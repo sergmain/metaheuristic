@@ -57,7 +57,7 @@ public class CommonSync<T> {
         return getLock(id).readLock();
     }
 
-    private synchronized ReentrantReadWriteLock getLock(T id) {
+    public synchronized ReentrantReadWriteLock getLock(T id) {
         if (System.currentTimeMillis() - lastCheckMills > TEN_MINUTES_TO_MILLS) {
             lastCheckMills = System.currentTimeMillis();
             List<T> ids = new ArrayList<>();

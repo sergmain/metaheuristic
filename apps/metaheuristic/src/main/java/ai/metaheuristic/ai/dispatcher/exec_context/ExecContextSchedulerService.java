@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -35,6 +34,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,7 +55,6 @@ public class ExecContextSchedulerService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
-    private final TaskTransactionalService taskTransactionalService;
     private final ExecContextGraphService execContextGraphService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
@@ -102,19 +101,29 @@ public class ExecContextSchedulerService {
     }
 
     private void reconcileStates(Long execContextId) {
-        final Map<Long, TaskData.TaskState> states = getExecStateOfTasks(execContextId);
-
-        Map<Long, TaskData.TaskState> taskStates = new HashMap<>();
-        AtomicBoolean isNullState = new AtomicBoolean(false);
-
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return;
         }
 
         // Reconcile states in db and in graph
-        List<ExecContextData.TaskVertex> vertices = execContextGraphService.findAll(execContext);
-        vertices.stream().parallel().forEach(tv -> {
+        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
+        if (rootVertices.size()>1) {
+            log.error("Too many root vertices, count: " + rootVertices.size());
+        }
+
+        if (rootVertices.isEmpty()) {
+            return;
+        }
+        Set<ExecContextData.TaskVertex> vertices = execContextGraphService.findDescendants(execContext, rootVertices.get(0).taskId);
+
+        final Map<Long, TaskData.TaskState> states = getExecStateOfTasks(execContextId);
+
+        Map<Long, TaskData.TaskState> taskStates = new HashMap<>();
+        AtomicBoolean isNullState = new AtomicBoolean(false);
+
+        for (ExecContextData.TaskVertex tv : vertices) {
+
             TaskData.TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {
                 isNullState.set(true);
@@ -123,9 +132,11 @@ public class ExecContextSchedulerService {
                 log.info("#751.040 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
-                taskStates.put(tv.taskId, taskState);
+
+                execContextFSM.updateTaskExecStates(execContext, tv.taskId, taskState.execState, null);
+                break;
             }
-        });
+        }
 
         if (isNullState.get()) {
             log.info("#751.060 Found non-created task, graph consistency is failed");
@@ -133,11 +144,11 @@ public class ExecContextSchedulerService {
             return;
         }
 
-        if (taskStates.isEmpty()) {
-            return;
-        }
-
-        taskTransactionalService.updateTaskExecStates(execContextId, taskStates);
+//        if (taskStates.isEmpty()) {
+//            return;
+//        }
+//
+//        taskTransactionalService.updateTaskExecStates(execContextId, taskStates);
 
         final Map<Long, TaskData.TaskState> newStates = getExecStateOfTasks(execContextId);
 
@@ -164,7 +175,7 @@ public class ExecContextSchedulerService {
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            execContextGraphTopLevelService.updateTaskExecStateWithoutSync(execContextCache.findById(execContextId), task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
+                            execContextFSM.updateTaskExecStates(execContextCache.findById(execContextId), task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
                         }
                     }
                 });

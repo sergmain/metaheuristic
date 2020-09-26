@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -46,8 +45,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
@@ -119,8 +116,8 @@ public class TaskWithInternalContextEventService {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
                         return null;
                     }
-                    taskTransactionalService.updateTaskExecStates(task.execContextId,
-                            Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.IN_PROGRESS.value, 0L, task.params)));
+                    execContextFSM.updateTaskExecStates(
+                            execContextCache.findById(task.execContextId), task.id, TaskExecState.IN_PROGRESS.value, null);
 
                     TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                     ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();

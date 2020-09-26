@@ -143,7 +143,7 @@ public class TestGraph extends PreparingSourceCode {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        execContextGraphTopLevelService.updateTaskExecStateWithoutSync(
+        execContextFSM.updateTaskExecStates(
                 execContextCache.findById(workbook.id), t1.id, t1.execState, "123###1");
     }
 

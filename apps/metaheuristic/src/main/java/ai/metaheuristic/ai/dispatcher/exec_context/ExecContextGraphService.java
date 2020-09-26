@@ -164,6 +164,9 @@ public class ExecContextGraphService {
         return graph;
     }
 
+    /**
+     * !!! This method doesn't return the current taskId and its new status. Must be changed by outside code.
+     */
     public ExecContextOperationStatusWithTaskList updateTaskExecStates(@Nullable ExecContextImpl execContext, Map<Long, TaskData.TaskState> taskStates) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
@@ -204,9 +207,17 @@ public class ExecContextGraphService {
         return status;
     }
 
+    /**
+     * !!! This method doesn't return the current taskId and its new status. Must be changed by outside code.
+     */
     @SuppressWarnings("StatementWithEmptyBody")
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
+        status.status = OperationStatusRest.OPERATION_STATUS_OK;
+        if (execContext == null) {
+            return status;
+        }
+
         try {
             changeGraph(execContext, graph -> {
                 ExecContextData.TaskVertex tv = graph.vertexSet()
@@ -348,7 +359,7 @@ public class ExecContextGraphService {
         }
 
         Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, vertex);
-        Set<ExecContextData.TaskVertex> descendants = new HashSet<>();
+        Set<ExecContextData.TaskVertex> descendants = new LinkedHashSet<>();
 
         // Do not add start vertex to result.
         if (iterator.hasNext()) {
@@ -479,6 +490,20 @@ public class ExecContextGraphService {
             return readOnlyGraph(execContext,
                     graph -> graph.vertexSet().stream()
                             .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
+                            .collect(Collectors.toList()));
+        }
+        catch (Throwable th) {
+            log.error("#915.030 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return List.of();
+        }
+    }
+
+    public List<ExecContextData.TaskVertex> findAllRootVertices(ExecContextImpl execContext) {
+        try {
+            return readOnlyGraph(execContext,
+                    graph -> graph.vertexSet().stream()
+                            .filter( v -> graph.incomingEdgesOf(v).isEmpty() )
                             .collect(Collectors.toList()));
         }
         catch (Throwable th) {

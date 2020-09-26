@@ -86,26 +86,4 @@ public class ExecContextGraphTopLevelService {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.getUnfinishedTaskVertices(execContext));
     }
 
-    // write operations with graph
-
-/*
-    public OperationStatusRest addNewTasksToGraph(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        final OperationStatusRest withSync = execContextSyncService.getWithSync(execContextId, () ->
-                execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds));
-        return withSync;
-    }
-*/
-
-    public ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
-        if (execContext==null) {
-            // this execContext was deleted
-            return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-        }
-
-        taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
-        taskExecStateService.updateTasksStateInDb(status);
-        return status;
-    }
-
 }

@@ -47,20 +47,14 @@ public class TaskPersistencer {
         if (task.id!=null) {
             ReentrantReadWriteLock.WriteLock lock = taskSyncService.getWriteLock(task.id);
             if (!lock.isHeldByCurrentThread()) {
-                try {
-                    throw new RuntimeException("Thread isn't locked by taskSyncService");
+                if (!execContextSyncService.getWriteLock(task.execContextId).isHeldByCurrentThread()) {
+                    try {
+                        throw new RuntimeException("The thread isn't locked by execContextSyncService or taskSyncService");
+                    }
+                    catch (RuntimeException e) {
+                        log.error("The thread isn't locked by execContextSyncService or taskSyncService", e);
+                    }
                 }
-                catch (RuntimeException e) {
-                    log.error("Thread isn't locked by taskSyncService", e);
-                }
-            }
-        }
-        if (!execContextSyncService.getWriteLock(task.execContextId).isHeldByCurrentThread()) {
-            try {
-                throw new RuntimeException("Thread isn't locked by execContextSyncService");
-            }
-            catch (RuntimeException e) {
-                log.error("Thread isn't locked by execContextSyncService", e);
             }
         }
         return taskRepository.save(task);
