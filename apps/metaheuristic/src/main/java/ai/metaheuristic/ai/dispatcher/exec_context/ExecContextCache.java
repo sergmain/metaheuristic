@@ -54,12 +54,7 @@ public class ExecContextCache {
             execContextSyncService.checkWriteLockPresent(execContext.id);
         }
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
-        //noinspection CaughtExceptionImmediatelyRethrown
-        try {
-            return execContextRepository.save(execContext);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw e;
-        }
+        return execContextRepository.save(execContext);
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")

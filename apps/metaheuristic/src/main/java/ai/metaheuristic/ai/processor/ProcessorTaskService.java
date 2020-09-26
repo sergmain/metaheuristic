@@ -420,8 +420,7 @@ public class ProcessorTaskService {
 
     public void createTask(String dispatcherUrl, long taskId, Long execContextId, String params) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-//            log.info("Assign new task #{}, params:\n{}", taskId, params );
-            log.info("Assign new task #{}", taskId);
+            log.info("#713.150 Prepare new task #{}", taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
             ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(taskId, k -> new ProcessorTask());
 
