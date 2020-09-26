@@ -137,7 +137,7 @@ public class TestRegisterProcessor {
 
         processorComm.reportProcessorStatus = ss;
 
-        processorComm.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+        processorComm.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
         processorComm.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
         ed = requestServer(processorComm);

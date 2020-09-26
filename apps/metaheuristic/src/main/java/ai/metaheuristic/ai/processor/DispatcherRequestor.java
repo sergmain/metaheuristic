@@ -179,7 +179,7 @@ public class DispatcherRequestor {
     }
 
     private void storeDispatcherContext(String dispatcherUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
-        if (dispatcherCommParamsYaml ==null || dispatcherCommParamsYaml.dispatcherCommContext ==null) {
+        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
             return;
         }
         DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
@@ -240,7 +240,7 @@ public class DispatcherRequestor {
                     final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired));
+                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {

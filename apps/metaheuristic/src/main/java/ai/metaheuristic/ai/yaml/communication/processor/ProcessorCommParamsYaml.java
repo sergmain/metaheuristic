@@ -24,7 +24,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -98,6 +97,8 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RequestTask {
+        @Nullable
+        public Boolean newTask;
         public boolean acceptOnlySigned;
     }
 

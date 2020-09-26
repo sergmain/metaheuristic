@@ -100,7 +100,7 @@ public class TestTaskRequest extends FeatureMethods {
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+        processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
@@ -128,7 +128,7 @@ public class TestTaskRequest extends FeatureMethods {
     public void step_3(String sessionId) {
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+        processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
@@ -143,7 +143,7 @@ public class TestTaskRequest extends FeatureMethods {
     public void step_4(String sessionId) {
         final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
         processorComm1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        processorComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+        processorComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
         String dispatcherResponse1 = serverService.processRequest(processorYaml1, Consts.LOCALHOST_IP);

@@ -311,7 +311,7 @@ public class ExecContextFSM {
                     String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#705.480 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                processor.getId(), task.getId(), taskParamYaml.task.function.env
+                                task.getId(), processor.getId(), taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
                         continue;

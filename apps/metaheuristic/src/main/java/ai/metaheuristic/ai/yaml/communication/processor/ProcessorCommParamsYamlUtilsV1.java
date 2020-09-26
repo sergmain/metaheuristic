@@ -84,8 +84,7 @@ public class ProcessorCommParamsYamlUtilsV1
                             : new ArrayList<>();
         }
         if (v1.requestTask!=null) {
-            t.requestTask = new ProcessorCommParamsYaml.RequestTask();
-            t.requestTask.acceptOnlySigned = v1.requestTask.acceptOnlySigned;
+            t.requestTask = new ProcessorCommParamsYaml.RequestTask(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);
         }
         if (v1.reportTaskProcessingResult!=null) {
             t.reportTaskProcessingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
