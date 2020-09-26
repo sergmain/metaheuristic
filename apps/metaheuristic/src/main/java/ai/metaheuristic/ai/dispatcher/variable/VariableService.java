@@ -56,7 +56,6 @@ import java.util.Set;
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
 @Service
-@Transactional
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
@@ -141,6 +140,7 @@ public class VariableService {
         }
     }
 
+    @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
@@ -160,6 +160,7 @@ public class VariableService {
         }
     }
 
+    @Transactional(readOnly = true)
     public void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
@@ -196,6 +197,7 @@ public class VariableService {
         variableRepository.deleteByName(variable);
     }
 
+    @Transactional
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         try {
             Variable data = new Variable();
@@ -271,6 +273,7 @@ public class VariableService {
         }
     }
 
+    @Transactional
     public void update(InputStream is, long size, Variable data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
@@ -282,10 +285,12 @@ public class VariableService {
         variableRepository.save(data);
     }
 
+    @Transactional
     public void update(InputStream is, long size, SimpleVariable simpleVariable) {
         update(is, size, simpleVariable, null);
     }
 
+    @Transactional
     public void update(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
         Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
         if (data==null) {
@@ -311,12 +316,10 @@ public class VariableService {
         variableRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
     public Optional<Variable> findById(Long id) {
         return variableRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
     public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
         return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
     }

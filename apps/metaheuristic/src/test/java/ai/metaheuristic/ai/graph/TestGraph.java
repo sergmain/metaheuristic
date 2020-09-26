@@ -106,7 +106,7 @@ public class TestGraph extends PreparingSourceCode {
             assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE, "123###1")));
             assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###1")));
 
-            setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.ERROR);
+            setExecStateError(execContextForTest.id, 1L, "An error");
             setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
             setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
 
@@ -140,11 +140,11 @@ public class TestGraph extends PreparingSourceCode {
     }
 
     private void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
-        TaskImpl t1 = new TaskImpl();
-        t1.id = id;
-        t1.execState = execState.value;
-        execContextFSM.updateTaskExecStates(
-                execContextCache.findById(workbook.id), t1.id, t1.execState, "123###1");
+        execContextFSM.updateTaskExecStates(execContextCache.findById(workbook.id), id, execState.value, "123###1");
+    }
+
+    private void setExecStateError(Long execContextId, Long taskId, String console) {
+        execContextFSM.finishWithError(taskId, console, execContextId, null);
     }
 
 }

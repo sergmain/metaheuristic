@@ -154,8 +154,9 @@ public class TaskExecStateService {
                 toNoneSimple(taskId);
                 break;
             case ERROR:
-                finishTaskAsError(taskId, state, -997, "#305.100 Task was finished with an unknown error, can't process it");
-                break;
+                throw new IllegalStateException("Must be set via ExecContextFSM.finishWithError()");
+//                finishTaskAsError(taskId, state, -997, "#305.100 Task was finished with an unknown error, can't process it");
+//                break;
             case OK:
                 toOkSimple(taskId);
                 break;

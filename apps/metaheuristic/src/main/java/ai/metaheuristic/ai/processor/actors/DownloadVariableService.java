@@ -210,7 +210,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         }
                     }
                     catch(SocketTimeoutException e) {
-                        log.error("#810.040 SocketTimeoutException, uri: " + uri, e);
+                        log.error("#810.040 SocketTimeoutException, uri: " + uri+", " + e.getMessage());
                         return;
                     }
                     idx++;

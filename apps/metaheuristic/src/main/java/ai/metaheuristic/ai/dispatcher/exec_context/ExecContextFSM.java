@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -45,6 +44,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -79,7 +79,6 @@ public class ExecContextFSM {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskSyncService taskSyncService;
 
     public void toStarted(ExecContext execContext) {
         toStarted(execContext.getId());
@@ -152,35 +151,16 @@ public class ExecContextFSM {
         }
 
         return execContextSyncService.getWithSync(task.execContextId, () -> {
-
             Task t = taskExecStateService.resetTask(task.id);
             if (t == null) {
-                ExecContextOperationStatusWithTaskList withTaskList = execContextGraphService.updateGraphWithSettingAllChildrenTasksAsError(
-                        execContextCache.findById(task.execContextId), task.id);
-                taskExecStateService.updateTasksStateInDb(withTaskList);
-                if (withTaskList.status.status == EnumsApi.OperationStatus.ERROR) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.100 Can't re-run task #" + taskId + ", see log for more information");
-                }
+                String es = S.f("#705.0950 Found a non-existed task, graph consistency for execContextId #%s is failed", task.execContextId);
+                log.error(es);
+                toError(task.execContextId);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             } else {
                 ExecContextOperationStatusWithTaskList withTaskList = execContextGraphService.updateGraphWithResettingAllChildrenTasks(
                         execContextCache.findById(task.execContextId), task.id);
-                if (withTaskList == null) {
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                    finishWithError(taskId, task.execContextId, tpy.task.taskContextId, task.params);
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                            "#705.120 Can't re-run task " + taskId + ", this task is orphan and doesn't belong to any execContext");
-                }
-
-                if (withTaskList.status.status == EnumsApi.OperationStatus.ERROR) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.140 Can't re-run task #" + taskId + ", see log for more information");
-                }
                 taskExecStateService.updateTasksStateInDb(withTaskList);
-/*
-                ExecContextImpl ec = execContextCache.findById(task.execContextId);
-                if (ec != null && ec.state != EnumsApi.ExecContextState.STARTED.code) {
-                    toState(ec.id, EnumsApi.ExecContextState.STARTED);
-                }
-*/
             }
 
             return OperationStatusRest.OPERATION_STATUS_OK;
@@ -194,34 +174,23 @@ public class ExecContextFSM {
 
         final Long execContextId = task.execContextId;
         final String taskContextId = taskParamsYaml.task.taskContextId;
-        final String params = task.params;
 
-        finishWithError(taskId, console, execContextId, taskContextId, params);
+        finishWithError(taskId, console, execContextId, taskContextId);
     }
 
     private void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
-        finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId, params);
+        finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
     }
 
-    private void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
-        taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
+    public void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+        execContextSyncService.getWithSyncNullable(execContextId, () -> {
+            taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
 
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
-
-/*
-        final ExecContextOperationStatusWithTaskList s = execContextGraphService.updateTaskExecStates(
-                execContextCache.findById(execContextId), Map.of(taskId, new TaskData.TaskState(taskId, EnumsApi.TaskExecState.ERROR.value, System.currentTimeMillis(), params)));
-*/
-
-        taskExecStateService.updateTasksStateInDb(status);
-/*
-
-        if (taskContextId!=null) {
-            ExecContextOperationStatusWithTaskList status = execContextGraphService.updateGraphWithSettingAllChildrenTasksAsSkipped(
-                    execContextCache.findById(execContextId), taskContextId, taskId);
-        }
-*/
+            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
+                    execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
+            taskExecStateService.updateTasksStateInDb(status);
+            return null;
+        });
     }
 
     // write operations with graph
@@ -477,18 +446,27 @@ public class ExecContextFSM {
                     null, result.taskId, t.getExecContextId());
 
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-            updateTaskExecStates(
-                    execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
+            if (state==EnumsApi.TaskExecState.ERROR) {
+                finishWithError(
+                        t.getId(),
+                        StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
+                        t.getExecContextId(), tpy.task.taskContextId);
+            }
+            else {
+                updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
+            }
 
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#303.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
             log.error("#303.061 ObjectOptimisticLockingFailureException", e);
+            ExceptionUtils.rethrow(e);
         }
     }
 
     @Nullable
     private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        return taskSyncService.getWithSync(result.taskId, (task) -> {
+        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+//        return taskSyncService.getWithSync(result.taskId, (task) -> {
             if (task==null) {
                 log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
                 return null;
@@ -513,7 +491,7 @@ public class ExecContextFSM {
             task = taskPersistencer.save(task);
 
             return task;
-        });
+//        });
     }
 
 }

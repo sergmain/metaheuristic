@@ -170,7 +170,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
     }
 
     protected void finishCurrentWithError() {
-        // lets report about sequences that all finished with error (errorCode!=0)
+        // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         assertEquals(1, tasks.size());

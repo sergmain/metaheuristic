@@ -303,20 +303,22 @@ public class BatchTopLevelService {
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
-        if (isVirtualDeletion) {
-            if (!batch.deleted) {
-                execContextFSM.toStopped(batch.execContextId);
 
-                Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
-                b.deleted = true;
-                batchCache.save(b);
+        return execContextSyncService.getWithSync(batch.execContextId, () -> {
+            if (isVirtualDeletion) {
+                if (!batch.deleted) {
+                    execContextFSM.toStopped(batch.execContextId);
+
+                    Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
+                    b.deleted = true;
+                    batchCache.save(b);
+                }
+            } else {
+                execContextService.deleteExecContext(batch.execContextId, companyUniqueId);
+                batchCache.deleteById(batch.id);
             }
-        }
-        else {
-            execContextService.deleteExecContext(batch.execContextId, companyUniqueId);
-            batchCache.deleteById(batch.id);
-        }
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
+            return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batch.id + " was deleted successfully.", null);
+        });
     }
 
     public BatchData.BulkOperations processBatchBulkDeleteCommit(String batchIdsStr, Long companyUniqueId, boolean isVirtualDeletion) {

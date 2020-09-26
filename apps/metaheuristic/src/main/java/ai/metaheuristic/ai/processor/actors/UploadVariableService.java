@@ -138,7 +138,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         .socketTimeout(20000)
                         .body(entity);
 
-                log.info("Start uploading resource to rest-server, {}", randonPart);
+                log.info("Start uploading variable to rest-server, {}", randonPart);
                 Response response = HttpClientExecutor.getExecutor(task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
