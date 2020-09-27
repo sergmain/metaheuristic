@@ -48,6 +48,7 @@ public class TaskExecStateService {
     private final TaskPersistencer taskPersistencer;
     private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
+    private final TaskTransactionalService taskTransactionalService;
 
     @Nullable
     public Task resetTask(final Long taskId) {
@@ -65,7 +66,7 @@ public class TaskExecStateService {
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
             task.setResultReceived(false);
             task.setResultResourceScheduledOn(0);
-            task = taskPersistencer.save(task);
+            task = taskTransactionalService.save(task);
 
             log.info("#305.030 task #{} was re-setted to initial state", taskId);
             return task;
@@ -73,12 +74,12 @@ public class TaskExecStateService {
     }
     public TaskImpl toInProgressSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        return taskPersistencer.save(task);
+        return taskTransactionalService.save(task);
     }
 
     private TaskImpl toSkippedSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
-        return taskPersistencer.save(task);
+        return taskTransactionalService.save(task);
     }
 
     public void toOkSimple(Long taskId) {
@@ -91,7 +92,7 @@ public class TaskExecStateService {
                 return task;
             }
             task.setExecState(EnumsApi.TaskExecState.OK.value);
-            return taskPersistencer.save(task);
+            return taskTransactionalService.save(task);
         });
     }
 
@@ -105,7 +106,7 @@ public class TaskExecStateService {
                 return task;
             }
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
-            return taskPersistencer.save(task);
+            return taskTransactionalService.save(task);
         });
     }
 
@@ -133,7 +134,7 @@ public class TaskExecStateService {
             }
             task.setResultReceived(true);
 
-            task = taskPersistencer.save(task);
+            task = taskTransactionalService.save(task);
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;

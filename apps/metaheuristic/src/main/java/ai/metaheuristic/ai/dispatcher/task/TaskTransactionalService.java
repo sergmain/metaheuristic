@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -44,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,8 +78,18 @@ public class TaskTransactionalService {
     private final TaskPersistencer taskPersistencer;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
+    private final TaskTransactionalService taskTransactionalService;
+    private final TaskSyncService taskSyncService;
 
-    @Transactional(readOnly = true)
+    public TaskImpl save(TaskImpl task) {
+        try {
+            return taskTransactionalService.save(task);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
+            throw e;
+        }
+    }
+
     public List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
         try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
             return stream.map(o-> {
@@ -187,7 +200,100 @@ public class TaskTransactionalService {
     @Nullable
     public TaskImpl persistOutputVariables(TaskImpl task, TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         variableService.initOutputVariables(taskParams, execContext, p);
-        return taskPersistencer.setParams(task.id, taskParams);
+        return setParams(task.id, taskParams);
     }
+
+    @Nullable
+    public TaskImpl setParams(Long taskId, TaskParamsYaml params) {
+        return setParams(taskId, TaskParamsYamlUtils.BASE_YAML_UTILS.toString(params));
+    }
+
+    @Nullable
+    public TaskImpl setParams(Long taskId, String taskParams) {
+        return taskSyncService.getWithSync(taskId, (task) -> setParamsInternal(taskId, taskParams, task));
+    }
+
+    @Nullable
+    public TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
+        try {
+            if (task == null) {
+                log.warn("#307.010 Task with taskId {} wasn't found", taskId);
+                return null;
+            }
+            task.setParams(taskParams);
+            save(task);
+            return task;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+        }
+        return null;
+    }
+
+    public Enums.UploadResourceStatus setResultReceived(Long taskId, Long variableId) {
+        Enums.UploadResourceStatus status = taskSyncService.getWithSync(true, taskId, (task) -> {
+            try {
+                if (task == null) {
+                    return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+                }
+                if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
+                    log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", taskId);
+                    return Enums.UploadResourceStatus.TASK_WAS_RESET;
+                }
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findAny().orElse(null);
+                if (output==null) {
+                    return Enums.UploadResourceStatus.UNRECOVERABLE_ERROR;
+                }
+                output.uploaded = true;
+                task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+
+                boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream().allMatch(o -> o.uploaded);
+                task.setCompleted(allUploaded);
+                task.setCompletedOn(System.currentTimeMillis());
+                task.setResultReceived(allUploaded);
+                save(task);
+                return Enums.UploadResourceStatus.OK;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived() for taskId: {}, variableId: {}, error: {}", taskId, variableId, e.toString());
+                log.warn("#307.060 ObjectOptimisticLockingFailureException", e);
+                return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+            }
+        });
+        if (status==null) {
+            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+        }
+        return status;
+    }
+
+    public Enums.UploadResourceStatus setResultReceivedForInternalFunction(Long taskId) {
+        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {
+            try {
+                if (task == null) {
+                    return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+                }
+                if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
+                    log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
+                    return Enums.UploadResourceStatus.TASK_WAS_RESET;
+                }
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                tpy.task.outputs.forEach(o->o.uploaded = true);
+                task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+                task.setCompleted(true);
+                task.setCompletedOn(System.currentTimeMillis());
+                task.setResultReceived(true);
+                save(task);
+                return Enums.UploadResourceStatus.OK;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("#307.100 !!!NEED TO INVESTIGATE. Error set setResultReceivedForInternalFunction() for taskId: {}, error: {}", taskId, e.toString());
+                log.warn("#307.120 ObjectOptimisticLockingFailureException", e);
+                return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+            }
+        });
+        if (status==null) {
+            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+        }
+        return status;
+    }
+
 
 }

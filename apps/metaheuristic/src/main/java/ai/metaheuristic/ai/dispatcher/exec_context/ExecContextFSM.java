@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -78,6 +79,7 @@ public class ExecContextFSM {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TaskTransactionalService taskTransactionalService;
 
     public void toStarted(ExecContext execContext) {
         toStarted(execContext.getId());
@@ -221,7 +223,7 @@ public class ExecContextFSM {
                 finishWithError(taskId, task.execContextId, tpy.task.taskContextId, task.params);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-                Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, variableId);
+                Enums.UploadResourceStatus uploadResourceStatus = taskTransactionalService.setResultReceived(taskId, variableId);
                 if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
                     log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
                 }
@@ -287,7 +289,7 @@ public class ExecContextFSM {
                     // it'll be set in ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService.handleAsync
                     task.setAssignedOn(System.currentTimeMillis());
                     task.setResultResourceScheduledOn(0);
-                    taskPersistencer.save(task);
+                    taskTransactionalService.save(task);
 
                     eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
                     continue;
@@ -358,7 +360,7 @@ public class ExecContextFSM {
         resultTask.setProcessorId(processor.getId());
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
-        taskPersistencer.save(resultTask);
+        taskTransactionalService.save(resultTask);
 
         updateTaskExecStates(execContextCache.findById(execContextId), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value, null);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
@@ -477,7 +479,7 @@ public class ExecContextFSM {
                 }
             }
             task.setFunctionExecResults(result.getResult());
-            task = taskPersistencer.save(task);
+            task = taskTransactionalService.save(task);
 
             return task;
 //        });

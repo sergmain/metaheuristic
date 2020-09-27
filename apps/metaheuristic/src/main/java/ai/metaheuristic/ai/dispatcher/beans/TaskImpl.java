@@ -46,7 +46,7 @@ public class TaskImpl implements Serializable, Task {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     /**
      * TaskParamsYaml represented as a String

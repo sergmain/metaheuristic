@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
@@ -95,7 +95,7 @@ public class SouthbridgeService {
     private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
     private final ProcessorRepository processorRepository;
-    private final TaskPersistencer taskPersistencer;
+    private final TaskTransactionalService taskTransactionalService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -164,7 +164,7 @@ public class SouthbridgeService {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
-        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(taskId, variable.getId());
+        Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(taskId, variable.getId());
         return status== Enums.UploadResourceStatus.OK
                 ? OK_UPLOAD_RESULT
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");

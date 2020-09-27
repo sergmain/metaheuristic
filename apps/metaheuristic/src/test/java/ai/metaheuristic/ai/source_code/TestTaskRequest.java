@@ -114,7 +114,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, output.id);
+            Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(t.taskId, output.id);
             assertEquals(Enums.UploadResourceStatus.OK, status);
         }
         task = taskRepository.findById(t.taskId).orElse(null);

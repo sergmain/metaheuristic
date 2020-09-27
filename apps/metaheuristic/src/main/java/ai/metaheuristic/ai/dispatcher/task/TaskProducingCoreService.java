@@ -49,8 +49,8 @@ public class TaskProducingCoreService {
 
     private final VariableService variableService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final TaskPersistencer taskPersistencer;
     private final FunctionService functionService;
+    private final TaskTransactionalService taskTransactionalService;
 
     @Nullable
     public TaskImpl createTaskInternal(
@@ -101,7 +101,7 @@ public class TaskProducingCoreService {
         TaskImpl task = new TaskImpl();
         task.setExecContextId(execContextId);
         task.setParams(params);
-        taskPersistencer.save(task);
+        taskTransactionalService.save(task);
 
         return task;
     }

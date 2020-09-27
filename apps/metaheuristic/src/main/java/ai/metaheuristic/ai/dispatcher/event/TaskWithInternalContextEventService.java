@@ -137,7 +137,7 @@ public class TaskWithInternalContextEventService {
                     // won't be called for initializing output variables in internal function.
                     // the code which skips initializing is here - ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.getTaskAndAssignToProcessor
                     variableService.initOutputVariables(taskParamsYaml, execContext, p);
-                    taskPersistencer.setParams(event.taskId, taskParamsYaml);
+                    taskTransactionalService.setParams(event.taskId, taskParamsYaml);
 
                     InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                             execContext.id, event.taskId, p.internalContextId, taskParamsYaml);
@@ -146,7 +146,7 @@ public class TaskWithInternalContextEventService {
                         execContextFSM.markAsFinishedWithError(task, execContext, taskParamsYaml, result);
                         return null;
                     }
-                    taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
+                    taskTransactionalService.setResultReceivedForInternalFunction(event.taskId);
 
                     ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
                     r.taskId = event.taskId;

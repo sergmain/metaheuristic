@@ -313,7 +313,7 @@ public class BatchTopLevelService {
         return execContextSyncService.getWithSync(batch.execContextId, () -> {
             if (isVirtualDeletion) {
                 if (!batch.deleted) {
-                    execContextFSM.toStopped(batch.execContextId);
+                    execContextFSM.toFinished(batch.execContextId);
 
                     Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
                     b.deleted = true;
