@@ -34,11 +34,7 @@ public class ExecContextData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AssignedTaskComplex {
-        // this field is the same as task.params but it could be downgraded to version which is supported by Processor
-        public String params;
-
         public Long execContextId;
-
         public Task task;
     }
 

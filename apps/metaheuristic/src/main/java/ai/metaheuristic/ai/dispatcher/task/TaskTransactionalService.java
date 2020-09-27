@@ -179,9 +179,9 @@ public class TaskTransactionalService {
         }
     }
 
-    public void persistOutputVariables(ExecContextData.AssignedTaskComplex assignedTaskComplex, TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
+    public void persistOutputVariables(TaskImpl task, TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         variableService.initOutputVariables(taskParams, execContext, p);
-        taskPersistencer.setParams(assignedTaskComplex.task.getId(), taskParams);
+        taskPersistencer.setParams(task.id, taskParams);
     }
 
 }

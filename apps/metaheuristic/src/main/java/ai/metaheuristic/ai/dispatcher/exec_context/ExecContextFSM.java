@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -244,7 +243,7 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    public ExecContextData.AssignedTaskComplex findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml ss, boolean isAcceptOnlySigned) {
+    public TaskImpl findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
 
         AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));
         if (longHolder.get()!=0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
@@ -258,12 +257,9 @@ public class ExecContextFSM {
         if (vertices.isEmpty()) {
             return null;
         }
-        final ProcessorStatusYaml processorStatus = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
         int page = 0;
         TaskImpl resultTask = null;
-        String resultTaskContextId = null;
-        String resultTaskParams = null;
         List<TaskImpl> tasks;
         while ((tasks = getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             for (TaskImpl task : tasks) {
@@ -297,16 +293,16 @@ public class ExecContextFSM {
                     continue;
                 }
 
-                if (gitUnavailable(taskParamYaml.task, processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
+                if (gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
                     log.warn("#705.460 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
-                            processor.getId(), task.getId(), processorStatus.gitStatusInfo
+                            processor.getId(), task.getId(), psy.gitStatusInfo
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
                 }
 
                 if (!S.b(taskParamYaml.task.function.env)) {
-                    String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.task.function.env);
+                    String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#705.480 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 task.getId(), processor.getId(), taskParamYaml.task.function.env
@@ -317,10 +313,10 @@ public class ExecContextFSM {
                 }
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
-                if (processorStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(processorStatus.os)) {
+                if (psy.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
                     log.info("#705.500 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            processor.getId(), task.getId(), processorStatus.os, supportedOS
+                            processor.getId(), task.getId(), psy.os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
@@ -333,13 +329,13 @@ public class ExecContextFSM {
                     }
                 }
                 resultTask = task;
+                // check that downgrading is supported
                 try {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                    resultTaskContextId = tpy.task.taskContextId;
-                    resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
+                    String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), processor.id, ss.taskParamsVersion);
+                            resultTask.getId(), processor.id, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
                 }
@@ -358,11 +354,6 @@ public class ExecContextFSM {
         // normal way of operation
         longHolder.set(0);
 
-        ExecContextData.AssignedTaskComplex assignedTaskComplex = new ExecContextData.AssignedTaskComplex();
-        assignedTaskComplex.setTask(resultTask);
-        assignedTaskComplex.setExecContextId(execContextId);
-        assignedTaskComplex.setParams(resultTaskParams);
-
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setProcessorId(processor.getId());
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
@@ -372,7 +363,7 @@ public class ExecContextFSM {
         updateTaskExecStates(execContextCache.findById(execContextId), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value, null);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
-        return assignedTaskComplex;
+        return resultTask;
     }
 
 

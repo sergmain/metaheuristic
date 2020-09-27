@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -107,15 +106,46 @@ public class ExecContextService {
     }
 
     public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
-        ExecContextData.AssignedTaskComplex assignedTaskComplex = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
-        // assignedTaskComplex won't be returned for an internal function
-        if (assignedTaskComplex==null) {
+
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.error("#705.320 Processor with id #{} wasn't found", processorId);
+            return null;
+        }
+        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
+        if (psy==null) {
+            return null;
+        }
+
+
+        TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
+        // task won't be returned for an internal function
+        if (task==null) {
             return null;
         }
 
         try {
-            prepareVariables(assignedTaskComplex);
-            return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.task.getId(), assignedTaskComplex.task.getExecContextId());
+            prepareVariables(task);
+
+            String params;
+            try {
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                if (tpy.version==psy.taskParamsVersion) {
+                    params = task.params;
+                }
+                else {
+                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                }
+            } catch (DowngradeNotSupportedException e) {
+                // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
+                //  but this one fails. that could occur because of prepareVariables(task);
+                //  need a better solution for checking
+                log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                        task.getId(), processor.id, psy.taskParamsVersion);
+                return null;
+            }
+
+            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
         } catch (Throwable th) {
             String es = "#705.270 Something wrong";
             log.error(es, th);
@@ -123,13 +153,13 @@ public class ExecContextService {
         }
     }
 
-    private void prepareVariables(ExecContextData.AssignedTaskComplex assignedTaskComplex) {
+    private void prepareVariables(TaskImpl task) {
 
         // we will use assignedTaskComplex.task.getParams(), not assignedTaskComplex.params,
         // because we need actual TaskParamsYaml for a correct initialization
-        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTaskComplex.task.getParams());
+        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-        final Long execContextId = assignedTaskComplex.execContextId;
+        final Long execContextId = task.execContextId;
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#705.280 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
@@ -149,24 +179,14 @@ public class ExecContextService {
                 .map(v -> taskProducingCoreService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        taskTransactionalService.persistOutputVariables(assignedTaskComplex, taskParams, execContext, p);
+        taskTransactionalService.persistOutputVariables(task, taskParams, execContext, p);
     }
 
     @Nullable
-    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
+    private TaskImpl getTaskAndAssignToProcessorInternal(
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
 
-        final Processor processor = processorCache.findById(processorId);
-        if (processor == null) {
-            log.error("#705.320 Processor with id #{} wasn't found", processorId);
-            return null;
-        }
-        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
-        if (psy==null) {
-            return null;
-        }
-
-        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processorId);
+        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processor.id);
         boolean allAssigned = false;
         if (reportProcessorTaskStatus.statuses!=null) {
             List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> lostTasks = reportProcessorTaskStatus.statuses.stream()
@@ -175,7 +195,7 @@ public class ExecContextService {
                 allAssigned = true;
             }
             else {
-                log.info("#705.330 Found the lost tasks at processor #{}, tasks #{}", processorId, lostTasks);
+                log.info("#705.330 Found the lost tasks at processor #{}, tasks #{}", processor.id, lostTasks);
                 for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
                     TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
                     if (task==null) {
@@ -183,27 +203,16 @@ public class ExecContextService {
                     }
                     if (task.execState!= TaskExecState.IN_PROGRESS.value) {
                         log.warn("#705.333 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
-                                processorId, task.id, TaskExecState.from(task.execState));
+                                processor.id, task.id, TaskExecState.from(task.execState));
                         // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
                     }
-                    try {
-                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                        String resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-
-                        ExecContextData.AssignedTaskComplex repeatSending = new ExecContextData.AssignedTaskComplex(resultTaskParams, task.execContextId, task);
-                        return repeatSending;
-
-                    } catch (DowngradeNotSupportedException e) {
-                        log.warn("#705.335 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported. The task will be re-set",
-                                task.id, processor.id, psy.taskParamsVersion);
-                        OperationStatusRest result = execContextFSM.resetTask(task.id);
-                    }
+                    return task;
                 }
             }
         }
         if (allAssigned) {
             // this processor already has active task
-            log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
+            log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
             return null;
         }
 
@@ -226,7 +235,7 @@ public class ExecContextService {
         }
 
         for (Long execContextId : execContextIds) {
-            ExecContextData.AssignedTaskComplex result = execContextSyncService.getWithSyncNullable(execContextId,
+            TaskImpl result = execContextSyncService.getWithSyncNullable(execContextId,
                     () -> execContextFSM.findUnassignedTaskAndAssign(execContextId, processor, psy, isAcceptOnlySigned));
             if (result!=null) {
                 return result;
