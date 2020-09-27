@@ -125,7 +125,11 @@ public class ExecContextService {
         }
 
         try {
-            prepareVariables(task);
+            task = prepareVariables(task);
+            if (task==null) {
+                log.warn("After prepareVariables(task) the task is null");
+                return null;
+            }
 
             String params;
             try {
@@ -153,7 +157,8 @@ public class ExecContextService {
         }
     }
 
-    private void prepareVariables(TaskImpl task) {
+    @Nullable
+    private TaskImpl prepareVariables(TaskImpl task) {
 
         // we will use assignedTaskComplex.task.getParams(), not assignedTaskComplex.params,
         // because we need actual TaskParamsYaml for a correct initialization
@@ -163,13 +168,13 @@ public class ExecContextService {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#705.280 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
-            return;
+            return null;
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
             log.warn("#705.300 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
-            return;
+            return null;
         }
 
         // we dont need to create inputs because all inputs are outputs of previous processes,
@@ -179,7 +184,7 @@ public class ExecContextService {
                 .map(v -> taskProducingCoreService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        taskTransactionalService.persistOutputVariables(task, taskParams, execContext, p);
+        return taskTransactionalService.persistOutputVariables(task, taskParams, execContext, p);
     }
 
     @Nullable

@@ -136,7 +136,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
             // ======================
 
-            // the calling of this method will produce a warning "#705.380 ExecContext wasn't started." which is correct behaviour
             DispatcherCommParamsYaml.AssignedTask simpleTask0 =
                     execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
@@ -291,10 +290,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
 
+/*
+        // becauce those tasks is executing in parallel, don't call getTaskAndAssignToProcessor() again
         DispatcherCommParamsYaml.AssignedTask simpleTask31 =
                 execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
         assertNull(simpleTask31);
+*/
 
         storeExecResult(simpleTask32);
         execContextSchedulerService.updateExecContextStatuses(true);
@@ -309,10 +311,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
 
+/*
+        // becauce those tasks is executing in parallel, don't call getTaskAndAssignToProcessor() again
         DispatcherCommParamsYaml.AssignedTask simpleTask31 =
                 execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
         assertNull(simpleTask31);
+*/
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
         assertNotNull(taskParamsYaml.task.processCode);
@@ -348,7 +353,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
         assertNotNull(task3);
 
-        // the calling of this method will produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
                 execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask21);
