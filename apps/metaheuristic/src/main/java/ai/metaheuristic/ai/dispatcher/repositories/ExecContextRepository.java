@@ -38,33 +38,33 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 
     @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
     @Query(value="select w.id, w.state from ExecContextImpl w ")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findAllExecStates();
 
     @Query(value="select w.id from ExecContextImpl w")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findAllIds();
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<ExecContextImpl> findByState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findIdsByExecState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
             "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +
             "from ExecContextImpl b " +
