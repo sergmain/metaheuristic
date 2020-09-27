@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,10 +67,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, experiment.getExecContextId());
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, experiment.getExecContextId());
         assertNull(task);
 
-        task = execContextService.getTaskAndAssignToProcessor(processor.getId() + 1, false, experiment.getExecContextId());
+        task = execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId() + 1, false, experiment.getExecContextId());
         assertNull(task);
     }
 

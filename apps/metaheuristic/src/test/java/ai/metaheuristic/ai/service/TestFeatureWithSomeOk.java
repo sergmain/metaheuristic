@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -54,14 +55,14 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
             // this processor already got task, so don't provide any new
             DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(
-                    processor.getId(), false, experiment.getExecContextId());
+                    new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, experiment.getExecContextId());
             // task is empty cos we still didn't finish those task
             assertNull(task);
 
             finishCurrentWithError();
 
             DispatcherCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToProcessor(
-                    processor.getId(), false, experiment.getExecContextId());
+                    new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, experiment.getExecContextId());
 
             assertNull(task1);
 

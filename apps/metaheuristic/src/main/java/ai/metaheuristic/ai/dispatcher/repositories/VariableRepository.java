@@ -41,7 +41,7 @@ import java.util.Set;
  * Time: 15:41
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional(readOnly = true)
 @Profile("dispatcher")
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
@@ -81,6 +81,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     List<String> findFilenameByVariableAndExecContextId(Long execContextId, String variable);
 
     @Nullable
+    @Transactional
     @Query(value="select b.data from Variable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
@@ -88,7 +89,6 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select b from Variable b where b.id=:id")
     Variable findByIdForUpdate(Long id);
 
-    @NonNull
     Page<Variable> findAll(@NonNull Pageable pageable);
 
     @Transactional
@@ -99,4 +99,8 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional
     void deleteByName(String variable);
+
+    @NonNull
+    @Transactional
+    Variable save(Variable v);
 }

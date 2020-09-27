@@ -157,11 +157,9 @@ public class ExecContextFSM {
                 log.error(es);
                 toError(task.execContextId);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-            } else {
-                ExecContextOperationStatusWithTaskList withTaskList = execContextGraphService.updateGraphWithResettingAllChildrenTasks(
-                        execContextCache.findById(task.execContextId), task.id);
-                taskExecStateService.updateTasksStateInDb(withTaskList);
             }
+
+            updateTaskExecStates(execContextCache.findById(task.execContextId), task.id, EnumsApi.TaskExecState.NONE.value, null);
 
             return OperationStatusRest.OPERATION_STATUS_OK;
         });

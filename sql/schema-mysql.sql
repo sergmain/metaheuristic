@@ -183,6 +183,9 @@ CREATE TABLE mh_task
     RESULT_RESOURCE_SCHEDULED_ON bigint
 );
 
+CREATE INDEX mh_task_processor_id_idx
+    ON mh_task (PROCESSOR_ID);
+
 CREATE INDEX mh_task_exec_context_id_idx
     ON mh_task (EXEC_CONTEXT_ID);
 

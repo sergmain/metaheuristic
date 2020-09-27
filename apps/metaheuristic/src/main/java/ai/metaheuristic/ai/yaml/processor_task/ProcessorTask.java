@@ -111,7 +111,7 @@ public class ProcessorTask {
     @Nullable
     public Long reportedOn;
 
-    // was this task reported to dispatcher?
+    // were status and console result reported to dispatcher?
     public boolean reported;
 
     // were status and console result received by dispatcher?

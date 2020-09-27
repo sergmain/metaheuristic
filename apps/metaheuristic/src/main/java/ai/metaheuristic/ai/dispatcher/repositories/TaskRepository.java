@@ -81,6 +81,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
     List<Long> findAnyActiveForProcessorId(Pageable limit, Long processorId);
 
+    @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
+    List<Long> findActiveForProcessorId(Long processorId);
+
     @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId and t.execState = :execState ")
     List<TaskImpl> findTasksByExecState(Long execContextId, int execState);
 

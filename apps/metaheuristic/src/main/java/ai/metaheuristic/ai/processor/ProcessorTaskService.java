@@ -215,6 +215,9 @@ public class ProcessorTaskService {
             if (task.delivered) {
                 return;
             }
+            if (!task.isReported() ) {
+                log.warn("#713.090 This state need to be investigated, task wasn't reported to dispatcher");
+            }
 
             task.setDelivered(true);
             // if function has finished with an error,
@@ -283,9 +286,10 @@ public class ProcessorTaskService {
         final ProcessorCommParamsYaml.ReportTaskProcessingResult processingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
         for (ProcessorTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {
-                log.warn("#775.140 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
+                log.warn("#713.105 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
+            //  2020-09-26 until #713.105 (task.isDelivered() && !task.isReported() ) will be fixed, this check is correct
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
@@ -317,12 +321,16 @@ public class ProcessorTaskService {
                 if (task.getLaunchedOn()==null) {
                     final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                     log.info("#713.113 task #{}, function '{}' doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
+                    final String es = "#713.114 stacktrace";
+                    try {
+                        throw new RuntimeException(es);
+                    } catch (RuntimeException e) {
+                        log.info(es, e);
+                    }
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
                 if (!functionExec.allFunctionsAreOk()) {
                     log.info("#713.115 task #{} was finished with an error, set completed to true", taskId);
-                    // there are some problems with this task. mark it as completed
-                    task.setDelivered(true);
                     task.setCompleted(true);
                 }
                 else {

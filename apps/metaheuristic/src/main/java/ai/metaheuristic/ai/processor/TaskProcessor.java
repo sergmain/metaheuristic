@@ -266,7 +266,7 @@ public class TaskProcessor {
     private void markFunctionAsFinishedWithPermanentError(String dispatcherUrl, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
-                "#100.150 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
+                "#100.150 Function "+result.getFunction().code+" has a permanent error: " + result.getSystemExecResult().console);
         processorTaskService.markAsFinished(dispatcherUrl, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
 

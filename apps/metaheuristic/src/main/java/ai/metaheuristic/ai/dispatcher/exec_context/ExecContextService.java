@@ -16,14 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -37,15 +35,12 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +53,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.EnumsApi.*;
 
 @Service
 @Profile("dispatcher")
@@ -80,10 +77,10 @@ public class ExecContextService {
     private final ApplicationEventPublisher eventPublisher;
     private final TaskTransactionalService taskTransactionalService;
 
-    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+    public OperationStatusRest execContextTargetState(Long execContextId, ExecContextState execState, Long companyUniqueId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
+            return new OperationStatusRest(OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
         }
 
         if (execContext.state !=execState.code) {
@@ -109,8 +106,8 @@ public class ExecContextService {
         return result;
     }
 
-    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
-        ExecContextData.AssignedTaskComplex assignedTaskComplex = getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId);
+    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
+        ExecContextData.AssignedTaskComplex assignedTaskComplex = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
         // assignedTaskComplex won't be returned for an internal function
         if (assignedTaskComplex==null) {
             return null;
@@ -118,12 +115,7 @@ public class ExecContextService {
 
         try {
             prepareVariables(assignedTaskComplex);
-            TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
-            if (task==null) {
-                log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
-                return null;
-            }
-            return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
+            return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.task.getId(), assignedTaskComplex.task.getExecContextId());
         } catch (Throwable th) {
             String es = "#705.270 Something wrong";
             log.error(es, th);
@@ -133,6 +125,8 @@ public class ExecContextService {
 
     private void prepareVariables(ExecContextData.AssignedTaskComplex assignedTaskComplex) {
 
+        // we will use assignedTaskComplex.task.getParams(), not assignedTaskComplex.params,
+        // because we need actual TaskParamsYaml for a correct initialization
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTaskComplex.task.getParams());
 
         final Long execContextId = assignedTaskComplex.execContextId;
@@ -159,17 +153,57 @@ public class ExecContextService {
     }
 
     @Nullable
-    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
+    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.error("#705.320 Processor with id #{} wasn't found", processorId);
             return null;
         }
-        List<Long> anyTaskId = taskRepository.findAnyActiveForProcessorId(Consts.PAGE_REQUEST_1_REC, processorId);
-        if (!anyTaskId.isEmpty()) {
+        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
+        if (psy==null) {
+            return null;
+        }
+
+        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processorId);
+        boolean allAssigned = false;
+        if (reportProcessorTaskStatus.statuses!=null) {
+            List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> lostTasks = reportProcessorTaskStatus.statuses.stream()
+                    .filter(o->!activeTaskIds.contains(o.taskId)).collect(Collectors.toList());
+            if (lostTasks.isEmpty()) {
+                allAssigned = true;
+            }
+            else {
+                log.info("#705.330 Found the lost tasks at processor #{}, tasks #{}", processorId, lostTasks);
+                for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
+                    TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
+                    if (task==null) {
+                        continue;
+                    }
+                    if (task.execState!= TaskExecState.IN_PROGRESS.value) {
+                        log.warn("#705.333 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
+                                processorId, task.id, TaskExecState.from(task.execState));
+                        // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
+                    }
+                    try {
+                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                        String resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+
+                        ExecContextData.AssignedTaskComplex repeatSending = new ExecContextData.AssignedTaskComplex(resultTaskParams, task.execContextId, task);
+                        return repeatSending;
+
+                    } catch (DowngradeNotSupportedException e) {
+                        log.warn("#705.335 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported. The task will be re-set",
+                                task.id, processor.id, psy.taskParamsVersion);
+                        OperationStatusRest result = execContextFSM.resetTask(task.id);
+                    }
+                }
+            }
+        }
+        if (allAssigned) {
             // this processor already has active task
-            log.info("#705.340 can't assign any new task to the processor #{} because this processor has an active task #{}", processorId, anyTaskId);
+            log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
             return null;
         }
 
@@ -181,33 +215,37 @@ public class ExecContextService {
                 log.warn("#705.360 ExecContext wasn't found for id: {}", specificExecContextId);
                 return null;
             }
-            if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
-                log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
+            if (execContext.getState()!= ExecContextState.STARTED.code) {
+                log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", ExecContextState.toState(execContext.getState()));
                 return null;
             }
             execContextIds = List.of(execContext.id);
         }
         else {
-            execContextIds = execContextRepository.findByStateOrderByCreatedOnAsc(EnumsApi.ExecContextState.STARTED.code);
-        }
-
-        ProcessorStatusYaml ss;
-        try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-        } catch (Throwable e) {
-            log.error("#705.400 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#705.410 Error ", e);
-            return null;
+            execContextIds = execContextRepository.findByStateOrderByCreatedOnAsc(ExecContextState.STARTED.code);
         }
 
         for (Long execContextId : execContextIds) {
             ExecContextData.AssignedTaskComplex result = execContextSyncService.getWithSyncNullable(execContextId,
-                    () -> execContextFSM.findUnassignedTaskAndAssign(execContextId, processor, ss, isAcceptOnlySigned));
+                    () -> execContextFSM.findUnassignedTaskAndAssign(execContextId, processor, psy, isAcceptOnlySigned));
             if (result!=null) {
                 return result;
             }
         }
         return null;
+    }
+
+    @Nullable
+    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
+        ProcessorStatusYaml ss;
+        try {
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            return ss;
+        } catch (Throwable e) {
+            log.error("#705.400 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#705.410 Error ", e);
+            return null;
+        }
     }
 
     public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
@@ -245,9 +283,9 @@ public class ExecContextService {
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
-        EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
-        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
+        ExecContextState execState = ExecContextState.from(state.toUpperCase());
+        if (execState== ExecContextState.UNKNOWN) {
+            return new OperationStatusRest(OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
@@ -272,7 +310,7 @@ public class ExecContextService {
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+            return new OperationStatusRest(OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
         }
         return null;
     }
