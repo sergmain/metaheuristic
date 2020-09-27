@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -77,10 +77,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
     private final VariableService variableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextGraphService execContextGraphService;
+    private final TaskTransactionalService taskTransactionalService;
 
     @Override
     public String getCode() {
@@ -231,7 +231,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-            t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = taskTransactionalService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
                 throw new BreakFromLambdaException("Creation of task failed");
             }

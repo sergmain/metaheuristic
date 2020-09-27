@@ -49,12 +49,13 @@ import static ai.metaheuristic.api.EnumsApi.TaskProducingStatus;
 @RequiredArgsConstructor
 public class TaskProducingService {
 
-    private final TaskProducingCoreService taskProducingCoreService;
+    private final TaskHelperService taskProducingCoreService;
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
+    private final TaskTransactionalService taskTransactionalService;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -135,7 +136,7 @@ public class TaskProducingService {
         if (isPersist) {
             try {
                 // for external Functions internalContextId==process.internalContextId
-                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                TaskImpl t = taskTransactionalService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
                         execContextParamsYaml.variables.inline);
                 if (t == null) {
                     result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
