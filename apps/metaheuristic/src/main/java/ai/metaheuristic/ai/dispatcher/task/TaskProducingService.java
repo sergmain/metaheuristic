@@ -49,7 +49,6 @@ import static ai.metaheuristic.api.EnumsApi.TaskProducingStatus;
 @RequiredArgsConstructor
 public class TaskProducingService {
 
-    private final TaskHelperService taskProducingCoreService;
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextCache execContextCache;

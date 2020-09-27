@@ -67,7 +67,6 @@ public class VariableService {
     private final Globals globals;
 
     @SuppressWarnings({"SameParameterValue"})
-    @Transactional(readOnly = true)
     @Nullable
     public SimpleVariable getVariableAsSimple(Long execContextId, String variable) {
         List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContextId, List.of(variable));
@@ -82,7 +81,6 @@ public class VariableService {
     }
 
     @SuppressWarnings({"SameParameterValue"})
-    @Transactional(readOnly = true)
     @Nullable
     public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
@@ -94,7 +92,6 @@ public class VariableService {
     }
 
     @Nullable
-    @Transactional(readOnly = true)
     public SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
@@ -280,7 +277,7 @@ public class VariableService {
             v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
 
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
+//            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
             variableRepository.save(v);
             return v;
         }

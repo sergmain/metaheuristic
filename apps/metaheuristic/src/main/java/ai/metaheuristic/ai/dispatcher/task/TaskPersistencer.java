@@ -54,12 +54,14 @@ public class TaskPersistencer {
                 }
             }
         }
+/*
         try {
             throw new RuntimeException("stacktrace");
         }
         catch (RuntimeException e) {
             log.info("stacktrace for task #"+task.id+", version: "+task.version, e);
         }
+*/
         return taskRepository.save(task);
     }
 

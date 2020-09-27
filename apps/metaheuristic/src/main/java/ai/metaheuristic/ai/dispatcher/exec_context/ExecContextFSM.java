@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -75,7 +75,7 @@ public class ExecContextFSM {
     private final TaskRepository taskRepository;
     private final TaskExecStateService taskExecStateService;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskPersistencer taskPersistencer;
+    private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
@@ -287,11 +287,14 @@ public class ExecContextFSM {
                 if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
                     // Do Not set EnumsApi.TaskExecState.IN_PROGRESS here.
                     // it'll be set in ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService.handleAsync
-                    task.setAssignedOn(System.currentTimeMillis());
-                    task.setResultResourceScheduledOn(0);
-                    taskTransactionalService.save(task);
+                    taskSyncService.getWithSync(task.id, (t) -> {
+                        t.setAssignedOn(System.currentTimeMillis());
+                        t.setResultResourceScheduledOn(0);
+                        taskTransactionalService.save(t);
 
-                    eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
+                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(t.getId()));
+                        return null;
+                    });
                     continue;
                 }
 
@@ -356,11 +359,14 @@ public class ExecContextFSM {
         // normal way of operation
         longHolder.set(0);
 
-        resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setProcessorId(processor.getId());
-        resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        resultTask.setResultResourceScheduledOn(0);
-        taskTransactionalService.save(resultTask);
+        taskSyncService.getWithSync(resultTask.id, (t) -> {
+            t.setAssignedOn(System.currentTimeMillis());
+            t.setProcessorId(processor.getId());
+            t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+            t.setResultResourceScheduledOn(0);
+            taskTransactionalService.save(t);
+            return null;
+        });
 
         updateTaskExecStates(execContextCache.findById(execContextId), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value, null);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
@@ -456,8 +462,8 @@ public class ExecContextFSM {
 
     @Nullable
     private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-//        return taskSyncService.getWithSync(result.taskId, (task) -> {
+//        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+        return taskSyncService.getWithSync(result.taskId, (task) -> {
             if (task==null) {
                 log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
                 return null;
@@ -482,7 +488,7 @@ public class ExecContextFSM {
             task = taskTransactionalService.save(task);
 
             return task;
-//        });
+        });
     }
 
 }

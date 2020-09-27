@@ -48,6 +48,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -88,6 +90,7 @@ public class TaskTransactionalService {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
         try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
             return stream.map(o-> {
@@ -282,7 +285,7 @@ public class TaskTransactionalService {
     }
 
     public Enums.UploadResourceStatus setResultReceived(Long taskId, Long variableId) {
-        Enums.UploadResourceStatus status = taskSyncService.getWithSync(true, taskId, (task) -> {
+        Enums.UploadResourceStatus status = taskSyncService.getWithSync(false, taskId, (task) -> {
             try {
                 if (task == null) {
                     return Enums.UploadResourceStatus.TASK_NOT_FOUND;

@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -75,6 +76,7 @@ public class ExecContextService {
     private final TaskHelperService taskProducingCoreService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskTransactionalService taskTransactionalService;
+    private final TaskSyncService taskSyncService;
 
     public OperationStatusRest execContextTargetState(Long execContextId, ExecContextState execState, Long companyUniqueId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -125,7 +127,8 @@ public class ExecContextService {
         }
 
         try {
-            task = prepareVariables(task);
+            task = taskSyncService.getWithSync(task.id, this::prepareVariables);
+
             if (task==null) {
                 log.warn("After prepareVariables(task) the task is null");
                 return null;
