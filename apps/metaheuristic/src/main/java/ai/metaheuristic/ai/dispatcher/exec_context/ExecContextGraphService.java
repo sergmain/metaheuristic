@@ -431,7 +431,7 @@ public class ExecContextGraphService {
                     return List.of(startVertex);
                 }
 
-                log.debug("\tthere isn't any task with state NONE and which doesn't have ancestors");
+                log.debug("\tThe root element of execContext was already started to process");
 
                 // get all non-processed tasks
                 Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
@@ -449,7 +449,9 @@ public class ExecContextGraphService {
                 if (!vertices.isEmpty()) {
                     if (log.isDebugEnabled()) {
                         log.debug("\tfound tasks for assigning:");
-                        vertices.forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
+                        StringBuilder sb = new StringBuilder();
+                        vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, o.execState)));
+                        log.debug("\t\t" + sb.toString());
                     }
                     return vertices;
                 }

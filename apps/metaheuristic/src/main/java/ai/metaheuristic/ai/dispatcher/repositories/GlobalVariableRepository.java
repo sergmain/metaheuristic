@@ -39,7 +39,7 @@ import java.util.List;
  * Time: 6:17 PM
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
@@ -48,6 +48,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
@@ -55,25 +56,29 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.name=:name")
     SimpleGlobalVariable findIdByName(String name);
 
+    @Transactional(readOnly = true)
     @Query(value="select b.filename from GlobalVariable b where b.name=:var")
     List<String> findFilenamesByVar(String var);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from GlobalVariable b where b.id=:id")
     GlobalVariable findByIdForUpdate(Long id);
 
+    @Transactional(readOnly = true)
     @NonNull
     Page<GlobalVariable> findAll(@NonNull Pageable pageable);
 
-    @Transactional
     void deleteByName(String variable);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
@@ -81,6 +86,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.id=:id")
     SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id);
 
+    @Transactional(readOnly = true)
     @Query(value="select b.id from GlobalVariable b")
     List<Long> getAllIds();
 }

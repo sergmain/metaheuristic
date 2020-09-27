@@ -31,8 +31,10 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface LogDataRepository extends CrudRepository<LogData, Long> {
+
+    @Transactional(readOnly = true)
     List<LogData> findAllByLogType(int logType);
 }

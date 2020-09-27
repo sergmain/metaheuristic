@@ -29,35 +29,43 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select p from SourceCodeImpl p where p.id=:id and p.companyId=:companyUniqueId")
     SourceCodeImpl findByIdForUpdate(Long id, Long companyUniqueId);
 
+    @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId")
     List<SourceCodeImpl> findAllAsSourceCode(Long companyUniqueId);
 
+    @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
     List<SourceCode> findAllByOrderByIdDesc(Long companyUniqueId);
 
+    @Transactional(readOnly = true)
     @Query(value="select p.id from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
     List<Long> findAllIdsByOrderByIdDesc(Long companyUniqueId);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select p from SourceCodeImpl p where p.uid=:uid and p.companyId=:companyUniqueId")
     SourceCodeImpl findByUidAndCompanyId(String uid, Long companyUniqueId);
 
 
+    @Transactional(readOnly = true)
     // for Experiment, that's why we don't use companyId in this query
     @Query(value="select p.id from SourceCodeImpl p")
     List<Long> findAllAsIds();
 
+    @Transactional(readOnly = true)
     @Query(value="select p.uid from SourceCodeImpl p")
     List<String> findAllSourceCodeUids();
 
+    @Transactional(readOnly = true)
     @Nullable
     SourceCodeImpl findByUid(String uid);
 }

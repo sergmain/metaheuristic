@@ -28,27 +28,33 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface FunctionRepository extends CrudRepository<Function, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     Function findByCode(String code);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
 
+    @Transactional(readOnly = true)
     @NonNull
     List<Function> findAll();
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from Function b where b.code=:code")
     Function findByCodeForUpdate(String code);
 
+    @Transactional(readOnly = true)
     @Query(value="select b.id from Function b")
     List<Long> findAllIds();
 
+    @Transactional(readOnly = true)
     @Query(value="select b.code from Function b")
     List<String> findAllFunctionCodes();
 }

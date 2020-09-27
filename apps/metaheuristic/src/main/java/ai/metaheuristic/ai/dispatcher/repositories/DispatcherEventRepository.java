@@ -32,13 +32,15 @@ import java.util.List;
  * Time: 8:20 PM
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
+    @Transactional(readOnly = true)
     @Query(value="select e.id from DispatcherEvent e where e.period in :periods")
     List<Long> findIdByPeriod(List<Integer> periods);
 
+    @Transactional(readOnly = true)
     @Query(value="select e from DispatcherEvent e where e.id in :ids ")
     List<DispatcherEvent> findByIds(List<Long> ids);
 }

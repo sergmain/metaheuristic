@@ -34,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -213,6 +214,7 @@ public class VariableService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
+            log.info("Start to create an initialized variable {}, execContextId: {}, taskContextId: {}", variable, execContextId, taskContextId);
             variableRepository.save(data);
 
             return data;
@@ -226,16 +228,27 @@ public class VariableService {
 
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            SimpleVariable sv = getVariableAsSimple(variable.name, p.processCode, execContext);
-            if (sv!=null) {
-                log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables",variable.name, p.processCode) );
-                continue;
-            }
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
                         S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
                                 p.processCode, variable.context, p.internalContextId, execContext.id));
+            }
+
+            SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContext.id);
+/*
+            SimpleVariable sv = getVariableAsSimple(variable.name, p.processCode, execContext);
+*/
+            if (sv!=null) {
+                Variable v = variableRepository.findById(sv.id).orElse(null);
+                if (v!=null) {
+                    v = createOrUpdateUninitialized(v);
+                    log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables", variable.name, p.processCode));
+                    continue;
+                }
+                else {
+                    throw new IllegalStateException("!!! A fatal error");
+                }
             }
             Variable v = createUninitialized(variable.name, execContext.id, contextId);
 
@@ -250,26 +263,34 @@ public class VariableService {
     }
 
     public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
+        Variable v = new Variable();
+        v.name = variable;
+        v.setExecContextId(execContextId);
+        v.setTaskContextId(taskContextId);
+        return createOrUpdateUninitialized(v);
+    }
+
+    public Variable createOrUpdateUninitialized(Variable v) {
         try {
-            Variable data = new Variable();
-            data.inited = false;
-            data.nullified = true;
-            data.setName(variable);
-            data.setExecContextId(execContextId);
+            v.inited = false;
+            v.nullified = true;
 
             // TODO 2020-02-03 right now, only DataSourcing.dispatcher is supported as internal variable.
             //   a new code has to be added for another type of sourcing
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+            v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
 
-            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setTaskContextId(taskContextId);
-            variableRepository.save(data);
-            return data;
+            v.setUploadTs(new Timestamp(System.currentTimeMillis()));
+            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
+            variableRepository.save(v);
+            return v;
         }
-        catch(PessimisticLockingFailureException e) {
+        catch (PessimisticLockingFailureException e) {
             throw e;
-        } catch(Throwable th) {
-            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw e;
+        } catch (Throwable th) {
+            throw new VariableSavingException("#087.070 error storing v to db - " + th.getMessage(), th);
         }
     }
 

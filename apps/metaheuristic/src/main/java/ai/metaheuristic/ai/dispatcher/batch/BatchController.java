@@ -125,7 +125,7 @@ public class BatchController {
     }
 
     @PostMapping("/batch-delete-commit")
-    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String processBatchDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, context, true);
         if (r.isErrorMessages()) {

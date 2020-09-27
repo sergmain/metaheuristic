@@ -33,7 +33,7 @@ import java.sql.Blob;
  * Time: 9:31 PM
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface FunctionDataRepository extends CrudRepository<FunctionData, Long> {
 
@@ -42,10 +42,10 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     @Query(value="select b.data from FunctionData b where b.functionCode=:functionCode")
     Blob getDataAsStreamByCode(String functionCode);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from FunctionData b where b.functionCode=:functionCode")
     FunctionData findByCodeForUpdate(String functionCode);
 
-    @Transactional
     void deleteByFunctionCode(String functionCode);
 }

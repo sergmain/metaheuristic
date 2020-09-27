@@ -32,10 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 6:24 PM
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface DispatcherParamsRepository extends CrudRepository<Dispatcher, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Dispatcher a where a.code=:code")
     Dispatcher findByCode(String code);

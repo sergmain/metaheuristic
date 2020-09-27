@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -28,5 +29,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 @Profile("dispatcher")
+@Transactional
 public interface IdsRepository extends CrudRepository<Ids, Long> {
 }

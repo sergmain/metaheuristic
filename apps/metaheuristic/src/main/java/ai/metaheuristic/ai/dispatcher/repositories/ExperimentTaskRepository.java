@@ -31,22 +31,25 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask, Long> {
 
+    @Transactional(readOnly = true)
     @Query(value="select t.id from ExperimentTask t where t.experimentResultId=:experimentResultId ")
     List<Long> findAllAsTaskSimple(Pageable pageable, Long experimentResultId);
 
+    @Transactional(readOnly = true)
     @Query("SELECT at FROM ExperimentTask at where at.experimentResultId=:experimentResultId and at.taskId in :ids ")
     List<ExperimentTask> findTasksById(Long experimentResultId, Collection<Long> ids);
 
+    @Transactional(readOnly = true)
     @Query("SELECT at.id FROM ExperimentTask at where at.experimentResultId=:experimentResultId ")
     Set<Long> findIdsByExperimentResultId(Long experimentResultId);
 
+    @Transactional(readOnly = true)
     @Nullable
     ExperimentTask findByExperimentResultIdAndTaskId(Long experimentResultId, Long taskId);
 
-    @Transactional
     void deleteByExperimentResultId(Long experimentResultId);
 }

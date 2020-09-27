@@ -32,31 +32,39 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
+@Transactional
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
     @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
+    @Transactional(readOnly = true)
     ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
     @Query(value="select w.id, w.state from ExecContextImpl w ")
+    @Transactional(readOnly = true)
     List<Object[]> findAllExecStates();
 
     @Query(value="select w.id from ExecContextImpl w")
+    @Transactional(readOnly = true)
     List<Long> findAllIds();
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
+    @Transactional(readOnly = true)
     List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
+    @Transactional(readOnly = true)
     List<ExecContextImpl> findByState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
+    @Transactional(readOnly = true)
     List<Long> findIdsByExecState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
+    @Transactional(readOnly = true)
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
             "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +
             "from ExecContextImpl b " +

@@ -36,30 +36,37 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select e from Experiment e where e.id=:id")
     Experiment findByIdForUpdate(Long id);
 
+    @Transactional(readOnly = true)
     @Query(value="select e.id from Experiment e where e.execContextId is not null")
     List<Long> findAllIds();
 
+    @Transactional(readOnly = true)
     Page<Experiment> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select e.id from Experiment e order by e.id desc")
     Slice<Long> findAllByOrderByIdDesc(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select e.id from Experiment e where e.execContextId=:execContextId")
     Long findIdByExecContextId(long execContextId);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select e.id from Experiment e where e.code=:code")
     Long findIdByCode(String code);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select e from Experiment e where e.code=:code")
     Experiment findByCode(String code);

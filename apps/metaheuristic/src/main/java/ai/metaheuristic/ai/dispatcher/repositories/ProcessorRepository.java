@@ -37,19 +37,23 @@ import java.util.Optional;
  * Time: 15:52
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface ProcessorRepository extends CrudRepository<Processor, Long> {
 
     @NonNull
+    @Transactional(readOnly = true)
     Optional<Processor> findById(Long id);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select s from Processor s where s.id=:id")
     Processor findByIdForUpdate(Long id);
 
+    @Transactional(readOnly = true)
     Page<Processor> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select s.id from Processor s order by s.updatedOn desc")
     Slice<Long> findAllByOrderByUpdatedOnDescId(Pageable pageable);
 

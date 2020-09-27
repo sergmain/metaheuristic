@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,6 +45,7 @@ public class TaskPersistencer {
     private final TaskSyncService taskSyncService;
     private final ExecContextSyncService execContextSyncService;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TaskImpl save(TaskImpl task) {
         if (task.id!=null) {
             ReentrantReadWriteLock.WriteLock lock = taskSyncService.getWriteLock(task.id);
@@ -67,20 +70,23 @@ public class TaskPersistencer {
 
     @Nullable
     public TaskImpl setParams(Long taskId, String taskParams) {
-        return taskSyncService.getWithSync(taskId, (task) -> {
-            try {
-                if (task == null) {
-                    log.warn("#307.010 Task with taskId {} wasn't found", taskId);
-                    return null;
-                }
-                task.setParams(taskParams);
-                save(task);
-                return task;
-            } catch (ObjectOptimisticLockingFailureException e) {
-                log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+        return taskSyncService.getWithSync(taskId, (task) -> setParamsInternal(taskId, taskParams, task));
+    }
+
+    @Nullable
+    public TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
+        try {
+            if (task == null) {
+                log.warn("#307.010 Task with taskId {} wasn't found", taskId);
+                return null;
             }
-            return null;
-        });
+            task.setParams(taskParams);
+            save(task);
+            return task;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+        }
+        return null;
     }
 
     public Enums.UploadResourceStatus setResultReceived(Long taskId, Long variableId) {

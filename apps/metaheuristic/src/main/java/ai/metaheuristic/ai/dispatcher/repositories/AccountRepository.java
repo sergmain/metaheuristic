@@ -36,23 +36,28 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface AccountRepository extends CrudRepository<Account, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Account a where a.id=:id")
     Account findByIdForUpdate(Long id);
 
+    @Transactional(readOnly = true)
     @Nullable
     Account findByUsername(String username);
 
+    @Transactional(readOnly = true)
     Page<Account> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.account.SimpleAccount(a.id, a.companyId, a.username, a.publicName, a.enabled, a.createdOn, a.updatedOn, a.roles) " +
             " from Account a where a.companyId=:companyUniqueId")
     Page<SimpleAccount> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
 
+    @Transactional(readOnly = true)
     @Query(value="select a.username from Account a")
     List<String> findAllUsernames();
 }

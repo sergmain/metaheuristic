@@ -292,7 +292,13 @@ public class BatchTopLevelService {
     }
 
     public OperationStatusRest processBatchDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
-        return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
+        try {
+            return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
+        } catch (Throwable th) {
+            final String es = "Error while deleting batch #" + batchId;
+            log.error(es, th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
     }
 
     public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {

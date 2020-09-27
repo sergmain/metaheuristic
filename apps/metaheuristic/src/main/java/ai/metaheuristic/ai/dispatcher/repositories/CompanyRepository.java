@@ -36,27 +36,33 @@ import java.util.List;
  * Time: 7:13 PM
  */
 @Repository
-@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+@Transactional
 @Profile("dispatcher")
 public interface CompanyRepository extends CrudRepository<Company, Long> {
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Company a where a.uniqueId=:uniqueId")
     Company findByUniqueIdForUpdate(Long uniqueId);
 
+    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Company a where a.uniqueId=:uniqueId")
     Company findByUniqueId(Long uniqueId);
 
+    @Transactional(readOnly = true)
     @Query(value="select a from Company a order by a.uniqueId")
     Page<Company> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SimpleCompany(a.id, a.uniqueId, a.name) from Company a order by a.uniqueId")
     Page<SimpleCompany> findAllAsSimple(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select max(c.uniqueId) from Company c")
     Long getMaxUniqueIdValue();
 
+    @Transactional(readOnly = true)
     @Query(value="select c.uniqueId from Company c")
     List<Long> findAllUniqueIds();
 }

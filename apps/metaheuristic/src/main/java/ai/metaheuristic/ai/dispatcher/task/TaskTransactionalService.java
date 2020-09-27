@@ -41,6 +41,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -173,7 +174,11 @@ public class TaskTransactionalService {
             String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
             byte[] bytes = yaml.getBytes();
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+            try {
+                Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+            } catch (Throwable e) {
+                ExceptionUtils.rethrow(e);
+            }
 
             int i=0;
         }
