@@ -60,6 +60,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
     @Test
     public void testCountNumberOfTasks() {
+        createExperiment();
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
 

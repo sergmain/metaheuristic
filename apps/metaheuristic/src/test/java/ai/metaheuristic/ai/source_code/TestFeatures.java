@@ -43,6 +43,8 @@ public class TestFeatures extends PreparingExperiment {
 
     @Test
     public void testFeatures() {
+        createExperiment();
+
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         //noinspection unused

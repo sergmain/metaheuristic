@@ -36,6 +36,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithAllError() {
+        createExperiment();
         assertTrue(isCorrectInit);
 
         long mills = System.currentTimeMillis();

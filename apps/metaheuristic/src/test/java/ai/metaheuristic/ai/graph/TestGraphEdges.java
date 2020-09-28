@@ -64,7 +64,7 @@ public class TestGraphEdges extends PreparingSourceCode {
 
         assertNotNull(execContextForTest);
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
+            OperationStatusRest osr = execContextFSM.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 

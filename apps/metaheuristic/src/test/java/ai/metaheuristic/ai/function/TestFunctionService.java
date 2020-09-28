@@ -39,6 +39,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,12 +90,12 @@ public class TestFunctionService {
     }
 
     @BeforeEach
-    public void beforePreparingExperiment() {
+    public void beforePreparingExperiment() throws IOException {
         assertTrue(globals.isUnitTesting);
         function = initFunction();
     }
 
-    public Function initFunction() {
+    public Function initFunction() throws IOException {
         long mills;
         byte[] bytes = "some program code".getBytes();
         Function f = functionRepository.findByCodeForUpdate(TEST_FUNCTION);
@@ -115,7 +116,8 @@ public class TestFunctionService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            f = functionCache.save(s);
+            f = functionService.createFunction(s, null);
+
             log.info("functionRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
             mills = System.currentTimeMillis();

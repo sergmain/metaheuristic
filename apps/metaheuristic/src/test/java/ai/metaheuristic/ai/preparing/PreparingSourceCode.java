@@ -303,7 +303,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
+        ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest();
         execContextForTest = result.execContext;
         return execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
@@ -327,6 +327,10 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
             return result1;
         });
+    }
+
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest() {
+        return execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
     }
 
     private void deleteFunction(@Nullable Function s) {

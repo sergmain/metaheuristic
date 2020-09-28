@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -116,8 +117,6 @@ public class ExecContextFSM {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }
 
-    // methods with syncing
-
     @Transactional
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -143,6 +142,12 @@ public class ExecContextFSM {
             log.error("Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
         }
+    }
+
+    @Transactional
+    public OperationStatusRest addNewTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds);
+        return osr;
     }
 
     /**

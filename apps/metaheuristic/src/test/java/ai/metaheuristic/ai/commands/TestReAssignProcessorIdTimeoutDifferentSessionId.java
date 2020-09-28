@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -59,6 +59,9 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     @Autowired
     public ProcessorRepository processorRepository;
 
+    @Autowired
+    public ProcessorTopLevelService processorTopLevelService;
+
     private Long processorIdBefore;
     private String sessionIdBefore;
     private long sessionCreatedOn;
@@ -89,18 +92,9 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
-        assertNotEquals(0L, ss.sessionCreatedOn);
-        assertEquals(sessionIdBefore, ss.sessionId);
+        DispatcherCommParamsYaml.ReAssignProcessorId s1 = processorTopLevelService.reassignProcessorId(null, null);
+        assertNotEquals(sessionIdBefore, s1.sessionId);
 
-        ss.sessionCreatedOn -= (Consts.SESSION_TTL + 100000);
-        sessionCreatedOn = ss.sessionCreatedOn;
-        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-
-        Processor s1 = processorCache.save(s);
-
-        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s1.status);
-        assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
     }
 
     @AfterEach
@@ -108,7 +102,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         log.info("Start after()");
         if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(processorIdBefore);
+                processorTopLevelService.deleteProcessorById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

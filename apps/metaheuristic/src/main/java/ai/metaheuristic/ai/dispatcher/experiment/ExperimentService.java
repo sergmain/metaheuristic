@@ -120,7 +120,10 @@ public class ExperimentService {
     }
 
     @Transactional
-    public void deleteExperiment(Long experimentId) {
+    public void deleteExperiment(@Nullable Long experimentId) {
+        if (experimentId==null) {
+            return;
+        }
         experimentCache.deleteById(experimentId);
     }
 

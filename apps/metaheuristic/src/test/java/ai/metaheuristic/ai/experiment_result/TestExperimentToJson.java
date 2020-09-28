@@ -48,6 +48,7 @@ public class TestExperimentToJson extends PreparingExperiment {
 
     @Test
     public void toExperimentStoredToExperimentResultToYaml() {
+        createExperiment();
 
         //noinspection unused
         SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();

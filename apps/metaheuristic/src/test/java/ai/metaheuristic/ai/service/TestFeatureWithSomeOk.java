@@ -38,6 +38,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithPartialError() {
+        createExperiment();
+
         assertTrue(isCorrectInit);
 
         long mills = System.currentTimeMillis();

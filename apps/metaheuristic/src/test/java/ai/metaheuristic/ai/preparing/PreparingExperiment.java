@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Serge
@@ -37,6 +40,13 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
 
     @BeforeEach
     public void beforePreparingExperiment() {
+
+    }
+
+    public void createExperiment() {
+        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        assertNotNull(r.execContext);
+        execContextForTest = r.execContext;
 
         // Prepare experiment
         experiment = new Experiment();

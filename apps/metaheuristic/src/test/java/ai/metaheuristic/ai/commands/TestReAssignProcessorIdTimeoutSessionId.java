@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -58,6 +59,9 @@ public class TestReAssignProcessorIdTimeoutSessionId {
 
     @Autowired
     public ProcessorRepository processorRepository;
+
+    @Autowired
+    public ProcessorTopLevelService processorTopLevelService;
 
     private Long processorIdBefore;
     private String sessionIdBefore;
@@ -108,7 +112,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         log.info("Start after()");
         if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(processorIdBefore);
+                processorTopLevelService.deleteProcessorById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -55,6 +54,7 @@ public class TestGraph extends PreparingSourceCode {
 
     @Autowired
     public ExecContextCache execContextCache;
+
     @Autowired
     public TaskTransactionalService taskTransactionalService;
 
@@ -82,7 +82,7 @@ public class TestGraph extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
+            OperationStatusRest osr = execContextFSM.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 

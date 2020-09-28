@@ -290,14 +290,15 @@ public class FunctionService {
     }
 
     @Transactional
-    public void createFunction(Function function, @Nullable File file) throws IOException {
-        functionCache.save(function);
+    public Function createFunction(Function function, @Nullable File file) throws IOException {
+        Function f = functionCache.save(function);
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String functionCode = function.getCode();
                 functionDataService.save(inputStream, file.length(), functionCode);
             }
         }
+        return f;
     }
 
     @Transactional
