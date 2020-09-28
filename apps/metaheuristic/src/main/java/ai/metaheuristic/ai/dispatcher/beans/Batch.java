@@ -53,6 +53,7 @@ public class Batch implements Serializable {
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
 
+    @NotNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

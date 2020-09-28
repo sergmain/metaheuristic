@@ -46,7 +46,7 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
-public abstract class FeatureMethods extends PreparingSourceCode {
+public abstract class FeatureMethods extends PreparingExperiment {
 
     @Autowired
     protected Globals globals;

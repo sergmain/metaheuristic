@@ -86,7 +86,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(uid, context);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(uid, context.getCompanyId());
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 

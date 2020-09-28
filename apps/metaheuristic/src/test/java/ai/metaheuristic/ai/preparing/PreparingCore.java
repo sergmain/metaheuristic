@@ -35,8 +35,10 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -107,14 +110,13 @@ public abstract class PreparingCore {
     public Processor processor = null;
     public String processorIdAsStr;
 
-    public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
     public Function fitFunction = null;
     public Function predictFunction = null;
 
     @BeforeEach
-    public void beforePreparingCore() {
+    public void beforePreparingCore() throws IOException {
         assertTrue(globals.isUnitTesting);
 
         try {
@@ -145,9 +147,9 @@ public abstract class PreparingCore {
 
 
             // Prepare processor
-            Processor p = processorTopLevelService.createProcessor(description, null, ss);
+            processor = processorTopLevelService.createProcessor(description, null, ss);
             log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-            processorIdAsStr =  Long.toString(p.getId());
+            processorIdAsStr =  Long.toString(processor.getId());
 
             // Prepare functions
             mills = System.currentTimeMillis();
@@ -210,35 +212,6 @@ public abstract class PreparingCore {
 
             mills = System.currentTimeMillis();
 
-            // Prepare experiment
-            experiment = new Experiment();
-            experiment.setCode(TEST_EXPERIMENT_CODE_01);
-
-            ExperimentParamsYaml epy = new ExperimentParamsYaml();
-            epy.setCode(TEST_EXPERIMENT_CODE_01);
-            epy.setName("Test experiment.");
-            epy.setDescription("Test experiment. Must be deleted automatically.");
-
-            // set hyper params for experiment
-            HyperParam ehp1 = new HyperParam();
-            ehp1.setKey("RNN");
-            ehp1.setValues("[LSTM, GRU, SimpleRNN]");
-
-            HyperParam ehp2 = new HyperParam();
-            ehp2.setKey("batches");
-            ehp2.setValues("[20, 40]");
-
-            HyperParam ehp3 = new HyperParam();
-            ehp3.setKey("aaa");
-            ehp3.setValues("[7, 13]");
-
-            experiment.updateParams(epy);
-
-            mills = System.currentTimeMillis();
-            log.info("Start experimentRepository.save()");
-            experimentRepository.save(experiment);
-            log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-
             System.out.println("Was inited correctly");
         }
         catch (Throwable th) {
@@ -252,13 +225,6 @@ public abstract class PreparingCore {
     public void afterPreparingCore() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
-        if (experiment != null) {
-            try {
-                experimentService.deleteExperiment(experiment.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }
         if (processor != null) {
             try {
                 processorTopLevelService.deleteProcessorById(processor.getId());

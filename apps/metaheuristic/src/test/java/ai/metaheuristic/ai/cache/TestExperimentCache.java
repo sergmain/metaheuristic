@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.cache;
 
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.preparing.PreparingCore;
+import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,7 +32,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-public class TestExperimentCache extends PreparingCore {
+public class TestExperimentCache extends PreparingExperiment {
+
+    @Override
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
+    }
 
     @Test
     public void testCache() {

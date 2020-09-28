@@ -50,6 +50,7 @@ public class Experiment implements Serializable, Cloneable {
     public Integer version;
 
     // 1-1 relation with ExecContext
+    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

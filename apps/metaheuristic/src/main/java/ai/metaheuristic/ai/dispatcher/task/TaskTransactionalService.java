@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -82,6 +83,40 @@ public class TaskTransactionalService {
     private final TaskSyncService taskSyncService;
     private final FunctionService functionService;
 
+    @Transactional
+    public TaskData.ProduceTaskResult produceTaskForProcess(
+            boolean isPersist, Long sourceCodeId, ExecContextParamsYaml.Process process,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId,
+            List<Long> parentTaskIds) {
+
+        TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
+
+        if (isPersist) {
+            try {
+                // for external Functions internalContextId==process.internalContextId
+                TaskImpl t = createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                        execContextParamsYaml.variables.inline);
+                if (t == null) {
+                    result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
+                    result.error = "#375.080 Unknown reason of error while task creation";
+                    return result;
+                }
+                result.taskId = t.getId();
+                List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+                execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, taskWithContexts);
+            } catch (TaskCreationException e) {
+                result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
+                result.error = "#375.100 task creation error " + e.getMessage();
+                log.error(result.error);
+                return result;
+            }
+        }
+        result.numberOfTasks=1;
+        result.status = EnumsApi.TaskProducingStatus.OK;
+        return result;
+    }
+
+    @Transactional
     public TaskImpl save(TaskImpl task) {
         try {
             return taskPersistencer.save(task);

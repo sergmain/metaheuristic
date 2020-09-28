@@ -96,18 +96,18 @@ public class ExecContextCreatorService {
         return createExecContext(sourceCode, context.getCompanyId());
     }
 
-    public ExecContextCreationResult createExecContext(String sourceCodeUid, DispatcherContext context) {
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.getCompanyId());
+    public ExecContextCreationResult createExecContext(String sourceCodeUid, Long companyUniqueId) {
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, companyUniqueId);
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             return new ExecContextCreationResult("#560.072 Error creating execContext: " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
-        return createExecContext(sourceCode, context.getCompanyId());
+        return createExecContext(sourceCode, companyUniqueId);
     }
 
     /**

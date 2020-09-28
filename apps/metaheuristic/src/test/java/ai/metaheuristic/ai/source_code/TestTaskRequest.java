@@ -121,7 +121,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
         assertTrue(task.isCompleted);
 
-        execContextSchedulerService.updateExecContextStatus(execContextForTest.id,true);
+        execContextFSM.updateExecContextStatus(execContextForTest.id,true);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
     }
 

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-public class TestFeatures extends PreparingSourceCode {
+public class TestFeatures extends PreparingExperiment {
 
     @Override
     public String getSourceCodeYamlAsString() {
