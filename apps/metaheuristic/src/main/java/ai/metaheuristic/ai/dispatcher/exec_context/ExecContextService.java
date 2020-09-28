@@ -110,6 +110,28 @@ public class ExecContextService {
     }
 
     @Transactional
+    public @Nullable DispatcherCommParamsYaml.AssignedTask findTaskInAllCExecContexts(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+        List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        for (Long execContextId : execContextIds) {
+            return execContextSyncService.getWithSync(execContextId, ()-> {
+                ExecContextImpl execContext = execContextCache.findById(execContextId);
+                if (execContext==null) {
+                    log.error("#705.315Cache doesn't contain ExecContext #{}", execContextId);
+                    return null;
+                }
+                if (execContext.state!=ExecContextState.STARTED.code) {
+                    return null;
+                }
+                DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(
+                        reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
+
+                return assignedTask;
+            });
+        }
+        return null;
+    }
+
+    @Transactional
     public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
 
         final Processor processor = processorCache.findById(processorId);

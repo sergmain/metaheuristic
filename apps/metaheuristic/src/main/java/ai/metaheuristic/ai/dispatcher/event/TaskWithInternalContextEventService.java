@@ -46,6 +46,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
@@ -83,6 +84,7 @@ public class TaskWithInternalContextEventService {
 
     @Async
     @EventListener
+    @Transactional
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
             TaskImpl task;

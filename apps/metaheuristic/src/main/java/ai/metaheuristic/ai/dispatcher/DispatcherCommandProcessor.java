@@ -154,7 +154,7 @@ public class DispatcherCommandProcessor {
         }
         checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask =
-                execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), null);
+                execContextService.findTaskInAllCExecContexts(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
 
         if (assignedTask!=null) {
             log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);

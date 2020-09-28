@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -117,7 +116,7 @@ public class BatchTopLevelService {
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
-    @SuppressWarnings("unused")
+    @Transactional(readOnly = true)
     public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
         BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
         return execStatuses;
@@ -135,10 +134,12 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
+    @Transactional(readOnly = true)
     public BatchData.BatchesResult getBatches(Pageable pageable, DispatcherContext context, boolean includeDeleted, boolean filterBatches) {
         return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, filterBatches);
     }
 
+    @Transactional(readOnly = true)
     public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, @Nullable Account account, boolean includeDeleted, boolean filterBatches) {
         if (filterBatches && account==null) {
             log.warn("#981.020 (filterBatches && account==null)");
@@ -173,6 +174,7 @@ public class BatchTopLevelService {
     }
 
     @Nullable
+    @Transactional(readOnly = true)
     public BatchData.BatchExecInfo getBatchExecInfo(DispatcherContext context, Long batchId) {
         List<BatchData.BatchExecInfo> items = batchService.getBatchExecInfos(List.of(batchId));
         if (items.isEmpty()) {
@@ -308,6 +310,7 @@ public class BatchTopLevelService {
         }
     }
 
+    @Transactional
     public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
 
         Batch batch = batchCache.findById(batchId);
@@ -334,6 +337,7 @@ public class BatchTopLevelService {
         });
     }
 
+    @Transactional
     public BatchData.BulkOperations processBatchBulkDeleteCommit(String batchIdsStr, Long companyUniqueId, boolean isVirtualDeletion) {
         BatchData.BulkOperations bulkOperations = new BatchData.BulkOperations();
         String[] batchIds = StringUtils.split(batchIdsStr, ", ");
@@ -345,7 +349,7 @@ public class BatchTopLevelService {
         return bulkOperations;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");
@@ -382,6 +386,7 @@ public class BatchTopLevelService {
     }
 
     @Nullable
+    @Transactional(readOnly = true)
     public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
         return getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-result");
     }
@@ -414,6 +419,7 @@ public class BatchTopLevelService {
         });
     }
 
+    @Transactional(readOnly = true)
     public CleanerInfo getBatchOriginFile(Long batchId) {
         return getVariable(batchId, null, true, (scpy)-> {
             String variableName = scpy.source.variables.startInputAs;

@@ -295,6 +295,7 @@ public class ExecContextFSM {
         });
     }
 
+    @Transactional
     public OperationStatusRest resetTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
@@ -397,6 +398,7 @@ public class ExecContextFSM {
     }
 
     @Nullable
+    @Transactional
     public TaskImpl findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
 
         AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));

@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -52,7 +51,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -73,7 +71,7 @@ public class ProcessorTopLevelService {
     // at least for 20 seconds
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
-    public static String createNewSessionId() {
+    private static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
     }
 

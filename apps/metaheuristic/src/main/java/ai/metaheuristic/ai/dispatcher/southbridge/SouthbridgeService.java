@@ -122,7 +122,7 @@ public class SouthbridgeService {
         }
         Variable variable = variableService.findById(variableId).orElse(null);
         if (variable ==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for variableId "+variableId+" wasn't found" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
         }
 
         File tempDir=null;
@@ -298,7 +298,7 @@ public class SouthbridgeService {
         return yaml;
     }
 
-    public DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
+    private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
             if (scpy.processorCommContext ==null) {

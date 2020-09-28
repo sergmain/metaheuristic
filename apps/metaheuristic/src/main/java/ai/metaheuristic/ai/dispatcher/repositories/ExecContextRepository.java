@@ -49,6 +49,12 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findAllIds();
 
+    // ai.metaheuristic.api.EnumsApi.ExecContextState
+    // STARTED(3),         // started
+    @Query(value="select w.id from ExecContextImpl w where w.state=3")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    List<Long> findAllStartedIds();
+
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findByStateOrderByCreatedOnAsc(int execState);

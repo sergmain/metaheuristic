@@ -41,6 +41,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -212,7 +213,7 @@ public class VariableService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            log.info("Start to create an initialized variable {}, execContextId: {}, taskContextId: {}", variable, execContextId, taskContextId);
+//            log.info("Start to create an initialized variable {}, execContextId: {}, taskContextId: {}", variable, execContextId, taskContextId);
             variableRepository.save(data);
 
             return data;
@@ -224,6 +225,7 @@ public class VariableService {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
@@ -260,7 +262,7 @@ public class VariableService {
         }
     }
 
-    public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
+    private Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
         Variable v = new Variable();
         v.name = variable;
         v.setExecContextId(execContextId);
@@ -268,7 +270,7 @@ public class VariableService {
         return createOrUpdateUninitialized(v);
     }
 
-    public Variable createOrUpdateUninitialized(Variable v) {
+    private Variable createOrUpdateUninitialized(Variable v) {
         try {
             v.inited = false;
             v.nullified = true;
