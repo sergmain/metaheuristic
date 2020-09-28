@@ -93,18 +93,16 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
-        assertNotEquals(0L, ss.sessionCreatedOn);
-        assertEquals(sessionIdBefore, ss.sessionId);
+        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        assertNotEquals(0L, psy.sessionCreatedOn);
+        assertEquals(sessionIdBefore, psy.sessionId);
 
-        ss.sessionCreatedOn -= (Consts.SESSION_TTL + 100000);
-        sessionCreatedOn = ss.sessionCreatedOn;
-        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        psy.sessionCreatedOn -= (Consts.SESSION_TTL + 100000);
+        sessionCreatedOn = psy.sessionCreatedOn;
+        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
 
-        Processor s1 = processorCache.save(s);
+        DispatcherCommParamsYaml.ReAssignProcessorId s1 = processorTopLevelService.reassignProcessorId(null, null);
 
-        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s1.status);
-        assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
     }
 
     @AfterEach
