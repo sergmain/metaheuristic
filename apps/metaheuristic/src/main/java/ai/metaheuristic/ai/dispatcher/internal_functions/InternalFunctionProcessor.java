@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,7 @@ public class InternalFunctionProcessor {
             log.error(es);
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found, es);
         }
-        ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml expy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         try {
             // ! all output variables must be already created at this point
             return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);

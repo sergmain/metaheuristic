@@ -26,6 +26,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Profile("dispatcher")
@@ -35,12 +37,14 @@ public class FunctionCache {
 
     private final FunctionRepository functionRepository;
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         function.reset();
         return functionRepository.save(function);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
     public void delete(Function function) {
         try {
@@ -50,6 +54,7 @@ public class FunctionCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#functionId")
     public void delete(Long functionId) {
         try {

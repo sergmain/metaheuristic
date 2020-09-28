@@ -1,6 +1,6 @@
 source:
   clean: false
-  uid: SourceCode for experiment
+  uid: source-code-for-tesing-experiment-1.0
   variables:
     globals:
       - global-test-variable

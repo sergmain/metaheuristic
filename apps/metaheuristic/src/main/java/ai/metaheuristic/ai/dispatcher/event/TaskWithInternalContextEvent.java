@@ -28,5 +28,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class TaskWithInternalContextEvent {
 
+    public Long execContextId;
     public Long taskId;
 }

@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -251,7 +252,7 @@ public class BatchService {
         if (ec == null) {
             return defName;
         }
-        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
         String startInputVariableName = ecpy.variables.startInputAs;
         if (S.b(startInputVariableName)) {
             return defName;

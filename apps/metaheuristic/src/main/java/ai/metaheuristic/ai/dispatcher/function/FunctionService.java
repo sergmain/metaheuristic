@@ -40,11 +40,11 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -263,7 +263,12 @@ public class FunctionService {
                 }
                 else {
                     function = new Function();
-                    storeFunction(functionConfig, file, function);
+                    function.code = functionConfig.code;
+                    function.type = functionConfig.type;
+                    FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
+                    function.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(scy);
+
+                    createFunction(function, file);
                 }
             }
             catch(VariableSavingException e) {
@@ -284,11 +289,8 @@ public class FunctionService {
         return statuses;
     }
 
-    private void storeFunction(FunctionConfigListYaml.FunctionConfig functionConfig, @Nullable File file, Function function) throws IOException {
-        function.code = functionConfig.code;
-        function.type = functionConfig.type;
-        FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
-        function.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(scy);
+    @Transactional
+    public void createFunction(Function function, @Nullable File file) throws IOException {
         functionCache.save(function);
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
@@ -297,4 +299,16 @@ public class FunctionService {
             }
         }
     }
+
+    @Transactional
+    public void delete(@Nullable Long functionId) {
+        if (functionId != null) {
+            Function f = functionCache.findById(functionId);
+            if (f!=null) {
+                functionCache.delete(functionId);
+                functionDataService.deleteByFunctionCode(f.code);
+            }
+        }
+    }
+
 }

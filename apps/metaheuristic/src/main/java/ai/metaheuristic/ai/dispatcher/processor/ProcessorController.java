@@ -77,8 +77,8 @@ public class ProcessorController {
     }
 
     @PostMapping("/processor-form-commit")
-    public String saveProcessor(Processor processor, final RedirectAttributes redirectAttributes) {
-        ProcessorData.ProcessorResult r = processorTopLevelService.saveProcessor(processor);
+    public String updateDescription(Processor processor, final RedirectAttributes redirectAttributes) {
+        ProcessorData.ProcessorResult r = processorTopLevelService.updateDescription(processor.id, processor.description);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }

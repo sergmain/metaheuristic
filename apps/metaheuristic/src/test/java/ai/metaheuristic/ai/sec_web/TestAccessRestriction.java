@@ -72,7 +72,7 @@ public class TestAccessRestriction {
     public void testUnauthorizedAccessToTest() throws Exception {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class TestAccessRestriction {
     public void testAnonymousAccessToTest() throws Exception {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
     }
 
     @Test
@@ -88,7 +88,7 @@ public class TestAccessRestriction {
     public void whenTestAdminCredentials_thenOk() throws Exception {
         MvcResult result = mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME)).andReturn();
 
         Cookie[] cookies = result.getResponse().getCookies();
         assertNotNull(cookies);
@@ -96,7 +96,7 @@ public class TestAccessRestriction {
 
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class TestAccessRestriction {
         MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(processorYaml))
                 .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME)).andReturn();
 
         String dispatcherYaml = result.getResponse().getContentAsString();
         System.out.println("yaml = " + dispatcherYaml);

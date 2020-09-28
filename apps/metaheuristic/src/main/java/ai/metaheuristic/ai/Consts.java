@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
@@ -34,7 +35,11 @@ public class Consts {
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 
-    public static final String SESSIONID_NAME = "JSESSIONID";
+    public static final String WEB_CONTAINER_SESSIONID_NAME = "JSESSIONID";
+
+    public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
+    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+
 
     public static final String SERVER_REST_URL_V2 = "/srv-v2";
     public static final String UPLOAD_REST_URL = "/upload";

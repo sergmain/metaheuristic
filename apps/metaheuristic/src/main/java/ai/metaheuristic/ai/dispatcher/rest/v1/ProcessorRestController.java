@@ -49,8 +49,8 @@ public class ProcessorRestController {
     }
 
     @PostMapping("/processor-form-commit")
-    public ProcessorData.ProcessorResult formCommit(@RequestBody Processor processor) {
-        return processorTopLevelService.saveProcessor(processor);
+    public ProcessorData.ProcessorResult updateDescription(@RequestBody Processor processor) {
+        return processorTopLevelService.updateDescription(processor.id, processor.description);
     }
 
     @PostMapping("/processor-delete-commit")

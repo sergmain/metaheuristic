@@ -22,12 +22,14 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -40,9 +42,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -66,6 +70,19 @@ public class ExperimentTopLevelService {
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeRepository sourceCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Async
+    @EventListener
+    public void handleAsync(DispatcherInternalEvent.DeleteExperimentEvent event) {
+        experimentService.deleteExperiment(event.experimentId);
+    }
+
+    @Async
+    @EventListener
+    public void handleAsync(DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent event) {
+        experimentService.deleteExperimentByExecContextId(event.execContextId);
+    }
+
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -286,7 +303,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.290 An associated execContext for experimentId #" + id +" wasn't found");
         }
-        String sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
+        String sourceCodeUid = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params).sourceCodeUid;
 
         String newCode = StrUtils.incCopyNumber(e.getCode());
         int i = 0;

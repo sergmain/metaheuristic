@@ -74,6 +74,10 @@ public class FunctionDataService {
         }
     }
 
+    public void deleteById(Long id) {
+        functionDataRepository.deleteById(id);
+    }
+
     public void deleteByFunctionCode(String functionCode) {
         functionDataRepository.deleteByFunctionCode(functionCode);
     }
@@ -117,10 +121,6 @@ public class FunctionDataService {
         data.setData(blob);
 
         functionDataRepository.save(data);
-    }
-
-    public void deleteById(Long id) {
-        functionDataRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)

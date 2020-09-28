@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -24,12 +25,16 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +45,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SourceCodeService {
 
+    private final Globals globals;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeValidationService sourceCodeValidationService;
@@ -47,6 +53,23 @@ public class SourceCodeService {
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
 
+    @Transactional
+    public OperationStatusRest deleteSourceCodeById(@Nullable Long sourceCodeId) {
+        if (sourceCodeId==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
+        }
+        SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+        }
+        sourceCodeCache.deleteById(sourceCodeId);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
 
     // TODO 2019.05.19 add reporting of producing of tasks
     // TODO 2020.01.17 reporting to where? do we need to implement it?

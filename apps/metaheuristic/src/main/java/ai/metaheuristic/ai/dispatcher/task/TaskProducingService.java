@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -37,6 +38,7 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -124,8 +126,8 @@ public class TaskProducingService {
         return null;
     }
 
-    @SuppressWarnings("unused")
-    private TaskData.ProduceTaskResult produceTaskForProcess(
+    @Transactional
+    public TaskData.ProduceTaskResult produceTaskForProcess(
             boolean isPersist, Long sourceCodeId, ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId,
             List<Long> parentTaskIds) {
@@ -160,7 +162,7 @@ public class TaskProducingService {
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
         return execContextSyncService.getWithSync(execContext.id, () -> {
 
-            ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
 
             // create all not dynamic tasks
             TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);

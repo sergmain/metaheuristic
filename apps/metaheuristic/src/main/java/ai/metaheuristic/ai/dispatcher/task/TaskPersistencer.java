@@ -21,11 +21,16 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SuppressWarnings("DuplicatedCode")
@@ -38,6 +43,8 @@ public class TaskPersistencer {
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
     private final ExecContextSyncService execContextSyncService;
+
+    public static List<Pair<String, String>> stacktraces = new ArrayList<>(10000);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TaskImpl save(TaskImpl task) {
@@ -54,14 +61,14 @@ public class TaskPersistencer {
                 }
             }
         }
-/*
         try {
             throw new RuntimeException("stacktrace");
         }
         catch (RuntimeException e) {
-            log.info("stacktrace for task #"+task.id+", version: "+task.version, e);
+            stacktraces.add( new ImmutablePair<>(
+                    "stacktrace for task #"+task.id+", version: "+task.version, ExceptionUtils.getStackTrace(e)));
+//            log.info("stacktrace for task #"+task.id+", version: "+task.version, e);
         }
-*/
         return taskRepository.save(task);
     }
 

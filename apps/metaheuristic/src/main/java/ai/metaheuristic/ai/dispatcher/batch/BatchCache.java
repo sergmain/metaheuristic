@@ -26,6 +26,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("dispatcher")
@@ -38,6 +40,7 @@ public class BatchCache {
         this.batchRepository = batchRepository;
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(value = {Consts.BATCHES_CACHE}, key = "#result.id")
     public Batch save(@NonNull Batch batch) {
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
@@ -50,8 +53,9 @@ public class BatchCache {
         return batchRepository.findById(id).orElse(null);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#batch.id")
-    public void delete(Batch batch) {
+    public void delete(@Nullable Batch batch) {
         if (batch==null) {
             return;
         }
@@ -62,15 +66,15 @@ public class BatchCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
-    public void deleteById(Long id) {
+    public void deleteById(@Nullable Long id) {
         if (id==null) {
             return;
         }
         try {
             batchRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {
-
             log.warn("#459.050 Error while deletingById, batch in db: " + batchRepository.findById(id), e);
         }
     }

@@ -26,32 +26,30 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYamlV1;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +84,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public SourceCodeService sourceCodeService;
+
+    @Autowired
+    public SourceCodeTopLevelService sourceCodeTopLevelService;
 
     @Autowired
     public FunctionCache functionCache;
@@ -144,10 +145,14 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public static final String GLOBAL_TEST_VARIABLE = "global-test-variable";
 
     @BeforeEach
-    public void beforePreparingSourceCode() {
+    public void beforePreparingSourceCode() throws IOException {
         assertTrue(globals.isUnitTesting);
 
-        cleanUp();
+        String params = getSourceCodeYamlAsString();
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        sourceCodeParamsYaml.checkIntegrity();
+
+        cleanUp(sourceCodeParamsYaml.source.uid);
 
         company = new Company();
         company.name = "Test company #2";
@@ -165,32 +170,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
         s4 = createFunction("function-04:1.1");
         s5 = createFunction("function-05:1.1");
 
-        SourceCodeImpl sc = new SourceCodeImpl();
-        sc.setUid(TEST_SOURCE_CODE_CODE);
-
-        SourceCodeStoredParamsYamlV1 sourceCodeStored = new SourceCodeStoredParamsYamlV1();
-        sourceCodeStored.source = getSourceCodeYamlAsString();
-
-        // check correctness of sourceCode
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeStored.source);
-        sourceCodeParamsYaml.checkIntegrity();
-
-        sourceCodeStored.lang = EnumsApi.SourceCodeLang.yaml;
-
-        final SourceCodeStoredParamsYamlUtilsV1 forVersion = (SourceCodeStoredParamsYamlUtilsV1) SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
-        assertNotNull(forVersion);
-        String params = forVersion.toString(sourceCodeStored);
-
-        sc.setParams(params);
-        sc.setCreatedOn(System.currentTimeMillis());
-        sc.companyId = company.uniqueId;
-
-
-        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(sc.getUid(), company.uniqueId);
-        if (tempSourceCode !=null) {
-            sourceCodeCache.deleteById(tempSourceCode.getId());
-        }
-        sourceCode = sourceCodeCache.save(sc);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeTopLevelService.createSourceCode(getSourceCodeYamlAsString(), company.uniqueId);
+        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();
 
@@ -207,8 +188,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
         execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
     }
 
-    private void cleanUp() {
-        SourceCode sc = sourceCodeRepository.findByUid(TEST_SOURCE_CODE_CODE);
+    private void cleanUp(String sourceCodeUid) {
+        SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
         Company c = null;
         if (sc!=null) {
             c = companyRepository.findByUniqueId(sc.getCompanyId());
@@ -233,7 +214,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
                 }
             }
             try {
-                sourceCodeCache.deleteById(sc.getId());
+                sourceCodeService.deleteSourceCodeById(sc.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }
@@ -254,7 +235,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
     }
 
-    private Function createFunction(String functionCode) {
+    private Function createFunction(String functionCode) throws IOException {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.code = functionCode;
         sc.type = functionCode + "-type";
@@ -268,24 +249,22 @@ public abstract class PreparingSourceCode extends PreparingCore {
         Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
-            functionCache.delete(functionId);
+            functionService.delete(functionId);
         }
         s.setCode(functionCode);
         s.setType(sc.type);
         s.setParams(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc));
 
-        functionCache.save(s);
+        functionService.createFunction(s, null);
         return s;
     }
 
     @AfterEach
     public void afterPreparingSourceCode() {
-        if (sourceCode !=null) {
-            try {
-                sourceCodeCache.deleteById(sourceCode.getId());
-            } catch (Throwable th) {
-                log.error("Error while planCache.deleteById()", th);
-            }
+        try {
+            sourceCodeService.deleteSourceCodeById(sourceCode.getId());
+        } catch (Throwable th) {
+            log.error("Error while planCache.deleteById()", th);
         }
         if (company!=null) {
             try {
@@ -354,7 +333,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     private void deleteFunction(@Nullable Function s) {
         if (s!=null) {
             try {
-                functionCache.delete(s);
+                functionService.delete(s.id);
             } catch (Throwable th) {
                 log.error("Error", th);
             }

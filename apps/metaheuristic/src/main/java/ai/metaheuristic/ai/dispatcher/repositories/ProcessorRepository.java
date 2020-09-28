@@ -46,11 +46,6 @@ public interface ProcessorRepository extends CrudRepository<Processor, Long> {
     Optional<Processor> findById(Long id);
 
     @Transactional(readOnly = true)
-    @Nullable
-    @Query(value="select s from Processor s where s.id=:id")
-    Processor findByIdForUpdate(Long id);
-
-    @Transactional(readOnly = true)
     Page<Processor> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)

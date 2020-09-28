@@ -25,14 +25,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -60,15 +59,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -81,8 +77,6 @@ import java.util.stream.Collectors;
 public class SouthbridgeService {
 
     private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
-    public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
-    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     // Processor's version for communicating with dispatcher
     private static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
@@ -94,8 +88,9 @@ public class SouthbridgeService {
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
-    private final ProcessorRepository processorRepository;
     private final TaskTransactionalService taskTransactionalService;
+    private final ProcessorSyncService processorSyncService;
+    private final ProcessorTopLevelService processorTopLevelService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -342,125 +337,58 @@ public class SouthbridgeService {
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void checkProcessorId(@Nullable String processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
-        if (StringUtils.isBlank(processorId)) {
+    private void checkProcessorId(@Nullable String processorIdAsStr, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+        if (StringUtils.isBlank(processorIdAsStr)) {
             log.warn("#440.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
             lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
             return;
         }
 
-        final Processor processor = processorRepository.findByIdForUpdate(Long.parseLong(processorId));
-        if (processor == null) {
-            log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-            lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-            return;
-        }
-        ProcessorStatusYaml ss;
-        try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-        } catch (Throwable e) {
-            log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#440.300 Error ", e);
-            // skip any command from this processor
-            return;
-        }
-        if (StringUtils.isBlank(sessionId)) {
-            log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
-            // the same processor but with different and expired sessionId
-            // so we can continue to use this processorId with new sessionId
-            lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
-            return;
-        }
-        if (!ss.sessionId.equals(sessionId)) {
-            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+        final long processorId = Long.parseLong(processorIdAsStr);
+        processorSyncService.getWithSyncVoid( processorId, ()-> {
+            final Processor processor = processorCache.findById(processorId);
+            if (processor == null) {
+                log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+                lcpy.reAssignedProcessorId = processorTopLevelService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
+                return null;
+            }
+            ProcessorStatusYaml ss;
+            try {
+                ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            } catch (Throwable e) {
+                log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
+                log.error("#440.300 Error ", e);
+                // skip any command from this processor
+                return null;
+            }
+            if (StringUtils.isBlank(sessionId)) {
+                log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
                 // the same processor but with different and expired sessionId
                 // so we can continue to use this processorId with new sessionId
-                // we won't use processor's sessionIf to be sure that sessionId has valid format
-                lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
-                return;
+                lcpy.reAssignedProcessorId = processorTopLevelService.assignNewSessionId(processor, ss);
+                return null;
+            }
+            if (!ss.sessionId.equals(sessionId)) {
+                if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
+                    log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                    // the same processor but with different and expired sessionId
+                    // so we can continue to use this processorId with new sessionId
+                    // we won't use processor's sessionIf to be sure that sessionId has valid format
+                    lcpy.reAssignedProcessorId = processorTopLevelService.assignNewSessionId(processor, ss);
+                    return null;
+                } else {
+                    log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                    // different processors with the same processorId
+                    // there is other active processor with valid sessionId
+                    lcpy.reAssignedProcessorId = processorTopLevelService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
+                    return null;
+                }
             } else {
-                log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
-                // different processors with the same processorId
-                // there is other active processor with valid sessionId
-                lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-                return;
+                // see logs in method
+                processorTopLevelService.updateSession(processor, ss);
             }
-        }
-        else {
-            // see logs in method
-            updateSession(processor, ss);
-        }
-    }
-
-    /**
-     * session is Ok, so we need to update session's timestamp periodically
-     */
-    @SuppressWarnings("UnnecessaryReturnStatement")
-    private void updateSession(Processor processor, ProcessorStatusYaml ss) {
-        final long millis = System.currentTimeMillis();
-        final long diff = millis - ss.sessionCreatedOn;
-        if (diff > SESSION_UPDATE_TIMEOUT) {
-            log.debug("#440.380 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
-                    "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
-                    "'    processor.status:\n{},\n" +
-                    "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
-                    processor.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, processor.status);
-            // the same processor, with the same sessionId
-            // so we just need to refresh sessionId timestamp
-            ss.sessionCreatedOn = millis;
-            processor.updatedOn = millis;
-            processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-            try {
-                processorCache.save(processor);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                log.error("#440.400 Error saving processor. old : {}, new: {}", processorCache.findById(processor.id), processor);
-                log.error("#440.420 Error");
-                throw e;
-            }
-
-            // for debugging behaviour of cache only
-/*
-            Processor p = processorCache.findById(processor.id);
-            if (p!=null) {
-                log.debug("#442.086 old processor.version: {}, in cache processor.version: {}, processor.status:\n{},\n", processor.version, p.version, p.status);
-            }
-*/
-
-            // the same processorId but new sessionId
-            return;
-        }
-        else {
-            // the same processorId, the same sessionId, session isn't expired
-            return;
-        }
-    }
-
-    private DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
-        ss.sessionId = ProcessorTopLevelService.createNewSessionId();
-        ss.sessionCreatedOn = System.currentTimeMillis();
-        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        processor.updatedOn = ss.sessionCreatedOn;
-        processorCache.save(processor);
-        // the same processorId but new sessionId
-        return new DispatcherCommParamsYaml.ReAssignProcessorId(processor.getId(), ss.sessionId);
-    }
-
-    private DispatcherCommParamsYaml.ReAssignProcessorId reassignProcessorId(String remoteAddress, String description) {
-        Processor s = new Processor();
-        s.setIp(remoteAddress);
-        s.setDescription(description);
-
-        String sessionId = ProcessorTopLevelService.createNewSessionId();
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
-                sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
-
-        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        s.updatedOn = ss.sessionCreatedOn;
-        processorCache.save(s);
-        return new DispatcherCommParamsYaml.ReAssignProcessorId(s.getId(), sessionId);
+            return null;
+        });
     }
 
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {

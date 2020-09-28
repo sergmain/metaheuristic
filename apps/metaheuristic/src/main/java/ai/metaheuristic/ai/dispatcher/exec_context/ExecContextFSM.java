@@ -50,6 +50,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.HashMap;
@@ -81,32 +82,39 @@ public class ExecContextFSM {
     private final ApplicationEventPublisher eventPublisher;
     private final TaskTransactionalService taskTransactionalService;
 
+    @Transactional
     public void toStarted(ExecContext execContext) {
         toStarted(execContext.getId());
     }
 
-    private void toStarted(Long execContextId) {
+    @Transactional
+    public void toStarted(Long execContextId) {
         toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
+    @Transactional
     public void toStopped(Long execContextId) {
         toState(execContextId, EnumsApi.ExecContextState.STOPPED);
     }
 
+    @Transactional
     public void toProduced(Long execContextId) {
         toState(execContextId, EnumsApi.ExecContextState.PRODUCED);
     }
 
+    @Transactional
     public void toFinished(Long execContextId) {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.FINISHED);
     }
 
+    @Transactional
     public void toError(Long execContextId) {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }
 
     // methods with syncing
 
+    @Transactional
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -123,10 +131,13 @@ public class ExecContextFSM {
         if (execContext==null) {
             return;
         }
-        if (execContext.state !=state.code || execContext.completedOn==null) {
+        if (execContext.state != state.code) {
             execContext.setCompletedOn(System.currentTimeMillis());
             execContext.setState(state.code);
             execContextCache.save(execContext);
+        } else if (execContext.completedOn != null) {
+            log.error("Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
+                    execContext.state, state.code);
         }
     }
 
@@ -292,7 +303,7 @@ public class ExecContextFSM {
                         t.setResultResourceScheduledOn(0);
                         taskTransactionalService.save(t);
 
-                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(t.getId()));
+                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(t.execContextId, t.id));
                         return null;
                     });
                     continue;
@@ -403,6 +414,7 @@ public class ExecContextFSM {
         return false;
     }
 
+    @Transactional
     public EnumsApi.TaskProducingStatus toProducing(Long execContextId, ExecContextService execContextService) {
         return execContextSyncService.getWithSync(execContextId, () -> {
             ExecContextImpl execContext = execContextCache.findById(execContextId);

@@ -43,7 +43,9 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -51,10 +53,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -86,6 +87,25 @@ public class TaskTransactionalService {
             return taskPersistencer.save(task);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
+            File f = new File("stacktrace-"+System.currentTimeMillis()+".txt");
+            try {
+                List<Pair<String, String>> stacktraces = TaskPersistencer.stacktraces;
+                TaskPersistencer.stacktraces = new ArrayList<>(10000);
+
+                try (OutputStream os = new FileOutputStream(f);
+                     OutputStreamWriter osw = new OutputStreamWriter(os);
+                     BufferedWriter sw = new BufferedWriter(osw)) {
+                    for (Pair<String, String> stacktrace : stacktraces) {
+                        sw.write(stacktrace.getKey());
+                        sw.newLine();
+                        sw.write(stacktrace.getValue());
+                        sw.newLine();
+                    }
+                }
+                stacktraces.clear();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
             throw e;
         }
     }

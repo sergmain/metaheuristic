@@ -42,6 +42,7 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -230,7 +231,7 @@ public class BatchTopLevelService {
             }
             return execContextSyncService.getWithSync(creationResult.execContext.id, () -> {
                 Batch b;
-                String startInputAs = creationResult.execContext.getExecContextParamsYaml().variables.startInputAs;
+                String startInputAs = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params).variables.startInputAs;
                 if (S.b(startInputAs)) {
                     return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
                 }

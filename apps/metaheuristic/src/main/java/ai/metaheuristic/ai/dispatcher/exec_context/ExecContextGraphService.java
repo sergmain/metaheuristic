@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -72,13 +73,13 @@ public class ExecContextGraphService {
     private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importProcessGraph(ecpy);
         try {
             callable.accept(graph);
         } finally {
             ecpy.graph = asString(graph);
-            execContext.updateParams(ecpy);
+            execContext.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy);
             execContextCache.save(execContext);
         }
     }
@@ -130,7 +131,7 @@ public class ExecContextGraphService {
     }
 
     private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextImpl execContext) {
-        return importProcessGraph(execContext.getExecContextParamsYaml());
+        return importProcessGraph(ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params));
     }
 
     @SneakyThrows

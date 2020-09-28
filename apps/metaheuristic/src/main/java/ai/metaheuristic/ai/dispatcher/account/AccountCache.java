@@ -25,6 +25,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Profile("dispatcher")
@@ -33,6 +35,7 @@ public class AccountCache {
 
     private final AccountRepository accountRepository;
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
     public Account save(Account account) {
         return accountRepository.save(account);

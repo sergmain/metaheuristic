@@ -28,6 +28,13 @@ import org.springframework.lang.NonNull;
 public class ProcessorData {
 
     @Data
+    @AllArgsConstructor
+    public static class ProcessorWithSessionId {
+        public Processor processor;
+        public String sessionId;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     public static class ProcessorsResult extends BaseDataClass {
         public Slice<ProcessorStatus> items;

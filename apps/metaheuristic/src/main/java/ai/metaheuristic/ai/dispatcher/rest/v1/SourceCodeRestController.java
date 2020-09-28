@@ -75,7 +75,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.addSourceCode(sourceCodeYamlAsStr, context);
+        return sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
     }
 
     @PostMapping("/source-code-edit-commit")

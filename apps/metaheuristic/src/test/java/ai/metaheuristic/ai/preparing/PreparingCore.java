@@ -25,7 +25,9 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -34,7 +36,6 @@ import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -77,6 +78,9 @@ public abstract class PreparingCore {
     protected FunctionCache functionCache;
 
     @Autowired
+    protected FunctionService functionService;
+
+    @Autowired
     protected FunctionRepository functionRepository;
 
     @Autowired
@@ -96,6 +100,9 @@ public abstract class PreparingCore {
 
     @Autowired
     public ExecContextFSM execContextFSM;
+
+    @Autowired
+    private ProcessorTopLevelService processorTopLevelService;
 
     public Processor processor = null;
     public String processorIdAsStr;
@@ -119,11 +126,6 @@ public abstract class PreparingCore {
                 experimentCache.delete(e);
             }
 
-            // Prepare processor
-            Processor p = new Processor();
-            mills = System.currentTimeMillis();
-            log.info("Start processorRepository.saveAndFlush()");
-
             EnvYaml envYaml = new EnvYaml();
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
             envYaml.getEnvs().put("env-function-01:1.1", "python.exe" );
@@ -136,10 +138,14 @@ public abstract class PreparingCore {
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     "[unknown]", "[unknown]", null, false,
                     TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown);
-            p.setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
+            final String description = "Test processor. Must be deleted automatically";
 
-            p.setDescription("Test processor. Must be deleted automatically");
-            processor = processorCache.save(p);
+            mills = System.currentTimeMillis();
+            log.info("Start processorRepository.saveAndFlush()");
+
+
+            // Prepare processor
+            Processor p = processorTopLevelService.createProcessor(description, null, ss);
             log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
             processorIdAsStr =  Long.toString(p.getId());
 
@@ -165,7 +171,7 @@ public abstract class PreparingCore {
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #1");
-                functionCache.save(function);
+                functionService.createFunction(function, null);
                 log.info("functionRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
@@ -191,7 +197,7 @@ public abstract class PreparingCore {
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #2");
-                functionCache.save(predictFunction);
+                functionService.createFunction(predictFunction, null);
                 log.info("processorRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
@@ -248,40 +254,30 @@ public abstract class PreparingCore {
         log.info("Start after()");
         if (experiment != null) {
             try {
-                experimentRepository.deleteById(experiment.getId());
+                experimentService.deleteExperiment(experiment.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         }
         if (processor != null) {
             try {
-                processorCache.deleteById(processor.getId());
+                processorTopLevelService.deleteProcessorById(processor.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         }
         if (predictFunction != null) {
             try {
-                functionCache.delete(predictFunction.getId());
+                functionService.delete(predictFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
-            }
-            try {
-                functionDataService.deleteByFunctionCode(predictFunction.getCode());
-            } catch (Throwable th) {
-                th.printStackTrace();
             }
         }
         if (fitFunction != null) {
             try {
-                functionCache.delete(fitFunction.getId());
+                functionService.delete(fitFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
-            }
-            try {
-                functionDataService.deleteByFunctionCode(fitFunction.getCode());
-            } catch (Throwable th) {
-                th.printStackTrace();
             }
         }
         System.out.println("Was finished correctly");

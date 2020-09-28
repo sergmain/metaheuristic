@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -98,7 +99,7 @@ public class ExecContextTopLevelService {
             resultWithError.addErrorMessage("Can't find execContext for Id "+ execContextId);
             return resultWithError;
         }
-        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ec.getExecContextParamsYaml());
+        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params));
         ExecContextApiData.ExecContextStateResult r = getExecContextStateResult(
                 sourceCodeId, infos, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid);
         return r;
@@ -182,7 +183,7 @@ public class ExecContextTopLevelService {
         if (execContext == null) {
             return new ExecContextForDeletion("#778.020 execContext wasn't found, execContextId: " + execContextId);
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         ExecContextForDeletion result = new ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
         return result;
     }

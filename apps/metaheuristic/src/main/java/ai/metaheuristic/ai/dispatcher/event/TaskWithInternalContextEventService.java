@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -82,20 +83,26 @@ public class TaskWithInternalContextEventService {
 
     @Async
     @EventListener
-    public void handleAsync(final TaskWithInternalContextEvent event) {
-        TaskImpl task;
-        try {
-            task = taskRepository.findById(event.taskId).orElse(null);
-            if (task==null) {
-                log.warn("Task #{} with internal context doesn't exist", event.taskId);
-                return;
+    public void processInternalFunction(final TaskWithInternalContextEvent event) {
+        execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
+            TaskImpl task;
+            try {
+                task = taskRepository.findById(event.taskId).orElse(null);
+                if (task==null) {
+                    log.warn("Task #{} with internal context doesn't exist", event.taskId);
+                    return null;
+                }
+            } catch (Throwable th) {
+                log.error("Error", th);
+                return null;
             }
-        } catch (Throwable th) {
-            log.error("Error", th);
-            return;
-        }
+            if (!event.execContextId.equals(task.execContextId)) {
+                log.error("The task #{} has different execContextId, expected: {}, actual: {}",
+                        event.taskId, event.execContextId, task.execContextId);
+                execContextFSM.toError(event.execContextId);
+                return null;
+            }
 
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
             try {
                 ExecContextImpl execContext = execContextCache.findById(task.execContextId);
                 if (execContext == null) {
@@ -120,7 +127,7 @@ public class TaskWithInternalContextEventService {
                             execContextCache.findById(task.execContextId), task.id, TaskExecState.IN_PROGRESS.value, null);
 
                     TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                    ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+                    ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
                     ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
                     if (p == null) {
                         if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,18 +28,18 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor
 public class SourceCodeCache {
 
     private final SourceCodeRepository sourceCodeRepository;
 
-    public SourceCodeCache(SourceCodeRepository sourceCodeRepository) {
-        this.sourceCodeRepository = sourceCodeRepository;
-    }
-
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(value = {Consts.SOURCE_CODES_CACHE}, key = "#result.id")
     public SourceCodeImpl save(SourceCodeImpl sourceCode) {
         return sourceCodeRepository.save(sourceCode);
@@ -50,6 +51,7 @@ public class SourceCodeCache {
         return sourceCodeRepository.findById(id).orElse(null);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#sourceCode.id")
     public void delete(SourceCode sourceCode) {
         if (sourceCode.getId()==null) {
@@ -62,11 +64,9 @@ public class SourceCodeCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#id")
     public void deleteById(Long id) {
-        if (id==null) {
-            return;
-        }
         try {
             sourceCodeRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {

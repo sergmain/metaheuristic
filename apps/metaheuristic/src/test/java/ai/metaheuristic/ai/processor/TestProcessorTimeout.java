@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +34,7 @@ public class TestProcessorTimeout {
     @Test
     public void test() {
         assertTrue(
-                ProcessorTopLevelService.PROCESSOR_TIMEOUT - SouthbridgeService.SESSION_UPDATE_TIMEOUT
+                ProcessorTopLevelService.PROCESSOR_TIMEOUT - Consts.SESSION_UPDATE_TIMEOUT
                         >= TimeUnit.SECONDS.toMillis(20)
         );
     }

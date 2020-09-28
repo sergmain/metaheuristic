@@ -17,9 +17,13 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -32,12 +36,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
 @SuppressWarnings("DuplicatedCode")
 @Service
-@EnableTransactionManagement
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
@@ -46,18 +50,6 @@ public class ExperimentService {
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-
-    @Async
-    @EventListener
-    public void handleAsync(DispatcherInternalEvent.DeleteExperimentEvent event) {
-        deleteExperiment(event.experimentId);
-    }
-
-    @Async
-    @EventListener
-    public void handleAsync(DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent event) {
-        deleteExperimentByExecContextId(event.execContextId);
-    }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -111,17 +103,19 @@ public class ExperimentService {
         ed.description = params.description;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = 0;
-        ed.sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
+        ed.sourceCodeUid = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params).sourceCodeUid;
         ed.sourceCodeId = ec.sourceCodeId;
 
         return ed;
     }
 
-    private void deleteExperiment(Long experimentId) {
+    @Transactional
+    public void deleteExperiment(Long experimentId) {
         experimentCache.deleteById(experimentId);
     }
 
-    private void deleteExperimentByExecContextId(Long execContextId) {
+    @Transactional
+    public void deleteExperimentByExecContextId(Long execContextId) {
         Long id = experimentRepository.findIdByExecContextId(execContextId);
         if (id==null) {
             return;

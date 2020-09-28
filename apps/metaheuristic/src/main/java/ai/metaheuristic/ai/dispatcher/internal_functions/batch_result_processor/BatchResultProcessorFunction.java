@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
@@ -146,7 +147,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     S.f("#993.020 ExecContext #%s wasn't found", execContextId));
         }
 
-        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
         // key is name of variable
         Map<String, ExecContextParamsYaml.Variable> nameToVar = gatherVars(ecpy);
         Set<String> varNames = nameToVar.keySet();

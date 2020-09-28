@@ -19,7 +19,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +37,11 @@ public class FunctionConfigListYaml implements BaseParams {
         return true;
     }
 
+    /**
+     * this class must be equal to ai.metaheuristic.commons.yaml.function.FunctionConfigYaml
+     *
+     * TODO 2020-09-27 add unit test to confirm equality
+     */
     @Data
     @ToString
     @NoArgsConstructor

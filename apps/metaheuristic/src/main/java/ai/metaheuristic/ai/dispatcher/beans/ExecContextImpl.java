@@ -15,13 +15,9 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -33,7 +29,6 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
-@ToString(exclude = "wpy")
 public class ExecContextImpl implements Serializable, ExecContext {
     private static final long serialVersionUID = -8687758209537096490L;
 
@@ -59,16 +54,9 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 
-    @Column(name = "PARAMS")
     @NonNull
-    private String params;
-
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.wpy=null;
-        }
-    }
+    @Column(name = "PARAMS")
+    public String params;
 
     @NonNull
     public String getParams() {
@@ -80,27 +68,4 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Column(name = "STATE")
     public int state;
-
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private ExecContextParamsYaml wpy = null;
-
-    @JsonIgnore
-    public @NonNull ExecContextParamsYaml getExecContextParamsYaml() {
-        if (wpy ==null) {
-            synchronized (this) {
-                if (wpy ==null) {
-                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    wpy = temp==null ? new ExecContextParamsYaml() : temp;
-                }
-            }
-        }
-        return wpy;
-    }
-
-    @JsonIgnore
-    public void updateParams(@NonNull ExecContextParamsYaml wpy) {
-        params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy);
-    }
 }

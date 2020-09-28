@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,18 +28,18 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("dispatcher")
 @Slf4j
+@RequiredArgsConstructor
 public class ExperimentCache {
 
     private final ExperimentRepository experimentRepository;
 
-    public ExperimentCache(ExperimentRepository experimentRepository) {
-        this.experimentRepository = experimentRepository;
-    }
-
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
     public Experiment save(Experiment experiment) {
         // noinspection UnusedAssignment
@@ -58,6 +59,7 @@ public class ExperimentCache {
         return experimentRepository.findById(id).orElse(null);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
     public void delete(@NonNull Experiment experiment) {
         try {
@@ -67,11 +69,13 @@ public class ExperimentCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void invalidate(Long id) {
         //
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void deleteById(@NonNull Long id) {
         try {

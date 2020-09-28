@@ -149,7 +149,7 @@ public class TestAccessForAllEndPoints {
             else {
                 throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);
             }
-            resultActions.andExpect(status().isUnauthorized()).andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+            resultActions.andExpect(status().isUnauthorized()).andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
         }
     }
 
@@ -160,12 +160,12 @@ public class TestAccessForAllEndPoints {
                 mockMvc.perform(get(accessUrl.url))
                         .andExpect(status().isFound())
                         .andExpect(redirectedUrlPattern("http://*/login"))
-                        .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+                        .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
             }
             else if (accessUrl.accessMethod== AccessMethod.POST) {
                 mockMvc.perform(post(accessUrl.url))
                         .andExpect(status().isForbidden())
-                        .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+                        .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
             }
             else {
                 throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);

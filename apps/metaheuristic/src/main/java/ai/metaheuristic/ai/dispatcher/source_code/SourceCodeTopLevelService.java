@@ -42,6 +42,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -64,6 +65,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 public class SourceCodeTopLevelService {
 
     private final Globals globals;
+    private final SourceCodeService sourceCodeService;
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
@@ -139,7 +141,8 @@ public class SourceCodeTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeApiData.SourceCodeResult addSourceCode(String sourceCodeYamlAsStr, DispatcherContext context) {
+    @Transactional
+    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
         }
@@ -172,7 +175,7 @@ public class SourceCodeTopLevelService {
         scspy.internalParams.updatedOn = System.currentTimeMillis();
         sourceCode.updateParams(scspy);
 
-        sourceCode.companyId = context.getCompanyId();
+        sourceCode.companyId = companyUniqueId;
         sourceCode.createdOn = System.currentTimeMillis();
         sourceCode.uid = ppy.source.uid;
 
@@ -192,6 +195,7 @@ public class SourceCodeTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
+    @Transactional
     public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
@@ -235,19 +239,10 @@ public class SourceCodeTopLevelService {
     }
 
     public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
-        }
-        SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
-        }
-        sourceCodeCache.deleteById(sourceCodeId);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return sourceCodeService.deleteSourceCodeById(sourceCodeId);
     }
 
+    @Transactional
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -266,6 +261,7 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    @Transactional
     public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -303,7 +299,7 @@ public class SourceCodeTopLevelService {
             }
             log.debug("Start loading sourceCode into db");
             String yaml = FileUtils.readFileToString(sourceCodeFile, StandardCharsets.UTF_8);
-            SourceCodeApiData.SourceCodeResult result = addSourceCode(yaml, context);
+            SourceCodeApiData.SourceCodeResult result = createSourceCode(yaml, context.getCompanyId());
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());

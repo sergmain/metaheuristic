@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
@@ -85,14 +86,14 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
         Long processorId = processorIdBefore;
-        Processor s = processorRepository.findByIdForUpdate(processorId);
+        Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);
 
-        ss.sessionCreatedOn -= (SouthbridgeService.SESSION_TTL + 100000);
+        ss.sessionCreatedOn -= (Consts.SESSION_TTL + 100000);
         sessionCreatedOn = ss.sessionCreatedOn;
         s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
 

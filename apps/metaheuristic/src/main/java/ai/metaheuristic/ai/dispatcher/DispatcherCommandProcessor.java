@@ -16,21 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,14 +43,12 @@ import java.util.stream.Collectors;
  * Date: 8/29/2019
  * Time: 8:03 PM
  */
-@SuppressWarnings("UnnecessaryLocalVariable")
 @Slf4j
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
-    private final ProcessorCache processorCache;
     private final TaskService taskService;
     private final ProcessorTopLevelService processorTopLevelService;
     private final ExecContextService execContextService;
@@ -182,17 +174,9 @@ public class DispatcherCommandProcessor {
         if (request==null) {
             return null;
         }
-        String sessionId = ProcessorTopLevelService.createNewSessionId();
-        final Processor st = new Processor();
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
-                "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown);
-
-        st.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        processorCache.save(st);
+        ProcessorData.ProcessorWithSessionId processorWithSessionId = processorTopLevelService.getNewProcessorId();
 
         // TODO 2019.05.19 why do we send processorId as a String?
-        return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(st.getId()), sessionId);
+        return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(processorWithSessionId.processor.id), processorWithSessionId.sessionId);
     }
 }

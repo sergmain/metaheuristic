@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -35,8 +36,8 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,6 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ExecContextCreatorService {
 
     @Data
@@ -146,7 +148,7 @@ public class ExecContextCreatorService {
         ec.setCompletedOn(null);
         ExecContextParamsYaml expy = to(sourceCodeGraph);
         expy.sourceCodeUid = sourceCode.uid;
-        ec.updateParams(expy);
+        ec.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy);
         ec.setValid(true);
 
         ExecContextImpl execContext = execContextCache.save(ec);

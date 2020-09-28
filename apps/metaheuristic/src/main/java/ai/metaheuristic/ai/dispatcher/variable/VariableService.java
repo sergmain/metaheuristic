@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -83,7 +84,7 @@ public class VariableService {
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
     public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
-        ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
+        ExecContextParamsYaml.Process p = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params).findProcess(processCode);
         if (p==null) {
             return null;
         }
@@ -277,7 +278,7 @@ public class VariableService {
             v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
 
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
-//            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
+            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
             variableRepository.save(v);
             return v;
         }

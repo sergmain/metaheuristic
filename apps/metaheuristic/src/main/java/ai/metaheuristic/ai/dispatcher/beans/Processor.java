@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -51,9 +52,11 @@ public class Processor implements Serializable {
     /**
      * this field is initialized manually
      */
+    @Nullable
     @Column(name = "IP")
     public String ip;
 
+    @Nullable
     @Column(name = "DESCRIPTION")
     public String description;
 

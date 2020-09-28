@@ -27,6 +27,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -43,10 +45,12 @@ public class ExecContextCache {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
         // execContext.id is null for a newly created bean
@@ -57,6 +61,7 @@ public class ExecContextCache {
         return execContextRepository.save(execContext);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
     public void delete(ExecContextImpl execContext) {
         try {
@@ -71,6 +76,7 @@ public class ExecContextCache {
         //
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
         try {
@@ -80,6 +86,7 @@ public class ExecContextCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
         try {

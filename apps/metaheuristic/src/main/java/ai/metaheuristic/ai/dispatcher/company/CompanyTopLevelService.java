@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Profile("dispatcher")
@@ -60,6 +61,7 @@ public class CompanyTopLevelService {
         return addCompany(new Company(companyName));
     }
 
+    @Transactional
     public OperationStatusRest addCompany(Company company) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
