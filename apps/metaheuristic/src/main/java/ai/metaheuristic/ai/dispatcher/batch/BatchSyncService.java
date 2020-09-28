@@ -17,15 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.dispatcher.CommonSync;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -39,51 +36,34 @@ import java.util.function.Supplier;
 @Profile("dispatcher")
 public class BatchSyncService {
 
-    private final BatchRepository batchRepository;
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
+    public void getWithSyncVoid(Long batchId, Supplier<Void> supplier) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
-//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
-            Batch batch = batchRepository.findByIdForUpdate(batchId);
-            if (batch!=null) {
-                function.accept(batch);
-            }
+            supplier.get();
         } finally {
             lock.unlock();
         }
     }
 
-    public <T> T getWithSync(Long batchId, Function<Batch, T> function) {
+    public <T> T getWithSync(Long batchId, Supplier<T> supplier) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
-            Batch batch = batchRepository.findByIdForUpdate(batchId);
-            return function.apply(batch);
+            return supplier.get();
         } finally {
             lock.unlock();
         }
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
+    public <T> T getWithSyncNullable(Long batchId, Supplier<T> supplier) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
-            Batch batch = batchRepository.findByIdForUpdate(batchId);
-            return batch == null ? null : function.apply(batch);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public <T> T getWithSyncReadOnly(Long batchId, Supplier<T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
-        try {
-            lock.lock();
-            return function.get();
+            return supplier.get();
         } finally {
             lock.unlock();
         }

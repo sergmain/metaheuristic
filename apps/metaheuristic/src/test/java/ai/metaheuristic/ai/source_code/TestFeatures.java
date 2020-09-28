@@ -17,18 +17,13 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
-import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -47,8 +42,8 @@ public class TestFeatures extends PreparingExperiment {
 
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
-        //noinspection unused
-        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
+
+        produceTasksForTest();
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

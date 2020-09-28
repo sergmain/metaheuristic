@@ -122,45 +122,44 @@ public class ExecContextService {
             return null;
         }
 
-
-        TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
+        final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
-        if (task==null) {
+        if (t==null) {
             return null;
         }
-
-        try {
-            task = taskSyncService.getWithSync(task.id, this::prepareVariables);
-
-            if (task==null) {
-                log.warn("After prepareVariables(task) the task is null");
-                return null;
-            }
-
-            String params;
+        return execContextSyncService.getWithSync(t.execContextId, ()-> {
             try {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                if (tpy.version==psy.taskParamsVersion) {
-                    params = task.params;
-                }
-                else {
-                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-                }
-            } catch (DowngradeNotSupportedException e) {
-                // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
-                //  but this one fails. that could occur because of prepareVariables(task);
-                //  need a better solution for checking
-                log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.getId(), processor.id, psy.taskParamsVersion);
-                return null;
-            }
+                TaskImpl task = taskSyncService.getWithSync(t.id, this::prepareVariables);
 
-            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
-        } catch (Throwable th) {
-            String es = "#705.270 Something wrong";
-            log.error(es, th);
-            throw new IllegalStateException(es, th);
-        }
+                if (task == null) {
+                    log.warn("After prepareVariables(task) the task is null");
+                    return null;
+                }
+
+                String params;
+                try {
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                    if (tpy.version == psy.taskParamsVersion) {
+                        params = task.params;
+                    } else {
+                        params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                    }
+                } catch (DowngradeNotSupportedException e) {
+                    // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
+                    //  but this one fails. that could occur because of prepareVariables(task);
+                    //  need a better solution for checking
+                    log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                            task.getId(), processor.id, psy.taskParamsVersion);
+                    return null;
+                }
+
+                return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
+            } catch (Throwable th) {
+                String es = "#705.270 Something wrong";
+                log.error(es, th);
+                throw new IllegalStateException(es, th);
+            }
+        });
     }
 
     @Nullable
@@ -315,6 +314,7 @@ public class ExecContextService {
         return status;
     }
 
+    @Transactional
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {

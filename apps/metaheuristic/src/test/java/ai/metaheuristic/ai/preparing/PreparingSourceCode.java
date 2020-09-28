@@ -56,13 +56,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProducingResultComplex;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 public abstract class PreparingSourceCode extends PreparingCore {
-
-    private static final String TEST_SOURCE_CODE_CODE = "test-sourceCode-code";
 
     @Autowired
     public CompanyTopLevelService companyTopLevelService;
@@ -296,7 +293,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
     }
 
-    public TaskProducingResultComplex produceTasksForTest() {
+    public void produceTasksForTest() {
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
@@ -305,7 +302,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest();
         execContextForTest = result.execContext;
-        return execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
             assertFalse(result.isErrorMessages());
             assertNotNull(execContextForTest);
@@ -317,15 +314,17 @@ public abstract class PreparingSourceCode extends PreparingCore {
             execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
-            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
+
+            sourceCodeService.createAllTasks();
+//            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
+//            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForTest.id).size());
+//            assertEquals(result1.numberOfTasks, execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest));
+//            assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
 
             this.execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
-            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForTest.id).size());
-            assertEquals(result1.numberOfTasks, execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest));
 
-            assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
-            return result1;
+            return null;
         });
     }
 

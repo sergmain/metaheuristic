@@ -49,6 +49,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -90,8 +91,10 @@ public class BatchService {
                 : ext;
     }
 
+    @Transactional
     public Batch changeStateToPreparing(Long batchId) {
-        return batchSyncService.getWithSync(batchId, (b)-> {
+        return batchSyncService.getWithSync(batchId, ()-> {
+            Batch b = batchCache.findById(batchId);
             if (b == null) {
                 log.warn("#990.010 batch wasn't found {}", batchId);
                 return null;
@@ -109,8 +112,10 @@ public class BatchService {
         });
     }
 
+    @Transactional
     public Batch changeStateToProcessing(Long batchId) {
-        return batchSyncService.getWithSync(batchId, (b)-> {
+        return batchSyncService.getWithSync(batchId, ()-> {
+            Batch b = batchCache.findById(batchId);
             if (b == null) {
                 log.warn("#990.030 batch wasn't found {}", batchId);
                 return null;
@@ -129,21 +134,23 @@ public class BatchService {
     }
 
     private void changeStateToFinished(Long batchId) {
-        batchSyncService.getWithSyncVoid(batchId, (b) -> {
+        batchSyncService.getWithSyncVoid(batchId, () -> {
             try {
+                Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batchId);
-                    return;
+                    return null;
                 }
                 if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
                     throw new IllegalStateException("#990.060 Can't change state to Finished, " +
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
                 if (b.execState == Enums.BatchExecState.Finished.code) {
-                    return;
+                    return null;
                 }
                 b.execState = Enums.BatchExecState.Finished.code;
                 batchCache.save(b);
+                return null;
             }
             finally {
                 dispatcherEventService.publishEventBatchFinished(batchId);
@@ -166,6 +173,7 @@ public class BatchService {
     }
 */
 
+    @Transactional
     public void updateBatchStatuses() {
         List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
         Map<Long, List<BatchAndExecContextStates>> map = statuses.parallelStream().collect(Collectors.groupingBy(status -> status.batchId));
@@ -194,7 +202,7 @@ public class BatchService {
                 }
             }
             if (isFinished) {
-                batchSyncService.getWithSyncVoid(batchId, (b) -> changeStateToFinished(batchId));
+                changeStateToFinished(batchId);
             }
         }
     }

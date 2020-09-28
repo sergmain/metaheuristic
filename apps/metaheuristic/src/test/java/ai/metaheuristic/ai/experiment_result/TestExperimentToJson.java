@@ -50,8 +50,7 @@ public class TestExperimentToJson extends PreparingExperiment {
     public void toExperimentStoredToExperimentResultToYaml() {
         createExperiment();
 
-        //noinspection unused
-        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
+        produceTasksForTest();
 
         assertNotNull(experiment);
         assertNotNull(experiment.getId());

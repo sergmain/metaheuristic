@@ -53,6 +53,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -129,6 +130,12 @@ public class ExecContextFSM {
         }
     }
 
+    @Transactional
+    public OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds);
+        return osr;
+    }
+
     private void toStateWithCompletion(Long execContextId, EnumsApi.ExecContextState state) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -142,12 +149,6 @@ public class ExecContextFSM {
             log.error("Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
         }
-    }
-
-    @Transactional
-    public OperationStatusRest addNewTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds);
-        return osr;
     }
 
     /**

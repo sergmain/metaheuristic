@@ -37,6 +37,7 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -54,6 +55,7 @@ public class TaskProducingService {
     private final ExecContextFSM execContextFSM;
     private final TaskTransactionalService taskTransactionalService;
 
+    @Transactional
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
         return execContextSyncService.getWithSync(execContext.id, () -> {
 
@@ -86,7 +88,7 @@ public class TaskProducingService {
         });
     }
 
-    public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    private TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(TaskProducingStatus.OK, null);
@@ -134,7 +136,8 @@ public class TaskProducingService {
         return okResult;
     }
 
-    private @Nullable ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
+    @Nullable
+    private ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
         for (ExecContextData.ProcessVertex ancestor : ancestors) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
             if (p==null) {

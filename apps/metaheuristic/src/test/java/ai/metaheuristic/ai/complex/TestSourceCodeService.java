@@ -39,7 +39,6 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -120,14 +119,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Test
     public void testCreateTasks() {
 
-        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
+        produceTasksForTest();
 
         final List<ExecContextData.TaskVertex> taskVertices = new ArrayList<>();
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
             List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
-            assertNotNull(result);
             assertNotNull(execContextForTest);
             assertNotNull(tasks);
             assertFalse(tasks.isEmpty());

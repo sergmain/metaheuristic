@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -274,7 +275,9 @@ public class BatchTopLevelService {
                 if (operationStatus.isErrorMessages()) {
                     throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
                 }
-                sourceCodeService.createAllTasks();
+//                sourceCodeService.createAllTasks();
+                sourceCodeService. produceAllTasks(true, sourceCode, creationResult.execContext);
+
                 operationStatus = execContextService.execContextTargetState(creationResult.execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
 
                 if (operationStatus.isErrorMessages()) {
@@ -294,6 +297,7 @@ public class BatchTopLevelService {
         }
     }
 
+    @Transactional
     public OperationStatusRest processBatchDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
         try {
             return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
@@ -341,7 +345,7 @@ public class BatchTopLevelService {
         return bulkOperations;
     }
 
-
+    @Transactional
     public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");

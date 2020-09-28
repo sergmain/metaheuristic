@@ -73,6 +73,7 @@ public class SourceCodeService {
 
     // TODO 2019.05.19 add reporting of producing of tasks
     // TODO 2020.01.17 reporting to where? do we need to implement it?
+    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
