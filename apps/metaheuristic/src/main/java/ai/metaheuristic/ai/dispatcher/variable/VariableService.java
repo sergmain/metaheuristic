@@ -225,7 +225,7 @@ public class VariableService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.MANDATORY)
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
@@ -236,29 +236,32 @@ public class VariableService {
             }
 
             SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContext.id);
+            if (sv == null) {
+//                log.info(S.f("Variable %s wasn't initialized for process %s.", variable.name, p.processCode));
+                Variable v = createUninitialized(variable.name, execContext.id, contextId);
+
+                // even variable.getNullable() can be false, we set empty to true because variable will be inited later
+                // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
+                taskParams.task.outputs.add(
+                        new TaskParamsYaml.OutputVariable(
+                                v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                                null, false, variable.type, true, variable.getNullable()
+                        ));
+            }
 /*
-            SimpleVariable sv = getVariableAsSimple(variable.name, p.processCode, execContext);
-*/
-            if (sv!=null) {
+            else {
                 Variable v = variableRepository.findById(sv.id).orElse(null);
                 if (v!=null) {
-                    v = createOrUpdateUninitialized(v);
-                    log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables", variable.name, p.processCode));
+//                    log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables", variable.name, p.processCode));
+                    // TODO 2020-09-28 do we need  taskParams.task.outputs.add()  here?
+//                    v = createOrUpdateUninitialized(v);
                     continue;
                 }
                 else {
                     throw new IllegalStateException("!!! A fatal error");
                 }
             }
-            Variable v = createUninitialized(variable.name, execContext.id, contextId);
-
-            // even variable.getNullable() can be false, we set empty to true because variable will be inited later
-            // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
-            taskParams.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(
-                            v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                            null, false, variable.type, true, variable.getNullable()
-                    ));
+*/
         }
     }
 
@@ -281,8 +284,7 @@ public class VariableService {
 
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
             log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
-            variableRepository.save(v);
-            return v;
+            return variableRepository.save(v);
         }
         catch (PessimisticLockingFailureException e) {
             throw e;

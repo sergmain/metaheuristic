@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -46,13 +47,15 @@ public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final TaskSyncService taskSyncService;
+//    private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextSyncService execContextSyncService;
 
     @Nullable
     public Task resetTask(final Long taskId) {
-        return taskSyncService.getWithSync(taskId, (task) -> {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+//        return taskSyncService.getWithSync(taskId, (task) -> {
             log.info("#305.010 Start re-setting task #{}", taskId);
             if (task==null) {
                 log.error("#305.020 task is null");
@@ -70,9 +73,10 @@ public class TaskExecStateService {
 
             log.info("#305.030 task #{} was re-setted to initial state", taskId);
             return task;
-        });
+//        });
     }
-    public TaskImpl toInProgressSimpleLambda(TaskImpl task) {
+
+    private TaskImpl toInProgressSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         return taskTransactionalService.save(task);
     }
@@ -82,45 +86,51 @@ public class TaskExecStateService {
         return taskTransactionalService.save(task);
     }
 
-    public void toOkSimple(Long taskId) {
-        taskSyncService.getWithSync(taskId, (task) -> {
-            if (task==null) {
-                log.warn("#305.040 Can't find Task for Id: {}", taskId);
-                return null;
-            }
-            if (task.execState==EnumsApi.TaskExecState.OK.value) {
-                return task;
-            }
-            task.setExecState(EnumsApi.TaskExecState.OK.value);
-            return taskTransactionalService.save(task);
-        });
+    private void toOkSimple(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+//        taskSyncService.getWithSync(taskId, (task) -> {
+        if (task==null) {
+            log.warn("#305.040 Can't find Task for Id: {}", taskId);
+            return;
+        }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        if (task.execState==EnumsApi.TaskExecState.OK.value) {
+            return;
+        }
+        task.setExecState(EnumsApi.TaskExecState.OK.value);
+        taskTransactionalService.save(task);
+//        });
     }
 
-    public void toNoneSimple(Long taskId) {
-        taskSyncService.getWithSync(taskId, (task) -> {
+    private void toNoneSimple(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+//        taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
                 log.warn("#305.040 Can't find Task for Id: {}", taskId);
-                return null;
+                return;
             }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
             if (task.execState==EnumsApi.TaskExecState.NONE.value) {
-                return task;
+                return;
             }
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
-            return taskTransactionalService.save(task);
-        });
+            taskTransactionalService.save(task);
+//        });
     }
 
     public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
         if (state!=EnumsApi.TaskExecState.ERROR) {
             throw new IllegalStateException("#305.060 state must be EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
-        taskSyncService.getWithSync(taskId, (task) -> {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+//        taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
                 log.warn("#305.080 Can't find Task for Id: {}", taskId);
-                return null;
+                return;
             }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
             if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-                return task;
+                return;
             }
             task.setExecState(state.value);
             task.setCompleted(true);
@@ -137,16 +147,28 @@ public class TaskExecStateService {
             task = taskTransactionalService.save(task);
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
-            return task;
-        });
+//            return task;
+//        });
     }
 
     private void toInProgressSimple(Long taskId) {
-        taskSyncService.getWithSync(taskId, this::toInProgressSimpleLambda);
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#305.082 Can't find Task for Id: {}", taskId);
+            return;
+        }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        toInProgressSimpleLambda(task);
     }
 
     private void toSkippedSimple(Long taskId) {
-        taskSyncService.getWithSync(taskId, this::toSkippedSimpleLambda);
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#305.084 Can't find Task for Id: {}", taskId);
+            return;
+        }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        toSkippedSimpleLambda(task);
     }
 
     public void changeTaskState(Long taskId, EnumsApi.TaskExecState state){

@@ -515,7 +515,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            taskTransactionalService.setResultReceived(simpleTask.getTaskId(), output.id);
+            taskTransactionalService.setResultReceived(task, output.id);
         }
 
         verifyGraphIntegrity();

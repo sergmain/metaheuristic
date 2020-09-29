@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcess
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -64,7 +63,7 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 public class TaskWithInternalContextEventService {
 
     private final TaskPersistencer taskPersistencer;
-    private final TaskSyncService taskSyncService;
+//    private final TaskSyncService taskSyncService;
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -145,8 +144,8 @@ public class TaskWithInternalContextEventService {
                     // ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
                     // won't be called for initializing output variables in internal function.
                     // the code which skips initializing is here - ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.getTaskAndAssignToProcessor
-                    variableService.initOutputVariables(taskParamsYaml, execContext, p);
-                    taskTransactionalService.setParams(event.taskId, taskParamsYaml);
+//                    variableService.initOutputVariables(taskParamsYaml, execContext, p);
+//                    taskTransactionalService.setParams(event.taskId, taskParamsYaml);
 
                     InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                             execContext.id, event.taskId, p.internalContextId, taskParamsYaml);

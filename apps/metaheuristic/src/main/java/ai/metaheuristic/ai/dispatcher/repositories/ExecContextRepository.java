@@ -33,44 +33,44 @@ import java.util.List;
 
 @Repository
 @Profile("dispatcher")
-@Transactional
+//@Transactional
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
     @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+////    @Transactional(readOnly = true)
     ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
     @Query(value="select w.id, w.state from ExecContextImpl w ")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Object[]> findAllExecStates();
 
     @Query(value="select w.id from ExecContextImpl w")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Long> findAllIds();
 
     // ai.metaheuristic.api.EnumsApi.ExecContextState
     // STARTED(3),         // started
     @Query(value="select w.id from ExecContextImpl w where w.state=3")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Long> findAllStartedIds();
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<ExecContextImpl> findByState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Long> findIdsByExecState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
             "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +
             "from ExecContextImpl b " +

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -41,34 +42,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class TaskPersistencer {
 
     private final TaskRepository taskRepository;
-    private final TaskSyncService taskSyncService;
+//    private final TaskSyncService taskSyncService;
     private final ExecContextSyncService execContextSyncService;
 
     public static List<Pair<String, String>> stacktraces = new ArrayList<>(10000);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TaskImpl save(TaskImpl task) {
-        if (task.id!=null) {
-            ReentrantReadWriteLock.WriteLock lock = taskSyncService.getWriteLock(task.id);
-            if (!lock.isHeldByCurrentThread()) {
-                if (!execContextSyncService.getWriteLock(task.execContextId).isHeldByCurrentThread()) {
-                    try {
-                        throw new RuntimeException("The thread isn't locked by execContextSyncService or taskSyncService");
-                    }
-                    catch (RuntimeException e) {
-                        log.error("The thread isn't locked by execContextSyncService or taskSyncService", e);
-                    }
-                }
-            }
-        }
-        try {
-            throw new RuntimeException("stacktrace");
-        }
-        catch (RuntimeException e) {
-            stacktraces.add( new ImmutablePair<>(
-                    "stacktrace for task #"+task.id+", version: "+task.version, ExceptionUtils.getStackTrace(e)));
-//            log.info("stacktrace for task #"+task.id+", version: "+task.version, e);
-        }
+        TxUtils.checkTx();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
         return taskRepository.save(task);
     }
 

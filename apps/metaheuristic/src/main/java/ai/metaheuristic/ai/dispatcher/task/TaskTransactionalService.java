@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -34,6 +35,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -44,7 +46,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
@@ -55,7 +56,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +80,8 @@ public class TaskTransactionalService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final TaskPersistencer taskPersistencer;
-    private final TaskSyncService taskSyncService;
+//    private final TaskSyncService taskSyncService;
+    private final ExecContextSyncService execContextSyncService;
     private final FunctionService functionService;
 
     @Transactional
@@ -116,31 +117,11 @@ public class TaskTransactionalService {
         return result;
     }
 
-    @Transactional
     public TaskImpl save(TaskImpl task) {
         try {
             return taskPersistencer.save(task);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
-            File f = new File("stacktrace-"+System.currentTimeMillis()+".txt");
-            try {
-                List<Pair<String, String>> stacktraces = TaskPersistencer.stacktraces;
-                TaskPersistencer.stacktraces = new ArrayList<>(10000);
-
-                try (OutputStream os = new FileOutputStream(f);
-                     OutputStreamWriter osw = new OutputStreamWriter(os);
-                     BufferedWriter sw = new BufferedWriter(osw)) {
-                    for (Pair<String, String> stacktrace : stacktraces) {
-                        sw.write(stacktrace.getKey());
-                        sw.newLine();
-                        sw.write(stacktrace.getValue());
-                        sw.newLine();
-                    }
-                }
-                stacktraces.clear();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
             throw e;
         }
     }
@@ -320,7 +301,14 @@ public class TaskTransactionalService {
 
     @Nullable
     public TaskImpl setParams(Long taskId, String taskParams) {
-        return taskSyncService.getWithSync(taskId, (task) -> setParamsInternal(taskId, taskParams, task));
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#305.082 Can't find Task for Id: {}", taskId);
+            return null;
+        }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        return setParamsInternal(taskId, taskParams, task);
+//        return taskSyncService.getWithSync(taskId, (task) -> setParamsInternal(taskId, taskParams, task));
     }
 
     @Nullable
@@ -339,14 +327,17 @@ public class TaskTransactionalService {
         return null;
     }
 
-    public Enums.UploadResourceStatus setResultReceived(Long taskId, Long variableId) {
-        Enums.UploadResourceStatus status = taskSyncService.getWithSync(false, taskId, (task) -> {
+    public Enums.UploadResourceStatus setResultReceived(TaskImpl task, Long variableId) {
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+//        Enums.UploadResourceStatus status = taskSyncService.getWithSync(false, taskId, (task) -> {
             try {
+/*
                 if (task == null) {
                     return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                 }
+*/
                 if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", taskId);
+                    log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", task.id);
                     return Enums.UploadResourceStatus.TASK_WAS_RESET;
                 }
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -364,23 +355,35 @@ public class TaskTransactionalService {
                 save(task);
                 return Enums.UploadResourceStatus.OK;
             } catch (ObjectOptimisticLockingFailureException e) {
-                log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived() for taskId: {}, variableId: {}, error: {}", taskId, variableId, e.toString());
+                log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived() for taskId: {}, variableId: {}, error: {}", task.id, variableId, e.toString());
                 log.warn("#307.060 ObjectOptimisticLockingFailureException", e);
                 return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
             }
-        });
+//        });
+/*
         if (status==null) {
             return Enums.UploadResourceStatus.TASK_NOT_FOUND;
         }
         return status;
+*/
     }
 
     public Enums.UploadResourceStatus setResultReceivedForInternalFunction(Long taskId) {
-        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#317.020 Task #{} is obsolete and was already deleted", taskId);
+            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+        }
+        TxUtils.checkTx();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
+//        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {
             try {
+/*
                 if (task == null) {
                     return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                 }
+*/
                 if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
                     log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
                     return Enums.UploadResourceStatus.TASK_WAS_RESET;
@@ -398,11 +401,13 @@ public class TaskTransactionalService {
                 log.warn("#307.120 ObjectOptimisticLockingFailureException", e);
                 return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
             }
+/*
         });
         if (status==null) {
             return Enums.UploadResourceStatus.TASK_NOT_FOUND;
         }
         return status;
+*/
     }
 
 
