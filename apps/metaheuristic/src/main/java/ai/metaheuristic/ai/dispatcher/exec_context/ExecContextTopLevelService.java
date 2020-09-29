@@ -21,8 +21,11 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -32,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -55,6 +59,8 @@ public class ExecContextTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTransactionalService taskTransactionService;
+    private final ExecContextRepository execContextRepository;
+    private final ExecContextSyncService execContextSyncService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -205,6 +211,20 @@ public class ExecContextTopLevelService {
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
         return result;
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask findTaskInAllExecContexts(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+        List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        for (Long execContextId : execContextIds) {
+            DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId, ()-> {
+                return execContextService.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
+            });
+            if (assignedTask!=null) {
+                return assignedTask;
+            }
+        }
+        return null;
     }
 
 }

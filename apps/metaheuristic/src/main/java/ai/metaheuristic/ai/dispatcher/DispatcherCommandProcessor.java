@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -54,6 +55,7 @@ public class DispatcherCommandProcessor {
     private final ExecContextService execContextService;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
+    private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextFSM execContextFSM;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
@@ -154,7 +156,7 @@ public class DispatcherCommandProcessor {
         }
         checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask =
-                execContextService.findTaskInAllExecContexts(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                execContextTopLevelService.findTaskInAllExecContexts(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
 
         if (assignedTask!=null) {
             log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);

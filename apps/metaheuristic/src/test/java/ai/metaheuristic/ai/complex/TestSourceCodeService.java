@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
@@ -474,7 +475,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             while(true) {
                 if (!(System.currentTimeMillis() - mills < period)) break;
                 TimeUnit.SECONDS.sleep(1);
-                finished = TaskWithInternalContextEventService.taskFinished(id);
+                finished = TaskWithInternalContextService.taskFinished(id);
                 if (finished) {
                     break;
                 }

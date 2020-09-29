@@ -101,25 +101,19 @@ public class ExecContextService {
     }
 
     @Transactional
-    public @Nullable DispatcherCommParamsYaml.AssignedTask findTaskInAllExecContexts(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
-        List<Long> execContextIds = execContextRepository.findAllStartedIds();
-        for (Long execContextId : execContextIds) {
-            return execContextSyncService.getWithSync(execContextId, ()-> {
-                ExecContextImpl execContext = execContextCache.findById(execContextId);
-                if (execContext==null) {
-                    log.error("#705.315Cache doesn't contain ExecContext #{}", execContextId);
-                    return null;
-                }
-                if (execContext.state!=ExecContextState.STARTED.code) {
-                    return null;
-                }
-                DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(
-                        reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
-
-                return assignedTask;
-            });
+    public @Nullable DispatcherCommParamsYaml.AssignedTask findTaskInAllExecContexts(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.error("#705.315Cache doesn't contain ExecContext #{}", execContextId);
+            return null;
         }
-        return null;
+        if (execContext.state!=ExecContextState.STARTED.code) {
+            return null;
+        }
+        DispatcherCommParamsYaml.AssignedTask task = getTaskAndAssignToProcessor(
+                reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
+        return task;
     }
 
     @Transactional
