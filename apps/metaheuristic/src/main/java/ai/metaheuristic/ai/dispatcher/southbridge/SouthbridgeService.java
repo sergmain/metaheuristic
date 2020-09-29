@@ -31,8 +31,8 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -80,8 +80,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SouthbridgeService {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
-
     // Processor's version for communicating with dispatcher
     private static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 
@@ -92,11 +90,11 @@ public class SouthbridgeService {
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
-    private final TaskTransactionalService taskTransactionalService;
     private final ProcessorSyncService processorSyncService;
     private final ProcessorTopLevelService processorTopLevelService;
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
+    private final VariableTopLevelService variableTopLevelService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -118,7 +116,6 @@ public class SouthbridgeService {
                 () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
     }
 
-    @Transactional
     public UploadResult uploadVariable(MultipartFile file, Long taskId, @Nullable Long variableId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -126,60 +123,61 @@ public class SouthbridgeService {
             log.warn(es);
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
         }
+        String originFilename = file.getOriginalFilename();
+        if (StringUtils.isBlank(originFilename)) {
+            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
+        }
+        if (variableId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 variableId is null" );
+        }
+        Variable variable = variableService.findById(variableId).orElse(null);
+        if (variable ==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
+        }
 
-        return execContextSyncService.getWithSync(task.execContextId, () -> {
+        File tempDir=null;
+        final File variableFile;
+        try {
+            tempDir = DirUtils.createTempDir("upload-variable-");
+            if (tempDir==null || tempDir.isFile()) {
+                final String location = System.getProperty("java.io.tmpdir");
+                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
+            }
+            variableFile = new File(tempDir, "variable.");
+            log.debug("Start storing an uploaded resource data to disk, target file: {}", variableFile.getPath());
+            try(OutputStream os = new FileOutputStream(variableFile)) {
+                IOUtils.copy(file.getInputStream(), os, 64000);
+            }
+            return execContextSyncService.getWithSync(task.execContextId, () -> {
+                try {
+                    return variableTopLevelService.storeVariable(variableFile, task, variable);
+                }
+                catch (PessimisticLockingFailureException th) {
+                    final String es = "#440.050 can't store the result, need to try again. Error: " + th.toString();
+                    log.error(es, th);
+                    return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
+                }
+                catch (Throwable th) {
+                    final String error = "#440.060 can't store the result, Error: " + th.toString();
+                    log.error(error, th);
+                    return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+                }
+            });
+        }
+        catch (VariableSavingException th) {
+            final String es = "#440.080 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);
+        }
+        catch (Throwable th) {
+            final String error = "#440.090 can't store the result, Error: " + th.toString();
+            log.error(error, th);
+            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
+        }
 
-            String originFilename = file.getOriginalFilename();
-            if (StringUtils.isBlank(originFilename)) {
-                return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
-            }
-            if (variableId==null) {
-                return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 variableId is null" );
-            }
-            Variable variable = variableService.findById(variableId).orElse(null);
-            if (variable ==null) {
-                return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
-            }
-
-            File tempDir=null;
-            try {
-                tempDir = DirUtils.createTempDir("upload-resource-");
-                if (tempDir==null || tempDir.isFile()) {
-                    final String location = System.getProperty("java.io.tmpdir");
-                    return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
-                }
-                final File resFile = new File(tempDir, "resource.");
-                log.debug("Start storing an uploaded resource data to disk, target file: {}", resFile.getPath());
-                try(OutputStream os = new FileOutputStream(resFile)) {
-                    IOUtils.copy(file.getInputStream(), os, 64000);
-                }
-                try (InputStream is = new FileInputStream(resFile)) {
-                    variableService.update(is, resFile.length(), variable);
-                }
-            }
-            catch (VariableSavingException th) {
-                final String es = "#440.045 can't store the result, unrecoverable error with data. Error: " + th.toString();
-                log.error(es, th);
-                return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);
-            }
-            catch (PessimisticLockingFailureException th) {
-                final String es = "#440.050 can't store the result, need to try again. Error: " + th.toString();
-                log.error(es, th);
-                return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
-            }
-            catch (Throwable th) {
-                final String error = "#440.060 can't store the result, Error: " + th.toString();
-                log.error(error, th);
-                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
-            }
-            finally {
-                DirUtils.deleteAsync(tempDir);
-            }
-            Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(task, variable.getId());
-            return status== Enums.UploadResourceStatus.OK
-                    ? OK_UPLOAD_RESULT
-                    : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
-        });
     }
 
     private CleanerInfo getAbstractDataResponseEntity(@Nullable String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
@@ -308,6 +306,7 @@ public class SouthbridgeService {
                         .collect(Collectors.toList()));
     }
 
+    @Transactional
     public String processRequest(String data, String remoteAddress) {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
         DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
@@ -353,7 +352,6 @@ public class SouthbridgeService {
         lcpy.dispatcherCommContext = lcc;
     }
 
-    @SuppressWarnings("UnnecessaryReturnStatement")
     private void checkProcessorId(@Nullable String processorIdAsStr, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(processorIdAsStr)) {
             log.warn("#440.240 StringUtils.isBlank(processorId), return RequestProcessorId()");

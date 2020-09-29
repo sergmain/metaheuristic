@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -31,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -46,6 +48,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -78,6 +81,7 @@ public class BatchSplitterFunction implements InternalFunction {
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
     private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextSyncService execContextSyncService;
 
     @Override
     public String getCode() {
@@ -89,11 +93,14 @@ public class BatchSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_SPLITTER_FUNCTION;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             @NonNull TaskParamsYaml taskParamsYaml) {
+        TxUtils.checkTx();
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");

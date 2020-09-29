@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -86,36 +87,34 @@ public class TaskExecStateService {
         return taskTransactionalService.save(task);
     }
 
-    private void toOkSimple(Long taskId) {
+    @Nullable
+    private TaskImpl toOkSimple(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-//        taskSyncService.getWithSync(taskId, (task) -> {
         if (task==null) {
             log.warn("#305.040 Can't find Task for Id: {}", taskId);
-            return;
+            return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==EnumsApi.TaskExecState.OK.value) {
-            return;
+            return null;
         }
         task.setExecState(EnumsApi.TaskExecState.OK.value);
-        taskTransactionalService.save(task);
-//        });
+        return taskTransactionalService.save(task);
     }
 
-    private void toNoneSimple(Long taskId) {
+    @Nullable
+    private TaskImpl toNoneSimple(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-//        taskSyncService.getWithSync(taskId, (task) -> {
-            if (task==null) {
-                log.warn("#305.040 Can't find Task for Id: {}", taskId);
-                return;
-            }
+        if (task==null) {
+            log.warn("#305.040 Can't find Task for Id: {}", taskId);
+            return null;
+        }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-            if (task.execState==EnumsApi.TaskExecState.NONE.value) {
-                return;
-            }
-            task.setExecState(EnumsApi.TaskExecState.NONE.value);
-            taskTransactionalService.save(task);
-//        });
+        if (task.execState==EnumsApi.TaskExecState.NONE.value) {
+            return null;
+        }
+        task.setExecState(EnumsApi.TaskExecState.NONE.value);
+        return taskTransactionalService.save(task);
     }
 
     public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
@@ -151,50 +150,51 @@ public class TaskExecStateService {
 //        });
     }
 
-    private void toInProgressSimple(Long taskId) {
+    @Nullable
+    private TaskImpl toInProgressSimple(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.082 Can't find Task for Id: {}", taskId);
-            return;
+            return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-        toInProgressSimpleLambda(task);
+        return toInProgressSimpleLambda(task);
     }
 
-    private void toSkippedSimple(Long taskId) {
+    @Nullable
+    private TaskImpl toSkippedSimple(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.084 Can't find Task for Id: {}", taskId);
-            return;
+            return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-        toSkippedSimpleLambda(task);
+        return toSkippedSimpleLambda(task);
     }
 
-    public void changeTaskState(Long taskId, EnumsApi.TaskExecState state){
+    @Nullable
+    public TaskImpl changeTaskState(Long taskId, EnumsApi.TaskExecState state){
         switch (state) {
             case NONE:
-                toNoneSimple(taskId);
-                break;
+                return toNoneSimple(taskId);
             case ERROR:
                 throw new IllegalStateException("Must be set via ExecContextFSM.finishWithError()");
 //                finishTaskAsError(taskId, state, -997, "#305.100 Task was finished with an unknown error, can't process it");
 //                break;
             case OK:
-                toOkSimple(taskId);
-                break;
+                return toOkSimple(taskId);
             case IN_PROGRESS:
-                toInProgressSimple(taskId);
-                break;
+                return toInProgressSimple(taskId);
             case SKIPPED:
-                toSkippedSimple(taskId);
-                break;
+                return toSkippedSimple(taskId);
             default:
                 throw new IllegalStateException("307.120 Right now it must be initialized somewhere else. state: " + state);
         }
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
+        TxUtils.checkTx();
+
         status.childrenTasks.forEach(t -> {
             TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
             if (task != null) {

@@ -349,11 +349,11 @@ public class ExecContextFSM {
 
     // write operations with graph
     public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
-        TxUtils.checkTx();
         if (execContext==null) {
             // this execContext was deleted
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
+        TxUtils.checkTx();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));

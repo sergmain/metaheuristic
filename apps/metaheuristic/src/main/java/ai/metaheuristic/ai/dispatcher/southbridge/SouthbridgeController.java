@@ -53,7 +53,7 @@ public class SouthbridgeController {
     private final SouthbridgeService serverService;
 
     @PostMapping("/srv-v2/{random-part}")
-    public String processRequestAuth(
+    public String processRequestWithAuth(
             HttpServletRequest request, HttpServletResponse response,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable @RequestBody String data
