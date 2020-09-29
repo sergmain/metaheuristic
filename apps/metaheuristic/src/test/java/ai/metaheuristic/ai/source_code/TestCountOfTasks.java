@@ -87,7 +87,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         long mills = System.currentTimeMillis();
 
-        sourceCodeService.createAllTasks();
+        taskProducingService.createAllTasks();
 //        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForTest);
 //        assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
 //        int numberOfTasks = taskResult.numberOfTasks;

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -68,7 +69,7 @@ public class SourceCodeValidationService {
     private final FunctionService functionService;
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
-    private final InternalFunctionProcessor internalFunctionProcessor;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
@@ -258,7 +259,7 @@ public class SourceCodeValidationService {
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
             if (snDef.context== EnumsApi.FunctionExecContext.internal) {
-                if (!internalFunctionProcessor.isRegistered(snDef.code)) {
+                if (!internalFunctionRegisterService.isRegistered(snDef.code)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,
                             "#177.380 Unknown internal function '"+snDef.code+"'"

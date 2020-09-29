@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
@@ -26,14 +27,19 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -45,13 +51,16 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,10 +83,12 @@ public class BatchService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
-    private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final DispatcherEventService dispatcherEventService;
+    private final ExecContextService execContextService;
+    private final ExecContextFSM execContextFSM;
+    private final TaskProducingService taskProducingService;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -91,9 +102,8 @@ public class BatchService {
                 : ext;
     }
 
-    @Transactional
+    @Nullable
     public Batch changeStateToPreparing(Long batchId) {
-        return batchSyncService.getWithSync(batchId, ()-> {
             Batch b = batchCache.findById(batchId);
             if (b == null) {
                 log.warn("#990.010 batch wasn't found {}", batchId);
@@ -109,12 +119,11 @@ public class BatchService {
             }
             b.execState = Enums.BatchExecState.Preparing.code;
             return batchCache.save(b);
-        });
     }
 
     @Transactional
+    @Nullable
     public Batch changeStateToProcessing(Long batchId) {
-        return batchSyncService.getWithSync(batchId, ()-> {
             Batch b = batchCache.findById(batchId);
             if (b == null) {
                 log.warn("#990.030 batch wasn't found {}", batchId);
@@ -130,48 +139,30 @@ public class BatchService {
             b.execState = Enums.BatchExecState.Processing.code;
             dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
             return batchCache.save(b);
-        });
     }
 
     private void changeStateToFinished(Long batchId) {
-        batchSyncService.getWithSyncVoid(batchId, () -> {
             try {
                 Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batchId);
-                    return null;
+                    return;
                 }
                 if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
                     throw new IllegalStateException("#990.060 Can't change state to Finished, " +
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
                 if (b.execState == Enums.BatchExecState.Finished.code) {
-                    return null;
+                    return;
                 }
                 b.execState = Enums.BatchExecState.Finished.code;
                 batchCache.save(b);
-                return null;
+                return;
             }
             finally {
                 dispatcherEventService.publishEventBatchFinished(batchId);
             }
-        });
     }
-
-
-/*
-    private static String getMainDocumentPoolCode(ExecContextImpl execContext) {
-        ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
-        List<String> codes = resourceParams.execContextYaml.variables.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
-        if (codes.isEmpty()) {
-            throw new IllegalStateException("#990.080 Main document section is missed. execContext.params:\n" + execContext.getParams());
-        }
-        if (codes.size()>1) {
-            throw new IllegalStateException("#990.090 Main document section contains more than one main document. execContext.params:\n" + execContext.getParams());
-        }
-        return codes.get(0);
-    }
-*/
 
     @Transactional
     public void updateBatchStatuses() {
@@ -274,4 +265,81 @@ public class BatchService {
         }
         return filenames.get(0);
     }
+
+    @Transactional
+    public BatchData.UploadingStatus createBatchForFile(final MultipartFile file, String originFilename, SourceCodeImpl sourceCode, ExecContextImpl execContext, final DispatcherContext dispatcherContext) {
+        Batch b;
+        String startInputAs = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params).variables.startInputAs;
+        if (S.b(startInputAs)) {
+            return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
+        }
+        try {
+            variableService.createInitialized(
+                    file.getInputStream(), file.getSize(), startInputAs,
+                    originFilename, execContext.getId(),"1"
+            );
+        } catch (IOException e) {
+            ExceptionUtils.rethrow(e);
+        }
+
+        b = new Batch(sourceCode.id, execContext.getId(), Enums.BatchExecState.Stored,
+                dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
+
+        BatchParamsYaml bpy = new BatchParamsYaml();
+        bpy.username = dispatcherContext.account.username;
+        b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
+        b = batchCache.save(b);
+
+        dispatcherEventService.publishBatchEvent(
+                EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
+                sourceCode.uid, null, b.id, execContext.getId(), dispatcherContext );
+
+        final Batch batch = changeStateToPreparing(b.id);
+        // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
+        if (batch==null) {
+            return new BatchData.UploadingStatus("#981.220 can't find batch with id " + b.id);
+        }
+
+        log.info("#981.240 The file {} was successfully stored for processing", originFilename);
+        //noinspection unused
+        int i=0;
+        // start producing new tasks
+        OperationStatusRest operationStatus = execContextService.execContextTargetState(
+                execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+
+        if (operationStatus.isErrorMessages()) {
+            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+        }
+        taskProducingService.produceAllTasks(true, sourceCode, execContext);
+
+        operationStatus = execContextService.execContextTargetState(execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
+
+        if (operationStatus.isErrorMessages()) {
+            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+        }
+
+        changeStateToProcessing(batch.id);
+
+        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, execContext.getId());
+        return uploadingStatus;
+    }
+
+    @Transactional
+    public OperationStatusRest deleteBatch(Long companyUniqueId, boolean isVirtualDeletion, Batch batch) {
+        if (isVirtualDeletion) {
+            if (!batch.deleted) {
+                execContextFSM.toFinished(batch.execContextId);
+
+                Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
+                b.deleted = true;
+                batchCache.save(b);
+            }
+        } else {
+            execContextService.deleteExecContext(batch.execContextId, companyUniqueId);
+            batchCache.deleteById(batch.id);
+        }
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batch.id + " was deleted successfully.", null);
+    }
+
+
 }

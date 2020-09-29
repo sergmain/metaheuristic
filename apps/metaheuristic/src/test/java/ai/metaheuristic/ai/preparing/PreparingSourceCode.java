@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -114,6 +115,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextSyncService execContextSyncService;
+
+    @Autowired
+    public TaskProducingService taskProducingService;
 
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
@@ -315,7 +319,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
-            sourceCodeService.createAllTasks();
+            taskProducingService.createAllTasks();
 //            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
 //            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForTest.id).size());
 //            assertEquals(result1.numberOfTasks, execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest));

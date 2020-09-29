@@ -82,6 +82,7 @@ public class ExecContextCreatorService {
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
+    @Transactional
     public ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {

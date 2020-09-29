@@ -30,4 +30,10 @@ public class TxUtils {
             throw new IllegalStateException("There isn't a Tx");
         }
     }
+
+    public static void checkTxExists() {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException("Tx exists");
+        }
+    }
 }

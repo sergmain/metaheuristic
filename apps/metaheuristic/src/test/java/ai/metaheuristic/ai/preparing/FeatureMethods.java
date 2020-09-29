@@ -145,7 +145,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             assertTrue(tasks02.isEmpty());
 
             long mills = System.currentTimeMillis();
-            sourceCodeService.createAllTasks();
+            taskProducingService.createAllTasks();
 //            SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForTest);
 //            assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
             log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");

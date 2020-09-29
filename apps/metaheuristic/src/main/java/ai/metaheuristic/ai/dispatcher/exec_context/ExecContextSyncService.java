@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -57,6 +58,7 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
@@ -68,6 +70,7 @@ public class ExecContextSyncService {
 
     @Nullable
     public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
@@ -78,6 +81,7 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContext.id);
         try {
             lock.lock();

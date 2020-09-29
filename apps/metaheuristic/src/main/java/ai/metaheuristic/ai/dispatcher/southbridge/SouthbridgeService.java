@@ -36,6 +36,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -99,6 +100,7 @@ public class SouthbridgeService {
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
     private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
+        TxUtils.checkTxExists();
         final String key = "--" + binaryType + "--" + code;
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
         try {

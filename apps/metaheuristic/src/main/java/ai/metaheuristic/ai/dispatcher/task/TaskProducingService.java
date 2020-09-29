@@ -17,13 +17,20 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -54,6 +61,66 @@ public class TaskProducingService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskTransactionalService taskTransactionalService;
+
+    private final ExecContextRepository execContextRepository;
+    private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeValidationService sourceCodeValidationService;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
+
+    // TODO 2019.05.19 add reporting of producing of tasks
+    // TODO 2020.01.17 reporting to where? do we need to implement it?
+    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
+    @Transactional
+    public synchronized void createAllTasks() {
+
+        Monitoring.log("##019", Enums.Monitor.MEMORY);
+        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
+        Monitoring.log("##020", Enums.Monitor.MEMORY);
+        if (!execContexts.isEmpty()) {
+            log.info("#701.020 Start producing tasks");
+        }
+        for (ExecContextImpl execContext : execContexts) {
+            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
+            if (sourceCode==null) {
+                execContextFSM.toStopped(execContext.id);
+                continue;
+            }
+            Monitoring.log("##021", Enums.Monitor.MEMORY);
+            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, execContext.getParams());
+            produceAllTasks(true, sourceCode, execContext);
+            Monitoring.log("##022", Enums.Monitor.MEMORY);
+        }
+        if (!execContexts.isEmpty()) {
+            log.info("#701.040 Producing of tasks was finished");
+        }
+    }
+
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {
+        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
+        if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
+            result.sourceCodeValidationResult = new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR, "Tasks were produced already");
+            return result;
+        }
+        long mills = System.currentTimeMillis();
+        result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+        if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
+                result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
+            log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
+            if(isPersist) {
+                execContextFSM.toStopped(execContext.getId());
+            }
+            return result;
+        }
+        Monitoring.log("##022", Enums.Monitor.MEMORY);
+        mills = System.currentTimeMillis();
+        result = produceTasks(isPersist, execContext);
+        log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        Monitoring.log("##033", Enums.Monitor.MEMORY);
+
+        return result;
+    }
 
     @Transactional
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
@@ -106,7 +173,7 @@ public class TaskProducingService {
                     return new TaskData.ProduceTaskResult(TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#375.020 Process '"+processCode+"' wasn't found");
                 }
             }
-            if (internalFunctionProcessor.isRegistered(p.function.code) && p.function.context!= FunctionExecContext.internal) {
+            if (internalFunctionRegisterService.isRegistered(p.function.code) && p.function.context!= FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
                         "#375.040 Process '"+processCode+"' must be internal");
             }

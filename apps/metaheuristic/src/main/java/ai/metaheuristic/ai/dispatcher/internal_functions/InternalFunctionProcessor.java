@@ -28,11 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
@@ -48,23 +43,12 @@ public class InternalFunctionProcessor {
 
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
-    public final List<InternalFunction> internalFunctions;
-
-    private final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
-
-    @PostConstruct
-    public void postConstruct() {
-        internalFunctions.forEach(o->internalFunctionMap.put(o.getCode(), o));
-    }
-
-    public boolean isRegistered(String functionCode) {
-        return internalFunctionMap.containsKey(functionCode);
-    }
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     public InternalFunctionProcessingResult process(Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        InternalFunction internalFunction = internalFunctionMap.get(taskParamsYaml.task.function.code);
+        InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
         }

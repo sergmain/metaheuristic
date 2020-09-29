@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -52,7 +52,7 @@ public class Schedulers {
 
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
-        private final SourceCodeService sourceCodeService;
+        private final TaskProducingService taskProducingService;
         private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
         private final BatchService batchService;
         private final ReplicationService replicationService;
@@ -122,7 +122,7 @@ public class Schedulers {
                 return;
             }
             log.info("Invoking sourceCodeService.createAllTasks()");
-            sourceCodeService.createAllTasks();
+            taskProducingService.createAllTasks();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")

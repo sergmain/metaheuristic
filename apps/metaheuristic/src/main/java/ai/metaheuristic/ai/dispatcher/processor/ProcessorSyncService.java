@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.processor;
 
 import ai.metaheuristic.ai.dispatcher.CommonSync;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,6 +55,7 @@ public class ProcessorSyncService {
     }
 
     public <T> T getWithSync(Long taskId, Supplier<T> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();
@@ -69,6 +71,7 @@ public class ProcessorSyncService {
     }
 
     public @Nullable <T> T getWithSyncNullable(boolean debug, Long taskId, Supplier<T> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         if (debug) {
             log.debug("WriteLock: " + lock);
@@ -82,6 +85,7 @@ public class ProcessorSyncService {
     }
 
     public void getWithSyncVoid(Long taskId, Supplier<Void> supplier) {
+        TxUtils.checkTxExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();

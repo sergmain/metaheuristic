@@ -71,60 +71,6 @@ public class SourceCodeService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    // TODO 2019.05.19 add reporting of producing of tasks
-    // TODO 2020.01.17 reporting to where? do we need to implement it?
-    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
-    public synchronized void createAllTasks() {
-
-        Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
-        Monitoring.log("##020", Enums.Monitor.MEMORY);
-        if (!execContexts.isEmpty()) {
-            log.info("#701.020 Start producing tasks");
-        }
-        for (ExecContextImpl execContext : execContexts) {
-            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-            if (sourceCode==null) {
-                execContextFSM.toStopped(execContext.id);
-                continue;
-            }
-            Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, execContext.getParams());
-            produceAllTasks(true, sourceCode, execContext);
-            Monitoring.log("##022", Enums.Monitor.MEMORY);
-        }
-        if (!execContexts.isEmpty()) {
-            log.info("#701.040 Producing of tasks was finished");
-        }
-    }
-
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {
-        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
-            result.sourceCodeValidationResult = new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR, "Tasks were produced already");
-            return result;
-        }
-        long mills = System.currentTimeMillis();
-        result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
-        if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
-                result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
-            log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
-            if(isPersist) {
-                execContextFSM.toStopped(execContext.getId());
-            }
-            return result;
-        }
-        Monitoring.log("##022", Enums.Monitor.MEMORY);
-        mills = System.currentTimeMillis();
-        result = taskProducingService.produceTasks(isPersist, execContext);
-        log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
-        Monitoring.log("##033", Enums.Monitor.MEMORY);
-
-        return result;
-    }
-
     public static List<SourceCodeParamsYaml.Variable> findVariableByType(SourceCodeParamsYaml scpy, String type) {
         List<SourceCodeParamsYaml.Variable> list = new ArrayList<>();
         for (SourceCodeParamsYaml.Process process : scpy.source.processes) {

@@ -16,10 +16,359 @@
 
 package ai.metaheuristic.ai.tx;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.tx.TxTestingService;
+import ai.metaheuristic.ai.dispatcher.tx.TxTestingTopLevelService;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author Serge
  * Date: 9/28/2020
  * Time: 11:44 PM
  */
-public class TestTx {
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@ActiveProfiles("dispatcher")
+@Slf4j
+public class TestTx extends PreparingSourceCode {
+
+    @Override
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
+    }
+
+    @Autowired
+    public TaskService taskService;
+    @Autowired
+    public TaskPersistencer taskPersistencer;
+    @Autowired
+    public ExecContextService execContextService;
+    @Autowired
+    public TxTestingService txTestingService;
+    @Autowired
+    public TxTestingTopLevelService txTestingTopLevelService;
+
+    @Autowired
+    public TaskRepository taskRepository;
+
+
+    @Test
+    public void testSingleThread() {
+        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        assertNotNull(r.execContext);
+        execContextForTest = r.execContext;
+
+        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+
+        assertNotNull(task.id);
+        assertNotNull(task.version);
+        assertEquals("BBB", task.params);
+
+        // == txTestingTopLevelService
+
+        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, task.id);
+        assertEquals("AAA", s);
+
+        TaskImpl task1 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task1.id);
+        assertNotNull(task1.version);
+        assertEquals("BBB", task1.params);
+        assertTrue((int)task1.version>task.version);
+        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t1, task1);
+
+        ////
+
+        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, task.id);
+        assertEquals("AAAAAA", s);
+
+        TaskImpl task2 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task2.id);
+        assertNotNull(task2.version);
+        assertEquals("BBB", task2.params);
+        assertTrue((int)task2.version>task1.version);
+        TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t2, task2);
+
+
+        // == txTestingService
+
+        s = txTestingService.updateSingle(execContextForTest.id, task.id);
+        assertEquals("AAA", s);
+
+        TaskImpl task3 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task3.id);
+        assertNotNull(task3.version);
+        assertEquals("BBB", task3.params);
+        assertTrue((int)task3.version>task2.version);
+        TaskImpl t3 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t3, task3);
+
+
+        ////
+
+        s = txTestingService.updateDouble(execContextForTest.id, task.id);
+        assertEquals("AAAAAA", s);
+
+        TaskImpl task4 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task4.id);
+        assertNotNull(task4.version);
+        assertEquals("BBB", task4.params);
+        assertTrue((int)task4.version>task3.version);
+        TaskImpl t4 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t4, task4);
+
+        ////
+
+        s = txTestingService.updateWithSyncSingle(execContextForTest.id, task.id);
+        assertEquals("AAA", s);
+
+        TaskImpl task5 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task5.id);
+        assertNotNull(task5.version);
+        assertEquals("BBB", task5.params);
+        assertTrue((int)task5.version>task4.version);
+        TaskImpl t5 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t5, task5);
+
+        ////
+
+        s = txTestingService.updateWithSyncDouble(execContextForTest.id, task.id);
+        assertEquals("AAAAAA", s);
+
+        TaskImpl task6 = txTestingService.update(task.id, "BBB");
+
+        assertNotNull(task6.id);
+        assertNotNull(task6.version);
+        assertEquals("BBB", task6.params);
+        assertTrue((int)task6.version>task5.version);
+        TaskImpl t6 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        assertEquals(t6, task6);
+
+
+
+    }
+
+
+    @Test
+    public void testMultiThreadTopLevelService() throws InterruptedException {
+        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        assertNotNull(r.execContext);
+        execContextForTest = r.execContext;
+
+        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+
+        assertNotNull(task.id);
+        assertNotNull(task.version);
+        assertEquals("BBB", task.params);
+
+        AtomicBoolean t1 = new AtomicBoolean();
+        AtomicBoolean t2 = new AtomicBoolean();
+        AtomicBoolean t3 = new AtomicBoolean();
+        AtomicBoolean t4 = new AtomicBoolean();
+        AtomicBoolean error = new AtomicBoolean();
+        new Thread(()-> {
+            try {
+                testTopLevelService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t1.set(true);
+        }, "t1"
+        ).start();
+        new Thread(()-> {
+            try {
+                testTopLevelService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t2.set(true);
+        }, "t2"
+        ).start();
+        new Thread(()-> {
+            try {
+                testTopLevelService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t3.set(true);
+        }, "t3"
+        ).start();
+        new Thread(()-> {
+            try {
+                testTopLevelService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t4.set(true);
+        }, "t4"
+        ).start();
+
+        long mills = System.currentTimeMillis();
+
+        while( true ) {
+            Thread.sleep(1_000);
+            if (System.currentTimeMillis() - mills >60_000) {
+                throw new IllegalStateException("Too long");
+            }
+            if (t1.get() && t2.get() && t3.get() && t4.get()) {
+                break;
+            }
+        }
+        assertFalse(error.get());
+    }
+
+    private void testTopLevelService(Long taskId) {
+        // == txTestingTopLevelService
+
+        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, taskId);
+        assertEquals("AAA", s);
+
+        ////
+
+        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, taskId);
+        assertEquals("AAAAAA", s);
+
+        // == txTestingService
+
+        ////
+
+/*
+        s = txTestingService.updateWithSyncSingle(execContextForTest.id, taskId);
+        assertEquals("AAA", s);
+
+        ////
+
+        s = txTestingService.updateWithSyncDouble(execContextForTest.id, taskId);
+        assertEquals("AAAAAA", s);
+*/
+
+
+    }
+
+    @Test
+    public void testMultiThreadService() throws InterruptedException {
+        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        assertNotNull(r.execContext);
+        execContextForTest = r.execContext;
+
+        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+
+        assertNotNull(task.id);
+        assertNotNull(task.version);
+        assertEquals("BBB", task.params);
+
+        AtomicBoolean t1 = new AtomicBoolean();
+        AtomicBoolean t2 = new AtomicBoolean();
+        AtomicBoolean t3 = new AtomicBoolean();
+        AtomicBoolean t4 = new AtomicBoolean();
+        AtomicBoolean error = new AtomicBoolean();
+        new Thread(()-> {
+            try {
+                testService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t1.set(true);
+        }, "t1"
+        ).start();
+        new Thread(()-> {
+            try {
+                testService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t2.set(true);
+        }, "t2"
+        ).start();
+        new Thread(()-> {
+            try {
+                testService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t3.set(true);
+        }, "t3"
+        ).start();
+        new Thread(()-> {
+            try {
+                testService(task.id);
+            } catch (Throwable e) {
+                error.set(true);
+                e.printStackTrace();
+            }
+            t4.set(true);
+        }, "t4"
+        ).start();
+
+        long mills = System.currentTimeMillis();
+
+        while( true ) {
+            Thread.sleep(1_000);
+            if (System.currentTimeMillis() - mills >60_000) {
+                throw new IllegalStateException("Too long");
+            }
+            if (t1.get() && t2.get() && t3.get() && t4.get()) {
+                break;
+            }
+        }
+        assertTrue(error.get());
+    }
+
+    private void testService(Long taskId) {
+        // == txTestingTopLevelService
+
+/*
+        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, taskId);
+        assertEquals("AAA", s);
+
+        ////
+
+        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, taskId);
+        assertEquals("AAAAAA", s);
+*/
+
+        // == txTestingService
+
+        ////
+
+        String s = txTestingService.updateWithSyncSingle(execContextForTest.id, taskId);
+        assertEquals("AAA", s);
+
+        ////
+
+        s = txTestingService.updateWithSyncDouble(execContextForTest.id, taskId);
+        assertEquals("AAAAAA", s);
+
+
+    }
+
 }
