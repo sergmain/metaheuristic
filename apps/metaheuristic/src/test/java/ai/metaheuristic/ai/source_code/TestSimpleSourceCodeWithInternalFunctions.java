@@ -84,7 +84,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+        DispatcherCommParamsYaml.AssignedTask t = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -103,7 +103,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(task, output.id);
+            Enums.UploadResourceStatus status = taskTopLevelService.setResultReceived(task, output.id);
             assertEquals(Enums.UploadResourceStatus.OK, status);
         }
 

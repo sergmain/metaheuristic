@@ -241,11 +241,34 @@ public class ExecContextTopLevelService {
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTaskInAllExecContexts(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId, ()-> {
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext == null) {
+                log.error("#705.315Cache doesn't contain ExecContext #{}", execContextId);
+                return null;
+            }
+            if (execContext.state != EnumsApi.ExecContextState.STARTED.code) {
+                return null;
+            }
+            DispatcherCommParamsYaml.AssignedTask task = getTaskAndAssignToProcessor(
+                    reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
+            return task;
+        });
+        return assignedTask;
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId,
+                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         for (Long execContextId : execContextIds) {
-            DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
-                    () -> execContextService.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
+            DispatcherCommParamsYaml.AssignedTask assignedTask = findTaskInExecContext(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
             if (assignedTask != null) {
                 return assignedTask;
             }

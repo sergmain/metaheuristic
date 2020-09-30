@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -35,11 +36,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -54,7 +52,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParam;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -107,6 +104,9 @@ public abstract class PreparingCore {
     @Autowired
     private ProcessorTopLevelService processorTopLevelService;
 
+    @Autowired
+    private ProcessorTransactionService processorTransactionService;
+
     public Processor processor = null;
     public String processorIdAsStr;
 
@@ -147,7 +147,7 @@ public abstract class PreparingCore {
 
 
             // Prepare processor
-            processor = processorTopLevelService.createProcessor(description, null, ss);
+            processor = processorTransactionService.createProcessor(description, null, ss);
             log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
             processorIdAsStr =  Long.toString(processor.getId());
 

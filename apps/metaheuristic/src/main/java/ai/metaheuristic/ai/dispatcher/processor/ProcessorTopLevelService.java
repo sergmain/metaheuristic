@@ -42,14 +42,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -65,15 +62,12 @@ public class ProcessorTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
     private final ProcessorSyncService processorSyncService;
+    private final ProcessorTransactionService processorTransactionService;
 
     // Attention, this value must be greater than
     // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
     // at least for 20 seconds
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
-
-    private static String createNewSessionId() {
-        return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
-    }
 
     public ProcessorData.ProcessorsResult getProcessors(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.processorRowsLimit, pageable);
@@ -125,110 +119,24 @@ public class ProcessorTopLevelService {
     }
 
     @Transactional
-    public ProcessorData.ProcessorResult updateDescription(Long processorId, String desc) {
-        Processor s = processorCache.findById(processorId);
-        if (s==null) {
-            return new ProcessorData.ProcessorResult("#807.060 processor wasn't found, processorId: " + processorId);
-        }
-        s.description = desc;
-        ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processorCache.save(s));
-        return r;
+    public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
+        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
     }
 
-    @Transactional
-    public OperationStatusRest deleteProcessorById(Long id) {
-        Processor processor = processorCache.findById(id);
-        if (processor == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
-        }
-        processorCache.deleteById(id);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+    public OperationStatusRest deleteProcessorById(Long processorId) {
+        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
-    @Transactional
+    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+        return processorSyncService.getWithSync(processor.id, ()-> processorTransactionService.assignNewSessionId(processor, ss));
+    }
+
     public void storeProcessorStatuses(@Nullable String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
         if (S.b(processorIdAsStr)) {
             return;
         }
         final Long processorId = Long.valueOf(processorIdAsStr);
-        processorSyncService.getWithSyncVoid(processorId, ()-> {
-            log.debug("Before entering in sync block, storeProcessorStatus()");
-            final Processor processor = processorCache.findById(processorId);
-            if (processor == null) {
-                // we throw ISE cos all checks have to be made early
-                throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
-            }
-            ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-            boolean isUpdated = false;
-            if (isProcessorStatusDifferent(ss, status)) {
-                ss.env = status.env;
-                ss.gitStatusInfo = status.gitStatusInfo;
-                ss.schedule = status.schedule;
-
-                // Do not include updating of sessionId
-                // ss.sessionId = command.status.sessionId;
-
-                // Do not include updating of sessionCreatedOn!
-                // ss.sessionCreatedOn = command.status.sessionCreatedOn;
-
-                ss.ip = status.ip;
-                ss.host = status.host;
-                ss.errors = status.errors;
-                ss.logDownloadable = status.logDownloadable;
-                ss.taskParamsVersion = status.taskParamsVersion;
-                ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
-
-                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-                processor.updatedOn = System.currentTimeMillis();
-                isUpdated = true;
-            }
-            if (isProcessorFunctionDownloadStatusDifferent(ss, functionDownloadStatus)) {
-                ss.downloadStatuses = functionDownloadStatus.statuses.stream()
-                        .map(o -> new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
-                        .collect(Collectors.toList());
-                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-                processor.updatedOn = System.currentTimeMillis();
-                isUpdated = true;
-            }
-            if (isUpdated) {
-                try {
-                    log.debug("#807.120 Save new processor status, processor: {}", processor);
-                    processorCache.save(processor);
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#807.140 ObjectOptimisticLockingFailureException was encountered\n" +
-                            "new processor:\n{}\n" +
-                            "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
-
-                    processorCache.clearCache();
-                }
-            } else {
-                log.debug("#807.160 Processor status is equal to the status stored in db");
-            }
-            log.debug("#807.180 After leaving sync block");
-            return null;
-
-        });
-    }
-
-    @Transactional
-    public Processor createProcessor(@Nullable String description, @Nullable String ip, ProcessorStatusYaml ss) {
-        Processor p = new Processor();
-        p.setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
-        p.description= description;
-        p.ip = ip;
-        return processorCache.save(p);
-    }
-
-    @Transactional
-    public ProcessorData.ProcessorWithSessionId getNewProcessorId() {
-        String sessionId = ProcessorTopLevelService.createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
-                "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown);
-
-        final Processor p = createProcessor(null, null, psy);
-        return new ProcessorData.ProcessorWithSessionId(p, sessionId);
+        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
     }
 
     /**
@@ -262,56 +170,15 @@ public class ProcessorTopLevelService {
     }
 
     @Transactional
-    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
-
-        ss.sessionId = ProcessorTopLevelService.createNewSessionId();
-        ss.sessionCreatedOn = System.currentTimeMillis();
-        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        processor.updatedOn = ss.sessionCreatedOn;
-        processorCache.save(processor);
-        // the same processorId but new sessionId
-        return new DispatcherCommParamsYaml.ReAssignProcessorId(processor.getId(), ss.sessionId);
-    }
-
-    @Transactional
     public DispatcherCommParamsYaml.ReAssignProcessorId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
-        String sessionId = ProcessorTopLevelService.createNewSessionId();
+        String sessionId = ProcessorTransactionService.createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
-        Processor p = createProcessor(description, remoteAddress, psy);
+        Processor p = processorTransactionService.createProcessor(description, remoteAddress, psy);
 
         return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
-    }
-
-
-
-    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.ReportProcessorStatus status) {
-        return
-        !Objects.equals(ss.env, status.env) ||
-        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
-        !Objects.equals(ss.schedule, status.schedule) ||
-        !Objects.equals(ss.ip, status.ip) ||
-        !Objects.equals(ss.host, status.host) ||
-        !Objects.equals(ss.errors, status.errors) ||
-        ss.logDownloadable!=status.logDownloadable ||
-        ss.taskParamsVersion!=status.taskParamsVersion||
-        ss.os!=status.os;
-    }
-
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.FunctionDownloadStatus status) {
-        if (ss.downloadStatuses.size()!=status.statuses.size()) {
-            return true;
-        }
-        for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
-            for (ProcessorCommParamsYaml.FunctionDownloadStatus.Status sds : status.statuses) {
-                if (downloadStatus.functionCode.equals(sds.functionCode) && !downloadStatus.functionState.equals(sds.functionState)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     @Transactional

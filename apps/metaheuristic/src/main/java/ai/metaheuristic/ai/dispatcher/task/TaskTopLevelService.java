@@ -16,33 +16,29 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@SuppressWarnings("DuplicatedCode")
+/**
+ * @author Serge
+ * Date: 9/29/2020
+ * Time: 7:22 PM
+ */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class TaskPersistencer {
+public class TaskTopLevelService {
 
-    private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
+    private final TaskTransactionalService taskTransactionalService;
 
-    public TaskImpl save(TaskImpl task) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        return taskRepository.save(task);
+    public Enums.UploadResourceStatus setResultReceived(TaskImpl task, Long variableId) {
+        return execContextSyncService.getWithSync(task.execContextId, () -> taskTransactionalService.setResultReceived(task, variableId));
     }
-
 }

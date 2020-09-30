@@ -24,15 +24,18 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -85,6 +88,7 @@ public class ExecContextFSM {
     private final TaskTransactionalService taskTransactionalService;
     private final DispatcherEventService dispatcherEventService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProcessorCache processorCache;
 
     @Transactional
     public void toStarted(ExecContext execContext) {
@@ -245,13 +249,15 @@ public class ExecContextFSM {
         finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
     }
 
-    public void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+    @Transactional
+    public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
                 execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
+        return null;
     }
 
     // write operations with graph
@@ -533,6 +539,117 @@ public class ExecContextFSM {
         task = taskTransactionalService.save(task);
 
         return task;
+    }
+
+    @Transactional
+    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.error("#705.320 Processor with id #{} wasn't found", processorId);
+            return null;
+        }
+        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
+        if (psy==null) {
+            return null;
+        }
+
+        final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
+        // task won't be returned for an internal function
+        if (t==null) {
+            return null;
+        }
+        try {
+            TaskImpl task = prepareVariables(t);
+            if (task == null) {
+                log.warn("After prepareVariables(task) the task is null");
+                return null;
+            }
+
+            String params;
+            try {
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                if (tpy.version == psy.taskParamsVersion) {
+                    params = task.params;
+                } else {
+                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                }
+            } catch (DowngradeNotSupportedException e) {
+                // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
+                //  but this one fails. that could occur because of prepareVariables(task);
+                //  need a better solution for checking
+                log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                        task.getId(), processor.id, psy.taskParamsVersion);
+                return null;
+            }
+
+            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
+        } catch (Throwable th) {
+            String es = "#705.270 Something wrong";
+            log.error(es, th);
+            throw new IllegalStateException(es, th);
+        }
+    }
+
+    @Nullable
+    private TaskImpl getTaskAndAssignToProcessorInternal(
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
+
+        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processor.id);
+        boolean allAssigned = false;
+        if (reportProcessorTaskStatus.statuses!=null) {
+            List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> lostTasks = reportProcessorTaskStatus.statuses.stream()
+                    .filter(o->!activeTaskIds.contains(o.taskId)).collect(Collectors.toList());
+            if (lostTasks.isEmpty()) {
+                allAssigned = true;
+            }
+            else {
+                log.info("#705.330 Found the lost tasks at processor #{}, tasks #{}", processor.id, lostTasks);
+                for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
+                    TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
+                    if (task==null) {
+                        continue;
+                    }
+                    if (task.execState!= EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                        log.warn("#705.333 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
+                                processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
+                        // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
+                    }
+                    return task;
+                }
+            }
+        }
+        if (allAssigned) {
+            // this processor already has active task
+            log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
+            return null;
+        }
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.warn("#705.360 ExecContext wasn't found for id: {}", execContextId);
+            return null;
+        }
+        if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
+            log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
+            return null;
+        }
+
+        TaskImpl result = findUnassignedTaskAndAssign(execContextId, processor, psy, isAcceptOnlySigned);
+
+        return result;
+    }
+
+    @Nullable
+    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
+        ProcessorStatusYaml ss;
+        try {
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            return ss;
+        } catch (Throwable e) {
+            log.error("#705.400 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#705.410 Error ", e);
+            return null;
+        }
     }
 
 }

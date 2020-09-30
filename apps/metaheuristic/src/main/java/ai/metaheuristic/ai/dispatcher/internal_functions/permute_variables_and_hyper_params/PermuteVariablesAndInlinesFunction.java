@@ -23,10 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
@@ -82,6 +79,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextFSM execContextFSM;
     private final TaskTransactionalService taskTransactionalService;
 
     @Override
@@ -216,7 +214,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
      * @param inlinePermuted
      * @param process
      */
-    public void createTasksForSubProcesses(
+    private void createTasksForSubProcesses(
             List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
             Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process) {
@@ -239,7 +237,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 throw new BreakFromLambdaException("Creation of task failed");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, currTaskIds);
+            execContextFSM.addTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, currTaskIds);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }

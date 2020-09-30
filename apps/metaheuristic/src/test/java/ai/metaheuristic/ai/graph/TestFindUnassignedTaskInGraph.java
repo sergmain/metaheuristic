@@ -81,21 +81,21 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(1, count);
 
 
-            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(1L),
+            osr = execContextFSM.addTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(21L, "12###1"), new TaskApiData.TaskWithContext(22L, "12###2")));
 
-            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(21L),
+            osr = execContextFSM.addTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(21L),
                     List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
                             new TaskApiData.TaskWithContext(312L, "123###2"),
                             new TaskApiData.TaskWithContext(313L, "123###3")));
 
-            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(22L),
+            osr = execContextFSM.addTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(22L),
                     List.of(new TaskApiData.TaskWithContext(321L, "123###4"),
                             new TaskApiData.TaskWithContext(322L, "123###5"),
                             new TaskApiData.TaskWithContext(323L, "123###6")));
 
             // 999L is mh.finish task
-            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(311L, 312L, 313L, 321L, 322L, 323L),
+            osr = execContextFSM.addTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(311L, 312L, 313L, 321L, 322L, 323L),
                     List.of(new TaskApiData.TaskWithContext(999L, "1")));
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);

@@ -140,6 +140,7 @@ public class TestTx extends PreparingSourceCode {
 
         ////
 
+/*
         s = txTestingService.updateWithSyncSingle(execContextForTest.id, task.id);
         assertEquals("AAA", s);
 
@@ -165,6 +166,7 @@ public class TestTx extends PreparingSourceCode {
         assertTrue((int)task6.version>task5.version);
         TaskImpl t6 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(t6, task6);
+*/
 
 
 

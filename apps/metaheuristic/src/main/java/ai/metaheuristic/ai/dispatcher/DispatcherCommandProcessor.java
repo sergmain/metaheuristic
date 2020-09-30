@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -53,6 +54,7 @@ public class DispatcherCommandProcessor {
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final ExecContextTopLevelService execContextTopLevelService;
+    private final ProcessorTransactionService processorService;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
     private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
@@ -152,7 +154,7 @@ public class DispatcherCommandProcessor {
         }
         checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask =
-                execContextTopLevelService.findTaskInAllExecContexts(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
 
         if (assignedTask!=null) {
             log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
@@ -173,7 +175,7 @@ public class DispatcherCommandProcessor {
         if (request==null) {
             return null;
         }
-        ProcessorData.ProcessorWithSessionId processorWithSessionId = processorTopLevelService.getNewProcessorId();
+        ProcessorData.ProcessorWithSessionId processorWithSessionId = processorService.getNewProcessorId();
 
         // TODO 2019.05.19 why do we send processorId as a String?
         return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(processorWithSessionId.processor.id), processorWithSessionId.sessionId);

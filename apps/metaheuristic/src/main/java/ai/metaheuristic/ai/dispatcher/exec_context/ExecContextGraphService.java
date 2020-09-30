@@ -18,16 +18,14 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +69,7 @@ public class ExecContextGraphService {
     private final ExecContextSyncService execContextSyncService;
 
     private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
@@ -165,9 +164,12 @@ public class ExecContextGraphService {
         return graph;
     }
 
-    /**
+/*
+    */
+/**
      * !!! This method doesn't return the current taskId and its new status. Must be changed by outside code.
-     */
+     *//*
+
     public ExecContextOperationStatusWithTaskList updateTaskExecStates(@Nullable ExecContextImpl execContext, Map<Long, TaskData.TaskState> taskStates) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
@@ -207,6 +209,7 @@ public class ExecContextGraphService {
         }
         return status;
     }
+*/
 
     /**
      * !!! This method doesn't return the current taskId and its new status. Must be changed by outside code.
@@ -573,6 +576,7 @@ public class ExecContextGraphService {
         });
     }
 
+/*
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(@Nullable ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
@@ -602,6 +606,7 @@ public class ExecContextGraphService {
             return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
+*/
 
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,

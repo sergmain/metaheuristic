@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
@@ -63,9 +62,10 @@ public class TestGraph extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
-    private ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
-        return execContextSyncService.getWithSync(execContext.id, () ->
-                execContextGraphService.updateGraphWithSettingAllChildrenTasksAsError(execContext, taskId));
+    private void updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
+        execContextSyncService.getWithSync(execContext.id,
+                () -> execContextFSM.finishWithError(taskId, "to finish", execContext.id, null));
+        // execContextGraphService.updateTaskExecState(execContext, taskId, EnumsApi.ExecContextState.FINISHED.code, null)
     }
 
     /**
@@ -92,7 +92,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, count);
 
 
-            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(1L),
+            osr = execContextFSM.addTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###1")));
             assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -110,10 +110,8 @@ public class TestGraph extends PreparingSourceCode {
             setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
             setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
 
-            ExecContextOperationStatusWithTaskList status = updateGraphWithSettingAllChildrenTasksAsError(
-                    Objects.requireNonNull(execContextCache.findById(execContextForTest.id)), 1L);
+             updateGraphWithSettingAllChildrenTasksAsError( Objects.requireNonNull(execContextCache.findById(execContextForTest.id)), 1L);
 
-            assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
             Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
