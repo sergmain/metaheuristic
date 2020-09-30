@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestReAssignProcessorId {
 
     @Autowired
-    public SouthbridgeService serverService;
+    public SouthBridgeService serverService;
 
     @Autowired
     public ProcessorCache processorCache;

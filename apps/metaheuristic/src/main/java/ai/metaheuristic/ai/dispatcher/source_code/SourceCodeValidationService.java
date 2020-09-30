@@ -20,9 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,7 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -73,6 +72,8 @@ public class SourceCodeValidationService {
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
+        TxUtils.checkTxExists();
+
         if (StringUtils.isBlank(sourceCode.uid)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_UID_EMPTY_ERROR, "#177.040 UID can't be blank");
@@ -182,7 +183,7 @@ public class SourceCodeValidationService {
     }
 
     @Nullable
-    private String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
+    private static String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
         if (processCodes.contains(process.code)) {
             return process.code;
         }
@@ -200,6 +201,7 @@ public class SourceCodeValidationService {
         return null;
     }
 
+    @Transactional
     public SourceCodeApiData.SourceCodeValidation validate(SourceCodeImpl sourceCode) {
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
         sourceCodeStateService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );

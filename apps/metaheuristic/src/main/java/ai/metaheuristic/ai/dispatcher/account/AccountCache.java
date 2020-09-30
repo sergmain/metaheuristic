@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -36,7 +37,7 @@ public class AccountCache {
     private final AccountRepository accountRepository;
 
     @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
+    @CachePut(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
     public Account save(Account account) {
         return accountRepository.save(account);
     }

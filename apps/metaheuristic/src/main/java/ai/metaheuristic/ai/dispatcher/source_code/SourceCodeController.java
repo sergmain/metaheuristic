@@ -49,7 +49,7 @@ public class SourceCodeController {
     public static final String REDIRECT_DISPATCHER_SOURCE_CODES = "redirect:/dispatcher/source-code/source-codes";
 
     private final Globals globals;
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final SourceCodeService sourceCodeService;
     private final UserContextService userContextService;
 
     @GetMapping("/source-codes")
@@ -58,7 +58,7 @@ public class SourceCodeController {
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
+        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeService.getSourceCodes(pageable, false, context);
         ControllerUtils.addMessagesToModel(model, sourceCodesResultRest);
         model.addAttribute("result", sourceCodesResultRest);
         return "dispatcher/source-code/source-codes";
@@ -69,7 +69,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String sourceCodesPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
+        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeService.getSourceCodes(pageable, false, context);
         model.addAttribute("result", sourceCodesResultRest);
         return "dispatcher/source-code/source-codes :: table";
     }
@@ -89,7 +89,7 @@ public class SourceCodeController {
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -102,7 +102,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.validateSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.validateSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -118,7 +118,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String uploadSourceCode(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
+        OperationStatusRest operationStatusRest = sourceCodeService.uploadSourceCode(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
@@ -129,7 +129,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
         if (sourceCodeResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         }
@@ -143,7 +143,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String editFormCommit(Model model, Long sourceCodeId, String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.id;
@@ -163,7 +163,7 @@ public class SourceCodeController {
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -176,7 +176,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteSourceCodeById(id, context);
+        OperationStatusRest operationStatusRest = sourceCodeService.deleteSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 sourceCode wasn't found, id: "+id) );
         }
@@ -187,7 +187,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -200,7 +200,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.archiveSourceCodeById(id, context);
+        OperationStatusRest operationStatusRest = sourceCodeService.archiveSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 source code wasn't found, id: "+id) );
         }

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -76,7 +76,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     public ExecContextCreatorService execContextCreatorService;
 
     @Autowired
-    public SouthbridgeService southbridgeService;
+    public SouthBridgeService southbridgeService;
 
     public boolean isCorrectInit = true;
 

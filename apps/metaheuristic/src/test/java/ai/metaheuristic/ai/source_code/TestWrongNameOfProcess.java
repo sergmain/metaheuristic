@@ -16,16 +16,12 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -37,7 +33,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -54,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TestWrongNameOfProcess extends FeatureMethods {
 
     @Autowired
-    public SouthbridgeService southbridgeService;
+    public SouthBridgeService southbridgeService;
 
     @Autowired
     public TaskService taskService;

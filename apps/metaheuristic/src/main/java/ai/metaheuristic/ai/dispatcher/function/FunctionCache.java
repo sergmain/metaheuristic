@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -38,7 +39,7 @@ public class FunctionCache {
     private final FunctionRepository functionRepository;
 
     @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
+    @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         function.reset();
         return functionRepository.save(function);

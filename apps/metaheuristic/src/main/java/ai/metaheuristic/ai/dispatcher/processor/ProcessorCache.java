@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
@@ -52,7 +53,7 @@ public class ProcessorCache {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
+    @CachePut(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
     public Processor save(@NonNull Processor processor) {
         if (processor.id!=null) {
             processorSyncService.checkWriteLockPresent(processor.id);

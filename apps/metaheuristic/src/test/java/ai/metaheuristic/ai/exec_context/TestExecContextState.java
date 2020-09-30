@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class TestExecContextState {
                 new TaskData.SimpleTaskInfo(190L, TaskExecState.OK.toString(), "ctx-1", "mh.finish", "mh.finish")
         );
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
-        ExecContextApiData.ExecContextStateResult r = ExecContextTopLevelService.getExecContextStateResult(
+        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(
                 1L, infos, processCodes, SourceCodeType.batch, "test-source-code", true);
 
         assertNotNull(r);

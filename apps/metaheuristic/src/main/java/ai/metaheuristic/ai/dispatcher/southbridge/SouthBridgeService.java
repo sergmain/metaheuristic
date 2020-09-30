@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class SouthbridgeService {
+public class SouthBridgeService {
 
     // Processor's version for communicating with dispatcher
     private static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
@@ -296,7 +296,7 @@ public class SouthbridgeService {
         return new DispatcherCommParamsYaml.ExecContextStatus(
                 execContextRepository.findAllExecStates()
                         .stream()
-                        .map(o -> SouthbridgeService.toSimpleStatus((Long)o[0], (Integer)o[1]))
+                        .map(o -> SouthBridgeService.toSimpleStatus((Long)o[0], (Integer)o[1]))
                         .collect(Collectors.toList()));
     }
 

@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -48,10 +49,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -288,6 +288,25 @@ public class FunctionService {
         }
         return statuses;
     }
+
+    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
+    private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
+    private long mills = System.currentTimeMillis();
+
+    @Transactional
+    public synchronized List<DispatcherCommParamsYaml.Functions.Info> getFunctionInfos() {
+        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
+            mills = System.currentTimeMillis();
+            final List<Long> allIds = functionRepository.findAllIds();
+            functionInfosCache = allIds.stream()
+                    .map(functionCache::findById)
+                    .filter(Objects::nonNull)
+                    .map(s->new DispatcherCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
+                    .collect(Collectors.toList());
+        }
+        return functionInfosCache;
+    }
+
 
     @Transactional
     public Function createFunction(Function function, @Nullable File file) throws IOException {

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -40,7 +41,7 @@ public class ExperimentCache {
     private final ExperimentRepository experimentRepository;
 
     @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
+    @CachePut(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
     public Experiment save(Experiment experiment) {
         // noinspection UnusedAssignment
         Experiment save=null;

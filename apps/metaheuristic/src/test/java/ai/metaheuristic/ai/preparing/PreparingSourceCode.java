@@ -178,7 +178,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         s4 = createFunction("function-04:1.1");
         s5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeTopLevelService.createSourceCode(getSourceCodeYamlAsString(), company.uniqueId);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(getSourceCodeYamlAsString(), company.uniqueId);
         sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();

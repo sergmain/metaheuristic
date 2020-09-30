@@ -18,10 +18,9 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -31,12 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -51,14 +44,9 @@ public class DispatcherCommandProcessor {
 
     private final TaskService taskService;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final FunctionRepository functionRepository;
-    private final FunctionCache functionCache;
+    private final FunctionService functionService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ProcessorTransactionService processorService;
-
-    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
-    private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
-    private long mills = System.currentTimeMillis();
 
     public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
         lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
@@ -68,20 +56,7 @@ public class DispatcherCommandProcessor {
         processReportProcessorStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);
         lcpy.assignedProcessorId = getNewProcessorId(scpy.requestProcessorId);
-        lcpy.functions.infos.addAll( getFunctionInfos() );
-    }
-
-    private synchronized List<DispatcherCommParamsYaml.Functions.Info> getFunctionInfos() {
-        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-            mills = System.currentTimeMillis();
-            final List<Long> allIds = functionRepository.findAllIds();
-            functionInfosCache = allIds.stream()
-                    .map(functionCache::findById)
-                    .filter(Objects::nonNull)
-                    .map(s->new DispatcherCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
-                    .collect(Collectors.toList());
-        }
-        return functionInfosCache;
+        lcpy.functions.infos.addAll( functionService.getFunctionInfos() );
     }
 
     // processing at dispatcher side

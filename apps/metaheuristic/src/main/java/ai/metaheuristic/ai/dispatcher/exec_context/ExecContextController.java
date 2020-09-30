@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -47,20 +47,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class ExecContextController {
 
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final SourceCodeService sourceCodeService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
     private final UserContextService userContextService;
     private final ExecContextCreatorService execContextCreatorService;
-
-    // ============= Exec contexts =============
 
     @GetMapping("/exec-contexts/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public String execContexts(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        model.addAttribute("result", execContextService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "dispatcher/source-code/exec-contexts";
     }
 
@@ -70,7 +68,7 @@ public class ExecContextController {
     public String execContextPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        model.addAttribute("result", execContextService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "dispatcher/source-code/exec-contexts :: table";
     }
 
@@ -87,7 +85,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAdd(Model model, @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -115,7 +113,7 @@ public class ExecContextController {
     public String execContextDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextForDeletion result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
+        SourceCodeApiData.ExecContextForDeletion result = execContextService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;

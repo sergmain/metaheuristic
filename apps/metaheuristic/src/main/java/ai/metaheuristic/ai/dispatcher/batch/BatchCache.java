@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
@@ -39,7 +40,7 @@ public class BatchCache {
     private final BatchRepository batchRepository;
 
     @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(value = {Consts.BATCHES_CACHE}, key = "#result.id")
+    @CachePut(value = {Consts.BATCHES_CACHE}, key = "#result.id")
     public Batch save(@NonNull Batch batch) {
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
         return batchRepository.saveAndFlush(batch);

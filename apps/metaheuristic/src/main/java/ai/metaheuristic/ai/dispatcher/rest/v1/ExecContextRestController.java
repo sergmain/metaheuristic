@@ -67,7 +67,7 @@ public class ExecContextRestController {
     public ExecContextApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
                                                               @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
+        return execContextService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
     /**

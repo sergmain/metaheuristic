@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.HashSet;
@@ -60,6 +61,7 @@ public class SourceCodeSelectorService {
     private final SourceCodeRepository sourceCodeRepository;
     private final CompanyCache companyCache;
 
+    @Transactional(readOnly = true)
     public List<SourceCodeData.SourceCodeUid> filterSourceCodes(DispatcherContext context, List<String> uids) {
         log.debug("#984.005 list for filtering: {}", uids);
         List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
@@ -71,10 +73,11 @@ public class SourceCodeSelectorService {
         return codes;
     }
 
-    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
+    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 
+    @Transactional(readOnly = true)
     public SourceCodeData.SourceCodesForCompany getSourceCodeById(Long sourceCodeId, Long companyId) {
         return getSourceCodeInternal(companyId, (o) -> o.getId().equals(sourceCodeId));
     }
@@ -91,6 +94,7 @@ public class SourceCodeSelectorService {
         return availableSourceCodesForCompany;
     }
 
+    @Transactional(readOnly = true)
     public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyId) {
         return getAvailableSourceCodesForCompany(companyId, (f) -> true);
     }

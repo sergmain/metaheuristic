@@ -136,7 +136,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         final DispatcherContext context = new DispatcherContext(a, company);
 
 
-        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(sourceCode.id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeService.validateSourceCode(sourceCode.id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.validationResult.status);
         sourceCode = Objects.requireNonNull(sourceCodeCache.findById(sourceCode.id));
         assertNotNull(sourceCode);
