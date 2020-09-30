@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.batch.BatchHelperService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -101,12 +102,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final Globals globals;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
-    private final BatchService batchService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final SourceCodeCache sourceCodeCache;
+    private final BatchHelperService batchHelperService;
 
     @Override
     public String getCode() {
@@ -232,7 +233,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
 
         try (FileInputStream fis = new FileInputStream(zipFile)) {
-            String originBatchFilename = batchService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
+            String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
             String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
             if (!S.b(ext)) {
                 originBatchFilename = StrUtils.getName(originBatchFilename) + ext;

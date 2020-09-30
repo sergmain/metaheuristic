@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -40,7 +39,6 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -83,12 +81,12 @@ public class BatchService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
-    private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
+    private final BatchHelperService batchHelperService;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -220,7 +218,7 @@ public class BatchService {
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
 
-                String filename = findUploadedFilenameForBatchId(batch.execContextId, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                String filename = batchHelperService.findUploadedFilenameForBatchId(batch.execContextId, Consts.UNKNOWN_FILENAME_IN_BATCH);
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
@@ -238,32 +236,6 @@ public class BatchService {
         public File zipDir;
         public String mainDocument;
         public Long execContextId;
-    }
-
-    public String getUploadedFilename(Long execContextId) {
-        String filename = findUploadedFilenameForBatchId(execContextId, Consts.RESULT_ZIP);
-        return filename;
-    }
-
-    public String findUploadedFilenameForBatchId(Long execContextId, @Nullable String defaultName) {
-        String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec == null) {
-            return defName;
-        }
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
-        String startInputVariableName = ecpy.variables.startInputAs;
-        if (S.b(startInputVariableName)) {
-            return defName;
-        }
-        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
-        if (filenames.isEmpty()) {
-            return defName;
-        }
-        if (filenames.size()>1) {
-            log.warn("something wrong, too many startInputAs variables: " + filenames);
-        }
-        return filenames.get(0);
     }
 
     @Transactional

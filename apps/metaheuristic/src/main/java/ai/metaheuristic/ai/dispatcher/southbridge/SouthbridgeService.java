@@ -308,7 +308,6 @@ public class SouthbridgeService {
                         .collect(Collectors.toList()));
     }
 
-    @Transactional
     public String processRequest(String data, String remoteAddress) {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
         DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);

@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -164,7 +165,7 @@ public class DispatcherCommandProcessor {
         return assignedTask;
     }
 
-    public void checkProcessorId(ProcessorCommParamsYaml request) {
+    private void checkProcessorId(ProcessorCommParamsYaml request) {
         if (request.processorCommContext ==null  || request.processorCommContext.processorId ==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");
@@ -172,7 +173,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public @Nullable DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(@Nullable ProcessorCommParamsYaml.RequestProcessorId request) {
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(@Nullable ProcessorCommParamsYaml.RequestProcessorId request) {
         if (request==null) {
             return null;
         }

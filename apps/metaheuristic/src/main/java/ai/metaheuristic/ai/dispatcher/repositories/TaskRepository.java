@@ -66,7 +66,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select t.id, t.assignedOn from TaskImpl t " +
+    @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
             "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 

@@ -38,12 +38,12 @@ import java.util.List;
 public class ExecContextSchedulerService {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextFSM execContextFSM;
+    private final ExecContextTopLevelService execContextTopLevelService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
         List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.STARTED.code);
         for (ExecContextImpl execContext : execContexts) {
-            execContextFSM.updateExecContextStatus(execContext.id, needReconciliation);
+            execContextTopLevelService.updateExecContextStatus(execContext.id, needReconciliation);
         }
     }
 

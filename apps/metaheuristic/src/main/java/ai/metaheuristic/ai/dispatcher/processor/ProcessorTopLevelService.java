@@ -314,6 +314,7 @@ public class ProcessorTopLevelService {
         return false;
     }
 
+    @Transactional
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
         if (S.b(processorIdAsStr)) {
             return;
@@ -323,6 +324,7 @@ public class ProcessorTopLevelService {
         for (Object[] obj : tasks) {
             long taskId = ((Number)obj[0]).longValue();
             Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
+            Long execContextId = ((Number)obj[2]).longValue();
 
             if (assignedOn==null) {
                 log.error("#807.190 Processor #{} has a task with assignedOn is null", processorIdAsStr);
@@ -338,7 +340,7 @@ public class ProcessorTopLevelService {
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
-                OperationStatusRest result = execContextFSM.resetTask(taskId);
+                OperationStatusRest result = execContextFSM.resetTask(execContextId, taskId);
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#807.220 Resetting of task #{} was failed. See log for more info.", taskId);
                 }

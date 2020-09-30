@@ -104,6 +104,7 @@ public class BatchTopLevelService {
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
+    private final BatchHelperService batchHelperService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -346,7 +347,7 @@ public class BatchTopLevelService {
                 return null;
             }
             return variableName;
-        }, (execContextId, scpy) -> batchService.findUploadedFilenameForBatchId(batchId, "origin-file.zip"));
+        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(batchId, "origin-file.zip"));
     }
 
     private CleanerInfo getVariable(

@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -77,6 +78,9 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     @Autowired
     public SouthbridgeService southbridgeService;
+
+    @Autowired
+    public ExecContextTopLevelService execContextTopLevelService;
 
     public boolean isCorrectInit = true;
 
