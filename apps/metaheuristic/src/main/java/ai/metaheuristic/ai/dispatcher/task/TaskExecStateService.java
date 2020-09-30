@@ -47,8 +47,6 @@ import org.springframework.stereotype.Service;
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
-    private final TaskPersistencer taskPersistencer;
-//    private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final TaskTransactionalService taskTransactionalService;
     private final ExecContextSyncService execContextSyncService;
@@ -56,25 +54,23 @@ public class TaskExecStateService {
     @Nullable
     public Task resetTask(final Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-//        return taskSyncService.getWithSync(taskId, (task) -> {
-            log.info("#305.010 Start re-setting task #{}", taskId);
-            if (task==null) {
-                log.error("#305.020 task is null");
-                return null;
-            }
-            task.setFunctionExecResults(null);
-            task.setProcessorId(null);
-            task.setAssignedOn(null);
-            task.setCompleted(false);
-            task.setCompletedOn(null);
-            task.setExecState(EnumsApi.TaskExecState.NONE.value);
-            task.setResultReceived(false);
-            task.setResultResourceScheduledOn(0);
-            task = taskTransactionalService.save(task);
+        log.info("#305.010 Start re-setting task #{}", taskId);
+        if (task==null) {
+            log.error("#305.020 task is null");
+            return null;
+        }
+        task.setFunctionExecResults(null);
+        task.setProcessorId(null);
+        task.setAssignedOn(null);
+        task.setCompleted(false);
+        task.setCompletedOn(null);
+        task.setExecState(EnumsApi.TaskExecState.NONE.value);
+        task.setResultReceived(false);
+        task.setResultResourceScheduledOn(0);
+        task = taskTransactionalService.save(task);
 
-            log.info("#305.030 task #{} was re-setted to initial state", taskId);
-            return task;
-//        });
+        log.info("#305.030 task #{} was re-setted to initial state", taskId);
+        return task;
     }
 
     private TaskImpl toInProgressSimpleLambda(TaskImpl task) {

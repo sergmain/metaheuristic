@@ -20,10 +20,11 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -59,7 +60,7 @@ public class ProcessorTransactionService {
     private final ProcessorCache processorCache;
     private final ProcessorRepository processorRepository;
     private final TaskRepository taskRepository;
-    private final ExecContextFSM execContextFSM;
+    private final ExecContextTopLevelService execContextTopLevelService;
 
     public static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
@@ -245,8 +246,9 @@ public class ProcessorTransactionService {
         }
     }
 
-    @Transactional
     public Void reconcileProcessorTasks(final long processorId, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+        TxUtils.checkTxNotExists();
+
         List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
         for (Object[] obj : tasks) {
             long taskId = ((Number)obj[0]).longValue();
@@ -267,7 +269,7 @@ public class ProcessorTransactionService {
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
-                OperationStatusRest result = execContextFSM.resetTask(execContextId, taskId);
+                OperationStatusRest result = execContextTopLevelService.resetTask(taskId);
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#807.220 Resetting of task #{} was failed. See log for more info.", taskId);
                 }

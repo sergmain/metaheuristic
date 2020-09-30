@@ -52,7 +52,7 @@ public class ProcessorTopLevelService {
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorSyncService processorSyncService;
+//    private final ProcessorSyncService processorSyncService;
     private final ProcessorTransactionService processorTransactionService;
 
     // Attention, this value must be greater than
@@ -110,15 +110,18 @@ public class ProcessorTopLevelService {
     }
 
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
-        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
+        return processorTransactionService.updateDescription(processorId, desc);
+//        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
     }
 
     public OperationStatusRest deleteProcessorById(Long processorId) {
-        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
+        return processorTransactionService.deleteProcessorById(processorId);
+//        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
     public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
-        return processorSyncService.getWithSync(processor.id, ()-> processorTransactionService.assignNewSessionId(processor, ss));
+        return processorTransactionService.assignNewSessionId(processor, ss);
+//        return processorSyncService.getWithSync(processor.id, ()-> processorTransactionService.assignNewSessionId(processor, ss));
     }
 
     public void storeProcessorStatuses(@Nullable String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
@@ -126,7 +129,8 @@ public class ProcessorTopLevelService {
             return;
         }
         final Long processorId = Long.valueOf(processorIdAsStr);
-        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
+        processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus);
+//        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
     }
 
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
@@ -134,11 +138,13 @@ public class ProcessorTopLevelService {
             return;
         }
         final long processorId = Long.parseLong(processorIdAsStr);
-        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.reconcileProcessorTasks(processorId, statuses));
+        processorTransactionService.reconcileProcessorTasks(processorId, statuses);
+//        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.reconcileProcessorTasks(processorId, statuses));
     }
 
     public void checkProcessorId(final long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
-        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy));
+        processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy);
+//        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy));
     }
 
 

@@ -45,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProcessorCache {
 
     private final ProcessorRepository processorRepository;
-    private final ProcessorSyncService processorSyncService;
+//    private final ProcessorSyncService processorSyncService;
 
     @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, allEntries = true)
@@ -55,9 +55,9 @@ public class ProcessorCache {
     @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
     public Processor save(@NonNull Processor processor) {
-        if (processor.id!=null) {
-            processorSyncService.checkWriteLockPresent(processor.id);
-        }
+//        if (processor.id!=null) {
+//            processorSyncService.checkWriteLockPresent(processor.id);
+//        }
         log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
         return processorRepository.save(processor);
     }
