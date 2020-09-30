@@ -58,7 +58,7 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
@@ -70,7 +70,7 @@ public class ExecContextSyncService {
 
     @Nullable
     public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
@@ -81,7 +81,7 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContext.id);
         try {
             lock.lock();

@@ -55,7 +55,7 @@ public class ProcessorSyncService {
     }
 
     public <T> T getWithSync(Long taskId, Supplier<T> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();
@@ -71,7 +71,7 @@ public class ProcessorSyncService {
     }
 
     public @Nullable <T> T getWithSyncNullable(boolean debug, Long taskId, Supplier<T> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         if (debug) {
             log.debug("WriteLock: " + lock);
@@ -85,7 +85,7 @@ public class ProcessorSyncService {
     }
 
     public void getWithSyncVoid(Long taskId, Supplier<Void> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();

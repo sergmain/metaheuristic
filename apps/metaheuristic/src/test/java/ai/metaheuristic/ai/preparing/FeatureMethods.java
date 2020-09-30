@@ -79,9 +79,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
     @Autowired
     public SouthbridgeService southbridgeService;
 
-    @Autowired
-    public ExecContextTopLevelService execContextTopLevelService;
-
     public boolean isCorrectInit = true;
 
     @Override
@@ -137,7 +134,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertNotNull(execContextForTest);
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
+            EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
@@ -189,7 +186,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             results.add(sser);
         }
 
-        execContextService.storeAllConsoleResults(results);
+        execContextTopLevelService.storeAllConsoleResults(results);
     }
 
     protected void finishCurrentWithOk() {
@@ -207,7 +204,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             results.add(ster);
         }
 
-        execContextService.storeAllConsoleResults(results);
+        execContextTopLevelService.storeAllConsoleResults(results);
     }
 
 

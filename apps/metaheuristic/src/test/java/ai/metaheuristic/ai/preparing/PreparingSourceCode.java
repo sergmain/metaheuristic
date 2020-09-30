@@ -119,6 +119,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired
     public TaskProducingService taskProducingService;
 
+    @Autowired
+    public ExecContextTopLevelService execContextTopLevelService;
+
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
     public Function s2 = null;
@@ -313,7 +316,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
+            EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
             assertNotNull(execContextForTest);

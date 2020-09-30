@@ -158,10 +158,45 @@ public class ExecContextFSM {
             log.warn("Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
-            storeExecResultInternal(result);
-            return null;
-        });
+        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
+        if (functionExec==null) {
+            String es = "#303.045 Task #" + result.taskId + " has empty execResult";
+            log.info(es);
+            functionExec = new FunctionApiData.FunctionExec();
+        }
+        FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
+        if (!systemExecResult.isOk) {
+            log.warn("#303.050 Task #{} finished with error, functionCode: {}, console: {}",
+                    result.taskId,
+                    systemExecResult.functionCode,
+                    StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
+        }
+        try {
+            EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
+            Task t = prepareAndSaveTask(result, state);
+            if (t==null) {
+                return;
+            }
+            dispatcherEventService.publishTaskEvent(
+                    state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
+                    null, result.taskId, t.getExecContextId());
+
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+            if (state==EnumsApi.TaskExecState.ERROR) {
+                finishWithError(
+                        t.getId(),
+                        StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
+                        t.getExecContextId(), tpy.task.taskContextId);
+            }
+            else {
+                updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
+            }
+
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#303.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+            log.error("#303.061 ObjectOptimisticLockingFailureException", e);
+            ExceptionUtils.rethrow(e);
+        }
     }
 
     @Transactional
@@ -180,6 +215,8 @@ public class ExecContextFSM {
     }
 
     public void markAsFinishedWithError(TaskImpl task, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
+        TxUtils.checkTxExists();
+
         log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, execContext.sourceCodeId, execContext.id);
         final Long taskId = task.id;
         final String console = "#707.060 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
@@ -196,14 +233,12 @@ public class ExecContextFSM {
     }
 
     public void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
-        execContextSyncService.getWithSyncNullable(execContextId, () -> {
-            taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
+        execContextSyncService.checkWriteLockPresent(execContextId);
+        taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
 
-            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
-            taskExecStateService.updateTasksStateInDb(status);
-            return null;
-        });
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
+                execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
+        taskExecStateService.updateTasksStateInDb(status);
     }
 
     // write operations with graph
@@ -213,7 +248,7 @@ public class ExecContextFSM {
             // this execContext was deleted
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        TxUtils.checkTx();
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
@@ -223,35 +258,26 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#317.020 Task obsolete and was already deleted");
-            return;
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, TaskImpl task, Long variableId) {
+        switch (status) {
+            case SEND_SCHEDULED:
+                log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, task.id);
+                break;
+            case VARIABLE_NOT_FOUND:
+            case TASK_IS_BROKEN:
+            case TASK_PARAM_FILE_NOT_FOUND:
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                finishWithError(task.id, task.execContextId, tpy.task.taskContextId, task.params);
+                break;
+            case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
+                Enums.UploadResourceStatus uploadResourceStatus = taskTransactionalService.setResultReceived(task, variableId);
+                if (uploadResourceStatus == Enums.UploadResourceStatus.OK) {
+                    log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", task.id);
+                } else {
+                    log.info("#317.050 can't update isCompleted field for task #{}", task.id);
+                }
+                break;
         }
-
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
-            switch (status) {
-                case SEND_SCHEDULED:
-                    log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
-                    break;
-                case VARIABLE_NOT_FOUND:
-                case TASK_IS_BROKEN:
-                case TASK_PARAM_FILE_NOT_FOUND:
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                    finishWithError(taskId, task.execContextId, tpy.task.taskContextId, task.params);
-                    break;
-                case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-                    Enums.UploadResourceStatus uploadResourceStatus = taskTransactionalService.setResultReceived(task, variableId);
-                    if (uploadResourceStatus == Enums.UploadResourceStatus.OK) {
-                        log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
-                    } else {
-                        log.info("#317.050 can't update isCompleted field for task #{}", taskId);
-                    }
-                    break;
-            }
-            return null;
-        });
     }
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
@@ -463,61 +489,17 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public EnumsApi.TaskProducingStatus toProducing(Long execContextId, ExecContextService execContextService) {
-        return execContextSyncService.getWithSync(execContextId, () -> {
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
-            if (execContext==null) {
-                return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
-            }
-            if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-                return EnumsApi.TaskProducingStatus.OK;
-            }
-            execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-            execContextCache.save(execContext);
+    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
+        }
+        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
             return EnumsApi.TaskProducingStatus.OK;
-        });
-    }
-
-    private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
-        if (functionExec==null) {
-            String es = "#303.045 Task #" + result.taskId + " has empty execResult";
-            log.info(es);
-            functionExec = new FunctionApiData.FunctionExec();
         }
-        FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
-        if (!systemExecResult.isOk) {
-            log.warn("#303.050 Task #{} finished with error, functionCode: {}, console: {}",
-                    result.taskId,
-                    systemExecResult.functionCode,
-                    StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
-        }
-        try {
-            EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
-            Task t = prepareAndSaveTask(result, state);
-            if (t==null) {
-                return;
-            }
-            dispatcherEventService.publishTaskEvent(
-                    state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
-                    null, result.taskId, t.getExecContextId());
-
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-            if (state==EnumsApi.TaskExecState.ERROR) {
-                finishWithError(
-                        t.getId(),
-                        StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
-                        t.getExecContextId(), tpy.task.taskContextId);
-            }
-            else {
-                updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
-            }
-
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#303.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
-            log.error("#303.061 ObjectOptimisticLockingFailureException", e);
-            ExceptionUtils.rethrow(e);
-        }
+        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
+        execContextCache.save(execContext);
+        return EnumsApi.TaskProducingStatus.OK;
     }
 
     @Nullable

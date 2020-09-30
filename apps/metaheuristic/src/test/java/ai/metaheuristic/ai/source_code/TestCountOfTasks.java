@@ -75,7 +75,7 @@ public class TestCountOfTasks extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-        EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
+        EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
         assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
 
         execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));

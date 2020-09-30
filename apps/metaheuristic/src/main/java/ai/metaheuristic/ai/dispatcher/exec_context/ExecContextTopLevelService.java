@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -198,6 +199,15 @@ public class ExecContextTopLevelService {
         return idx;
     }
 
+    public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
+        List<Long> ids = new ArrayList<>();
+        for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
+            ids.add(result.taskId);
+            storeExecResult(result);
+        }
+        return ids;
+    }
+
     public ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
@@ -277,6 +287,22 @@ public class ExecContextTopLevelService {
         }
 
         return execContextSyncService.getWithSync(task.execContextId, () -> execContextFSM.resetTask(task.execContextId, taskId));
+    }
+
+    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.toProducing(execContextId));
+    }
+
+    public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+        if (task==null) {
+            log.warn("Reporting about non-existed task #{}", result.taskId);
+            return;
+        }
+        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
+            execContextFSM.storeExecResult(result);
+            return null;
+        });
     }
 
     @Async
@@ -377,6 +403,19 @@ public class ExecContextTopLevelService {
             states.put(taskState.taskId, taskState);
         }
         return states;
+    }
+
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#317.020 Task obsolete and was already deleted");
+            return;
+        }
+
+        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
+            execContextFSM.processResendTaskOutputResourceResult(processorId, status, task, variableId);
+            return null;
+        });
     }
 
 }

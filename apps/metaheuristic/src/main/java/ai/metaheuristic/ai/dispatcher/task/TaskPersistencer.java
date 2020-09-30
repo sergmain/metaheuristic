@@ -22,17 +22,12 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SuppressWarnings("DuplicatedCode")
 @Service
@@ -48,7 +43,7 @@ public class TaskPersistencer {
     public static List<Pair<String, String>> stacktraces = new ArrayList<>(10000);
 
     public TaskImpl save(TaskImpl task) {
-        TxUtils.checkTx();
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         return taskRepository.save(task);
     }

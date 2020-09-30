@@ -231,16 +231,6 @@ public class ExecContextService {
         }
     }
 
-    public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
-
-        List<Long> ids = new ArrayList<>();
-        for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
-            ids.add(result.taskId);
-            execContextFSM.storeExecResult(result);
-        }
-        return ids;
-    }
-
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
         eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);

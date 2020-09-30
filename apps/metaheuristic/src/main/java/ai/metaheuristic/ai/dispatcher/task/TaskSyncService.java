@@ -63,7 +63,7 @@ public class TaskSyncService {
     }
 
     public @Nullable <T> T getWithSync(boolean debug, Long taskId, Function<TaskImpl, T> function) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         if (debug) {
             log.debug("WriteLock: " + lock);
@@ -82,7 +82,7 @@ public class TaskSyncService {
     }
 
     public void getWithSyncVoid(Long taskId, Consumer<TaskImpl> supplier) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();

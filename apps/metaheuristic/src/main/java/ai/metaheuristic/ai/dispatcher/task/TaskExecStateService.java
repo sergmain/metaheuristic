@@ -193,7 +193,7 @@ public class TaskExecStateService {
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
-        TxUtils.checkTx();
+        TxUtils.checkTxExists();
 
         status.childrenTasks.forEach(t -> {
             TaskImpl task = taskRepository.findById(t.taskId).orElse(null);

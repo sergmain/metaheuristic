@@ -64,7 +64,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -100,7 +99,7 @@ public class SouthbridgeService {
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
     private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
         final String key = "--" + binaryType + "--" + code;
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
         try {

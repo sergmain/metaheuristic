@@ -47,7 +47,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -56,7 +55,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -374,7 +372,7 @@ public class TaskTransactionalService {
             log.warn("#317.020 Task #{} is obsolete and was already deleted", taskId);
             return Enums.UploadResourceStatus.TASK_NOT_FOUND;
         }
-        TxUtils.checkTx();
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
 //        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {

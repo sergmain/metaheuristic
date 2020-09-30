@@ -25,13 +25,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 public class TxUtils {
 
-    public static void checkTx() {
+    public static void checkTxExists() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("There isn't a Tx");
         }
     }
 
-    public static void checkTxExists() {
+    public static void checkTxNotExists() {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("Tx exists");
         }

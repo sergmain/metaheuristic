@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -32,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,11 +50,9 @@ public class DispatcherCommandProcessor {
 
     private final TaskService taskService;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final ExecContextService execContextService;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final ExecContextTopLevelService execContextTopLevelService;
-    private final ExecContextFSM execContextFSM;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
     private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
@@ -107,7 +102,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            execContextFSM.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
+            execContextTopLevelService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
         }
     }
 
@@ -130,7 +125,7 @@ public class DispatcherCommandProcessor {
             return null;
         }
         final DispatcherCommParamsYaml.ReportResultDelivering cmd1 = new DispatcherCommParamsYaml.ReportResultDelivering(
-                execContextService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
+                execContextTopLevelService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
         );
         return cmd1;
     }
