@@ -322,12 +322,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
-            taskProducingService.createAllTasks();
-//            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
-//            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForTest.id).size());
-//            assertEquals(result1.numberOfTasks, execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest));
-//            assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
-
+            execContextTopLevelService.createAllTasks();
             this.execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));

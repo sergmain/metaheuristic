@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -62,28 +61,28 @@ public class TestPagerForTaskVertex {
         );
 */
 
-        List<Long> ids = ExecContextFSM.getIdsForSearch(vertices, 0, 3);
+        List<Long> ids = ExecContextService.getIdsForSearch(vertices, 0, 3);
         assertNotNull(ids);
         assertEquals(3, ids.size());
         assertTrue(ids.contains(1L));
         assertTrue(ids.contains(2L));
         assertTrue(ids.contains(3L));
 
-        ids = ExecContextFSM.getIdsForSearch(vertices, 1, 3);
+        ids = ExecContextService.getIdsForSearch(vertices, 1, 3);
         assertNotNull(ids);
         assertEquals(3, ids.size());
         assertTrue(ids.contains(4L));
         assertTrue(ids.contains(5L));
         assertTrue(ids.contains(6L));
 
-        ids = ExecContextFSM.getIdsForSearch(vertices, 2, 3);
+        ids = ExecContextService.getIdsForSearch(vertices, 2, 3);
         assertNotNull(ids);
         assertEquals(3, ids.size());
         assertTrue(ids.contains(7L));
         assertTrue(ids.contains(8L));
         assertTrue(ids.contains(9L));
 
-        ids = ExecContextFSM.getIdsForSearch(vertices, 3, 3);
+        ids = ExecContextService.getIdsForSearch(vertices, 3, 3);
         assertNotNull(ids);
         assertEquals(1, ids.size());
         assertTrue(ids.contains(10L));

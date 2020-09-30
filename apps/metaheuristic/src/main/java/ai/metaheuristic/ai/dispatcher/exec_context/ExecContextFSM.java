@@ -88,36 +88,43 @@ public class ExecContextFSM {
 
     @Transactional
     public void toStarted(ExecContext execContext) {
+        execContextSyncService.checkWriteLockPresent(execContext.getId());
         toStarted(execContext.getId());
     }
 
     @Transactional
     public void toStarted(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
     @Transactional
     public void toStopped(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STOPPED);
     }
 
     @Transactional
     public void toProduced(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.PRODUCED);
     }
 
     @Transactional
     public void toFinished(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.FINISHED);
     }
 
     @Transactional
     public void toError(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }
 
     @Transactional
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return;
@@ -130,6 +137,10 @@ public class ExecContextFSM {
 
     @Transactional
     public OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        if (execContext==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        execContextSyncService.checkWriteLockPresent(execContext.id);
         OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds);
         return osr;
     }
@@ -201,6 +212,7 @@ public class ExecContextFSM {
 
     @Transactional
     public OperationStatusRest resetTask(Long execContextId, Long taskId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         Task t = taskExecStateService.resetTask(taskId);
         if (t == null) {
             String es = S.f("#705.0950 Found a non-existed task, graph consistency for execContextId #%s is failed",
@@ -229,6 +241,7 @@ public class ExecContextFSM {
 
     @Transactional
     public void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
     }
 
@@ -248,7 +261,6 @@ public class ExecContextFSM {
             // this execContext was deleted
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
@@ -259,6 +271,7 @@ public class ExecContextFSM {
 
     @Transactional
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, TaskImpl task, Long variableId) {
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
         switch (status) {
             case SEND_SCHEDULED:
                 log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, task.id);
@@ -283,7 +296,7 @@ public class ExecContextFSM {
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     private List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
-        final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
+        final List<Long> idsForSearch = ExecContextService.getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
         }
@@ -433,6 +446,8 @@ public class ExecContextFSM {
 
     @Nullable
     public TaskImpl prepareVariables(TaskImpl task) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
@@ -459,17 +474,6 @@ public class ExecContextFSM {
         return taskTransactionalService.persistOutputVariables(task, taskParams, execContext, p);
     }
 
-
-    public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
-        final int fromIndex = page * pageSize;
-        if (vertices.size()<=fromIndex) {
-            return List.of();
-        }
-        int toIndex = fromIndex + (vertices.size()-pageSize>=fromIndex ? pageSize : vertices.size() - fromIndex);
-        return vertices.subList(fromIndex, toIndex).stream()
-                .map(v -> v.taskId)
-                .collect(Collectors.toList());
-    }
 
     private static boolean gitUnavailable(TaskParamsYaml.TaskYaml task, boolean gitNotInstalled) {
         if (task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
@@ -505,32 +509,30 @@ public class ExecContextFSM {
     @Nullable
     private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-//        return taskSyncService.getWithSync(result.taskId, (task) -> {
-            if (task==null) {
-                log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
-                return null;
-            }
-            task.setExecState(state.value);
+        if (task==null) {
+            log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
+            return null;
+        }
+        task.setExecState(state.value);
 
-            if (state==EnumsApi.TaskExecState.ERROR) {
+        if (state==EnumsApi.TaskExecState.ERROR) {
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+            task.setResultReceived(true);
+        }
+        else {
+            task.setResultResourceScheduledOn(System.currentTimeMillis());
+            TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            // if there isn't any output variable which has to be uploaded to dispatcher then complete this task
+            if (yaml.task.outputs.stream().noneMatch(o->o.sourcing== EnumsApi.DataSourcing.dispatcher)) {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
-                task.setResultReceived(true);
             }
-            else {
-                task.setResultResourceScheduledOn(System.currentTimeMillis());
-                TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                // if there isn't any output variable which has to be uploaded to dispatcher then complete this task
-                if (yaml.task.outputs.stream().noneMatch(o->o.sourcing== EnumsApi.DataSourcing.dispatcher)) {
-                    task.setCompleted(true);
-                    task.setCompletedOn(System.currentTimeMillis());
-                }
-            }
-            task.setFunctionExecResults(result.getResult());
-            task = taskTransactionalService.save(task);
+        }
+        task.setFunctionExecResults(result.getResult());
+        task = taskTransactionalService.save(task);
 
-            return task;
-//        });
+        return task;
     }
 
 }

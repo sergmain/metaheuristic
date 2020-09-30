@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -46,7 +47,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +69,17 @@ public class ExecContextService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ApplicationEventPublisher eventPublisher;
+
+    public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
+        final int fromIndex = page * pageSize;
+        if (vertices.size()<=fromIndex) {
+            return List.of();
+        }
+        int toIndex = fromIndex + (vertices.size()-pageSize>=fromIndex ? pageSize : vertices.size() - fromIndex);
+        return vertices.subList(fromIndex, toIndex).stream()
+                .map(v -> v.taskId)
+                .collect(Collectors.toList());
+    }
 //    private final TaskSyncService taskSyncService;
 
     public OperationStatusRest execContextTargetState(Long execContextId, ExecContextState execState, Long companyUniqueId) {
@@ -136,7 +147,6 @@ public class ExecContextService {
                 return null;
             }
             try {
-//                TaskImpl task = taskSyncService.getWithSync(t.id, execContextFSM::prepareVariables);
                 TaskImpl task = execContextFSM.prepareVariables(t);
                 if (task == null) {
                     log.warn("After prepareVariables(task) the task is null");

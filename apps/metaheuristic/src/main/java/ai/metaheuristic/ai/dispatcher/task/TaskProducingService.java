@@ -27,8 +27,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -60,40 +58,13 @@ public class TaskProducingService {
     private final ExecContextFSM execContextFSM;
     private final TaskTransactionalService taskTransactionalService;
 
-    private final ExecContextRepository execContextRepository;
-    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    // TODO 2019.05.19 add reporting of producing of tasks
-    // TODO 2020.01.17 reporting to where? do we need to implement it?
-    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
     @Transactional
-    public synchronized void createAllTasks() {
-
-        Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
-        Monitoring.log("##020", Enums.Monitor.MEMORY);
-        if (!execContexts.isEmpty()) {
-            log.info("#701.020 Start producing tasks");
-        }
-        for (ExecContextImpl execContext : execContexts) {
-            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-            if (sourceCode==null) {
-                execContextFSM.toStopped(execContext.id);
-                continue;
-            }
-            Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, execContext.getParams());
-            produceAllTasks(true, sourceCode, execContext);
-            Monitoring.log("##022", Enums.Monitor.MEMORY);
-        }
-        if (!execContexts.isEmpty()) {
-            log.info("#701.040 Producing of tasks was finished");
-        }
-    }
-
     public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {
+        execContextSyncService.checkWriteLockPresent(execContext.id);
+
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
             result.sourceCodeValidationResult = new SourceCodeApiData.SourceCodeValidationResult(
@@ -122,35 +93,34 @@ public class TaskProducingService {
 
     @Transactional
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
-        return execContextSyncService.getWithSync(execContext.id, () -> {
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
-            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
 
-            // create all not dynamic tasks
-            TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
+        // create all not dynamic tasks
+        TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
+        if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
+            log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
+        }
+        else {
+            log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+        }
+
+
+        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
+        if (isPersist) {
             if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-                log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
+                execContextFSM.toProduced(execContext.id);
             }
             else {
-                log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+                execContextFSM.toError(execContext.id);
             }
+        }
+        result.numberOfTasks = produceTaskResult.numberOfTasks;
+        result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+        result.taskProducingStatus = produceTaskResult.status;
 
-
-            SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-            if (isPersist) {
-                if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-                    execContextFSM.toProduced(execContext.id);
-                }
-                else {
-                    execContextFSM.toError(execContext.id);
-                }
-            }
-            result.numberOfTasks = produceTaskResult.numberOfTasks;
-            result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
-            result.taskProducingStatus = produceTaskResult.status;
-
-            return result;
-        });
+        return result;
     }
 
     private TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {

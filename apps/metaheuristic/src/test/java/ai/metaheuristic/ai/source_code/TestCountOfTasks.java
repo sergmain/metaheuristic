@@ -87,10 +87,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         long mills = System.currentTimeMillis();
 
-        taskProducingService.createAllTasks();
-//        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForTest);
-//        assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
-//        int numberOfTasks = taskResult.numberOfTasks;
+        execContextTopLevelService.createAllTasks();
 
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
@@ -99,9 +96,6 @@ public class TestCountOfTasks extends PreparingExperiment {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-//        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(true, sourceCode, execContextForTest);
-//        assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
-//        assertNotNull(taskResult);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));

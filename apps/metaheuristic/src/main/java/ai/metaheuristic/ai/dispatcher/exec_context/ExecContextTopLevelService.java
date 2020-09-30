@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -28,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -78,6 +80,7 @@ public class ExecContextTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final TaskProducingService taskProducingService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -417,5 +420,37 @@ public class ExecContextTopLevelService {
             return null;
         });
     }
+
+    // TODO 2019.05.19 add reporting of producing of tasks
+    // TODO 2020.01.17 reporting to where? do we need to implement it?
+    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
+    public synchronized void createAllTasks() {
+
+        Monitoring.log("##019", Enums.Monitor.MEMORY);
+        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
+        Monitoring.log("##020", Enums.Monitor.MEMORY);
+        if (!execContexts.isEmpty()) {
+            log.info("#701.020 Start producing tasks");
+        }
+        for (ExecContextImpl execContext : execContexts) {
+            execContextSyncService.getWithSyncNullable(execContext.id, ()-> {
+                SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
+                if (sourceCode == null) {
+                    execContextFSM.toStopped(execContext.id);
+                    return null;
+                }
+                Monitoring.log("##021", Enums.Monitor.MEMORY);
+                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", sourceCode.uid, execContext.getParams());
+                taskProducingService.produceAllTasks(true, sourceCode, execContext);
+                Monitoring.log("##022", Enums.Monitor.MEMORY);
+                return null;
+            });
+        }
+        if (!execContexts.isEmpty()) {
+            log.info("#701.040 Producing of tasks was finished");
+        }
+    }
+
+
 
 }
