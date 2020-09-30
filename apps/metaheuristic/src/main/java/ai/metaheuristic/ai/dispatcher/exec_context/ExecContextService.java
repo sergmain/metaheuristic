@@ -19,25 +19,14 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,7 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.EnumsApi.*;
+import static ai.metaheuristic.api.EnumsApi.ExecContextState;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
 @Service
 @Profile("dispatcher")
@@ -64,7 +54,6 @@ public class ExecContextService {
 
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -77,20 +66,6 @@ public class ExecContextService {
         return vertices.subList(fromIndex, toIndex).stream()
                 .map(v -> v.taskId)
                 .collect(Collectors.toList());
-    }
-//    private final TaskSyncService taskSyncService;
-
-    public OperationStatusRest execContextTargetState(Long execContextId, ExecContextState execState, Long companyUniqueId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
-        }
-
-        if (execContext.state !=execState.code) {
-            execContextFSM.toState(execContext.id, execState);
-            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
-        }
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public void changeValidStatus(Long execContextId, boolean status) {
@@ -131,19 +106,6 @@ public class ExecContextService {
             }
             execContextCache.deleteById(execContextId);
         }
-    }
-
-    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
-        ExecContextState execState = ExecContextState.from(state.toUpperCase());
-        if (execState== ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
-        }
-        OperationStatusRest status = checkExecContext(execContextId, context);
-        if (status != null) {
-            return status;
-        }
-        status = execContextTargetState(execContextId, execState, context.getCompanyId());
-        return status;
     }
 
     @Transactional

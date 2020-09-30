@@ -22,6 +22,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -37,7 +38,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
@@ -54,7 +55,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 
-    @NonNull
+    @NotBlank
     @Column(name = "PARAMS")
     public String params;
 

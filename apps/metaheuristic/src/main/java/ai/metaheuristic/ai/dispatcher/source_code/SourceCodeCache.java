@@ -46,6 +46,7 @@ public class SourceCodeCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.SOURCE_CODES_CACHE}, unless="#result==null")
     public SourceCodeImpl findById(Long id) {
         return sourceCodeRepository.findById(id).orElse(null);

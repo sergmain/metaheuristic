@@ -48,7 +48,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
     @Column(name = "COMPANY_ID")

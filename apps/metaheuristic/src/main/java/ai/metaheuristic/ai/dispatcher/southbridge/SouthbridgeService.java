@@ -21,13 +21,10 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -44,8 +41,6 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
@@ -88,9 +83,7 @@ public class SouthbridgeService {
     private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
-    private final ProcessorSyncService processorSyncService;
     private final ProcessorTopLevelService processorTopLevelService;
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
@@ -341,6 +334,7 @@ public class SouthbridgeService {
         return lcpy;
     }
 
+
     private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
         return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;
     }
@@ -360,50 +354,7 @@ public class SouthbridgeService {
         }
 
         final long processorId = Long.parseLong(processorIdAsStr);
-        processorSyncService.getWithSyncVoid( processorId, ()-> {
-            final Processor processor = processorCache.findById(processorId);
-            if (processor == null) {
-                log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                lcpy.reAssignedProcessorId = processorTopLevelService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-                return null;
-            }
-            ProcessorStatusYaml ss;
-            try {
-                ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-            } catch (Throwable e) {
-                log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
-                log.error("#440.300 Error ", e);
-                // skip any command from this processor
-                return null;
-            }
-            if (StringUtils.isBlank(sessionId)) {
-                log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
-                // the same processor but with different and expired sessionId
-                // so we can continue to use this processorId with new sessionId
-                lcpy.reAssignedProcessorId = processorTopLevelService.assignNewSessionId(processor, ss);
-                return null;
-            }
-            if (!ss.sessionId.equals(sessionId)) {
-                if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
-                    log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
-                    // the same processor but with different and expired sessionId
-                    // so we can continue to use this processorId with new sessionId
-                    // we won't use processor's sessionIf to be sure that sessionId has valid format
-                    lcpy.reAssignedProcessorId = processorTopLevelService.assignNewSessionId(processor, ss);
-                    return null;
-                } else {
-                    log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
-                    // different processors with the same processorId
-                    // there is other active processor with valid sessionId
-                    lcpy.reAssignedProcessorId = processorTopLevelService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-                    return null;
-                }
-            } else {
-                // see logs in method
-                processorTopLevelService.updateSession(processor, ss);
-            }
-            return null;
-        });
+        processorTopLevelService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy);
     }
 
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {

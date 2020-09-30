@@ -57,7 +57,15 @@ public class ExecContextCache {
         if (execContext.id!=null) {
             execContextSyncService.checkWriteLockPresent(execContext.id);
         }
-        log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
+        if (log.isDebugEnabled()) {
+            log.debug("#461.010 save execContext, id: #{}, ver: {}, execContext: {}", execContext.id, execContext.version, execContext);
+            try {
+                throw new RuntimeException("stacktrace");
+            }
+            catch(RuntimeException e) {
+                log.debug("stacktrace", e);
+            }
+        }
         return execContextRepository.save(execContext);
     }
 
@@ -71,6 +79,7 @@ public class ExecContextCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
@@ -97,6 +106,7 @@ public class ExecContextCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
         return execContextRepository.findById(id).orElse(null);

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.commands;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -62,6 +63,9 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     @Autowired
     public ProcessorTopLevelService processorTopLevelService;
 
+    @Autowired
+    public ProcessorTransactionService processorTransactionService;
+
     private Long processorIdBefore;
     private String sessionIdBefore;
     private long sessionCreatedOn;
@@ -92,7 +96,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
-        DispatcherCommParamsYaml.ReAssignProcessorId s1 = processorTopLevelService.reassignProcessorId(null, null);
+        DispatcherCommParamsYaml.ReAssignProcessorId s1 = processorTransactionService.reassignProcessorId(null, null);
         assertNotEquals(sessionIdBefore, s1.sessionId);
 
     }

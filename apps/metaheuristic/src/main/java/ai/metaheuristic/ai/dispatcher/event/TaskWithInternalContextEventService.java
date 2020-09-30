@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,6 +43,7 @@ public class TaskWithInternalContextEventService {
     @Async
     @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
+        TxUtils.checkTxNotExists();
         execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
             taskWithInternalContextService.processInternalFunction(event);
             return null;

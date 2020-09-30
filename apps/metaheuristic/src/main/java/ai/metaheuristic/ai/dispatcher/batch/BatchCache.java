@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,13 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Profile("dispatcher")
 @Slf4j
+@RequiredArgsConstructor
 public class BatchCache {
 
     private final BatchRepository batchRepository;
-
-    public BatchCache(BatchRepository batchRepository) {
-        this.batchRepository = batchRepository;
-    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(value = {Consts.BATCHES_CACHE}, key = "#result.id")
@@ -48,6 +46,7 @@ public class BatchCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);
@@ -79,6 +78,7 @@ public class BatchCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void evictById(Long id) {
         //

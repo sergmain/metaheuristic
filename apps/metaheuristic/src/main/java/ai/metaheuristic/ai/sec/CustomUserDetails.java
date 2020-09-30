@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
-    private final AccountCache accountService;
+    private final AccountService accountService;
 
     @Data
     public static class ComplexUsername {

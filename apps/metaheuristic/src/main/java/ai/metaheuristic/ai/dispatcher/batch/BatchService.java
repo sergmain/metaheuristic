@@ -101,7 +101,7 @@ public class BatchService {
     }
 
     @Nullable
-    public Batch changeStateToPreparing(Long batchId) {
+    private Batch changeStateToPreparing(Long batchId) {
             Batch b = batchCache.findById(batchId);
             if (b == null) {
                 log.warn("#990.010 batch wasn't found {}", batchId);
@@ -276,7 +276,7 @@ public class BatchService {
         //noinspection unused
         int i=0;
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextService.execContextTargetState(
+        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(
                 execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
@@ -284,7 +284,7 @@ public class BatchService {
         }
         taskProducingService.produceAllTasks(true, sourceCode, execContext);
 
-        operationStatus = execContextService.execContextTargetState(execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
+        operationStatus = execContextFSM.execContextTargetState(execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

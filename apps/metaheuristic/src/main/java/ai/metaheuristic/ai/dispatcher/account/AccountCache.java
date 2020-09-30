@@ -41,6 +41,7 @@ public class AccountCache {
         return accountRepository.save(account);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
     public @Nullable Account findByUsername(String username) {
         return accountRepository.findByUsername(username);

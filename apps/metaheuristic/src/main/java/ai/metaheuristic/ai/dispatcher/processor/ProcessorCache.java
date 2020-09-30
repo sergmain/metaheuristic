@@ -71,6 +71,7 @@ public class ProcessorCache {
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
@@ -97,6 +98,7 @@ public class ProcessorCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.PROCESSORS_CACHE}, unless="#result==null")
     public Processor findById(Long id) {
         return processorRepository.findById(id).orElse(null);

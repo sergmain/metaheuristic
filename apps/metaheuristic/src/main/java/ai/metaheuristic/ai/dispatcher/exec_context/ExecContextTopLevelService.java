@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -40,6 +41,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -276,6 +278,16 @@ public class ExecContextTopLevelService {
         return null;
     }
 
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
+        return execContextSyncService.getWithSync(execContextId,
+                ()-> execContextFSM.changeExecContextState(state, execContextId, context));
+    }
+
+    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        return execContextSyncService.getWithSync(execContextId,
+                ()-> execContextFSM.execContextTargetState(execContextId, execState, companyUniqueId));
+    }
+
     public void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
         execContextSyncService.getWithSyncNullable(execContextId, () -> {
             ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -303,6 +315,15 @@ public class ExecContextTopLevelService {
             }
             return null;
         });
+    }
+
+    @Nullable
+    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
+        ExecContext wb = execContextCache.findById(execContextId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+        }
+        return null;
     }
 
     public OperationStatusRest resetTask(Long taskId) {

@@ -65,6 +65,7 @@ public class FunctionCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
     public Function findById(Long id) {
         return functionRepository.findById(id).orElse(null);

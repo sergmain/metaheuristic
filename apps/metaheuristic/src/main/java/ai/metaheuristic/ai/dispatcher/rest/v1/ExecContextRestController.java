@@ -123,7 +123,7 @@ public class ExecContextRestController {
             @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,
             @PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return execContextService.changeExecContextState(state, id, context);
+        return execContextTopLevelService.changeExecContextState(state, id, context);
     }
 
     @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")

@@ -87,6 +87,8 @@ public class TaskTransactionalService {
             ExecContextParamsYaml execContextParamsYaml, Long execContextId,
             List<Long> parentTaskIds) {
 
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
         if (isPersist) {

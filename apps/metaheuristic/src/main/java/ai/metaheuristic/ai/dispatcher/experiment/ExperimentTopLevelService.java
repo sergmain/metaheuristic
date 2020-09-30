@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -67,6 +68,7 @@ public class ExperimentTopLevelService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
     private final ExecContextService execContextService;
+    private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeRepository sourceCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -110,7 +112,7 @@ public class ExperimentTopLevelService {
         if (e==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.007 experiment wasn't found, experimentId: " + experimentId);
         }
-        OperationStatusRest operationStatusRest = execContextService.changeExecContextState(state, e.execContextId, context);
+        OperationStatusRest operationStatusRest = execContextTopLevelService.changeExecContextState(state, e.execContextId, context);
         return operationStatusRest;
     }
 
@@ -199,20 +201,6 @@ public class ExperimentTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK);
     }
 
-    public OperationStatusRest toExperimentResult(Long id) {
-
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
-        }
-
-        if (experiment.execContextId ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.420 This experiment isn't bound to ExecContext");
-        }
-        return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
-    }
-
     /**
      * this method is for using in command-line
      *
@@ -235,12 +223,12 @@ public class ExperimentTopLevelService {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
-        if (experiment==null || experiment.execContextId ==null) {
-            return EnumsApi.ExecContextState.UNKNOWN;
+        if (experiment==null) {
+            return EnumsApi.ExecContextState.ERROR;
         }
         ExecContext ec = execContextCache.findById(experiment.execContextId);
         if (ec==null) {
-            return EnumsApi.ExecContextState.UNKNOWN;
+            return EnumsApi.ExecContextState.DOESNT_EXIST;
         }
         return EnumsApi.ExecContextState.toState(ec.getState());
     }
@@ -264,7 +252,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
         }
-        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
+        OperationStatusRest status = execContextTopLevelService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
         if (status.isErrorMessages()) {
             return status;
         }
@@ -279,13 +267,11 @@ public class ExperimentTopLevelService {
             return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.260 experiment wasn't found, experimentId: " + id);
         }
-        if (experiment.execContextId !=null) {
-            ExecContext ex = execContextCache.findById(experiment.execContextId);
-            if (ex != null) {
-                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
-                if (operationStatusRest.isErrorMessages()) {
-                    return operationStatusRest;
-                }
+        ExecContext ex = execContextCache.findById(experiment.execContextId);
+        if (ex != null) {
+            OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
+            if (operationStatusRest.isErrorMessages()) {
+                return operationStatusRest;
             }
         }
         experimentCache.deleteById(id);

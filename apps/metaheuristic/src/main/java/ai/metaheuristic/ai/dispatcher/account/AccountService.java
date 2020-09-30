@@ -29,8 +29,10 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +54,13 @@ public class AccountService {
     private final AccountCache accountCache;
     private final PasswordEncoder passwordEncoder;
 
+    @Nullable
+    @Transactional(readOnly = true)
+    public Account findByUsername(String username) {
+        return accountCache.findByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         AccountData.AccountsResult result = new AccountData.AccountsResult();
         result.accounts = accountRepository.findAllByCompanyUniqueId(pageable, companyUniqueId);
@@ -59,6 +68,7 @@ public class AccountService {
         return result;
     }
 
+    @Transactional
     public OperationStatusRest addAccount(AccountData.NewAccount acc, Long companyUniqueId, String roles) {
 
         if (StringUtils.isBlank(acc.getUsername()) ||
@@ -103,6 +113,7 @@ public class AccountService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    @Transactional(readOnly = true)
     public AccountData.AccountResult getAccount(Long id, Long companyUniqueId){
         Account account = accountRepository.findById(id).orElse(null);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
@@ -115,6 +126,7 @@ public class AccountService {
         return new SimpleAccount(acc.id, acc.companyId, acc.username, acc.publicName, acc.enabled, acc.createdOn, acc.updatedOn, acc.roles);
     }
 
+    @Transactional
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
         Account a = accountRepository.findByIdForUpdate(accountId);
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
@@ -127,6 +139,7 @@ public class AccountService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
+    @Transactional
     public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyUniqueId) {
         if (StringUtils.isBlank(password) || StringUtils.isBlank(password2)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.080 Both passwords must be not null");
@@ -147,6 +160,7 @@ public class AccountService {
     }
 
     // this method is using with angular's rest
+    @Transactional
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
@@ -164,6 +178,7 @@ public class AccountService {
     }
 
     // this method is for using with company-accounts
+    @Transactional
     public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {

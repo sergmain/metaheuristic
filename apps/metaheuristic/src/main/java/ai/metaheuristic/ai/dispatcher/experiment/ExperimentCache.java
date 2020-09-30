@@ -54,6 +54,7 @@ public class ExperimentCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
     public Experiment findById(Long id) {
         return experimentRepository.findById(id).orElse(null);

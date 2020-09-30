@@ -17,12 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -137,6 +139,42 @@ public class ExecContextFSM {
             execContext.setState(state.code);
             execContextCache.save(execContext);
         }
+    }
+
+    @Transactional
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
+        EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
+        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
+        }
+        OperationStatusRest status = checkExecContext(execContextId, context);
+        if (status != null) {
+            return status;
+        }
+        status = execContextTargetState(execContextId, execState, context.getCompanyId());
+        return status;
+    }
+
+    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
+        }
+
+        if (execContext.state !=execState.code) {
+            toState(execContext.id, execState);
+            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Nullable
+    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
+        ExecContext wb = execContextCache.findById(execContextId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+        }
+        return null;
     }
 
     @Transactional

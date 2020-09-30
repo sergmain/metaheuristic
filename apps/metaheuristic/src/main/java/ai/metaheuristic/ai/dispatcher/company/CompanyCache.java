@@ -42,6 +42,7 @@ public class CompanyCache {
     }
 
     @Nullable
+    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
     public Company findByUniqueId(Long uniqueId) {
         return companyRepository.findByUniqueId(uniqueId);

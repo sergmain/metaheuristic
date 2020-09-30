@@ -27,7 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -56,6 +58,7 @@ public class ReplicationAccountService {
         public Account account;
     }
 
+    @Transactional
     public void syncAccounts(List<ReplicationData.AccountShortAsset> actualAccounts) {
         List<AccountLoopEntry> forUpdating = new ArrayList<>(actualAccounts.size());
         LinkedList<ReplicationData.AccountShortAsset> forCreating = new LinkedList<>(actualAccounts);
@@ -125,10 +128,14 @@ public class ReplicationAccountService {
             return;
         }
 
+        //noinspection ConstantConditions
         accountAsset.account.id=null;
+        //noinspection ConstantConditions
+        accountAsset.account.version=null;
         accountCache.save(accountAsset.account);
     }
 
+    @Nullable
     private ReplicationData.AccountAsset getAccountAsset(String username) {
         ReplicationData.AccountAsset accountAsset = requestAccountAsset(username);
         if (accountAsset.isErrorMessages()) {

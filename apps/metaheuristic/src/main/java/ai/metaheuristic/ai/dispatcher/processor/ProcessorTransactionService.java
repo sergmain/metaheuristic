@@ -16,10 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.processor;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -29,6 +32,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -36,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,6 +58,8 @@ public class ProcessorTransactionService {
 
     private final ProcessorCache processorCache;
     private final ProcessorRepository processorRepository;
+    private final TaskRepository taskRepository;
+    private final ExecContextFSM execContextFSM;
 
     public static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
@@ -194,6 +201,125 @@ public class ProcessorTransactionService {
                         ss.logDownloadable!=status.logDownloadable ||
                         ss.taskParamsVersion!=status.taskParamsVersion||
                         ss.os!=status.os;
+    }
+
+    @Transactional
+    public DispatcherCommParamsYaml.ReAssignProcessorId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
+        String sessionId = ProcessorTransactionService.createNewSessionId();
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
+                sessionId, System.currentTimeMillis(),
+                "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
+        Processor p = createProcessor(description, remoteAddress, psy);
+
+        return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
+    }
+
+    /**
+     * session is Ok, so we need to update session's timestamp periodically
+     */
+    @Transactional
+    @SuppressWarnings("UnnecessaryReturnStatement")
+    public void updateSession(Processor processor, ProcessorStatusYaml ss) {
+        final long millis = System.currentTimeMillis();
+        final long diff = millis - ss.sessionCreatedOn;
+        if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
+            log.debug("#440.380 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
+                            "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
+                            "'    processor.status:\n{},\n" +
+                            "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
+                    processor.version, millis, ss.sessionCreatedOn, diff, Consts.SESSION_UPDATE_TIMEOUT, processor.status);
+            // the same processor, with the same sessionId
+            // so we just need to refresh sessionId timestamp
+            ss.sessionCreatedOn = millis;
+            processor.updatedOn = millis;
+            processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+            processorCache.save(processor);
+
+            // the same processorId but new sessionId
+            return;
+        }
+        else {
+            // the same processorId, the same sessionId, session isn't expired
+            return;
+        }
+    }
+
+    @Transactional
+    public Void reconcileProcessorTasks(final long processorId, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+        List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
+        for (Object[] obj : tasks) {
+            long taskId = ((Number)obj[0]).longValue();
+            Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
+            Long execContextId = ((Number)obj[2]).longValue();
+
+            if (assignedOn==null) {
+                log.error("#807.190 Processor #{} has a task with assignedOn is null", processorId);
+            }
+
+            boolean isFound = statuses.stream().anyMatch(status -> status.taskId == taskId);
+            boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
+
+            // if Processor haven't reported back about this task in 90 seconds,
+            // this task will be de-assigned from this Processor
+            if (!isFound && isExpired) {
+                log.info("#807.200 De-assign task #{} from processor #{}", taskId, processorId);
+                log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
+                log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
+                log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
+                OperationStatusRest result = execContextFSM.resetTask(execContextId, taskId);
+                if (result.status== EnumsApi.OperationStatus.ERROR) {
+                    log.error("#807.220 Resetting of task #{} was failed. See log for more info.", taskId);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Transactional
+    public Void checkProcessorId(final long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
+            return null;
+        }
+        ProcessorStatusYaml ss;
+        try {
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        } catch (Throwable e) {
+            log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#440.300 Error ", e);
+            // skip any command from this processor
+            return null;
+        }
+        if (StringUtils.isBlank(sessionId)) {
+            log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            // the same processor but with different and expired sessionId
+            // so we can continue to use this processorId with new sessionId
+            lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
+            return null;
+        }
+        if (!ss.sessionId.equals(sessionId)) {
+            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
+                log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                // the same processor but with different and expired sessionId
+                // so we can continue to use this processorId with new sessionId
+                // we won't use processor's sessionIf to be sure that sessionId has valid format
+                lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
+                return null;
+            } else {
+                log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                // different processors with the same processorId
+                // there is other active processor with valid sessionId
+                lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
+                return null;
+            }
+        } else {
+            // see logs in method
+            updateSession(processor, ss);
+        }
+        return null;
     }
 
 }
