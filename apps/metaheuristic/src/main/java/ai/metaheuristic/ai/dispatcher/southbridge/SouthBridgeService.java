@@ -109,23 +109,22 @@ public class SouthBridgeService {
                 () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
     }
 
-    public UploadResult uploadVariable(MultipartFile file, Long taskId, @Nullable Long variableId) {
+    public UploadResult uploadVariable(MultipartFile file, @Nullable Long taskId, @Nullable Long variableId) {
+        String originFilename = file.getOriginalFilename();
+        if (StringUtils.isBlank(originFilename)) {
+            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
+        }
+        if (taskId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR,"#440.015 taskId is null" );
+        }
+        if (variableId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR,"#440.020 variableId is null" );
+        }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
-        }
-        String originFilename = file.getOriginalFilename();
-        if (StringUtils.isBlank(originFilename)) {
-            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
-        }
-        if (variableId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 variableId is null" );
-        }
-        Variable variable = variableService.findById(variableId).orElse(null);
-        if (variable ==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
         }
 
         File tempDir=null;
@@ -142,7 +141,7 @@ public class SouthBridgeService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(variableFile)) {
-                return execContextSyncService.getWithSync(task.execContextId, () -> variableTopLevelService.storeVariable(is, variableFile.length(), task, variable));
+                return execContextSyncService.getWithSync(task.execContextId, () -> variableTopLevelService.storeVariable(is, variableFile.length(), taskId, variableId));
             }
         }
         catch (VariableSavingException th) {

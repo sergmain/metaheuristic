@@ -92,7 +92,7 @@ public class SouthbridgeController {
     public UploadResult uploadResourceAuth(
             MultipartFile file,
             @SuppressWarnings("unused") String processorId,
-            @SuppressWarnings("unused") Long taskId,
+            @Nullable Long taskId,
             @Nullable Long variableId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,6 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 /**
@@ -49,11 +48,24 @@ public class VariableTopLevelService {
     private final VariableService variableService;
     private final TaskTransactionalService taskTransactionalService;
     private final ExecContextSyncService execContextSyncService;
+    private final TaskRepository taskRepository;
 
     @Transactional
-    public UploadResult storeVariable(InputStream variableIS, long length, TaskImpl task, Variable variable) {
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+    public UploadResult storeVariable(InputStream variableIS, long length, Long taskId, Long variableId) {
         try {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
+                log.warn(es);
+                return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
+            }
+            execContextSyncService.checkWriteLockPresent(task.execContextId);
+
+            Variable variable = variableService.findById(variableId).orElse(null);
+            if (variable ==null) {
+                return new UploadResult(Enums.UploadResourceStatus.VARIABLE_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
+            }
+
             variableService.update(variableIS, length, variable);
             Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(task, variable.getId());
             return status== Enums.UploadResourceStatus.OK

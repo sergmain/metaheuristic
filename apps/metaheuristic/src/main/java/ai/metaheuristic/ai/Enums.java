@@ -46,6 +46,7 @@ public final class Enums {
         FILENAME_IS_BLANK,
         TASK_WAS_RESET,
         TASK_NOT_FOUND,
+        VARIABLE_NOT_FOUND,
         UNRECOVERABLE_ERROR,
         PROBLEM_WITH_LOCKING,
         GENERAL_ERROR

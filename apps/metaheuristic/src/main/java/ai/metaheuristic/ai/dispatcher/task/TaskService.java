@@ -54,4 +54,20 @@ public class TaskService {
         return result;
     }
 
+
+    public TaskImpl save(TaskImpl task) {
+/*
+        if (log.isDebugEnabled()) {
+            log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
+            try {
+                throw new RuntimeException("stacktrace");
+            }
+            catch(RuntimeException e) {
+                log.debug("stacktrace", e);
+            }
+        }
+*/
+        return taskRepository.save(task);
+    }
+
 }
