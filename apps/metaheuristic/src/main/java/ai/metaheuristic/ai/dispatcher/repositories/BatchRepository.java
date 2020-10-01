@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
@@ -34,7 +34,7 @@ import java.util.List;
 
 @Repository
 @Profile("dispatcher")
-@Transactional(propagation = Propagation.REQUIRES_NEW)
+//@Transactional(propagation = Propagation.REQUIRES_NEW)
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     @Query(value="select b from Batch b where b.id=:id and b.companyId=:companyUniqueId")
@@ -44,28 +44,28 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     @Query(value="select b from Batch b where b.id=:id")
     Batch findByIdForUpdate(Long id);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyUniqueId order by b.createdOn desc")
     Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyUniqueId and b.accountId=:accountId order by b.createdOn desc")
     Page<Long> findAllForAccountByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId, Long accountId);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyUniqueId and b.deleted=false order by b.createdOn desc")
     Page<Long> findAllExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyUniqueId and b.deleted=false and b.accountId=:accountId order by b.createdOn desc")
     Page<Long> findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId, Long accountId);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus(b.id, b.execState) " +
             "from Batch b where b.companyId=:companyUniqueId")
     List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
             "from Batch b, ExecContextImpl w " +
             "where b.execContextId=w.id and b.execState=3")

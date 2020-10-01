@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.commons.S;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
 
@@ -95,7 +96,7 @@ public class TestCommonSync {
 
     TestSync testSync = new TestSync();
 
-    @Test
+    @RepeatedTest(10)
     public void test() throws InterruptedException {
 
         final AtomicBoolean isRun = new AtomicBoolean(true);
@@ -141,9 +142,11 @@ public class TestCommonSync {
             ExceptionUtils.rethrow(e);
         }
 
+        AtomicBoolean insideSync2 = new AtomicBoolean();
         Thread t2 = new Thread(() -> {
             isStarted2.set(true);
             testSync.getWithSyncNullable(42L, ()->{
+                insideSync2.set(true);
                 started2.set(System.currentTimeMillis());
                 try {
                     while (isRun2.get()) {
@@ -159,9 +162,11 @@ public class TestCommonSync {
         }, "My thread #2");
         t2.start();
 
+        AtomicBoolean insideSync3 = new AtomicBoolean();
         Thread t3 = new Thread(() -> {
             isStarted3.set(true);
             testSync.getWithSyncNullable(42L, ()->{
+                insideSync3.set(true);
                 started3.set(System.currentTimeMillis());
                 try {
                     while (isRun3.get()) {
@@ -175,6 +180,9 @@ public class TestCommonSync {
             isStarted3.set(false);
         }, "My thread #3");
         t3.start();
+
+        assertFalse(insideSync2.get());
+        assertFalse(insideSync3.get());
 
         mills = System.currentTimeMillis();
         try {

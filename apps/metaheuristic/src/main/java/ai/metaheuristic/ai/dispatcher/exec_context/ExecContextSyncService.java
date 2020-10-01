@@ -49,6 +49,12 @@ public class ExecContextSyncService {
         }
     }
 
+    public void checkWriteLockNotPresent(Long execContextId) {
+        if (getWriteLock(execContextId).isHeldByCurrentThread()) {
+            throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+        }
+    }
+
     public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
         return commonSync.getWriteLock(execContextId);
     }
@@ -71,6 +77,8 @@ public class ExecContextSyncService {
     @Nullable
     public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextId);
+
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();

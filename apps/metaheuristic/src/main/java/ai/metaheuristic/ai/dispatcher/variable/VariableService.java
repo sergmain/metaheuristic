@@ -160,7 +160,7 @@ public class VariableService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);

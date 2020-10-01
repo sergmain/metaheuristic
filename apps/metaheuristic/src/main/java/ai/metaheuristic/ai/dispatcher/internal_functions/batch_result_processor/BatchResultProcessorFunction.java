@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -38,6 +39,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -108,6 +110,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final ProcessorCache processorCache;
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
+    private final ExecContextSyncService execContextSyncService;
 
     @Override
     public String getCode() {
@@ -139,10 +142,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     @SneakyThrows
     @Override
-    @Transactional
     public InternalFunctionData.InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml) {
+
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {

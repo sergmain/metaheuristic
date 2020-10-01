@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +40,17 @@ public class TaskWithInternalContextEventService {
 
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextCache execContextCache;
 
     @Async
     @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
+        log.info("#447.020 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
         TxUtils.checkTxNotExists();
+        execContextSyncService.checkWriteLockNotPresent(event.execContextId);
+
         execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
+            log.info("#447.025 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
             taskWithInternalContextService.processInternalFunction(event);
             return null;
         });

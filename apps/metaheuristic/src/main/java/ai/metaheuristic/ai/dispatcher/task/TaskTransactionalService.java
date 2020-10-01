@@ -51,10 +51,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -125,7 +127,6 @@ public class TaskTransactionalService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
         try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
             return stream.map(o-> {

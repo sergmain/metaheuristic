@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,8 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -46,19 +45,18 @@ public class ExecContextCache {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
+        TxUtils.checkTxExists();
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
+        TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
         if (execContext.id!=null) {
             execContextSyncService.checkWriteLockPresent(execContext.id);
         }
-/*
         if (log.isDebugEnabled()) {
             log.debug("#461.010 save execContext, id: #{}, ver: {}, execContext: {}", execContext.id, execContext.version, execContext);
             try {
@@ -68,13 +66,12 @@ public class ExecContextCache {
                 log.debug("stacktrace", e);
             }
         }
-*/
         return execContextRepository.save(execContext);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
     public void delete(ExecContextImpl execContext) {
+        TxUtils.checkTxExists();
         try {
             execContextRepository.deleteById(execContext.id);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -82,15 +79,9 @@ public class ExecContextCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#id")
-    public void evictById(Long id) {
-        //
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
+        TxUtils.checkTxExists();
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -98,9 +89,9 @@ public class ExecContextCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
+        TxUtils.checkTxExists();
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -109,9 +100,9 @@ public class ExecContextCache {
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
+        TxUtils.checkTxExists();
         return execContextRepository.findById(id).orElse(null);
     }
 }

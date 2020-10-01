@@ -61,7 +61,6 @@ public class TaskWithInternalContextService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
-    ;
 
     private static Long lastTaskId=null;
     // this code is only for testing

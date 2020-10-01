@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -276,15 +277,14 @@ public class BatchService {
         //noinspection unused
         int i=0;
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(
-                execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.PRODUCING, execContext.getId(), dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
         taskProducingService.produceAllTasks(true, sourceCode, execContext);
 
-        operationStatus = execContextFSM.execContextTargetState(execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
+        operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.STARTED, execContext.getId(), dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

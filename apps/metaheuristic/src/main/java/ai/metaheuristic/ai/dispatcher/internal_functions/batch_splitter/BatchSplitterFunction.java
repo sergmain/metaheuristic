@@ -47,8 +47,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,7 +90,7 @@ public class BatchSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_SPLITTER_FUNCTION;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
     public InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,

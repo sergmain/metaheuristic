@@ -42,10 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -211,6 +208,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     }
                     catch(SocketTimeoutException e) {
                         log.error("#810.040 SocketTimeoutException, uri: " + uri+", " + e.getMessage());
+                        return;
+                    }
+                    catch(ConnectException e) {
+                        log.error("#810.042 ConnectException, uri: " + uri+", " + e.getMessage());
                         return;
                     }
                     idx++;

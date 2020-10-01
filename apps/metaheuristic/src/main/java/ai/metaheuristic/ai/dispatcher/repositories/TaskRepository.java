@@ -33,88 +33,88 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository
-@Transactional
+//@Transactional
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     Stream<TaskImpl> findAllByExecContextIdAsStream(Long execContextId);
 
     @Nullable
     @Query(value="select t from TaskImpl t where t.id=:id")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     TaskImpl findByIdForUpdate(Long id);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Query(value="select t.id from TaskImpl t where t.execContextId=:execContextId")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findAllTaskIdsByExecContextId(Long execContextId);
 
     @Query(value="select t.id, t.execContextId from TaskImpl t")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findAllAsTaskSimple(Pageable pageable);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Task> findByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +
             "where t.processorId=:processorId and t.resultReceived=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
             "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.execState, t.updatedOn, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findAllExecStateByExecContextId(Long execContextId);
 
     void deleteByExecContextId(Long execContextId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findByExecContextId(Long execContextId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     List<TaskImpl> findByExecContextIdAsList(Long execContextId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
     List<TaskImpl> findForAssigning(Long execContextId, List<Long> ids);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
     List<Long> findAnyActiveForProcessorId(Pageable limit, Long processorId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
     List<Long> findActiveForProcessorId(Long processorId);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId and t.execState = :execState ")
     List<TaskImpl> findTasksByExecState(Long execContextId, int execState);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
     List<Task> findForMissingResultResources(Long processorId, long mills, int execState);
 
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids and t.execState > 1 ")
     List<Task> findByIsCompletedIsTrueAndIds(List<Long> ids);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
     List<TaskImpl> findTasksByIds(List<Long> ids);
 
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.data.TaskProgress(" +
             "t.execContextId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
             "from TaskImpl t where t.execContextId=:execContextId " +

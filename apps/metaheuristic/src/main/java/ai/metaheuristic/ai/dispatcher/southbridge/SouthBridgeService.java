@@ -53,7 +53,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -142,21 +141,9 @@ public class SouthBridgeService {
             try(OutputStream os = new FileOutputStream(variableFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            return execContextSyncService.getWithSync(task.execContextId, () -> {
-                try {
-                    return variableTopLevelService.storeVariable(variableFile, task, variable);
-                }
-                catch (PessimisticLockingFailureException th) {
-                    final String es = "#440.050 can't store the result, need to try again. Error: " + th.toString();
-                    log.error(es, th);
-                    return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
-                }
-                catch (Throwable th) {
-                    final String error = "#440.060 can't store the result, Error: " + th.toString();
-                    log.error(error, th);
-                    return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
-                }
-            });
+            try (InputStream is = new FileInputStream(variableFile)) {
+                return execContextSyncService.getWithSync(task.execContextId, () -> variableTopLevelService.storeVariable(is, variableFile.length(), task, variable));
+            }
         }
         catch (VariableSavingException th) {
             final String es = "#440.080 can't store the result, unrecoverable error with data. Error: " + th.toString();

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -64,7 +65,6 @@ public class ExecContextService {
     private final VariableService variableService;
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
-    private final ExecContextFSM execContextFSM;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTransactionalService taskTransactionService;
@@ -277,6 +277,7 @@ public class ExecContextService {
         }
         return null;
     }
+
 
 
 }

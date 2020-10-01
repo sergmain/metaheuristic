@@ -25,12 +25,12 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -51,15 +51,24 @@ public class VariableTopLevelService {
     private final ExecContextSyncService execContextSyncService;
 
     @Transactional
-    public UploadResult storeVariable(File variableFile, TaskImpl task, Variable variable) throws IOException {
+    public UploadResult storeVariable(InputStream variableIS, long length, TaskImpl task, Variable variable) {
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        try (InputStream is = new FileInputStream(variableFile)) {
-            variableService.update(is, variableFile.length(), variable);
+        try {
+            variableService.update(variableIS, length, variable);
+            Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(task, variable.getId());
+            return status== Enums.UploadResourceStatus.OK
+                    ? OK_UPLOAD_RESULT
+                    : new UploadResult(status, "#490.020 can't update resultReceived field for task #"+ variable.getId()+"");
         }
-        Enums.UploadResourceStatus status = taskTransactionalService.setResultReceived(task, variable.getId());
-        return status== Enums.UploadResourceStatus.OK
-                ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
+        catch (PessimisticLockingFailureException th) {
+            final String es = "#490.040 can't store the result, need to try again. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
+        }
+        catch (Throwable th) {
+            final String error = "#490.060 can't store the result, Error: " + th.toString();
+            log.error(error, th);
+            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+        }
     }
 }
