@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -71,8 +70,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     public TaskService taskService;
-    @Autowired
-    public TaskPersistencer taskPersistencer;
     @Autowired
     public TaskTransactionalService taskTransactionalService;
     @Autowired

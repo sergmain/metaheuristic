@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
@@ -95,9 +94,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextService execContextService;
-
-    @Autowired
-    public TaskPersistencer taskPersistencer;
 
     @Autowired
     public TaskTransactionalService taskTransactionalService;

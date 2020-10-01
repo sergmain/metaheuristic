@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -52,8 +51,6 @@ public class TestCountOfTasks extends PreparingExperiment {
 
     @Autowired
     public TaskService taskService;
-    @Autowired
-    public TaskPersistencer taskPersistencer;
     @Autowired
     public ExecContextService execContextService;
 

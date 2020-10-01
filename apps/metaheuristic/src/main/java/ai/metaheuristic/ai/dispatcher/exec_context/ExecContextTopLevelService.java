@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -157,6 +158,7 @@ public class ExecContextTopLevelService {
     }
 
     public OperationStatusRest resetTask(Long taskId) {
+        TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -176,10 +178,7 @@ public class ExecContextTopLevelService {
             log.warn("Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
-            execContextFSM.storeExecResult(result);
-            return null;
-        });
+        execContextSyncService.getWithSyncNullable(task.execContextId, () -> execContextFSM.storeExecResult(result));
     }
 
     @Async
@@ -199,10 +198,8 @@ public class ExecContextTopLevelService {
             return;
         }
 
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> {
-            execContextFSM.processResendTaskOutputResourceResult(processorId, status, task, variableId);
-            return null;
-        });
+        execContextSyncService.getWithSyncNullable(task.execContextId,
+                () -> execContextFSM.processResendTaskOutputResourceResult(processorId, status, task.id, variableId));
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks

@@ -53,12 +53,15 @@ public class TaskExecStateService {
 
     @Nullable
     public Task resetTask(final Long taskId) {
+        TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("#305.010 Start re-setting task #{}", taskId);
         if (task==null) {
             log.error("#305.020 task is null");
             return null;
         }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
         task.setFunctionExecResults(null);
         task.setProcessorId(null);
         task.setAssignedOn(null);
@@ -85,6 +88,7 @@ public class TaskExecStateService {
 
     @Nullable
     private TaskImpl toOkSimple(Long taskId) {
+        TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.040 Can't find Task for Id: {}", taskId);
@@ -100,6 +104,7 @@ public class TaskExecStateService {
 
     @Nullable
     private TaskImpl toNoneSimple(Long taskId) {
+        TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.040 Can't find Task for Id: {}", taskId);
@@ -114,40 +119,38 @@ public class TaskExecStateService {
     }
 
     public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
+        TxUtils.checkTxExists();
         if (state!=EnumsApi.TaskExecState.ERROR) {
             throw new IllegalStateException("#305.060 state must be EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-//        taskSyncService.getWithSync(taskId, (task) -> {
-            if (task==null) {
-                log.warn("#305.080 Can't find Task for Id: {}", taskId);
-                return;
-            }
+        if (task==null) {
+            log.warn("#305.080 Can't find Task for Id: {}", taskId);
+            return;
+        }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-            if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-                return;
-            }
-            task.setExecState(state.value);
-            task.setCompleted(true);
-            task.setCompletedOn(System.currentTimeMillis());
+        if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
+            return;
+        }
+        task.setExecState(state.value);
+        task.setCompleted(true);
+        task.setCompletedOn(System.currentTimeMillis());
 
-            if (task.functionExecResults ==null || task.functionExecResults.isBlank()) {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-                functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
-                task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
-            }
-            task.setResultReceived(true);
+        if (task.functionExecResults ==null || task.functionExecResults.isBlank()) {
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
+            task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
+        }
+        task.setResultReceived(true);
 
-            task = taskTransactionalService.save(task);
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
-
-//            return task;
-//        });
+        task = taskTransactionalService.save(task);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
     }
 
     @Nullable
     private TaskImpl toInProgressSimple(Long taskId) {
+        TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.082 Can't find Task for Id: {}", taskId);
@@ -159,6 +162,7 @@ public class TaskExecStateService {
 
     @Nullable
     private TaskImpl toSkippedSimple(Long taskId) {
+        TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#305.084 Can't find Task for Id: {}", taskId);
@@ -170,6 +174,8 @@ public class TaskExecStateService {
 
     @Nullable
     public TaskImpl changeTaskState(Long taskId, EnumsApi.TaskExecState state){
+        TxUtils.checkTxExists();
+
         switch (state) {
             case NONE:
                 return toNoneSimple(taskId);

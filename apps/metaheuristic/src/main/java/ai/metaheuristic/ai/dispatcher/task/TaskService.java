@@ -16,10 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -29,7 +25,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -52,22 +47,6 @@ public class TaskService {
             }
         }
         return result;
-    }
-
-
-    public TaskImpl save(TaskImpl task) {
-/*
-        if (log.isDebugEnabled()) {
-            log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
-            try {
-                throw new RuntimeException("stacktrace");
-            }
-            catch(RuntimeException e) {
-                log.debug("stacktrace", e);
-            }
-        }
-*/
-        return taskRepository.save(task);
     }
 
 }

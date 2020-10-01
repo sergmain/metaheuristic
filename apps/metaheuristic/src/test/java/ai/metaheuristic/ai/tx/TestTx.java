@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.tx.TxTestingService;
 import ai.metaheuristic.ai.dispatcher.tx.TxTestingTopLevelService;
@@ -55,8 +54,6 @@ public class TestTx extends PreparingSourceCode {
 
     @Autowired
     public TaskService taskService;
-    @Autowired
-    public TaskPersistencer taskPersistencer;
     @Autowired
     public ExecContextService execContextService;
     @Autowired

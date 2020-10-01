@@ -79,7 +79,6 @@ public class TaskTransactionalService {
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskPersistencer taskPersistencer;
     private final ExecContextSyncService execContextSyncService;
     private final FunctionService functionService;
 
@@ -119,8 +118,22 @@ public class TaskTransactionalService {
     }
 
     public TaskImpl save(TaskImpl task) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
         try {
-            return taskPersistencer.save(task);
+/*
+            if (log.isDebugEnabled()) {
+                log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
+                try {
+                    throw new RuntimeException("task stacktrace");
+                }
+                catch(RuntimeException e) {
+                    log.debug("task stacktrace", e);
+                }
+            }
+*/
+            return taskRepository.save(task);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
             throw e;
@@ -313,6 +326,7 @@ public class TaskTransactionalService {
 
     @Nullable
     public TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
+        TxUtils.checkTxExists();
         try {
             if (task == null) {
                 log.warn("#307.010 Task with taskId {} wasn't found", taskId);

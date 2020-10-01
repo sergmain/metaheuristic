@@ -212,11 +212,11 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("Reporting about non-existed task #{}", result.taskId);
-            return;
+            return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
@@ -236,7 +236,7 @@ public class ExecContextFSM {
         EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
         Task t = prepareAndSaveTask(result, state);
         if (t==null) {
-            return;
+            return null;
         }
         dispatcherEventService.publishTaskEvent(
                 state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
@@ -252,6 +252,7 @@ public class ExecContextFSM {
         else {
             updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
         }
+        return null;
     }
 
     @Transactional
@@ -438,7 +439,13 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, TaskImpl task, Long variableId) {
+    public Void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#317.020 Task obsolete and was already deleted");
+            return null;
+        }
+
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         switch (status) {
             case SEND_SCHEDULED:
@@ -459,6 +466,7 @@ public class ExecContextFSM {
                 }
                 break;
         }
+        return null;
     }
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
@@ -705,6 +713,8 @@ public class ExecContextFSM {
 
     @Transactional
     public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.error("#705.320 Processor with id #{} wasn't found", processorId);
