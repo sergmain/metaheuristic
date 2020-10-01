@@ -29,6 +29,7 @@ import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public class ReplicationCompanyService {
         public Company company;
     }
 
+    @Transactional
     public void syncCompanies(List<ReplicationData.CompanyShortAsset> actualCompanies) {
         List<CompanyLoopEntry> forUpdating = new ArrayList<>(actualCompanies.size());
         LinkedList<ReplicationData.CompanyShortAsset> forCreating = new LinkedList<>(actualCompanies);

@@ -30,6 +30,7 @@ import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class ReplicationSourceCodeService {
     // TODO 2020-09-21 Need to create a reconciliation algo for a case when
     //  there is a record in MH_SOURCE_CODE but this SourceCode wasn't registered in Dispatcher
 
+    @Transactional
     public void syncSourceCodes(List<ReplicationData.SourceCodeShortAsset> actualSourceCodes) {
         List<SourceCodeLoopEntry> forUpdating = new ArrayList<>(actualSourceCodes.size());
         LinkedList<ReplicationData.SourceCodeShortAsset> forCreating = new LinkedList<>(actualSourceCodes);

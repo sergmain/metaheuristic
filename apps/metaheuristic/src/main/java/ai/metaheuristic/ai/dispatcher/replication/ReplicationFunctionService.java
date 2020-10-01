@@ -26,6 +26,7 @@ import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -46,6 +47,7 @@ public class ReplicationFunctionService {
     public final FunctionRepository functionRepository;
     public final FunctionCache functionCache;
 
+    @Transactional
     public void syncFunctions(List<String> actualFunctions) {
         functionRepository.findAllFunctionCodes().parallelStream()
                 .filter(s->!actualFunctions.contains(s))
