@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -47,6 +48,7 @@ public interface InternalFunction {
      * @param taskContextId
      * @param variableDeclaration
      * @param taskParamsYaml
+     * @param holder
      * @return
      *
      * @see ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
@@ -54,5 +56,5 @@ public interface InternalFunction {
     InternalFunctionData.InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml);
+            TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder);
 }

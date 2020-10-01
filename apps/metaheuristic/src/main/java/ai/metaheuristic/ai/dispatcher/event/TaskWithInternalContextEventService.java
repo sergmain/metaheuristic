@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -25,6 +26,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
 
 /**
  * @author Serge
@@ -49,11 +52,24 @@ public class TaskWithInternalContextEventService {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
-        execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
-            log.info("#447.025 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
-            taskWithInternalContextService.processInternalFunction(event);
-            return null;
-        });
+        VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
+        try {
+            execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
+                log.info("#447.025 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
+                taskWithInternalContextService.processInternalFunction(event, holder);
+                return null;
+            });
+        }
+        finally {
+            for (InputStream inputStream : holder.inputStreams) {
+                try {
+                    inputStream.close();
+                }
+                catch(Throwable th)  {
+                    log.warn("Error while closing stream", th);
+                }
+            }
+        }
     }
 
 }

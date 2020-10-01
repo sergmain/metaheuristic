@@ -308,13 +308,13 @@ public class VariableService {
         variableRepository.save(data);
     }
 
-    @Transactional
-    public void update(InputStream is, long size, SimpleVariable simpleVariable) {
-        update(is, size, simpleVariable, null);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void storeData(InputStream is, long size, SimpleVariable simpleVariable) {
+        storeData(is, size, simpleVariable, null);
     }
 
-    @Transactional
-    public void update(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void storeData(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
         Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
         if (data==null) {
             log.warn("can't find variable #" + simpleVariable.id);

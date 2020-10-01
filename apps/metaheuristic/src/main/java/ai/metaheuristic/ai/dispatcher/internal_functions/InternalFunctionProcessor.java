@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -45,7 +46,7 @@ public class InternalFunctionProcessor {
     private final ExecContextCache execContextCache;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public InternalFunctionProcessingResult process(Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public InternalFunctionProcessingResult process(Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
@@ -62,7 +63,7 @@ public class InternalFunctionProcessor {
         ExecContextParamsYaml expy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         try {
             // ! all output variables must be already created at this point
-            return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
+            return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml, holder);
         } catch (Throwable th) {
             String es = "#977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
             log.error(es, th);

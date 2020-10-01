@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.internal_function;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -62,7 +63,7 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
     @Override
     public InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId, @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml) {
+            @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {

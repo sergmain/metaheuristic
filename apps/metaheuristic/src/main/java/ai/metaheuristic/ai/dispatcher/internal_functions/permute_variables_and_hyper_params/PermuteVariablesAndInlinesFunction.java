@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -97,7 +98,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml) {
+            @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             log.warn("List of input variables isn't empty");

@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -66,7 +67,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.ByteArrayInputStream;
@@ -144,7 +144,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml) {
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
@@ -194,7 +194,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(ec, taskContextId, taskParamsYaml, zipDir);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(ec, taskContextId, taskParamsYaml, zipDir, holder);
         if (ifprForStatus != null) {
             return ifprForStatus;
         }
@@ -211,7 +211,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(sourceCodeId, execContextId, taskContextId, taskParamsYaml, zipFile);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(sourceCodeId, execContextId, taskContextId, taskParamsYaml, zipFile, holder);
         if (ifprForResult != null) {
             return ifprForResult;
         }
@@ -220,7 +220,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
     }
 
     @Nullable
-    private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(Long sourceCodeId, Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml, File zipFile) throws IOException {
+    private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(
+            Long sourceCodeId, Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml,
+            File zipFile, VariableData.DataStreamHolder holder) throws IOException {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
@@ -237,20 +239,22 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     S.f("#993.080 Can't find SourceCode #%s", sourceCodeId));
         }
 
-        try (FileInputStream fis = new FileInputStream(zipFile)) {
-            String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
-            String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
-            if (!S.b(ext)) {
-                originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
-            }
-            variableService.update(fis, zipFile.length(), batchResult, originBatchFilename);
+        String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
+        String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
+        if (!S.b(ext)) {
+            originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
         }
+
+        FileInputStream fis = new FileInputStream(zipFile);
+        holder.inputStreams.add(fis);
+
+        variableService.storeData(fis, zipFile.length(), batchResult, originBatchFilename);
         return null;
     }
 
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
-            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir) throws IOException {
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, VariableData.DataStreamHolder holder) throws IOException {
         BatchStatusProcessor status = prepareStatus(execContext);
 
         File statusFile = new File(zipDir, "status.txt");
@@ -268,7 +272,11 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
 
         byte[] bytes = status.getStatus().getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, batchStatus);
+
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        holder.inputStreams.add(inputStream);
+
+        variableService.storeData(inputStream, bytes.length, batchStatus);
         return null;
     }
 

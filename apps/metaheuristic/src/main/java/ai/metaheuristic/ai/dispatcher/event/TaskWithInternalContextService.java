@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -69,7 +70,7 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public void processInternalFunction(final TaskWithInternalContextEvent event) {
+    public void processInternalFunction(final TaskWithInternalContextEvent event, VariableData.DataStreamHolder holder) {
         execContextSyncService.checkWriteLockPresent(event.execContextId);
 
         TaskImpl task;
@@ -134,7 +135,7 @@ public class TaskWithInternalContextService {
 //                    taskTransactionalService.setParams(event.taskId, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                        execContext.id, event.taskId, p.internalContextId, taskParamsYaml);
+                        execContext.id, event.taskId, p.internalContextId, taskParamsYaml, holder);
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
                     execContextFSM.markAsFinishedWithError(task, execContext, taskParamsYaml, result);
