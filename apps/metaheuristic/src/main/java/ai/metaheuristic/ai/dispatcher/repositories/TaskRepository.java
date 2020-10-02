@@ -122,5 +122,14 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     )
     List<TaskProgress> getTaskProgress(Long execContextId);
 
+    @Query(nativeQuery = true, value =
+            "select distinct d.EXEC_CONTEXT_ID from mh_task d where d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
+    List<Long> findAllExecContextIdsForOrphanTasks();
+
+//    @Query("DELETE FROM TaskImpl t where t.id in :ids")
+    void deleteAllByIdIn(List<Long> ids);
+
+    @Query(value="select v.id from TaskImpl v where v.execContextId=:execContextId")
+    List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 }
 

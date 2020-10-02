@@ -15,17 +15,14 @@
  */
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -33,48 +30,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ArtifactCleanerAtDispatcher {
 
-    private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
+    private final TaskTopLevelService taskTopLevelService;
     private final VariableRepository variableRepository;
+    private final VariableTopLevelService variableTopLevelService;
 
     public void fixedDelay() {
         deleteOrphanTasks();
-        deleteOrphanExecContextData();
-    }
-
-    private void deleteOrphanExecContextData() {
-        deleteOrphanData(variableRepository.findAllOrphanExecContextData());
-    }
-
-    private void deleteOrphanData(List<Long> ids) {
-        if (ids.isEmpty()) {
-            return;
-        }
-
-        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher.deleteOrphanData()
-        for (int i = 0; i < Math.min(ids.size(), 1000); i++) {
-            variableRepository.deleteById(ids.get(i));
-        }
+        deleteOrphanVariables();
     }
 
     private void deleteOrphanTasks() {
-        List<Long> ids = execContextRepository.findAllIds();;
-        int page = 0;
-        final AtomicBoolean isFound = new AtomicBoolean();
-        do {
-            isFound.set(false);
-            taskRepository.findAllAsTaskSimple(PageRequest.of(page, 100))
-                    .forEach(t -> {
-                        isFound.set(true);
-                        Long execContextId = (Long) t[1];
-                        if (!ids.contains(execContextId)) {
-                            log.info("Found orphan task #{}, execContextId: #{}", t[0], execContextId);
-                            taskRepository.deleteById((Long) t[0]);
-                        }
-                    });
-            page++;
-        } while (isFound.get());
+        taskTopLevelService.deleteOrphanTasks(taskRepository.findAllExecContextIdsForOrphanTasks());
     }
 
-    
+    private void deleteOrphanVariables() {
+        variableTopLevelService.deleteOrphanVariables(variableRepository.findAllExecContextIdsForOrphanVariables());
+    }
+
+
 }

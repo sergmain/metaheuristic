@@ -126,8 +126,20 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             }
         }
         if (!finishPresent) {
+            SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
+            p.code = Consts.MH_FINISH_FUNCTION;
+            p.name = Consts.MH_FINISH_FUNCTION;
+            SourceCodeParamsYaml.FunctionDefForSourceCode f = new SourceCodeParamsYaml.FunctionDefForSourceCode();
+            f.code = Consts.MH_FINISH_FUNCTION;
+            f.context = EnumsApi.FunctionExecContext.internal;
+            p.function = f;
+
+            ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, Consts.TOP_LEVEL_CONTEXT_ID);
+            scg.processes.add(processInGraph);
+
             ExecContextData.ProcessVertex finishVertex = getVertex(ids, currId, Consts.MH_FINISH_FUNCTION, currentInternalContextId);
             ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, finishVertex, parentProcesses);
+
         }
         return scg;
     }

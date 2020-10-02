@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -365,45 +366,37 @@ public class TaskTransactionalService {
     }
 
     public Enums.UploadResourceStatus setResultReceivedForInternalFunction(Long taskId) {
+        TxUtils.checkTxExists();
+
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#317.020 Task #{} is obsolete and was already deleted", taskId);
             return Enums.UploadResourceStatus.TASK_NOT_FOUND;
         }
-        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
-//        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {
-            try {
-/*
-                if (task == null) {
-                    return Enums.UploadResourceStatus.TASK_NOT_FOUND;
-                }
-*/
-                if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
-                    return Enums.UploadResourceStatus.TASK_WAS_RESET;
-                }
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                tpy.task.outputs.forEach(o->o.uploaded = true);
-                task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-                task.setCompleted(true);
-                task.setCompletedOn(System.currentTimeMillis());
-                task.setResultReceived(true);
-                save(task);
-                return Enums.UploadResourceStatus.OK;
-            } catch (ObjectOptimisticLockingFailureException e) {
-                log.warn("#307.100 !!!NEED TO INVESTIGATE. Error set setResultReceivedForInternalFunction() for taskId: {}, error: {}", taskId, e.toString());
-                log.warn("#307.120 ObjectOptimisticLockingFailureException", e);
-                return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
-            }
-/*
-        });
-        if (status==null) {
-            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+        if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
+            log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
+            return Enums.UploadResourceStatus.TASK_WAS_RESET;
         }
-        return status;
-*/
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        tpy.task.outputs.forEach(o->o.uploaded = true);
+        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        task.setCompleted(true);
+        task.setCompletedOn(System.currentTimeMillis());
+        task.setResultReceived(true);
+        save(task);
+        return Enums.UploadResourceStatus.OK;
+    }
+
+    @Transactional
+    public Void deleteOrphanTasks(Long execContextId) {
+        List<Long> ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId) ;
+        if (ids.isEmpty()) {
+            return null;
+        }
+        taskRepository.deleteAllByIdIn(ids);
+        return null;
     }
 
 

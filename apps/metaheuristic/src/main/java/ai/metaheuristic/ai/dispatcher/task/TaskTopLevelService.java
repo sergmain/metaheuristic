@@ -22,7 +22,12 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Serge
@@ -40,5 +45,11 @@ public class TaskTopLevelService {
 
     public Enums.UploadResourceStatus setResultReceived(TaskImpl task, Long variableId) {
         return execContextSyncService.getWithSync(task.execContextId, () -> taskTransactionalService.setResultReceived(task, variableId));
+    }
+
+    public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
+        for (Long execContextId : orphanExecContextIds) {
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> taskTransactionalService.deleteOrphanTasks(execContextId));
+        }
     }
 }

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.api.data.account.SimpleAccount;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +27,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
 import java.util.Collection;
@@ -48,10 +47,13 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query("SELECT v.taskContextId FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
     Set<String> findTaskContextIdsByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
 
+//    @Query("DELETE FROM Variable v where v.id in :ids")
+    void deleteAllByIdIn(List<Long> ids);
+
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(nativeQuery = true, value =
-            "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
-    List<Long> findAllOrphanExecContextData();
+            "select distinct d.EXEC_CONTEXT_ID from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
+    List<Long> findAllExecContextIdsForOrphanVariables();
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
@@ -95,6 +97,9 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     Page<Variable> findAll(@NonNull Pageable pageable);
+
+    @Query(value="select v.id from Variable v where v.execContextId=:execContextId")
+    List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
     @Nullable
     @Query(value="select b.data from Variable b where b.id=:id")

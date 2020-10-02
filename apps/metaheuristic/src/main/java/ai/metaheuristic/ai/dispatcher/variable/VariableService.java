@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -59,6 +60,7 @@ import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -362,5 +364,15 @@ public class VariableService {
 
     public Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> vars) {
         return variableRepository.findTaskContextIdsByExecContextIdAndVariableNames(execContextId, vars);
+    }
+
+    @Transactional
+    public Void deleteOrphanVariables(Long execContextId) {
+        List<Long> ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId) ;
+        if (ids.isEmpty()) {
+            return null;
+        }
+        variableRepository.deleteAllByIdIn(ids);
+        return null;
     }
 }

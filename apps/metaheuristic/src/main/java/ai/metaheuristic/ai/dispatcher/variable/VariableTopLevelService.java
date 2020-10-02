@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * @author Serge
@@ -83,4 +84,11 @@ public class VariableTopLevelService {
             return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
         }
     }
+
+    public void deleteOrphanVariables(List<Long> orphanExecContextIds) {
+        for (Long execContextId : orphanExecContextIds) {
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> variableService.deleteOrphanVariables(execContextId));
+        }
+    }
+
 }

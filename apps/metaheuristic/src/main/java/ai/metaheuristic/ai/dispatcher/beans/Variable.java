@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -52,17 +53,11 @@ public class Variable implements Serializable {
     @Column(name = "NAME")
     public String name;
 
-    /**
-     * This field is initialized only for data resources which were produced while processing execContext.
-     * The data resource which is using as input resources must not have execContextId.
-     * Also this field is used as refId for deleting any resources which were produced
-     * while execContext was processed.
-     */
-    @Nullable
+    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 
-    @Nullable
+    @NonNull
     @Column(name = "TASK_CONTEXT_ID")
     public String taskContextId;
 
