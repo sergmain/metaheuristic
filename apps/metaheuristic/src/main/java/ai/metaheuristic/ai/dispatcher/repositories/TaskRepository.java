@@ -41,11 +41,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     Stream<TaskImpl> findAllByExecContextIdAsStream(Long execContextId);
 
-    @Nullable
-    @Query(value="select t from TaskImpl t where t.id=:id")
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    TaskImpl findByIdForUpdate(Long id);
-
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     Page<TaskImpl> findAll(Pageable pageable);
 
