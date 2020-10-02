@@ -48,14 +48,18 @@ public class TaskWithInternalContextEventService {
     @Async
     @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
-        log.info("#447.020 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
+        log.info("#447.020 processInternalFunction(), thread #{}, task #{}, execContext #{}, {}",
+                Thread.currentThread().getId(), event.taskId, event.execContextId, execContextCache.findById(event.execContextId));
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
         VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
         try {
             execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
-                log.info("#447.025 execContext #{}, {}", event.execContextId, execContextCache.findById(event.execContextId));
+/*
+                log.info("#447.025 processInternalFunction(), thread #{}, task #{}, execContext #{}, {}",
+                        Thread.currentThread().getId(), event.taskId, event.execContextId, execContextCache.findById(event.execContextId));
+*/
                 taskWithInternalContextService.processInternalFunction(event, holder);
                 return null;
             });

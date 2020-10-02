@@ -372,7 +372,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 String mapping = variableService.getVariableDataAsString(sv.id);
                 bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
             } catch (CommonErrorWithDataException e) {
-                log.warn(S.f("#993.200 no mapping variables with id were found in execContextId #%s", sv.id, execContextId));
+                log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
             }
         }
 

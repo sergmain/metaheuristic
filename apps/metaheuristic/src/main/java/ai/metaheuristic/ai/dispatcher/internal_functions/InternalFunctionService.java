@@ -67,7 +67,7 @@ public class InternalFunctionService {
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
                     "#994.220 execContext wasn't found, execContextId: " + execContextId));
         }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(ec, taskId);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(ec, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,

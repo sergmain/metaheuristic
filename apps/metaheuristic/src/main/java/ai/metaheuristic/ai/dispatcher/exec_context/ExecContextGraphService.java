@@ -424,18 +424,18 @@ public class ExecContextGraphService {
                     graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
                 }
 
-                // if this is newly created graph then return only the start vertex of graph
                 ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
                         .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
                         .findFirst()
                         .orElse(null);
 
+                // if this is newly created graph then return only the start vertex of graph
                 if (startVertex!=null) {
-                    log.debug("\tthere is a task without any ancestors, #{}, state {}", startVertex.taskId, startVertex.execState);
+                    log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}", startVertex.taskId, startVertex.execState);
                     return List.of(startVertex);
                 }
 
-                log.debug("\tThe root element of execContext was already started to process");
+                log.debug("\tThe root vertex of execContext was already started to process");
 
                 // get all non-processed tasks
                 Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);

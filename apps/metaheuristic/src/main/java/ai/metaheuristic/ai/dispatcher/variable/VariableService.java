@@ -146,7 +146,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#087.0286 Binary data for variableId {} wasn't found", variableId);
+                log.warn("#087.028 Binary data for variableId {} wasn't found", variableId);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, "#087.028 Variable data wasn't found, variableId: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream()) {
