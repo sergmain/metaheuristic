@@ -711,8 +711,9 @@ public class ExecContextFSM {
         return task;
     }
 
+    @Nullable
     @Transactional
-    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -766,6 +767,16 @@ public class ExecContextFSM {
     private TaskImpl getTaskAndAssignToProcessorInternal(
             ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
 
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.warn("#705.360 ExecContext wasn't found for id: {}", execContextId);
+            return null;
+        }
+        if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
+            log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
+            return null;
+        }
+
         List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processor.id);
         boolean allAssigned = false;
         if (reportProcessorTaskStatus.statuses!=null) {
@@ -793,16 +804,6 @@ public class ExecContextFSM {
         if (allAssigned) {
             // this processor already has active task
             log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
-            return null;
-        }
-
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#705.360 ExecContext wasn't found for id: {}", execContextId);
-            return null;
-        }
-        if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
-            log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
             return null;
         }
 

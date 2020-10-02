@@ -99,30 +99,6 @@ public class ExecContextTopLevelService {
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
-        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId, ()-> {
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
-            if (execContext == null) {
-                log.error("#705.315Cache doesn't contain ExecContext #{}", execContextId);
-                return null;
-            }
-            if (execContext.state != EnumsApi.ExecContextState.STARTED.code) {
-                return null;
-            }
-            DispatcherCommParamsYaml.AssignedTask task = getTaskAndAssignToProcessor(
-                    reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
-            return task;
-        });
-        return assignedTask;
-    }
-
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId,
-                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
-    }
-
-    @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         for (Long execContextId : execContextIds) {
@@ -132,6 +108,13 @@ public class ExecContextTopLevelService {
             }
         }
         return null;
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
+                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
+        return assignedTask;
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
@@ -148,17 +131,7 @@ public class ExecContextTopLevelService {
         execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, needReconciliation));
     }
 
-    @Nullable
-    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
-        ExecContext wb = execContextCache.findById(execContextId);
-        if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
-        }
-        return null;
-    }
-
     public OperationStatusRest resetTask(Long taskId) {
-        TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -191,7 +164,7 @@ public class ExecContextTopLevelService {
         execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.reconcileStates(execContextId));
     }
 
-        public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#317.020 Task obsolete and was already deleted");

@@ -95,7 +95,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        DispatcherCommParamsYaml.AssignedTask t = execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+        DispatcherCommParamsYaml.AssignedTask t = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

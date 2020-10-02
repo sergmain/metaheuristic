@@ -132,7 +132,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // ======================
 
             DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                    execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                    execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
             assertNull(simpleTask0);
 
@@ -192,7 +192,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertFalse(tpy.task.metas.isEmpty());
 
         DispatcherCommParamsYaml.AssignedTask task40 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
@@ -240,7 +240,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             return null;
         });
         DispatcherCommParamsYaml.AssignedTask t =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 20);
@@ -253,7 +253,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskVertices.size());
             return null;
         });
-        t = execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+        t = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(finishTask.task.id, 20);
@@ -278,7 +278,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     public void step_CommonProcessing() {
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
@@ -299,7 +299,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     public void step_FitAndPredict() {
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
@@ -341,7 +341,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     public void step_DatasetProcessing() {
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
@@ -349,7 +349,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(task3);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask21);
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask20.params);
@@ -410,7 +410,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     public void step_AssembledRaw() {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -419,7 +419,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         // the calling of this method may produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                execContextTopLevelService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask2);
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);

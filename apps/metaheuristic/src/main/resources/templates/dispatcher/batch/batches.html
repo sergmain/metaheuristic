@@ -55,7 +55,10 @@
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr th:align="center">
-            <th>#</th>
+            <th>
+                <div class="no-wrap">Batch ##</div>
+                <div class="no-wrap">EC ##</div>
+            </th>
             <th>Created on</th>
             <th>Owner's username</th>
             <th>Is batch consistent?</th>
@@ -71,7 +74,10 @@
         <tbody>
         <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.BatchData$BatchesResult"*/-->
         <tr th:each="r : ${result.batches}">
-            <td th:text="${r.batch.id}">#Id</td>
+            <td>
+                <div th:text="${r.batch.id}" class="no-wrap">Batch ##</div>
+                <div th:text="${r.batch.execContextId}" class="no-wrap">EC ##</div>
+            </td>
             <td th:text="${#dates.format(r.batch.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
             <td th:text="${r.username}">Owner's username</td>
             <td>
