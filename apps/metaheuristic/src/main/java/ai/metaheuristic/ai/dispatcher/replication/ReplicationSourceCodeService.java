@@ -97,8 +97,8 @@ public class ReplicationSourceCodeService {
             forCreating.removeIf(sourceCodeShortAsset -> sourceCodeShortAsset.uid.equals(p.uid));
         }
 
-        forUpdating.parallelStream().forEach(this::updateSourceCode);
-        forCreating.parallelStream().forEach(this::createSourceCode);
+        forUpdating.forEach(this::updateSourceCode);
+        forCreating.forEach(this::createSourceCode);
     }
 
     private void updateSourceCode(SourceCodeLoopEntry sourceCodeLoopEntry) {

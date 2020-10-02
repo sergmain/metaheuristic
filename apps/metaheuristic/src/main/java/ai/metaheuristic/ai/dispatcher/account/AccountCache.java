@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.account;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -36,15 +37,15 @@ public class AccountCache {
 
     private final AccountRepository accountRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
     public Account save(Account account) {
+        TxUtils.checkTxExists();
         return accountRepository.save(account);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
     public @Nullable Account findByUsername(String username) {
+        TxUtils.checkTxExists();
         return accountRepository.findByUsername(username);
     }
 }

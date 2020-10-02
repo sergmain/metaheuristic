@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -38,16 +39,16 @@ public class FunctionCache {
 
     private final FunctionRepository functionRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
+        TxUtils.checkTxExists();
         function.reset();
         return functionRepository.save(function);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
     public void delete(Function function) {
+        TxUtils.checkTxExists();
         try {
             functionRepository.delete(function);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -55,9 +56,9 @@ public class FunctionCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#functionId")
     public void delete(Long functionId) {
+        TxUtils.checkTxExists();
         try {
             functionRepository.deleteById(functionId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -66,9 +67,9 @@ public class FunctionCache {
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
     public Function findById(Long id) {
+        TxUtils.checkTxExists();
         return functionRepository.findById(id).orElse(null);
     }
 

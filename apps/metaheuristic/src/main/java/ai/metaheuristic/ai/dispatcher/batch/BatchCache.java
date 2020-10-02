@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,23 +41,23 @@ public class BatchCache {
 
     private final BatchRepository batchRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(value = {Consts.BATCHES_CACHE}, key = "#result.id")
     public Batch save(@NonNull Batch batch) {
+        TxUtils.checkTxExists();
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
         return batchRepository.saveAndFlush(batch);
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
+        TxUtils.checkTxExists();
         return batchRepository.findById(id).orElse(null);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#batch.id")
     public void delete(@Nullable Batch batch) {
+        TxUtils.checkTxExists();
         if (batch==null) {
             return;
         }
@@ -67,9 +68,9 @@ public class BatchCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void deleteById(@Nullable Long id) {
+        TxUtils.checkTxExists();
         if (id==null) {
             return;
         }
@@ -80,7 +81,6 @@ public class BatchCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void evictById(Long id) {
         //

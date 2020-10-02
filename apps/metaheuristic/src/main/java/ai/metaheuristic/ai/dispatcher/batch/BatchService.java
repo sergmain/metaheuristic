@@ -166,7 +166,7 @@ public class BatchService {
     @Transactional
     public void updateBatchStatuses() {
         List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
-        Map<Long, List<BatchAndExecContextStates>> map = statuses.parallelStream().collect(Collectors.groupingBy(status -> status.batchId));
+        Map<Long, List<BatchAndExecContextStates>> map = statuses.stream().collect(Collectors.groupingBy(status -> status.batchId));
         for (Long batchId : map.keySet()) {
             boolean isFinished = true;
             for (BatchAndExecContextStates execStates : map.get(batchId)) {

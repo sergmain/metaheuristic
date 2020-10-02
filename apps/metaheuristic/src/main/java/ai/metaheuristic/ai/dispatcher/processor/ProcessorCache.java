@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -29,8 +30,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -45,26 +44,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProcessorCache {
 
     private final ProcessorRepository processorRepository;
-//    private final ProcessorSyncService processorSyncService;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, allEntries = true)
     public void clearCache() {
+        TxUtils.checkTxExists();
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
     public Processor save(@NonNull Processor processor) {
-//        if (processor.id!=null) {
-//            processorSyncService.checkWriteLockPresent(processor.id);
-//        }
+        TxUtils.checkTxExists();
         log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
         return processorRepository.save(processor);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processor.id")
     public void delete(@NonNull Processor processor) {
+        TxUtils.checkTxExists();
         try {
             processorRepository.delete(processor);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -72,15 +67,15 @@ public class ProcessorCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#id")
     public void evictById(Long id) {
+        TxUtils.checkTxExists();
         //
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processorId")
     public void delete(Long processorId) {
+        TxUtils.checkTxExists();
         try {
             processorRepository.deleteById(processorId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -88,9 +83,9 @@ public class ProcessorCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processorId")
     public void deleteById(Long processorId) {
+        TxUtils.checkTxExists();
         try {
             processorRepository.deleteById(processorId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -99,9 +94,9 @@ public class ProcessorCache {
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.PROCESSORS_CACHE}, unless="#result==null")
     public Processor findById(Long id) {
+        TxUtils.checkTxExists();
         return processorRepository.findById(id).orElse(null);
     }
 }

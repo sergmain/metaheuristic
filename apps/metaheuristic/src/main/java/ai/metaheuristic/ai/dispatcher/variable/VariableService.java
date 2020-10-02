@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -225,8 +226,9 @@ public class VariableService {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
+        TxUtils.checkTxExists();
+
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
             if (S.b(contextId)) {

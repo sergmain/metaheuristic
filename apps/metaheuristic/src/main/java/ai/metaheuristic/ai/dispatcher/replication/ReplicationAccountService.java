@@ -88,8 +88,8 @@ public class ReplicationAccountService {
             forCreating.removeIf(accountShortAsset -> accountShortAsset.username.equals(a.username));
         }
 
-        forUpdating.parallelStream().forEach(this::updateAccount);
-        forCreating.parallelStream().forEach(this::createAccount);
+        forUpdating.forEach(this::updateAccount);
+        forCreating.forEach(this::createAccount);
     }
 
     private void updateAccount(AccountLoopEntry accountLoopEntry) {

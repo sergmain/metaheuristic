@@ -49,14 +49,14 @@ public class ReplicationFunctionService {
 
     @Transactional
     public void syncFunctions(List<String> actualFunctions) {
-        functionRepository.findAllFunctionCodes().parallelStream()
+        functionRepository.findAllFunctionCodes().stream()
                 .filter(s->!actualFunctions.contains(s))
                 .map(functionRepository::findByCode)
                 .filter(Objects::nonNull)
                 .forEach(s-> functionRepository.deleteById(s.id));
 
         List<String> currFunctions = functionRepository.findAllFunctionCodes();
-        actualFunctions.parallelStream()
+        actualFunctions.stream()
                 .filter(s->!currFunctions.contains(s))
                 .forEach(this::createFunction);
     }

@@ -204,7 +204,7 @@ public class Globals {
             dispatcherPublicKey = SecUtils.getPublicKey(dispatcherPublicKeyStr);
         }
         if (dispatcherEnabled && isFunctionSignatureRequired && dispatcherPublicKey==null ) {
-            throw new GlobalConfigurationException("Public key wasn't configured for dispatcher (file application.properties) but isFunctionSignatureRequired is true");
+            throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
 
         String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");

@@ -39,12 +39,12 @@ import java.util.List;
  * Time: 6:17 PM
  */
 @Repository
-@Transactional
+//@Transactional
 @Profile("dispatcher")
 public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
@@ -60,25 +60,25 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Query(value="select b.filename from GlobalVariable b where b.name=:var")
     List<String> findFilenamesByVar(String var);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from GlobalVariable b where b.id=:id")
     GlobalVariable findByIdForUpdate(Long id);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @NonNull
     Page<GlobalVariable> findAll(@NonNull Pageable pageable);
 
     void deleteByName(String variable);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
@@ -86,7 +86,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.id=:id")
     SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id);
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Query(value="select b.id from GlobalVariable b")
     List<Long> getAllIds();
 }

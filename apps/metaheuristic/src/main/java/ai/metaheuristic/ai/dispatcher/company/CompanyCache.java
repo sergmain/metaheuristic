@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.dispatcher.company;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -36,16 +36,16 @@ public class CompanyCache {
 
     private final CompanyRepository companyRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(cacheNames = Consts.COMPANIES_CACHE, key = "#result.uniqueId")
     public Company save(Company account) {
+        TxUtils.checkTxExists();
         return companyRepository.save(account);
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
     public Company findByUniqueId(Long uniqueId) {
+        TxUtils.checkTxExists();
         return companyRepository.findByUniqueId(uniqueId);
     }
 

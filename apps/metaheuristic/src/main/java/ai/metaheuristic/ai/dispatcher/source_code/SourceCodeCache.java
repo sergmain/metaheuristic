@@ -17,9 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,22 +41,22 @@ public class SourceCodeCache {
 
     private final SourceCodeRepository sourceCodeRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(value = {Consts.SOURCE_CODES_CACHE}, key = "#result.id")
     public SourceCodeImpl save(SourceCodeImpl sourceCode) {
+        TxUtils.checkTxExists();
         return sourceCodeRepository.save(sourceCode);
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.SOURCE_CODES_CACHE}, unless="#result==null")
     public SourceCodeImpl findById(Long id) {
+        TxUtils.checkTxExists();
         return sourceCodeRepository.findById(id).orElse(null);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#sourceCode.id")
     public void delete(SourceCode sourceCode) {
+        TxUtils.checkTxExists();
         if (sourceCode.getId()==null) {
             return;
         }
@@ -66,13 +67,9 @@ public class SourceCodeCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#id")
     public void deleteById(Long id) {
-        try {
-            sourceCodeRepository.deleteById(id);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error", e);
-        }
+        TxUtils.checkTxExists();
+        sourceCodeRepository.deleteById(id);
     }
 }

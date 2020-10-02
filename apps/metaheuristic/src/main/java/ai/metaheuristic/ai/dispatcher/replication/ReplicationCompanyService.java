@@ -88,8 +88,8 @@ public class ReplicationCompanyService {
             forCreating.removeIf(companyShortAsset -> companyShortAsset.uniqueId.equals(c.uniqueId));
         }
 
-        forUpdating.parallelStream().forEach(this::updateCompany);
-        forCreating.parallelStream().forEach(this::createCompany);
+        forUpdating.forEach(this::updateCompany);
+        forCreating.forEach(this::createCompany);
     }
 
     private void createCompany(ReplicationData.CompanyShortAsset companyShortAsset) {

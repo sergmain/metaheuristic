@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,30 +41,25 @@ public class ExperimentCache {
 
     private final ExperimentRepository experimentRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CachePut(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
     public Experiment save(Experiment experiment) {
+        TxUtils.checkTxExists();
         // noinspection UnusedAssignment
         Experiment save=null;
-        //noinspection CaughtExceptionImmediatelyRethrown
-        try {
-            save = experimentRepository.save(experiment);
-            return save;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw e;
-        }
+        save = experimentRepository.save(experiment);
+        return save;
     }
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY)
     @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
     public Experiment findById(Long id) {
+        TxUtils.checkTxExists();
         return experimentRepository.findById(id).orElse(null);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
     public void delete(@NonNull Experiment experiment) {
+        TxUtils.checkTxExists();
         try {
             experimentRepository.delete(experiment);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -71,15 +67,15 @@ public class ExperimentCache {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void invalidate(Long id) {
+        TxUtils.checkTxExists();
         //
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void deleteById(@NonNull Long id) {
+        TxUtils.checkTxExists();
         try {
             experimentRepository.deleteById(id);
         } catch (EmptyResultDataAccessException e) {
