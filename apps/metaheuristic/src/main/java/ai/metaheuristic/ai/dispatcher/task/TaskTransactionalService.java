@@ -395,7 +395,10 @@ public class TaskTransactionalService {
         if (ids.isEmpty()) {
             return null;
         }
-        taskRepository.deleteAllByIdIn(ids);
+        for (Long id : ids) {
+            log.info("Found orphan task #{}, execContextId: #{}", id, execContextId);
+            taskRepository.deleteById(id);
+        }
         return null;
     }
 
