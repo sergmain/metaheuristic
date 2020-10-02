@@ -67,7 +67,7 @@ public class SourceCodeValidationService {
 
     private final FunctionService functionService;
     private final FunctionRepository functionRepository;
-    private final SourceCodeStateService sourceCodeStateService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final DispatcherParamsService dispatcherParamsService;
 
@@ -204,7 +204,7 @@ public class SourceCodeValidationService {
     @Transactional
     public SourceCodeApiData.SourceCodeValidation validate(SourceCodeImpl sourceCode) {
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
-        sourceCodeStateService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
+        sourceCodeTopLevelService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
             dispatcherParamsService.registerSourceCode(sourceCode);
             if (sourceCode.isValid() && sourceCodeValidation.status.status!=OK) {

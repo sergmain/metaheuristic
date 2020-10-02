@@ -16,9 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code;
 
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -27,7 +32,26 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SourceCodeTopLevelService {
 
+    private final SourceCodeStateService sourceCodeStateService;
 
-    // The class for placing method with syncing
+    private final static Object syncObj = new Object();
+
+    @Async
+    @EventListener
+    public void handleAsync(DispatcherInternalEvent.SourceCodeLockingEvent event) {
+        setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
+    }
+
+    public void setValidTo(SourceCodeImpl sourceCode, boolean valid) {
+        synchronized (syncObj) {
+            sourceCodeStateService.setValidTo(sourceCode.id, sourceCode.companyId, valid);
+        }
+    }
+
+    public void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
+        synchronized (syncObj) {
+            sourceCodeStateService.setLockedTo(sourceCodeId, companyUniqueId, locked);
+        }
+    }
 
 }

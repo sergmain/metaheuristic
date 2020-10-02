@@ -17,64 +17,60 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 /**
  * @author Serge
  * Date: 2/23/2020
  * Time: 9:12 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class SourceCodeStateService {
 
-    private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeCache sourceCodeCache;
 
-    @Async
-    @EventListener
-    public void handleAsync(DispatcherInternalEvent.SourceCodeLockingEvent event) {
-        setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
-    }
+    @Transactional
+    public void setValidTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean valid) {
+        SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
+        if (sc==null) {
+            return;
+        }
+        if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
+            log.warn("SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
+            return;
+        }
 
-    public void setValidTo(SourceCode sourceCode, boolean valid) {
-        synchronized (syncObj) {
-            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(sourceCode.getId(), sourceCode.getCompanyId());
-            if (p!=null && p.isValid()!=valid) {
-                p.setValid(valid);
-                saveInternal(p);
-            }
-            sourceCode.setValid(valid);
+        if (sc.isValid()!=valid) {
+            sc.setValid(valid);
+            saveInternal(sc);
         }
     }
 
-    private final static Object syncObj = new Object();
-
-    private void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
-        synchronized (syncObj) {
-            SourceCodeImpl p;
-            if (companyUniqueId==null) {
-                p = sourceCodeRepository.findById(sourceCodeId).orElse(null);
-            }
-            else {
-                p = sourceCodeRepository.findByIdForUpdate(sourceCodeId, companyUniqueId);
-            }
-            if (p != null && p.isLocked() != locked) {
-                p.setLocked(locked);
-                saveInternal(p);
-            }
+    @Transactional
+    public void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
+        SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
+        if (sc==null) {
+            return;
+        }
+        if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
+            log.warn("SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
+            return;
+        }
+        if (sc.isLocked()!=locked) {
+            sc.setLocked(locked);
+            saveInternal(sc);
         }
     }
 
