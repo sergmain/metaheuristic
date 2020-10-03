@@ -23,8 +23,10 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
@@ -61,6 +63,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,8 +132,7 @@ public class ExecContextFSM {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }
 
-    @Transactional
-    public void toState(Long execContextId, EnumsApi.ExecContextState state) {
+    private void toState(Long execContextId, EnumsApi.ExecContextState state) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -152,6 +154,10 @@ public class ExecContextFSM {
     }
 
     @Transactional
+    public OperationStatusRest changeExecContextStateWithTx(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
+        return changeExecContextState(execState, execContextId, companyUniqueId);
+    }
+
     public OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 

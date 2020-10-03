@@ -45,12 +45,12 @@ public class ExecContextCache {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
 
-    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
+//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
         TxUtils.checkTxExists();
     }
 
-    @CachePut(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
+//    @CachePut(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
@@ -70,7 +70,7 @@ public class ExecContextCache {
         return execContextRepository.save(execContext);
     }
 
-    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
+//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
     public void delete(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         try {
@@ -80,7 +80,7 @@ public class ExecContextCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
+//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -90,7 +90,7 @@ public class ExecContextCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
+//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -101,7 +101,7 @@ public class ExecContextCache {
     }
 
     @Nullable
-    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
+//    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
         TxUtils.checkTxExists();
         return execContextRepository.findById(id).orElse(null);
