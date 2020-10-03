@@ -276,7 +276,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         holder.inputStreams.add(inputStream);
 
-        variableService.storeData(inputStream, bytes.length, batchStatus);
+        variableService.storeData(inputStream, bytes.length, batchStatus, null);
         return null;
     }
 

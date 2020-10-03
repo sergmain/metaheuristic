@@ -73,10 +73,10 @@ public class TaskProducingService {
         }
         long mills = System.currentTimeMillis();
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.100 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
                 result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
-            log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
+            log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
             if(isPersist) {
                 execContextFSM.toStopped(execContext.getId());
             }
@@ -85,7 +85,7 @@ public class TaskProducingService {
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         result = produceTasks(isPersist, execContext);
-        log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
@@ -100,10 +100,10 @@ public class TaskProducingService {
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-            log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
+            log.info(S.f("#701.160 Tasks were produced with status %s", produceTaskResult.status));
         }
         else {
-            log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+            log.info(S.f("#701.180 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
         }
 
 
@@ -138,18 +138,18 @@ public class TaskProducingService {
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
-                    return new TaskData.ProduceTaskResult(TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#375.020 Process '"+processCode+"' wasn't found");
+                    return new TaskData.ProduceTaskResult(TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#701.200 Process '"+processCode+"' wasn't found");
                 }
             }
             if (internalFunctionRegisterService.isRegistered(p.function.code) && p.function.context!= FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
-                        "#375.040 Process '"+processCode+"' must be internal");
+                        "#701.220 Process '"+processCode+"' must be internal");
             }
             Set<ExecContextData.ProcessVertex> ancestors = ExecContextProcessGraphService.findAncestors(processGraph, processVertex);
             ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctions(execContextParamsYaml, ancestors, p);
 
             if (internalFuncProcess!=null) {
-                log.info(S.f("There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
+                log.info(S.f("#701.240 There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
                 continue;
             }
 
@@ -176,7 +176,7 @@ public class TaskProducingService {
         for (ExecContextData.ProcessVertex ancestor : ancestors) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
             if (p==null) {
-                log.warn("#375.060 Unusual state, need to investigate");
+                log.warn("#701.260 Unusual state, need to investigate");
                 continue;
             }
             if (!currProcess.internalContextId.startsWith(p.internalContextId)) {

@@ -34,7 +34,6 @@ import java.util.List;
 
 @Repository
 @Profile("dispatcher")
-//@Transactional(propagation = Propagation.REQUIRES_NEW)
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     @Query(value="select b from Batch b where b.id=:id and b.companyId=:companyUniqueId")

@@ -16,9 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +47,8 @@ public class TaskWithInternalContextEventService {
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
+    private final ExecContextFSM execContextFSM;
+    private final TaskRepository taskRepository;
 
     @Async
     @EventListener
@@ -56,11 +61,24 @@ public class TaskWithInternalContextEventService {
         VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
         try {
             execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
-/*
-                log.info("#447.025 processInternalFunction(), thread #{}, task #{}, execContext #{}, {}",
-                        Thread.currentThread().getId(), event.taskId, event.execContextId, execContextCache.findById(event.execContextId));
-*/
-                taskWithInternalContextService.processInternalFunction(event, holder);
+                TaskImpl task;
+                try {
+                    task = taskRepository.findById(event.taskId).orElse(null);
+                    if (task==null) {
+                        log.warn("Task #{} with internal context doesn't exist", event.taskId);
+                        return null;
+                    }
+                } catch (Throwable th) {
+                    log.error("Error", th);
+                    return null;
+                }
+                if (!event.execContextId.equals(task.execContextId)) {
+                    log.error("The task #{} has different execContextId, expected: {}, actual: {}",
+                            event.taskId, event.execContextId, task.execContextId);
+                    execContextFSM.toError(event.execContextId);
+                    return null;
+                }
+                taskWithInternalContextService.processInternalFunction(task, holder);
                 return null;
             });
         }

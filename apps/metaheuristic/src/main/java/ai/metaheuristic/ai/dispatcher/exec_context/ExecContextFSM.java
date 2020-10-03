@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
@@ -234,10 +233,8 @@ public class ExecContextFSM {
                     StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
         }
         EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
-        Task t = prepareAndSaveTask(result, state);
-        if (t==null) {
-            return null;
-        }
+        Task t = prepareAndSaveTask(task, result, state);
+
         dispatcherEventService.publishTaskEvent(
                 state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
                 null, result.taskId, t.getExecContextId());
@@ -271,14 +268,12 @@ public class ExecContextFSM {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public void markAsFinishedWithError(TaskImpl task, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
+    public void markAsFinishedWithError(Long taskId, Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
         TxUtils.checkTxExists();
 
-        log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, execContext.sourceCodeId, execContext.id);
-        final Long taskId = task.id;
+        log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
         final String console = "#707.060 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
 
-        final Long execContextId = task.execContextId;
         final String taskContextId = taskParamsYaml.task.taskContextId;
 
         finishWithError(taskId, console, execContextId, taskContextId);
@@ -471,7 +466,7 @@ public class ExecContextFSM {
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
-    private List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
+    public List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = ExecContextService.getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
@@ -480,8 +475,8 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));
@@ -520,16 +515,8 @@ public class ExecContextFSM {
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                     continue;
                 }
-                // all tasks with internal function will be processed in a different thread
+                // all tasks with internal function will be processed by scheduler
                 if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
-                    // Do Not set EnumsApi.TaskExecState.IN_PROGRESS here.
-                    // it'll be set in ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService.handleAsync
-                    task.setAssignedOn(System.currentTimeMillis());
-                    task.setResultResourceScheduledOn(0);
-                    task = taskTransactionalService.save(task);
-                    prepareVariables(task);
-
-                    eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.execContextId, task.id));
                     continue;
                 }
 
@@ -594,16 +581,6 @@ public class ExecContextFSM {
         // normal way of operation
         longHolder.set(0);
 
-/*
-        taskSyncService.getWithSync(resultTask.id, (t) -> {
-            t.setAssignedOn(System.currentTimeMillis());
-            t.setProcessorId(processor.getId());
-            t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-            t.setResultResourceScheduledOn(0);
-            taskTransactionalService.save(t);
-            return null;
-        });
-*/
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setProcessorId(processor.getId());
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
@@ -682,15 +659,8 @@ public class ExecContextFSM {
         return EnumsApi.TaskProducingStatus.OK;
     }
 
-    @Nullable
-    private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-        if (task==null) {
-            log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
-            return null;
-        }
+    private Task prepareAndSaveTask(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         task.setExecState(state.value);
-
         if (state==EnumsApi.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());

@@ -22,11 +22,16 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -34,7 +39,8 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,7 +48,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +59,7 @@ import java.util.List;
  * Date: 7/4/2019
  * Time: 3:56 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Profile("dispatcher")
 @Service
@@ -63,8 +72,11 @@ public class ExecContextTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
     private final TaskProducingService taskProducingService;
+    private final TaskTransactionalService taskTransactionalService;
+    private final TaskWithInternalContextService taskWithInternalContextService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId, ()-> execContextService.getExecContextState(sourceCodeId, execContextId, context));
@@ -109,6 +121,76 @@ public class ExecContextTopLevelService {
         }
         return null;
     }
+
+    public void findUnassignedInternalTaskAndAssign() {
+        List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        for (Long execContextId : execContextIds) {
+            execContextSyncService.getWithSyncNullable(execContextId, ()->findUnassignedInternalTaskAndAssign(execContextId));
+        }
+    }
+
+    @Nullable
+    private Void findUnassignedInternalTaskAndAssign(Long execContextId) {
+        TxUtils.checkTxNotExists();
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return null;
+        }
+        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
+        if (vertices.isEmpty()) {
+            return null;
+        }
+
+        int page = 0;
+        List<TaskImpl> tasks;
+        while ((tasks = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+            for (TaskImpl task : tasks) {
+                final TaskParamsYaml taskParamYaml;
+                if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    log.warn("#705.240 task with IN_PROGRESS is here??");
+                    continue;
+                }
+                try {
+                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                }
+                catch (YAMLException e) {
+                    log.error("#705.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
+                    execContextFSM.finishWithError(task.getId(), task.execContextId, null, null);
+                    continue;
+                }
+                if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
+                    log.warn("#705.280 Task #{} with function '{}' was already processed with status {}",
+                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
+                    continue;
+                }
+                // all tasks with internal function will be processed in a different thread
+                if (taskParamYaml.task.context!=EnumsApi.FunctionExecContext.internal) {
+                    continue;
+                }
+                log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
+                try {
+                    taskWithInternalContextService.processInternalFunction(task, holder);
+                }
+                finally {
+                    for (InputStream inputStream : holder.inputStreams) {
+                        try {
+                            inputStream.close();
+                        }
+                        catch(Throwable th)  {
+                            log.warn("Error while closing stream", th);
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+        return null;
+    }
+
+
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {

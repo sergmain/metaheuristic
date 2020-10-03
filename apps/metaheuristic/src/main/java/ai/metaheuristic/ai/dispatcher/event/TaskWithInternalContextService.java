@@ -26,9 +26,9 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -60,8 +60,8 @@ public class TaskWithInternalContextService {
     private final TaskTransactionalService taskTransactionalService;
     private final TaskExecStateService taskExecStateService;
     private final ExecContextSyncService execContextSyncService;
-    private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
+    private final VariableService variableService;
 
     private static Long lastTaskId=null;
     // this code is only for testing
@@ -70,45 +70,31 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public void processInternalFunction(final TaskWithInternalContextEvent event, VariableData.DataStreamHolder holder) {
-        execContextSyncService.checkWriteLockPresent(event.execContextId);
-
-        TaskImpl task;
-        try {
-            task = taskRepository.findById(event.taskId).orElse(null);
-            if (task==null) {
-                log.warn("Task #{} with internal context doesn't exist", event.taskId);
-                return;
-            }
-        } catch (Throwable th) {
-            log.error("Error", th);
-            return;
-        }
-        if (!event.execContextId.equals(task.execContextId)) {
-            log.error("The task #{} has different execContextId, expected: {}, actual: {}",
-                    event.taskId, event.execContextId, task.execContextId);
-            execContextFSM.toError(event.execContextId);
-            return;
-        }
+    public void processInternalFunction(TaskImpl task, VariableData.DataStreamHolder holder) {
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         try {
+            task.setAssignedOn(System.currentTimeMillis());
+            task.setResultResourceScheduledOn(0);
+            task = taskTransactionalService.save(task);
+
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext == null) {
-                taskExecStateService.finishTaskAsError(event.taskId, EnumsApi.TaskExecState.ERROR, -10000,
-                        "#707.030 Task #" + event.taskId + " is broken, execContext #" + task.execContextId + " wasn't found.");
+                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10000,
+                        "#707.030 Task #" + task.id + " is broken, execContext #" + task.execContextId + " wasn't found.");
                 return;
             }
             try {
                 if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.error("#707.012 Task #"+event.taskId+" already in progress. mustn't happened. it's, actually, illegal state");
+                    log.error("#707.012 Task #"+task.id+" already in progress. mustn't happened. it's, actually, illegal state");
                     return;
                 }
                 if (task.execState!= EnumsApi.TaskExecState.NONE.value) {
-                    log.info("#707.011 Task #"+event.taskId+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
+                    log.info("#707.011 Task #"+task.id+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
                     return;
                 }
                 if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
-                    log.error("#707.015 Task #"+event.taskId+" already was finished");
+                    log.error("#707.015 Task #"+task.id+" already was finished");
                     return;
                 }
                 execContextFSM.updateTaskExecStates(
@@ -131,45 +117,43 @@ public class TaskWithInternalContextService {
                 // ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
                 // won't be called for initializing output variables in internal function.
                 // the code which skips initializing is here - ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.getTaskAndAssignToProcessor
-//                    variableService.initOutputVariables(taskParamsYaml, execContext, p);
-//                    taskTransactionalService.setParams(event.taskId, taskParamsYaml);
+                variableService.initOutputVariables(taskParamsYaml, execContext, p);
+                taskTransactionalService.setParams(task.id, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                        execContext.id, event.taskId, p.internalContextId, taskParamsYaml, holder);
+                        execContext.id, task.id, p.internalContextId, taskParamsYaml, holder);
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                    execContextFSM.markAsFinishedWithError(task, execContext, taskParamsYaml, result);
+                    execContextFSM.markAsFinishedWithError(task.id, execContext.sourceCodeId, execContext.id, taskParamsYaml, result);
                     return;
                 }
-                taskTransactionalService.setResultReceivedForInternalFunction(event.taskId);
+                taskTransactionalService.setResultReceivedForInternalFunction(task.id);
 
                 ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
-                r.taskId = event.taskId;
+                r.taskId = task.id;
                 FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
                 functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
                 r.result = FunctionExecUtils.toString(functionExec);
 
                 execContextFSM.storeExecResult(r);
-                return;
+
             } catch (CommonErrorWithDataException th) {
-                String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
-                taskExecStateService.finishTaskAsError(event.taskId, EnumsApi.TaskExecState.ERROR, -10002, es);
+                String es = "#707.067 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
+                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10002, es);
                 log.error(es);
             } catch (Throwable th) {
-                String es = "#707.070 Task #" + event.taskId + " was processed with error: " + th.getMessage();
-                taskExecStateService.finishTaskAsError(event.taskId, EnumsApi.TaskExecState.ERROR, -10003, es);
+                String es = "#707.070 Task #" + task.id + " was processed with error: " + th.getMessage();
+                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10003, es);
                 log.error(es, th);
             }
-            return;
         } catch (Throwable th) {
-            String es = "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage();
-            taskExecStateService.finishTaskAsError(event.taskId, EnumsApi.TaskExecState.ERROR, -10004, es);
+            String es = "#707.080 Task #" + task.id + " was processed with error: " + th.getMessage();
+            taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10004, es);
             log.error(es, th);
         }
         finally {
-            lastTaskId = event.taskId;
+            lastTaskId = task.id;
         }
-        return;
     }
 
 }

@@ -43,7 +43,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -163,7 +162,7 @@ public class VariableService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Transactional
     public void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
@@ -312,16 +311,12 @@ public class VariableService {
         variableRepository.save(data);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeData(InputStream is, long size, SimpleVariable simpleVariable) {
-        storeData(is, size, simpleVariable, null);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void storeData(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
+        TxUtils.checkTxExists();
+
         Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
         if (data==null) {
-            log.warn("can't find variable #" + simpleVariable.id);
+            log.error("#087.075 can't find variable #" + simpleVariable.id);
             return;
         }
         data.filename = filename;
