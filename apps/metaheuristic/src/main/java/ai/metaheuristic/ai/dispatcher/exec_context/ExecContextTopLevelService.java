@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -233,7 +232,7 @@ public class ExecContextTopLevelService {
             log.warn("Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> execContextFSM.storeExecResult(result));
+        execContextSyncService.getWithSyncNullable(task.execContextId, () -> execContextFSM.storeExecResultWithTx(result));
     }
 
     @Async

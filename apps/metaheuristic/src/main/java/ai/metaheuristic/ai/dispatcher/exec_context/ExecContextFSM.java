@@ -211,6 +211,10 @@ public class ExecContextFSM {
     }
 
     @Transactional
+    public Void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+        return storeExecResult(result);
+    }
+
     public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
@@ -241,12 +245,14 @@ public class ExecContextFSM {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
         if (state==EnumsApi.TaskExecState.ERROR) {
-            finishWithError(
+            log.info("#303.050 store result with an ERROR state");
+            finishWithErrorInternal(
                     t.getId(),
                     StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
                     t.getExecContextId(), tpy.task.taskContextId);
         }
         else {
+            log.info("#303.050 store result with an {} state", t.getExecState());
             updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
         }
         return null;
@@ -276,17 +282,21 @@ public class ExecContextFSM {
 
         final String taskContextId = taskParamsYaml.task.taskContextId;
 
-        finishWithError(taskId, console, execContextId, taskContextId);
+        finishWithErrorInternal(taskId, console, execContextId, taskContextId);
     }
 
     @Transactional
     public void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
         execContextSyncService.checkWriteLockPresent(execContextId);
-        finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
+        finishWithErrorInternal(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
     }
 
     @Transactional
     public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+        return finishWithErrorInternal(taskId, console, execContextId, taskContextId);
+    }
+
+    public Void finishWithErrorInternal(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
 

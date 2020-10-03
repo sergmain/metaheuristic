@@ -153,7 +153,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#305.082 Can't find Task for Id: {}", taskId);
+            log.warn("#305.100 Can't find Task for Id: {}", taskId);
             return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
@@ -165,7 +165,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#305.084 Can't find Task for Id: {}", taskId);
+            log.warn("#305.120 Can't find Task for Id: {}", taskId);
             return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
@@ -176,13 +176,12 @@ public class TaskExecStateService {
     public TaskImpl changeTaskState(Long taskId, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
 
+        log.info("#305.120 set task #{} as {}", taskId, state);
         switch (state) {
             case NONE:
                 return toNoneSimple(taskId);
             case ERROR:
-                throw new IllegalStateException("Must be set via ExecContextFSM.finishWithError()");
-//                finishTaskAsError(taskId, state, -997, "#305.100 Task was finished with an unknown error, can't process it");
-//                break;
+                throw new IllegalStateException("#305.140 Must be set via ExecContextFSM.finishWithError()");
             case OK:
                 return toOkSimple(taskId);
             case IN_PROGRESS:
@@ -190,7 +189,7 @@ public class TaskExecStateService {
             case SKIPPED:
                 return toSkippedSimple(taskId);
             default:
-                throw new IllegalStateException("307.120 Right now it must be initialized somewhere else. state: " + state);
+                throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
     }
 
@@ -204,7 +203,7 @@ public class TaskExecStateService {
                     changeTaskState(task.id, t.execState);
                 }
             } else {
-                log.error("307.140 Graph state is compromised, found task in graph but it doesn't exist in db");
+                log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
             }
         });
     }

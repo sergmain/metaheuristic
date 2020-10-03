@@ -222,7 +222,7 @@ public class ExecContextGraphService {
             return status;
         }
 
-        try {
+//        try {
             changeGraph(execContext, graph -> {
                 ExecContextData.TaskVertex tv = graph.vertexSet()
                         .stream()
@@ -248,11 +248,13 @@ public class ExecContextGraphService {
                 }
             });
             status.status = OperationStatusRest.OPERATION_STATUS_OK;
+/*
         }
         catch (Throwable th) {
             log.error("Error while updating graph", th);
             status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
+*/
         return status;
     }
 

@@ -317,16 +317,15 @@ public class TaskTransactionalService {
     public TaskImpl setParams(Long taskId, String taskParams) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#305.082 Can't find Task for Id: {}", taskId);
+            log.warn("#307.082 Can't find Task for Id: {}", taskId);
             return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         return setParamsInternal(taskId, taskParams, task);
-//        return taskSyncService.getWithSync(taskId, (task) -> setParamsInternal(taskId, taskParams, task));
     }
 
     @Nullable
-    public TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
+    private TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
         TxUtils.checkTxExists();
         try {
             if (task == null) {

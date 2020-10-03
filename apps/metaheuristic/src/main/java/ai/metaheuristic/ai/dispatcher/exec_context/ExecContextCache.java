@@ -57,7 +57,6 @@ public class ExecContextCache {
         if (execContext.id!=null) {
             execContextSyncService.checkWriteLockPresent(execContext.id);
         }
-/*
         if (log.isDebugEnabled()) {
             log.debug("#461.010 save execContext, id: #{}, ver: {}, execContext: {}", execContext.id, execContext.version, execContext);
             try {
@@ -67,7 +66,6 @@ public class ExecContextCache {
                 log.debug("stacktrace", e);
             }
         }
-*/
         return execContextRepository.save(execContext);
     }
 
