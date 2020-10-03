@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -74,7 +73,6 @@ public class ExecContextTopLevelService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
     private final TaskProducingService taskProducingService;
-    private final TaskTransactionalService taskTransactionalService;
     private final TaskWithInternalContextService taskWithInternalContextService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
@@ -242,7 +240,7 @@ public class ExecContextTopLevelService {
     }
 
     public void reconcileStates(Long execContextId) {
-        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.reconcileStates(execContextId));
+        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.reconcileStatesWithTx(execContextId));
     }
 
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {

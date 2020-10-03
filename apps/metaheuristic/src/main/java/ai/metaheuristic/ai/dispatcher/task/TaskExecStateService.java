@@ -96,7 +96,8 @@ public class TaskExecStateService {
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==EnumsApi.TaskExecState.OK.value) {
-            return null;
+            log.info("#305.045 Task #{} already has execState as OK", task.id);
+            return task;
         }
         task.setExecState(EnumsApi.TaskExecState.OK.value);
         return taskTransactionalService.save(task);
@@ -107,7 +108,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#305.040 Can't find Task for Id: {}", taskId);
+            log.warn("#305.050 Can't find Task for Id: {}", taskId);
             return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
@@ -176,12 +177,12 @@ public class TaskExecStateService {
     public TaskImpl changeTaskState(Long taskId, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
 
-        log.info("#305.120 set task #{} as {}", taskId, state);
+        log.info("#305.140 set task #{} as {}", taskId, state);
         switch (state) {
             case NONE:
                 return toNoneSimple(taskId);
             case ERROR:
-                throw new IllegalStateException("#305.140 Must be set via ExecContextFSM.finishWithError()");
+                throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithError()");
             case OK:
                 return toOkSimple(taskId);
             case IN_PROGRESS:

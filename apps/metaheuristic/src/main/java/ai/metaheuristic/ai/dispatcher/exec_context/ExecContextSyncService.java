@@ -64,18 +64,7 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
-        TxUtils.checkTxNotExists();
-        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
-        try {
-            lock.lock();
-            return supplier.get();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @Nullable
-    public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+        log.debug("Start ExecContextSyncService.getWithSync(), execContext #{}", execContextId);
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
@@ -85,17 +74,38 @@ public class ExecContextSyncService {
             return supplier.get();
         } finally {
             lock.unlock();
+            log.debug("End ExecContextSyncService.getWithSync(), execContext #{}", execContextId);
+        }
+    }
+
+    @Nullable
+    public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+        log.debug("Start ExecContextSyncService.getWithSyncNullable(), execContext #{}", execContextId);
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        try {
+            lock.lock();
+            return supplier.get();
+        } finally {
+            lock.unlock();
+            log.debug("End ExecContextSyncService.getWithSyncNullable(), execContext #{}", execContextId);
         }
     }
 
     public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
+        log.debug("Start ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
         TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContext.id);
+
         final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContext.id);
         try {
             lock.lock();
             return supplier.get();
         } finally {
             lock.unlock();
+            log.debug("End ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
         }
     }
 }

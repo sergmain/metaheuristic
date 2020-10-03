@@ -146,7 +146,7 @@ public class ExecContextFSM {
     public OperationStatusRest changeExecContextState(String state, Long execContextId, Long companyUniqueId) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
         if (execState== EnumsApi.ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.020 Unknown exec state, state: " + state);
         }
         return changeExecContextState(execState, execContextId, companyUniqueId);
     }
@@ -166,7 +166,7 @@ public class ExecContextFSM {
     private OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.040 execContext wasn't found, execContextId: " + execContextId);
         }
 
         if (execContext.state !=execState.code) {
@@ -180,7 +180,7 @@ public class ExecContextFSM {
     private OperationStatusRest checkExecContext(Long execContextId) {
         ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.060 ExecContext wasn't found, execContextId: " + execContextId );
         }
         return null;
     }
@@ -205,7 +205,7 @@ public class ExecContextFSM {
             execContext.setState(state.code);
             execContextCache.save(execContext);
         } else if (execContext.state!= EnumsApi.ExecContextState.FINISHED.code && execContext.completedOn != null) {
-            log.error("Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
+            log.error("#303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
         }
     }
@@ -218,20 +218,20 @@ public class ExecContextFSM {
     public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
-            log.warn("Reporting about non-existed task #{}", result.taskId);
+            log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
         if (functionExec==null) {
-            String es = "#303.045 Task #" + result.taskId + " has empty execResult";
+            String es = "#303.120 Task #" + result.taskId + " has empty execResult";
             log.info(es);
             functionExec = new FunctionApiData.FunctionExec();
         }
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
-            log.warn("#303.050 Task #{} finished with error, functionCode: {}, console: {}",
+            log.warn("#303.140 Task #{} finished with error, functionCode: {}, console: {}",
                     result.taskId,
                     systemExecResult.functionCode,
                     StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
@@ -245,14 +245,14 @@ public class ExecContextFSM {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
         if (state==EnumsApi.TaskExecState.ERROR) {
-            log.info("#303.050 store result with an ERROR state");
+            log.info("#303.160 store result with the state ERROR");
             finishWithErrorInternal(
                     t.getId(),
                     StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
                     t.getExecContextId(), tpy.task.taskContextId);
         }
         else {
-            log.info("#303.050 store result with an {} state", t.getExecState());
+            log.info("#303.180 store result with the state {}", EnumsApi.ExecContextState.toState(t.getExecState()));
             updateTaskExecStates( execContextCache.findById(t.getExecContextId()), t.getId(), t.getExecState(), tpy.task.taskContextId);
         }
         return null;
@@ -263,7 +263,7 @@ public class ExecContextFSM {
         execContextSyncService.checkWriteLockPresent(execContextId);
         Task t = taskExecStateService.resetTask(taskId);
         if (t == null) {
-            String es = S.f("#705.0950 Found a non-existed task, graph consistency for execContextId #%s is failed",
+            String es = S.f("#303.200 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContextId);
             log.error(es);
             toError(execContextId);
@@ -277,8 +277,8 @@ public class ExecContextFSM {
     public void markAsFinishedWithError(Long taskId, Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
         TxUtils.checkTxExists();
 
-        log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
-        final String console = "#707.060 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
+        log.error("#303.220 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
+        final String console = "#303.240 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
 
         final String taskContextId = taskParamsYaml.task.taskContextId;
 
@@ -288,7 +288,7 @@ public class ExecContextFSM {
     @Transactional
     public void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
         execContextSyncService.checkWriteLockPresent(execContextId);
-        finishWithErrorInternal(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
+        finishWithErrorInternal(taskId, "#303.260 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
     }
 
     @Transactional
@@ -308,6 +308,8 @@ public class ExecContextFSM {
 
     @Transactional
     public Void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return null;
@@ -315,7 +317,7 @@ public class ExecContextFSM {
         long countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
         if (countUnfinishedTasks==0) {
             // workaround for situation when states in graph and db are different
-            reconcileStates(execContextId);
+            reconcileStatesInternal(execContextId);
             execContext = execContextCache.findById(execContextId);
             if (execContext==null) {
                 return null;
@@ -328,15 +330,21 @@ public class ExecContextFSM {
         }
         else {
             if (needReconciliation) {
-                reconcileStates(execContextId);
+                reconcileStatesInternal(execContextId);
             }
         }
         return null;
     }
 
     @Transactional
-    public Void reconcileStates(Long execContextId) {
+    public Void reconcileStatesWithTx(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
+        return reconcileStatesInternal(execContextId);
+    }
+
+    private Void reconcileStatesInternal(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return null;
@@ -345,7 +353,7 @@ public class ExecContextFSM {
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
         if (rootVertices.size()>1) {
-            log.error("Too many root vertices, count: " + rootVertices.size());
+            log.error("#303.280 Too many root vertices, count: " + rootVertices.size());
         }
 
         if (rootVertices.isEmpty()) {
@@ -364,8 +372,9 @@ public class ExecContextFSM {
             if (taskState==null) {
                 isNullState.set(true);
             }
+/*
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
-                log.info("#751.040 Found different states for task #"+tv.taskId+", " +
+                log.info("#303.300 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
 
@@ -377,10 +386,11 @@ public class ExecContextFSM {
                 }
                 break;
             }
+*/
         }
 
         if (isNullState.get()) {
-            log.info("#751.060 Found non-created task, graph consistency is failed");
+            log.info("#303.320 Found non-created task, graph consistency is failed");
             toError(execContextId);
             return null;
         }
@@ -405,7 +415,7 @@ public class ExecContextFSM {
                             final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
-                                log.info("#751.080 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
+                                log.info("#303.340 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
                                 resetTask(task.execContextId, task.id);
                             }
                         }
@@ -447,14 +457,14 @@ public class ExecContextFSM {
     public Void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#317.020 Task obsolete and was already deleted");
+            log.warn("#303.360 Task obsolete and was already deleted");
             return null;
         }
 
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         switch (status) {
             case SEND_SCHEDULED:
-                log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, task.id);
+                log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, task.id);
                 break;
             case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
@@ -465,9 +475,9 @@ public class ExecContextFSM {
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskTransactionalService.setResultReceived(task, variableId);
                 if (uploadResourceStatus == Enums.UploadResourceStatus.OK) {
-                    log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", task.id);
+                    log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", task.id);
                 } else {
-                    log.info("#317.050 can't update isCompleted field for task #{}", task.id);
+                    log.info("#303.420 can't update isCompleted field for task #{}", task.id);
                 }
                 break;
         }
@@ -512,7 +522,7 @@ public class ExecContextFSM {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 }
                 catch (YAMLException e) {
-                    log.error("#705.420 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
+                    log.error("#303.440 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
                     finishWithError(task.getId(), task.execContextId, null, null);
                     continue;
                 }
@@ -521,7 +531,7 @@ public class ExecContextFSM {
                     continue;
                 }
                 if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#705.440 Task #{} with function '{}' was already processed with status {}",
+                    log.warn("#303.460 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                     continue;
                 }
@@ -531,7 +541,7 @@ public class ExecContextFSM {
                 }
 
                 if (gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
-                    log.warn("#705.460 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
+                    log.warn("#303.480 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processor.getId(), task.getId(), psy.gitStatusInfo
                     );
                     longHolder.set(System.currentTimeMillis());
@@ -541,7 +551,7 @@ public class ExecContextFSM {
                 if (!S.b(taskParamYaml.task.function.env)) {
                     String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
-                        log.warn("#705.480 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
+                        log.warn("#303.500 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 task.getId(), processor.getId(), taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
@@ -551,7 +561,7 @@ public class ExecContextFSM {
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
                 if (psy.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
-                    log.info("#705.500 Can't assign task #{} to processor #{}, " +
+                    log.info("#303.520 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
                             processor.getId(), task.getId(), psy.os, supportedOS
                     );
@@ -561,7 +571,7 @@ public class ExecContextFSM {
 
                 if (isAcceptOnlySigned) {
                     if (taskParamYaml.task.function.checksumMap==null || taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o->o.isSigned)) {
-                        log.warn("#705.520 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
+                        log.warn("#303.540 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
                         continue;
                     }
                 }
@@ -571,7 +581,7 @@ public class ExecContextFSM {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
-                    log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                    log.warn("#303.560 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             resultTask.getId(), processor.id, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
@@ -617,13 +627,13 @@ public class ExecContextFSM {
         final Long execContextId = task.execContextId;
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("#705.280 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
+            log.warn("#303.580 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
             return null;
         }
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#705.300 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("#303.600 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return null;
         }
 
@@ -698,7 +708,7 @@ public class ExecContextFSM {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.error("#705.320 Processor with id #{} wasn't found", processorId);
+            log.error("#303.620 Processor with id #{} wasn't found", processorId);
             return null;
         }
         ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
@@ -714,7 +724,7 @@ public class ExecContextFSM {
         try {
             TaskImpl task = prepareVariables(t);
             if (task == null) {
-                log.warn("After prepareVariables(task) the task is null");
+                log.warn("#303.640 After prepareVariables(task) the task is null");
                 return null;
             }
 
@@ -730,14 +740,14 @@ public class ExecContextFSM {
                 // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
-                log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                log.warn("#303.660 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                         task.getId(), processor.id, psy.taskParamsVersion);
                 return null;
             }
 
             return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
         } catch (Throwable th) {
-            String es = "#705.270 Something wrong";
+            String es = "#303.680 Something wrong";
             log.error(es, th);
             throw new IllegalStateException(es, th);
         }
@@ -749,11 +759,11 @@ public class ExecContextFSM {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("#705.360 ExecContext wasn't found for id: {}", execContextId);
+            log.warn("#303.700 ExecContext wasn't found for id: {}", execContextId);
             return null;
         }
         if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
-            log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
+            log.warn("#303.720 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
             return null;
         }
 
@@ -766,14 +776,14 @@ public class ExecContextFSM {
                 allAssigned = true;
             }
             else {
-                log.info("#705.330 Found the lost tasks at processor #{}, tasks #{}", processor.id, lostTasks);
+                log.info("#303.740 Found the lost tasks at processor #{}, tasks #{}", processor.id, lostTasks);
                 for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
                     TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
                     if (task==null) {
                         continue;
                     }
                     if (task.execState!= EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        log.warn("#705.333 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
+                        log.warn("#303.760 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
                                 processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
                         // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
                     }
@@ -783,7 +793,7 @@ public class ExecContextFSM {
         }
         if (allAssigned) {
             // this processor already has active task
-            log.warn("#705.340 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
+            log.warn("#303.780 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
             return null;
         }
 
@@ -799,8 +809,8 @@ public class ExecContextFSM {
             ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
             return ss;
         } catch (Throwable e) {
-            log.error("#705.400 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#705.410 Error ", e);
+            log.error("#303.800 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#303.820 Error ", e);
             return null;
         }
     }
