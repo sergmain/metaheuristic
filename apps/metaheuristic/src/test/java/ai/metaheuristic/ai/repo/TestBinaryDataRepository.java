@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -40,11 +41,14 @@ public class TestBinaryDataRepository {
     @Autowired
     private VariableService variableService;
 
+    @Autowired
+    private VariableRepository variableRepository;
+
     private Variable d1 = null;
     @AfterEach
     public void after() {
         if (d1!=null) {
-            variableService.deleteById(d1.id);
+            variableRepository.deleteById(d1.id);
         }
     }
 

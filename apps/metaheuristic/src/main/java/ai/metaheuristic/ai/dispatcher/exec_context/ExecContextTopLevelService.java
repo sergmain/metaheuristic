@@ -203,7 +203,7 @@ public class ExecContextTopLevelService {
                 }
                 Monitoring.log("##021", Enums.Monitor.MEMORY);
                 log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", sourceCode.uid, execContext.getParams());
-                taskProducingService.produceAllTasks(true, sourceCode, execContext);
+                execContextFSM.produceAllTasks(true, sourceCode, execContext);
                 Monitoring.log("##022", Enums.Monitor.MEMORY);
                 return null;
             });

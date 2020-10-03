@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
@@ -122,6 +123,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired
     public ExecContextTopLevelService execContextTopLevelService;
 
+    @Autowired
+    public VariableRepository variableRepository;
+
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
     public Function s2 = null;
@@ -212,7 +216,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
                     log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
                 }
                 try {
-                    variableService.deleteByExecContextId(execContextId);
+                    variableRepository.deleteByExecContextId(execContextId);
                 } catch (Throwable th) {
                     log.error("error", th);
                 }

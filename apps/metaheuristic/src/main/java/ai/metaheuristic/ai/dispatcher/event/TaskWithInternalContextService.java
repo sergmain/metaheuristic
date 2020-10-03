@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -62,6 +63,7 @@ public class TaskWithInternalContextService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final VariableService variableService;
+    private final TaskService taskService;
 
     private static Long lastTaskId=null;
     // this code is only for testing
@@ -76,7 +78,7 @@ public class TaskWithInternalContextService {
         try {
             task.setAssignedOn(System.currentTimeMillis());
             task.setResultResourceScheduledOn(0);
-            task = taskTransactionalService.save(task);
+            task = taskService.save(task);
 
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext == null) {

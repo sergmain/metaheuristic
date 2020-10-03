@@ -16,7 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -25,6 +28,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,6 +40,7 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final ExecContextSyncService execContextSyncService;
 
     public DispatcherCommParamsYaml.ResendTaskOutputs resourceReceivingChecker(long processorId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -48,5 +53,29 @@ public class TaskService {
         }
         return result;
     }
+
+    public TaskImpl save(TaskImpl task) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
+        try {
+/*
+            if (log.isDebugEnabled()) {
+                log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
+                try {
+                    throw new RuntimeException("task stacktrace");
+                }
+                catch(RuntimeException e) {
+                    log.debug("task stacktrace", e);
+                }
+            }
+*/
+            return taskRepository.save(task);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
+            throw e;
+        }
+    }
+
 
 }

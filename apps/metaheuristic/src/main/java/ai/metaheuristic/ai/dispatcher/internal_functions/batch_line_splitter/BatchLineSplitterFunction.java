@@ -22,11 +22,10 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
@@ -71,10 +70,9 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 public class BatchLineSplitterFunction implements InternalFunction {
 
     private final VariableService variableService;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
-    private final TaskTransactionalService taskTransactionService;
+    private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextCache execContextCache;
 
@@ -169,7 +167,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             currTaskNumber.incrementAndGet();
             try {
                 String str = StringUtils.join(lines, '\n' );
-                taskTransactionService.createTasksForSubProcesses(
+                taskProducingService.createTasksForSubProcesses(
                         Stream.empty(), str, execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds );
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

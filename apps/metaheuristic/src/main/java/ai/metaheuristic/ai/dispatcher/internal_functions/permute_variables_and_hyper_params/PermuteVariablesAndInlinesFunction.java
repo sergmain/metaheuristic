@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
@@ -82,6 +83,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextFSM execContextFSM;
     private final TaskTransactionalService taskTransactionalService;
+    private final TaskProducingService taskProducingService;
 
     @Override
     public String getCode() {
@@ -233,7 +235,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-            t = taskTransactionalService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
                 throw new BreakFromLambdaException("Creation of task failed");
             }

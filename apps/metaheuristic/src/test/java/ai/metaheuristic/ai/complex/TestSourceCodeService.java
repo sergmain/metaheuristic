@@ -373,7 +373,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(v);
         assertFalse(v.inited);
 
-        Variable variable = variableService.findById(v.id).orElse(null);
+        Variable variable = variableRepository.findById(v.id).orElse(null);
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
@@ -395,7 +395,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(v);
         assertFalse(v.inited);
 
-        Variable variable = variableService.findById(v.id).orElse(null);
+        Variable variable = variableRepository.findById(v.id).orElse(null);
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();

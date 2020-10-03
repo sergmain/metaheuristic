@@ -25,10 +25,9 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -62,12 +61,12 @@ public class ExecContextService {
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
 
-    private final VariableService variableService;
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTransactionalService taskTransactionService;
+    private final VariableRepository variableRepository;
 
     @Transactional(readOnly = true)
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
@@ -224,7 +223,7 @@ public class ExecContextService {
     @Transactional
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
         eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
-        variableService.deleteByExecContextId(execContextId);
+        variableRepository.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {
             // unlock sourceCode if this is the last execContext in the sourceCode

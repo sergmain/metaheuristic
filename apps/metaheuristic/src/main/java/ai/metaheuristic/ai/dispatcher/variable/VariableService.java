@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -37,8 +38,6 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -54,7 +53,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -69,6 +67,7 @@ public class VariableService {
     private final EntityManager em;
     private final VariableRepository variableRepository;
     private final Globals globals;
+    private final ExecContextSyncService execContextSyncService;
 
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
@@ -183,10 +182,6 @@ public class VariableService {
         }
     }
 
-    public void deleteByExecContextId(Long execContextId) {
-        variableRepository.deleteByExecContextId(execContextId);
-    }
-
     @Transactional(readOnly = true)
     public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {
         if (variables.length==0) {
@@ -195,13 +190,9 @@ public class VariableService {
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
     }
 
-    public void deleteByVariable(String variable) {
-        variableRepository.deleteByName(variable);
-    }
-
     @Transactional
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
-        try {
+//        try {
             Variable data = new Variable();
             data.inited = true;
             data.nullified = false;
@@ -219,16 +210,17 @@ public class VariableService {
             variableRepository.save(data);
 
             return data;
-        }
-        catch(VariableSavingException | PessimisticLockingFailureException e) {
-            throw e;
-        } catch(Throwable th) {
-            throw new VariableSavingException("#087.060 error storing data to db - " + th.getMessage(), th);
-        }
+//        }
+//        catch(VariableSavingException | PessimisticLockingFailureException e) {
+//            throw e;
+//        } catch(Throwable th) {
+//            throw new VariableSavingException("#087.060 error storing data to db - " + th.getMessage(), th);
+//        }
     }
 
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
@@ -277,7 +269,7 @@ public class VariableService {
     }
 
     private Variable createOrUpdateUninitialized(Variable v) {
-        try {
+//        try {
             v.inited = false;
             v.nullified = true;
 
@@ -288,6 +280,7 @@ public class VariableService {
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
             log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
             return variableRepository.save(v);
+/*
         }
         catch (PessimisticLockingFailureException e) {
             throw e;
@@ -297,10 +290,11 @@ public class VariableService {
         } catch (Throwable th) {
             throw new VariableSavingException("#087.070 error storing v to db - " + th.getMessage(), th);
         }
+*/
     }
 
-    @Transactional
     public void update(InputStream is, long size, Variable data) {
+        TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
@@ -338,10 +332,6 @@ public class VariableService {
         variableRepository.deleteById(id);
     }
 
-    public Optional<Variable> findById(Long id) {
-        return variableRepository.findById(id);
-    }
-
     public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
         return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
     }
@@ -370,4 +360,5 @@ public class VariableService {
         variableRepository.deleteAllByIdIn(ids);
         return null;
     }
+
 }
