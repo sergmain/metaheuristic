@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -86,6 +87,7 @@ public class SouthBridgeService {
     private final TaskRepository taskRepository;
     private final TaskTransactionalService taskTransactionalService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextVariableService execContextVariableService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -140,7 +142,7 @@ public class SouthBridgeService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(variableFile)) {
-                return execContextSyncService.getWithSync(task.execContextId, () -> taskTransactionalService.storeVariable(is, variableFile.length(), taskId, variableId));
+                return execContextSyncService.getWithSync(task.execContextId, () -> execContextVariableService.storeVariable(is, variableFile.length(), taskId, variableId));
             }
         }
         catch (VariableSavingException th) {

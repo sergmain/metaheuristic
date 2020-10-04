@@ -22,9 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -64,6 +62,8 @@ public class TaskWithInternalContextService {
     private final ExecContextFSM execContextFSM;
     private final VariableService variableService;
     private final TaskService taskService;
+    private final ExecContextTaskStateService execContextTaskStateService;
+    private final ExecContextVariableService execContextVariableService;
 
     private static Long lastTaskId=null;
     // this code is only for testing
@@ -99,7 +99,7 @@ public class TaskWithInternalContextService {
                     log.error("#707.015 Task #"+task.id+" already was finished");
                     return;
                 }
-                execContextFSM.updateTaskExecStates(
+                execContextTaskStateService.updateTaskExecStates(
                         execContextCache.findById(task.execContextId), task.id, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
 
                 TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -129,7 +129,7 @@ public class TaskWithInternalContextService {
                     execContextFSM.markAsFinishedWithError(task.id, execContext.sourceCodeId, execContext.id, taskParamsYaml, result);
                     return;
                 }
-                taskTransactionalService.setResultReceivedForInternalFunction(task.id);
+                execContextVariableService.setResultReceivedForInternalFunction(task.id);
 
                 ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
                 r.taskId = task.id;

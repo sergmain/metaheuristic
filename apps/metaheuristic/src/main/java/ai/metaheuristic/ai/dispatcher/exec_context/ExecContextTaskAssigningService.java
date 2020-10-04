@@ -21,8 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -53,6 +51,7 @@ public class ExecContextTaskAssigningService {
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskWithInternalContextService taskWithInternalContextService;
+    private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
     @Nullable
     @Transactional
@@ -82,7 +81,7 @@ public class ExecContextTaskAssigningService {
                 }
                 catch (YAMLException e) {
                     log.error("#705.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    execContextFSM.finishWithError(task.getId(), task.execContextId, null, null);
+                    execContextTaskFinishingService.finishWithError(task.getId(), task.execContextId, null, null);
                     continue;
                 }
                 if (task.execState!=EnumsApi.TaskExecState.NONE.value) {

@@ -19,15 +19,13 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Serge
@@ -42,9 +40,10 @@ public class TaskTopLevelService {
 
     private final ExecContextSyncService execContextSyncService;
     private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextVariableService execContextVariableService;
 
-    public Enums.UploadResourceStatus setResultReceived(TaskImpl task, Long variableId) {
-        return execContextSyncService.getWithSync(task.execContextId, () -> taskTransactionalService.setResultReceived(task, variableId));
+    public Enums.UploadResourceStatus setVariableReceived(TaskImpl task, Long variableId) {
+        return execContextSyncService.getWithSync(task.execContextId, () -> execContextVariableService.setVariableReceived(task, variableId));
     }
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {

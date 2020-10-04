@@ -136,7 +136,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-            OperationStatusRest status = execContextFSM.updateTaskExecStates(
+            OperationStatusRest status = execContextTaskStateService.updateTaskExecStates(
                     execContextCache.findById(execContextForTest.id),
                     1L, EnumsApi.TaskExecState.OK.value, "123###1");
 
@@ -150,7 +150,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
-            status = execContextFSM.updateTaskExecStates(
+            status = execContextTaskStateService.updateTaskExecStates(
                     execContextCache.findById(execContextForTest.id),
                     22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
 
@@ -163,7 +163,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-            execContextFSM.finishWithError(22L, "An error", execContextForTest.id, null);
+            execContextTaskFinishingService.finishWithError(22L, "An error", execContextForTest.id, null);
 
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
@@ -173,7 +173,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-            status = execContextFSM.updateTaskExecStates(
+            status = execContextTaskStateService.updateTaskExecStates(
                     execContextCache.findById(execContextForTest.id),
                     21L, EnumsApi.TaskExecState.OK.value, "123###1");
 
@@ -185,7 +185,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
             assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-            status = execContextFSM.updateTaskExecStates(
+            status = execContextTaskStateService.updateTaskExecStates(
                     execContextCache.findById(execContextForTest.id),
                     22L, EnumsApi.TaskExecState.OK.value, "123###1");
 

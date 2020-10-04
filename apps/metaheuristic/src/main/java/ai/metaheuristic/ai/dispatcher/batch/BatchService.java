@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -86,6 +87,7 @@ public class BatchService {
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
     private final BatchHelperService batchHelperService;
+    private final ExecContextTaskProducingService execContextTaskProducingService;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -280,7 +282,7 @@ public class BatchService {
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        execContextFSM.produceAllTasks(true, sourceCode, execContext);
+        execContextTaskProducingService.produceAllTasks(true, sourceCode, execContext);
 
         operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.STARTED, execContext.getId(), dispatcherContext.getCompanyId());
 

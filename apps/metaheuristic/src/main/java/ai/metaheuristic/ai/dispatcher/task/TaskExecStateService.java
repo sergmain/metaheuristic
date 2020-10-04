@@ -131,13 +131,14 @@ public class TaskExecStateService {
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
+            log.info("#305.085 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", taskId);
             return;
         }
         task.setExecState(state.value);
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
 
-        if (task.functionExecResults ==null || task.functionExecResults.isBlank()) {
+        if (S.b(task.functionExecResults)) {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);

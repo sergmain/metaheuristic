@@ -124,6 +124,12 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public ExecContextTopLevelService execContextTopLevelService;
 
     @Autowired
+    public ExecContextTaskStateService execContextTaskStateService;
+
+    @Autowired
+    public ExecContextTaskFinishingService execContextTaskFinishingService;
+
+    @Autowired
     public VariableRepository variableRepository;
 
     public SourceCodeImpl sourceCode = null;

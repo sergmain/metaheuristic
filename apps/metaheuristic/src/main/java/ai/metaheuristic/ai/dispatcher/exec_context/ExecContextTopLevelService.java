@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -62,8 +61,8 @@ public class ExecContextTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextTaskProducingService execContextTaskProducingService;
     private final TaskRepository taskRepository;
-    private final TaskProducingService taskProducingService;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
@@ -180,7 +179,7 @@ public class ExecContextTopLevelService {
         }
 
         execContextSyncService.getWithSyncNullable(task.execContextId,
-                () -> execContextFSM.processResendTaskOutputResourceResult(processorId, status, task.id, variableId));
+                () -> execContextFSM.processResendTaskOutputVariable(processorId, status, task.id, variableId));
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -203,7 +202,7 @@ public class ExecContextTopLevelService {
                 }
                 Monitoring.log("##021", Enums.Monitor.MEMORY);
                 log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", sourceCode.uid, execContext.getParams());
-                execContextFSM.produceAllTasks(true, sourceCode, execContext);
+                execContextTaskProducingService.produceAllTasks(true, sourceCode, execContext);
                 Monitoring.log("##022", Enums.Monitor.MEMORY);
                 return null;
             });

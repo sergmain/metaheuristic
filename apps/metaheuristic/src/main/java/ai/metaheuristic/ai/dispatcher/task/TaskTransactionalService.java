@@ -17,17 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,7 +38,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,52 +53,12 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class TaskTransactionalService {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
-
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
     private final TaskProducingService taskProducingService;
-    private final VariableRepository variableRepository;
-    private final VariableService variableService;
-
-    @Transactional
-    public UploadResult storeVariable(InputStream variableIS, long length, Long taskId, Long variableId) {
-//        try {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
-            log.warn(es);
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        Variable variable = variableRepository.findById(variableId).orElse(null);
-        if (variable ==null) {
-            return new UploadResult(Enums.UploadResourceStatus.VARIABLE_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
-        }
-
-        variableService.update(variableIS, length, variable);
-        Enums.UploadResourceStatus status = setResultReceived(task, variable.getId());
-        return status== Enums.UploadResourceStatus.OK
-                ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#490.020 can't update resultReceived field for task #"+ variable.getId()+"");
-
-//        }
-//        catch (PessimisticLockingFailureException th) {
-//            final String es = "#490.040 can't store the result, need to try again. Error: " + th.toString();
-//            log.error(es, th);
-//            return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
-//        }
-//        catch (Throwable th) {
-//            final String error = "#490.060 can't store the result, Error: " + th.toString();
-//            log.error(error, th);
-//            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
-//        }
-    }
-
 
     @Transactional
     public TaskData.ProduceTaskResult produceTaskForProcess(
@@ -181,53 +135,6 @@ public class TaskTransactionalService {
             log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
         }
         return null;
-    }
-
-    @Transactional
-    public Enums.UploadResourceStatus setResultReceived(TaskImpl task, Long variableId) {
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", task.id);
-            return Enums.UploadResourceStatus.TASK_WAS_RESET;
-        }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findAny().orElse(null);
-        if (output==null) {
-            return Enums.UploadResourceStatus.UNRECOVERABLE_ERROR;
-        }
-        output.uploaded = true;
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-
-        boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream().allMatch(o -> o.uploaded);
-        task.setCompleted(allUploaded);
-        task.setCompletedOn(System.currentTimeMillis());
-        task.setResultReceived(allUploaded);
-        taskService.save(task);
-        return Enums.UploadResourceStatus.OK;
-    }
-
-    public Enums.UploadResourceStatus setResultReceivedForInternalFunction(Long taskId) {
-        TxUtils.checkTxExists();
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#317.020 Task #{} is obsolete and was already deleted", taskId);
-            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
-            return Enums.UploadResourceStatus.TASK_WAS_RESET;
-        }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        tpy.task.outputs.forEach(o->o.uploaded = true);
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
-        task.setResultReceived(true);
-        taskService.save(task);
-        return Enums.UploadResourceStatus.OK;
     }
 
     @Transactional
