@@ -145,11 +145,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, zipDir, mapping, taskParamsYaml, taskId);
+                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, zipDir, mapping, taskParamsYaml, taskId, holder);
             }
             else {
                 log.debug("Start loading file data to db");
-                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
+                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId, holder);
             }
         }
         catch(UnzipArchiveException e) {
@@ -180,7 +180,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
     private InternalFunctionProcessingResult loadFilesFromDirAfterZip(
             Long sourceCodeId, Long execContextId, File srcDir,
-            final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
+            final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId, VariableData.DataStreamHolder holder) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContextId, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
@@ -210,14 +210,14 @@ public class BatchSplitterFunction implements InternalFunction {
                                     });
                             taskProducingService.createTasksForSubProcesses(
                                     files, null,
-                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds
-                            );
+                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds,
+                                    holder);
                         } else {
                             String actualFileName = mapping.get(file.getName());
                             taskProducingService.createTasksForSubProcesses(
                                     Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
-                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds
-                            );
+                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds,
+                                    holder);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;

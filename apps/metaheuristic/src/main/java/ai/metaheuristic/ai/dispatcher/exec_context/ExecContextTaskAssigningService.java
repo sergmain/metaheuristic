@@ -55,7 +55,7 @@ public class ExecContextTaskAssigningService {
 
     @Nullable
     @Transactional
-    public Void findUnassignedInternalTaskAndAssign(Long execContextId) {
+    public Void findUnassignedInternalTaskAndAssign(Long execContextId, VariableData.DataStreamHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -94,20 +94,7 @@ public class ExecContextTaskAssigningService {
                     continue;
                 }
                 log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
-                try {
-                    taskWithInternalContextService.processInternalFunction(task, holder);
-                }
-                finally {
-                    for (InputStream inputStream : holder.inputStreams) {
-                        try {
-                            inputStream.close();
-                        }
-                        catch(Throwable th)  {
-                            log.warn("Error while closing stream", th);
-                        }
-                    }
-                }
+                taskWithInternalContextService.processInternalFunction(task, holder);
                 continue;
             }
         }

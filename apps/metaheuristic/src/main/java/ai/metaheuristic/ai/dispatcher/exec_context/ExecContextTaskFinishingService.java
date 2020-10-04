@@ -108,7 +108,7 @@ public class ExecContextTaskFinishingService {
                 .allMatch(o -> o.uploaded);
 
         if (task.resultReceived && allUploaded) {
-            execContextTaskStateService.updateTaskExecStates(execContextCache.findById(task.execContextId), task.id, task.execState, tpy.task.taskContextId);
+            execContextTaskStateService.updateTaskExecStates(execContextCache.findById(task.execContextId), task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
         }
     }
 

@@ -276,7 +276,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @AfterEach
     public void afterPreparingSourceCode() {
         try {
-            sourceCodeService.deleteSourceCodeById(sourceCode.getId());
+            if (sourceCode!=null) {
+                sourceCodeService.deleteSourceCodeById(sourceCode.getId());
+            }
         } catch (Throwable th) {
             log.error("Error while planCache.deleteById()", th);
         }

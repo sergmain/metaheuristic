@@ -179,7 +179,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
                                             subProcesses, permutationNumber, taskId, variableName, map, lastIds,
-                                            inlineVariableName, inlineVariable.params, process
+                                            inlineVariableName, inlineVariable.params, process, holder
                                     );
                                 }
                             }
@@ -188,7 +188,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                 createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses,
                                         permutationNumber, taskId, variableName,
                                         execContextParamsYaml.variables.inline, lastIds,
-                                        inlineVariableName, Map.of(), process
+                                        inlineVariableName, Map.of(), process, holder
                                 );
                             }
                             return true;
@@ -216,11 +216,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
      * @param inlineVariableName
      * @param inlinePermuted
      * @param process
+     * @param holder
      */
     private void createTasksForSubProcesses(
             List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process) {
+            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process, VariableData.DataStreamHolder holder) {
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;
@@ -254,6 +255,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
                 byte[] bytes = yaml.getBytes();
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(bais);
                 Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
             }
             {
@@ -261,6 +263,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 String yaml = yampUtil.dumpAsMap(inlinePermuted);
                 byte[] bytes = yaml.getBytes();
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(bais);
                 Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContextId, currTaskContextId);
             }
 

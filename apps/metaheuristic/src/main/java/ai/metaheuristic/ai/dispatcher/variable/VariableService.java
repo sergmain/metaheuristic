@@ -22,7 +22,10 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.SourceCodeException;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -46,14 +49,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -191,7 +191,14 @@ public class VariableService {
     }
 
     @Transactional
+    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+        return createInitialized(is, size, variable, filename, execContextId, taskContextId);
+    }
+
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
 //        try {
             Variable data = new Variable();
             data.inited = true;
@@ -278,7 +285,7 @@ public class VariableService {
             v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
 
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            log.info("Start to create an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
+            log.info("Start creating an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
             return variableRepository.save(v);
 /*
         }
@@ -334,21 +341,6 @@ public class VariableService {
 
     public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
         return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
-    }
-
-    public Variable createInitializedFromFile(File tempFile, String variable, String filename, Long execContextId, String internalContextId) {
-        try {
-            try (InputStream is = new FileInputStream(tempFile)) {
-                return createInitialized(is, tempFile.length(), variable, filename, execContextId, internalContextId);
-            }
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new StoreNewFileException("#087.080 Error while storing", e, tempFile.getPath(), filename);
-        }
-    }
-
-    public Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> vars) {
-        return variableRepository.findTaskContextIdsByExecContextIdAndVariableNames(execContextId, vars);
     }
 
     @Transactional

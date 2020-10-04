@@ -68,6 +68,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -226,8 +227,10 @@ public class BatchTopLevelService {
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
-            return execContextSyncService.getWithSync(creationResult.execContext.id,
-                    () -> batchService.createBatchForFile(file, originFilename, sourceCode, creationResult.execContext, dispatcherContext));
+            try(InputStream is = file.getInputStream()) {
+                return execContextSyncService.getWithSync(creationResult.execContext.id,
+                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode, creationResult.execContext, dispatcherContext));
+            }
         }
         catch (Throwable th) {
             String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();

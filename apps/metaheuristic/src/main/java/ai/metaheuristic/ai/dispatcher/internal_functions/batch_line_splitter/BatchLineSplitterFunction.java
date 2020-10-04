@@ -103,20 +103,20 @@ public class BatchLineSplitterFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found");
         }
 
-        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, inputVariableName, holders);
+        List<VariableUtils.VariableHolder> varHolders = new ArrayList<>();
+        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, inputVariableName, varHolders);
         if (result != null) {
             return result;
         }
-        if (holders.isEmpty()) {
+        if (varHolders.isEmpty()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found");
         }
 
-        if (holders.size()>1) {
+        if (varHolders.size()>1) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.040 Too many variables");
         }
 
-        VariableUtils.VariableHolder variableHolder = holders.get(0);
+        VariableUtils.VariableHolder variableHolder = varHolders.get(0);
 
         try {
             String content;
@@ -126,7 +126,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             else {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time");
             }
-            return createTasks(sourceCodeId, execContextId, content, taskParamsYaml, taskId, numberOfLines);
+            return createTasks(sourceCodeId, execContextId, content, taskParamsYaml, taskId, numberOfLines, holder);
         }
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
@@ -146,7 +146,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     private InternalFunctionProcessingResult createTasks(
-            Long sourceCodeId, Long execContextId, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) throws IOException {
+            Long sourceCodeId, Long execContextId, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, VariableData.DataStreamHolder holder) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContextId, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
@@ -168,7 +168,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             try {
                 String str = StringUtils.join(lines, '\n' );
                 taskProducingService.createTasksForSubProcesses(
-                        Stream.empty(), str, execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds );
+                        Stream.empty(), str, execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds, holder );
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {

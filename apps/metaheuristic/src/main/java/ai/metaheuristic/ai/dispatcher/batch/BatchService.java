@@ -60,6 +60,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -240,20 +241,16 @@ public class BatchService {
     }
 
     @Transactional
-    public BatchData.UploadingStatus createBatchForFile(final MultipartFile file, String originFilename, SourceCodeImpl sourceCode, ExecContextImpl execContext, final DispatcherContext dispatcherContext) {
+    public BatchData.UploadingStatus createBatchForFile(InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, ExecContextImpl execContext, final DispatcherContext dispatcherContext) {
         Batch b;
         String startInputAs = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params).variables.startInputAs;
         if (S.b(startInputAs)) {
             return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
         }
-        try {
-            variableService.createInitialized(
-                    file.getInputStream(), file.getSize(), startInputAs,
-                    originFilename, execContext.getId(),"1"
-            );
-        } catch (IOException e) {
-            ExceptionUtils.rethrow(e);
-        }
+        variableService.createInitialized(
+                is, size, startInputAs,
+                originFilename, execContext.getId(),"1"
+        );
 
         b = new Batch(sourceCode.id, execContext.getId(), Enums.BatchExecState.Stored,
                 dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());

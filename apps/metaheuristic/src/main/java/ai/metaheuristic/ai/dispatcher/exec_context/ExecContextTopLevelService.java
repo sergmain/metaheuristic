@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -40,6 +41,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,8 +114,21 @@ public class ExecContextTopLevelService {
     public void findUnassignedInternalTaskAndAssign() {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         for (Long execContextId : execContextIds) {
-            execContextSyncService.getWithSyncNullable(execContextId,
-                    ()->execContextTaskAssigningService.findUnassignedInternalTaskAndAssign(execContextId));
+            VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
+            try {
+                execContextSyncService.getWithSyncNullable(execContextId,
+                        ()->execContextTaskAssigningService.findUnassignedInternalTaskAndAssign(execContextId, holder));
+            }
+            finally {
+                for (InputStream inputStream : holder.inputStreams) {
+                    try {
+                        inputStream.close();
+                    }
+                    catch(Throwable th)  {
+                        log.warn("Error while closing stream", th);
+                    }
+                }
+            }
         }
     }
 

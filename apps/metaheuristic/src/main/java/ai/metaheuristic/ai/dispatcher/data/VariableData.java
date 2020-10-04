@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.Data;
 
 import java.io.InputStream;
@@ -31,6 +32,11 @@ public class VariableData {
 
     @Data
     public static class DataStreamHolder {
+
+        public DataStreamHolder() {
+            TxUtils.checkTxNotExists();
+        }
+
         public List<InputStream> inputStreams = new ArrayList<>();
     }
 }

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
@@ -50,13 +51,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
 
 @Service
 @Slf4j
@@ -77,11 +75,12 @@ public class TaskProducingService {
      * @param parentTaskId
      * @param inputVariableName
      * @param lastIds
+     * @param holder
      */
     public void createTasksForSubProcesses(
             Stream<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, Long execContextId, InternalFunctionData.ExecutionContextData executionContextData,
             AtomicInteger currTaskNumber, Long parentTaskId, String inputVariableName,
-            List<Long> lastIds) {
+            List<Long> lastIds, VariableData.DataStreamHolder holder) {
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
@@ -126,9 +125,10 @@ public class TaskProducingService {
 
                         Variable v;
                         try {
-                            try( FileInputStream fis = new FileInputStream(f.file)) {
-                                v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
-                            }
+                            FileInputStream fis = new FileInputStream(f.file);
+                            holder.inputStreams.add(fis);
+                            v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+
                         } catch (IOException e) {
                             throw new BreakFromLambdaException(e);
                         }
@@ -140,15 +140,11 @@ public class TaskProducingService {
 
             if (!S.b(inputVariableContent)) {
                 String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
-                Variable v;
-                try {
-                    final byte[] bytes = inputVariableContent.getBytes();
-                    try(InputStream is = new ByteArrayInputStream(bytes)) {
-                        v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
-                    }
-                } catch (IOException e) {
-                    throw new BreakFromLambdaException(e);
-                }
+                final byte[] bytes = inputVariableContent.getBytes();
+                InputStream is = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(is);
+                Variable v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
+
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
                 variableHolders.add(variableHolder);
@@ -158,6 +154,7 @@ public class TaskProducingService {
             String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
             byte[] bytes = yaml.getBytes();
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            holder.inputStreams.add(bais);
             try {
                 Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
             } catch (Throwable e) {
