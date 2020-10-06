@@ -41,6 +41,7 @@ import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -246,6 +247,11 @@ public class ExecContextGraphService {
 //            log.error("#915.013 Error", th);
 //            return List.of();
 //        }
+    }
+
+    @Transactional
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(@Nullable ExecContextImpl execContext, Long taskId) {
+        return updateGraphWithResettingAllChildrenTasks(execContext, taskId);
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextImpl execContext, Long taskId) {

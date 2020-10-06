@@ -118,6 +118,10 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
         // in this scenario we test that a processor has got a refreshed sessionId
 
+        // TODO 2020-10-06 right now this test isn't working because
+        //  clause ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) is wrong (i.e. sessionCreatedOn is less that 30 minutes)
+        //  for correcting this test sessionCreatedOn must be changed
+
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         final String newSessionId = sessionIdBefore + '-';
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), newSessionId);

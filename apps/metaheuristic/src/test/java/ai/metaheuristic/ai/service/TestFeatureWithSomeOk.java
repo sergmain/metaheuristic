@@ -49,7 +49,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextFSM.toStarted(execContextForTest);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
 

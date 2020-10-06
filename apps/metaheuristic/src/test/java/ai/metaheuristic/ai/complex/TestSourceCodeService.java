@@ -137,7 +137,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNull(simpleTask0);
 
             execContextFSM.toStarted(execContextForTest);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
 
             SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
             assertNotNull(gv);
@@ -199,7 +199,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         waitForFinishing(permuteTask.task.id, 20);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
             assertNotNull(tempTask);
@@ -246,7 +246,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         waitForFinishing(aggregateTask.task.id, 20);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             verifyGraphIntegrity();
             taskVertices.clear();
             taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
@@ -264,7 +264,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
             assertEquals(0, taskVertices.size());
 
-            ExecContext execContext = execContextCache.findById(execContextForTest.id);
+            ExecContext execContext = execContextService.findById(execContextForTest.id);
             assertNotNull(execContext);
             assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
 
@@ -486,7 +486,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
 
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
+        execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest);
         assertEquals(tasks.size(), taskVertices.size());
 

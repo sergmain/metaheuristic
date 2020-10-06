@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -42,6 +43,11 @@ public class ExecContextTaskStateService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
+
+    @Transactional
+    public OperationStatusRest updateTaskExecStatesWithTx(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
+        return updateTaskExecStates(execContext, taskId, execState, taskContextId);
+    }
 
     public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         return updateTaskExecStates(execContext, taskId, execState, taskContextId, false);

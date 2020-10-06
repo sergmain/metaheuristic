@@ -42,6 +42,10 @@ public class ExecContextGraphTopLevelService {
     // section 'execContext graph methods'
 
     // read-only operations with graph
+    public List<ExecContextData.TaskVertex> findAllWithTx(ExecContextImpl execContext) {
+        return findAll(execContext);
+    }
+
     public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         return execContextGraphService.findAll(execContext);
     }
