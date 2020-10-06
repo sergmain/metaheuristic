@@ -36,7 +36,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Slf4j
 @Profile("dispatcher")
@@ -78,7 +80,9 @@ public class GlobalVariableTopLevelService {
             }
 
             try {
-                globalVariableService.storeInitialGlobalVariable(tempFile, variable, originFilename);
+                try (InputStream is = new FileInputStream(tempFile)) {
+                    globalVariableService.save(is, tempFile.length(), variable, originFilename);
+                }
             } catch (Throwable e) {
                 String es = "#172.050 An error while saving data to file, " + e.toString();
                 log.error(es, e);

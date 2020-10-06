@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,6 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -72,7 +72,6 @@ public class SourceCodeValidationService {
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
-        TxUtils.checkTxExists();
 
         if (StringUtils.isBlank(sourceCode.uid)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
@@ -222,7 +221,7 @@ public class SourceCodeValidationService {
         return sourceCodeValidation;
     }
 
-    private SourceCodeApiData.SourceCodeValidation getSourceCodesValidation(SourceCodeImpl sourceCode) {
+    public SourceCodeApiData.SourceCodeValidation getSourceCodesValidation(SourceCodeImpl sourceCode) {
         final SourceCodeApiData.SourceCodeValidation sourceCodeValidation = new SourceCodeApiData.SourceCodeValidation();
         try {
             sourceCodeValidation.status = checkConsistencyOfSourceCode(sourceCode);

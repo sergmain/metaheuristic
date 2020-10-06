@@ -75,7 +75,7 @@ public class TestCountOfTasks extends PreparingExperiment {
         EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
         assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
 
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
+        execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
         assertNotNull(execContextForTest);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
@@ -88,14 +88,14 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        ExecContext execContext = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+        ExecContext execContext = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
         List<Object[]> tasks02 = taskCollector.getTasks(execContext);
-        assertTrue(tasks02.isEmpty());
+        assertEquals(7, tasks02.size());
 
         mills = System.currentTimeMillis();
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForTest.getState());
 
         experiment = Objects.requireNonNull(experimentCache.findById(experiment.getId()));

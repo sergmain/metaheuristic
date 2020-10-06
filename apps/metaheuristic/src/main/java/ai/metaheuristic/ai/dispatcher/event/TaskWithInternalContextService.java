@@ -41,6 +41,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -57,14 +58,14 @@ public class TaskWithInternalContextService {
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextCache execContextCache;
     private final TaskTransactionalService taskTransactionalService;
-    private final TaskExecStateService taskExecStateService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
-    private final VariableService variableService;
     private final TaskService taskService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextVariableService execContextVariableService;
+    private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
+    @Nullable
     private static Long lastTaskId=null;
     // this code is only for testing
     public static boolean taskFinished(Long id) {
@@ -74,6 +75,7 @@ public class TaskWithInternalContextService {
     public void processInternalFunction(TaskImpl task, VariableData.DataStreamHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
+        lastTaskId = null;
 
         try {
             task.setAssignedOn(System.currentTimeMillis());
@@ -82,8 +84,9 @@ public class TaskWithInternalContextService {
 
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext == null) {
-                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10000,
-                        "#707.030 Task #" + task.id + " is broken, execContext #" + task.execContextId + " wasn't found.");
+                execContextTaskFinishingService.finishWithError(task.id,
+                        "#707.030 Task #" + task.id + " is broken, execContext #" + task.execContextId + " wasn't found.",
+                        task.execContextId, null, -10000);
                 return;
             }
             try {
@@ -116,17 +119,13 @@ public class TaskWithInternalContextService {
                     }
                 }
 
-                // ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
-                // won't be called for initializing output variables in internal function.
-                // the code which skips initializing is here - ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.getTaskAndAssignToProcessor
-                variableService.initOutputVariables(taskParamsYaml, execContext, p);
-                taskTransactionalService.setParams(task.id, taskParamsYaml);
+                taskTransactionalService.initOutputVariables(execContext, task.id, p, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext.id, task.id, p.internalContextId, taskParamsYaml, holder);
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                    execContextFSM.markAsFinishedWithError(task.id, execContext.sourceCodeId, execContext.id, taskParamsYaml, result);
+                    execContextTaskFinishingService.markAsFinishedWithError(task.id, execContext.sourceCodeId, execContext.id, taskParamsYaml, result);
                     return;
                 }
                 execContextVariableService.setResultReceivedForInternalFunction(task.id);
@@ -141,16 +140,16 @@ public class TaskWithInternalContextService {
 
             } catch (CommonErrorWithDataException th) {
                 String es = "#707.067 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
-                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10002, es);
+                execContextTaskFinishingService.finishWithError(task.id, es, task.execContextId, null, -10002);
                 log.error(es);
             } catch (Throwable th) {
                 String es = "#707.070 Task #" + task.id + " was processed with error: " + th.getMessage();
-                taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10003, es);
+                execContextTaskFinishingService.finishWithError(task.id, es, task.execContextId, null, -10003);
                 log.error(es, th);
             }
         } catch (Throwable th) {
             String es = "#707.080 Task #" + task.id + " was processed with error: " + th.getMessage();
-            taskExecStateService.finishTaskAsError(task.id, EnumsApi.TaskExecState.ERROR, -10004, es);
+            execContextTaskFinishingService.finishWithError(task.id, es, task.execContextId, null, -10004);
             log.error(es, th);
         }
         finally {

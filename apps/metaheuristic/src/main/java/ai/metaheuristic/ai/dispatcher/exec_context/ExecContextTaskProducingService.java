@@ -152,7 +152,6 @@ public class ExecContextTaskProducingService {
                 continue;
             }
 
-
             List<Long> parentTaskIds = new ArrayList<>();
             processGraph.incomingEdgesOf(processVertex).stream()
                     .map(processGraph::getEdgeSource)

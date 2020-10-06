@@ -161,6 +161,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @BeforeEach
     public void beforePreparingSourceCode() throws IOException {
         assertTrue(globals.isUnitTesting);
+        assertNotSame(globals.assetMode, EnumsApi.DispatcherAssetMode.replicated);
 
         String params = getSourceCodeYamlAsString();
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
@@ -171,6 +172,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         company = new Company();
         company.name = "Test company #2";
         companyTopLevelService.addCompany(company);
+        company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(company.uniqueId));
 
         assertNotNull(company.id);
         assertNotNull(company.uniqueId);
@@ -282,7 +284,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         } catch (Throwable th) {
             log.error("Error while planCache.deleteById()", th);
         }
-        if (company!=null) {
+        if (company!=null && company.id!=null) {
             try {
                 companyRepository.deleteById(company.id);
             } catch (Throwable th) {
@@ -328,18 +330,18 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
+            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
-
-            execContextTopLevelService.createAllTasks();
-            this.execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
-
-            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
             return null;
         });
+
+        execContextTopLevelService.createAllTasks();
+        this.execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+
+        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest() {

@@ -300,6 +300,12 @@ public class VariableService {
 */
     }
 
+    @Transactional
+    public Void updateWithTx(InputStream is, long size, Variable data) {
+        update(is, size, data);
+        return null;
+    }
+
     public void update(InputStream is, long size, Variable data) {
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));

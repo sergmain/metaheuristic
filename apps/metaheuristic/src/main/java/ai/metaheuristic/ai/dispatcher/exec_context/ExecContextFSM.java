@@ -21,17 +21,12 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -92,7 +87,6 @@ public class ExecContextFSM {
     private final ApplicationEventPublisher eventPublisher;
     private final ProcessorCache processorCache;
     private final TaskService taskService;
-    private final VariableService variableService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTaskStateService execContextTaskStateService;
@@ -253,17 +247,6 @@ public class ExecContextFSM {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public void markAsFinishedWithError(Long taskId, Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
-        TxUtils.checkTxExists();
-
-        log.error("#303.220 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
-        final String console = "#303.240 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
-
-        final String taskContextId = taskParamsYaml.task.taskContextId;
-
-        execContextTaskFinishingService.finishWithErrorInternal(taskId, console, execContextId, taskContextId);
-    }
-
     @Transactional
     public Void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
         execContextSyncService.checkWriteLockPresent(execContextId);
@@ -330,21 +313,21 @@ public class ExecContextFSM {
             if (taskState==null) {
                 isNullState.set(true);
             }
-/*
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
                 log.info("#303.300 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
 
+/*
                 if (taskState.execState== EnumsApi.TaskExecState.ERROR.value) {
-                    finishWithError(tv.taskId, execContext.id, null, null);
+                    finishWithErrorWithTx(tv.taskId, execContext.id, null, null);
                 }
                 else {
                     updateTaskExecStates(execContext, tv.taskId, taskState.execState, null);
                 }
                 break;
-            }
 */
+            }
         }
 
         if (isNullState.get()) {
@@ -414,7 +397,7 @@ public class ExecContextFSM {
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                execContextTaskFinishingService.finishWithError(task.id, task.execContextId, tpy.task.taskContextId, task.params);
+                execContextTaskFinishingService.finishWithErrorWithTx(task.id, task.execContextId, tpy.task.taskContextId, task.params);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = execContextVariableService.setVariableReceived(task, variableId);
@@ -467,7 +450,7 @@ public class ExecContextFSM {
                 }
                 catch (YAMLException e) {
                     log.error("#303.440 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    execContextTaskFinishingService.finishWithError(task.getId(), task.execContextId, null, null);
+                    execContextTaskFinishingService.finishWithErrorWithTx(task.getId(), task.execContextId, null, null);
                     continue;
                 }
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
@@ -588,10 +571,7 @@ public class ExecContextFSM {
                 .map(v -> taskHelperService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        variableService.initOutputVariables(taskParams, execContext, p);
-        return taskTransactionalService.setParams(task.id, taskParams);
-
-        //        return taskTransactionalService.persistOutputVariables(task, taskParams, execContext, p);
+        return taskTransactionalService.initOutputVariables(execContext, task.id, p, taskParams);
     }
 
 /*

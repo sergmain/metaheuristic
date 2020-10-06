@@ -64,7 +64,7 @@ public class TestGraph extends PreparingSourceCode {
 
     private void updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
         execContextSyncService.getWithSync(execContext.id,
-                () -> execContextTaskFinishingService.finishWithError(taskId, "to finish", execContext.id, null));
+                () -> execContextTaskFinishingService.finishWithErrorWithTx(taskId, "to finish", execContext.id, null));
         // execContextGraphService.updateTaskExecState(execContext, taskId, EnumsApi.ExecContextState.FINISHED.code, null)
     }
 
@@ -142,7 +142,7 @@ public class TestGraph extends PreparingSourceCode {
     }
 
     private void setExecStateError(Long execContextId, Long taskId, String console) {
-        execContextTaskFinishingService.finishWithError(taskId, console, execContextId, null);
+        execContextTaskFinishingService.finishWithErrorWithTx(taskId, console, execContextId, null);
     }
 
 }

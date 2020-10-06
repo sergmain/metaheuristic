@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import org.junit.jupiter.api.AfterEach;
@@ -44,6 +45,9 @@ public class TestBinaryDataRepository {
     @Autowired
     private VariableRepository variableRepository;
 
+    @Autowired
+    private ExecContextSyncService execContextSyncService;
+
     private Variable d1 = null;
     @AfterEach
     public void after() {
@@ -54,15 +58,16 @@ public class TestBinaryDataRepository {
 
     @Test
     public void test() throws InterruptedException {
-        byte[] bytes = "this is very short data".getBytes();
+        final byte[] bytes = "this is very short data".getBytes();
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = variableService.createInitialized(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID);
+        d1 = execContextSyncService.getWithSync(10L,
+                ()-> variableService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
 
         Timestamp ts = d1.getUploadTs();
 
-        Variable d2 = variableService.getBinaryData(d1.getId());
+        final Variable d2 = variableService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -70,13 +75,15 @@ public class TestBinaryDataRepository {
         // to check timestamp
         Thread.sleep(1100);
 
-        bytes = "another one very short data".getBytes();
-        inputStream = new ByteArrayInputStream(bytes);
-        variableService.update(inputStream, bytes.length, d2);
+        final byte[] bytes2 = "another one very short data".getBytes();
+        final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
+        execContextSyncService.getWithSyncNullable(10L,
+                ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2));
 
-        d2 = variableService.getBinaryData(d2.getId());
-        assertNotNull(d2);
-        assertNotEquals(ts, d2.getUploadTs());
-        assertArrayEquals(bytes, d2.bytes);
+        final Variable d3 = variableService.getBinaryData(d2.getId());
+
+        assertNotNull(d3);
+        assertNotEquals(ts, d3.getUploadTs());
+        assertArrayEquals(bytes2, d3.bytes);
     }
 }

@@ -76,6 +76,12 @@ public class ExecContextService {
         return result;
     }
 
+    @Nullable
+    @Transactional
+    public ExecContextImpl findById(Long id) {
+        return execContextCache.findById(id);
+    }
+
     public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
         if (vertices.size()<=fromIndex) {

@@ -17,20 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -51,16 +44,22 @@ public class ExecContextTaskStateService {
     private final TaskExecStateService taskExecStateService;
 
     public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
+        return updateTaskExecStates(execContext, taskId, execState, taskContextId, false);
+    }
+
+    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         if (execContext==null) {
             // this execContext was deleted
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         execContextSyncService.checkWriteLockPresent(execContext.id);
-
-        taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
+        TaskImpl t = taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
+        if (markAsCompleted && t!=null && (!t.isCompleted || t.completedOn==null)) {
+            taskExecStateService.markAsCompleted(taskId);
+        }
         return status.status;
     }
 

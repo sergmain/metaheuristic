@@ -26,13 +26,13 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -52,6 +52,7 @@ public class ExecContextTaskAssigningService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Nullable
     @Transactional
@@ -81,7 +82,7 @@ public class ExecContextTaskAssigningService {
                 }
                 catch (YAMLException e) {
                     log.error("#705.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    execContextTaskFinishingService.finishWithError(task.getId(), task.execContextId, null, null);
+                    execContextTaskFinishingService.finishWithErrorWithTx(task.getId(), task.execContextId, null, null);
                     continue;
                 }
                 if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
@@ -95,6 +96,9 @@ public class ExecContextTaskAssigningService {
                 }
                 log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                 taskWithInternalContextService.processInternalFunction(task, holder);
+
+//                eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.execContextId, task.id));
+
                 continue;
             }
         }

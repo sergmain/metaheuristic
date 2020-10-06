@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -53,6 +55,13 @@ public class ExecContextTaskFinishingService {
     private final TaskRepository taskRepository;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskService taskService;
+
+    @Transactional
+    public Void checkTaskCanBeFinishedWithTx(Long taskId) {
+        checkTaskCanBeFinished(taskId);
+        return null;
+    }
 
     public void checkTaskCanBeFinished(Long taskId) {
         checkTaskCanBeFinished(taskRepository.findById(taskId).orElse(null));
@@ -63,6 +72,7 @@ public class ExecContextTaskFinishingService {
             return;
         }
         TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
 
@@ -92,13 +102,13 @@ public class ExecContextTaskFinishingService {
             }
 
             if (!functionExec.allFunctionsAreOk()) {
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
-
                 log.info("#303.160 store result with the state ERROR");
-                finishWithErrorInternal(
+                finishWithError(
                         task.id,
                         StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
                         task.execContextId, tpy.task.taskContextId);
+
+                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
                 return;
             }
         }
@@ -108,29 +118,74 @@ public class ExecContextTaskFinishingService {
                 .allMatch(o -> o.uploaded);
 
         if (task.resultReceived && allUploaded) {
-            execContextTaskStateService.updateTaskExecStates(execContextCache.findById(task.execContextId), task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
+            execContextTaskStateService.updateTaskExecStates(
+                    execContextCache.findById(task.execContextId), task.id,
+                    EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId, true);
         }
     }
 
-    @Transactional
-    public void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-        finishWithErrorInternal(taskId, "#303.260 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
+    public void markAsFinishedWithError(Long taskId, Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
+        TxUtils.checkTxExists();
+
+        log.error("#303.220 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
+        final String console = "#303.240 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
+
+        final String taskContextId = taskParamsYaml.task.taskContextId;
+
+        finishWithError(taskId, console, execContextId, taskContextId);
     }
 
     @Transactional
+    public void finishWithErrorWithTx(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
+        finishWithError(taskId, "#303.260 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
+    }
+
+    @Transactional
+    public Void finishWithErrorWithTx(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+        return finishWithError(taskId, console, execContextId, taskContextId);
+    }
+
     public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
-        return finishWithErrorInternal(taskId, console, execContextId, taskContextId);
+        return finishWithError(taskId, console, execContextId, taskContextId, -10001);
     }
 
-    public Void finishWithErrorInternal(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+    public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId, int exitCode) {
         execContextSyncService.checkWriteLockPresent(execContextId);
-        taskExecStateService.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR, -10001, console);
+        finishTaskAsError(taskId, exitCode, console);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
                 execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
+
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, taskId, execContextId);
         return null;
+    }
+
+    private void finishTaskAsError(Long taskId, int exitCode, String console) {
+        TxUtils.checkTxExists();
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#305.080 Can't find Task for Id: {}", taskId);
+            return;
+        }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
+            log.info("#305.085 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", taskId);
+            return;
+        }
+        task.setExecState(EnumsApi.TaskExecState.ERROR.value);
+        task.setCompleted(true);
+        task.setCompletedOn(System.currentTimeMillis());
+
+        if (S.b(task.functionExecResults)) {
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
+            task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
+        }
+        task.setResultReceived(true);
+
+        task = taskService.save(task);
     }
 
 

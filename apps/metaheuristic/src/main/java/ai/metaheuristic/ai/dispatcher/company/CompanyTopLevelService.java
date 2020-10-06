@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +58,7 @@ public class CompanyTopLevelService {
         return result;
     }
 
+    @Transactional
     public OperationStatusRest addCompany(String companyName) {
         return addCompany(new Company(companyName));
     }
@@ -110,6 +112,7 @@ public class CompanyTopLevelService {
         return newUniqueId;
     }
 
+    @Transactional
     public CompanyData.SimpleCompanyResult getSimpleCompany(Long companyUniqueId){
         Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company == null) {
@@ -136,6 +139,7 @@ public class CompanyTopLevelService {
      * @param groups
      * @return
      */
+    @Transactional
     public OperationStatusRest editFormCommit(Long companyUniqueId, String name, String groups) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -168,5 +172,11 @@ public class CompanyTopLevelService {
         c.setName(name);
         companyCache.save(c);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of company was changed successfully", null);
+    }
+
+    @Nullable
+    @Transactional
+    public Company getCompanyByUniqueId(Long uniqueId) {
+        return companyCache.findByUniqueId(uniqueId);
     }
 }

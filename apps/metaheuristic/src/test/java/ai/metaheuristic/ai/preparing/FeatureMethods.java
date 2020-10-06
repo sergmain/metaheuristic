@@ -97,7 +97,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     public void toStarted() {
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextFSM.toStarted(execContextForTest);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
         });
@@ -133,8 +133,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertNotNull(execContextForTest);
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            EnumsApi.TaskProducingStatus producingStatus = execContextTopLevelService.toProducing(execContextForTest.id);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id);
+            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
@@ -144,15 +144,15 @@ public abstract class FeatureMethods extends PreparingExperiment {
             List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
             assertTrue(tasks02.isEmpty());
 
-            long mills = System.currentTimeMillis();
-            execContextTopLevelService.createAllTasks();
-            log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
-
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
-            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
-
             return null;
         });
+
+        long mills = System.currentTimeMillis();
+        execContextTopLevelService.createAllTasks();
+        log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
+
+        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
     }
 
     protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {

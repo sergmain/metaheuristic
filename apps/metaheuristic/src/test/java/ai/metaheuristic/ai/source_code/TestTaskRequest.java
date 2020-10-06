@@ -110,19 +110,21 @@ public class TestTaskRequest extends FeatureMethods {
         assertNull(d1.getAssignedTask());
 
         finishCurrentWithOk();
-        TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+        final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadResourceStatus status = taskTopLevelService.setVariableReceived(task, output.id);
             assertEquals(Enums.UploadResourceStatus.OK, status);
         }
-        task = taskRepository.findById(t.taskId).orElse(null);
-        assertNotNull(task);
-        assertTrue(task.isCompleted);
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()->execContextTaskFinishingService.checkTaskCanBeFinishedWithTx(task.id));
+
+        final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
+        assertNotNull(task2);
+        assertTrue(task2.isCompleted);
 
         execContextTopLevelService.updateExecContextStatus(execContextForTest.id,true);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
     }
 
     public void step_3(String sessionId) {

@@ -17,12 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -59,6 +61,13 @@ public class TaskTransactionalService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
     private final TaskProducingService taskProducingService;
+    private final VariableService variableService;
+
+    @Nullable
+    public TaskImpl initOutputVariables(ExecContextImpl execContext, Long taskId, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
+        variableService.initOutputVariables(taskParamsYaml, execContext, p);
+        return setParams(taskId, taskParamsYaml);
+    }
 
     @Transactional
     public TaskData.ProduceTaskResult produceTaskForProcess(

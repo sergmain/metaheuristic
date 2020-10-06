@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -33,9 +33,6 @@ public class TestProcessorTimeout {
 
     @Test
     public void test() {
-        assertTrue(
-                ProcessorTopLevelService.PROCESSOR_TIMEOUT - Consts.SESSION_UPDATE_TIMEOUT
-                        >= TimeUnit.SECONDS.toMillis(20)
-        );
+        assertTrue(TimeUnit.SECONDS.toMillis(20) <= ProcessorTransactionService.PROCESSOR_TIMEOUT - Consts.SESSION_UPDATE_TIMEOUT);
     }
 }

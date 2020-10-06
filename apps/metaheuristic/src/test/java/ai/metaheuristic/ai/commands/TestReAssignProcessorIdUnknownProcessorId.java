@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -50,7 +50,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
     public SouthBridgeService serverService;
 
     @Autowired
-    public ProcessorCache processorCache;
+    public ProcessorTransactionService processorTransactionService;
 
     private Long processorIdBefore;
     private String sessionIdBefore;
@@ -65,7 +65,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
 
         for (int i = 0; i < 100; i++) {
             final long id = -1L - i;
-            Processor s = processorCache.findById(id);
+            Processor s = processorTransactionService.findById(id);
             if (s==null) {
                 unknownProcessorId = id;
                 break;
@@ -100,7 +100,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         log.info("Start after()");
         if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(processorIdBefore);
+                processorTransactionService.deleteById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -129,7 +129,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
 
         assertNotEquals(unknownProcessorId, processorId);
 
-        Processor s = processorCache.findById(processorId);
+        Processor s = processorTransactionService.findById(processorId);
 
         assertNotNull(s);
     }

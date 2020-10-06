@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -106,58 +107,40 @@ public class GlobalVariableService {
         }
     }
 
+    @Transactional
     public void deleteByVariable(String variable) {
         globalVariableRepository.deleteByName(variable);
     }
 
     @Transactional
     public GlobalVariable save(InputStream is, long size, String variable, String filename) {
-        try {
-            GlobalVariable data = new GlobalVariable();
-            data.setName(variable);
-            data.setFilename(filename);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
-            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        GlobalVariable data = new GlobalVariable();
+        data.setName(variable);
+        data.setFilename(filename);
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-            Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
-            data.setData(blob);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        data.setData(blob);
 
-            globalVariableRepository.save(data);
+        globalVariableRepository.save(data);
 
-            return data;
-        }
-        catch(VariableSavingException | PessimisticLockingFailureException e) {
-            throw e;
-        } catch(Throwable th) {
-            throw new VariableSavingException("#089.060 error storing data to db - " + th.getMessage(), th);
-        }
-    }
-
-    public GlobalVariable storeInitialGlobalVariable(File tempFile, String variable, String filename) throws IOException {
-        try (InputStream is = new FileInputStream(tempFile)) {
-            return save(is, tempFile.length(), variable, filename);
-        }
+        return data;
     }
 
     @SuppressWarnings("UnusedReturnValue")
     @Transactional
     public GlobalVariable createGlobalVariableWithExternalStorage(String variable, String params) {
 
-        try {
-            GlobalVariable data = new GlobalVariable();
-            data.setName(variable);
-            data.setFilename(null);
-            data.setParams(params);
-            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setData(null);
-            globalVariableRepository.save(data);
+        GlobalVariable data = new GlobalVariable();
+        data.setName(variable);
+        data.setFilename(null);
+        data.setParams(params);
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        data.setData(null);
+        globalVariableRepository.save(data);
 
-            return data;
-        }
-        catch(Throwable th) {
-            log.error("#089.090 error storing data to db", th);
-            throw new VariableSavingException("Error", th);
-        }
+        return data;
     }
 
     @Transactional
