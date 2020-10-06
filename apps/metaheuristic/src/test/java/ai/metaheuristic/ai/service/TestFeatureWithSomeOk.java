@@ -53,6 +53,9 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
 
+            return null;
+        });
+
             getTaskAndAssignToProcessor_mustBeNewTask();
 
             // this processor already got task, so don't provide any new
@@ -67,27 +70,6 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
                     new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, experiment.getExecContextId());
 
             assertNull(task1);
-
-            return null;
-
-            // TODO 2019.05.04 this test needs to be rewritten completely
-/*
-        if (true) throw new NotImplementedException("Not implemented yet");
-        final ExperimentFeature feature = null;
-//        final ExperimentFeature feature = task1.getFeature();
-        assertNotNull(feature);
-        assertNotNull(task1.getSimpleTask());
-        assertNotNull(task1.getSimpleTask());
-
-        finishCurrentWithOk(2);
-
-        getTaskAndAssignToProcessor_mustBeNewTask();
-
-
-        System.out.println();
-*/
-        });
-
     }
 
 }

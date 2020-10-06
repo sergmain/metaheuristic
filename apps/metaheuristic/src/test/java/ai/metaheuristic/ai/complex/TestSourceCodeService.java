@@ -119,22 +119,22 @@ public class TestSourceCodeService extends PreparingSourceCode {
         produceTasksForTest();
 
         final List<ExecContextData.TaskVertex> taskVertices = new ArrayList<>();
+        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
+
+        assertNotNull(execContextForTest);
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
+
+        verifyGraphIntegrity();
+
+        // ======================
+
+        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
+                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
+
+        assertNull(simpleTask0);
+
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-
-            List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
-
-            assertNotNull(execContextForTest);
-            assertNotNull(tasks);
-            assertFalse(tasks.isEmpty());
-
-            verifyGraphIntegrity();
-
-            // ======================
-
-            DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                    execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
-
-            assertNull(simpleTask0);
 
             execContextFSM.toStarted(execContextForTest);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
@@ -143,8 +143,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNotNull(gv);
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
-            step_AssembledRaw();
-            step_DatasetProcessing();
+            return null;
+        });
+        step_AssembledRaw();
+
+        step_DatasetProcessing();
 
             //   processCode: feature-processing-1, function code: function-03:1.1
             step_CommonProcessing();
@@ -154,8 +157,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
             taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
             assertEquals(3, taskVertices.size());
-            return null;
-        });
 
         TaskHolder finishTask = new TaskHolder(), permuteTask = new TaskHolder(), aggregateTask = new TaskHolder();
 
@@ -377,7 +378,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable);
 
 
 
@@ -458,7 +459,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
-
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
@@ -506,7 +506,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        execContextFSM.storeExecResult(r);
+        execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
+
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
