@@ -36,6 +36,10 @@ import java.util.List;
 @Profile("dispatcher")
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
+    @Transactional(readOnly = true)
+    @Query(value="select b.execContextId from Batch b where b.id=:batchId")
+    Long getExecContextId(Long batchId);
+
     @Query(value="select b from Batch b where b.id=:id and b.companyId=:companyUniqueId")
     Batch findByIdForUpdate(Long id, Long companyUniqueId);
 

@@ -26,10 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -88,6 +85,7 @@ public class BatchService {
     private final ExecContextCache execContextCache;
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
+    private final ExecContextSyncService execContextSyncService;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -314,7 +312,15 @@ public class BatchService {
     }
 
     @Transactional
-    public OperationStatusRest deleteBatch(Long companyUniqueId, boolean isVirtualDeletion, Batch batch) {
+    public OperationStatusRest deleteBatch(Long companyUniqueId, boolean isVirtualDeletion, Long batchId) {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null || !batch.companyId.equals(companyUniqueId)) {
+            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+            log.info(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+        execContextSyncService.checkWriteLockPresent(batch.execContextId);
+
         if (isVirtualDeletion) {
             if (!batch.deleted) {
                 ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
@@ -334,5 +340,16 @@ public class BatchService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batch.id + " was deleted successfully.", null);
     }
 
+    @Transactional
+    public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null || !batch.companyId.equals(companyUniqueId)) {
+            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+            log.info(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+
+        return deleteBatch(companyUniqueId, isVirtualDeletion, batchId);
+    }
 
 }

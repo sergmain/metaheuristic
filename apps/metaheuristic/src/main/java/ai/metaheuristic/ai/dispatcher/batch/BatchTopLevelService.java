@@ -245,14 +245,14 @@ public class BatchTopLevelService {
     }
 
     public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
-        Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyUniqueId)) {
+        Long execContextId = batchRepository.getExecContextId(batchId);
+        if (execContextId == null) {
             final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        return execContextSyncService.getWithSync(batch.execContextId, () -> batchService.deleteBatch(companyUniqueId, isVirtualDeletion, batch));
+        return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(companyUniqueId, isVirtualDeletion, batchId));
     }
 
     public BatchData.BulkOperations processBatchBulkDeleteCommit(String batchIdsStr, Long companyUniqueId, boolean isVirtualDeletion) {
