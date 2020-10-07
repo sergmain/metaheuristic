@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
@@ -31,11 +32,12 @@ import java.io.Serializable;
 @ToString(exclude = {"params"} )
 @NoArgsConstructor
 @EntityListeners(value=TaskImpl.LastUpdateListener.class)
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
 
     public static class LastUpdateListener {
-        @PreUpdate
         @PrePersist
         public void setLastUpdate(TaskImpl o) {
             o.setUpdatedOn( System.currentTimeMillis() );
@@ -85,6 +87,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;
 
+    // resource==variable
     @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")
     public long resultResourceScheduledOn;
 

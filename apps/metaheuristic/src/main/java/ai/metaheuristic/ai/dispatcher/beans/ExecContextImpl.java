@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -30,6 +31,8 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextImpl implements Serializable, ExecContext {
     private static final long serialVersionUID = -8687758209537096490L;
 

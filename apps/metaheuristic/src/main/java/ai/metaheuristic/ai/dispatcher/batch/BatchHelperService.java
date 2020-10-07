@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -42,21 +41,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BatchHelperService {
 
-    private final ExecContextCache execContextCache;
     private final VariableService variableService;
 
-    public String findUploadedFilenameForBatchId(Long execContextId, @Nullable String defaultName) {
+    public String findUploadedFilenameForBatchId(ExecContextImpl execContext, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec == null) {
-            return defName;
-        }
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         String startInputVariableName = ecpy.variables.startInputAs;
         if (S.b(startInputVariableName)) {
             return defName;
         }
-        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
+        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContext.id, startInputVariableName);
         if (filenames.isEmpty()) {
             return defName;
         }

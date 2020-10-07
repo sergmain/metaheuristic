@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -39,6 +40,8 @@ import java.io.Serializable;
 @Data
 @ToString(exclude = {"epy"})
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Experiment implements Serializable, Cloneable {
     private static final long serialVersionUID = -3509391644278818781L;
 

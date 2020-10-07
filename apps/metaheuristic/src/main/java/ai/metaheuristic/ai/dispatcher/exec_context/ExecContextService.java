@@ -20,14 +20,15 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -36,7 +37,10 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -46,8 +50,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
@@ -65,8 +71,10 @@ public class ExecContextService {
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsService dispatcherParamsService;
-    private final TaskTransactionalService taskTransactionService;
+    private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
+    private final ExecContextSyncService execContextSyncService;
+    private final EntityManager em;
 
     @Transactional(readOnly = true)
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
@@ -167,22 +175,66 @@ public class ExecContextService {
     }
 
     @Transactional
-    public void changeValidStatus(Long execContextId, boolean status) {
+    public Void changeValidStatus(Long execContextId, boolean status) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return;
+            return null;
         }
         execContext.setValid(status);
-        execContextCache.save(execContext);
+        save(execContext);
+        return null;
     }
 
-    @Transactional
+    public ExecContextImpl save(ExecContextImpl execContext) {
+        TxUtils.checkTxExists();
+        if (execContext.id!=null) {
+            execContextSyncService.checkWriteLockPresent(execContext.id);
+        }
+/*
+
+        if (log.isDebugEnabled()) {
+            log.debug("#462.010 save execContext, id: #{}, ver: {}, execContext: {}", execContext.id, execContext.version, execContext);
+            try {
+                throw new RuntimeException("execContext stacktrace");
+            }
+            catch(RuntimeException e) {
+                log.debug("execContext stacktrace", e);
+            }
+        }
+*/
+        if (execContext.id==null) {
+            final ExecContextImpl ec = execContextCache.save(execContext);
+            return ec;
+        }
+        else if (!em.contains(execContext) ) {
+//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
+            throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", execContext));
+        }
+        return execContext;
+    }
+
+    @Transactional(readOnly = true)
+    public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
+        }
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
+        if (sourceCode == null) {
+            return new SourceCodeApiData.ExecContextResult("#705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
+        }
+
+        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
+        return result;
+    }
+
+    @Transactional(readOnly = true)
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();
         result.sourceCodeId = sourceCodeId;
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        List<TaskData.SimpleTaskInfo> infos = taskTransactionService.getSimpleTaskInfos(execContextId);
+        List<TaskData.SimpleTaskInfo> infos = getSimpleTaskInfos(execContextId);
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec == null) {
             ExecContextApiData.ExecContextStateResult resultWithError = new ExecContextApiData.ExecContextStateResult();
@@ -195,7 +247,16 @@ public class ExecContextService {
         return r;
     }
 
-    public void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {
+    private List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
+        try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
+            return stream.map(o-> {
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params);
+                return new TaskData.SimpleTaskInfo(o.id,  EnumsApi.TaskExecState.from(o.execState).toString(), tpy.task.taskContextId, tpy.task.processCode, tpy.task.function.code);
+            }).collect(Collectors.toList());
+        }
+    }
+
+    private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {
         TxUtils.checkTxExists();
         SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
         if (sc != null) {

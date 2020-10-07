@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
@@ -50,16 +51,13 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +85,7 @@ public class BatchService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextCache execContextCache;
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
 
@@ -198,17 +197,38 @@ public class BatchService {
         }
     }
 
+    @Nullable
+    @Transactional(readOnly = true)
+    public BatchData.BatchExecInfo getBatchExecInfo(DispatcherContext context, Long batchId) {
+        List<BatchData.BatchExecInfo> items = getBatchExecInfos(List.of(batchId));
+        if (items.isEmpty()) {
+            return null;
+        }
+        BatchData.BatchExecInfo batchExecInfo = items.get(0);
+
+        Batch b = batchExecInfo.batch;
+        return b.companyId.equals(context.getCompanyId()) && b.accountId.equals(context.account.id) && !b.deleted ? batchExecInfo : null;
+    }
+
+    @Transactional(readOnly = true)
     public List<BatchData.BatchExecInfo> getBatches(Page<Long> pageWithBatchIds) {
         List<Long> batchIds = pageWithBatchIds.getContent();
         return getBatchExecInfos(batchIds);
     }
 
+    @Transactional(readOnly = true)
     public List<BatchData.BatchExecInfo> getBatchExecInfos(List<Long> batchIds) {
         List<BatchData.BatchExecInfo> items = new ArrayList<>();
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
             String uid = SOURCE_CODE_NOT_FOUND;
             if (batch!=null) {
+                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+                if (execContext==null) {
+                    log.error("Broken batch #{}, execContext #{} doesn't exist", batch.id, batch.execContextId);
+                    continue;
+                }
+
                 SourceCodeImpl sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
                 boolean ok = true;
                 if (sourceCode != null) {
@@ -220,7 +240,7 @@ public class BatchService {
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
 
-                String filename = batchHelperService.findUploadedFilenameForBatchId(batch.execContextId, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                String filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
@@ -297,7 +317,11 @@ public class BatchService {
     public OperationStatusRest deleteBatch(Long companyUniqueId, boolean isVirtualDeletion, Batch batch) {
         if (isVirtualDeletion) {
             if (!batch.deleted) {
-                execContextFSM.toFinished(batch.execContextId);
+                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+                if (execContext==null) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Batch #" + batch.id + " was deleted successfully.");
+                }
+                execContextFSM.toFinished(execContext);
 
                 Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
                 b.deleted = true;

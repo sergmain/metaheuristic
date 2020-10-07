@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
@@ -59,18 +58,15 @@ public class ExecContextTaskFinishingService {
 
     @Transactional
     public Void checkTaskCanBeFinishedWithTx(Long taskId) {
-        checkTaskCanBeFinished(taskId);
+        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return null;
+        }
+        checkTaskCanBeFinished(task);
         return null;
     }
 
-    public void checkTaskCanBeFinished(Long taskId) {
-        checkTaskCanBeFinished(taskRepository.findById(taskId).orElse(null));
-    }
-
-    public void checkTaskCanBeFinished(@Nullable TaskImpl task) {
-        if (task==null) {
-            return;
-        }
+    public void checkTaskCanBeFinished(TaskImpl task) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
@@ -104,9 +100,9 @@ public class ExecContextTaskFinishingService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#303.160 store result with the state ERROR");
                 finishWithError(
-                        task.id,
+                        task,
                         StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
-                        task.execContextId, tpy.task.taskContextId);
+                        tpy.task.taskContextId);
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
                 return;
@@ -119,58 +115,56 @@ public class ExecContextTaskFinishingService {
 
         if (task.resultReceived && allUploaded) {
             execContextTaskStateService.updateTaskExecStates(
-                    execContextCache.findById(task.execContextId), task.id,
-                    EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId, true);
+                    execContextCache.findById(task.execContextId), task,
+                    EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
         }
     }
 
-    public void markAsFinishedWithError(Long taskId, Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, InternalFunctionData.InternalFunctionProcessingResult result) {
-        TxUtils.checkTxExists();
-
-        log.error("#303.220 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}", result.processing, result.error, sourceCodeId, execContextId);
-        final String console = "#303.240 Task #" + taskId + " was finished with status '" + result.processing + "', text of error: " + result.error;
-
-        final String taskContextId = taskParamsYaml.task.taskContextId;
-
-        finishWithError(taskId, console, execContextId, taskContextId);
+    @Transactional
+    public void finishWithErrorWithTx(Long taskId, Long execContextId, @Nullable String taskContextId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#303.1650 Reporting about non-existed task #{}", taskId);
+            return;
+        }
+        finishWithError(task, taskContextId);
     }
 
-    @Transactional
-    public void finishWithErrorWithTx(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
-        finishWithError(taskId, "#303.260 Task was finished with an unknown error, can't process it", execContextId, taskContextId);
+    public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
+        finishWithError(task, "#303.260 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
     @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
-        return finishWithError(taskId, console, execContextId, taskContextId);
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#303.1650 Reporting about non-existed task #{}", taskId);
+            return null;
+        }
+        return finishWithError(task, console, taskContextId);
     }
 
-    public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
-        return finishWithError(taskId, console, execContextId, taskContextId, -10001);
+    public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {
+        return finishWithError(task, console, taskContextId, -10001);
     }
 
-    public Void finishWithError(Long taskId, String console, Long execContextId, @Nullable String taskContextId, int exitCode) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-        finishTaskAsError(taskId, exitCode, console);
+    public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        finishTaskAsError(task, exitCode, console);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                execContextCache.findById(execContextId), taskId, EnumsApi.TaskExecState.ERROR.value, taskContextId);
+                execContextCache.findById(task.execContextId), task.id, EnumsApi.TaskExecState.ERROR, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
 
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, taskId, execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
         return null;
     }
 
-    private void finishTaskAsError(Long taskId, int exitCode, String console) {
+    private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
         TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#305.080 Can't find Task for Id: {}", taskId);
-            return;
-        }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#305.085 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", taskId);
+            log.info("#305.085 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
         task.setExecState(EnumsApi.TaskExecState.ERROR.value);

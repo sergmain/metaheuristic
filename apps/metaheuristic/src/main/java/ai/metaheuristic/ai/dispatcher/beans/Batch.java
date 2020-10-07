@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -30,6 +31,8 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @ToString(exclude = "params")
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Batch implements Serializable {
     private static final long serialVersionUID = -3509391644278818781L;
 

@@ -64,6 +64,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
     @Test
     public void test() {
 
+        // TODO 2020-10-06 need to rewrite with using real Tasks
+
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
         execContextForTest = result.execContext;
         assertNotNull(execContextForTest);
@@ -138,7 +140,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             OperationStatusRest status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextService.findById(execContextForTest.id),
-                    1L, EnumsApi.TaskExecState.OK.value, "123###1");
+                    1L, EnumsApi.TaskExecState.OK, "123###1");
 
             assertEquals(EnumsApi.OperationStatus.OK, status.status);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -152,7 +154,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextService.findById(execContextForTest.id),
-                    22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
+                    22L, EnumsApi.TaskExecState.IN_PROGRESS, null);
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -175,7 +177,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextService.findById(execContextForTest.id),
-                    21L, EnumsApi.TaskExecState.OK.value, "123###1");
+                    21L, EnumsApi.TaskExecState.OK, "123###1");
 
             vertices = execContextGraphTopLevelService.findAllForAssigningWithTx(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
@@ -187,7 +189,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextService.findById(execContextForTest.id),
-                    22L, EnumsApi.TaskExecState.OK.value, "123###1");
+                    22L, EnumsApi.TaskExecState.OK, "123###1");
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 

@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate_internal_con
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -71,7 +73,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
@@ -96,7 +98,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
-        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, names);
+        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(execContext.id, names);
 
         File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
         if (tempDir==null) {

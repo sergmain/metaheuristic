@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -47,7 +48,7 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class ExecContextVariableService {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
+    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
 
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
@@ -58,73 +59,73 @@ public class ExecContextVariableService {
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long taskId, Long variableId) {
-//        try {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
+            return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            return new UploadResult(Enums.UploadResourceStatus.VARIABLE_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
+            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#440.030 Variable #"+variableId+" wasn't found" );
+        }
+        if (!task.execContextId.equals(variable.execContextId)) {
+            final String es = "#440.010 Task #"+taskId+" has the different execContextId than variable #"+task.id+", " +
+                    "task execContextId: "+task.execContextId+", var execContextId: "+variable.execContextId;
+            log.warn(es);
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
 
         variableService.update(variableIS, length, variable);
-        Enums.UploadResourceStatus status = setVariableReceived(task, variable.getId());
-        execContextTaskFinishingService.checkTaskCanBeFinished(task.id);
-
-        return status== Enums.UploadResourceStatus.OK
-                ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#490.020 can't update resultReceived field for task #"+ variable.getId()+"");
-
-//        }
-//        catch (PessimisticLockingFailureException th) {
-//            final String es = "#490.040 can't store the result, need to try again. Error: " + th.toString();
-//            log.error(es, th);
-//            return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
-//        }
-//        catch (Throwable th) {
-//            final String error = "#490.060 can't store the result, Error: " + th.toString();
-//            log.error(error, th);
-//            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
-//        }
+        Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
+        if (status==Enums.UploadVariableStatus.OK) {
+            execContextTaskFinishingService.checkTaskCanBeFinished(task);
+            return OK_UPLOAD_RESULT;
+        }
+        else {
+            return new UploadResult(status, "#490.020 can't update resultReceived field for task #"+ variable.getId()+"");
+        }
     }
 
     @Transactional
-    public Enums.UploadResourceStatus setVariableReceived(TaskImpl task, Long variableId) {
+    public Enums.UploadVariableStatus setVariableReceivedWithTx(TaskImpl task, Long variableId) {
+        return setVariableReceived(task, variableId);
+    }
+
+    public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
             log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", task.id);
-            return Enums.UploadResourceStatus.TASK_WAS_RESET;
+            return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findAny().orElse(null);
         if (output==null) {
-            return Enums.UploadResourceStatus.UNRECOVERABLE_ERROR;
+            return Enums.UploadVariableStatus.UNRECOVERABLE_ERROR;
         }
         output.uploaded = true;
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-        taskService.save(task);
+        TaskImpl t = taskService.save(task);
 
-        return Enums.UploadResourceStatus.OK;
+        return Enums.UploadVariableStatus.OK;
     }
 
-    public Enums.UploadResourceStatus setResultReceivedForInternalFunction(Long taskId) {
+    public Enums.UploadVariableStatus setResultReceivedForInternalFunction(Long taskId) {
         TxUtils.checkTxExists();
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#317.020 Task #{} is obsolete and was already deleted", taskId);
-            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+            return Enums.UploadVariableStatus.TASK_NOT_FOUND;
         }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
             log.warn("#307.080 Task {} was reset, can't set new value to field resultReceived", taskId);
-            return Enums.UploadResourceStatus.TASK_WAS_RESET;
+            return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         tpy.task.outputs.forEach(o->o.uploaded = true);
@@ -133,7 +134,7 @@ public class ExecContextVariableService {
         task.setCompletedOn(System.currentTimeMillis());
         task.setResultReceived(true);
         taskService.save(task);
-        return Enums.UploadResourceStatus.OK;
+        return Enums.UploadVariableStatus.OK;
     }
 
 

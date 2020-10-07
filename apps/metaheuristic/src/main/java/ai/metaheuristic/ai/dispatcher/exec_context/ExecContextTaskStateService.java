@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,28 +44,39 @@ public class ExecContextTaskStateService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
+    private final TaskRepository taskRepository;
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesWithTx(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
-        return updateTaskExecStates(execContext, taskId, execState, taskContextId);
+    public OperationStatusRest updateTaskExecStatesWithTx(@Nullable ExecContextImpl execContext, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            final String es = "#303.100 Reporting about non-existed task #" + taskId;
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+
+        return updateTaskExecStates(execContext, task, execState, taskContextId);
     }
 
-    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
-        return updateTaskExecStates(execContext, taskId, execState, taskContextId, false);
+    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        return updateTaskExecStates(execContext, task, execState, taskContextId, false);
     }
 
-    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId, boolean markAsCompleted) {
+    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         if (execContext==null) {
             // this execContext was deleted
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         execContextSyncService.checkWriteLockPresent(execContext.id);
-        TaskImpl t = taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
+        TaskImpl t = taskExecStateService.changeTaskState(task, execState);
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, t.id, execState, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
-        if (markAsCompleted && t!=null && (!t.isCompleted || t.completedOn==null)) {
-            taskExecStateService.markAsCompleted(taskId);
+        if (markAsCompleted) {
+//        if (markAsCompleted && (!t.isCompleted || t.completedOn==null)) {
+            t.setCompleted(true);
+            t.setCompletedOn(System.currentTimeMillis());
+//            taskExecStateService.markAsCompleted(t);
         }
         return status.status;
     }

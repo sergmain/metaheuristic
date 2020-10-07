@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -33,6 +34,8 @@ import java.io.Serializable;
 @Data
 @ToString(exclude = "status")
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Processor implements Serializable {
     private static final long serialVersionUID = -6094247705164836600L;
 

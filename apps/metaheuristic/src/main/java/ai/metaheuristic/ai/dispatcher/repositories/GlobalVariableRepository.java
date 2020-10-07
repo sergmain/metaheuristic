@@ -44,7 +44,7 @@ import java.util.List;
 public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
     @Nullable
-//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 

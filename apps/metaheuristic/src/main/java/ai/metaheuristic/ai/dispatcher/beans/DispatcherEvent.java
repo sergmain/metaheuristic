@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -32,6 +33,8 @@ import java.io.Serializable;
 @Table(name = "MH_EVENT")
 @Data
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class DispatcherEvent implements Serializable {
 
     private static final long serialVersionUID = 6281346638344725952L;

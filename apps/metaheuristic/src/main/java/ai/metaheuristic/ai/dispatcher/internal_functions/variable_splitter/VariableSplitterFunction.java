@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -52,7 +54,7 @@ public class VariableSplitterFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 

@@ -51,30 +51,23 @@ import java.util.Set;
 public class InternalFunctionService {
 
     private final SourceCodeCache sourceCodeCache;
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public InternalFunctionData.ExecutionContextData getSupProcesses(Long sourceCodeId, Long execContextId, TaskParamsYaml taskParamsYaml, Long taskId) {
+    public InternalFunctionData.ExecutionContextData getSupProcesses(Long sourceCodeId, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
             return new InternalFunctionData.ExecutionContextData(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "#994.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId));
         }
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec==null) {
-            return new InternalFunctionData.ExecutionContextData(
-                new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
-                    "#994.220 execContext wasn't found, execContextId: " + execContextId));
-        }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(ec, taskId);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(execContext, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#994.240 Graph for ExecContext #"+execContextId+" is broken"));
+                    "#994.240 Graph for ExecContext #"+execContext.id+" is broken"));
         }
 
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionData.ExecutionContextData(

@@ -14,19 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.southbridge;
+package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.Enums;
-import lombok.AllArgsConstructor;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
-public class UploadResult {
-    public Enums.UploadVariableStatus status;
-    public String error;
+/**
+ * @author Serge
+ * Date: 10/6/2020
+ * Time: 9:07 PM
+ */
+public class CommonData {
+
+    @Data
+    public static class TaskWithExecContext {
+        public TaskImpl task;
+        public ExecContextImpl execContext;
+
+        public Long taskId;
+        public Long execContextId;
+    }
 }
+

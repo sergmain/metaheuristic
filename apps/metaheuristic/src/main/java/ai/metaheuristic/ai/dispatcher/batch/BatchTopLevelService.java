@@ -21,11 +21,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -107,6 +109,7 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
+    private final ExecContextService execContextService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -168,16 +171,8 @@ public class BatchTopLevelService {
     }
 
     @Nullable
-    @Transactional(readOnly = true)
     public BatchData.BatchExecInfo getBatchExecInfo(DispatcherContext context, Long batchId) {
-        List<BatchData.BatchExecInfo> items = batchService.getBatchExecInfos(List.of(batchId));
-        if (items.isEmpty()) {
-            return null;
-        }
-        BatchData.BatchExecInfo batchExecInfo = items.get(0);
-
-        Batch b = batchExecInfo.batch;
-        return b.companyId.equals(context.getCompanyId()) && b.accountId.equals(context.account.id) && !b.deleted ? batchExecInfo : null;
+        return batchService.getBatchExecInfo(context, batchId);
     }
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
@@ -274,12 +269,14 @@ public class BatchTopLevelService {
     @Transactional(readOnly = true)
     public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
-            CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");
-            if (cleanerInfo==null) {
-                final String es = "#981.300 Batch wasn't found, batchId: " + batchId;
+            Batch batch = batchCache.findById(batchId);
+            if (batch == null) {
+                final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
                 log.warn(es);
                 return new BatchData.Status(es);
             }
+
+            CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batch, companyUniqueId, includeDeleted, "batch-status");
             try {
                 if (cleanerInfo.entity==null) {
                     final String es = "#981.305 Batch wasn't found, batchId: " + batchId;
@@ -309,13 +306,22 @@ public class BatchTopLevelService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
-        return getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-result");
+    public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+        return getBatchProcessingResult(batchId, companyUniqueId, includeDeleted);
     }
 
-    @Nullable
-    private CleanerInfo getBatchProcessingResultInternal(Long batchId, Long companyUniqueId, boolean includeDeleted, String variableType) throws IOException {
-        return getVariable(batchId, companyUniqueId, includeDeleted, (scpy)-> {
+    private CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null) {
+            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return new CleanerInfo();
+        }
+        return getBatchProcessingResultInternal(batch, companyUniqueId, includeDeleted, "batch-result");
+    }
+
+    private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) throws IOException {
+        return getVariable(batch, companyUniqueId, includeDeleted, (scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
                 final String es = "#981.360 variable with type '"+variableType+"' wasn't found";
@@ -343,7 +349,18 @@ public class BatchTopLevelService {
 
     @Transactional(readOnly = true)
     public CleanerInfo getBatchOriginFile(Long batchId) {
-        return getVariable(batchId, null, true, (scpy)-> {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null) {
+            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return new CleanerInfo();
+        }
+        ExecContextImpl execContext = execContextService.findById(batch.execContextId);
+        if (execContext==null) {
+            return new CleanerInfo();
+        }
+
+        return getVariable(batch, null, true, (scpy)-> {
             String variableName = scpy.source.variables.startInputAs;
             if (S.b(variableName)) {
                 final String es = "#981.420 a start input variable '" + scpy.source.variables.startInputAs +"' wasn't found";
@@ -351,23 +368,15 @@ public class BatchTopLevelService {
                 return null;
             }
             return variableName;
-        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(batchId, "origin-file.zip"));
+        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContext, "origin-file.zip"));
     }
 
     private CleanerInfo getVariable(
-            Long batchId, @Nullable Long companyUniqueId, boolean includeDeleted,
+            Batch batch, @Nullable Long companyUniqueId, boolean includeDeleted,
             Function<SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) {
 
         CleanerInfo resource = new CleanerInfo();
         try {
-            Batch batch = batchCache.findById(batchId);
-            if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
-                    (!includeDeleted && batch.deleted)) {
-                final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
-                log.warn(es);
-                return resource;
-            }
-
             File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
             resource.toClean.add(resultDir);
 

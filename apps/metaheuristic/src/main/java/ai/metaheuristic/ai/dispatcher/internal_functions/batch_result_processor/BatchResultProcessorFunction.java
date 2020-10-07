@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -104,7 +103,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final Globals globals;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
@@ -143,42 +141,36 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @SneakyThrows
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec==null) {
-            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
-                    S.f("#993.020 ExecContext #%s wasn't found", execContextId));
-        }
-
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         // key is name of variable
         Map<String, ExecContextParamsYaml.Variable> nameToVar = gatherVars(ecpy);
         Set<String> varNames = nameToVar.keySet();
-        List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContextId, varNames);
+        List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContext.id, varNames);
 
         String processedFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_PROCESSED_FILE);
         if (S.b(processedFileTypes)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    S.f("#993.025 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSED_FILE, execContextId));
+                    S.f("#993.025 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSED_FILE, execContext));
         }
         final List<String> outputTypes = Stream.of(StringUtils.split(processedFileTypes, ", ")).collect(Collectors.toList());
 
         String statusFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_PROCESSING_STATUS);
         if (S.b(statusFileTypes)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    S.f("#993.027 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSING_STATUS, execContextId));
+                    S.f("#993.027 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSING_STATUS, execContext));
         }
         final List<String> statusTypes = Stream.of(StringUtils.split(statusFileTypes, ", ")).collect(Collectors.toList());
 
         String mappingFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_MAPPING);
         final List<String> mappingTypes;
         if (S.b(mappingFileTypes)) {
-            log.info(S.f("#993.029 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_MAPPING, execContextId));
+            log.info(S.f("#993.029 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_MAPPING, execContext));
             mappingTypes = List.of();
         }
         else {
@@ -194,24 +186,24 @@ public class BatchResultProcessorFunction implements InternalFunction {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(ec, taskContextId, taskParamsYaml, zipDir, holder);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir, holder);
         if (ifprForStatus != null) {
             return ifprForStatus;
         }
 
-        Map<String, List<ExecContextData.TaskVertex>> vertices = execContextGraphService.findVerticesByTaskContextIds(ec, prepared.keySet());
+        Map<String, List<ExecContextData.TaskVertex>> vertices = execContextGraphService.findVerticesByTaskContextIds(execContext, prepared.keySet());
         for (Map.Entry<String, List<ExecContextData.TaskVertex>> entry : vertices.entrySet()) {
             boolean isOK = entry.getValue().stream().noneMatch(o->o.execState!= EnumsApi.TaskExecState.OK);
             if (isOK) {
                 ItemWithStatusWithMapping item = prepared.get(entry.getKey());
-                storeResultVariables(zipDir, execContextId, item);
+                storeResultVariables(zipDir, execContext.id, item);
             }
         }
 
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(sourceCodeId, execContextId, taskContextId, taskParamsYaml, zipFile, holder);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(execContext.sourceCodeId, execContext, taskContextId, taskParamsYaml, zipFile, holder);
         if (ifprForResult != null) {
             return ifprForResult;
         }
@@ -221,17 +213,17 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(
-            Long sourceCodeId, Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml,
+            Long sourceCodeId, ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml,
             File zipFile, VariableData.DataStreamHolder holder) throws IOException {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
-                    S.f("#993.040 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
+                    S.f("#993.040 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext.id));
         }
-        SimpleVariable batchResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContextId);
+        SimpleVariable batchResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContext.id);
         if (batchResult==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                    S.f("#993.060 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContextId));
+                    S.f("#993.060 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContext.id));
         }
         SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
         if (sc==null) {
@@ -239,7 +231,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     S.f("#993.080 Can't find SourceCode #%s", sourceCodeId));
         }
 
-        String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
+        String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContext, "batch-result.zip");
         String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
         if (!S.b(ext)) {
             originBatchFilename = StrUtils.getName(originBatchFilename) + ext;

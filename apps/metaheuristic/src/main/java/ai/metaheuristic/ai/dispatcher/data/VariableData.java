@@ -16,8 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.utils.TxUtils;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -38,5 +42,17 @@ public class VariableData {
         }
 
         public List<InputStream> inputStreams = new ArrayList<>();
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class UploadVariableStatusResult {
+        @Nullable
+        public TaskImpl task;
+        public Enums.UploadVariableStatus status;
+
+        public UploadVariableStatusResult(Enums.UploadVariableStatus status) {
+            this.status = status;
+        }
     }
 }

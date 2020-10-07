@@ -44,28 +44,20 @@ public class TaskExecStateService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
 
-    @Nullable
-    public Task markAsCompleted(final Long taskId) {
+    public Task markAsCompleted(final TaskImpl task) {
         TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        log.info("#305.010 Start re-setting task #{}", taskId);
-        if (task==null) {
-            log.error("#305.015 task is null");
-            return null;
-        }
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
+        TaskImpl t = taskService.save(task);
 
-        task = taskService.save(task);
-
-        log.info("#305.020 task #{} was marked as completed", taskId);
-        return task;
+        log.info("#305.020 task #{} was marked as completed", task.id);
+        return t;
     }
 
     @Nullable
-    public Task resetTask(final Long taskId) {
+    public TaskImpl resetTask(final Long taskId) {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("#305.025 Start re-setting task #{}", taskId);
@@ -89,92 +81,32 @@ public class TaskExecStateService {
         return task;
     }
 
-    private TaskImpl toInProgressSimpleLambda(TaskImpl task) {
-        task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        return taskService.save(task);
-    }
-
-    private TaskImpl toSkippedSimpleLambda(TaskImpl task) {
-        task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
-        return taskService.save(task);
-    }
-
-    @Nullable
-    private TaskImpl toOkSimple(Long taskId) {
-        TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#305.040 Can't find Task for Id: {}", taskId);
-            return null;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        if (task.execState==EnumsApi.TaskExecState.OK.value) {
-            log.info("#305.045 Task #{} already has execState as OK", task.id);
-            return task;
-        }
-        task.setExecState(EnumsApi.TaskExecState.OK.value);
-        return taskService.save(task);
-    }
-
-    @Nullable
-    private TaskImpl toNoneSimple(Long taskId) {
-        TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#305.050 Can't find Task for Id: {}", taskId);
-            return null;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        if (task.execState==EnumsApi.TaskExecState.NONE.value) {
-            return null;
-        }
-        task.setExecState(EnumsApi.TaskExecState.NONE.value);
-        return taskService.save(task);
-    }
-
-    @Nullable
-    private TaskImpl toInProgressSimple(Long taskId) {
-        TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#305.100 Can't find Task for Id: {}", taskId);
-            return null;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        return toInProgressSimpleLambda(task);
-    }
-
-    @Nullable
-    private TaskImpl toSkippedSimple(Long taskId) {
-        TxUtils.checkTxExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#305.120 Can't find Task for Id: {}", taskId);
-            return null;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        return toSkippedSimpleLambda(task);
-    }
-
-    @Nullable
-    public TaskImpl changeTaskState(Long taskId, EnumsApi.TaskExecState state){
+    public TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
 
-        log.info("#305.140 set task #{} as {}", taskId, state);
+        log.info("#305.140 set task #{} as {}", task.id, state);
         switch (state) {
-            case NONE:
-                return toNoneSimple(taskId);
             case ERROR:
-                throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithErrorWithTx()");
+                throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithError()");
             case OK:
-                return toOkSimple(taskId);
+                if (task.execState==EnumsApi.TaskExecState.OK.value) {
+                    log.info("#305.045 Task #{} already has execState as OK", task.id);
+                }
+                else {
+                    task.setExecState(EnumsApi.TaskExecState.OK.value);
+                }
+                break;
             case IN_PROGRESS:
-                return toInProgressSimple(taskId);
             case SKIPPED:
-                return toSkippedSimple(taskId);
+            case NONE:
+                if (task.execState!=state.value) {
+                    task.setExecState(state.value);
+                }
+                break;
             default:
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
+        return task;
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
@@ -183,9 +115,7 @@ public class TaskExecStateService {
         status.childrenTasks.forEach(t -> {
             TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
             if (task != null) {
-                if (task.execState != t.execState.value) {
-                    changeTaskState(task.id, t.execState);
-                }
+                changeTaskState(task, t.execState);
             } else {
                 log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
             }

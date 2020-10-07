@@ -41,7 +41,7 @@ public class BatchCache {
 
     private final BatchRepository batchRepository;
 
-    @CachePut(value = {Consts.BATCHES_CACHE}, key = "#result.id")
+//    @CachePut(value = {Consts.BATCHES_CACHE}, key = "#result.id")
     public Batch save(@NonNull Batch batch) {
         TxUtils.checkTxExists();
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
@@ -49,13 +49,13 @@ public class BatchCache {
     }
 
     @Nullable
-    @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
+//    @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
         TxUtils.checkTxExists();
         return batchRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#batch.id")
+//    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#batch.id")
     public void delete(@Nullable Batch batch) {
         TxUtils.checkTxExists();
         if (batch==null) {
@@ -68,7 +68,7 @@ public class BatchCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
+//    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void deleteById(@Nullable Long id) {
         TxUtils.checkTxExists();
         if (id==null) {
@@ -81,7 +81,7 @@ public class BatchCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
+//    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
     }

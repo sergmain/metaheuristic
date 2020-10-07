@@ -161,7 +161,7 @@ public class VariableService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
@@ -315,7 +315,7 @@ public class VariableService {
         data.inited = true;
         data.nullified = false;
 
-        variableRepository.save(data);
+//        variableRepository.save(data);
     }
 
     public void storeData(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
@@ -335,10 +335,6 @@ public class VariableService {
         data.nullified = false;
 
         variableRepository.save(data);
-    }
-
-    public Page<Variable> findAll(Pageable pageable) {
-        return variableRepository.findAll(pageable);
     }
 
     public void deleteById(Long id) {

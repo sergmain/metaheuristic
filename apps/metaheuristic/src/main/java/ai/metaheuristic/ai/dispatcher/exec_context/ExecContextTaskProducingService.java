@@ -112,7 +112,7 @@ public class ExecContextTaskProducingService {
                 execContextFSM.toProduced(execContext.id);
             }
             else {
-                execContextFSM.toError(execContext.id);
+                execContextFSM.toError(execContext);
             }
         }
         result.numberOfTasks = produceTaskResult.numberOfTasks;

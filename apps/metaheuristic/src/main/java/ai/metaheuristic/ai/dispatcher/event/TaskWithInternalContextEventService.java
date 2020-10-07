@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -58,9 +59,12 @@ public class TaskWithInternalContextEventService {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
+        if (true) throw new IllegalStateException("Not supported at this time");
+
         VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
         try {
             execContextSyncService.getWithSyncNullable(event.execContextId, () -> {
+                ExecContextImpl execContext = execContextCache.findById(event.execContextId);
                 TaskImpl task;
                 try {
                     task = taskRepository.findById(event.taskId).orElse(null);
@@ -75,10 +79,10 @@ public class TaskWithInternalContextEventService {
                 if (!event.execContextId.equals(task.execContextId)) {
                     log.error("The task #{} has different execContextId, expected: {}, actual: {}",
                             event.taskId, event.execContextId, task.execContextId);
-                    execContextFSM.toError(event.execContextId);
+                    execContextFSM.toError(execContext);
                     return null;
                 }
-                taskWithInternalContextService.processInternalFunction(task, holder);
+                taskWithInternalContextService.processInternalFunction(execContext, task, holder);
                 return null;
             });
         }

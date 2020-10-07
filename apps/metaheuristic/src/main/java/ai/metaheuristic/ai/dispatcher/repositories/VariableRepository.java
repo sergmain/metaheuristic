@@ -27,6 +27,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
 import java.util.Collection;
@@ -91,18 +93,13 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     List<String> findFilenameByVariableAndExecContextId(Long execContextId, String variable);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Nullable
-    @Query(value="select b from Variable b where b.id=:id")
-    Variable findByIdForUpdate(Long id);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    Page<Variable> findAll(@NonNull Pageable pageable);
 
     @Query(value="select v.id from Variable v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
     @Nullable
     @Query(value="select b.data from Variable b where b.id=:id")
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
 
     void deleteById(@NonNull Long id);

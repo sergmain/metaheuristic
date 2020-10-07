@@ -78,7 +78,7 @@ public class ExecContextCreatorService {
         }
     }
 
-    private final ExecContextCache execContextCache;
+    private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
@@ -152,7 +152,7 @@ public class ExecContextCreatorService {
         ec.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy);
         ec.setValid(true);
 
-        ExecContextImpl execContext = execContextCache.save(ec);
+        ExecContextImpl execContext = execContextService.save(ec);
         return execContext;
     }
 

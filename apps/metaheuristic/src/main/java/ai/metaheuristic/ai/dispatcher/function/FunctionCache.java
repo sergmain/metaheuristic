@@ -39,14 +39,14 @@ public class FunctionCache {
 
     private final FunctionRepository functionRepository;
 
-    @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
+//    @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         TxUtils.checkTxExists();
         function.reset();
         return functionRepository.save(function);
     }
 
-    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
+//    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
     public void delete(Function function) {
         TxUtils.checkTxExists();
         try {
@@ -56,7 +56,7 @@ public class FunctionCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#functionId")
+//    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#functionId")
     public void delete(Long functionId) {
         TxUtils.checkTxExists();
         try {
@@ -67,7 +67,7 @@ public class FunctionCache {
     }
 
     @Nullable
-    @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
+//    @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
     public Function findById(Long id) {
         TxUtils.checkTxExists();
         return functionRepository.findById(id).orElse(null);

@@ -22,9 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 public class Monitoring {
 
     public static void log(String tag, Enums.Monitor ... monitors) {
-        if (monitors==null) {
-            throw new IllegalStateException("monitors is null");
-        }
         if (log.isDebugEnabled() && isMemory(monitors)) {
             Runtime rt = Runtime.getRuntime();
             log.debug("{} mem free: {}, total: {}, max: {}", tag, rt.freeMemory(), rt.maxMemory(), rt.totalMemory());

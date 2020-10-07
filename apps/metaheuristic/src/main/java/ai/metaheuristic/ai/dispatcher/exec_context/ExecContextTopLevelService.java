@@ -57,7 +57,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExecContextTopLevelService {
 
-    private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextRepository execContextRepository;
@@ -81,23 +80,22 @@ public class ExecContextTopLevelService {
     }
 
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
-        }
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (sourceCode == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
+        SourceCodeApiData.ExecContextResult result = execContextSyncService.getWithSync(execContextId,
+                ()-> execContextService.getExecContextExtended(execContextId));
+
+        if (result.isErrorMessages()) {
+            return result;
         }
 
-        if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
-            execContextService.changeValidStatus(execContextId, false);
-            return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, sourceCodeId: " + execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + execContext.getSourceCodeId());
+        if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
+            execContextSyncService.getWithSyncNullable(execContextId,
+                    ()-> execContextService.changeValidStatus(execContextId, false));
+            return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, " +
+                    "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
-
-        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
         return result;
     }
+
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
@@ -136,6 +134,16 @@ public class ExecContextTopLevelService {
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
         DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
                 ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
+
+        if (assignedTask!=null && log.isDebugEnabled()) {
+            TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
+            if (task==null) {
+                log.debug("#705.075 findTaskInExecContext(), task #{} wasn't found", assignedTask.taskId);
+            }
+            else {
+                log.debug("#705.078 findTaskInExecContext(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
+            }
+        }
         return assignedTask;
     }
 
@@ -154,26 +162,26 @@ public class ExecContextTopLevelService {
     }
 
     public OperationStatusRest resetTask(Long taskId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
+        Long execContextId = taskRepository.getExecContextId(taskId);
+        if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
-        return execContextSyncService.getWithSync(task.execContextId, () -> execContextFSM.resetTask(task.execContextId, taskId));
+        return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.resetTaskWithTx(execContextId, taskId));
     }
 
     public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.toProducing(execContextId));
     }
 
-    public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-        if (task==null) {
+    private void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+        Long execContextId = taskRepository.getExecContextId(result.taskId);
+        if (execContextId==null) {
             log.warn("Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(task.execContextId, () -> execContextFSM.storeExecResultWithTx(result));
+        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result));
     }
 
     @Async
@@ -187,14 +195,14 @@ public class ExecContextTopLevelService {
     }
 
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
+        Long execContextId = taskRepository.getExecContextId(taskId);
+        if (execContextId==null) {
             log.warn("#317.020 Task obsolete and was already deleted");
             return;
         }
 
-        execContextSyncService.getWithSyncNullable(task.execContextId,
-                () -> execContextFSM.processResendTaskOutputVariable(processorId, status, task.id, variableId));
+        execContextSyncService.getWithSyncNullable(execContextId,
+                () -> execContextFSM.processResendTaskOutputVariable(processorId, status, taskId, variableId));
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks

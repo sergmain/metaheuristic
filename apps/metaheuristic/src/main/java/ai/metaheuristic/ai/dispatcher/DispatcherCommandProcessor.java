@@ -60,17 +60,18 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public @Nullable DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml request) {
+    @Nullable
+    private DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
         final long processorId = Long.parseLong(request.processorCommContext.processorId);
-        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.resourceReceivingChecker(processorId);
+        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.variableReceivingChecker(processorId);
         return outputs;
     }
 
     // processing at dispatcher side
-    public void processResendTaskOutputResourceResult(ProcessorCommParamsYaml request) {
+    private void processResendTaskOutputResourceResult(ProcessorCommParamsYaml request) {
         if (request.resendTaskOutputResourceResult==null) {
             return;
         }
@@ -84,7 +85,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public void processProcessorTaskStatus(ProcessorCommParamsYaml request) {
+    private void processProcessorTaskStatus(ProcessorCommParamsYaml request) {
         if (request.reportProcessorTaskStatus ==null || request.reportProcessorTaskStatus.statuses==null) {
             return;
         }

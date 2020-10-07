@@ -105,27 +105,23 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml) {
-        Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
+    public OperationStatusRest storeExperimentToExperimentResult(ExecContextImpl execContext, TaskParamsYaml taskParamsYaml) {
+        Long experimentId = experimentRepository.findIdByExecContextId(execContext.id);
 
         if (experimentId==null ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + execContext.id);
         }
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.040 can't find experiment for id: " + experimentId);
         }
-        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
-        if (execContext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.060 can't find execContext for this experiment");
-        }
 
         StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(execContext, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
-        if (!execContextId.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
+        if (!execContext.id.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
         }
 
@@ -151,8 +147,8 @@ public class ExperimentResultService {
                     "Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
-        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContextId, metricsVariableName);
-        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContextId, featureVariableName);
+        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContext.id, metricsVariableName);
+        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
         Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
 
         ExperimentResult a = new ExperimentResult();
@@ -201,22 +197,22 @@ public class ExperimentResultService {
             List<SimpleVariable> metricsVs = metricsVariables.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
             if (metricsVs.isEmpty()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", metricsVariableName, taskContextId, execContextId));
+                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", metricsVariableName, taskContextId, execContext.id));
             }
             if (metricsVs.size()>1) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         S.f("Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
-                                metricsVariableName, taskContextId, execContextId, metricsVs.size()));
+                                metricsVariableName, taskContextId, execContext.id, metricsVs.size()));
             }
             List<SimpleVariable> featureVs = featureVariables.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
             if (featureVs.isEmpty()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", featureVariableName, taskContextId, execContextId));
+                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", featureVariableName, taskContextId, execContext.id));
             }
             if (featureVs.size()>1) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         S.f("Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
-                                featureVariableName, taskContextId, execContextId, featureVs.size()));
+                                featureVariableName, taskContextId, execContext.id, featureVs.size()));
             }
             VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(variableService.getVariableDataAsString(featureVs.get(0).id));
 
@@ -225,7 +221,7 @@ public class ExperimentResultService {
 
             ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy);
             taskFeatures.add(new ExperimentTaskFeature(
-                    taskFeatureId.getAndIncrement(), execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
+                    taskFeatureId.getAndIncrement(), execContext.id, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
                     new ExperimentResultParamsYaml.MetricValues(mvs.values)
             ));
 

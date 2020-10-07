@@ -136,7 +136,7 @@ public class BatchRestController {
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
         DispatcherContext context = userContextService.getContext(authentication);
         try {
-            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context.getCompanyId(), false);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, context.getCompanyId(), false);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

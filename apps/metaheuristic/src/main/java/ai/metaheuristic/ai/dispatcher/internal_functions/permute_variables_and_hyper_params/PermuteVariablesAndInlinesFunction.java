@@ -98,7 +98,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     @Override
     @Transactional
     public InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
@@ -106,15 +106,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             log.warn("List of input variables isn't empty");
         }
 
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
-                    "ExecContext not found for id #"+execContextId);
-        }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, taskId);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
         if (descendants.isEmpty()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "Graph for ExecContext #"+execContextId+" is broken");
+                    "Graph for ExecContext #"+ execContext +" is broken");
         }
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
 
@@ -147,7 +142,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, names, holders);
+        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
         if (result != null) {
             return result;
         }
@@ -177,16 +172,16 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
                                     map.put(item.inlineKey, inlineVariable.params);
 
-                                    createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
-                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds,
+                                    createTasksForSubProcesses(permutedVariables, execContext, execContextParamsYaml,
+                                            subProcesses, permutationNumber, task.id, variableName, map, lastIds,
                                             inlineVariableName, inlineVariable.params, process, holder
                                     );
                                 }
                             }
                             else {
                                 permutationNumber.incrementAndGet();
-                                createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses,
-                                        permutationNumber, taskId, variableName,
+                                createTasksForSubProcesses(permutedVariables, execContext, execContextParamsYaml, subProcesses,
+                                        permutationNumber, task.id, variableName,
                                         execContextParamsYaml.variables.inline, lastIds,
                                         inlineVariableName, Map.of(), process, holder
                                 );
@@ -199,13 +194,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage());
             }
         }
-        execContextGraphService.createEdges(execContextCache.findById(execContextId), lastIds, descendants);
+        execContextGraphService.createEdges(execContext, lastIds, descendants);
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     /**
      * @param permutedVariables
-     * @param execContextId
+     * @param execContext
      * @param execContextParamsYaml
      * @param subProcesses
      * @param permutationNumber
@@ -219,7 +214,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
      * @param holder
      */
     private void createTasksForSubProcesses(
-            List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
+            List<VariableUtils.VariableHolder> permutedVariables, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml,
+            List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
             Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process, VariableData.DataStreamHolder holder) {
         List<Long> parentTaskIds = List.of(parentTaskId);
@@ -236,12 +232,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-            t = taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = taskProducingService.createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
                 throw new BreakFromLambdaException("Creation of task failed");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextFSM.addTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, currTaskIds);
+            execContextFSM.addTasksToGraph(execContext, parentTaskIds, currTaskIds);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
@@ -256,7 +252,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 byte[] bytes = yaml.getBytes();
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 holder.inputStreams.add(bais);
-                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
+                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContext.id, currTaskContextId);
             }
             {
                 Yaml yampUtil = YamlUtils.init(Map.class);
@@ -264,7 +260,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 byte[] bytes = yaml.getBytes();
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 holder.inputStreams.add(bais);
-                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContextId, currTaskContextId);
+                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContext.id, currTaskContextId);
             }
 
         }

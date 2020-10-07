@@ -66,7 +66,7 @@ public class ExecContextGraphService {
     private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
     private static final String TASK_CONTEXT_ID_ATTR = "task_context_id";
 
-    private final ExecContextCache execContextCache;
+    private final ExecContextService execContextService;
     private final ExecContextSyncService execContextSyncService;
 
     private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
@@ -80,7 +80,7 @@ public class ExecContextGraphService {
         } finally {
             ecpy.graph = asString(graph);
             execContext.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy);
-            execContextCache.save(execContext);
+            execContextService.save(execContext);
         }
     }
 
@@ -166,10 +166,10 @@ public class ExecContextGraphService {
     }
 
     /**
-     * !!! This method doesn't return the current taskId and its new status. Must be changed by outside code.
+     * !!! This method doesn't return the current Id of Task and its new status. Must be changed by outside code.
      */
     @SuppressWarnings("StatementWithEmptyBody")
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(@Nullable ExecContextImpl execContext, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
         if (execContext == null) {
@@ -185,7 +185,7 @@ public class ExecContextGraphService {
 
             // Don't combine streams, a side-effect could be occurred
             if (tv!=null) {
-                tv.execState = EnumsApi.TaskExecState.from(execState);
+                tv.execState = execState;
                 if (tv.execState==EnumsApi.TaskExecState.ERROR) {
                     setStateForAllChildrenTasksInternal(graph, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                 }

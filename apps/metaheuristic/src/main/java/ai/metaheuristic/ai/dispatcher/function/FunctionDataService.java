@@ -55,6 +55,7 @@ public class FunctionDataService {
     private final EntityManager em;
     private final FunctionDataRepository functionDataRepository;
 
+    @Transactional(readOnly = true)
     public void storeToFile(String code, File trgFile) {
         try {
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);

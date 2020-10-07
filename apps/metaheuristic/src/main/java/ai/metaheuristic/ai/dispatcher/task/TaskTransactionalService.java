@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -35,9 +34,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -59,14 +57,15 @@ public class TaskTransactionalService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final TaskService taskService;
     private final TaskProducingService taskProducingService;
     private final VariableService variableService;
 
-    @Nullable
-    public TaskImpl initOutputVariables(ExecContextImpl execContext, Long taskId, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
+    @Transactional(propagation = Propagation.MANDATORY)
+    public TaskImpl initOutputVariables(ExecContextImpl execContext, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         variableService.initOutputVariables(taskParamsYaml, execContext, p);
-        return setParams(taskId, taskParamsYaml);
+        task.setUpdatedOn( System.currentTimeMillis() );
+        task.setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml));
+        return task;
     }
 
     @Transactional
@@ -102,48 +101,6 @@ public class TaskTransactionalService {
         result.numberOfTasks=1;
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
-    }
-
-    public List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
-        try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
-            return stream.map(o-> {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params);
-                return new TaskData.SimpleTaskInfo(o.id,  EnumsApi.TaskExecState.from(o.execState).toString(), tpy.task.taskContextId, tpy.task.processCode, tpy.task.function.code);
-            }).collect(Collectors.toList());
-        }
-    }
-
-    @Nullable
-    public TaskImpl setParams(Long taskId, TaskParamsYaml params) {
-        return setParams(taskId, TaskParamsYamlUtils.BASE_YAML_UTILS.toString(params));
-    }
-
-    @Nullable
-    public TaskImpl setParams(Long taskId, String taskParams) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#307.082 Can't find Task for Id: {}", taskId);
-            return null;
-        }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        return setParamsInternal(taskId, taskParams, task);
-    }
-
-    @Nullable
-    private TaskImpl setParamsInternal(Long taskId, String taskParams, @Nullable TaskImpl task) {
-        TxUtils.checkTxExists();
-        try {
-            if (task == null) {
-                log.warn("#307.010 Task with taskId {} wasn't found", taskId);
-                return null;
-            }
-            task.setParams(taskParams);
-            taskService.save(task);
-            return task;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
-        }
-        return null;
     }
 
     @Transactional

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -38,6 +39,8 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"dpy"})
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Dispatcher implements Serializable {
     private static final long serialVersionUID = 2499919383081808903L;
 

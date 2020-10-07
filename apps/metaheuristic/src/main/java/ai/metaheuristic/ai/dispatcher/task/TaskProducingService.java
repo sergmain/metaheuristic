@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -70,7 +71,7 @@ public class TaskProducingService {
 
     /**
      * @param files
-     * @param execContextId
+     * @param execContext
      * @param currTaskNumber
      * @param parentTaskId
      * @param inputVariableName
@@ -78,7 +79,7 @@ public class TaskProducingService {
      * @param holder
      */
     public void createTasksForSubProcesses(
-            Stream<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, Long execContextId, InternalFunctionData.ExecutionContextData executionContextData,
+            Stream<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
             AtomicInteger currTaskNumber, Long parentTaskId, String inputVariableName,
             List<Long> lastIds, VariableData.DataStreamHolder holder) {
 
@@ -105,12 +106,12 @@ public class TaskProducingService {
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
-            t = createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
                 throw new BreakFromLambdaException("#995.380 Creation of task failed");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, currTaskIds);
+            execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, currTaskIds);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
@@ -127,7 +128,7 @@ public class TaskProducingService {
                         try {
                             FileInputStream fis = new FileInputStream(f.file);
                             holder.inputStreams.add(fis);
-                            v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                            v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
 
                         } catch (IOException e) {
                             throw new BreakFromLambdaException(e);
@@ -143,7 +144,7 @@ public class TaskProducingService {
                 final byte[] bytes = inputVariableContent.getBytes();
                 InputStream is = new ByteArrayInputStream(bytes);
                 holder.inputStreams.add(is);
-                Variable v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
+                Variable v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
 
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
@@ -156,7 +157,7 @@ public class TaskProducingService {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             holder.inputStreams.add(bais);
             try {
-                Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+                Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
             } catch (Throwable e) {
                 ExceptionUtils.rethrow(e);
             }

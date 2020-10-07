@@ -118,7 +118,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 log.error("#311.040 File {} doesn't exist", task.file.getPath());
                 continue;
             }
-            Enums.UploadResourceStatus status = null;
+            Enums.UploadVariableStatus status = null;
             try {
                 final String uploadRestUrl  = task.dispatcher.url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId;
@@ -144,7 +144,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
 
-                if (result.status!= Enums.UploadResourceStatus.OK) {
+                if (result.status!= Enums.UploadVariableStatus.OK) {
                     log.error("#311.050 Error uploading file, server's error : " + result.error);
                 }
                 status = result.status;

@@ -22,8 +22,10 @@ import ai.metaheuristic.api.dispatcher.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,11 +39,15 @@ import java.util.stream.Stream;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
-//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
+    @Query(value="select t.execContextId from TaskImpl t where t.id=:taskId")
+    Long getExecContextId(Long taskId);
+
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     Stream<TaskImpl> findAllByExecContextIdAsStream(Long execContextId);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Query(value="select t.id from TaskImpl t where t.execContextId=:execContextId")
@@ -80,9 +86,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     List<TaskImpl> findByExecContextIdAsList(Long execContextId);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query("SELECT t FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
-    List<TaskImpl> findForAssigning(Long execContextId, List<Long> ids);
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
+    List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
@@ -99,7 +105,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
-    List<Task> findForMissingResultResources(Long processorId, long mills, int execState);
+    List<Task> findForMissingResultVariables(Long processorId, long mills, int execState);
 
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)

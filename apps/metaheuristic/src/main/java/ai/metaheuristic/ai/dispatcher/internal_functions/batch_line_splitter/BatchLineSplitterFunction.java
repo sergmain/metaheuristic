@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -88,7 +90,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
     @Transactional
     public InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
@@ -104,7 +106,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
         }
 
         List<VariableUtils.VariableHolder> varHolders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, inputVariableName, varHolders);
+        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, varHolders);
         if (result != null) {
             return result;
         }
@@ -126,7 +128,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             else {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time");
             }
-            return createTasks(sourceCodeId, execContextId, content, taskParamsYaml, taskId, numberOfLines, holder);
+            return createTasks(execContext.sourceCodeId, execContext, content, taskParamsYaml, task.id, numberOfLines, holder);
         }
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
@@ -146,9 +148,9 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     private InternalFunctionProcessingResult createTasks(
-            Long sourceCodeId, Long execContextId, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, VariableData.DataStreamHolder holder) throws IOException {
+            Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, VariableData.DataStreamHolder holder) throws IOException {
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContextId, taskParamsYaml, taskId);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             return executionContextData.internalFunctionProcessingResult;
         }
@@ -168,7 +170,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             try {
                 String str = StringUtils.join(lines, '\n' );
                 taskProducingService.createTasksForSubProcesses(
-                        Stream.empty(), str, execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds, holder );
+                        Stream.empty(), str, execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds, holder );
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
@@ -177,7 +179,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 throw new BatchResourceProcessingException(es);
             }
         });
-        execContextGraphService.createEdges(execContextCache.findById(execContextId), lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
         return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 

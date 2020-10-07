@@ -141,7 +141,7 @@ public class TestGraph extends PreparingSourceCode {
     }
 
     private void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
-        execContextTaskStateService.updateTaskExecStatesWithTx(execContextService.findById(workbook.id), id, execState.value, "123###1");
+        execContextTaskStateService.updateTaskExecStatesWithTx(execContextService.findById(workbook.id), id, execState, "123###1");
     }
 
     private void setExecStateError(Long execContextId, Long taskId, String console) {

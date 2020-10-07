@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -75,11 +77,9 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class BatchSplitterFunction implements InternalFunction {
 
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
-    private final TaskTransactionalService taskTransactionalService;
     private final TaskProducingService taskProducingService;
     private final ExecContextSyncService execContextSyncService;
 
@@ -95,11 +95,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
 
         // variable-for-splitting
@@ -109,7 +109,7 @@ public class BatchSplitterFunction implements InternalFunction {
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, inputVariableName, holders);
+        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, holders);
         if (result != null) {
             return result;
         }
@@ -145,11 +145,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, zipDir, mapping, taskParamsYaml, taskId, holder);
+                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id, holder);
             }
             else {
                 log.debug("Start loading file data to db");
-                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId, holder);
+                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id, holder);
             }
         }
         catch(UnzipArchiveException e) {
@@ -179,10 +179,10 @@ public class BatchSplitterFunction implements InternalFunction {
     }
 
     private InternalFunctionProcessingResult loadFilesFromDirAfterZip(
-            Long sourceCodeId, Long execContextId, File srcDir,
+            Long sourceCodeId, ExecContextImpl execContext, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId, VariableData.DataStreamHolder holder) throws IOException {
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContextId, taskParamsYaml, taskId);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             return executionContextData.internalFunctionProcessingResult;
         }
@@ -210,13 +210,13 @@ public class BatchSplitterFunction implements InternalFunction {
                                     });
                             taskProducingService.createTasksForSubProcesses(
                                     files, null,
-                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds,
+                                    execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds,
                                     holder);
                         } else {
                             String actualFileName = mapping.get(file.getName());
                             taskProducingService.createTasksForSubProcesses(
                                     Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
-                                    execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds,
+                                    execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds,
                                     holder);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
@@ -227,7 +227,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
-        execContextGraphService.createEdges(execContextCache.findById(execContextId), lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
         return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 

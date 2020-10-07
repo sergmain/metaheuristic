@@ -51,7 +51,7 @@ public class ExecContextSyncService {
 
     public void checkWriteLockNotPresent(Long execContextId) {
         if (getWriteLock(execContextId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#977.020 Thread already was locked by WriteLock");
+            throw new IllegalStateException("#977.025 The thread was already locked by WriteLock");
         }
     }
 
@@ -64,38 +64,38 @@ public class ExecContextSyncService {
     }
 
     public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
-        log.debug("Start ExecContextSyncService.getWithSync(), execContext #{}", execContextId);
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        log.debug("Start ExecContextSyncService.getWithSync(), Thread {}, execContext #{}, lock {}", Thread.currentThread().getId(), execContextId, lock);
         try {
             lock.lock();
             return supplier.get();
         } finally {
             lock.unlock();
-            log.debug("End ExecContextSyncService.getWithSync(), execContext #{}", execContextId);
+            log.debug("End ExecContextSyncService.getWithSync(), Thread {}, execContext #{}, lock {}", Thread.currentThread().getId(), execContextId, lock);
         }
     }
 
     @Nullable
     public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
-        log.debug("Start ExecContextSyncService.getWithSyncNullable(), execContext #{}", execContextId);
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        log.debug("Start ExecContextSyncService.getWithSyncNullable(), Thread {}, execContext #{}, lock {}", Thread.currentThread().getId(), execContextId, lock);
         try {
             lock.lock();
             return supplier.get();
         } finally {
             lock.unlock();
-            log.debug("End ExecContextSyncService.getWithSyncNullable(), execContext #{}", execContextId);
+            log.debug("End ExecContextSyncService.getWithSyncNullable(), Thread {}, execContext #{}, lock {}", Thread.currentThread().getId(), execContextId, lock);
         }
     }
 
     public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
-        log.debug("Start ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
+//        log.debug("Start ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContext.id);
 
@@ -105,7 +105,7 @@ public class ExecContextSyncService {
             return supplier.get();
         } finally {
             lock.unlock();
-            log.debug("End ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
+//            log.debug("End ExecContextSyncService.getWithSyncReadOnly(), execContext #{}", execContext.id);
         }
     }
 }

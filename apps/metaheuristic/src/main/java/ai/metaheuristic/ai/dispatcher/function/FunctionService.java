@@ -74,7 +74,9 @@ public class FunctionService {
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
 
-    public @Nullable Function findByCode(String functionCode) {
+    @Nullable
+    @Transactional
+    public Function findByCode(String functionCode) {
         Long id = functionRepository.findIdByCode(functionCode);
         if (id==null) {
             return null;

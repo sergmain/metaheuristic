@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
@@ -50,13 +49,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
@@ -85,7 +84,6 @@ public class SouthBridgeService {
     private final ExecContextRepository execContextRepository;
     private final ProcessorTopLevelService processorTopLevelService;
     private final TaskRepository taskRepository;
-    private final TaskTransactionalService taskTransactionalService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextVariableService execContextVariableService;
 
@@ -113,19 +111,19 @@ public class SouthBridgeService {
     public UploadResult uploadVariable(MultipartFile file, @Nullable Long taskId, @Nullable Long variableId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
-            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
+            return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
         }
         if (taskId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR,"#440.015 taskId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.015 taskId is null" );
         }
         if (variableId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR,"#440.020 variableId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.020 variableId is null" );
         }
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
+        Long execContextId = taskRepository.getExecContextId(taskId);
+        if (execContextId==null) {
             final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND, es);
+            return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
 
         File tempDir=null;
@@ -134,7 +132,7 @@ public class SouthBridgeService {
             tempDir = DirUtils.createTempDir("upload-variable-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
-                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
+                return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
             }
             variableFile = new File(tempDir, "variable.");
             log.debug("Start storing an uploaded resource data to disk, target file: {}", variableFile.getPath());
@@ -142,18 +140,43 @@ public class SouthBridgeService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(variableFile)) {
-                return execContextSyncService.getWithSync(task.execContextId, () -> execContextVariableService.storeVariable(is, variableFile.length(), taskId, variableId));
+                final UploadResult uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.storeVariable(is, variableFile.length(), taskId, variableId));
+                if (log.isDebugEnabled()) {
+                    TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                    if (t==null) {
+                        log.debug("#440.043 uploadVariable(), task #{} wasn't found", taskId);
+                    }
+                    else {
+                        log.debug("#440.045 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                    }
+                }
+                return uploadResult;
+
             }
+        }
+        catch (ObjectOptimisticLockingFailureException th) {
+            if (log.isDebugEnabled()) {
+                TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                if (t==null) {
+                    log.debug("#440.047 uploadVariable(), task #{} wasn't found", taskId);
+                }
+                else {
+                    log.debug("#440.048 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                }
+            }
+            final String es = "#440.075 can't store the result, need to try again. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableSavingException th) {
             final String es = "#440.080 can't store the result, unrecoverable error with data. Error: " + th.toString();
             log.error(es, th);
-            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
         catch (Throwable th) {
             final String error = "#440.090 can't store the result, Error: " + th.toString();
             log.error(error, th);
-            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+            return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }
         finally {
             DirUtils.deleteAsync(tempDir);
@@ -246,36 +269,6 @@ public class SouthBridgeService {
             return resource;
         } catch (IOException e) {
             throw new CommonIOErrorWithDataException("Error: " + e.getMessage());
-        }
-    }
-
-    public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
-
-        try (final FileOutputStream fos = new FileOutputStream(destFile);
-             RandomAccessFile raf = new RandomAccessFile(sourceFile,"r")){
-            raf.seek(offset);
-            long left = size;
-            int realChunkSize = (int)(size > 64000 ? 64000 : size);
-            byte[] bytes = new byte[realChunkSize];
-            while (left>0) {
-                int realSize = (int)(left>realChunkSize ? realChunkSize : left);
-                int state;
-                //noinspection CaughtExceptionImmediatelyRethrown
-                try {
-                    state = raf.read(bytes, 0, realSize);
-                } catch (IndexOutOfBoundsException e) {
-                    throw e;
-                }
-                if (state==-1) {
-                    log.error("#440.200 Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
-                    break;
-                }
-                fos.write(bytes, 0, realSize);
-                left -= realSize;
-            }
-        }
-        catch (Throwable th) {
-            ExceptionUtils.wrapAndThrow(th);
         }
     }
 

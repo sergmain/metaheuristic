@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -40,6 +41,8 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(of = {"username", "password"})
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Account implements UserDetails, Serializable, Cloneable {
     private static final long serialVersionUID = 708692073045562337L;
 

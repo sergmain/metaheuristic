@@ -165,7 +165,7 @@ public class BatchController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context.getCompanyId(), false);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, context.getCompanyId(), false);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

@@ -24,13 +24,15 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 @Service
@@ -41,14 +43,18 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
+    private final EntityManager em;
 
-    public DispatcherCommParamsYaml.ResendTaskOutputs resourceReceivingChecker(long processorId) {
-        List<Task> tasks = taskRepository.findForMissingResultResources(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
+    @Transactional(readOnly = true)
+    public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(long processorId) {
+        List<Task> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
         for (Task task : tasks) {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                result.resends.add( new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+                if (!output.uploaded) {
+                    result.resends.add(new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+                }
             }
         }
         return result;
@@ -57,24 +63,28 @@ public class TaskService {
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        try {
+        task.setUpdatedOn( System.currentTimeMillis() );
 /*
-            if (log.isDebugEnabled()) {
-                log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
-                try {
-                    throw new RuntimeException("task stacktrace");
-                }
-                catch(RuntimeException e) {
-                    log.debug("task stacktrace", e);
-                }
+
+        if (log.isDebugEnabled()) {
+            log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
+            try {
+                throw new RuntimeException("task stacktrace");
             }
-*/
-            return taskRepository.save(task);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.info("Current task:\n" + task+"\ntask in db: " + (task.id!=null ? taskRepository.findById(task.id) : null));
-            throw e;
+            catch(RuntimeException e) {
+                log.debug("task stacktrace", e);
+            }
         }
+*/
+        if (task.id==null) {
+            final TaskImpl t = taskRepository.save(task);
+            return t;
+        }
+        else if (!em.contains(task) ) {
+//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
+            throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", task));
+        }
+        return task;
     }
 
 

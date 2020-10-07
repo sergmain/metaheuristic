@@ -16,16 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -42,9 +38,8 @@ public interface InternalFunction {
      * !!! all call of internal functions will be synchronized over execContextId in method
      * ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
      *
-     * @param sourceCodeId
-     * @param execContextId
-     * @param taskId
+     * @param execContext
+     * @param task
      * @param taskContextId
      * @param variableDeclaration
      * @param taskParamsYaml
@@ -54,7 +49,7 @@ public interface InternalFunction {
      * @see ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
      */
     InternalFunctionData.InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder);
 }
