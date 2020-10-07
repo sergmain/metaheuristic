@@ -285,7 +285,7 @@ public class VariableService {
             v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
 
             v.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            log.info("Start creating an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
+//            log.info("Start creating an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
             return variableRepository.save(v);
 /*
         }
