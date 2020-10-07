@@ -418,7 +418,7 @@ public class TaskProcessor {
         }
     }
 
-    private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
+    private static TaskFileParamsYaml.InputVariable upInputVariable(TaskParamsYaml.InputVariable v1) {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
         v.id = v1.id.toString();
         v.dataType = toType(v1.context);
@@ -428,6 +428,8 @@ public class TaskProcessor {
         v.sourcing = v1.sourcing;
         v.filename = v1.filename;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 
@@ -441,6 +443,8 @@ public class TaskProcessor {
         v.sourcing = v1.sourcing;
         v.filename = v1.filename;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 

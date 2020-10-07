@@ -77,6 +77,7 @@ public class TaskHelperService {
         iv.disk = v.disk;
         iv.git = v.git;
         iv.type = v.type;
+        iv.setNullable(v.getNullable());
         return iv;
     }
 }
