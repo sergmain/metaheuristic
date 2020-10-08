@@ -360,13 +360,18 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         if (item.mapping!=null) {
             SimpleVariable sv = item.mapping;
-            try {
-                String mapping = variableService.getVariableDataAsString(sv.id, sv.nullified);
-                if (!S.b(mapping)) {
-                    bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
+            if (!sv.nullified) {
+                try {
+                    String mapping = variableService.getVariableDataAsString(sv.id);
+                    if (!S.b(mapping)) {
+                        bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
+                    }
+                } catch (CommonErrorWithDataException e) {
+                    log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
                 }
-            } catch (CommonErrorWithDataException e) {
-                log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
+            }
+            else {
+                log.info("#993.210 Variable #{} {} is null", sv.id, sv.variable);
             }
         }
 
@@ -379,6 +384,10 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     private void storeVariableToFile(BatchItemMappingYaml bimy, File resultDir, List<SimpleVariable> simpleVariables) {
         for (SimpleVariable simpleVariable : simpleVariables) {
+            if (simpleVariable.nullified) {
+                log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
+                continue;
+            }
             String itemFilename = bimy.filenames.get(simpleVariable.id.toString());
             if (S.b(itemFilename)) {
                 itemFilename = simpleVariable.id.toString();
