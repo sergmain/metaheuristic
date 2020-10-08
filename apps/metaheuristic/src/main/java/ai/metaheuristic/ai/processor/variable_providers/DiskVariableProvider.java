@@ -111,13 +111,19 @@ public class DiskVariableProvider implements VariableProvider {
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            Long outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
+            TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
+        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
-            log.info("The result data was already written to file {}, no need to upload to dispatcher", outputVariableFile.getPath());
-            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariableId);
-        } else {
+            log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
+            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariable.id);
+        }
+        else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
+            log.info("The result variable #{} is nullable, no need to upload to dispatcher", outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariable.id);
+            return null;
+        }
+        else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.getPath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);

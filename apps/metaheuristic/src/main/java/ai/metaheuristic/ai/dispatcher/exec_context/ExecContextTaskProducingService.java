@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -59,6 +60,18 @@ public class ExecContextTaskProducingService {
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextFSM execContextFSM;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
+    private final SourceCodeCache sourceCodeCache;
+
+    @Nullable
+    @Transactional
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, ExecContextImpl execContext) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
+        if (sourceCode == null) {
+            execContextFSM.toStopped(execContext.id);
+            return null;
+        }
+        return produceAllTasks(isPersist, sourceCode, execContext);
+    }
 
     @Transactional
     public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {

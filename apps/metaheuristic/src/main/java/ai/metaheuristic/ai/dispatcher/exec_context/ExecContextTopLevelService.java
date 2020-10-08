@@ -17,16 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -58,7 +55,6 @@ import java.util.List;
 public class ExecContextTopLevelService {
 
     private final ExecContextService execContextService;
-    private final SourceCodeCache sourceCodeCache;
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
@@ -210,23 +206,14 @@ public class ExecContextTopLevelService {
     // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
     public synchronized void createAllTasks() {
 
-        Monitoring.log("##019", Enums.Monitor.MEMORY);
         List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
-        Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!execContexts.isEmpty()) {
             log.info("#701.020 Start producing tasks");
         }
         for (ExecContextImpl execContext : execContexts) {
             execContextSyncService.getWithSyncNullable(execContext.id, ()-> {
-                SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-                if (sourceCode == null) {
-                    execContextFSM.toStopped(execContext.id);
-                    return null;
-                }
-                Monitoring.log("##021", Enums.Monitor.MEMORY);
-                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", sourceCode.uid, execContext.getParams());
-                execContextTaskProducingService.produceAllTasks(true, sourceCode, execContext);
-                Monitoring.log("##022", Enums.Monitor.MEMORY);
+                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", execContext.getSourceCodeId(), execContext.getParams());
+                execContextTaskProducingService.produceAllTasks(true, execContext);
                 return null;
             });
         }

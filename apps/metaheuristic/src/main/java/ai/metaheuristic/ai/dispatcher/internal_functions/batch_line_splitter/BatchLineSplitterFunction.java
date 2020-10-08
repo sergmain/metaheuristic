@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
@@ -76,7 +75,6 @@ public class BatchLineSplitterFunction implements InternalFunction {
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
-    private final ExecContextCache execContextCache;
 
     @Override
     public String getCode() {

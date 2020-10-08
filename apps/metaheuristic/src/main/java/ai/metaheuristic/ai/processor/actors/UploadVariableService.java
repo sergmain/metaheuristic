@@ -139,7 +139,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
                 if (!task.nullified) {
                     if (task.file==null) {
-                        throw new IllegalStateException("IDEA, are you Ok?");
+                        throw new IllegalStateException("IDEA is Ok but you're not");
                     }
                     builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
                 }

@@ -143,11 +143,30 @@ public class VariableService {
 
     @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
+        final String data = getVariableDataAsString(variableId, false);
+        if (S.b(data)) {
+            final String es = "#087.028 Variable data wasn't found, variableId: " + variableId;
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return data;
+    }
+
+    @Nullable
+    @Transactional(readOnly = true)
+    public String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#087.028 Binary data for variableId {} wasn't found", variableId);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, "#087.028 Variable data wasn't found, variableId: " + variableId);
+                if (nullable) {
+                    log.info("#087.027 Variable #{} is nullable and current value is null", variableId);
+                    return null;
+                }
+                else {
+                    final String es = "#087.028 Variable data wasn't found, variableId: " + variableId;
+                    log.warn(es);
+                    throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+                }
             }
             try (InputStream is = blob.getBinaryStream()) {
                 String s = IOUtils.toString(is, StandardCharsets.UTF_8);
