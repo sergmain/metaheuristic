@@ -156,6 +156,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         public @Nullable Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);
         }
+
+        public boolean cacheOutput;
     }
 
     @Data

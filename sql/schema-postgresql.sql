@@ -4,6 +4,19 @@ create table MH_IDS
     STUB    varchar(1) null
 );
 
+CREATE TABLE MH_CACHE
+(
+    ID                  SERIAL PRIMARY KEY,
+    VERSION             NUMERIC(10, 0)  NOT NULL,
+    CREATED_ON          bigint not null,
+    KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
+    KEY_VALUE           VARCHAR(512) NOT NULL,
+    DATA                OID NOT NULL
+);
+
+CREATE UNIQUE INDEX MH_CACHE_KEY_SHA256_LENGTH_UNQ_IDX
+    ON MH_CACHE (KEY_SHA256_LENGTH);
+
 create table MH_GEN_IDS
 (
     SEQUENCE_NAME       varchar(50) not null,

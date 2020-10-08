@@ -129,6 +129,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public final List<VariableV1> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
         public @Nullable SubProcessesV1 subProcesses;
+
+        public boolean cacheOutput;
     }
 
     @Data
