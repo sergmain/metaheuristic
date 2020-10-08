@@ -113,10 +113,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                 throw new NotImplementedException("Implement");
             }
-            log.info("Start uploading result data to server, resultDataFile: {}", task.file);
-            if (!task.file.exists()) {
+            if (!task.nullified && (task.file==null || !task.file.exists())) {
                 log.error("#311.040 File {} doesn't exist", task.file.getPath());
                 continue;
+            }
+            if (task.nullified) {
+                log.info("Start reporting a variable #{} as null", task.variableId);
+            }
+            else {
+                log.info("Start uploading a variable #{} to server, resultDataFile: {}", task.variableId, task.file);
             }
             Enums.UploadVariableStatus status = null;
             try {
@@ -124,14 +129,21 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
-                HttpEntity entity = MultipartEntityBuilder.create()
+                final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.RFC6532)
                         .setCharset(StandardCharsets.UTF_8)
                         .addTextBody("processorId", task.processorId)
                         .addTextBody("taskId", Long.toString(task.taskId))
                         .addTextBody("variableId", Long.toString(task.variableId))
-                        .addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName())
-                        .build();
+                        .addTextBody("nullified", String.valueOf(task.nullified));
+
+                if (!task.nullified) {
+                    if (task.file==null) {
+                        throw new IllegalStateException("IDEA, are you Ok?");
+                    }
+                    builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
+                }
+                HttpEntity entity = builder.build();
 
                 Request request = Request.Post(uri)
                         .connectTimeout(5000)

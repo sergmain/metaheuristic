@@ -314,8 +314,6 @@ public class VariableService {
         data.setData(blob);
         data.inited = true;
         data.nullified = false;
-
-//        variableRepository.save(data);
     }
 
     public void storeData(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {

@@ -149,16 +149,25 @@ public class DispatcherVariableProvider implements VariableProvider {
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            Long outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
+            TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
+        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
-            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariableId);
+            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id);
             uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
             uploadVariableTask.processorId = dispatcherCode.processorId;
             uploadVariableService.add(uploadVariableTask);
             return null;
-        } else {
+        }
+        else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
+            log.info("Register an upload task for setting a variable #{} as null", outputVariable.id);
+            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariable.id, true);
+            uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
+            uploadVariableTask.processorId = dispatcherCode.processorId;
+            uploadVariableService.add(uploadVariableTask);
+            return null;
+        }
+        else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.getPath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);

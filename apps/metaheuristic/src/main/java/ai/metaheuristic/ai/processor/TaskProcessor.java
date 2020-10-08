@@ -339,7 +339,7 @@ public class TaskProcessor {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
                                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processOutputVariable(
-                                        taskDir, dispatcher, task, dispatcherInfo, outputVariable.id, mainFunctionConfig);
+                                        taskDir, dispatcher, task, dispatcherInfo, outputVariable, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {

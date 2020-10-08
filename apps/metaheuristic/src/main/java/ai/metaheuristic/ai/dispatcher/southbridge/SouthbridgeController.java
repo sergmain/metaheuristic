@@ -90,14 +90,20 @@ public class SouthbridgeController {
 
     @PostMapping("/upload/{random-part}")
     public UploadResult uploadResourceAuth(
-            MultipartFile file,
+            @Nullable MultipartFile file,
             @SuppressWarnings("unused") String processorId,
             @Nullable Long taskId,
             @Nullable Long variableId,
+            @Nullable Boolean nullified,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
-        log.debug("uploadResourceAuth(), variableId: {}", variableId);
-        return serverService.uploadVariable(file, taskId, variableId);
+        log.debug("uploadVariable(), variableId: {}", variableId);
+        if (Boolean.TRUE.equals(nullified)) {
+            return serverService.setVariableAsNull(taskId, variableId);
+        }
+        else {
+            return serverService.uploadVariable(file, taskId, variableId);
+        }
     }
 
     /**

@@ -16,17 +16,29 @@
 
 package ai.metaheuristic.ai.processor.tasks;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 
 @Data
-@AllArgsConstructor
 @EqualsAndHashCode(of={"taskId","variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
     public long taskId;
-    public File file;
+    @Nullable public File file = null;
     public Long variableId;
+    public boolean nullified = false;
+
+    public UploadVariableTask(long taskId, @Nullable File file, Long variableId) {
+        this.taskId = taskId;
+        this.file = file;
+        this.variableId = variableId;
+    }
+
+    public UploadVariableTask(long taskId, Long variableId, boolean nullified) {
+        this.taskId = taskId;
+        this.variableId = variableId;
+        this.nullified = nullified;
+    }
 }

@@ -108,20 +108,23 @@ public class SouthBridgeService {
                 () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
     }
 
-    public UploadResult uploadVariable(MultipartFile file, @Nullable Long taskId, @Nullable Long variableId) {
+    public UploadResult uploadVariable(@Nullable MultipartFile file, @Nullable Long taskId, @Nullable Long variableId) {
+        if (file==null) {
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.015 file in null");
+        }
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
-            return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
+            return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "#440.020 name of uploaded file is blank");
         }
         if (taskId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.015 taskId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.040 taskId is null" );
         }
         if (variableId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.020 variableId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.060 variableId is null" );
         }
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {
-            final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
+            final String es = "#440.080 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
@@ -132,7 +135,7 @@ public class SouthBridgeService {
             tempDir = DirUtils.createTempDir("upload-variable-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
-                return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
+                return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.100 can't create temporary directory in " + location);
             }
             variableFile = new File(tempDir, "variable.");
             log.debug("Start storing an uploaded resource data to disk, target file: {}", variableFile.getPath());
@@ -144,15 +147,64 @@ public class SouthBridgeService {
                 if (log.isDebugEnabled()) {
                     TaskImpl t = taskRepository.findById(taskId).orElse(null);
                     if (t==null) {
-                        log.debug("#440.043 uploadVariable(), task #{} wasn't found", taskId);
+                        log.debug("#440.120 uploadVariable(), task #{} wasn't found", taskId);
                     }
                     else {
-                        log.debug("#440.045 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                        log.debug("#440.140 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                     }
                 }
                 return uploadResult;
 
             }
+        }
+        catch (ObjectOptimisticLockingFailureException th) {
+            if (log.isDebugEnabled()) {
+                TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                if (t==null) {
+                    log.debug("#440.160 uploadVariable(), task #{} wasn't found", taskId);
+                }
+                else {
+                    log.debug("#440.180 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                }
+            }
+            final String es = "#440.200 can't store the result, need to try again. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
+        }
+        catch (VariableSavingException th) {
+            final String es = "#440.220 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
+        }
+        catch (Throwable th) {
+            final String error = "#440.240 can't store the result, Error: " + th.toString();
+            log.error(error, th);
+            return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
+        }
+
+    }
+
+    public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
+        if (taskId==null) {
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.260 taskId is null" );
+        }
+        if (variableId==null) {
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.280 variableId is null" );
+        }
+        Long execContextId = taskRepository.getExecContextId(taskId);
+        if (execContextId==null) {
+            final String es = "#440.005 Task "+taskId+" is obsolete and was already deleted";
+            log.warn(es);
+            return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
+        }
+
+        try {
+            final UploadResult uploadResult = execContextSyncService.getWithSync(execContextId,
+                    () -> execContextVariableService.setVariableAsNull(taskId, variableId));
+            return uploadResult;
         }
         catch (ObjectOptimisticLockingFailureException th) {
             if (log.isDebugEnabled()) {
@@ -178,10 +230,6 @@ public class SouthBridgeService {
             log.error(error, th);
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }
-        finally {
-            DirUtils.deleteAsync(tempDir);
-        }
-
     }
 
     private CleanerInfo getAbstractDataResponseEntity(@Nullable String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
