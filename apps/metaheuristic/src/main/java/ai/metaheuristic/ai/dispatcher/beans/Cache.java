@@ -31,12 +31,14 @@ import java.sql.Blob;
  * Date: 10/7/2020
  * Time: 9:13 PM
  */
+/*
 @Entity
 @Table(name = "MH_CACHE")
 @Data
 @EqualsAndHashCode(of = {"keySha256Length"})
 @ToString(exclude={"data", "bytes"})
 @NoArgsConstructor
+*/
 public class Cache implements Serializable {
     private static final long serialVersionUID = -1541017259044013865L;
 

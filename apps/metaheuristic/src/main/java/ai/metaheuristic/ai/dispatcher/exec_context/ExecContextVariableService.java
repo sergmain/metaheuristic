@@ -57,34 +57,37 @@ public class ExecContextVariableService {
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
     @Transactional
-    public UploadResult storeVariable(InputStream variableIS, long length, Long taskId, Long variableId) {
+    public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
+        Variable variable = variableRepository.findById(variableId).orElse(null);
+        if (variable ==null) {
+            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.040 Variable #"+variableId+" wasn't found" );
+        }
+        if (!execContextId.equals(variable.execContextId)) {
+            final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
+                    "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
+            log.warn(es);
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
+        }
+
+        variableService.update(variableIS, length, variable);
+        return OK_UPLOAD_RESULT;
+    }
+
+    @Transactional
+    public UploadResult updateStatusOfVariable(Long taskId, Long variableId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.020 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        Variable variable = variableRepository.findById(variableId).orElse(null);
-        if (variable ==null) {
-            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.040 Variable #"+variableId+" wasn't found" );
-        }
-        if (!task.execContextId.equals(variable.execContextId)) {
-            final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+task.id+", " +
-                    "task execContextId: "+task.execContextId+", var execContextId: "+variable.execContextId;
-            log.warn(es);
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
-        }
-
-        variableService.update(variableIS, length, variable);
-        Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
+        Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
             execContextTaskFinishingService.checkTaskCanBeFinished(task);
             return OK_UPLOAD_RESULT;
         }
         else {
-            return new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ variable.getId()+"");
+            return new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ variableId+"");
         }
     }
 

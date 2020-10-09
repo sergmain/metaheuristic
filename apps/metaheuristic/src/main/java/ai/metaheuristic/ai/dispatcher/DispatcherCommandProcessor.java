@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -129,8 +130,19 @@ public class DispatcherCommandProcessor {
             return null;
         }
         checkProcessorId(request);
-        DispatcherCommParamsYaml.AssignedTask assignedTask =
-                execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+        DispatcherCommParamsYaml.AssignedTask assignedTask;
+        try {
+            assignedTask = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#997.045 ObjectOptimisticLockingFailureException", e);
+            log.error("#997.047 Lets try requesting a new task one more time");
+            try {
+                assignedTask = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+            } catch (ObjectOptimisticLockingFailureException e1) {
+                log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
+                assignedTask = null;
+            }
+        }
 
         if (assignedTask!=null) {
             log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);

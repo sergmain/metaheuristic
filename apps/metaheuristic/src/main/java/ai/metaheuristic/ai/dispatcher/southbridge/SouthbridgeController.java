@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,9 +49,11 @@ import java.io.IOException;
 @RequestMapping("/rest/v1")
 @PreAuthorize("hasAnyRole('SERVER_REST_ACCESS')")
 @RequiredArgsConstructor
+// !!! Do not change the name to SouthBridgeController
 public class SouthbridgeController {
 
     private final SouthbridgeService serverService;
+    private final ExecContextVariableTopLevelService execContextVariableTopLevelService;
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestWithAuth(
@@ -99,10 +102,10 @@ public class SouthbridgeController {
     ) {
         log.debug("uploadVariable(), variableId: {}", variableId);
         if (Boolean.TRUE.equals(nullified)) {
-            return serverService.setVariableAsNull(taskId, variableId);
+            return execContextVariableTopLevelService.setVariableAsNull(taskId, variableId);
         }
         else {
-            return serverService.uploadVariable(file, taskId, variableId);
+            return execContextVariableTopLevelService.uploadVariable(file, taskId, variableId);
         }
     }
 
