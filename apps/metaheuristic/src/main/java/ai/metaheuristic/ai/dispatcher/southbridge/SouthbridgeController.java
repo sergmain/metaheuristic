@@ -50,7 +50,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class SouthbridgeController {
 
-    private final SouthBridgeService serverService;
+    private final SouthbridgeService serverService;
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestWithAuth(

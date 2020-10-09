@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestReAssignProcessorIdTimeoutSessionId {
 
     @Autowired
-    public SouthBridgeService serverService;
+    public SouthbridgeService serverService;
 
     @Autowired
     public ProcessorCache processorCache;

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TestSingleInternalFunction extends FeatureMethods {
 
     @Autowired
-    public SouthBridgeService southbridgeService;
+    public SouthbridgeService southbridgeService;
 
     @Autowired
     public TaskService taskService;

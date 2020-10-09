@@ -54,7 +54,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AssetController {
 
-    private final SouthBridgeService serverService;
+    private final SouthbridgeService serverService;
     private final FunctionService functionService;
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthBridgeService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.api.EnumsApi;
@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TestWrongNameOfProcess extends FeatureMethods {
 
     @Autowired
-    public SouthBridgeService southbridgeService;
+    public SouthbridgeService southbridgeService;
 
     @Autowired
     public TaskService taskService;
