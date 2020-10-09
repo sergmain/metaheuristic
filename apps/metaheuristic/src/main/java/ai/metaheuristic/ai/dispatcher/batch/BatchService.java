@@ -223,7 +223,7 @@ public class BatchService {
             if (batch!=null) {
                 ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
                 if (execContext==null) {
-                    log.error("Broken batch #{}, execContext #{} doesn't exist", batch.id, batch.execContextId);
+                    log.warn("Broken batch #{}, execContext #{} doesn't exist", batch.id, batch.execContextId);
                     continue;
                 }
 
