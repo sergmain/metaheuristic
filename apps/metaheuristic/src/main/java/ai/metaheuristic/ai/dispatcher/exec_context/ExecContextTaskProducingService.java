@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -62,12 +63,13 @@ public class ExecContextTaskProducingService {
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
-            return;
+            throw new IllegalStateException("Need better solution for this state");
         }
-        produceAndStartAllTasks(sourceCode, execContextId, execContextParamsYaml);
+        produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
     }
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
@@ -82,7 +84,7 @@ public class ExecContextTaskProducingService {
         }
         mills = System.currentTimeMillis();
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = produceTasksInternal(execContextId, execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = produceTasksInternal(execContext, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
             log.info(S.f("#701.160 Tasks were produced with status %s", produceTaskResult.status));
         }
@@ -91,10 +93,10 @@ public class ExecContextTaskProducingService {
         }
 
         if (produceTaskResult.status==EnumsApi.TaskProducingStatus.OK) {
-            execContextFSM.toStarted(execContextId);
+            execContext.state = EnumsApi.ExecContextState.STARTED.code;
         }
         else {
-            execContextFSM.toError(execContextId);
+            execContext.state = EnumsApi.ExecContextState.ERROR.code;
         }
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
@@ -104,7 +106,7 @@ public class ExecContextTaskProducingService {
         return result;
     }
 
-    private TaskData.ProduceTaskResult produceTasksInternal(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    private TaskData.ProduceTaskResult produceTasksInternal(ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
@@ -141,7 +143,7 @@ public class ExecContextTaskProducingService {
                     .filter(Objects::nonNull)
                     .forEach(parentTaskIds::addAll);
 
-            TaskData.ProduceTaskResult result = taskTransactionalService.produceTaskForProcess(p, execContextParamsYaml, execContextId, parentTaskIds);
+            TaskData.ProduceTaskResult result = taskTransactionalService.produceTaskForProcess(p, execContextParamsYaml, execContext, parentTaskIds);
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
             }
