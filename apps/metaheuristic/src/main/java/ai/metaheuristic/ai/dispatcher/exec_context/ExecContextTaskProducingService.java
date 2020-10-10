@@ -60,43 +60,24 @@ public class ExecContextTaskProducingService {
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextFSM execContextFSM;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
-    private final SourceCodeCache sourceCodeCache;
-
-    @Nullable
-    @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, ExecContextImpl execContext) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (sourceCode == null) {
-            execContextFSM.toStopped(execContext.id);
-            return null;
-        }
-        return produceAllTasks(isPersist, sourceCode, execContext);
-    }
 
     @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
-            result.sourceCodeValidationResult = new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR, "Tasks were produced already");
-            return result;
-        }
         long mills = System.currentTimeMillis();
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         log.info("#701.100 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
                 result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
-            if(isPersist) {
-                execContextFSM.toStopped(execContext.getId());
-            }
+            execContextFSM.toStopped(execContextId);
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = produceTasks(isPersist, execContext);
+        result = produceTasks(execContextId);
         log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
@@ -104,13 +85,13 @@ public class ExecContextTaskProducingService {
     }
 
     @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
 
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = produceTasks(execContextId, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
             log.info(S.f("#701.160 Tasks were produced with status %s", produceTaskResult.status));
         }
@@ -120,13 +101,11 @@ public class ExecContextTaskProducingService {
 
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist) {
-            if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-                execContextFSM.toProduced(execContext.id);
-            }
-            else {
-                execContextFSM.toError(execContext);
-            }
+        if (produceTaskResult.status==EnumsApi.TaskProducingStatus.OK) {
+            execContextFSM.toStarted(execContextId);
+        }
+        else {
+            execContextFSM.toError(execContextId);
         }
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
@@ -135,7 +114,7 @@ public class ExecContextTaskProducingService {
         return result;
     }
 
-    private TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    private TaskData.ProduceTaskResult produceTasks(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
@@ -172,7 +151,7 @@ public class ExecContextTaskProducingService {
                     .filter(Objects::nonNull)
                     .forEach(parentTaskIds::addAll);
 
-            TaskData.ProduceTaskResult result = taskTransactionalService.produceTaskForProcess(isPersist, sourceCodeId, p, execContextParamsYaml, execContextId, parentTaskIds);
+            TaskData.ProduceTaskResult result = taskTransactionalService.produceTaskForProcess(p, execContextParamsYaml, execContextId, parentTaskIds);
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
             }

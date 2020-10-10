@@ -216,30 +216,23 @@ public class VariableService {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-//        try {
-            Variable data = new Variable();
-            data.inited = true;
-            data.nullified = false;
-            data.setName(variable);
-            data.setFilename(filename);
-            data.setExecContextId(execContextId);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
-            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setTaskContextId(taskContextId);
+        Variable data = new Variable();
+        data.inited = true;
+        data.nullified = false;
+        data.setName(variable);
+        data.setFilename(filename);
+        data.setExecContextId(execContextId);
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        data.setTaskContextId(taskContextId);
 
-            Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
-            data.setData(blob);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        data.setData(blob);
 
 //            log.info("Start to create an initialized variable {}, execContextId: {}, taskContextId: {}", variable, execContextId, taskContextId);
-            variableRepository.save(data);
+        variableRepository.save(data);
 
-            return data;
-//        }
-//        catch(VariableSavingException | PessimisticLockingFailureException e) {
-//            throw e;
-//        } catch(Throwable th) {
-//            throw new VariableSavingException("#087.060 error storing data to db - " + th.getMessage(), th);
-//        }
+        return data;
     }
 
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
@@ -289,32 +282,15 @@ public class VariableService {
         v.name = variable;
         v.setExecContextId(execContextId);
         v.setTaskContextId(taskContextId);
-        return createOrUpdateUninitialized(v);
-    }
+        v.inited = false;
+        v.nullified = true;
 
-    private Variable createOrUpdateUninitialized(Variable v) {
-//        try {
-            v.inited = false;
-            v.nullified = true;
-
-            // TODO 2020-02-03 right now, only DataSourcing.dispatcher is supported as internal variable.
-            //   a new code has to be added for another type of sourcing
-            v.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name)));
-
-            v.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        // TODO 2020-02-03 right now, only DataSourcing.dispatcher is supported as internal variable.
+        //   a new code has to be added for another type of sourcing
+        v.params = DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name));
+        v.uploadTs = new Timestamp(System.currentTimeMillis());
 //            log.info("Start creating an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
-            return variableRepository.save(v);
-/*
-        }
-        catch (PessimisticLockingFailureException e) {
-            throw e;
-        }
-        catch (DataIntegrityViolationException e) {
-            throw e;
-        } catch (Throwable th) {
-            throw new VariableSavingException("#087.070 error storing v to db - " + th.getMessage(), th);
-        }
-*/
+        return variableRepository.save(v);
     }
 
     @Transactional

@@ -11,3 +11,6 @@ CREATE TABLE mh_cache
 CREATE UNIQUE INDEX mh_cache_key_sha256_length_unq_idx
     ON mh_cache (KEY_SHA256_LENGTH);
 
+
+CREATE INDEX mh_exec_context_state_idx
+    ON mh_exec_context (STATE);

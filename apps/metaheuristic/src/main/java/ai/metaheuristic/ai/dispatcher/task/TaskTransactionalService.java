@@ -70,7 +70,7 @@ public class TaskTransactionalService {
 
     @Transactional
     public TaskData.ProduceTaskResult produceTaskForProcess(
-            boolean isPersist, Long sourceCodeId, ExecContextParamsYaml.Process process,
+            ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId,
             List<Long> parentTaskIds) {
 
@@ -78,25 +78,23 @@ public class TaskTransactionalService {
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
-        if (isPersist) {
-            try {
-                // for external Functions internalContextId==process.internalContextId
-                TaskImpl t = taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
-                        execContextParamsYaml.variables.inline);
-                if (t == null) {
-                    result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
-                    result.error = "#375.080 Unknown reason of error while task creation";
-                    return result;
-                }
-                result.taskId = t.getId();
-                List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
-                execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, taskWithContexts);
-            } catch (TaskCreationException e) {
+        try {
+            // for external Functions internalContextId==process.internalContextId
+            TaskImpl t = taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                    execContextParamsYaml.variables.inline);
+            if (t == null) {
                 result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
-                result.error = "#375.100 task creation error " + e.getMessage();
-                log.error(result.error);
+                result.error = "#375.080 Unknown reason of error while task creation";
                 return result;
             }
+            result.taskId = t.getId();
+            List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+            execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, taskWithContexts);
+        } catch (TaskCreationException e) {
+            result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
+            result.error = "#375.100 task creation error " + e.getMessage();
+            log.error(result.error);
+            return result;
         }
         result.numberOfTasks=1;
         result.status = EnumsApi.TaskProducingStatus.OK;

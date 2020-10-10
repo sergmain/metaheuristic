@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -33,11 +34,11 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -48,6 +49,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
@@ -86,6 +88,7 @@ public class BatchService {
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextSyncService execContextSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -99,43 +102,30 @@ public class BatchService {
                 : ext;
     }
 
-    @Nullable
-    private Batch changeStateToPreparing(Long batchId) {
-            Batch b = batchCache.findById(batchId);
-            if (b == null) {
-                log.warn("#990.010 batch wasn't found {}", batchId);
-                return null;
-            }
+    private void changeStateToPreparing(Batch b) {
             if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
                     b.execState != Enums.BatchExecState.Preparing.code) {
                 throw new IllegalStateException("\"#990.020 Can't change state to Preparing, " +
                         "current state: " + Enums.BatchExecState.toState(b.execState));
             }
             if (b.execState == Enums.BatchExecState.Preparing.code) {
-                return b;
+                return;
             }
             b.execState = Enums.BatchExecState.Preparing.code;
-            return batchCache.save(b);
+//            return batchCache.save(b);
     }
 
-    @Transactional
-    @Nullable
-    public Batch changeStateToProcessing(Long batchId) {
-            Batch b = batchCache.findById(batchId);
-            if (b == null) {
-                log.warn("#990.030 batch wasn't found {}", batchId);
-                return null;
-            }
-            if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
-                throw new IllegalStateException("\"#990.040 Can't change state to Finished, " +
-                        "current state: " + Enums.BatchExecState.toState(b.execState));
-            }
-            if (b.execState == Enums.BatchExecState.Processing.code) {
-                return b;
-            }
-            b.execState = Enums.BatchExecState.Processing.code;
-            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
-            return batchCache.save(b);
+    private void changeStateToProcessing(Batch b) {
+        if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
+            throw new IllegalStateException("\"#990.040 Can't change state to Finished, " +
+                    "current state: " + Enums.BatchExecState.toState(b.execState));
+        }
+        if (b.execState == Enums.BatchExecState.Processing.code) {
+            return;
+        }
+        b.execState = Enums.BatchExecState.Processing.code;
+        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, b.id, null, null );
+//            return batchCache.save(b);
     }
 
     private void changeStateToFinished(Long batchId) {
@@ -259,55 +249,47 @@ public class BatchService {
     }
 
     @Transactional
-    public BatchData.UploadingStatus createBatchForFile(InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, ExecContextImpl execContext, final DispatcherContext dispatcherContext) {
-        Batch b;
-        String startInputAs = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params).variables.startInputAs;
-        if (S.b(startInputAs)) {
-            return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
-        }
-        variableService.createInitialized(
-                is, size, startInputAs,
-                originFilename, execContext.getId(),"1"
-        );
+    public BatchData.UploadingStatus createBatchForFile(
+            InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, Long execContextId,
+            String startInputAs,
+            final DispatcherContext dispatcherContext) {
 
-        b = new Batch(sourceCode.id, execContext.getId(), Enums.BatchExecState.Stored,
+        variableService.createInitialized(is, size, startInputAs, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+
+        Batch b = new Batch(sourceCode.id, execContextId, Enums.BatchExecState.Stored,
                 dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
 
         BatchParamsYaml bpy = new BatchParamsYaml();
         bpy.username = dispatcherContext.account.username;
         b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
-        b = batchCache.save(b);
+//        b = batchCache.save(b);
 
         dispatcherEventService.publishBatchEvent(
                 EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
-                sourceCode.uid, null, b.id, execContext.getId(), dispatcherContext );
+                sourceCode.uid, null, b.id, execContextId, dispatcherContext );
 
-        final Batch batch = changeStateToPreparing(b.id);
-        // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
-        if (batch==null) {
-            return new BatchData.UploadingStatus("#981.220 can't find batch with id " + b.id);
-        }
+        changeStateToPreparing(b);
 
-        log.info("#981.240 The file {} was successfully stored for processing", originFilename);
-        //noinspection unused
-        int i=0;
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.PRODUCING, execContext.getId(), dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.PRODUCING, execContextId, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        execContextTaskProducingService.produceAllTasks(true, sourceCode, execContext);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAllTasks(sourceCode, execContextId);
+        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
 
-        operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.STARTED, execContext.getId(), dispatcherContext.getCompanyId());
+        if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
+            throw new BatchResourceProcessingException(result.sourceCodeValidationResult.error);
+        }
 
-        if (operationStatus.isErrorMessages()) {
+        if (result.taskProducingStatus!= EnumsApi.TaskProducingStatus.OK) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
 
-        changeStateToProcessing(batch.id);
+        changeStateToProcessing(b);
 
-        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, execContext.getId());
+        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, execContextId);
         return uploadingStatus;
     }
 

@@ -237,10 +237,13 @@ CREATE TABLE mh_exec_context
     COMPANY_ID      INT UNSIGNED    not null,
     CREATED_ON      bigint NOT NULL,
     COMPLETED_ON    bigint,
-    PARAMS  LONGTEXT NOT NULL,
+    PARAMS          LONGTEXT NOT NULL,
     IS_VALID        BOOLEAN  default false not null,
     STATE           smallint not null default 0
 );
+
+CREATE INDEX mh_exec_context_state_idx
+    ON mh_exec_context (STATE);
 
 CREATE TABLE mh_experiment_result
 (

@@ -19,13 +19,19 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -61,6 +67,8 @@ public class ExecContextTopLevelService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
+    private final ProcessorCache processorCache;
+    private final SourceCodeCache sourceCodeCache;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId, ()-> execContextService.getExecContextState(sourceCodeId, execContextId, context));
@@ -127,7 +135,30 @@ public class ExecContextTopLevelService {
     }
 
     @Nullable
+    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
+        ProcessorStatusYaml ss;
+        try {
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            return ss;
+        } catch (Throwable e) {
+            log.error("#303.800 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#303.820 Error ", e);
+            return null;
+        }
+    }
+
+    @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.error("#303.620 Processor with id #{} wasn't found", processorId);
+            return null;
+        }
+        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
+        if (psy==null) {
+            return null;
+        }
+
         DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
                 ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
 
@@ -206,20 +237,29 @@ public class ExecContextTopLevelService {
     // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
     public synchronized void createAllTasks() {
 
-        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
-        if (!execContexts.isEmpty()) {
-            log.info("#701.020 Start producing tasks");
+        List<Long> execContextIds = execContextRepository.findIdByState(EnumsApi.ExecContextState.PRODUCING.code);
+        if (execContextIds.isEmpty()) {
+            return;
         }
-        for (ExecContextImpl execContext : execContexts) {
-            execContextSyncService.getWithSyncNullable(execContext.id, ()-> {
-                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", execContext.getSourceCodeId(), execContext.getParams());
-                execContextTaskProducingService.produceAllTasks(true, execContext);
+        log.info("#701.020 Start producing tasks");
+        for (Long execContextId : execContextIds) {
+            ExecContextImpl ec = execContextService.findById(execContextId);
+            if (ec==null) {
+                log.error("ExecContext is null for #{}", execContextId);
+                continue;
+            }
+            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContextId);
+            if (sourceCode == null) {
+                execContextFSM.toError(execContextId);
+                continue;
+            }
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> {
+                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", ec.sourceCodeId, ec.getParams());
+                execContextTaskProducingService.produceAllTasks(sourceCode, execContextId);
                 return null;
             });
         }
-        if (!execContexts.isEmpty()) {
-            log.info("#701.040 Producing of tasks was finished");
-        }
+        log.info("#701.040 Producing of tasks was finished");
     }
 
 

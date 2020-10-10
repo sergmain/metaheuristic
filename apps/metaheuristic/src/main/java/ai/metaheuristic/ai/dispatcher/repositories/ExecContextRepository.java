@@ -62,6 +62,9 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 //    @Transactional(readOnly = true)
     List<ExecContextImpl> findByState(int execState);
 
+//    @Transactional(readOnly = true)
+    List<Long> findIdByState(int execState);
+
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
 //    @Transactional(readOnly = true)
     List<Long> findIdsByExecState(int execState);

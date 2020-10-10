@@ -122,6 +122,18 @@ public class ExecContextFSM {
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.FINISHED);
     }
 
+    public void toError(Long execContextId) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+
+        toStateWithCompletion(execContext, EnumsApi.ExecContextState.ERROR);
+    }
+
     public void toError(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
@@ -620,18 +632,10 @@ public class ExecContextFSM {
 
     @Nullable
     @Transactional
-    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
 
-        final Processor processor = processorCache.findById(processorId);
-        if (processor == null) {
-            log.error("#303.620 Processor with id #{} wasn't found", processorId);
-            return null;
-        }
-        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
-        if (psy==null) {
-            return null;
-        }
+        execContextSyncService.checkWriteLockPresent(execContextId);
 
         final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
@@ -717,19 +721,6 @@ public class ExecContextFSM {
         TaskImpl result = findUnassignedTaskAndAssign(execContext, processor, psy, isAcceptOnlySigned);
 
         return result;
-    }
-
-    @Nullable
-    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
-        ProcessorStatusYaml ss;
-        try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-            return ss;
-        } catch (Throwable e) {
-            log.error("#303.800 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#303.820 Error ", e);
-            return null;
-        }
     }
 
 }
