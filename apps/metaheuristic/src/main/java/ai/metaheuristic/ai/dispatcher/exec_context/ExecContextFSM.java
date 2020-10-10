@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -73,6 +74,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExecContextFSM {
 
+    private final Globals globals;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -89,23 +91,32 @@ public class ExecContextFSM {
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextService execContextService;
 
+    /**
+     * Only for testing
+     */
     @Transactional
     public void toStarted(Long execContextId) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
         execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
+/*
     @Transactional
     public void toStopped(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STOPPED);
     }
+*/
 
     public void toFinished(ExecContextImpl execContext) {
         execContextSyncService.checkWriteLockPresent(execContext.id);
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.FINISHED);
     }
 
+/*
     public void toError(Long execContextId) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
@@ -117,6 +128,7 @@ public class ExecContextFSM {
 
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.ERROR);
     }
+*/
 
     public void toError(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
@@ -136,6 +148,7 @@ public class ExecContextFSM {
         }
     }
 
+/*
     @Transactional
     public OperationStatusRest changeExecContextState(String state, Long execContextId, Long companyUniqueId) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
@@ -144,6 +157,7 @@ public class ExecContextFSM {
         }
         return changeExecContextState(execState, execContextId, companyUniqueId);
     }
+*/
 
     @Transactional
     public OperationStatusRest changeExecContextStateWithTx(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
