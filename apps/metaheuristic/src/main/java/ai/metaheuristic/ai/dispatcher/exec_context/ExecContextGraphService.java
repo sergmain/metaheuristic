@@ -587,29 +587,20 @@ public class ExecContextGraphService {
         withTaskList.childrenTasks.addAll(setFiltered);
     }
 
-    public OperationStatusRest addNewTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        if (execContext==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-//        try {
-            changeGraph(execContext, graph -> {
-                List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
-                        .stream()
-                        .filter(o -> parentTaskIds.contains(o.taskId))
-                        .collect(Collectors.toList());
+    public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        changeGraph(execContext, graph -> {
+            List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
+                    .stream()
+                    .filter(o -> parentTaskIds.contains(o.taskId))
+                    .collect(Collectors.toList());
 
-                taskIds.forEach(taskWithContext -> {
-                    final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId);
-                    graph.addVertex(v);
-                    vertices.forEach(parentV -> graph.addEdge(parentV, v) );
-                });
+            taskIds.forEach(taskWithContext -> {
+                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId);
+                graph.addVertex(v);
+                vertices.forEach(parentV -> graph.addEdge(parentV, v) );
             });
-            return OperationStatusRest.OPERATION_STATUS_OK;
-//        }
-//        catch (Throwable th) {
-//            log.error("Error while adding task to graph", th);
-//            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
-//        }
+        });
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Nullable

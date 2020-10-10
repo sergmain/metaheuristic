@@ -34,7 +34,6 @@ public class TaskData {
     public static class ProduceTaskResult {
         public EnumsApi.TaskProducingStatus status;
         public @Nullable String error;
-        public int numberOfTasks=0;
         public Long taskId;
 
         public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {

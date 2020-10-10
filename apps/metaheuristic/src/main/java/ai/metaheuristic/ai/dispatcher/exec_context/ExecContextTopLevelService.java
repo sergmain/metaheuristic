@@ -259,7 +259,7 @@ public class ExecContextTopLevelService {
 
             execContextSyncService.getWithSyncNullable(execContextId, ()-> {
                 log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", ec.sourceCodeId, ec.getParams());
-                execContextTaskProducingService.produceAllTasks(sourceCode, execContextId, execContextParamsYaml);
+                execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContextId, execContextParamsYaml);
                 return null;
             });
         }

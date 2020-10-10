@@ -213,8 +213,8 @@ public class TaskProducingService {
         String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);
 
         TaskImpl task = new TaskImpl();
-        task.setExecContextId(execContextId);
-        task.setParams(params);
+        task.execContextId = execContextId;
+        task.params = params;
         taskService.save(task);
 
         return task;

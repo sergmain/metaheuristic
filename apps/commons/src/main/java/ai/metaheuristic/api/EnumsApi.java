@@ -239,7 +239,7 @@ public class EnumsApi {
         UNKNOWN(-1),        // unknown state
         NONE(0),            // just created execContext
         PRODUCING(1),       // producing was just started
-        PRODUCED(2),        // producing was finished
+        NOT_USED_ANYMORE(2),        // former 'PRODUCED' status
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
@@ -263,7 +263,7 @@ public class EnumsApi {
                 case 1:
                     return PRODUCING;
                 case 2:
-                    return PRODUCED;
+                    return NOT_USED_ANYMORE;
                 case 3:
                     return STARTED;
                 case 4:
@@ -341,8 +341,14 @@ public class EnumsApi {
     }
 
     public enum DispatcherEventType {
-        BATCH_FILE_UPLOADED, BATCH_CREATED, BATCH_PROCESSING_STARTED, BATCH_PROCESSING_FINISHED, BATCH_FINISHED_WITH_ERROR,
-        TASK_ASSIGNED, TASK_FINISHED, TASK_ERROR
+        BATCH_FILE_UPLOADED,
+        BATCH_CREATED,
+        BATCH_PROCESSING_STARTED,   // processing time doesn't include the time for creating tasks
+        BATCH_PROCESSING_FINISHED,
+        BATCH_FINISHED_WITH_ERROR,
+        TASK_ASSIGNED,
+        TASK_FINISHED,
+        TASK_ERROR
 
     }
 

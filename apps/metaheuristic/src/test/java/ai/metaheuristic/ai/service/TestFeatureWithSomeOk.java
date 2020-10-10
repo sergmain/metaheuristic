@@ -48,7 +48,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            execContextFSM.toStarted(execContextForTest);
+            execContextFSM.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());

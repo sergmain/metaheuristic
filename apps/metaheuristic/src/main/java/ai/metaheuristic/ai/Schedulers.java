@@ -101,6 +101,7 @@ public class Schedulers {
         /**
          * update statuses of all batches if all related execContexts are finished
          */
+/*
         @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
@@ -112,6 +113,7 @@ public class Schedulers {
             log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
+*/
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
         public void createAllTasks() {

@@ -96,7 +96,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     public void toStarted() {
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            execContextFSM.toStarted(execContextForTest);
+            execContextFSM.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
@@ -152,7 +152,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 
         execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
+        assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
     }
 
     protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {

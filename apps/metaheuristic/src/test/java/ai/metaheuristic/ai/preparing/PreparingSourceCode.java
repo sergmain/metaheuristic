@@ -341,7 +341,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         execContextTopLevelService.createAllTasks();
         this.execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
+        assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest() {

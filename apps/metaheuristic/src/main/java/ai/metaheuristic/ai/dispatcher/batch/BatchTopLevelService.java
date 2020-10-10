@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -58,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -112,6 +114,7 @@ public class BatchTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
     private final ExecContextService execContextService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -225,10 +228,13 @@ public class BatchTopLevelService {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+            final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = file.getInputStream()) {
-                return execContextSyncService.getWithSync(creationResult.execContext.id,
+                uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
                         () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
             }
+            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
+            return uploadingStatus;
         }
         catch (Throwable th) {
             String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();

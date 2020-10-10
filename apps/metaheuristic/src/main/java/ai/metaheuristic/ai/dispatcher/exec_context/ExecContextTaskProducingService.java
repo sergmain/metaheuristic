@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -55,10 +56,19 @@ public class ExecContextTaskProducingService {
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextFSM execContextFSM;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
+    private final ExecContextService execContextService;
 
     @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        produceAndStartAllTasks(sourceCode, execContextId, execContextParamsYaml);
+    }
+
+    public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         long mills = System.currentTimeMillis();
@@ -67,20 +77,10 @@ public class ExecContextTaskProducingService {
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
                 result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
-            execContextFSM.toStopped(execContextId);
+            execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
             return result;
         }
         mills = System.currentTimeMillis();
-        result = produceTasks(execContextId, execContextParamsYaml);
-        log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
-
-        return result;
-    }
-
-    @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasksInternal(execContextId, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
@@ -90,17 +90,16 @@ public class ExecContextTaskProducingService {
             log.info(S.f("#701.180 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
         }
 
-
-        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (produceTaskResult.status==EnumsApi.TaskProducingStatus.OK) {
             execContextFSM.toStarted(execContextId);
         }
         else {
             execContextFSM.toError(execContextId);
         }
-        result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
+
+        log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
 
         return result;
     }
@@ -147,7 +146,6 @@ public class ExecContextTaskProducingService {
                 return result;
             }
             parentProcesses.computeIfAbsent(p.processCode, o->new ArrayList<>()).add(result.taskId);
-            okResult.numberOfTasks += result.numberOfTasks;
         }
         return okResult;
     }

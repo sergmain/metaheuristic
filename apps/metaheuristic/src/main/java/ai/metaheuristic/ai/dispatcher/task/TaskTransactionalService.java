@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -68,35 +69,27 @@ public class TaskTransactionalService {
         return task;
     }
 
-    @Transactional
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId,
+            ExecContextParamsYaml execContextParamsYaml, ExecContextImpl execContext,
             List<Long> parentTaskIds) {
-
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContext.id);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
-        try {
-            // for external Functions internalContextId==process.internalContextId
-            TaskImpl t = taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
-                    execContextParamsYaml.variables.inline);
-            if (t == null) {
-                result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
-                result.error = "#375.080 Unknown reason of error while task creation";
-                return result;
-            }
-            result.taskId = t.getId();
-            List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
-            execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, taskWithContexts);
-        } catch (TaskCreationException e) {
+        // for external Functions internalContextId==process.internalContextId
+        TaskImpl t = taskProducingService.createTaskInternal(execContext.id, execContextParamsYaml, process, process.internalContextId,
+                execContextParamsYaml.variables.inline);
+        if (t == null) {
             result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
-            result.error = "#375.100 task creation error " + e.getMessage();
-            log.error(result.error);
+            result.error = "#375.080 Unknown reason of error while task creation";
             return result;
         }
-        result.numberOfTasks=1;
+        result.taskId = t.getId();
+        List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+        execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskWithContexts);
+
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
     }

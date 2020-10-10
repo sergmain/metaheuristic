@@ -94,12 +94,6 @@ public class ExecContextFSM {
     private final ExecContextService execContextService;
 
     @Transactional
-    public void toStarted(ExecContext execContext) {
-        execContextSyncService.checkWriteLockPresent(execContext.getId());
-        toStarted(execContext.getId());
-    }
-
-    @Transactional
     public void toStarted(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STARTED);
@@ -109,12 +103,6 @@ public class ExecContextFSM {
     public void toStopped(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         toState(execContextId, EnumsApi.ExecContextState.STOPPED);
-    }
-
-    @Transactional
-    public void toProduced(Long execContextId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-        toState(execContextId, EnumsApi.ExecContextState.PRODUCED);
     }
 
     public void toFinished(ExecContextImpl execContext) {
@@ -175,6 +163,12 @@ public class ExecContextFSM {
         }
         status = execContextTargetState(execContextId, execState, companyUniqueId);
         return status;
+    }
+
+    public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        execContext.setState(execState.code);
+        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     private OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {

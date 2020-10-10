@@ -19,14 +19,12 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -50,7 +48,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
@@ -61,15 +58,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
  * Date: 6/1/2019
  * Time: 4:18 PM
  */
-@SuppressWarnings({"UnusedReturnValue"})
+@SuppressWarnings({"UnusedReturnValue", "DuplicatedCode"})
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -89,7 +84,6 @@ public class BatchService {
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextSyncService execContextSyncService;
-    private final ApplicationEventPublisher eventPublisher;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -106,7 +100,7 @@ public class BatchService {
     private void changeStateToPreparing(Batch b) {
             if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
                     b.execState != Enums.BatchExecState.Preparing.code) {
-                throw new IllegalStateException("\"#990.020 Can't change state to Preparing, " +
+                throw new IllegalStateException("#990.020 Can't change state to Preparing, " +
                         "current state: " + Enums.BatchExecState.toState(b.execState));
             }
             if (b.execState == Enums.BatchExecState.Preparing.code) {
@@ -118,7 +112,7 @@ public class BatchService {
 
     private void changeStateToProcessing(Batch b) {
         if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
-            throw new IllegalStateException("\"#990.040 Can't change state to Finished, " +
+            throw new IllegalStateException("#990.040 Can't change state to Finished, " +
                     "current state: " + Enums.BatchExecState.toState(b.execState));
         }
         if (b.execState == Enums.BatchExecState.Processing.code) {
@@ -129,6 +123,7 @@ public class BatchService {
 //            return batchCache.save(b);
     }
 
+/*
     private void changeStateToFinished(Long batchId) {
             try {
                 Batch b = batchCache.findById(batchId);
@@ -159,22 +154,6 @@ public class BatchService {
         for (Long batchId : map.keySet()) {
             boolean isFinished = true;
             for (BatchAndExecContextStates execStates : map.get(batchId)) {
-/*
-                public enum ExecContextState {
-                    ERROR(-2),          // some error in configuration
-                    UNKNOWN(-1),        // unknown state
-                    NONE(0),            // just created execContext
-                    PRODUCING(1),       // producing was just started
-                    PRODUCED(2),        // producing was finished
-                    STARTED(3),         // started
-                    STOPPED(4),         // stopped
-                    FINISHED(5),        // finished
-                    DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of experiments
-                    EXPORTING_TO_EXPERIMENT_RESULT(7),    // execContext is marked as needed to be exported to ExperimentResult
-                    EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED(8),    // execContext is marked as needed to be exported to ExperimentResult and export was started
-                    EXPORTED_TO_EXPERIMENT_RESULT(9);    // execContext was exported to ExperimentResult
-*/
-
                 if (execStates.execContextState != EnumsApi.ExecContextState.ERROR.code && execStates.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
                     isFinished = false;
                     break;
@@ -185,6 +164,7 @@ public class BatchService {
             }
         }
     }
+*/
 
     @Nullable
     @Transactional(readOnly = true)
@@ -259,30 +239,23 @@ public class BatchService {
         if (S.b(startInputAs)) {
             return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
         }
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            return new BatchData.UploadingStatus("#981.205 ExecContext was lost");
+        }
         variableService.createInitialized(is, size, startInputAs, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
 
-        Batch b = new Batch(sourceCode.id, execContextId, Enums.BatchExecState.Stored,
-                dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
-
-        BatchParamsYaml bpy = new BatchParamsYaml();
-        bpy.username = dispatcherContext.account.username;
-        b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
-//        b = batchCache.save(b);
-
-        dispatcherEventService.publishBatchEvent(
-                EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
-                sourceCode.uid, null, b.id, execContextId, dispatcherContext );
+        Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
 
         changeStateToPreparing(b);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.changeExecContextState(EnumsApi.ExecContextState.PRODUCING, execContextId, dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAllTasks(sourceCode, execContextId, execContextParamsYaml);
-        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
 
         if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
             throw new BatchResourceProcessingException(result.sourceCodeValidationResult.error);
@@ -296,6 +269,21 @@ public class BatchService {
 
         BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, execContextId);
         return uploadingStatus;
+    }
+
+    private Batch createBatch(SourceCodeImpl sourceCode, Long execContextId, DispatcherContext dispatcherContext) {
+        Batch b = new Batch(sourceCode.id, execContextId, Enums.BatchExecState.Stored,
+                dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
+
+        BatchParamsYaml bpy = new BatchParamsYaml();
+        bpy.username = dispatcherContext.account.username;
+        b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
+//        b = batchCache.save(b);
+
+        dispatcherEventService.publishBatchEvent(
+                EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
+                sourceCode.uid, null, b.id, execContextId, dispatcherContext );
+        return b;
     }
 
     @Transactional
