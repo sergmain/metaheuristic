@@ -18,13 +18,11 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
@@ -35,7 +33,6 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -86,7 +83,6 @@ public class ExecContextFSM {
     private final TaskTransactionalService taskTransactionalService;
     private final DispatcherEventService dispatcherEventService;
     private final ApplicationEventPublisher eventPublisher;
-    private final ProcessorCache processorCache;
     private final TaskService taskService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
@@ -437,11 +433,11 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(ExecContextImpl execContext, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl findUnassignedTaskAndAssign(ExecContextImpl execContext, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
-        AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));
+        AtomicLong longHolder = bannedSince.computeIfAbsent(processorId, o -> new AtomicLong(0));
         if (longHolder.get()!=0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
@@ -484,7 +480,7 @@ public class ExecContextFSM {
 
                 if (gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
                     log.warn("#303.480 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
-                            processor.getId(), task.getId(), psy.gitStatusInfo
+                            processorId, task.getId(), psy.gitStatusInfo
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
@@ -494,7 +490,7 @@ public class ExecContextFSM {
                     String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#303.500 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                task.getId(), processor.getId(), taskParamYaml.task.function.env
+                                task.getId(), processorId, taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
                         continue;
@@ -505,7 +501,7 @@ public class ExecContextFSM {
                 if (psy.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
                     log.info("#303.520 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            processor.getId(), task.getId(), psy.os, supportedOS
+                            processorId, task.getId(), psy.os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
@@ -524,7 +520,7 @@ public class ExecContextFSM {
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#303.560 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), processor.id, psy.taskParamsVersion);
+                            resultTask.getId(), processorId, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
                 }
@@ -544,13 +540,13 @@ public class ExecContextFSM {
         longHolder.set(0);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setProcessorId(processor.getId());
+        resultTask.setProcessorId(processorId);
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
         TaskImpl t = taskService.save(resultTask);
 
         execContextTaskStateService.updateTaskExecStates(execContext, t, EnumsApi.TaskExecState.IN_PROGRESS, null);
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContext.id);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorId, resultTask.getId(), execContext.id);
 
         return t;
     }
@@ -627,11 +623,11 @@ public class ExecContextFSM {
     @Nullable
     @Transactional
     public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
 
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned, execContextId);
+        final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
         if (t==null) {
             return null;
@@ -656,7 +652,7 @@ public class ExecContextFSM {
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
                 log.warn("#303.660 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.getId(), processor.id, psy.taskParamsVersion);
+                        task.getId(), processorId, psy.taskParamsVersion);
                 return null;
             }
 
@@ -670,7 +666,7 @@ public class ExecContextFSM {
 
     @Nullable
     private TaskImpl getTaskAndAssignToProcessorInternal(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -682,7 +678,7 @@ public class ExecContextFSM {
             return null;
         }
 
-        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processor.id);
+        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processorId);
         boolean allAssigned = false;
         if (reportProcessorTaskStatus.statuses!=null) {
             List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> lostTasks = reportProcessorTaskStatus.statuses.stream()
@@ -691,7 +687,7 @@ public class ExecContextFSM {
                 allAssigned = true;
             }
             else {
-                log.info("#303.740 Found the lost tasks at processor #{}, tasks #{}", processor.id, lostTasks);
+                log.info("#303.740 Found the lost tasks at processor #{}, tasks #{}", processorId, lostTasks);
                 for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
                     TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
                     if (task==null) {
@@ -699,7 +695,7 @@ public class ExecContextFSM {
                     }
                     if (task.execState!= EnumsApi.TaskExecState.IN_PROGRESS.value) {
                         log.warn("#303.760 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
-                                processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
+                                processorId, task.id, EnumsApi.TaskExecState.from(task.execState));
                         // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
                     }
                     return task;
@@ -708,11 +704,11 @@ public class ExecContextFSM {
         }
         if (allAssigned) {
             // this processor already has active task
-            log.warn("#303.780 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processor.id, activeTaskIds);
+            log.warn("#303.780 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
             return null;
         }
 
-        TaskImpl result = findUnassignedTaskAndAssign(execContext, processor, psy, isAcceptOnlySigned);
+        TaskImpl result = findUnassignedTaskAndAssign(execContext, processorId, psy, isAcceptOnlySigned);
 
         return result;
     }

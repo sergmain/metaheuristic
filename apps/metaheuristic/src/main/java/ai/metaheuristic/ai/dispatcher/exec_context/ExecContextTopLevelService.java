@@ -18,25 +18,20 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,11 +61,9 @@ public class ExecContextTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
-    private final ExecContextTaskProducingService execContextTaskProducingService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ProcessorCache processorCache;
-    private final SourceCodeCache sourceCodeCache;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId, ()-> execContextService.getExecContextState(sourceCodeId, execContextId, context));
@@ -162,7 +155,7 @@ public class ExecContextTopLevelService {
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
-                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId));
+                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -234,6 +227,7 @@ public class ExecContextTopLevelService {
                 () -> execContextFSM.processResendTaskOutputVariable(processorId, status, taskId, variableId));
     }
 
+/*
     // TODO 2019.05.19 add reporting of producing of tasks
     // TODO 2020.01.17 reporting to where? do we need to implement it?
     // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
@@ -266,6 +260,7 @@ public class ExecContextTopLevelService {
         log.info("#701.040 Producing of tasks was finished");
     }
 
+*/
 
 
 }

@@ -20,8 +20,10 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -84,7 +86,8 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         long mills = System.currentTimeMillis();
 
-        execContextTopLevelService.createAllTasks();
+        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
 
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 

@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -122,6 +123,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextTopLevelService execContextTopLevelService;
+
+    @Autowired
+    public ExecContextTaskProducingService execContextTaskProducingService;
 
     @Autowired
     public ExecContextTaskStateService execContextTaskStateService;
@@ -338,7 +342,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
             return null;
         });
 
-        execContextTopLevelService.createAllTasks();
+        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+
         this.execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
