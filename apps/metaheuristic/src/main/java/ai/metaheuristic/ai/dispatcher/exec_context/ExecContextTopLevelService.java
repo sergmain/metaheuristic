@@ -30,11 +30,13 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -253,9 +255,11 @@ public class ExecContextTopLevelService {
                 execContextFSM.toError(execContextId);
                 continue;
             }
+            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+
             execContextSyncService.getWithSyncNullable(execContextId, ()-> {
                 log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", ec.sourceCodeId, ec.getParams());
-                execContextTaskProducingService.produceAllTasks(sourceCode, execContextId);
+                execContextTaskProducingService.produceAllTasks(sourceCode, execContextId, execContextParamsYaml);
                 return null;
             });
         }

@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -251,9 +252,13 @@ public class BatchService {
     @Transactional
     public BatchData.UploadingStatus createBatchForFile(
             InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, Long execContextId,
-            String startInputAs,
+            ExecContextParamsYaml execContextParamsYaml,
             final DispatcherContext dispatcherContext) {
 
+        String startInputAs = execContextParamsYaml.variables.startInputAs;
+        if (S.b(startInputAs)) {
+            return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
+        }
         variableService.createInitialized(is, size, startInputAs, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
 
         Batch b = new Batch(sourceCode.id, execContextId, Enums.BatchExecState.Stored,
@@ -276,7 +281,7 @@ public class BatchService {
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAllTasks(sourceCode, execContextId);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAllTasks(sourceCode, execContextId, execContextParamsYaml);
         eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
 
         if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {

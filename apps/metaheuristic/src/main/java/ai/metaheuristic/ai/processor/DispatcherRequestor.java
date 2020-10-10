@@ -17,9 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -73,10 +71,10 @@ public class DispatcherRequestor {
     private final ProcessorCommandProcessor processorCommandProcessor;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = getHttpRequestFactory();
-    private RestTemplate restTemplate;
 
-    private DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
-    private String serverRestUrl;
+    private final RestTemplate restTemplate;
+    private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
+    private final String serverRestUrl;
 
     public DispatcherRequestor(String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
@@ -218,7 +216,6 @@ public class DispatcherRequestor {
         }
 
         try {
-            Monitoring.log("##010", Enums.Monitor.MEMORY);
             ProcessorCommParamsYaml scpy = swap();
 
             final String processorId = metadataService.getProcessorId(dispatcherUrl);
@@ -236,9 +233,7 @@ public class DispatcherRequestor {
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
-                    Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
-                    Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
                         setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired));
                     }
@@ -269,9 +264,7 @@ public class DispatcherRequestor {
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
 
-                Monitoring.log("##013", Enums.Monitor.MEMORY);
                 setReportTaskProcessingResult(scpy, processorTaskService.reportTaskProcessingResult(dispatcherUrl));
-                Monitoring.log("##014", Enums.Monitor.MEMORY);
 
                 scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
             }
@@ -289,12 +282,10 @@ public class DispatcherRequestor {
 
                 String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
-                Monitoring.log("##015", Enums.Monitor.MEMORY);
 
                 log.debug("Start to request a dispatcher at {}", url);
                 log.debug("ExchangeData:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-                Monitoring.log("##016", Enums.Monitor.MEMORY);
                 String result = response.getBody();
                 log.debug("ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
@@ -307,9 +298,7 @@ public class DispatcherRequestor {
                     log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
-                Monitoring.log("##017", Enums.Monitor.MEMORY);
                 processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
-                Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {
                     case UNAUTHORIZED:

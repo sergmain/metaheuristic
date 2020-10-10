@@ -45,6 +45,7 @@ import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -223,13 +224,10 @@ public class BatchTopLevelService {
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
-            String startInputAs = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params).variables.startInputAs;
-            if (S.b(startInputAs)) {
-                return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
-            }
+            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
             try(InputStream is = file.getInputStream()) {
                 return execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode, creationResult.execContext.id, startInputAs, dispatcherContext));
+                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
             }
         }
         catch (Throwable th) {

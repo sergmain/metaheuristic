@@ -52,8 +52,6 @@ public final class Enums {
         GENERAL_ERROR
     }
 
-    public enum Monitor { MEMORY }
-
     public enum ResendTaskOutputResourceStatus {
         SEND_SCHEDULED, VARIABLE_NOT_FOUND, TASK_IS_BROKEN, TASK_NOT_FOUND, TASK_PARAM_FILE_NOT_FOUND, OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE
     }

@@ -17,17 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -62,7 +57,7 @@ public class ExecContextTaskProducingService {
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
@@ -75,23 +70,19 @@ public class ExecContextTaskProducingService {
             execContextFSM.toStopped(execContextId);
             return result;
         }
-        Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = produceTasks(execContextId);
+        result = produceTasks(execContextId, execContextParamsYaml);
         log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
-        Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
     }
 
     @Transactional
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(Long execContextId) {
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
-
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = produceTasks(execContextId, execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = produceTasksInternal(execContextId, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
             log.info(S.f("#701.160 Tasks were produced with status %s", produceTaskResult.status));
         }
@@ -114,7 +105,7 @@ public class ExecContextTaskProducingService {
         return result;
     }
 
-    private TaskData.ProduceTaskResult produceTasks(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    private TaskData.ProduceTaskResult produceTasksInternal(Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
