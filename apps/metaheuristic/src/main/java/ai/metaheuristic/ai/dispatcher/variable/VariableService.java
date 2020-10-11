@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -64,7 +63,6 @@ public class VariableService {
 
     private final EntityManager em;
     private final VariableRepository variableRepository;
-    private final Globals globals;
     private final ExecContextSyncService execContextSyncService;
 
     @SuppressWarnings({"SameParameterValue"})
@@ -111,32 +109,6 @@ public class VariableService {
             return null;
         }
         return taskContextId.substring(0, taskContextId.lastIndexOf(',')).strip();
-    }
-
-    @Nullable
-    @Transactional(readOnly = true)
-    public Variable getBinaryData(Long id) {
-        if (!globals.isUnitTesting) {
-            throw new IllegalStateException("#087.010 this method intended to be only for test cases");
-        }
-        return getBinaryData(id, true);
-    }
-
-    @Nullable
-    private Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
-        try {
-            Variable v = variableRepository.findById(id).orElse(null);
-            if (v==null) {
-                return null;
-            }
-            if (isInitBytes) {
-                Blob blob = v.getData();
-                v.bytes = blob.getBytes(1, (int) blob.length());
-            }
-            return v;
-        } catch (Throwable th) {
-            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);
-        }
     }
 
     @Transactional(readOnly = true)

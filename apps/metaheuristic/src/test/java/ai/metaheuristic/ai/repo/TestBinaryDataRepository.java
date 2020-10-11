@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ public class TestBinaryDataRepository {
 
     @Autowired
     private VariableService variableService;
+
+    @Autowired
+    private TxSupportForTestingService txSupportForTestingService;
 
     @Autowired
     private VariableRepository variableRepository;
@@ -67,7 +71,7 @@ public class TestBinaryDataRepository {
 
         Timestamp ts = d1.getUploadTs();
 
-        final Variable d2 = variableService.getBinaryData(d1.getId());
+        final Variable d2 = txSupportForTestingService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -80,7 +84,7 @@ public class TestBinaryDataRepository {
         execContextSyncService.getWithSyncNullable(10L,
                 ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2));
 
-        final Variable d3 = variableService.getBinaryData(d2.getId());
+        final Variable d3 = txSupportForTestingService.getBinaryData(d2.getId());
 
         assertNotNull(d3);
         assertNotEquals(ts, d3.getUploadTs());

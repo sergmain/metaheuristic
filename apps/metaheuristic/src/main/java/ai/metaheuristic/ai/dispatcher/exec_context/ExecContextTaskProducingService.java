@@ -37,7 +37,6 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -55,18 +54,7 @@ public class ExecContextTaskProducingService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskTransactionalService taskTransactionalService;
     private final SourceCodeValidationService sourceCodeValidationService;
-    private final ExecContextFSM execContextFSM;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
-    private final ExecContextService execContextService;
-
-    @Transactional
-    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            throw new IllegalStateException("Need better solution for this state");
-        }
-        produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
-    }
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
         TxUtils.checkTxExists();

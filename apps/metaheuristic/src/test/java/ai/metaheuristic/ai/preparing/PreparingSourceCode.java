@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -135,6 +136,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public VariableRepository variableRepository;
+
+    @Autowired
+    public TxSupportForTestingService txSupportForTestingService;
 
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
@@ -343,7 +347,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         });
 
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
 
         this.execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
