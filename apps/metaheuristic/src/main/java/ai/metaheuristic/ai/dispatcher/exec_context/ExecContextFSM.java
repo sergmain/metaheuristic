@@ -25,10 +25,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -492,7 +489,7 @@ public class ExecContextFSM {
                     continue;
                 }
 
-                if (gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
+                if (TaskUtils.gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
                     log.warn("#303.480 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processorId, task.getId(), psy.gitStatusInfo
                     );
@@ -602,23 +599,6 @@ public class ExecContextFSM {
         return setParams(task.id, taskParams);
     }
 */
-
-    private static boolean gitUnavailable(TaskParamsYaml.TaskYaml task, boolean gitNotInstalled) {
-        if (task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-            return true;
-        }
-        for (TaskParamsYaml.FunctionConfig preFunction : task.preFunctions) {
-            if (preFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                return true;
-            }
-        }
-        for (TaskParamsYaml.FunctionConfig postFunction : task.postFunctions) {
-            if (postFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     @Transactional
     public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
