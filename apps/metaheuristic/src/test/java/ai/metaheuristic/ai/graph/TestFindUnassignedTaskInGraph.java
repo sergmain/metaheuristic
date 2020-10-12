@@ -73,7 +73,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
 
 
-            OperationStatusRest osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id,
+            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id,
                     List.of(), List.of(new TaskApiData.TaskWithContext(1L, "1")));
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -83,21 +83,21 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(1, count);
 
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(21L, "12###1"), new TaskApiData.TaskWithContext(22L, "12###2")));
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
                     List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
                             new TaskApiData.TaskWithContext(312L, "123###2"),
                             new TaskApiData.TaskWithContext(313L, "123###3")));
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(22L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(22L),
                     List.of(new TaskApiData.TaskWithContext(321L, "123###4"),
                             new TaskApiData.TaskWithContext(322L, "123###5"),
                             new TaskApiData.TaskWithContext(323L, "123###6")));
 
             // 999L is mh.finish task
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(311L, 312L, 313L, 321L, 322L, 323L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(311L, 312L, 313L, 321L, 322L, 323L),
                     List.of(new TaskApiData.TaskWithContext(999L, "1")));
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);

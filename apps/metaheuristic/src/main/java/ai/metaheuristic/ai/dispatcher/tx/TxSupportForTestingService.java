@@ -85,20 +85,14 @@ public class TxSupportForTestingService {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("#087.010 this method intended to be only for test cases");
         }
-        return getBinaryData(id, true);
-    }
 
-    @Nullable
-    public Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
             Variable v = variableRepository.findById(id).orElse(null);
             if (v==null) {
                 return null;
             }
-            if (isInitBytes) {
-                Blob blob = v.getData();
-                v.bytes = blob.getBytes(1, (int) blob.length());
-            }
+            Blob blob = v.getData();
+            v.bytes = blob.getBytes(1, (int) blob.length());
             return v;
         } catch (Throwable th) {
             throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);

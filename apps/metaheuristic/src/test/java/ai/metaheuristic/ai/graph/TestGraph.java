@@ -82,7 +82,7 @@ public class TestGraph extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            OperationStatusRest osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -92,7 +92,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, count);
 
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###1")));
             assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));

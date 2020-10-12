@@ -64,7 +64,7 @@ public class TestGraphEdges extends PreparingSourceCode {
 
         assertNotNull(execContextForTest);
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            OperationStatusRest osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -73,7 +73,7 @@ public class TestGraphEdges extends PreparingSourceCode {
             long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
             assertEquals(1, count);
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id,List.of(1L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id,List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(21L, "123###1"),
                             new TaskApiData.TaskWithContext(22L, "123###1"),
                             new TaskApiData.TaskWithContext(23L, "123###1")));
@@ -88,7 +88,7 @@ public class TestGraphEdges extends PreparingSourceCode {
             assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, 22L, EnumsApi.TaskExecState.NONE, "123###1")));
             assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, 23L, EnumsApi.TaskExecState.NONE, "123###1")));
 
-            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
                     List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
                             new TaskApiData.TaskWithContext(312L, "123###1"),
                             new TaskApiData.TaskWithContext(313L, "123###1")));
