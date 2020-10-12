@@ -64,6 +64,7 @@ public class ExecContextTaskProducingService {
         long mills = System.currentTimeMillis();
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         log.info("#701.100 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
                 result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
@@ -71,6 +72,7 @@ public class ExecContextTaskProducingService {
             return result;
         }
         mills = System.currentTimeMillis();
+
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasksInternal(execContext, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {

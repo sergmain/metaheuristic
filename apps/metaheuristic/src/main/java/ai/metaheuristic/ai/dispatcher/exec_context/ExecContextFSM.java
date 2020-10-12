@@ -23,17 +23,13 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -68,8 +64,6 @@ public class ExecContextFSM {
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
-    private final TaskHelperService taskHelperService;
-    private final TaskTransactionalService taskTransactionalService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderService taskProviderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
@@ -292,51 +286,23 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    private TaskImpl prepareVariables(TaskImpl task) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-
-        final Long execContextId = task.execContextId;
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#303.580 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
-            return null;
-        }
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
-        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
-        if (p==null) {
-            log.warn("#303.600 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
-            return null;
-        }
-
-        // we dont need to create inputs because all inputs are outputs of previous processes,
-        // except globals and startInputAs
-        // but we need to initialize descriptor of input variable
-        p.inputs.stream()
-                .map(v -> taskHelperService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
-                .collect(Collectors.toCollection(()->taskParams.task.inputs));
-
-        return taskTransactionalService.initOutputVariables(execContext, task, p, taskParams);
-    }
-
-    @Nullable
     public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
             ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
         TxUtils.checkTxNotExists();
 
-        final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
+        final TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
-        if (t==null) {
+        if (task==null) {
             return null;
         }
         try {
-            TaskImpl task = prepareVariables(t);
+/*
+            TaskImpl task = taskTransactionalService.prepareVariables(t);
             if (task == null) {
                 log.warn("#303.640 The task is null after prepareVariables(task)");
                 return null;
             }
+*/
 
             String params;
             try {

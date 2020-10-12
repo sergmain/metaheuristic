@@ -110,7 +110,7 @@ public class TaskWithInternalContextService {
                     }
                 }
 
-                taskTransactionalService.initOutputVariables(execContext, task, p, taskParamsYaml);
+                taskTransactionalService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext, task, p.internalContextId, taskParamsYaml, holder);

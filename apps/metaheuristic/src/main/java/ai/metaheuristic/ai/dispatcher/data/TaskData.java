@@ -38,6 +38,7 @@ public class TaskData {
 
         public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {
             this.status = status;
+            this.error = error;
         }
     }
 

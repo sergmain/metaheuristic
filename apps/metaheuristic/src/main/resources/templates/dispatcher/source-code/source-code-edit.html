@@ -4,23 +4,26 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Edit the source code</h1>
+        <h1 class="widget-header">The source code</h1>
 
         <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodeResult"*/-->
+
         <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-edit-commit}" accept-charset="UTF-8" id="processor-form" name="f">
             <input type="hidden" name="sourceCodeId" th:value="${result.id}"/>
             <fieldset>
 
+<!--
                 <label for="sourceCodeYamlAsStr">Parameters of sourceCode</label>
                 <textarea name="sourceCodeYamlAsStr" id="sourceCodeYamlAsStr" placeholder="Parameters of source code" cols="70" rows="15"
                           th:text="${result.source}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
+-->
 
                 <table>
                     <tr>
-                        <td>
-                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
-                        </td>
+                        <td><pre style="display: none;" id="processor-status" th:if="${result.source}!=null" th:text="${result.source}">Status of processor </pre></td>
+                    </tr>
+                    <tr>
                         <td>
                             &nbsp;
                         </td>

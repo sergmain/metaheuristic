@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,7 @@ public class TaskProviderService {
 
     @Nullable
     public TaskImpl findUnassignedTaskAndAssign(Long execContextId, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+        TxUtils.checkTxNotExists();
         synchronized (syncObj) {
             TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned);
             if (task!=null) {

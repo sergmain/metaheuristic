@@ -218,6 +218,7 @@ public class DispatcherParamsService {
             }
 /*
         // todo 2020-04-24 this isn't working. need better solution to reduce number of db interaction
+        //  2020-10-12 what is the problem?
         if (dispatcherCacheValue!=null && dispatcher.params.equals(dispatcherCacheValue.params)) {
             log.info("Dispatcher params is the same. Won't be saved  to db");
             return;

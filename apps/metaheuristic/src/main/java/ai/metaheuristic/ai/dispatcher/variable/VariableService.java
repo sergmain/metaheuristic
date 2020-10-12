@@ -207,22 +207,22 @@ public class VariableService {
         return data;
     }
 
-    public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
+    public void initOutputVariables(TaskParamsYaml taskParams, Long execContextId, ExecContextParamsYaml.Process p) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        execContextSyncService.checkWriteLockPresent(execContextId);
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
                         S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                p.processCode, variable.context, p.internalContextId, execContext.id));
+                                p.processCode, variable.context, p.internalContextId, execContextId));
             }
 
-            SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContext.id);
+            SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
             if (sv == null) {
 //                log.info(S.f("Variable %s wasn't initialized for process %s.", variable.name, p.processCode));
-                Variable v = createUninitialized(variable.name, execContext.id, contextId);
+                Variable v = createUninitialized(variable.name, execContextId, contextId);
 
                 // even variable.getNullable() can be false, we set empty to true because variable will be inited later
                 // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
