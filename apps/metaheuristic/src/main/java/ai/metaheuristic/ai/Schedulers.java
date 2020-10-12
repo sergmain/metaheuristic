@@ -17,7 +17,6 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
-import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
@@ -53,7 +52,6 @@ public class Schedulers {
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
         private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
-        private final BatchService batchService;
         private final ReplicationService replicationService;
         private final ExecContextTopLevelService execContextTopLevelService;
 
@@ -73,7 +71,7 @@ public class Schedulers {
             if (!globals.dispatcherEnabled) {
                 return;
             }
-            // if this dispatcher is source of assets then don't do any update of execContext
+            // if this dispatcher is the source of assets then don't do any update of execContext
             // because this dispatcher isn't processing any tasks
             if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
                 return;
@@ -115,19 +113,17 @@ public class Schedulers {
         }
 */
 
-/*
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
-        public void createAllTasks() {
+        @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
+        public void fillQueueForProcessing() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.dispatcherEnabled) {
                 return;
             }
-            log.info("Invoking execContextTopLevelService.createAllTasks()");
+            log.info("Invoking execContextTopLevelService.fillQueueForProcessing()");
             execContextTopLevelService.createAllTasks();
         }
-*/
 
         @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
         public void processInternalTasks() {
@@ -257,13 +253,6 @@ public class Schedulers {
                 return;
             }
 
-/*
-            String url = roundRobin.next();
-            if (url==null) {
-                log.info("Can't find any enabled dispatcher");
-                return;
-            }
-*/
             Set<String> dispatchers = roundRobin.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");

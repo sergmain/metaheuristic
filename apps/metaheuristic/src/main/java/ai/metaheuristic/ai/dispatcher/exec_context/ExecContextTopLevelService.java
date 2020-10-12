@@ -206,16 +206,6 @@ public class ExecContextTopLevelService {
         execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result));
     }
 
-    @Async
-    @EventListener
-    public void reconcileStates(final ReconcileStatesEvent event) {
-        reconcileStates(event.execContextId);
-    }
-
-    public void reconcileStates(Long execContextId) {
-        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.reconcileStatesWithTx(execContextId));
-    }
-
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {

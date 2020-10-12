@@ -67,6 +67,11 @@ public class TaskProviderTransactionalService {
         taskIds.remove(taskId);
     }
 
+
+    public int countOfTasks() {
+        return taskIds.size();
+    }
+
     @Nullable
     @Transactional
     public TaskImpl findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
@@ -191,6 +196,5 @@ public class TaskProviderTransactionalService {
 
         return t;
     }
-
 
 }

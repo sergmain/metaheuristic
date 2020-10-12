@@ -66,7 +66,6 @@ public class ExecContextService {
 
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
-
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
