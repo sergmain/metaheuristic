@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
  * Date: 1/18/2020
  * Time: 3:34 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Profile("dispatcher")
 @Slf4j

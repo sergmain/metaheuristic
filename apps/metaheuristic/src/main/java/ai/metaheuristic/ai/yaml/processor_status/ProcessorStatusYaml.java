@@ -58,8 +58,10 @@ public class ProcessorStatusYaml implements BaseParams {
     public String sessionId;
 
     // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-    // it'll work but in some cases behaviour can be different
-    // need to change to UTC, Coordinated Universal Time
+    //  it'll work but in some cases behaviour can be different
+    //  need to change to UTC, Coordinated Universal Time
+    // TODO 2020-10-11 actually, it's working in prod with multi-time-zoned.
+    //  So need to decide about implementing the support of UTC
     public long sessionCreatedOn;
     public String ip;
     public String host;
