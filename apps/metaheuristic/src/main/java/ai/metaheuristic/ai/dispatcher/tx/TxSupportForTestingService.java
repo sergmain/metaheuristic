@@ -27,7 +27,9 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingServi
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
+import java.util.List;
 
 /**
  * @author Serge
@@ -100,6 +103,25 @@ public class TxSupportForTestingService {
         } catch (Throwable th) {
             throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);
         }
+    }
+
+    @Transactional
+    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
+        }
+        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
+            return EnumsApi.TaskProducingStatus.OK;
+        }
+        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
+        execContextService.save(execContext);
+        return EnumsApi.TaskProducingStatus.OK;
+    }
+
+    @Transactional
+    public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        return execContextFSM.addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
     }
 
 

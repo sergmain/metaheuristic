@@ -197,10 +197,6 @@ public class ExecContextTopLevelService {
         return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.resetTaskWithTx(execContextId, taskId));
     }
 
-    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.toProducing(execContextId));
-    }
-
     private void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         Long execContextId = taskRepository.getExecContextId(result.taskId);
         if (execContextId==null) {

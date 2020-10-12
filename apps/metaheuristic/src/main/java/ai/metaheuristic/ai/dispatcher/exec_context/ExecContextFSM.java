@@ -187,11 +187,6 @@ public class ExecContextFSM {
         return null;
     }
 
-    @Transactional
-    public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
-    }
-
     public OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
         TxUtils.checkTxExists();
 
@@ -474,23 +469,10 @@ public class ExecContextFSM {
     }
 */
 
-    @Transactional
-    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
-        }
-        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-            return EnumsApi.TaskProducingStatus.OK;
-        }
-        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-        execContextService.save(execContext);
-        return EnumsApi.TaskProducingStatus.OK;
-    }
-
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
             ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
+        TxUtils.checkTxNotExists();
 
         final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
