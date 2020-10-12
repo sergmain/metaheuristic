@@ -101,7 +101,6 @@ public class ExecContextCache {
     @Nullable
 //    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
-        TxUtils.checkTxExists();
         return execContextRepository.findById(id).orElse(null);
     }
 }

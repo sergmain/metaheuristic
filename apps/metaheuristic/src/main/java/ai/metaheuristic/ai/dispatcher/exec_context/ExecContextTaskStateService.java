@@ -43,14 +43,23 @@ public class ExecContextTaskStateService {
 
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextService execContextService;
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesWithTx(@Nullable ExecContextImpl execContext, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public OperationStatusRest updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            final String es = "#309.020 execContext #" + execContextId+ " wasn't found";
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            final String es = "#303.100 Reporting about non-existed task #" + taskId;
+            final String es = "#309.040 task #" + taskId+ " wasn't found";
             log.warn(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

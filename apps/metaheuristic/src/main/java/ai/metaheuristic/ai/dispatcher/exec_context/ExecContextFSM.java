@@ -17,15 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.*;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskHelperService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -39,7 +40,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +71,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExecContextFSM {
 
-    private final Globals globals;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -81,25 +79,12 @@ public class ExecContextFSM {
     private final TaskRepository taskRepository;
     private final TaskHelperService taskHelperService;
     private final TaskTransactionalService taskTransactionalService;
-    private final DispatcherEventService dispatcherEventService;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskService taskService;
+    private final TaskProviderService taskProviderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextService execContextService;
-
-    /**
-     * Only for testing
-     */
-    @Transactional
-    public void toStarted(Long execContextId) {
-        if (!globals.isUnitTesting) {
-            throw new IllegalStateException("Only for testing");
-        }
-        execContextSyncService.checkWriteLockPresent(execContextId);
-        toState(execContextId, EnumsApi.ExecContextState.STARTED);
-    }
 
 /*
     @Transactional
@@ -134,7 +119,8 @@ public class ExecContextFSM {
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.ERROR);
     }
 
-    private void toState(Long execContextId, EnumsApi.ExecContextState state) {
+    public void toState(Long execContextId, EnumsApi.ExecContextState state) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -162,7 +148,7 @@ public class ExecContextFSM {
         return changeExecContextState(execState, execContextId, companyUniqueId);
     }
 
-    public OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
+    private OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         OperationStatusRest status = checkExecContext(execContextId);
@@ -202,7 +188,13 @@ public class ExecContextFSM {
     }
 
     @Transactional
+    public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
+    }
+
     public OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        TxUtils.checkTxExists();
+
         if (execContext==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -445,125 +437,6 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(ExecContextImpl execContext, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
-
-        AtomicLong longHolder = bannedSince.computeIfAbsent(processorId, o -> new AtomicLong(0));
-        if (longHolder.get()!=0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
-            return null;
-        }
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
-        if (vertices.isEmpty()) {
-            return null;
-        }
-
-        int page = 0;
-        TaskImpl resultTask = null;
-        List<Long> taskIds;
-        while ((taskIds = getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContext.id, vertices, page++)).size()>0) {
-            for (Long taskId : taskIds) {
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                if (task==null) {
-                    continue;
-                }
-                final TaskParamsYaml taskParamYaml;
-                try {
-                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                }
-                catch (YAMLException e) {
-                    log.error("#303.440 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    execContextTaskFinishingService.finishWithError(task, null);
-                    continue;
-                }
-                if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // may be happened because of multi-threaded processing of internal function
-                    continue;
-                }
-                if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#303.460 Task #{} with function '{}' was already processed with status {}",
-                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
-                    continue;
-                }
-                // all tasks with internal function will be processed by scheduler
-                if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
-                    continue;
-                }
-
-                if (TaskUtils.gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
-                    log.warn("#303.480 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
-                            processorId, task.getId(), psy.gitStatusInfo
-                    );
-                    longHolder.set(System.currentTimeMillis());
-                    continue;
-                }
-
-                if (!S.b(taskParamYaml.task.function.env)) {
-                    String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
-                    if (interpreter == null) {
-                        log.warn("#303.500 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                task.getId(), processorId, taskParamYaml.task.function.env
-                        );
-                        longHolder.set(System.currentTimeMillis());
-                        continue;
-                    }
-                }
-
-                final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
-                if (psy.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
-                    log.info("#303.520 Can't assign task #{} to processor #{}, " +
-                                    "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            processorId, task.getId(), psy.os, supportedOS
-                    );
-                    longHolder.set(System.currentTimeMillis());
-                    continue;
-                }
-
-                if (isAcceptOnlySigned) {
-                    if (taskParamYaml.task.function.checksumMap==null || taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o->o.isSigned)) {
-                        log.warn("#303.540 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
-                        continue;
-                    }
-                }
-                resultTask = task;
-                // check that downgrading is supported
-                try {
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                    String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-                } catch (DowngradeNotSupportedException e) {
-                    log.warn("#303.560 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), processorId, psy.taskParamsVersion);
-                    longHolder.set(System.currentTimeMillis());
-                    resultTask = null;
-                }
-                if (resultTask!=null) {
-                    break;
-                }
-            }
-            if (resultTask!=null) {
-                break;
-            }
-        }
-        if (resultTask==null) {
-            return null;
-        }
-
-        // normal way of operation
-        longHolder.set(0);
-
-        resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setProcessorId(processorId);
-        resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        resultTask.setResultResourceScheduledOn(0);
-        TaskImpl t = taskService.save(resultTask);
-
-        execContextTaskStateService.updateTaskExecStates(execContext, t, EnumsApi.TaskExecState.IN_PROGRESS, null);
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorId, resultTask.getId(), execContext.id);
-
-        return t;
-    }
-
-    @Nullable
     private TaskImpl prepareVariables(TaskImpl task) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
@@ -616,11 +489,8 @@ public class ExecContextFSM {
     }
 
     @Nullable
-    @Transactional
     public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
             ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
-
-        execContextSyncService.checkWriteLockPresent(execContextId);
 
         final TaskImpl t = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
         // task won't be returned for an internal function
@@ -662,6 +532,7 @@ public class ExecContextFSM {
     @Nullable
     private TaskImpl getTaskAndAssignToProcessorInternal(
             ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
+        TxUtils.checkTxNotExists();
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -691,19 +562,18 @@ public class ExecContextFSM {
                     if (task.execState!= EnumsApi.TaskExecState.IN_PROGRESS.value) {
                         log.warn("#303.760 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
                                 processorId, task.id, EnumsApi.TaskExecState.from(task.execState));
-                        // TODO 2020-09-26 because this situation shouldn't happened what exactly to do isn't known right now
+                        // TODO 2020-09-26 because this situation shouldn't be happened what exactly to do isn't known right now
                     }
                     return task;
                 }
             }
         }
         if (allAssigned) {
-            // this processor already has active task
-            log.warn("#303.780 !!! Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
+            log.warn("#303.780 ! This processor already has active task. Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
             return null;
         }
 
-        TaskImpl result = findUnassignedTaskAndAssign(execContext, processorId, psy, isAcceptOnlySigned);
+        TaskImpl result = taskProviderService.findUnassignedTaskAndAssign(execContext.id, processorId, psy, isAcceptOnlySigned);
 
         return result;
     }

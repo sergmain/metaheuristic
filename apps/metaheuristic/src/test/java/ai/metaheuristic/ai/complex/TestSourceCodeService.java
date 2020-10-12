@@ -136,7 +136,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
-            execContextFSM.toStarted(execContextForTest.id);
+            txSupportForTestingService.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
 
             SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");

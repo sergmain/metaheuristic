@@ -98,7 +98,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     public void toStarted() {
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            execContextFSM.toStarted(execContextForTest.id);
+            txSupportForTestingService.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;

@@ -64,6 +64,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskProviderService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
+    private final DispatcherEventService dispatcherEventService;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextTaskStateService execContextTaskStateService;
+    private final ExecContextService execContextService;
 
     private static final Object syncObj = new Object();
 
@@ -76,10 +80,14 @@ public class TaskProviderService {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(ExecContextImpl execContext, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    public TaskImpl findUnassignedTaskAndAssign(Long execContextId, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         synchronized (syncObj) {
-            TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(execContext, processorId, psy, isAcceptOnlySigned);
+            TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned);
             if (task!=null) {
+                execContextSyncService.getWithSyncNullable(execContextId,
+                        ()->execContextTaskStateService.updateTaskExecStatesWithTx(execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null));
+
+                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorId, task.id, execContextId);
                 taskProviderTransactionalService.deRegisterTask(task.id);
             }
             return task;

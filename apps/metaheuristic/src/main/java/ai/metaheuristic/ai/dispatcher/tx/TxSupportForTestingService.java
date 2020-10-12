@@ -20,10 +20,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +52,8 @@ public class TxSupportForTestingService {
     private final VariableRepository variableRepository;
     private final ExecContextService execContextService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextFSM execContextFSM;
 
     @Transactional
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
@@ -57,6 +62,18 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("Need better solution for this state");
         }
         execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+    }
+
+    /**
+     * Only for testing
+     */
+    @Transactional
+    public void toStarted(Long execContextId) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        execContextSyncService.checkWriteLockPresent(execContextId);
+        execContextFSM.toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
     @Nullable

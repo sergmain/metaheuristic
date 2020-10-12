@@ -82,7 +82,7 @@ public class TestGraph extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            OperationStatusRest osr = execContextFSM.addTasksToGraph(execContextService.findById(execContextForTest.id), List.of(),
+            OperationStatusRest osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(),
                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -92,7 +92,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, count);
 
 
-            osr = execContextFSM.addTasksToGraph(execContextService.findById(execContextForTest.id), List.of(1L),
+            osr = execContextFSM.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###1")));
             assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -106,9 +106,9 @@ public class TestGraph extends PreparingSourceCode {
             assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE, "123###1")));
             assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###1")));
 
-            setExecStateError(execContextForTest.id, 1L, "An error");
-            setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
-            setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
+            execContextTaskFinishingService.finishWithErrorWithTx(1L, "An error", execContextForTest.id, null);
+            execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 2L, EnumsApi.TaskExecState.NONE, "123###1");
+            execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 3L, EnumsApi.TaskExecState.NONE, "123###1");
             return null;
         });
 
@@ -128,7 +128,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(2, count);
 
 
-            setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.NONE);
+            execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 1L, EnumsApi.TaskExecState.NONE, "123###1");
             execContextGraphService.updateGraphWithResettingAllChildrenTasksWithTx(execContextService.findById(execContextForTest.id), 1L);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -138,14 +138,6 @@ public class TestGraph extends PreparingSourceCode {
             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
             return null;
         });
-    }
-
-    private void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
-        execContextTaskStateService.updateTaskExecStatesWithTx(execContextService.findById(workbook.id), id, execState, "123###1");
-    }
-
-    private void setExecStateError(Long execContextId, Long taskId, String console) {
-        execContextTaskFinishingService.finishWithErrorWithTx(taskId, console, execContextId, null);
     }
 
 }

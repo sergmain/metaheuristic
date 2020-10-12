@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -218,6 +219,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
             Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process, VariableData.DataStreamHolder holder) {
+        TxUtils.checkTxExists();
+
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;

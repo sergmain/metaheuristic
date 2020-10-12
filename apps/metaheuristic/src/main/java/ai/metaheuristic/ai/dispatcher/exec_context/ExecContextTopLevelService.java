@@ -154,8 +154,8 @@ public class ExecContextTopLevelService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextSyncService.getWithSync(execContextId,
-                ()-> execContextFSM.getTaskAndAssignToProcessor(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId));
+        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextFSM.getTaskAndAssignToProcessor(
+                reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
