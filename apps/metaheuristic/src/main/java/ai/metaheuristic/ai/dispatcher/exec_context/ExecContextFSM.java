@@ -23,18 +23,14 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +41,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -65,7 +60,6 @@ public class ExecContextFSM {
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskProviderService taskProviderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTaskStateService execContextTaskStateService;
@@ -283,99 +277,6 @@ public class ExecContextFSM {
             return List.of();
         }
         return taskRepository.findForAssigning(execContextId, idsForSearch);
-    }
-
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
-        TxUtils.checkTxNotExists();
-
-        final TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
-        // task won't be returned for an internal function
-        if (task==null) {
-            return null;
-        }
-        try {
-/*
-            TaskImpl task = taskTransactionalService.prepareVariables(t);
-            if (task == null) {
-                log.warn("#303.640 The task is null after prepareVariables(task)");
-                return null;
-            }
-*/
-
-            String params;
-            try {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                if (tpy.version == psy.taskParamsVersion) {
-                    params = task.params;
-                } else {
-                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-                }
-            } catch (DowngradeNotSupportedException e) {
-                // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
-                //  but this one fails. that could occur because of prepareVariables(task);
-                //  need a better solution for checking
-                log.warn("#303.660 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.getId(), processorId, psy.taskParamsVersion);
-                return null;
-            }
-
-            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
-        } catch (Throwable th) {
-            String es = "#303.680 Something wrong";
-            log.error(es, th);
-            throw new IllegalStateException(es, th);
-        }
-    }
-
-    @Nullable
-    private TaskImpl getTaskAndAssignToProcessorInternal(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, Long execContextId) {
-        TxUtils.checkTxNotExists();
-
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#303.700 ExecContext wasn't found for id: {}", execContextId);
-            return null;
-        }
-        if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
-            log.warn("#303.720 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
-            return null;
-        }
-
-        List<Long> activeTaskIds = taskRepository.findActiveForProcessorId(processorId);
-        boolean allAssigned = false;
-        if (reportProcessorTaskStatus.statuses!=null) {
-            List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> lostTasks = reportProcessorTaskStatus.statuses.stream()
-                    .filter(o->!activeTaskIds.contains(o.taskId)).collect(Collectors.toList());
-            if (lostTasks.isEmpty()) {
-                allAssigned = true;
-            }
-            else {
-                log.info("#303.740 Found the lost tasks at processor #{}, tasks #{}", processorId, lostTasks);
-                for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus lostTask : lostTasks) {
-                    TaskImpl task = taskRepository.findById(lostTask.taskId).orElse(null);
-                    if (task==null) {
-                        continue;
-                    }
-                    if (task.execState!= EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        log.warn("#303.760 !!! Need to investigate, processor: #{}, task #{}, execStatus: {}, but isCompleted==false",
-                                processorId, task.id, EnumsApi.TaskExecState.from(task.execState));
-                        // TODO 2020-09-26 because this situation shouldn't be happened what exactly to do isn't known right now
-                    }
-                    return task;
-                }
-            }
-        }
-        if (allAssigned) {
-            log.warn("#303.780 ! This processor already has active task. Need to investigate, shouldn't happened, processor #{}, tasks: {}", processorId, activeTaskIds);
-            return null;
-        }
-
-        TaskImpl result = taskProviderService.findUnassignedTaskAndAssign(execContext.id, processorId, psy, isAcceptOnlySigned);
-
-        return result;
     }
 
 }

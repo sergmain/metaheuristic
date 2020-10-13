@@ -27,6 +27,9 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -55,28 +58,36 @@ public class TaskProviderTransactionalService {
     private final TaskService taskService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
-    private final LinkedList<Long> taskIds = new LinkedList<>();
+    @Data
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = {"taskId"})
+    public static class QueuedTask {
+        public Long execContextId;
+        public Long taskId;
+    }
+
+    private final LinkedList<QueuedTask> tasks = new LinkedList<>();
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
-    public void registerTask(Long taskId) {
-        taskIds.add(taskId);
+    public void registerTask(Long execContextId, Long taskId) {
+        tasks.add( new QueuedTask(execContextId, taskId));
     }
 
     public void deRegisterTask(Long taskId) {
-        taskIds.remove(taskId);
+        tasks.remove(new QueuedTask(null, taskId));
     }
 
 
     public int countOfTasks() {
-        return taskIds.size();
+        return tasks.size();
     }
 
     @Nullable
     @Transactional
     public TaskImpl findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
 
-        if (taskIds.isEmpty()) {
+        if (tasks.isEmpty()) {
             return null;
         }
 
@@ -86,13 +97,13 @@ public class TaskProviderTransactionalService {
         }
 
         TaskImpl resultTask = null;
-        List<Long> forRemoving = new ArrayList<>();
+        List<QueuedTask> forRemoving = new ArrayList<>();
 
         try {
-            for (Long taskId : taskIds) {
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            for (QueuedTask queuedTask : tasks) {
+                TaskImpl task = taskRepository.findById(queuedTask.taskId).orElse(null);
                 if (task == null) {
-                    forRemoving.add(taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
                 final TaskParamsYaml taskParamYaml;
@@ -101,26 +112,26 @@ public class TaskProviderTransactionalService {
                 } catch (YAMLException e) {
                     log.error("#303.440 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
                     execContextTaskFinishingService.finishWithError(task, null);
-                    forRemoving.add(taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // may be happened because of multi-threaded processing of internal function
-                    forRemoving.add(taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 if (task.execState != EnumsApi.TaskExecState.NONE.value) {
                     log.warn("#303.460 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
-                    forRemoving.add(taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 // all tasks with internal function will be processed by scheduler
                 if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
-                    forRemoving.add(taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
@@ -178,7 +189,7 @@ public class TaskProviderTransactionalService {
             }
         }
         finally {
-            taskIds.removeAll(forRemoving);
+            tasks.removeAll(forRemoving);
         }
 
         if (resultTask == null) {
@@ -197,4 +208,13 @@ public class TaskProviderTransactionalService {
         return t;
     }
 
+    public void deregisterTasksByExecContextId(Long execContextId) {
+        List<QueuedTask> forRemoving = new ArrayList<>();
+        for (QueuedTask queuedTask : tasks) {
+            if (queuedTask.execContextId.equals(execContextId)) {
+                forRemoving.add(queuedTask);
+            }
+        }
+        tasks.removeAll(forRemoving);
+    }
 }

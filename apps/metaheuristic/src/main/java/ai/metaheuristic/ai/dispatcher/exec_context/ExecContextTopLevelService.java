@@ -21,10 +21,10 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.event.ReconcileStatesEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -36,9 +36,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -62,6 +60,7 @@ public class ExecContextTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
+    private final TaskProviderService taskProviderService1;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ProcessorCache processorCache;
 
@@ -98,14 +97,9 @@ public class ExecContextTopLevelService {
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
-        List<Long> execContextIds = execContextRepository.findAllStartedIds();
-        for (Long execContextId : execContextIds) {
-            DispatcherCommParamsYaml.AssignedTask assignedTask = findTaskInExecContext(reportProcessorTaskStatus, processorId, isAcceptOnlySigned, execContextId);
-            if (assignedTask != null) {
-                return assignedTask;
-            }
-        }
-        return null;
+        DispatcherCommParamsYaml.AssignedTask assignedTask = taskProviderService1.findTaskInExecContext(
+                reportProcessorTaskStatus, processorId, isAcceptOnlySigned);
+        return assignedTask;
     }
 
     public void findUnassignedInternalTaskAndAssign() {
@@ -127,46 +121,6 @@ public class ExecContextTopLevelService {
                 }
             }
         }
-    }
-
-    @Nullable
-    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
-        ProcessorStatusYaml ss;
-        try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-            return ss;
-        } catch (Throwable e) {
-            log.error("#303.800 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#303.820 Error ", e);
-            return null;
-        }
-    }
-
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
-        final Processor processor = processorCache.findById(processorId);
-        if (processor == null) {
-            log.error("#303.620 Processor with id #{} wasn't found", processorId);
-            return null;
-        }
-        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
-        if (psy==null) {
-            return null;
-        }
-
-        DispatcherCommParamsYaml.AssignedTask assignedTask = execContextFSM.getTaskAndAssignToProcessor(
-                reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned, execContextId);
-
-        if (assignedTask!=null && log.isDebugEnabled()) {
-            TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
-            if (task==null) {
-                log.debug("#705.075 findTaskInExecContext(), task #{} wasn't found", assignedTask.taskId);
-            }
-            else {
-                log.debug("#705.078 findTaskInExecContext(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
-            }
-        }
-        return assignedTask;
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
