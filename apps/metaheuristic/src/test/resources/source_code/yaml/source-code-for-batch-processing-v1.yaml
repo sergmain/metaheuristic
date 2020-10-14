@@ -32,6 +32,10 @@ source:
             outputs:
               - name: var-processed-file-1
                 type: processed-file-type-1
+                nullable: true
+              - name: var-item-mapping
+                type: mapping-type
+                nullable: true
               - name: var-processed-file-2
                 type: processed-file-type-2
               - name: var-processing-status
