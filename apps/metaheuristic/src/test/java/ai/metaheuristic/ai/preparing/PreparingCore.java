@@ -159,7 +159,7 @@ public abstract class PreparingCore {
             Function function = functionRepository.findByCodeForUpdate(TEST_FIT_FUNCTION);
             log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
             if (function == null) {
-                function = new Function();
+
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_FIT_FUNCTION;
                 sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
@@ -167,19 +167,10 @@ public abstract class PreparingCore {
                 sc.type = CommonConsts.FIT_TYPE;
                 sc.file = "fit-filename.txt";
 
-                function.setCode(TEST_FIT_FUNCTION);
-                function.setType(CommonConsts.FIT_TYPE);
-                function.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
-
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #1");
-                functionService.createFunction(function, null);
+                function = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
                 log.info("functionRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
-
-                mills = System.currentTimeMillis();
-                log.info("Start binaryDataService.save() #1");
-                functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, function.getCode());
-                log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
             fitFunction = function;
 
@@ -199,13 +190,9 @@ public abstract class PreparingCore {
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #2");
-                functionService.createFunction(predictFunction, null);
+                functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
                 log.info("processorRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
-                mills = System.currentTimeMillis();
-                log.info("Start binaryDataService.save() #2");
-                functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictFunction.getCode());
-                log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
             this.predictFunction = predictFunction;
 

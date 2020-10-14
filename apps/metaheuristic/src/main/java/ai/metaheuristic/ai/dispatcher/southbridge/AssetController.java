@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -55,7 +55,7 @@ import java.util.Map;
 public class AssetController {
 
     private final SouthbridgeService serverService;
-    private final FunctionService functionService;
+    private final FunctionTopLevelService functionTopLevelService;
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverFunctionAuth(
@@ -94,13 +94,13 @@ public class AssetController {
     }
 
     private Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
-        Function function = functionService.findByCode(functionCode);
+        Function function = functionTopLevelService.findByCode(functionCode);
         if (function ==null) {
             log.warn("#442.100 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return Map.of();
         }
-        FunctionConfigYaml sc = function.getFunctionConfig(false);
+        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
         log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
         return sc.checksumMap==null ? Map.of() : sc.checksumMap;
     }
@@ -121,13 +121,13 @@ public class AssetController {
     }
 
     private String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
-        Function function = functionService.findByCode(functionCode);
+        Function function = functionTopLevelService.findByCode(functionCode);
         if (function ==null) {
             log.warn("#442.140 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }
-        FunctionConfigYaml sc = function.getFunctionConfig(false);
+        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
         log.info("Send config of function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }

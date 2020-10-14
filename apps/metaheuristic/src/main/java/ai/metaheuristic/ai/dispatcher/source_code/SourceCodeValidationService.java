@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR;
 
 /**
  * @author Serge
@@ -65,11 +66,12 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @RequiredArgsConstructor
 public class SourceCodeValidationService {
 
-    private final FunctionService functionService;
+    private final FunctionTopLevelService functionTopLevelService;
     private final FunctionRepository functionRepository;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final DispatcherParamsService dispatcherParamsService;
+    private final SourceCodeCache sourceCodeCache;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
 
@@ -201,7 +203,15 @@ public class SourceCodeValidationService {
     }
 
     @Transactional
-    public SourceCodeApiData.SourceCodeValidation validate(SourceCodeImpl sourceCode) {
+    public SourceCodeApiData.SourceCodeValidation validate(Long sourceCodeId) {
+        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode==null) {
+            SourceCodeApiData.SourceCodeValidation validation = new SourceCodeApiData.SourceCodeValidation(new SourceCodeApiData.SourceCodeValidationResult(
+                    SOURCE_CODE_NOT_FOUND_ERROR, "#981.165 sourceCode #" + sourceCodeId + " wasn't found"
+            ));
+            return validation;
+        }
+
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
         sourceCodeTopLevelService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
@@ -221,7 +231,7 @@ public class SourceCodeValidationService {
         return sourceCodeValidation;
     }
 
-    public SourceCodeApiData.SourceCodeValidation getSourceCodesValidation(SourceCodeImpl sourceCode) {
+    private SourceCodeApiData.SourceCodeValidation getSourceCodesValidation(SourceCodeImpl sourceCode) {
         final SourceCodeApiData.SourceCodeValidation sourceCodeValidation = new SourceCodeApiData.SourceCodeValidation();
         try {
             sourceCodeValidation.status = checkConsistencyOfSourceCode(sourceCode);
@@ -319,7 +329,7 @@ public class SourceCodeValidationService {
     }
 
     private boolean isFunctionVersionOk(int requiredVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        TaskParamsYaml.FunctionConfig sc = functionService.getFunctionConfig(snDef);
+        TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= FunctionCoreUtils.getTaskParamsVersion(sc.metas));
     }
 

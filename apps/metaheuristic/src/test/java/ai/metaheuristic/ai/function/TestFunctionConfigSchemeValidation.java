@@ -26,7 +26,7 @@ import org.springframework.lang.NonNull;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.function.FunctionService.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR;
+import static ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

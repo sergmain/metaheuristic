@@ -119,7 +119,7 @@ public class ExecContextCreatorService {
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
         // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK) {
             return new ExecContextCreationResult(sourceCodeValidation.getErrorMessagesAsList());
         }

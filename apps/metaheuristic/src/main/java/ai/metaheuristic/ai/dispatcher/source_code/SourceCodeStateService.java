@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +42,9 @@ public class SourceCodeStateService {
 
     private final SourceCodeCache sourceCodeCache;
 
-    @Transactional
-    public void setValidTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean valid) {
-        SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
-        if (sc==null) {
-            return;
-        }
+    public void setValidTo(SourceCodeImpl sc, @Nullable Long companyUniqueId, boolean valid) {
+        TxUtils.checkTxExists();
+
         if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
             log.warn("SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
             return;

@@ -44,7 +44,7 @@ public class SourceCodeTopLevelService {
 
     public void setValidTo(SourceCodeImpl sourceCode, boolean valid) {
         synchronized (syncObj) {
-            sourceCodeStateService.setValidTo(sourceCode.id, sourceCode.companyId, valid);
+            sourceCodeStateService.setValidTo(sourceCode, sourceCode.companyId, valid);
         }
     }
 

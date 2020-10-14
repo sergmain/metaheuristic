@@ -217,11 +217,15 @@ public class BatchTopLevelService {
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK ) {
             return new BatchData.UploadingStatus("#981.160 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }
 
+        final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
+        if (sc==null) {
+            return new BatchData.UploadingStatus("#981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+        }
         try {
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorService.createExecContext(sourceCodeId, dispatcherContext);
             if (creationResult.isErrorMessages()) {
@@ -231,7 +235,7 @@ public class BatchTopLevelService {
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = file.getInputStream()) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
+                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode.id, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
             }
             eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
             return uploadingStatus;
