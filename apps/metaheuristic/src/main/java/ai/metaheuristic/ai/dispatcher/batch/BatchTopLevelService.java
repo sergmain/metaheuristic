@@ -235,7 +235,7 @@ public class BatchTopLevelService {
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = file.getInputStream()) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sourceCode.id, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
+                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sc.id, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
             }
             eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
             return uploadingStatus;
