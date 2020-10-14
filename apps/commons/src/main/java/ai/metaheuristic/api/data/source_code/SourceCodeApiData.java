@@ -202,6 +202,7 @@ public class SourceCodeApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SourceCodeValidation extends BaseDataClass {
         public SourceCodeValidationResult status;
     }

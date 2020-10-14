@@ -165,7 +165,7 @@ public class SourceCodeService {
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
@@ -177,7 +177,7 @@ public class SourceCodeService {
 
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.validationResult = sourceCodeValidation.status;
@@ -229,7 +229,7 @@ public class SourceCodeService {
             return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
         }
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml());
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -272,7 +272,7 @@ public class SourceCodeService {
 
         sourceCode = sourceCodeCache.save(sourceCode);
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy );
         result.infoMessages = sourceCodeValidation.infoMessages;

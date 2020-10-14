@@ -21,12 +21,12 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -62,6 +62,9 @@ public class TestFunctionService {
     private FunctionService functionService;
 
     @Autowired
+    private FunctionTopLevelService functionTopLevelService;
+
+    @Autowired
     private FunctionRepository functionRepository;
 
     @Autowired
@@ -80,7 +83,7 @@ public class TestFunctionService {
         ExecContextParamsYaml.FunctionDefinition sd = new ExecContextParamsYaml.FunctionDefinition();
         sd.code = TEST_FUNCTION;
         sd.params = null;
-        TaskParamsYaml.FunctionConfig sc = functionService.getFunctionConfig(sd);
+        TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(sd);
         assertNotNull(sc);
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);
@@ -95,12 +98,11 @@ public class TestFunctionService {
         function = initFunction();
     }
 
-    public Function initFunction() throws IOException {
+    public Function initFunction() {
         long mills;
         byte[] bytes = "some program code".getBytes();
         Function f = functionRepository.findByCodeForUpdate(TEST_FUNCTION);
         if (f == null) {
-            Function s = new Function();
             FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_FUNCTION;
             sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
@@ -110,20 +112,11 @@ public class TestFunctionService {
             sc.skipParams = false;
             sc.params = FUNCTION_PARAMS;
 
-            s.setCode(TEST_FUNCTION);
-            s.setType("test");
-            s.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
-
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            f = functionService.createFunction(s, null);
+            f = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
 
             log.info("functionRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
-
-            mills = System.currentTimeMillis();
-            log.info("Start binaryDataService.save() #2");
-            functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, s.getCode());
-            log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
         }
         return f;
     }

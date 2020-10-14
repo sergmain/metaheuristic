@@ -23,9 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
@@ -64,9 +63,8 @@ import java.util.stream.Stream;
 public class TaskProducingService {
 
     private final VariableService variableService;
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
-    private final FunctionService functionService;
+    private final FunctionTopLevelService functionTopLevelService;
     private final TaskService taskService;
 
     /**
@@ -190,7 +188,7 @@ public class TaskProducingService {
                     null, false );
         }
         else {
-            TaskParamsYaml.FunctionConfig fConfig = functionService.getFunctionConfig(process.function);
+            TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
             if (fConfig == null) {
                 log.error("#171.020 Function '{}' wasn't found", process.function.code);
                 return null;
@@ -198,12 +196,12 @@ public class TaskProducingService {
             taskParams.task.function = fConfig;
             if (process.getPreFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
-                    taskParams.task.preFunctions.add(functionService.getFunctionConfig(preFunction));
+                    taskParams.task.preFunctions.add(functionTopLevelService.getFunctionConfig(preFunction));
                 }
             }
             if (process.getPostFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
-                    taskParams.task.postFunctions.add(functionService.getFunctionConfig(postFunction));
+                    taskParams.task.postFunctions.add(functionTopLevelService.getFunctionConfig(postFunction));
                 }
             }
         }

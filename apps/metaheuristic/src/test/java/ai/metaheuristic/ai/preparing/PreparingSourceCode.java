@@ -41,7 +41,6 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -251,7 +250,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
     }
 
-    private Function createFunction(String functionCode) throws IOException {
+    private Function createFunction(String functionCode) {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.code = functionCode;
         sc.type = functionCode + "-type";
@@ -262,17 +261,14 @@ public abstract class PreparingSourceCode extends PreparingCore {
 //  metas:
 //  - mh.task-params-version: '5'
         Objects.requireNonNull(sc.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
-        Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
             functionService.delete(functionId);
         }
-        s.setCode(functionCode);
-        s.setType(sc.type);
-        s.setParams(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc));
 
-        functionService.createFunction(s, null);
-        return s;
+        byte[] bytes = "some code for testing".getBytes();
+        Function f = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
+        return f;
     }
 
     @AfterEach

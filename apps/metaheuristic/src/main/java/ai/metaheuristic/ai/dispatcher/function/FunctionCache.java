@@ -42,7 +42,6 @@ public class FunctionCache {
 //    @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         TxUtils.checkTxExists();
-        function.reset();
         return functionRepository.save(function);
     }
 
@@ -69,7 +68,6 @@ public class FunctionCache {
     @Nullable
 //    @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
     public Function findById(Long id) {
-        TxUtils.checkTxExists();
         return functionRepository.findById(id).orElse(null);
     }
 
