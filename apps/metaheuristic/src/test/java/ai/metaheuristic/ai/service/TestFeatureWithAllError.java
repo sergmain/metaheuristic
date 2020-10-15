@@ -68,10 +68,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        DispatcherCommParamsYaml.AssignedTask task = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, experiment.getExecContextId());
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         assertNull(task);
 
-        task = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId() + 1, false, experiment.getExecContextId());
+        task = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId() + 1, false);
         assertNull(task);
     }
 

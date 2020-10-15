@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -48,6 +49,7 @@ public class DispatcherCommandProcessor {
     private final FunctionService functionService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ProcessorTransactionService processorService;
+    private final TaskProviderService taskProviderService;
 
     public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
         lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
@@ -132,12 +134,12 @@ public class DispatcherCommandProcessor {
         checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask;
         try {
-            assignedTask = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+            assignedTask = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.045 ObjectOptimisticLockingFailureException", e);
             log.error("#997.047 Lets try requesting a new task one more time");
             try {
-                assignedTask = execContextTopLevelService.findTaskInExecContext(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                assignedTask = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;

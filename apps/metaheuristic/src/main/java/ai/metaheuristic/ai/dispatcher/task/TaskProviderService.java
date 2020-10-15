@@ -74,17 +74,17 @@ public class TaskProviderService {
         }
     }
 
-    public int countOfTasks() {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.countOfTasks();
-        }
-    }
-
     @Async
     @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
+        }
+    }
+
+    private int countOfTasks() {
+        synchronized (syncObj) {
+            return taskProviderTransactionalService.countOfTasks();
         }
     }
 
@@ -105,7 +105,12 @@ public class TaskProviderService {
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+        TxUtils.checkTxNotExists();
+        if (countOfTasks()==0) {
+            return null;
+        }
+
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.error("#303.620 Processor with id #{} wasn't found", processorId);
@@ -122,17 +127,17 @@ public class TaskProviderService {
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
             if (task==null) {
-                log.debug("#705.075 findTaskInExecContext(), task #{} wasn't found", assignedTask.taskId);
+                log.debug("#705.075 findTask(), task #{} wasn't found", assignedTask.taskId);
             }
             else {
-                log.debug("#705.078 findTaskInExecContext(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
+                log.debug("#705.078 findTask(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
             }
         }
         return assignedTask;
     }
 
     @Nullable
-    private ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
+    private static ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
         ProcessorStatusYaml ss;
         try {
             ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);

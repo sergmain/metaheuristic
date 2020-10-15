@@ -164,8 +164,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToProcessor()");
-        DispatcherCommParamsYaml.AssignedTask task = execContextTopLevelService.findTaskInExecContext(
-                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.id);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(
+                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(task);

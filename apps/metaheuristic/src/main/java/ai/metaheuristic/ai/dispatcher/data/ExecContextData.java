@@ -18,10 +18,11 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.Task;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Serge
@@ -82,5 +83,14 @@ public class ExecContextData {
         public ProcessVertex(Long id) {
             this.id = id;
         }
+    }
+
+    @Data
+    @RequiredArgsConstructor
+    public static class ReconciliationStatus {
+        public final Long execContextId;
+        public final AtomicBoolean isNullState = new AtomicBoolean(false);
+        public final List<Long> taskForResettingIds = new ArrayList<>();
+        public final List<Long> taskIsOkIds = new ArrayList<>();
     }
 }

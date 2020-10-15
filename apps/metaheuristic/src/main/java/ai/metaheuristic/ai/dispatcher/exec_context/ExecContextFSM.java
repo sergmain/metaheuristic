@@ -179,30 +179,6 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public OperationStatusRest resetTaskWithTx(Long execContextId, Long taskId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
-        }
-        return resetTask(execContext, taskId);
-    }
-
-    public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
-        execContextSyncService.checkWriteLockPresent(execContext.id);
-        TaskImpl t = taskExecStateService.resetTask(taskId);
-        if (t == null) {
-            String es = S.f("#303.200 Found a non-existed task, graph consistency for execContextId #%s is failed",
-                    execContext.id);
-            log.error(es);
-            toError(execContext);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-        }
-
-        execContextTaskStateService.updateTaskExecStates(execContext, t, EnumsApi.TaskExecState.NONE, null);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    @Transactional
     public Void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -211,7 +187,7 @@ public class ExecContextFSM {
             return null;
         }
         if (needReconciliation) {
-            ExecContextReconciliationService.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
+            ExecContextData.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
             execContextSyncService.getWithSync(execContext.id,
                     () -> execContextReconciliationService.finishReconciliation(status));
         }

@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -33,9 +32,11 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Serge
@@ -48,26 +49,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ExecContextReconciliationService {
 
-    private final ExecContextFSM execContextFSM;
     private final ExecContextService execContextService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextTaskResettingService execContextTaskResettingService;
 
-    @Data
-    @RequiredArgsConstructor
-    public static class ReconciliationStatus {
-        public final Long execContextId;
-        public final AtomicBoolean isNullState = new AtomicBoolean(false);
-        public final List<Long> taskForResettingIds = new ArrayList<>();
-        public final List<Long> taskIsOkIds = new ArrayList<>();
-    }
-
-    public ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
+    public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
 
-        ReconciliationStatus status = new ReconciliationStatus(execContext.id);
+        ExecContextData.ReconciliationStatus status = new ExecContextData.ReconciliationStatus(execContext.id);
 
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
@@ -157,7 +149,7 @@ public class ExecContextReconciliationService {
     }
 
     @Transactional
-    public Void finishReconciliation(ReconciliationStatus status) {
+    public Void finishReconciliation(ExecContextData.ReconciliationStatus status) {
         execContextSyncService.checkWriteLockPresent(status.execContextId);
 
         if (!status.isNullState.get() && status.taskIsOkIds.isEmpty() && status.taskForResettingIds.isEmpty()) {
@@ -169,12 +161,13 @@ public class ExecContextReconciliationService {
         }
         if (status.isNullState.get()) {
             log.info("#303.320 Found non-created task, graph consistency is failed");
-            execContextFSM.toError(execContext);
+            execContext.completedOn = System.currentTimeMillis();
+            execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return null;
         }
 
         for (Long taskForResettingId : status.taskForResettingIds) {
-            execContextFSM.resetTask(execContext, taskForResettingId);
+            execContextTaskResettingService.resetTask(execContext, taskForResettingId);
         }
         for (Long taskIsOkId : status.taskIsOkIds) {
             TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);

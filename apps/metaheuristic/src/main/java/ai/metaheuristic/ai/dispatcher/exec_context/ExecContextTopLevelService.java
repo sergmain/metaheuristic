@@ -18,17 +18,10 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -60,9 +53,8 @@ public class ExecContextTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
-    private final TaskProviderService taskProviderService1;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
-    private final ProcessorCache processorCache;
+    private final ExecContextTaskResettingService execContextTaskResettingService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId, ()-> execContextService.getExecContextState(sourceCodeId, execContextId, context));
@@ -92,14 +84,6 @@ public class ExecContextTopLevelService {
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
         return result;
-    }
-
-
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTaskInExecContext(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
-        DispatcherCommParamsYaml.AssignedTask assignedTask = taskProviderService1.findTaskInExecContext(
-                reportProcessorTaskStatus, processorId, isAcceptOnlySigned);
-        return assignedTask;
     }
 
     public void findUnassignedInternalTaskAndAssign() {
@@ -148,7 +132,7 @@ public class ExecContextTopLevelService {
                     "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
-        return execContextSyncService.getWithSync(execContextId, () -> execContextFSM.resetTaskWithTx(execContextId, taskId));
+        return execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
     }
 
     private void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
