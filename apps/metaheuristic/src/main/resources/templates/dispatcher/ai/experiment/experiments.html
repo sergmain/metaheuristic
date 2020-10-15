@@ -50,10 +50,9 @@
                     <div>
                     <a class="pure-button pure-button-primary"
                        th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).NONE.code}"
-                       th:href="${'/dispatcher/ai/experiment/experiment-target-state/producing/' + r.experiment.id}">Produce</a>
+                       th:href="${'/dispatcher/ai/experiment/experiment-target-state/producing/' + r.experiment.id}">Produce and Start</a>
                     <a class="pure-button pure-button-primary"
-                       th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
-                   r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
+                       th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
                        th:href="${'/dispatcher/ai/experiment/experiment-target-state/started/' + r.experiment.id}">Start</a>
                     <a class="pure-button pure-button-primary"
                        th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"

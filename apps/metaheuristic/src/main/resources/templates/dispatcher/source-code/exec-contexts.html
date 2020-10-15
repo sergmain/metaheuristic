@@ -60,10 +60,9 @@
                    i.valid and
                    result.sourceCodeValid
                    }"
-                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/PRODUCING/' + i.id}">Produce</a>
+                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/PRODUCING/' + i.id}">Produce and Start</a>
                 <a class="pure-button pure-button-primary"
-                   th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
-                   i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
+                   th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
                    th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/started/' + i.id}">Start</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"

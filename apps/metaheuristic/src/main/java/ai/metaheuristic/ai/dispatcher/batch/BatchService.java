@@ -278,7 +278,7 @@ public class BatchService {
         BatchParamsYaml bpy = new BatchParamsYaml();
         bpy.username = dispatcherContext.account.username;
         b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
-//        b = batchCache.save(b);
+        b = batchCache.save(b);
 
         dispatcherEventService.publishBatchEvent(
                 EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),

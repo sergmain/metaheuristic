@@ -178,7 +178,6 @@ public class ExecContextFSM {
         return null;
     }
 
-    @Transactional
     public Void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
