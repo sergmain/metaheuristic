@@ -82,10 +82,8 @@ public class ExecContextTaskStateService {
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, t.id, execState, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
         if (markAsCompleted) {
-//        if (markAsCompleted && (!t.isCompleted || t.completedOn==null)) {
             t.setCompleted(true);
             t.setCompletedOn(System.currentTimeMillis());
-//            taskExecStateService.markAsCompleted(t);
         }
         return status.status;
     }

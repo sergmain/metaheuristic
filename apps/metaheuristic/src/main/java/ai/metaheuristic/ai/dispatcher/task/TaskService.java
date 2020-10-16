@@ -64,18 +64,7 @@ public class TaskService {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         task.setUpdatedOn( System.currentTimeMillis() );
-/*
 
-        if (log.isDebugEnabled()) {
-            log.debug("#462.010 save task, id: #{}, ver: {}, task: {}", task.id, task.version, task);
-            try {
-                throw new RuntimeException("task stacktrace");
-            }
-            catch(RuntimeException e) {
-                log.debug("task stacktrace", e);
-            }
-        }
-*/
         if (task.id==null) {
             final TaskImpl t = taskRepository.save(task);
             return t;

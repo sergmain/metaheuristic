@@ -83,7 +83,7 @@ public class ExecContextReconciliationService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
-                log.info("#303.300 Found different states for task #"+tv.taskId+", " +
+                log.error("#303.300 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
 

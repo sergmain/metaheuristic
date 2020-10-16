@@ -206,7 +206,6 @@ public class TaskProviderTransactionalService {
         resultTask.setProcessorId(processorId);
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
-//        TaskImpl t = taskService.save(resultTask);
 
         return resultTask;
     }

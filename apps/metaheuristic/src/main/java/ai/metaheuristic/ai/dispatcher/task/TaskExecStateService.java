@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.dispatcher.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -43,18 +42,6 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
-
-    public Task markAsCompleted(final TaskImpl task) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
-        TaskImpl t = taskService.save(task);
-
-        log.info("#305.020 task #{} was marked as completed", task.id);
-        return t;
-    }
 
     @Nullable
     public TaskImpl resetTask(final Long taskId) {

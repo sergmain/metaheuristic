@@ -155,40 +155,4 @@ public class ExecContextTopLevelService {
                 () -> execContextFSM.processResendTaskOutputVariable(processorId, status, taskId, variableId));
     }
 
-/*
-    // TODO 2019.05.19 add reporting of producing of tasks
-    // TODO 2020.01.17 reporting to where? do we need to implement it?
-    // TODO 2020.09.28 reporting is about dynamically inform a web application about the current status of creating
-    public synchronized void createAllTasks() {
-
-        List<Long> execContextIds = execContextRepository.findIdByState(EnumsApi.ExecContextState.PRODUCING.code);
-        if (execContextIds.isEmpty()) {
-            return;
-        }
-        log.info("#701.020 Start producing tasks");
-        for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextService.findById(execContextId);
-            if (ec==null) {
-                log.error("ExecContext is null for #{}", execContextId);
-                continue;
-            }
-            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContextId);
-            if (sourceCode == null) {
-                execContextFSM.toError(execContextId);
-                continue;
-            }
-            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
-
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> {
-                log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}", ec.sourceCodeId, ec.getParams());
-                execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContextId, execContextParamsYaml);
-                return null;
-            });
-        }
-        log.info("#701.040 Producing of tasks was finished");
-    }
-
-*/
-
-
 }

@@ -67,11 +67,11 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         d1 = execContextSyncService.getWithSync(10L,
-                ()-> variableService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
+                ()-> txSupportForTestingService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
 
         Timestamp ts = d1.getUploadTs();
 
-        final Variable d2 = txSupportForTestingService.getBinaryData(d1.getId());
+        final Variable d2 = txSupportForTestingService.getVariableWithData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -82,9 +82,9 @@ public class TestBinaryDataRepository {
         final byte[] bytes2 = "another one very short data".getBytes();
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
         execContextSyncService.getWithSyncNullable(10L,
-                ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2));
+                ()-> txSupportForTestingService.updateWithTx(inputStream2, bytes2.length, d2.id));
 
-        final Variable d3 = txSupportForTestingService.getBinaryData(d2.getId());
+        final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());
 
         assertNotNull(d3);
         assertNotEquals(ts, d3.getUploadTs());

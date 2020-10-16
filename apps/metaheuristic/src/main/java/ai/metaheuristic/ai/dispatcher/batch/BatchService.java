@@ -108,7 +108,6 @@ public class BatchService {
                 return;
             }
             b.execState = Enums.BatchExecState.Preparing.code;
-//            return batchCache.save(b);
     }
 
     private void changeStateToProcessing(Batch b) {
@@ -121,7 +120,6 @@ public class BatchService {
         }
         b.execState = Enums.BatchExecState.Processing.code;
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, b.id, null, null );
-//            return batchCache.save(b);
     }
 
     @Transactional
@@ -147,20 +145,6 @@ public class BatchService {
             batchCache.save(b);
             dispatcherEventService.publishEventBatchFinished(status.batchId);
         }
-/*
-        Map<Long, List<BatchAndExecContextStates>> map = statuses.stream().collect(Collectors.groupingBy(status -> status.batchId));
-        for (Long batchId : map.keySet()) {
-            boolean isFinished = true;
-            for (BatchAndExecContextStates execStates : map.get(batchId)) {
-                if (execStates.execContextState != EnumsApi.ExecContextState.ERROR.code && execStates.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
-                    isFinished = false;
-                    break;
-                }
-            }
-            if (isFinished) {
-            }
-        }
-*/
     }
 
     @Nullable

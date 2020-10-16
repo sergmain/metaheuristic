@@ -113,20 +113,6 @@ public class Schedulers {
             batchService.updateBatchStatuses();
         }
 
-/*
-        @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
-        public void fillQueueForProcessing() {
-            if (globals.isUnitTesting) {
-                return;
-            }
-            if (!globals.dispatcherEnabled) {
-                return;
-            }
-            log.info("Invoking execContextTopLevelService.fillQueueForProcessing()");
-            execContextTopLevelService.createAllTasks();
-        }
-*/
-
         @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
         public void processInternalTasks() {
             if (globals.isUnitTesting) {

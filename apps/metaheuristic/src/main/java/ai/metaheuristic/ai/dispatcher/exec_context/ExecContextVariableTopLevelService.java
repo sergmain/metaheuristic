@@ -17,16 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
@@ -52,13 +45,6 @@ import java.io.*;
 @RequiredArgsConstructor
 public class ExecContextVariableTopLevelService {
 
-    private final Globals globals;
-    private final VariableService variableService;
-    private final GlobalVariableService globalVariableService;
-    private final FunctionDataService functionDataService;
-    private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ExecContextRepository execContextRepository;
-    private final ProcessorTopLevelService processorTopLevelService;
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextVariableService execContextVariableService;

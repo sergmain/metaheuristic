@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -30,7 +29,6 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,12 +55,10 @@ public class ExecContextFSM {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
-    private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
 
@@ -172,7 +168,6 @@ public class ExecContextFSM {
 
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(true);
-//        task = taskService.save(task);
 
         execContextTaskFinishingService.checkTaskCanBeFinished(task);
         return null;
@@ -197,9 +192,6 @@ public class ExecContextFSM {
                 ExecContextReconciliationService.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
                 execContextSyncService.getWithSync(execContext.id,
                         () -> execContextReconciliationService.finishReconciliation(status));
-*/
-
-/*
                 execContext = execContextCache.findById(execContextId);
                 if (execContext == null) {
                     return null;

@@ -16,20 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -39,22 +34,14 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -202,7 +189,6 @@ public class TaskProducingService {
         task.params = params;
         task = taskService.save(task);
 
-//        task = variableService.initOutputVariables(execContextId, task, process, taskParams);
         task = variableService.prepareVariables(execContextParamsYaml, task);
         return task;
     }

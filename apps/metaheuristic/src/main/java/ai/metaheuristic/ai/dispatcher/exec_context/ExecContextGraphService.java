@@ -387,13 +387,6 @@ public class ExecContextGraphService {
         });
     }
 
-    public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext,
-                graph -> graph.vertexSet().stream()
-                        .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
-                        .collect(Collectors.toList()));
-    }
-
     public List<ExecContextData.TaskVertex> findAllRootVertices(ExecContextImpl execContext) {
         return readOnlyGraph(execContext,
                 graph -> graph.vertexSet().stream()
@@ -419,18 +412,6 @@ public class ExecContextGraphService {
         });
     }
 
-    @Nullable
-    public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
-        return readOnlyGraphNullable(execContext, graph -> {
-            ExecContextData.TaskVertex vertex = graph.vertexSet()
-                    .stream()
-                    .filter(o -> o.taskId.equals(taskId))
-                    .findFirst()
-                    .orElse(null);
-            return vertex;
-        });
-    }
-
     @SneakyThrows
     public Map<String, List<ExecContextData.TaskVertex>> findVerticesByTaskContextIds(ExecContextImpl execContext, Collection<String> taskContextIds) {
         return readOnlyGraph(execContext, graph -> {
@@ -445,6 +426,7 @@ public class ExecContextGraphService {
         });
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {

@@ -64,7 +64,7 @@ public class TestGraph extends PreparingSourceCode {
 
     private void updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
         execContextSyncService.getWithSync(execContext.id,
-                () -> execContextTaskFinishingService.finishWithErrorWithTx(taskId, "to finish", execContext.id, null));
+                () -> txSupportForTestingService.finishWithErrorWithTx(taskId, "to finish", execContext.id, null));
         // execContextGraphService.updateTaskExecState(execContext, taskId, EnumsApi.ExecContextState.FINISHED.code, null)
     }
 
@@ -106,7 +106,7 @@ public class TestGraph extends PreparingSourceCode {
             assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE, "123###1")));
             assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###1")));
 
-            execContextTaskFinishingService.finishWithErrorWithTx(1L, "An error", execContextForTest.id, null);
+            txSupportForTestingService.finishWithErrorWithTx(1L, "An error", execContextForTest.id, null);
             execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 2L, EnumsApi.TaskExecState.NONE, "123###1");
             execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 3L, EnumsApi.TaskExecState.NONE, "123###1");
             return null;

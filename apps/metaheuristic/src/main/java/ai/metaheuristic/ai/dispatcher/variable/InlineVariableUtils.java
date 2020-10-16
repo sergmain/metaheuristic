@@ -95,7 +95,7 @@ public class InlineVariableUtils {
     }
 
     public static int calcTotalVariants(Map<String, String> experimentMetadatas) {
-        if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
+        if (experimentMetadatas.isEmpty()) {
             return 0;
         }
 
@@ -155,7 +155,6 @@ public class InlineVariableUtils {
         return allPaths.contains(new InlineVariable(Consts.EMPTY_UNMODIFIABLE_MAP, path));
     }
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
     public static NumberOfVariants getNumberOfVariants(@Nullable String variantsAsStr) {
         if (StringUtils.isBlank(variantsAsStr)) {
             return ZERO_VARIANT;
@@ -207,6 +206,7 @@ public class InlineVariableUtils {
         return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
     }
 
+    // TODO add unit-test
     public static NumberOfVariants extractValues(String s) {
         int count = 0;
         final NumberOfVariants variants = new NumberOfVariants(true, null, 0);

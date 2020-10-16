@@ -34,6 +34,7 @@ import java.util.function.Function;
  * Date: 7/27/2019
  * Time: 8:26 PM
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 @Slf4j
 @Service
 @RequiredArgsConstructor

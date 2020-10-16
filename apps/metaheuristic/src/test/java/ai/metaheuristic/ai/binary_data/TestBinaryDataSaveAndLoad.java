@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.binary_data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -65,6 +66,9 @@ public class TestBinaryDataSaveAndLoad {
     @Autowired
     private ExecContextSyncService execContextSyncService;
 
+    @Autowired
+    private TxSupportForTestingService txSupportForTestingService;
+
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
 
@@ -99,7 +103,7 @@ public class TestBinaryDataSaveAndLoad {
         Variable variable = null;
         try (InputStream is = new FileInputStream(dataFile)) {
             variable = execContextSyncService.getWithSync(1L,
-                    ()-> variableService.createInitializedWithTx(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
+                    ()-> txSupportForTestingService.createInitializedWithTx(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
         }
         assertNotNull(variable);
         assertNotNull(variable.id);

@@ -16,36 +16,25 @@
 
 package ai.metaheuristic.ai.dispatcher.processor;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j

@@ -67,7 +67,6 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
-@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -295,11 +294,6 @@ public class VariableService {
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
     }
 
-    @Transactional
-    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
-        return createInitialized(is, size, variable, filename, execContextId, taskContextId);
-    }
-
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
@@ -380,14 +374,8 @@ public class VariableService {
         //   a new code has to be added for another type of sourcing
         v.params = DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name));
         v.uploadTs = new Timestamp(System.currentTimeMillis());
-//            log.info("Start creating an uninitialized variable {}, execContextId: {}, taskContextId: {}, id: {}", v.name, v.execContextId, v.taskContextId, v.id);
-        return variableRepository.save(v);
-    }
 
-    @Transactional
-    public Void updateWithTx(InputStream is, long size, Variable data) {
-        update(is, size, data);
-        return null;
+        return variableRepository.save(v);
     }
 
     public void update(InputStream is, long size, Variable data) {

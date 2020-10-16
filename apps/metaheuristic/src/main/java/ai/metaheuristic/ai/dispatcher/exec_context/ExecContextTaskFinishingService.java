@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -34,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -51,20 +49,9 @@ public class ExecContextTaskFinishingService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
-    private final TaskRepository taskRepository;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskService taskService;
-
-    @Transactional
-    public Void checkTaskCanBeFinishedWithTx(Long taskId) {
-        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            return null;
-        }
-        checkTaskCanBeFinished(task);
-        return null;
-    }
 
     public void checkTaskCanBeFinished(TaskImpl task) {
         TxUtils.checkTxExists();
@@ -120,28 +107,8 @@ public class ExecContextTaskFinishingService {
         }
     }
 
-    @Transactional
-    public void finishWithErrorWithTx(Long taskId, Long execContextId, @Nullable String taskContextId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#303.1650 Reporting about non-existed task #{}", taskId);
-            return;
-        }
-        finishWithError(task, taskContextId);
-    }
-
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
         finishWithError(task, "#303.260 Task was finished with an unknown error, can't process it", taskContextId);
-    }
-
-    @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#303.1650 Reporting about non-existed task #{}", taskId);
-            return null;
-        }
-        return finishWithError(task, console, taskContextId);
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {

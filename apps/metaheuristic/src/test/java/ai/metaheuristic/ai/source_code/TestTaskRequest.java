@@ -117,7 +117,7 @@ public class TestTaskRequest extends FeatureMethods {
             Enums.UploadVariableStatus status = taskTopLevelService.setVariableReceived(task, output.id);
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()->execContextTaskFinishingService.checkTaskCanBeFinishedWithTx(task.id));
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()->txSupportForTestingService.checkTaskCanBeFinishedWithTx(task.id));
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);
