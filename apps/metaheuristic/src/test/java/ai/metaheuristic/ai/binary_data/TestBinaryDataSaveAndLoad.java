@@ -74,20 +74,12 @@ public class TestBinaryDataSaveAndLoad {
 
     @BeforeEach
     public void before() {
-        try {
-            variableRepository.deleteByName(TEST_VARIABLE);
-        } catch (Throwable e) {
-            log.error("Error", e);
-        }
+        txSupportForTestingService.deleteVariableByName(TEST_VARIABLE);
     }
 
     @AfterEach
     public void after() {
-        try {
-            variableRepository.deleteByName(TEST_VARIABLE);
-        } catch (Throwable th) {
-            log.error("Error while deleting test data", th);
-        }
+        txSupportForTestingService.deleteVariableByName(TEST_VARIABLE);
     }
 
     @Test

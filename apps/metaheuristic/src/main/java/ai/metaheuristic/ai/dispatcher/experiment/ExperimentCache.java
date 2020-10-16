@@ -53,7 +53,6 @@ public class ExperimentCache {
     @Nullable
 //    @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
     public Experiment findById(Long id) {
-        TxUtils.checkTxExists();
         return experimentRepository.findById(id).orElse(null);
     }
 

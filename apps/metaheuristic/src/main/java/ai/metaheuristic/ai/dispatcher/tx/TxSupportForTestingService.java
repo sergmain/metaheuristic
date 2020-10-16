@@ -65,6 +65,11 @@ public class TxSupportForTestingService {
     private final TaskRepository taskRepository;
 
     @Transactional
+    public void deleteVariableByName(String name) {
+        variableRepository.deleteByName(name);
+    }
+
+    @Transactional
     public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }

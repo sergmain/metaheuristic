@@ -146,14 +146,14 @@ public abstract class FeatureMethods extends PreparingExperiment {
             List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
             assertTrue(tasks02.isEmpty());
 
+            long mills = System.currentTimeMillis();
+            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
+            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+
+            log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
+
             return null;
         });
-
-        long mills = System.currentTimeMillis();
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
-
-        log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 
         execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
