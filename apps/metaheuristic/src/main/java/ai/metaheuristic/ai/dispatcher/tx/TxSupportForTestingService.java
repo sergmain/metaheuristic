@@ -20,10 +20,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,6 +55,17 @@ public class TxSupportForTestingService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextGraphService execContextGraphService;
+
+    @Transactional
+    public List<ExecContextData.TaskVertex> findAllWithTx(ExecContextImpl execContext) {
+        return execContextGraphService.findAll(execContext);
+    }
+
+    @Transactional
+    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(ExecContextImpl execContext) {
+        return execContextGraphService.findAllForAssigning(execContext);
+    }
 
     @Transactional
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {

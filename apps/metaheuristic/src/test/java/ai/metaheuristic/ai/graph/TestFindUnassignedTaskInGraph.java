@@ -156,7 +156,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            vertices = execContextGraphTopLevelService.findAllForAssigningWithTx(
+            vertices = txSupportForTestingService.findAllForAssigningWithTx(
                     Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
             assertEquals(1, vertices.size());
@@ -167,7 +167,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            vertices = execContextGraphTopLevelService.findAllForAssigningWithTx(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
+            vertices = txSupportForTestingService.findAllForAssigningWithTx(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
             assertEquals(1, vertices.size());
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
@@ -176,7 +176,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextForTest.id,21L, EnumsApi.TaskExecState.OK, "123###1");
 
-            vertices = execContextGraphTopLevelService.findAllForAssigningWithTx(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
+            vertices = txSupportForTestingService.findAllForAssigningWithTx(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
             assertEquals(3, vertices.size());
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
@@ -190,7 +190,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
 
-            vertices = execContextGraphTopLevelService.findAllForAssigningWithTx(
+            vertices = txSupportForTestingService.findAllForAssigningWithTx(
                     Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
             assertEquals(6, vertices.size());

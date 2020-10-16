@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -39,14 +38,6 @@ import java.util.Set;
 public class ExecContextGraphTopLevelService {
 
     private final ExecContextGraphService execContextGraphService;
-
-    // section 'execContext graph methods'
-
-    // read-only operations with graph
-    @Transactional
-    public List<ExecContextData.TaskVertex> findAllWithTx(ExecContextImpl execContext) {
-        return findAll(execContext);
-    }
 
     public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         return execContextGraphService.findAll(execContext);
@@ -68,17 +59,8 @@ public class ExecContextGraphTopLevelService {
         return execContextGraphService.findDirectAncestors(execContext, vertex);
     }
 
-    @Transactional
-    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(ExecContextImpl execContext) {
-        return findAllForAssigning(execContext);
-    }
-
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         return execContextGraphService.findAllForAssigning(execContext);
-    }
-
-    public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
-        return execContextGraphService.findAllBroken(execContext);
     }
 
     public Long getCountUnfinishedTasks(ExecContextImpl execContext) {

@@ -133,7 +133,7 @@ public class TestGraph extends PreparingSourceCode {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             // there is only 'NONE' exec state
-            states = execContextGraphTopLevelService.findAllWithTx(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
+            states = txSupportForTestingService.findAllWithTx(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
             assertEquals(1, states.size());
             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
             return null;

@@ -187,8 +187,7 @@ public class ExecContextFSM {
         }
         if (needReconciliation) {
             ExecContextData.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
-            execContextSyncService.getWithSync(execContext.id,
-                    () -> execContextReconciliationService.finishReconciliation(status));
+            execContextReconciliationService.finishReconciliation(status);
         }
         else {
 /*

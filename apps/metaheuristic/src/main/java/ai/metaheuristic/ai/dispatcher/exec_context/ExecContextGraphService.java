@@ -206,47 +206,29 @@ public class ExecContextGraphService {
     }
 
     public long getCountUnfinishedTasks(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraphLong(execContext, graph -> graph
-                    .vertexSet()
-                    .stream()
-                    .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
-                    .count());
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.010 Error", th);
-//            return 0L;
-//        }
+        return readOnlyGraphLong(execContext, graph -> graph
+                .vertexSet()
+                .stream()
+                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
+                .count());
     }
 
     public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext, graph -> graph
-                    .vertexSet()
-                    .stream()
-                    .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
-                    .collect(Collectors.toList()));
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.010 Error", th);
-//            return List.of();
-//        }
+        return readOnlyGraph(execContext, graph -> graph
+                .vertexSet()
+                .stream()
+                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
+                .collect(Collectors.toList()));
     }
 
     public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext, graph -> {
-                TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
+        return readOnlyGraph(execContext, graph -> {
+            TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
 
-                List<ExecContextData.TaskVertex> tasks = new ArrayList<>();
-                iterator.forEachRemaining(tasks::add);
-                return tasks;
-            });
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.013 Error", th);
-//            return List.of();
-//        }
+            List<ExecContextData.TaskVertex> tasks = new ArrayList<>();
+            iterator.forEachRemaining(tasks::add);
+            return tasks;
+        });
     }
 
     @Transactional
@@ -255,56 +237,37 @@ public class ExecContextGraphService {
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextImpl execContext, Long taskId) {
-//        try {
-            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            if (execContext==null) {
-                return withTaskList;
-            }
-            changeGraph(execContext, graph -> {
-
-                Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-                set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
-                withTaskList.childrenTasks.addAll(set);
-            });
+        final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+        if (execContext==null) {
             return withTaskList;
-//        }
-//        catch (Throwable th) {
-//            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
-//        }
+        }
+        changeGraph(execContext, graph -> {
+
+            Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
+            set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
+            withTaskList.childrenTasks.addAll(set);
+        });
+        return withTaskList;
     }
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext, graph -> {
+        return readOnlyGraph(execContext, graph -> {
 
-                try {
-                    List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
-                            .stream()
-                            .filter(o -> graph.outDegreeOf(o)==0)
-                            .collect(Collectors.toList());
-                    return vertices;
-                } catch (Throwable th) {
-                    log.error("#915.019 error", th);
-                    throw new RuntimeException("Error", th);
-                }
-            });
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.020 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return List.of();
-//        }
+            try {
+                List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
+                        .stream()
+                        .filter(o -> graph.outDegreeOf(o)==0)
+                        .collect(Collectors.toList());
+                return vertices;
+            } catch (Throwable th) {
+                log.error("#915.019 error", th);
+                throw new RuntimeException("Error", th);
+            }
+        });
     }
 
     public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
-//        try {
-            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDescendantsInternal(graph, taskId));
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.022 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return Set.of();
-//        }
+        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDescendantsInternal(graph, taskId));
     }
 
     private Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -329,14 +292,7 @@ public class ExecContextGraphService {
     }
 
     public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
-//        try {
-            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
-//        }
-//        catch (Throwable th) {
-//            log.error("#916.140 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return Set.of();
-//        }
+        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -353,14 +309,7 @@ public class ExecContextGraphService {
     }
 
     public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
-//        try {
-            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectAncestorsInternal(graph, vertex));
-//        }
-//        catch (Throwable th) {
-//            log.error("#916.145 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return Set.of();
-//        }
+        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectAncestorsInternal(graph, vertex));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
@@ -369,108 +318,87 @@ public class ExecContextGraphService {
     }
 
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext, graph -> {
+        return readOnlyGraph(execContext, graph -> {
 
-                log.debug("Start find a task for assigning");
-                if (log.isDebugEnabled()) {
-                    log.debug("\tcurrent state of tasks:");
-                    graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
-                }
+            log.debug("Start find a task for assigning");
+            if (log.isDebugEnabled()) {
+                log.debug("\tcurrent state of tasks:");
+                graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
+            }
 
-                ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
-                        .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
-                        .findFirst()
-                        .orElse(null);
+            ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
+                    .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
+                    .findFirst()
+                    .orElse(null);
 
-                // if this is newly created graph then return only the start vertex of graph
-                if (startVertex!=null) {
-                    log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}", startVertex.taskId, startVertex.execState);
-                    return List.of(startVertex);
-                }
+            // if this is newly created graph then return only the start vertex of graph
+            if (startVertex!=null) {
+                log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}", startVertex.taskId, startVertex.execState);
+                return List.of(startVertex);
+            }
 
-                log.debug("\tThe root vertex of execContext was already processes");
+            log.debug("\tThe root vertex of execContext was already processes");
 
-                // get all non-processed tasks
-                Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
-                List<ExecContextData.TaskVertex> vertices = new ArrayList<>();
+            // get all non-processed tasks
+            Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
+            List<ExecContextData.TaskVertex> vertices = new ArrayList<>();
 
-                iterator.forEachRemaining(v -> {
-                    if (v.execState==EnumsApi.TaskExecState.NONE) {
-                        // remove all tasks which have non-processed tasks as a direct parent
-                        if (isParentFullyProcessed(graph, v)) {
-                            vertices.add(v);
-                        }
-                    }
-                });
-
-                if (!vertices.isEmpty()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("\tfound tasks for assigning:");
-                        StringBuilder sb = new StringBuilder();
-                        vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, o.execState)));
-                        log.debug("\t\t" + sb.toString());
-                    }
-                    return vertices;
-                }
-
-                log.debug("\tthere isn't any task for assigning, let's check for 'mh.finish' task");
-
-                // this case is about when all tasks in graph is completed and only mh_finish is left
-                ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
-                        .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
-                        .findFirst()
-                        .orElse(null);
-
-                if (endVertex!=null) {
-                    log.debug("\tfound task which doesn't have any descendant, #{}, state {}", endVertex.taskId, endVertex.execState);
-
-                    boolean allDone = graph.incomingEdgesOf(endVertex).stream()
-                            .map(graph::getEdgeSource)
-                            .peek(o->log.debug("\t\tancestor of task #{} is #{}, state {}", endVertex.taskId, o.taskId, o.execState))
-                            .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
-
-                    log.debug("\tall done: {}", allDone);
-                    if (allDone) {
-                        return List.of(endVertex);
+            iterator.forEachRemaining(v -> {
+                if (v.execState==EnumsApi.TaskExecState.NONE) {
+                    // remove all tasks which have non-processed tasks as a direct parent
+                    if (isParentFullyProcessed(graph, v)) {
+                        vertices.add(v);
                     }
                 }
-                return List.of();
             });
-//        }
-//        catch (Throwable th) {
-//            log.error("#916.160 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return List.of();
-//        }
+
+            if (!vertices.isEmpty()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("\tfound tasks for assigning:");
+                    StringBuilder sb = new StringBuilder();
+                    vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, o.execState)));
+                    log.debug("\t\t" + sb.toString());
+                }
+                return vertices;
+            }
+
+            log.debug("\tthere isn't any task for assigning, let's check for 'mh.finish' task");
+
+            // this case is about when all tasks in graph is completed and only mh_finish is left
+            ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
+                    .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
+                    .findFirst()
+                    .orElse(null);
+
+            if (endVertex!=null) {
+                log.debug("\tfound task which doesn't have any descendant, #{}, state {}", endVertex.taskId, endVertex.execState);
+
+                boolean allDone = graph.incomingEdgesOf(endVertex).stream()
+                        .map(graph::getEdgeSource)
+                        .peek(o->log.debug("\t\tancestor of task #{} is #{}, state {}", endVertex.taskId, o.taskId, o.execState))
+                        .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
+
+                log.debug("\tall done: {}", allDone);
+                if (allDone) {
+                    return List.of(endVertex);
+                }
+            }
+            return List.of();
+        });
     }
 
     public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext,
-                    graph -> graph.vertexSet().stream()
-                            .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
-                            .collect(Collectors.toList()));
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.030 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return List.of();
-//        }
+        return readOnlyGraph(execContext,
+                graph -> graph.vertexSet().stream()
+                        .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
+                        .collect(Collectors.toList()));
     }
 
     public List<ExecContextData.TaskVertex> findAllRootVertices(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext,
-                    graph -> graph.vertexSet().stream()
-                            .filter( v -> graph.incomingEdgesOf(v).isEmpty() )
-                            .collect(Collectors.toList()));
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.030 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return List.of();
-//        }
+        return readOnlyGraph(execContext,
+                graph -> graph.vertexSet().stream()
+                        .filter( v -> graph.incomingEdgesOf(v).isEmpty() )
+                        .collect(Collectors.toList()));
     }
 
     private boolean isParentFullyProcessed(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
@@ -485,35 +413,22 @@ public class ExecContextGraphService {
     }
 
     public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
-//        try {
-            return readOnlyGraph(execContext, graph -> {
-                List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
-                return vertices;
-            });
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.030 Error", th);
-//            // TODO 2020.03.09 need to implement better handling of Throwable
-//            return List.of();
-//        }
+        return readOnlyGraph(execContext, graph -> {
+            List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
+            return vertices;
+        });
     }
 
     @Nullable
     public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
-//        try {
-            return readOnlyGraphNullable(execContext, graph -> {
-                ExecContextData.TaskVertex vertex = graph.vertexSet()
-                        .stream()
-                        .filter(o -> o.taskId.equals(taskId))
-                        .findFirst()
-                        .orElse(null);
-                return vertex;
-            });
-//        }
-//        catch (Throwable th) {
-//            log.error("#915.040 Error", th);
-//            return null;
-//        }
+        return readOnlyGraphNullable(execContext, graph -> {
+            ExecContextData.TaskVertex vertex = graph.vertexSet()
+                    .stream()
+                    .filter(o -> o.taskId.equals(taskId))
+                    .findFirst()
+                    .orElse(null);
+            return vertex;
+        });
     }
 
     @SneakyThrows
@@ -529,38 +444,6 @@ public class ExecContextGraphService {
             return vertices;
         });
     }
-
-/*
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(@Nullable ExecContextImpl execContext, Long taskId) {
-        try {
-            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            if (execContext==null) {
-                return withTaskList;
-            }
-            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.ERROR));
-            return withTaskList;
-        }
-        catch (Throwable th) {
-            log.error("#915.050 Error", th);
-            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
-        }
-    }
-
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsSkipped(@Nullable ExecContextImpl execContext, String taskContextId, Long taskId) {
-        try {
-            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            if (execContext==null) {
-                return withTaskList;
-            }
-            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.SKIPPED, taskContextId));
-            return withTaskList;
-        }
-        catch (Throwable th) {
-            log.error("#915.050 Error", th);
-            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
-        }
-    }
-*/
 
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
