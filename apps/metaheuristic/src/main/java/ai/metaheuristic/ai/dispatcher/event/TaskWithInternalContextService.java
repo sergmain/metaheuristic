@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -54,14 +54,13 @@ import org.springframework.stereotype.Service;
 public class TaskWithInternalContextService {
 
     private final InternalFunctionProcessor internalFunctionProcessor;
-    private final ExecContextCache execContextCache;
-    private final TaskTransactionalService taskTransactionalService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskService taskService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final VariableService variableService;
 
     @Nullable
     private static Long lastTaskId=null;
@@ -110,7 +109,7 @@ public class TaskWithInternalContextService {
                     }
                 }
 
-                taskTransactionalService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
+                variableService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext, task, p.internalContextId, taskParamsYaml, holder);

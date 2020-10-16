@@ -22,14 +22,17 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -65,7 +68,39 @@ public class TaskProducingService {
     private final VariableService variableService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
+    private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
+
+    public TaskData.ProduceTaskResult produceTaskForProcess(
+            ExecContextParamsYaml.Process process,
+            ExecContextParamsYaml execContextParamsYaml, ExecContextImpl execContext,
+            List<Long> parentTaskIds) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContext.id);
+
+        TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
+
+        // for external Functions internalContextId==process.internalContextId
+        TaskImpl t = createTaskInternal(execContext.id, execContextParamsYaml, process, process.internalContextId,
+                execContextParamsYaml.variables.inline);
+        if (t == null) {
+            return new TaskData.ProduceTaskResult(
+                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.080 Unknown reason of error while task creation");
+        }
+
+        TaskImpl task = variableService.prepareVariables(execContextParamsYaml, t);
+        if (task == null) {
+            return new TaskData.ProduceTaskResult(
+                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#303.640 The task is null after prepareVariables(task)");
+        }
+
+        result.taskId = t.getId();
+        List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+        execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskWithContexts);
+
+        result.status = EnumsApi.TaskProducingStatus.OK;
+        return result;
+    }
 
     /**
      * @param files
@@ -80,6 +115,7 @@ public class TaskProducingService {
             Stream<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
             AtomicInteger currTaskNumber, Long parentTaskId, String inputVariableName,
             List<Long> lastIds, VariableData.DataStreamHolder holder) {
+        TxUtils.checkTxExists();
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
@@ -177,10 +213,6 @@ public class TaskProducingService {
         taskParams.task.metas.addAll(process.metas);
         taskParams.task.inline = inlines;
 
-        // inputs and outputs will be initialized at the time of task selection
-        // task selection is here:
-        //      ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
-
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
                     process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params,"internal",
@@ -213,10 +245,11 @@ public class TaskProducingService {
         TaskImpl task = new TaskImpl();
         task.execContextId = execContextId;
         task.params = params;
-        taskService.save(task);
+        task = taskService.save(task);
 
+//        task = variableService.initOutputVariables(execContextId, task, process, taskParams);
+        task = variableService.prepareVariables(execContextParamsYaml, task);
         return task;
     }
-
 
 }

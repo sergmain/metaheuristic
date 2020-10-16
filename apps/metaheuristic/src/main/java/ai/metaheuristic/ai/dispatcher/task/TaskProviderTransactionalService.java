@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -70,8 +71,10 @@ public class TaskProviderTransactionalService {
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
-    public void registerTask(Long execContextId, Long taskId) {
-        tasks.add( new QueuedTask(execContextId, taskId));
+    public void registerTask(RegisterTaskForProcessingEvent event) {
+        for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds task : event.tasks) {
+            tasks.add( new QueuedTask(task.execContextId, task.taskId));
+        }
     }
 
     public void deRegisterTask(Long taskId) {
@@ -203,9 +206,9 @@ public class TaskProviderTransactionalService {
         resultTask.setProcessorId(processorId);
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
-        TaskImpl t = taskService.save(resultTask);
+//        TaskImpl t = taskService.save(resultTask);
 
-        return t;
+        return resultTask;
     }
 
     public void deregisterTasksByExecContextId(Long execContextId) {

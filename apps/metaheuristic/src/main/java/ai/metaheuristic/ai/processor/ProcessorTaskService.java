@@ -313,14 +313,14 @@ public class ProcessorTaskService {
     void markAsFinished(String dispatcherUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("markAsFinished({}, {})", dispatcherUrl, taskId);
+            log.info("markAsFinished({}, {}, {})", dispatcherUrl, taskId, functionExec);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
                     final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                    log.info("#713.113 task #{}, function '{}' doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
+                    log.info("#713.113 task #{}, function '{}', doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
                     final String es = "#713.114 stacktrace";
                     try {
                         throw new RuntimeException(es);

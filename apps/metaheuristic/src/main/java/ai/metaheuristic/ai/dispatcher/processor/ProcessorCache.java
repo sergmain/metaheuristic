@@ -96,7 +96,6 @@ public class ProcessorCache {
     @Nullable
 //    @Cacheable(cacheNames = {Consts.PROCESSORS_CACHE}, unless="#result==null")
     public Processor findById(Long id) {
-        TxUtils.checkTxExists();
         return processorRepository.findById(id).orElse(null);
     }
 }

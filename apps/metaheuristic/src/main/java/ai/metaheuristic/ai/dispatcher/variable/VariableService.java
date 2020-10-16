@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.SourceCodeException;
-import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -33,6 +33,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -64,6 +66,70 @@ public class VariableService {
     private final EntityManager em;
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
+    private final GlobalVariableRepository globalVariableRepository;
+
+    /**
+     * @param execContextParamsYaml
+     * @param task
+     * @return
+     */
+    @Nullable
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
+        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+
+        final Long execContextId = task.execContextId;
+        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
+        if (p==null) {
+            log.warn("#303.600 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            return null;
+        }
+
+        p.inputs.stream()
+                .map(v -> toInputVariable(v, taskParams.task.taskContextId, execContextId))
+                .collect(Collectors.toCollection(()->taskParams.task.inputs));
+
+        return initOutputVariables(execContextId, task, p, taskParams);
+    }
+
+    private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+        TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
+        if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
+            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableService.getParentContext(taskContextId) : taskContextId;
+            if (S.b(contextId)) {
+                throw new TaskCreationException(
+                        S.f("#171.040 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            SimpleVariable variable = findVariableInAllInternalContexts(v.name, contextId, execContextId);
+            if (variable==null) {
+                throw new TaskCreationException(
+                        S.f("#171.060 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            iv.id = variable.id;
+            iv.filename = variable.filename;
+        }
+        else {
+            SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
+            if (variable==null) {
+                throw new TaskCreationException(
+                        S.f("#171.080 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            iv.id = variable.id;
+        }
+        iv.context = v.context;
+        iv.name = v.name;
+        iv.sourcing = v.sourcing;
+        iv.disk = v.disk;
+        iv.git = v.git;
+        iv.type = v.type;
+        iv.setNullable(v.getNullable());
+        return iv;
+    }
 
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
@@ -207,12 +273,12 @@ public class VariableService {
         return data;
     }
 
-    public void initOutputVariables(TaskParamsYaml taskParams, Long execContextId, ExecContextParamsYaml.Process p) {
+    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
+            String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
                         S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
@@ -226,7 +292,7 @@ public class VariableService {
 
                 // even variable.getNullable() can be false, we set empty to true because variable will be inited later
                 // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
-                taskParams.task.outputs.add(
+                taskParamsYaml.task.outputs.add(
                         new TaskParamsYaml.OutputVariable(
                                 v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
                                 null, false, variable.type, true, variable.getNullable()
@@ -247,13 +313,16 @@ public class VariableService {
             }
 */
         }
+        task.updatedOn = System.currentTimeMillis();
+        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
+        return task;
     }
 
     private Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
         Variable v = new Variable();
         v.name = variable;
-        v.setExecContextId(execContextId);
-        v.setTaskContextId(taskContextId);
+        v.execContextId = execContextId;
+        v.taskContextId = taskContextId;
         v.inited = false;
         v.nullified = true;
 

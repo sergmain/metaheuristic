@@ -95,6 +95,7 @@ public class TaskProcessor {
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (ProcessorTask task : tasks) {
+            processorTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
             if (StringUtils.isBlank(task.dispatcherUrl)) {
                 final String es = "#100.005 task.dispatcherUrl is blank for task #" + task.taskId;
                 log.warn(es);

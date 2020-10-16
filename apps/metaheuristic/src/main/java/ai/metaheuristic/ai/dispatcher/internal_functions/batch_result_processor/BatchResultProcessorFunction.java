@@ -139,7 +139,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
     }
 
-    @SneakyThrows
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
             @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
@@ -212,10 +211,11 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 
+    @SneakyThrows
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(
             Long sourceCodeId, ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml,
-            File zipFile, VariableData.DataStreamHolder holder) throws IOException {
+            File zipFile, VariableData.DataStreamHolder holder) {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
@@ -238,6 +238,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
             originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
         }
 
+        // this stream will be closed outside of this transaction
         FileInputStream fis = new FileInputStream(zipFile);
         holder.inputStreams.add(fis);
 
@@ -245,9 +246,10 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return null;
     }
 
+    @SneakyThrows
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
-            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, VariableData.DataStreamHolder holder) throws IOException {
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, VariableData.DataStreamHolder holder) {
         BatchStatusProcessor status = prepareStatus(execContext);
 
         File statusFile = new File(zipDir, "status.txt");

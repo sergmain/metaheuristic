@@ -19,6 +19,9 @@ package ai.metaheuristic.ai.dispatcher.event;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 10/11/2020
@@ -27,6 +30,13 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class RegisterTaskForProcessingEvent {
-    public Long execContextId;
-    public Long taskId;
+
+    @Data
+    @AllArgsConstructor
+    public static class ExecContextWithTaskIds {
+        public Long execContextId;
+        public Long taskId;
+    }
+
+    public final List<ExecContextWithTaskIds> tasks = new ArrayList<>();
 }

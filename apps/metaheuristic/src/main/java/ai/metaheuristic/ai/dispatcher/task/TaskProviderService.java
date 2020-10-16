@@ -70,7 +70,7 @@ public class TaskProviderService {
     @EventListener
     public void registerTask(RegisterTaskForProcessingEvent event) {
         synchronized (syncObj) {
-            taskProviderTransactionalService.registerTask(event.execContextId, event.taskId);
+            taskProviderTransactionalService.registerTask(event);
         }
     }
 

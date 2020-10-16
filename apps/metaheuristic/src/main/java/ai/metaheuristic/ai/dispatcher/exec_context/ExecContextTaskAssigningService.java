@@ -20,8 +20,10 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -53,10 +55,11 @@ public class ExecContextTaskAssigningService {
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskRepository taskRepository;
+    private final TaskProviderService taskProviderService;
 
     @Nullable
     @Transactional
-    public Void findUnassignedInternalTaskAndAssign(Long execContextId, VariableData.DataStreamHolder holder) {
+    public Void findUnassignedTasksAndAssign(Long execContextId, VariableData.DataStreamHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -71,6 +74,7 @@ public class ExecContextTaskAssigningService {
 
         int page = 0;
         List<Long> taskIds;
+        RegisterTaskForProcessingEvent event = new RegisterTaskForProcessingEvent();
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -96,17 +100,17 @@ public class ExecContextTaskAssigningService {
                     continue;
                 }
                 // all tasks with internal function will be processed in a different thread
-                if (taskParamYaml.task.context!=EnumsApi.FunctionExecContext.internal) {
-                    continue;
+                if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
+                    log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                    taskWithInternalContextService.processInternalFunction(execContext, task, holder);
                 }
-                log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                taskWithInternalContextService.processInternalFunction(execContext, task, holder);
-                return null;
-
-//                eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.execContextId, task.id));
-//                continue;
+                else {
+                    event.tasks.add(new RegisterTaskForProcessingEvent.ExecContextWithTaskIds(execContextId, taskId));
+                }
             }
         }
+        taskProviderService.registerTask(event);
+//        eventPublisher.publishEvent(event);
         return null;
     }
 

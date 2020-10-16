@@ -86,13 +86,13 @@ public class ExecContextTopLevelService {
         return result;
     }
 
-    public void findUnassignedInternalTaskAndAssign() {
+    public void findUnassignedTasksAndAssign() {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         for (Long execContextId : execContextIds) {
             VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
             try {
                 execContextSyncService.getWithSyncNullable(execContextId,
-                        ()->execContextTaskAssigningService.findUnassignedInternalTaskAndAssign(execContextId, holder));
+                        ()->execContextTaskAssigningService.findUnassignedTasksAndAssign(execContextId, holder));
             }
             finally {
                 for (InputStream inputStream : holder.inputStreams) {
