@@ -17,14 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -34,7 +37,10 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,12 +52,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -67,6 +78,45 @@ public class VariableService {
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
     private final GlobalVariableRepository globalVariableRepository;
+
+    @SneakyThrows
+    public void createInputVariablesForSubProcess(List<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName, VariableData.DataStreamHolder holder, String subProcessContextId) {
+        if (files.isEmpty() && inputVariableContent==null) {
+            throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null)");
+        }
+
+        String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+        List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
+        for (BatchTopLevelService.FileWithMapping f : files) {
+            String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+
+            FileInputStream fis = new FileInputStream(f.file);
+            holder.inputStreams.add(fis);
+            Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
+
+            SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+            variableHolders.add( new VariableUtils.VariableHolder(sv));
+        }
+
+        if (!S.b(inputVariableContent)) {
+            String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+            final byte[] bytes = inputVariableContent.getBytes();
+            InputStream is = new ByteArrayInputStream(bytes);
+            holder.inputStreams.add(is);
+            Variable v = createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
+
+            SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+            VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
+            variableHolders.add(variableHolder);
+        }
+
+        VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
+        String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+        byte[] bytes = yaml.getBytes();
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+        holder.inputStreams.add(bais);
+        Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
+    }
 
     /**
      * @param execContextParamsYaml

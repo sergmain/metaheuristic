@@ -58,11 +58,11 @@ public class AssetController {
     private final FunctionTopLevelService functionTopLevelService;
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<AbstractResource> deliverFunctionAuth(
+    public ResponseEntity<AbstractResource> deliverFunction(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
-        log.debug("deliverFunctionAuth(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
+        log.debug("deliverFunction(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (S.b(code) || S.b(chunkSize) || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }

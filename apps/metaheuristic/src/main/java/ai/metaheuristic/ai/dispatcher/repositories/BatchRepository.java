@@ -69,7 +69,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
 //    @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, b.execContextId, b.execState, w.state) " +
             "from Batch b, ExecContextImpl w " +
             "where b.execContextId=w.id and b.execState=3")
     List<BatchAndExecContextStates> findAllUnfinished();

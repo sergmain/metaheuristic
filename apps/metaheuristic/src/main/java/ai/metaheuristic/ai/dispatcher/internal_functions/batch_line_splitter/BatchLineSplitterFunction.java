@@ -53,7 +53,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
@@ -148,9 +147,14 @@ public class BatchLineSplitterFunction implements InternalFunction {
     private InternalFunctionProcessingResult createTasks(
             Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, VariableData.DataStreamHolder holder) throws IOException {
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             return executionContextData.internalFunctionProcessingResult;
+        }
+
+        if (executionContextData.subProcesses.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
@@ -163,12 +167,19 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
-        allLines.forEach( lines ->  {
+        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+
+        allLines.forEach( lines -> {
             currTaskNumber.incrementAndGet();
             try {
                 String str = StringUtils.join(lines, '\n' );
+
+                variableService.createInputVariablesForSubProcess(
+                        List.of(), str, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+
                 taskProducingService.createTasksForSubProcesses(
-                        Stream.empty(), str, execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds, holder );
+                        execContext, executionContextData, currTaskNumber, taskId, lastIds);
+
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {

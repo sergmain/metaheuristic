@@ -42,22 +42,20 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -103,44 +101,49 @@ public class TaskProducingService {
     }
 
     /**
-     * @param files
      * @param execContext
      * @param currTaskNumber
      * @param parentTaskId
-     * @param inputVariableName
      * @param lastIds
-     * @param holder
      */
     public void createTasksForSubProcesses(
-            Stream<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
-            AtomicInteger currTaskNumber, Long parentTaskId, String inputVariableName,
-            List<Long> lastIds, VariableData.DataStreamHolder holder) {
+            ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
+            AtomicInteger currTaskNumber, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
+        if (subProcesses.isEmpty()) {
+            log.info("#995.330 There isn't any subProcess");
+            return;
+        }
+
         Map<String, Map<String, String>> inlines = executionContextData.execContextParamsYaml.variables.inline;
         ExecContextParamsYaml.Process process = executionContextData.process;
 
+        if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential) {
+            throw new BreakFromLambdaException("#995.340 only the 'sequential' logic is supported");
+        }
+
         List<Long> parentTaskIds = List.of(parentTaskId);
+        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+
         TaskImpl t = null;
-        String subProcessContextId = null;
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
                 throw new BreakFromLambdaException("#995.320 Process '" + subProcess.process + "' wasn't found");
             }
 
-            if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                throw new BreakFromLambdaException("#995.340 only the 'sequential' logic is supported");
-            }
             // all subProcesses must have the same processContextId
-            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+            if (!subProcessContextId.equals(subProcess.processContextId)) {
                 throw new BreakFromLambdaException("#995.360 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
+
             t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
+
             if (t==null) {
                 throw new BreakFromLambdaException("#995.380 Creation of task failed");
             }
@@ -149,55 +152,7 @@ public class TaskProducingService {
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
-
-        if (subProcessContextId!=null) {
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-            lastIds.add(t.id);
-
-            List<VariableUtils.VariableHolder> variableHolders = files
-                    .map(f-> {
-                        String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
-
-                        Variable v;
-                        try {
-                            FileInputStream fis = new FileInputStream(f.file);
-                            holder.inputStreams.add(fis);
-                            v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
-
-                        } catch (IOException e) {
-                            throw new BreakFromLambdaException(e);
-                        }
-                        SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                        return new VariableUtils.VariableHolder(sv);
-                    })
-                    .collect(Collectors.toList());
-
-
-            if (!S.b(inputVariableContent)) {
-                String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
-                final byte[] bytes = inputVariableContent.getBytes();
-                InputStream is = new ByteArrayInputStream(bytes);
-                holder.inputStreams.add(is);
-                Variable v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
-
-                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
-                variableHolders.add(variableHolder);
-            }
-
-            VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
-            String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-            byte[] bytes = yaml.getBytes();
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            holder.inputStreams.add(bais);
-            try {
-                Variable v = variableService.createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
-            } catch (Throwable e) {
-                ExceptionUtils.rethrow(e);
-            }
-
-            int i=0;
-        }
+        lastIds.add(t.id);
     }
 
     @Nullable

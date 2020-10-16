@@ -17,6 +17,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
@@ -50,6 +51,7 @@ public class Schedulers {
     public static class DispatcherSchedulers {
 
         private final Globals globals;
+        private final BatchService batchService;
         private final ExecContextSchedulerService execContextSchedulerService;
         private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
         private final ReplicationService replicationService;
@@ -99,7 +101,6 @@ public class Schedulers {
         /**
          * update statuses of all batches if all related execContexts are finished
          */
-/*
         @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
@@ -111,7 +112,6 @@ public class Schedulers {
             log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
-*/
 
 /*
         @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)

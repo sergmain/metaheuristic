@@ -53,7 +53,7 @@ public class InternalFunctionService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public InternalFunctionData.ExecutionContextData getSupProcesses(Long sourceCodeId, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+    public InternalFunctionData.ExecutionContextData getSubProcesses(Long sourceCodeId, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
             return new InternalFunctionData.ExecutionContextData(

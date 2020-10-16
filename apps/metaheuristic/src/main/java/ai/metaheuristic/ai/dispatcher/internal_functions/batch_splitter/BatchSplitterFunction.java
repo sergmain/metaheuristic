@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -57,7 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -80,6 +81,7 @@ public class BatchSplitterFunction implements InternalFunction {
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final ExecContextSyncService execContextSyncService;
+    private final VariableService variableService;
 
     @Override
     public String getCode() {
@@ -180,9 +182,14 @@ public class BatchSplitterFunction implements InternalFunction {
             Long sourceCodeId, ExecContextImpl execContext, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId, VariableData.DataStreamHolder holder) throws IOException {
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSupProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             return executionContextData.internalFunctionProcessingResult;
+        }
+
+        if (executionContextData.subProcesses.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#995.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
@@ -193,29 +200,35 @@ public class BatchSplitterFunction implements InternalFunction {
 
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
+        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
         Files.list(srcDir.toPath())
                 .forEach( dataFilePath ->  {
                     File file = dataFilePath.toFile();
                     currTaskNumber.incrementAndGet();
                     try {
                         if (file.isDirectory()) {
-                            final Stream<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
+                            final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
                                     .filter(o -> o.toFile().isFile())
                                     .map(f -> {
                                         final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
-                                    });
+                                    }).collect(Collectors.toList());
+
+                            variableService.createInputVariablesForSubProcess(
+                                    files, null, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+
                             taskProducingService.createTasksForSubProcesses(
-                                    files, null,
-                                    execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds,
-                                    holder);
+                                    execContext, executionContextData, currTaskNumber, taskId, lastIds);
                         } else {
                             String actualFileName = mapping.get(file.getName());
+
+                            variableService.createInputVariablesForSubProcess(
+                                    List.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
+                                    execContext, currTaskNumber, variableName, holder, subProcessContextId);
+
                             taskProducingService.createTasksForSubProcesses(
-                                    Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
-                                    execContext, executionContextData, currTaskNumber, taskId, variableName, lastIds,
-                                    holder);
+                                    execContext, executionContextData, currTaskNumber, taskId, lastIds);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;

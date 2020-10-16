@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -123,33 +124,30 @@ public class BatchService {
 //            return batchCache.save(b);
     }
 
-/*
-    private void changeStateToFinished(Long batchId) {
-            try {
-                Batch b = batchCache.findById(batchId);
-                if (b == null) {
-                    log.warn("#990.050 batch wasn't found {}", batchId);
-                    return;
-                }
-                if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
-                    throw new IllegalStateException("#990.060 Can't change state to Finished, " +
-                            "current state: " + Enums.BatchExecState.toState(b.execState));
-                }
-                if (b.execState == Enums.BatchExecState.Finished.code) {
-                    return;
-                }
-                b.execState = Enums.BatchExecState.Finished.code;
-                batchCache.save(b);
-                return;
-            }
-            finally {
-                dispatcherEventService.publishEventBatchFinished(batchId);
-            }
-    }
-
     @Transactional
     public void updateBatchStatuses() {
         List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
+        for (BatchAndExecContextStates status : statuses) {
+            if (status.execContextState != EnumsApi.ExecContextState.ERROR.code && status.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
+                continue;
+            }
+            Batch b = batchCache.findById(status.batchId);
+            if (b == null) {
+                log.warn("#990.050 batch wasn't found {}", status.batchId);
+                continue;
+            }
+            if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
+                throw new IllegalStateException("#990.060 Can't change state to Finished, " +
+                        "current state: " + Enums.BatchExecState.toState(b.execState));
+            }
+            if (b.execState == Enums.BatchExecState.Finished.code) {
+                continue;
+            }
+            b.execState = Enums.BatchExecState.Finished.code;
+            batchCache.save(b);
+            dispatcherEventService.publishEventBatchFinished(status.batchId);
+        }
+/*
         Map<Long, List<BatchAndExecContextStates>> map = statuses.stream().collect(Collectors.groupingBy(status -> status.batchId));
         for (Long batchId : map.keySet()) {
             boolean isFinished = true;
@@ -160,11 +158,10 @@ public class BatchService {
                 }
             }
             if (isFinished) {
-                changeStateToFinished(batchId);
             }
         }
-    }
 */
+    }
 
     @Nullable
     @Transactional(readOnly = true)
@@ -314,17 +311,4 @@ public class BatchService {
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batch.id + " was deleted successfully.", null);
     }
-
-    @Transactional
-    public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
-        Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyUniqueId)) {
-            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
-            log.info(es);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-        }
-
-        return deleteBatch(companyUniqueId, isVirtualDeletion, batchId);
-    }
-
 }
