@@ -73,11 +73,13 @@ public class TaskProducingService {
                     EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.080 Unknown reason of error while task creation");
         }
 
+/*
         TaskImpl task = variableService.prepareVariables(execContextParamsYaml, t);
         if (task == null) {
             return new TaskData.ProduceTaskResult(
                     EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#303.640 The task is null after prepareVariables(task)");
         }
+*/
 
         result.taskId = t.getId();
         List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));

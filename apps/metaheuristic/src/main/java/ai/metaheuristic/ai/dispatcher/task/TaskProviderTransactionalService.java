@@ -56,7 +56,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;
-    private final TaskService taskService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
     @Data

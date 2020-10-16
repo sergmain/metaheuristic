@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.tx;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -63,6 +64,7 @@ public class TxSupportForTestingService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskRepository taskRepository;
+    private final ExecContextVariableService execContextVariableService;
 
     @Transactional
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextId, Long taskId) {
@@ -79,6 +81,12 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
+    public Void deleteByExecContextId(Long execContextId) {
+        variableRepository.deleteByExecContextId(execContextId);
+        return null;
+    }
+
+    @Transactional
     public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
@@ -91,6 +99,24 @@ public class TxSupportForTestingService {
         }
         variableService.update(is, size, v);
         return null;
+    }
+
+    @Transactional
+    public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
+        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return Enums.UploadVariableStatus.TASK_NOT_FOUND;
+        }
+        return execContextVariableService.setVariableReceived(task, variableId);
+    }
+
+    @Transactional
+    public void checkTaskCanBeFinished(Long taskId) {
+        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return;
+        }
+        execContextTaskFinishingService.checkTaskCanBeFinished(task);
     }
 
     @Transactional

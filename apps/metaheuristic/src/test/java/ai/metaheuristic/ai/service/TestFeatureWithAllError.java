@@ -45,6 +45,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         toStarted();
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");

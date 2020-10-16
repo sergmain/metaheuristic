@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,8 @@ public class ExecContextVariableTopLevelService {
     private final ExecContextVariableService execContextVariableService;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
+        TxUtils.checkTxNotExists();
+
         if (taskId==null) {
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.260 taskId is null" );
         }
@@ -95,6 +98,8 @@ public class ExecContextVariableTopLevelService {
     }
 
     public UploadResult uploadVariable(@Nullable MultipartFile file, @Nullable Long taskId, @Nullable Long variableId) {
+        TxUtils.checkTxNotExists();
+
         if (file==null) {
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.015 file in null");
         }

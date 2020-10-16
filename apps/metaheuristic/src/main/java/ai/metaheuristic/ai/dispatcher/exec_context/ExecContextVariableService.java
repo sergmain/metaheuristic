@@ -126,11 +126,6 @@ public class ExecContextVariableService {
         }
     }
 
-    @Transactional
-    public Enums.UploadVariableStatus setVariableReceivedWithTx(TaskImpl task, Long variableId) {
-        return setVariableReceived(task, variableId);
-    }
-
     public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);

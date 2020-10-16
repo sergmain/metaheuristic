@@ -89,19 +89,23 @@ public class ExecContextTopLevelService {
     public void findUnassignedTasksAndAssign() {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         for (Long execContextId : execContextIds) {
-            VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
-            try {
-                execContextSyncService.getWithSyncNullable(execContextId,
-                        ()->execContextTaskAssigningService.findUnassignedTasksAndAssign(execContextId, holder));
-            }
-            finally {
-                for (InputStream inputStream : holder.inputStreams) {
-                    try {
-                        inputStream.close();
-                    }
-                    catch(Throwable th)  {
-                        log.warn("Error while closing stream", th);
-                    }
+            findTaskForAssigning(execContextId);
+        }
+    }
+
+    public void findTaskForAssigning(Long execContextId) {
+        VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
+        try {
+            execContextSyncService.getWithSyncNullable(execContextId,
+                    ()->execContextTaskAssigningService.findUnassignedTasksAndAssign(execContextId, holder));
+        }
+        finally {
+            for (InputStream inputStream : holder.inputStreams) {
+                try {
+                    inputStream.close();
+                }
+                catch(Throwable th)  {
+                    log.warn("Error while closing stream", th);
                 }
             }
         }

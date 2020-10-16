@@ -55,21 +55,22 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
             return null;
         });
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
 
-            getTaskAndAssignToProcessor_mustBeNewTask();
+        getTaskAndAssignToProcessor_mustBeNewTask();
 
-            // this processor already got task, so don't provide any new
-            DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(
-                    new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
-            // task is empty cos we still didn't finish those task
-            assertNull(task);
+        // this processor already got task, so don't provide any new
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(
+                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        // task is empty cos we still didn't finish those task
+        assertNull(task);
 
-            finishCurrentWithError();
+        finishCurrentWithError();
 
-            DispatcherCommParamsYaml.AssignedTask task1 = taskProviderService.findTask(
-                    new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderService.findTask(
+                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
 
-            assertNull(task1);
+        assertNull(task1);
     }
 
 }

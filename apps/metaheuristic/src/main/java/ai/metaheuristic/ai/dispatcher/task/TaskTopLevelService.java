@@ -16,11 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -41,11 +37,6 @@ public class TaskTopLevelService {
 
     private final ExecContextSyncService execContextSyncService;
     private final TaskTransactionalService taskTransactionalService;
-    private final ExecContextVariableService execContextVariableService;
-
-    public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
-        return execContextSyncService.getWithSync(task.execContextId, () -> execContextVariableService.setVariableReceivedWithTx(task, variableId));
-    }
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
         for (Long execContextId : orphanExecContextIds) {

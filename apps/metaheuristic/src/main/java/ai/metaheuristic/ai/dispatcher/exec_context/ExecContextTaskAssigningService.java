@@ -110,7 +110,6 @@ public class ExecContextTaskAssigningService {
             }
         }
         taskProviderService.registerTask(event);
-//        eventPublisher.publishEvent(event);
         return null;
     }
 

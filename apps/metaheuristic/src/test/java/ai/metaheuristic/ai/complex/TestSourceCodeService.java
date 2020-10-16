@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -55,7 +56,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -102,7 +102,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     public void afterTestSourceCodeService() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
         if (execContextForTest!=null) {
-            variableRepository.deleteByExecContextId(execContextForTest.id);
+            execContextSyncService.getWithSyncNullable(execContextForTest.id,
+                    () -> txSupportForTestingService.deleteByExecContextId(execContextForTest.id));
         }
     }
 
@@ -118,7 +119,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         produceTasksForTest();
 
-        final List<ExecContextData.TaskVertex> taskVertices = new ArrayList<>();
         List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
         assertNotNull(execContextForTest);
@@ -145,18 +145,25 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
         });
+
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
         step_AssembledRaw();
 
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
         step_DatasetProcessing();
 
-            //   processCode: feature-processing-1, function code: function-03:1.1
-            step_CommonProcessing();
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        //   processCode: feature-processing-1, function code: function-03:1.1
+        step_CommonProcessing("feature-output-1");
 
-            //   processCode: feature-processing-2, function code: function-04:1.1
-            step_CommonProcessing();
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        //   processCode: feature-processing-2, function code: function-04:1.1
+        step_CommonProcessing("feature-output-2");
 
-            taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
-            assertEquals(3, taskVertices.size());
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+
+        final List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+        assertEquals(3, taskVertices.size());
 
         TaskHolder finishTask = new TaskHolder(), permuteTask = new TaskHolder(), aggregateTask = new TaskHolder();
 
@@ -197,6 +204,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 20);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
@@ -277,25 +285,24 @@ public class TestSourceCodeService extends PreparingSourceCode {
         });
     }
 
-    public void step_CommonProcessing() {
+    private void step_CommonProcessing(String outputVariable) {
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
-        Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
+        TaskImpl task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
 
-/*
-        // becauce those tasks is executing in parallel, don't call getTaskAndAssignToProcessor() again
-        DispatcherCommParamsYaml.AssignedTask simpleTask31 =
-                execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
-
-        assertNull(simpleTask31);
-*/
-
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
+        storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
-        execContextSchedulerService.updateExecContextStatuses(true);
+
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+            txSupportForTestingService.checkTaskCanBeFinished(task32.id);
+            return null;
+        });
+//        execContextSchedulerService.updateExecContextStatuses(true);
     }
 
     public void step_FitAndPredict() {
@@ -340,13 +347,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
-    public void step_DatasetProcessing() {
+    private void step_DatasetProcessing() {
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
-        Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
+        TaskImpl task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
         assertNotNull(task3);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
@@ -363,7 +370,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
-        execContextSchedulerService.updateExecContextStatuses(true);
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+            txSupportForTestingService.checkTaskCanBeFinished(task3.id);
+            return null;
+        });
+//        execContextSchedulerService.updateExecContextStatuses(true);
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -409,13 +420,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     }
 
-    public void step_AssembledRaw() {
+    private void step_AssembledRaw() {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
-        Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
+        TaskImpl task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
         assertNotNull(task);
 
         // the calling of this method may produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
@@ -459,10 +470,15 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
-        execContextSchedulerService.updateExecContextStatuses(true);
+
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+            txSupportForTestingService.checkTaskCanBeFinished(task.id);
+            return null;
+        });
+//        execContextSchedulerService.updateExecContextStatuses(true);
     }
 
-    public void waitForFinishing(Long id, int secs) {
+    private void waitForFinishing(Long id, int secs) {
         try {
             long mills = System.currentTimeMillis();
             boolean finished = false;
@@ -476,7 +492,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     break;
                 }
             }
-            assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
+            assertTrue(finished, "After "+secs+" seconds permuteTask still isn't finished ");
         } catch (InterruptedException e) {
             ExceptionUtils.rethrow(e);
         }
@@ -499,7 +515,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
     }
 
-    public void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
+    private void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
         verifyGraphIntegrity();
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
@@ -511,10 +527,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            taskTopLevelService.setVariableReceived(task, output.id);
-        }
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+                assertEquals(Enums.UploadVariableStatus.OK, status);
+            }
+            return null;
+        });
 
         verifyGraphIntegrity();
     }
