@@ -65,6 +65,15 @@ public class TxSupportForTestingService {
     private final TaskRepository taskRepository;
 
     @Transactional
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextId, Long taskId) {
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            throw new IllegalStateException("Need better solution for this state");
+        }
+        return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContext, taskId);
+    }
+
+    @Transactional
     public void deleteVariableByName(String name) {
         variableRepository.deleteByName(name);
     }

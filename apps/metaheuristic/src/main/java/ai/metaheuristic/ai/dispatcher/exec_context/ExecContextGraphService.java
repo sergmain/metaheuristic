@@ -231,11 +231,6 @@ public class ExecContextGraphService {
         });
     }
 
-    @Transactional
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(@Nullable ExecContextImpl execContext, Long taskId) {
-        return updateGraphWithResettingAllChildrenTasks(execContext, taskId);
-    }
-
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextImpl execContext, Long taskId) {
         final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         if (execContext==null) {

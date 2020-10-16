@@ -92,10 +92,10 @@ source:
             outputs:
               - name: metrics
               - name: predicted
-    - code: mh.aggregate-internal-context
-      name: aggregate variables in internal context
+    - code: mh.aggregate
+      name: mh.aggregate
       function:
-        code: mh.aggregate-internal-context
+        code: mh.aggregate
         context: internal
       metas:
         - variables: metrics, predicted

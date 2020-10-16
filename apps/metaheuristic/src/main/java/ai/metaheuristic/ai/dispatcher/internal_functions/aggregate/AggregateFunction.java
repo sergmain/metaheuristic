@@ -26,14 +26,28 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -49,7 +63,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 public class AggregateFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
-    private final GlobalVariableRepository globalVariableRepository;
+    private final VariableService variableService;
 
     @Override
     public String getCode() {
@@ -61,24 +75,65 @@ public class AggregateFunction implements InternalFunction {
         return Consts.MH_AGGREGATE_FUNCTION;
     }
 
+    @SneakyThrows
     @Override
     public InternalFunctionProcessingResult process(
             @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
 
-        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-        if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(inputVariable.id).orElse(null);
-            if (bd == null) {
-                throw new IllegalStateException("Variable not found for code " + inputVariable);
+        if (taskParamsYaml.task.outputs.size()!=1) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
+                    "There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
+        }
+
+        Variable variable;
+        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+        if (outputVariable.context==EnumsApi.VariableContext.local) {
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
+            if (variable == null) {
+                throw new IllegalStateException("Variable not found for code " + outputVariable);
             }
         }
         else {
-            GlobalVariable gv = globalVariableRepository.findById(inputVariable.id).orElse(null);
-            if (gv == null) {
-                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
-            }
+            throw new IllegalStateException("GlobalVariable not found for code " + outputVariable);
         }
+
+        String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
+        if (names==null || names.length==0) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
+        }
+        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(execContext.id, names);
+
+        File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
+        if (tempDir==null) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+        }
+        File outputDir = new File(tempDir, outputVariable.name);
+        if (!outputDir.mkdirs()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "Can't create output directory  "+ outputDir.getAbsolutePath());
+        }
+
+        list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
+                .forEach(contextId->{
+                    File taskContextDir = new File(outputDir, contextId);
+                    //noinspection ResultOfMethodCallIgnored
+                    taskContextDir.mkdirs();
+                    list.stream().filter(t-> contextId.equals(t.taskContextId))
+                            .forEach( v->{
+                                File varFile = new File(taskContextDir, v.variable);
+                                variableService.storeToFile(v.id, varFile);
+                            });
+                });
+
+        File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
+
+        ZipUtils.createZip(outputDir, zipFile);
+        InputStream is = new FileInputStream(zipFile);
+        holder.inputStreams.add(is);
+        variableService.update(is, zipFile.length(), variable);
 
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }

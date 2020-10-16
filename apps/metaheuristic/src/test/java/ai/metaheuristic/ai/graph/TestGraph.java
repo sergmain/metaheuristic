@@ -129,7 +129,7 @@ public class TestGraph extends PreparingSourceCode {
 
 
             execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 1L, EnumsApi.TaskExecState.NONE, "123###1");
-            execContextGraphService.updateGraphWithResettingAllChildrenTasksWithTx(execContextService.findById(execContextForTest.id), 1L);
+            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(execContextForTest.id, 1L);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             // there is only 'NONE' exec state

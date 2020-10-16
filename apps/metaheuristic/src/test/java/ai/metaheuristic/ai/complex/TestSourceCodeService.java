@@ -164,7 +164,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
+            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
 
@@ -172,7 +172,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 case Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION:
                     permuteTask.task = tempTask;
                     break;
-                case Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION:
+                case Consts.MH_AGGREGATE_FUNCTION:
                     aggregateTask.task = tempTask;
                     break;
                 case Consts.MH_FINISH_FUNCTION:

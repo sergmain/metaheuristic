@@ -30,8 +30,8 @@ source:
       function:
         code: mh.aggregate
         context: internal
-      inputs:
-        - name: processes-element
+      metas:
+        - variables: processes-element
       outputs:
         - name: result
 version: 1

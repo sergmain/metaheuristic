@@ -64,7 +64,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
     @Test
     public void test() {
 
-        // TODO 2020-10-06 need to rewrite with using real Tasks
+        // !!! TODO 2020-10-06 need to rewrite with using real Tasks
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
         execContextForTest = result.execContext;
@@ -123,7 +123,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(ancestors.contains(new ExecContextData.TaskVertex(323L, 323L, EnumsApi.TaskExecState.NONE, "123###1")));
 
             Set<EnumsApi.TaskExecState> states;
-            execContextGraphService.updateGraphWithResettingAllChildrenTasksWithTx(execContextService.findById(execContextForTest.id), 1L);
+            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(execContextForTest.id, 1L);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             // there is only 'NONE' exec state
@@ -140,6 +140,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             OperationStatusRest status = execContextTaskStateService.updateTaskExecStatesWithTx(
                     execContextForTest.id,1L, EnumsApi.TaskExecState.OK, "123###1");
+
+            // !!! TODO 2020-10-06 need to rewrite with using real Tasks
 
             assertEquals(EnumsApi.OperationStatus.OK, status.status);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
