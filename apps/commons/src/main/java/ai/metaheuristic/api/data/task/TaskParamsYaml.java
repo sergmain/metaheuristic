@@ -166,9 +166,9 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable GitInfo git;
 
         /**
-         * this field tell Processor don't add absolute path to params.yaml file
+         * this field tells Processor to don't add the absolute path to params.yaml file
          * as the last parameter in command line.
-         * Useful for defining FUnction which is invoking curl as a command
+         * Useful for defining Function which is invoking curl as a command
          */
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
