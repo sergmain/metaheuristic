@@ -130,10 +130,10 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console, Long execContextId, @Nullable String taskContextId) {
+    public Void finishWithErrorWithTx(Long taskId, String console, @Nullable String taskContextId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#303.1650 Reporting about non-existed task #{}", taskId);
+            log.warn("#303.165 Reporting about non-existed task #{}", taskId);
             return null;
         }
         return execContextTaskFinishingService.finishWithError(task, console, taskContextId);

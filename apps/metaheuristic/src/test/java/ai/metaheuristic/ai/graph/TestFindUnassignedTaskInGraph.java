@@ -165,7 +165,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-            txSupportForTestingService.finishWithErrorWithTx(22L, "An error", execContextForTest.id, null);
+            txSupportForTestingService.finishWithErrorWithTx(22L, "An error", null);
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
