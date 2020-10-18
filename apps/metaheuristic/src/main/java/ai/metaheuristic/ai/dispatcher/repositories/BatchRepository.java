@@ -37,6 +37,7 @@ import java.util.List;
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     @Transactional(readOnly = true)
+    @Nullable
     @Query(value="select b.execContextId from Batch b where b.id=:batchId")
     Long getExecContextId(Long batchId);
 

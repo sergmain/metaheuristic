@@ -26,8 +26,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
-
 /**
  * @author Serge
  * Date: 2/23/2020
@@ -46,7 +44,7 @@ public class SourceCodeStateService {
         TxUtils.checkTxExists();
 
         if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
-            log.warn("SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
+            log.warn("#373.020 SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
             return;
         }
 
@@ -63,7 +61,7 @@ public class SourceCodeStateService {
             return;
         }
         if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
-            log.warn("SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
+            log.warn("#373.040 SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
             return;
         }
         if (sc.isLocked()!=locked) {
