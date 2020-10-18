@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.api.EnumsApi;
@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -52,10 +53,10 @@ public class ExecContextTaskAssigningService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final TaskWithInternalContextService taskWithInternalContextService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskRepository taskRepository;
     private final TaskProviderService taskProviderService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Nullable
     @Transactional
@@ -102,7 +103,8 @@ public class ExecContextTaskAssigningService {
                 // all tasks with internal function will be processed in a different thread
                 if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
                     log.info("#705.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                    taskWithInternalContextService.processInternalFunction(execContext, task, holder);
+//                    taskWithInternalContextService.processInternalFunction(execContext, task, holder);
+                    eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
                 }
                 else {
                     event.tasks.add(new RegisterTaskForProcessingEvent.ExecContextWithTaskIds(execContextId, taskId));

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -53,6 +55,7 @@ public class ExecContextTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
+    private final TaskProviderService taskProviderService;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
@@ -87,7 +90,11 @@ public class ExecContextTopLevelService {
     }
 
     public void findUnassignedTasksAndAssign() {
+        if (taskProviderService.countOfTasks()>0) {
+            return;
+        }
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        execContextIds.sort((Comparator.naturalOrder()));
         for (Long execContextId : execContextIds) {
             findTaskForAssigning(execContextId);
         }

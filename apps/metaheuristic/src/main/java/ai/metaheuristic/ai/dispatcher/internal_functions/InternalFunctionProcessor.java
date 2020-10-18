@@ -44,7 +44,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 public class InternalFunctionProcessor {
 
     private final ExecContextSyncService execContextSyncService;
-    private final ExecContextCache execContextCache;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     public InternalFunctionProcessingResult process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
@@ -56,7 +55,6 @@ public class InternalFunctionProcessor {
         }
         ExecContextParamsYaml expy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         try {
-            // ! all output variables must be already created at this point
             return internalFunction.process(execContext, task, internalContextId, expy.variables, taskParamsYaml, holder);
         } catch (Throwable th) {
             String es = "#977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();

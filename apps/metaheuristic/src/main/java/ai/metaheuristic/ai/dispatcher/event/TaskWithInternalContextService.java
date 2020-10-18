@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -61,12 +63,35 @@ public class TaskWithInternalContextService {
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final VariableService variableService;
-
+    private final ExecContextCache execContextCache;
+    private final TaskRepository taskRepository;
     @Nullable
     private static Long lastTaskId=null;
     // this code is only for testing
     public static boolean taskFinished(Long id) {
         return id.equals(lastTaskId);
+    }
+
+    @Transactional
+    public Void processInternalFunctionWithTx(Long execContextId, Long taskId, VariableData.DataStreamHolder holder) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.warn("ExecContext #{} doesn't exist", execContextId);
+            return null;
+        }
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("Task #{} with internal context doesn't exist", taskId);
+            return null;
+        }
+        if (!execContextId.equals(task.execContextId)) {
+            log.error("The task #{} has different execContextId, expected: {}, actual: {}",
+                    taskId, execContextId, task.execContextId);
+//            execContextFSM.toError(execContext);
+            return null;
+        }
+        processInternalFunction(execContext, task, holder);
+        return null;
     }
 
     public void processInternalFunction(ExecContextImpl execContext, TaskImpl task, VariableData.DataStreamHolder holder) {

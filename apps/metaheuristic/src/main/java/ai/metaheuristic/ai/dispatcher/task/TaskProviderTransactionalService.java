@@ -72,7 +72,10 @@ public class TaskProviderTransactionalService {
 
     public void registerTask(RegisterTaskForProcessingEvent event) {
         for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds task : event.tasks) {
-            tasks.add( new QueuedTask(task.execContextId, task.taskId));
+            final QueuedTask queuedTask = new QueuedTask(task.execContextId, task.taskId);
+            if (!tasks.contains(queuedTask)) {
+                tasks.add(queuedTask);
+            }
         }
     }
 
