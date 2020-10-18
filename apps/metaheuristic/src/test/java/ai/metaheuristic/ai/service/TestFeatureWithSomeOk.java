@@ -65,7 +65,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         // task is empty cos we still didn't finish those task
         assertNull(task);
 
-        finishCurrentWithError();
+        storeConsoleResultAsError();
 
         DispatcherCommParamsYaml.AssignedTask task1 = taskProviderService.findTask(
                 new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);

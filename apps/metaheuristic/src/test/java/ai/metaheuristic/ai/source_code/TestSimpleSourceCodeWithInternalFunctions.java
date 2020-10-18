@@ -98,7 +98,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(d1);
         assertNull(d1.getAssignedTask());
 
-        finishCurrentWithOk();
+        storeConsoleResultAsOk();
         TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);

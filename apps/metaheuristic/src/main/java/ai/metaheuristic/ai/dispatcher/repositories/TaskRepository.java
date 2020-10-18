@@ -59,7 +59,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllAsTaskSimple(Pageable pageable);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    List<Task> findByProcessorIdAndResultReceivedIsFalse(Long processorId);
+    List<TaskImpl> findByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +

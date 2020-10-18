@@ -66,8 +66,7 @@ public class TestTaskRequest extends FeatureMethods {
     public void testTaskRequest() {
         produceTasks();
         toStarted();
-        String sessionId;
-        sessionId = step_1();
+        String sessionId = step_1();
         step_2(sessionId);
         step_3(sessionId);
         step_4(sessionId);
@@ -94,7 +93,10 @@ public class TestTaskRequest extends FeatureMethods {
         return sessionId;
     }
 
-    public void step_2(String sessionId) {
+    private void step_2(String sessionId) {
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+
+        // get a task for processing
         DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         assertNotNull(t);
 
@@ -105,19 +107,24 @@ public class TestTaskRequest extends FeatureMethods {
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
 
+        // get a task for processing one more time
         DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
         assertNotNull(d1);
+        // there isn't any new task for processing
         assertNull(d1.getAssignedTask());
 
-        finishCurrentWithOk();
+        storeConsoleResultAsOk();
         final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
+
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
-            assertEquals(Enums.UploadVariableStatus.OK, status);
-        }
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()->txSupportForTestingService.checkTaskCanBeFinishedWithTx(task.id));
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()-> {
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+                assertEquals(Enums.UploadVariableStatus.OK, status);
+            }
+            return txSupportForTestingService.checkTaskCanBeFinishedWithTx(task.id);
+        });
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);
@@ -127,7 +134,9 @@ public class TestTaskRequest extends FeatureMethods {
         execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
     }
 
-    public void step_3(String sessionId) {
+    private void step_3(String sessionId) {
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
         processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
@@ -139,10 +148,9 @@ public class TestTaskRequest extends FeatureMethods {
 
         assertNotNull(d);
         assertNotNull(d.getAssignedTask());
-        assertNotNull(d.getAssignedTask());
     }
 
-    public void step_4(String sessionId) {
+    private void step_4(String sessionId) {
         final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
         processorComm1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
         processorComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);

@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -97,12 +98,14 @@ public abstract class FeatureMethods extends PreparingExperiment {
     }
 
     public void toStarted() {
+        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+/*
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             txSupportForTestingService.toStarted(execContextForTest.id);
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
-            assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
         });
+*/
     }
 
     public String initSessionId() {
@@ -172,38 +175,37 @@ public abstract class FeatureMethods extends PreparingExperiment {
         return task;
     }
 
-    protected void finishCurrentWithError() {
+    protected void storeConsoleResultAsError() {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         assertEquals(1, tasks.size());
-        for (Task task : tasks) {
-            FunctionApiData.SystemExecResult systemExecResult = new FunctionApiData.SystemExecResult("output-of-a-function",false, -1, "This is sample console output");
-            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(systemExecResult, null, null, null);
-            String yaml = FunctionExecUtils.toString(functionExec);
 
-            ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
-            results.add(sser);
-        }
+        TaskImpl task = tasks.get(0);
+        FunctionApiData.SystemExecResult systemExecResult = new FunctionApiData.SystemExecResult("output-of-a-function",false, -1, "This is sample console output");
+        FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(systemExecResult, null, null, null);
+        String yaml = FunctionExecUtils.toString(functionExec);
+
+        ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
+                new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
+        results.add(sser);
 
         execContextTopLevelService.storeAllConsoleResults(results);
     }
 
-    protected void finishCurrentWithOk() {
-        // lets report about sequences that all finished with error (errorCode!=0)
+    protected void storeConsoleResultAsOk() {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         assertEquals(1, tasks.size());
-        for (Task task : tasks) {
-            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            functionExec.setExec( new FunctionApiData.SystemExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));
-            String yaml = FunctionExecUtils.toString(functionExec);
 
-            ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
-            results.add(ster);
-        }
+        TaskImpl task = tasks.get(0);
+        FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+        functionExec.setExec( new FunctionApiData.SystemExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));
+        String yaml = FunctionExecUtils.toString(functionExec);
+
+        ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
+                new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
+        results.add(ster);
 
         execContextTopLevelService.storeAllConsoleResults(results);
     }

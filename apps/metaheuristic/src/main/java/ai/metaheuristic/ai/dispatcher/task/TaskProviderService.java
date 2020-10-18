@@ -82,7 +82,7 @@ public class TaskProviderService {
         }
     }
 
-    private int countOfTasks() {
+    public int countOfTasks() {
         synchronized (syncObj) {
             return taskProviderTransactionalService.countOfTasks();
         }
