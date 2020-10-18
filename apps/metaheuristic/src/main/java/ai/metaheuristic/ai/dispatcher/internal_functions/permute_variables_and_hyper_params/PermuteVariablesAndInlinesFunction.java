@@ -20,12 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -35,19 +36,12 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.ai.utils.ContextUtils;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -58,9 +52,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -82,7 +74,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextGraphService execContextGraphService;
-    private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
     private final InternalFunctionService internalFunctionService;
 
@@ -237,76 +228,4 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         execContextGraphService.createEdges(execContext, lastIds, descendants);
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
-
-    /**
-     * @param permutedVariables
-     * @param execContext
-     * @param execContextParamsYaml
-     * @param subProcesses
-     * @param currTaskNumber
-     * @param parentTaskId
-     * @param variableName
-     * @param inlines
-     * @param lastIds
-     * @param inlineVariableName
-     * @param inlinePermuted
-     * @param process
-     * @param holder
-     */
-    private void createTasksForSubProcesses(
-            List<VariableUtils.VariableHolder> permutedVariables, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml,
-            List<ExecContextData.ProcessVertex> subProcesses,
-            AtomicInteger currTaskNumber, Long parentTaskId, String variableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted,
-            ExecContextParamsYaml.Process process, VariableData.DataStreamHolder holder) {
-        TxUtils.checkTxExists();
-
-        List<Long> parentTaskIds = List.of(parentTaskId);
-        TaskImpl t = null;
-        String subProcessContextId = null;
-        for (ExecContextData.ProcessVertex subProcess : subProcesses) {
-            final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
-            if (p==null) {
-                throw new BreakFromLambdaException("#991.200 Process '" + subProcess.process + "' wasn't found");
-            }
-            // all subProcesses must have the same processContextId, if logic for subProcesses is sequential
-            if (process.logic== EnumsApi.SourceCodeSubProcessLogic.sequential && subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
-                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
-            }
-
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
-            t = taskProducingService.createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
-            if (t==null) {
-                throw new BreakFromLambdaException("#991.220 Creation of task failed");
-            }
-            List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextFSM.addTasksToGraph(execContext, parentTaskIds, currTaskIds);
-            parentTaskIds = List.of(t.getId());
-            subProcessContextId = subProcess.processContextId;
-        }
-
-        if (subProcessContextId!=null) {
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-            lastIds.add(t.id);
-
-            {
-                VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutedVariables);
-                String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                holder.inputStreams.add(bais);
-                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContext.id, currTaskContextId);
-            }
-            {
-                Yaml yampUtil = YamlUtils.init(Map.class);
-                String yaml = yampUtil.dumpAsMap(inlinePermuted);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                holder.inputStreams.add(bais);
-                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContext.id, currTaskContextId);
-            }
-
-        }
-    }
-
 }

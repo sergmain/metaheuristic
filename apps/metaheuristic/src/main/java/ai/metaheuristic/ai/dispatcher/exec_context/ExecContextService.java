@@ -84,7 +84,6 @@ public class ExecContextService {
     }
 
     @Nullable
-    @Transactional
     public ExecContextImpl findById(Long id) {
         return execContextCache.findById(id);
     }

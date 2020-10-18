@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.api.EnumsApi;
@@ -39,6 +40,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.util.List;
@@ -65,6 +67,29 @@ public class TxSupportForTestingService {
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskRepository taskRepository;
     private final ExecContextVariableService execContextVariableService;
+
+    @Transactional
+    public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId) {
+
+        SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
+        if (v==null || v.inited) {
+            throw new IllegalStateException("(v==null || v.inited)");
+        }
+        Variable variable = variableRepository.findById(v.id).orElse(null);
+        if (variable==null) {
+            throw new IllegalStateException("(v==null || v.inited)");
+        }
+        byte[] bytes = variableData.getBytes();
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+
+        v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
+        if (v==null) {
+            throw new IllegalStateException("(v==null)");
+        }
+        if (!v.inited) {
+            throw new IllegalStateException("(!v.inited)");
+        }
+    }
 
     @Transactional
     public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {

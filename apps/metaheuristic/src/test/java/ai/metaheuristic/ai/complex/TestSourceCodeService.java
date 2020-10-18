@@ -234,6 +234,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
             descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.task.id);
             assertEquals(7, descendants.size());
+            return null;
+        });
 
             // process and complete fit/predict tasks
             for (int i = 0; i < 12; i++) {
@@ -246,8 +248,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // 1 'mh.aggregate-internal-context'  task,
             // and 1 'mh.finish' task
             assertEquals(2, taskVertices.size());
-            return null;
-        });
+
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
@@ -262,6 +264,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskVertices.size());
             return null;
         });
+
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
         t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
@@ -305,7 +309,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 //        execContextSchedulerService.updateExecContextStatuses(true);
     }
 
-    public void step_FitAndPredict() {
+    private void step_FitAndPredict() {
+        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
 
@@ -333,17 +339,26 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(fitTask ? 1 : 2, taskParamsYaml.task.outputs.size());
 
         if (fitTask) {
-            storeOutputVariableWithTaskContextId(
-                    "model", "model-data-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
+            txSupportForTestingService.storeOutputVariableWithTaskContextId(execContextForTest.id,
+                    "model", "model-data-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
         }
         else {
-            storeOutputVariableWithTaskContextId(
-                    "metrics", "metrics-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
-            storeOutputVariableWithTaskContextId(
-                    "predicted", "predicted-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
+            txSupportForTestingService.storeOutputVariableWithTaskContextId(execContextForTest.id,
+                    "metrics", "metrics-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
+            txSupportForTestingService.storeOutputVariableWithTaskContextId(execContextForTest.id,
+                    "predicted", "predicted-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
         }
 
         storeExecResult(simpleTask32);
+
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()-> {
+            for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
+                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id);
+                assertEquals(Enums.UploadVariableStatus.OK, status);
+            }
+            return txSupportForTestingService.checkTaskCanBeFinishedWithTx(simpleTask32.taskId);
+        });
+
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
@@ -394,26 +409,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 
         v = variableService.getVariableAsSimple(v.variable, processCode, execContextForTest);
-        assertNotNull(v);
-        assertTrue(v.inited);
-
-
-    }
-
-    private void storeOutputVariableWithTaskContextId(String variableName, String variableData, String taskContextId, String processCode) {
-
-        SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
-
-        assertNotNull(v);
-        assertFalse(v.inited);
-
-        Variable variable = variableRepository.findById(v.id).orElse(null);
-        assertNotNull(variable);
-
-        byte[] bytes = variableData.getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
-
-        v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
         assertNotNull(v);
         assertTrue(v.inited);
 
