@@ -67,6 +67,15 @@ public class TxSupportForTestingService {
     private final ExecContextVariableService execContextVariableService;
 
     @Transactional
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            throw new IllegalStateException("Need better solution for this state");
+        }
+        return execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
+    }
+
+    @Transactional
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextId, Long taskId) {
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {

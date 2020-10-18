@@ -189,7 +189,7 @@ public class ExecContextGraphService {
                 if (tv.execState==EnumsApi.TaskExecState.ERROR) {
                     setStateForAllChildrenTasksInternal(graph, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                 }
-                else if (tv.execState==EnumsApi.TaskExecState.OK) {
+                else if (tv.execState==EnumsApi.TaskExecState.NONE || tv.execState==EnumsApi.TaskExecState.OK) {
                     setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
                 }
                 else if (tv.execState == EnumsApi.TaskExecState.SKIPPED) {
@@ -404,6 +404,18 @@ public class ExecContextGraphService {
         return readOnlyGraph(execContext, graph -> {
             List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
             return vertices;
+        });
+    }
+
+    @Nullable
+    public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
+        return readOnlyGraphNullable(execContext, graph -> {
+            ExecContextData.TaskVertex vertex = graph.vertexSet()
+                    .stream()
+                    .filter(o -> o.taskId.equals(taskId))
+                    .findFirst()
+                    .orElse(null);
+            return vertex;
         });
     }
 
