@@ -175,7 +175,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 String str = StringUtils.join(lines, '\n' );
 
                 variableService.createInputVariablesForSubProcess(
-                        List.of(), str, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                        List.of(), str, execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
 
                 taskProducingService.createTasksForSubProcesses(
                         execContext, executionContextData, currTaskNumber, taskId, lastIds);

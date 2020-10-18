@@ -36,6 +36,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
@@ -50,6 +51,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.persistence.EntityManager;
 import java.io.ByteArrayInputStream;
@@ -61,6 +63,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -79,42 +82,66 @@ public class VariableService {
     private final GlobalVariableRepository globalVariableRepository;
 
     @SneakyThrows
-    public void createInputVariablesForSubProcess(List<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent, ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName, VariableData.DataStreamHolder holder, String subProcessContextId) {
-        if (files.isEmpty() && inputVariableContent==null) {
+    public void createInputVariablesForSubProcess(
+            List<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent,
+            ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName,
+            VariableData.DataStreamHolder holder, String subProcessContextId, @Nullable VariableData.Permutation permutation) {
+        if (files.isEmpty() && inputVariableContent==null && permutation==null) {
             throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null)");
         }
 
         String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-        List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
-        for (BatchTopLevelService.FileWithMapping f : files) {
-            String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+        if (!files.isEmpty() || inputVariableContent!=null) {
+            List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
+            for (BatchTopLevelService.FileWithMapping f : files) {
+                String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
 
-            FileInputStream fis = new FileInputStream(f.file);
-            holder.inputStreams.add(fis);
-            Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
+                FileInputStream fis = new FileInputStream(f.file);
+                holder.inputStreams.add(fis);
+                Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
 
-            SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-            variableHolders.add( new VariableUtils.VariableHolder(sv));
+                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+                variableHolders.add(new VariableUtils.VariableHolder(sv));
+            }
+
+            if (!S.b(inputVariableContent)) {
+                String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+                final byte[] bytes = inputVariableContent.getBytes();
+                InputStream is = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(is);
+                Variable v = createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
+
+                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+                VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
+                variableHolders.add(variableHolder);
+            }
+
+            VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
+            String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+            byte[] bytes = yaml.getBytes();
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            holder.inputStreams.add(bais);
+            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
         }
 
-        if (!S.b(inputVariableContent)) {
-            String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
-            final byte[] bytes = inputVariableContent.getBytes();
-            InputStream is = new ByteArrayInputStream(bytes);
-            holder.inputStreams.add(is);
-            Variable v = createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
-
-            SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-            VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
-            variableHolders.add(variableHolder);
+        if (permutation!=null) {
+            {
+                VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutation.permutedVariables);
+                String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(bais);
+                Variable v = createInitialized(bais, bytes.length, permutation.permutedVariableName, null, execContext.id, currTaskContextId);
+            }
+            {
+                Yaml yampUtil = YamlUtils.init(Map.class);
+                String yaml = yampUtil.dumpAsMap(permutation.inlinePermuted);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                holder.inputStreams.add(bais);
+                Variable v = createInitialized(bais, bytes.length, permutation.inlineVariableName, null, execContext.id, currTaskContextId);
+            }
         }
-
-        VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
-        String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-        byte[] bytes = yaml.getBytes();
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        holder.inputStreams.add(bais);
-        Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
     }
 
     /**

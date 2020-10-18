@@ -216,7 +216,7 @@ public class BatchSplitterFunction implements InternalFunction {
                                     }).collect(Collectors.toList());
 
                             variableService.createInputVariablesForSubProcess(
-                                    files, null, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                                    files, null, execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
 
                             taskProducingService.createTasksForSubProcesses(
                                     execContext, executionContextData, currTaskNumber, taskId, lastIds);
@@ -225,7 +225,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
                             variableService.createInputVariablesForSubProcess(
                                     List.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
-                                    execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                                    execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
 
                             taskProducingService.createTasksForSubProcesses(
                                     execContext, executionContextData, currTaskNumber, taskId, lastIds);

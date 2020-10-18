@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,7 @@ import org.springframework.lang.Nullable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -33,6 +35,16 @@ import java.util.List;
  * Time: 10:33 PM
  */
 public class VariableData {
+
+    @Data
+    @AllArgsConstructor
+    public static class Permutation {
+        public List<VariableUtils.VariableHolder> permutedVariables;
+        public String permutedVariableName;
+        public Map<String, Map<String, String>> inlines;
+        public String inlineVariableName;
+        public Map<String, String> inlinePermuted;
+   }
 
     @Data
     public static class DataStreamHolder {

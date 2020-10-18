@@ -70,7 +70,7 @@ public class TaskProducingService {
                 execContextParamsYaml.variables.inline);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
-                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.080 Unknown reason of error while task creation");
+                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.020 Unknown reason of error while task creation");
         }
 
 /*
@@ -103,7 +103,7 @@ public class TaskProducingService {
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
         if (subProcesses.isEmpty()) {
-            log.info("#995.330 There isn't any subProcess");
+            log.info("#375.040 There isn't any subProcess");
             return;
         }
 
@@ -111,7 +111,7 @@ public class TaskProducingService {
         ExecContextParamsYaml.Process process = executionContextData.process;
 
         if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential) {
-            throw new BreakFromLambdaException("#995.340 only the 'sequential' logic is supported");
+            throw new BreakFromLambdaException("#375.060 only the 'sequential' logic is supported");
         }
 
         List<Long> parentTaskIds = List.of(parentTaskId);
@@ -121,12 +121,12 @@ public class TaskProducingService {
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
-                throw new BreakFromLambdaException("#995.320 Process '" + subProcess.process + "' wasn't found");
+                throw new BreakFromLambdaException("#375.080 Process '" + subProcess.process + "' wasn't found");
             }
 
             // all subProcesses must have the same processContextId
             if (!subProcessContextId.equals(subProcess.processContextId)) {
-                throw new BreakFromLambdaException("#995.360 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+                throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
             }
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
@@ -134,7 +134,7 @@ public class TaskProducingService {
             t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
 
             if (t==null) {
-                throw new BreakFromLambdaException("#995.380 Creation of task failed");
+                throw new BreakFromLambdaException("#375.120 Creation of task failed");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
             execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, currTaskIds);
@@ -166,7 +166,7 @@ public class TaskProducingService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
             if (fConfig == null) {
-                log.error("#171.020 Function '{}' wasn't found", process.function.code);
+                log.error("#375.140 Function '{}' wasn't found", process.function.code);
                 return null;
             }
             taskParams.task.function = fConfig;
