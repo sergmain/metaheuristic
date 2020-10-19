@@ -206,6 +206,7 @@ public class BatchSplitterFunction implements InternalFunction {
                     File file = dataFilePath.toFile();
                     currTaskNumber.incrementAndGet();
                     try {
+                        VariableData.VariableDataSource variableDataSource;
                         if (file.isDirectory()) {
                             final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
                                     .filter(o -> o.toFile().isFile())
@@ -215,21 +216,20 @@ public class BatchSplitterFunction implements InternalFunction {
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     }).collect(Collectors.toList());
 
-                            variableService.createInputVariablesForSubProcess(
-                                    files, null, execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
-
-                            taskProducingService.createTasksForSubProcesses(
-                                    execContext, executionContextData, currTaskNumber, taskId, lastIds);
+                            if (files.isEmpty()) {
+                                log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
+                                return;
+                            }
+                            variableDataSource = new VariableData.VariableDataSource(files);
                         } else {
-                            String actualFileName = mapping.get(file.getName());
-
-                            variableService.createInputVariablesForSubProcess(
-                                    List.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
-                                    execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
-
-                            taskProducingService.createTasksForSubProcesses(
-                                    execContext, executionContextData, currTaskNumber, taskId, lastIds);
+                            variableDataSource = new VariableData.VariableDataSource(
+                                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getName()))));
                         }
+                        variableService.createInputVariablesForSubProcess(
+                                variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+
+                        taskProducingService.createTasksForSubProcesses(
+                                execContext, executionContextData, currTaskNumber, taskId, lastIds);
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {

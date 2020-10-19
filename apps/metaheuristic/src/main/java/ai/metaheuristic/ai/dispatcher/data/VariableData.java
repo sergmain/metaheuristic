@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -35,6 +36,29 @@ import java.util.Map;
  * Time: 10:33 PM
  */
 public class VariableData {
+
+    @Data
+    public static class VariableDataSource {
+        @Nullable
+        public Permutation permutation = null;
+
+        public List<BatchTopLevelService.FileWithMapping> files = List.of();
+
+        @Nullable
+        public String inputVariableContent = null;
+
+        public VariableDataSource(Permutation permutation) {
+            this.permutation = permutation;
+        }
+
+        public VariableDataSource(String inputVariableContent) {
+            this.inputVariableContent = inputVariableContent;
+        }
+
+        public VariableDataSource(List<BatchTopLevelService.FileWithMapping> files) {
+            this.files = files;
+        }
+    }
 
     @Data
     @AllArgsConstructor

@@ -83,11 +83,16 @@ public class VariableService {
 
     @SneakyThrows
     public void createInputVariablesForSubProcess(
-            List<BatchTopLevelService.FileWithMapping> files, @Nullable String inputVariableContent,
+            VariableData.VariableDataSource variableDataSource,
             ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName,
-            VariableData.DataStreamHolder holder, String subProcessContextId, @Nullable VariableData.Permutation permutation) {
+            VariableData.DataStreamHolder holder, String subProcessContextId) {
+
+        List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
+        String inputVariableContent = variableDataSource.inputVariableContent;
+        VariableData.Permutation permutation = variableDataSource.permutation;
+
         if (files.isEmpty() && inputVariableContent==null && permutation==null) {
-            throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null)");
+            throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null && permutation==null)");
         }
 
         String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));

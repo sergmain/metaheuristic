@@ -173,12 +173,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
                                     map.put(item.inlineKey, inlineVariable.params);
 
+                                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                                            new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
 
                                     variableService.createInputVariablesForSubProcess(
-                                            List.of(), null, execContext, currTaskNumber, variableName, holder, subProcessContextId,
-                                            new VariableData.Permutation(
-                                                    permutedVariables, variableName, map, inlineVariableName, inlineVariable.params)
-                                    );
+                                            variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
 
                                     taskProducingService.createTasksForSubProcesses(
                                             execContext, executionContextData, currTaskNumber, task.id, lastIds);
@@ -187,11 +186,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                             else {
                                 currTaskNumber.incrementAndGet();
 
+                                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                                        new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of()));
+
                                 variableService.createInputVariablesForSubProcess(
-                                        List.of(), null, execContext, currTaskNumber, variableName, holder, subProcessContextId,
-                                        new VariableData.Permutation(
-                                                permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of())
-                                );
+                                        variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
 
                                 taskProducingService.createTasksForSubProcesses(
                                         execContext, executionContextData, currTaskNumber, task.id, lastIds);

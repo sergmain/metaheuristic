@@ -45,7 +45,7 @@ public class SourceCodeStateService {
 
         if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
             log.warn("#373.020 SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
-            return;
+//            return;
         }
 
         if (sc.isValid()!=valid) {
@@ -62,7 +62,7 @@ public class SourceCodeStateService {
         }
         if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
             log.warn("#373.040 SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
-            return;
+//            return;
         }
         if (sc.isLocked()!=locked) {
             sc.setLocked(locked);

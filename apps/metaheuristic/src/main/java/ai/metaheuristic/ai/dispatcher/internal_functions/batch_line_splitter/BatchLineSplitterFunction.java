@@ -170,12 +170,17 @@ public class BatchLineSplitterFunction implements InternalFunction {
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
 
         allLines.forEach( lines -> {
+            if (lines.isEmpty()) {
+                log.error("#994.290 there isn't any lines");
+                return;
+            }
             currTaskNumber.incrementAndGet();
             try {
                 String str = StringUtils.join(lines, '\n' );
 
+                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
                 variableService.createInputVariablesForSubProcess(
-                        List.of(), str, execContext, currTaskNumber, variableName, holder, subProcessContextId, null);
+                        variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
 
                 taskProducingService.createTasksForSubProcesses(
                         execContext, executionContextData, currTaskNumber, taskId, lastIds);

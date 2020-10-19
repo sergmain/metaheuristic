@@ -38,19 +38,19 @@ public class SourceCodeTopLevelService {
 
     @Async
     @EventListener
-    public void handleAsync(DispatcherInternalEvent.SourceCodeLockingEvent event) {
+    public void setLockedTo(DispatcherInternalEvent.SourceCodeLockingEvent event) {
         setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
+    }
+
+    private void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
+        synchronized (syncObj) {
+            sourceCodeStateService.setLockedTo(sourceCodeId, companyUniqueId, locked);
+        }
     }
 
     public void setValidTo(SourceCodeImpl sourceCode, boolean valid) {
         synchronized (syncObj) {
             sourceCodeStateService.setValidTo(sourceCode, sourceCode.companyId, valid);
-        }
-    }
-
-    public void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
-        synchronized (syncObj) {
-            sourceCodeStateService.setLockedTo(sourceCodeId, companyUniqueId, locked);
         }
     }
 
