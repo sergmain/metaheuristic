@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -46,8 +45,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -123,9 +120,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
-        List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
-
         // variableNames contains a list of variables for permutation
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
         if (S.b(variableNames)) {
@@ -188,13 +182,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
                                     taskProducingService.createTasksForSubProcesses(
                                             execContext, executionContextData, currTaskNumber, task.id, lastIds);
-
-/*
-                                    createTasksForSubProcesses(permutedVariables, execContext, execContextParamsYaml,
-                                            subProcesses, currTaskNumber, task.id, variableName, map, lastIds,
-                                            inlineVariableName, inlineVariable.params, process, holder
-                                    );
-*/
                                 }
                             }
                             else {
@@ -208,14 +195,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
                                 taskProducingService.createTasksForSubProcesses(
                                         execContext, executionContextData, currTaskNumber, task.id, lastIds);
-
-/*
-                                createTasksForSubProcesses(permutedVariables, execContext, execContextParamsYaml, subProcesses,
-                                        currTaskNumber, task.id, variableName,
-                                        execContextParamsYaml.variables.inline, lastIds,
-                                        inlineVariableName, Map.of(), process, holder
-                                );
-*/
                             }
                             return true;
                         }
