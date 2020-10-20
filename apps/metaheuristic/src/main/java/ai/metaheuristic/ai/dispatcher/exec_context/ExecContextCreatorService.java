@@ -60,6 +60,7 @@ public class ExecContextCreatorService {
     private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final ExecContextSyncService execContextSyncService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -117,14 +118,17 @@ public class ExecContextCreatorService {
             return creationResult;
         }
 
-        final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
-        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, creationResult.execContext, execContextParamsYaml);
-        if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
-            creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
-        }
-        if (result.taskProducingStatus!= EnumsApi.TaskProducingStatus.OK) {
-            creationResult.addErrorMessage("Error while producing new tasks "+ result.taskProducingStatus);
-        }
+        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
+            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, creationResult.execContext, execContextParamsYaml);
+            if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
+                creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
+            }
+            if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
+                creationResult.addErrorMessage("Error while producing new tasks " + result.taskProducingStatus);
+            }
+            return null;
+        });
         return creationResult;
     }
 

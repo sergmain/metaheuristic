@@ -78,6 +78,19 @@ public class ExecContextSyncService {
     }
 
     @Nullable
+    public <T> T getWithSyncNullableForCreation(Long execContextId, Supplier<T> supplier) {
+        checkWriteLockNotPresent(execContextId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        try {
+            lock.lock();
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Nullable
     public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
