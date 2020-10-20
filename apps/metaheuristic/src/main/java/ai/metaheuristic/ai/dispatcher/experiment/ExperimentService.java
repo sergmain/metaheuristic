@@ -15,13 +15,10 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -38,11 +35,8 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -157,7 +151,7 @@ public class ExperimentService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
         }
-        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeUid, companyUniqueId);
+        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sc, companyUniqueId);
         if (execContextResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.getErrorMessagesAsList());
         }

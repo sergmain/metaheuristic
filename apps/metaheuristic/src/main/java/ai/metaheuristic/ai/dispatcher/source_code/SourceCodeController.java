@@ -50,11 +50,12 @@ public class SourceCodeController {
 
     private final Globals globals;
     private final SourceCodeService sourceCodeService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final UserContextService userContextService;
 
     @GetMapping("/source-codes")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String sourceCodes(Model model, @PageableDefault(size = 5) Pageable pageable,
+    public String sourceCodes(Model model, @PageableDefault Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -67,7 +68,7 @@ public class SourceCodeController {
     // for AJAX
     @PostMapping("/source-codes-part")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String sourceCodesPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
+    public String sourceCodesPart(Model model, @PageableDefault Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeService.getSourceCodes(pageable, false, context);
         model.addAttribute("result", sourceCodesResultRest);
@@ -118,7 +119,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String uploadSourceCode(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeService.uploadSourceCode(file, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
@@ -129,7 +130,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
         if (sourceCodeResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         }

@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -47,7 +46,6 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -103,7 +101,6 @@ public class BatchTopLevelService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
-    private final SourceCodeValidationService sourceCodeValidationService;
     private final VariableService variableService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
@@ -212,14 +209,6 @@ public class BatchTopLevelService {
 
         if (file.getSize()==0) {
             return new BatchData.UploadingStatus("#981.140 Empty files aren't supported");
-        }
-
-        // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
-        //  2019-10-28 it's working so left it as is until an issue with this will be found
-        // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
-        if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK ) {
-            return new BatchData.UploadingStatus("#981.160 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }
 
         final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
@@ -333,7 +322,7 @@ public class BatchTopLevelService {
         return getBatchProcessingResultInternal(batch, companyUniqueId, includeDeleted, "batch-result");
     }
 
-    private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) throws IOException {
+    private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
         return getVariable(batch, companyUniqueId, includeDeleted, (scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {

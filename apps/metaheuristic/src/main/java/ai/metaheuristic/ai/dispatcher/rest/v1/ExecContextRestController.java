@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -52,7 +53,7 @@ public class ExecContextRestController {
 
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
-    private final ExecContextCreatorService execContextCreatorService;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final UserContextService userContextService;
 
     @Data
@@ -86,7 +87,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(uid, context.getCompanyId());
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(uid, context.getCompanyId());
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
@@ -97,7 +98,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(sourceCodeId, context);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId());
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
         return result;

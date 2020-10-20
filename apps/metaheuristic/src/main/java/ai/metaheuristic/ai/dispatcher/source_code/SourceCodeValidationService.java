@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -42,8 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
@@ -52,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
-import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR;
 
 /**
  * @author Serge
@@ -68,10 +66,9 @@ public class SourceCodeValidationService {
 
     private final FunctionTopLevelService functionTopLevelService;
     private final FunctionRepository functionRepository;
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final SourceCodeStateService sourceCodeStateService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final DispatcherParamsService dispatcherParamsService;
-    private final SourceCodeCache sourceCodeCache;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
 
@@ -202,18 +199,12 @@ public class SourceCodeValidationService {
         return null;
     }
 
-    @Transactional
-    public SourceCodeApiData.SourceCodeValidation validate(Long sourceCodeId) {
-        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode==null) {
-            SourceCodeApiData.SourceCodeValidation validation = new SourceCodeApiData.SourceCodeValidation(new SourceCodeApiData.SourceCodeValidationResult(
-                    SOURCE_CODE_NOT_FOUND_ERROR, "#981.165 sourceCode #" + sourceCodeId + " wasn't found"
-            ));
-            return validation;
-        }
+    public SourceCodeApiData.SourceCodeValidation validate(SourceCodeImpl sourceCode) {
+        TxUtils.checkTxExists();
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
-        sourceCodeTopLevelService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
+
+        sourceCodeStateService.setValidTo(sourceCode, sourceCode.companyId, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
             dispatcherParamsService.registerSourceCode(sourceCode);
             if (sourceCode.isValid() && sourceCodeValidation.status.status!=OK) {

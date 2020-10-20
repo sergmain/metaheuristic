@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -47,12 +48,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * Date: 2/23/2020
  * Time: 10:48 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class ExecContextCreatorService {
+
+    private final ExecContextTaskProducingService execContextTaskProducingService;
+    private final ExecContextService execContextService;
+    private final SourceCodeValidationService sourceCodeValidationService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -78,10 +85,6 @@ public class ExecContextCreatorService {
         }
     }
 
-    private final ExecContextService execContextService;
-    private final SourceCodeValidationService sourceCodeValidationService;
-    private final SourceCodeSelectorService sourceCodeSelectorService;
-
     @Transactional
     public ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.getCompanyId());
@@ -97,18 +100,32 @@ public class ExecContextCreatorService {
         return createExecContext(sourceCode, context.getCompanyId());
     }
 
-    public ExecContextCreationResult createExecContext(String sourceCodeUid, Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, companyUniqueId);
+    @Transactional
+    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId) {
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             return new ExecContextCreationResult("#560.072 Error creating execContext: " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
         }
-        return createExecContext(sourceCode, companyUniqueId);
+        final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId);
+        if (creationResult.isErrorMessages()) {
+            return creationResult;
+        }
+
+        final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, creationResult.execContext, execContextParamsYaml);
+        if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
+            creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
+        }
+        if (result.taskProducingStatus!= EnumsApi.TaskProducingStatus.OK) {
+            creationResult.addErrorMessage("Error while producing new tasks "+ result.taskProducingStatus);
+        }
+        return creationResult;
     }
 
     /**
@@ -118,8 +135,10 @@ public class ExecContextCreatorService {
      * @return ExecContextCreationResult
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+        TxUtils.checkTxExists();
+
         // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode.id);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK) {
             return new ExecContextCreationResult(sourceCodeValidation.getErrorMessagesAsList());
         }

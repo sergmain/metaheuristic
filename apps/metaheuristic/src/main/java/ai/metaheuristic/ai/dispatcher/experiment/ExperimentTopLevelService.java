@@ -23,10 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -69,7 +66,7 @@ public class ExperimentTopLevelService {
     private final ExperimentService experimentService;
     private final ExecContextService execContextService;
     private final ExecContextTopLevelService execContextTopLevelService;
-    private final ExecContextCreatorService execContextCreatorService;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -153,7 +150,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
         }
-        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeUid, context.getCompanyId());
+        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeUid, context.getCompanyId());
         if (execContextResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.getErrorMessagesAsList());
         }

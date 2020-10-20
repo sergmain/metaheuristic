@@ -51,7 +51,7 @@ public class ExecContextController {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
     private final UserContextService userContextService;
-    private final ExecContextCreatorService execContextCreatorService;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
 
     @GetMapping("/exec-contexts/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
@@ -101,7 +101,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAddCommit(Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeId, context);
+        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId());
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.getErrorMessagesAsList());
         }
