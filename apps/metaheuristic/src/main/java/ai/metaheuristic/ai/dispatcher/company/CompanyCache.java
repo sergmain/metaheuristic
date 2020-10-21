@@ -45,7 +45,6 @@ public class CompanyCache {
     @Nullable
     @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
     public Company findByUniqueId(Long uniqueId) {
-        TxUtils.checkTxExists();
         return companyRepository.findByUniqueId(uniqueId);
     }
 

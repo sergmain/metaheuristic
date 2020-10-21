@@ -60,8 +60,6 @@ public class ReplicationSourceHelperService {
     public final CompanyCache companyCache;
 
     public ReplicationData.AssetStateResponse currentAssets() {
-        TxUtils.checkTxExists();
-
         ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
         res.companies.addAll(companyRepository.findAllUniqueIds().stream()
                 .map(id->{

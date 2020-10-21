@@ -17,6 +17,8 @@ package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -42,7 +44,10 @@ public class OperationStatusRest extends BaseDataClass {
         this.errorMessages = errorMessages;
     }
 
-    public OperationStatusRest(EnumsApi.OperationStatus status, @Nullable List<String> errorMessages, @Nullable List<String> infoMessages) {
+    @JsonCreator
+    public OperationStatusRest(@JsonProperty("status") EnumsApi.OperationStatus status,
+                               @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                               @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
         this.status = status;
         this.errorMessages = errorMessages;
         this.infoMessages = infoMessages;

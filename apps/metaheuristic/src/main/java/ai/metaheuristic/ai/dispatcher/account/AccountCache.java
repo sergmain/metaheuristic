@@ -42,7 +42,6 @@ public class AccountCache {
 
     @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
     public @Nullable Account findByUsername(String username) {
-        TxUtils.checkTxExists();
         return accountRepository.findByUsername(username);
     }
 }

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class JsonUtils {
 
-    private static ObjectMapper mapper;
+    private static final ObjectMapper mapper;
     static {
         ObjectMapper m = new ObjectMapper();
         m.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);

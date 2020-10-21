@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -27,8 +28,12 @@ import java.util.List;
 import java.util.Objects;
 
 @Data
-public class BaseDataClass {
+public abstract class BaseDataClass {
+
+    @JsonInclude(value= JsonInclude.Include.NON_NULL, content= JsonInclude.Include.NON_EMPTY)
     public @Nullable List<String> errorMessages;
+
+    @JsonInclude(value= JsonInclude.Include.NON_NULL, content= JsonInclude.Include.NON_EMPTY)
     public @Nullable List<String> infoMessages;
 
     public void addErrorMessage(String errorMessage) {

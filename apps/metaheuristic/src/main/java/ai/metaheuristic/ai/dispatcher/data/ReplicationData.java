@@ -21,10 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,6 +126,7 @@ public class ReplicationData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
+
         public final List<String> functions = new ArrayList<>();
         public final List<SourceCodeShortAsset> sourceCodes = new ArrayList<>();
         public final List<CompanyShortAsset> companies = new ArrayList<>();
@@ -134,6 +138,14 @@ public class ReplicationData {
 
         public AssetStateResponse(List<String> errorMessages) {
             addErrorMessages(errorMessages);
+        }
+
+        @JsonCreator
+        public AssetStateResponse(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 }

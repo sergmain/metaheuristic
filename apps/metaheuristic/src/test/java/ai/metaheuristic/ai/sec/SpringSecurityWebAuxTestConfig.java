@@ -34,12 +34,7 @@ public class SpringSecurityWebAuxTestConfig {
 
     private static final Long DATA_REST_ID = 2L;
     private static final Long DATA_ID = 3L;
-
-    private static final Long OPERATOR_REST_ID = 4L;
-    private static final Long OPERATOR_ID = 5L;
-
-    private static final Long MANAGER_REST_ID = 6L;
-    private static final Long MANAGER_ID = 7L;
+    private static final Long ASSET_REST_ID = 4L;
 
     public static class MyUserDetailsManager implements UserDetailsManager {
 
@@ -128,6 +123,20 @@ public class SpringSecurityWebAuxTestConfig {
             account.setPassword("123");
 
             account.setRoles("ROLE_DATA");
+            accounts.add(account);
+        }
+        {
+            Account account = new Account();
+
+            account.setId(ASSET_REST_ID);
+            account.setUsername("asset_rest");
+            account.setAccountNonExpired(true);
+            account.setAccountNonLocked(true);
+            account.setCredentialsNonExpired(true);
+            account.setEnabled(true);
+            account.setPassword("123");
+
+            account.setRoles("ROLE_ASSET_REST_ACCESS");
             accounts.add(account);
         }
 

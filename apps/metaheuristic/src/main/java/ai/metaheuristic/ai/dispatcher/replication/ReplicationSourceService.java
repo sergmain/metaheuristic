@@ -52,7 +52,6 @@ public class ReplicationSourceService {
     public final CompanyCache companyCache;
     public final ReplicationSourceHelperService replicationSourceHelperService;
 
-    @Transactional
     public ReplicationData.AssetStateResponse currentAssets() {
         return replicationSourceHelperService.currentAssets();
     }

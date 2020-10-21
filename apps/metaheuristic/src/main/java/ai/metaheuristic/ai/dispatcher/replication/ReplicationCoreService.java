@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
@@ -111,8 +112,7 @@ public class ReplicationCoreService {
             }
             final HttpEntity entity = httpResponse.getEntity();
             if (entity != null) {
-                Object assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
-                return (ReplicationData.ReplicationAsset)assetResponse;
+                return getReplicationAsset(entity.getContent(), clazz);
             }
             else {
                 return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",
@@ -130,5 +130,10 @@ public class ReplicationCoreService {
                     globals.assetSourceUrl, th.getMessage()));
         }
 
+    }
+
+    public static ReplicationData.ReplicationAsset getReplicationAsset(InputStream content, Class clazz) throws java.io.IOException {
+        Object assetResponse = JsonUtils.getMapper().readValue(content, clazz);
+        return (ReplicationData.ReplicationAsset)assetResponse;
     }
 }
