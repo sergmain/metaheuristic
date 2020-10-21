@@ -87,7 +87,7 @@ public class FunctionService {
 
 
     @Transactional
-    public Function createFunctionWithData(FunctionConfigYaml functionConfig, InputStream inputStream, long size) {
+    public Function createFunctionWithData(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {
         Function function = new Function();
         function.code = functionConfig.code;
         function.type = functionConfig.type;
@@ -95,7 +95,9 @@ public class FunctionService {
 
         String functionCode = function.getCode();
         function = functionCache.save(function);
-        functionDataService.save(inputStream, size, functionCode);
+        if (inputStream!=null) {
+            functionDataService.save(inputStream, size, functionCode);
+        }
         return function;
     }
 

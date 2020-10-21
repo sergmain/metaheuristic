@@ -306,15 +306,14 @@ public class FunctionTopLevelService {
                     continue;
                 }
                 else {
+                    FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                     if (file != null) {
                         try (InputStream inputStream = new FileInputStream(file)) {
-                            FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                             functionService.createFunctionWithData(scy, inputStream, file.length());
                         }
                     }
                     else {
-                        status = new FunctionApiData.FunctionConfigStatus(false,"#295.230 Fatal error - file is null ");
-
+                        functionService.createFunctionWithData(scy, null, 0);
                     }
                 }
             }

@@ -155,12 +155,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.getErrorMessagesAsList());
         }
 
-        Experiment e = new Experiment();
-        e.code = StringUtils.strip(code);
-        e.execContextId = execContextResultRest.execContext.id;
-
-        ExperimentParamsYaml params = new ExperimentParamsYaml();
-        return updateParamsAndSave(e, params, name, description);
+        return experimentService.addExperimentCommit(execContextResultRest.execContext.id, name, code, description);
     }
 
     public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {

@@ -60,15 +60,22 @@ public class ExecContextCreatorTopLevelService {
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, companyUniqueId);
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+            return new ExecContextCreatorService.ExecContextCreationResult("#563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#560.072 Error creating execContext: " +
+            return new ExecContextCreatorService.ExecContextCreationResult("#563.040 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
-        return execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId);
+        try {
+            return execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId);
+        } catch (Throwable th) {
+            final String es = "#563.060 General error of creating execContext. " +
+                    "sourceCode wasn't found for UID: " + sourceCodeUid + ", companyId: " + companyUniqueId + ", error: " + th.getMessage();
+            log.error(es, th);
+            return new ExecContextCreatorService.ExecContextCreationResult(es);
+        }
     }
 
 

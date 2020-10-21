@@ -17,14 +17,9 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -33,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -51,9 +45,16 @@ public class ExperimentService {
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final SourceCodeRepository sourceCodeRepository;
-    private final ExecContextCreatorService execContextCreatorService;
-    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
+    public OperationStatusRest addExperimentCommit(Long execContextId, String name, String code, String description) {
+        Experiment e = new Experiment();
+        e.code = StringUtils.strip(code);
+        e.execContextId = execContextId;
+
+        ExperimentParamsYaml params = new ExperimentParamsYaml();
+        return updateParamsAndSave(e, params, name, description);
+    }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -142,27 +143,4 @@ public class ExperimentService {
         experimentCache.save(e);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
-
-    @Transactional
-    public OperationStatusRest createExperiment(String sourceCodeUid, String name, String code, String description, Long companyUniqueId) {
-        SourceCodeImpl sc = sourceCodeRepository.findByUid(sourceCodeUid);
-        if (sc==null) {
-            eventPublisher.publishEvent(new DispatcherCacheRemoveSourceCodeEvent(sourceCodeUid));
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
-        }
-        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sc, companyUniqueId);
-        if (execContextResultRest.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.getErrorMessagesAsList());
-        }
-
-        Experiment e = new Experiment();
-        e.code = StringUtils.strip(code);
-        e.execContextId = execContextResultRest.execContext.id;
-
-        ExperimentParamsYaml params = new ExperimentParamsYaml();
-        return updateParamsAndSave(e, params, name, description);
-    }
-
-
 }
