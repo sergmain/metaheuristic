@@ -114,7 +114,7 @@ public class TestFunctionService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            f = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
+            f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
 
             log.info("functionRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
         }

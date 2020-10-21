@@ -279,7 +279,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
 
         byte[] bytes = "some code for testing".getBytes();
-        Function f = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
+        Function f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
         return f;
     }
 

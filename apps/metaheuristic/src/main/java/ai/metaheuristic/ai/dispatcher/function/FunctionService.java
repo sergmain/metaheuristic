@@ -87,7 +87,7 @@ public class FunctionService {
 
 
     @Transactional
-    public Function createFunctionWithData(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {
+    public Function persistFunction(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {
         Function function = new Function();
         function.code = functionConfig.code;
         function.type = functionConfig.type;

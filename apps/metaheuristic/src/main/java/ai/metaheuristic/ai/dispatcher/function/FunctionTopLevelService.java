@@ -224,9 +224,8 @@ public class FunctionTopLevelService {
         FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(cfg);
         List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
         for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.functions) {
-            FunctionApiData.FunctionConfigStatus status = null;
             try {
-                status = FunctionCoreUtils.validate(functionConfig);
+                FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(functionConfig);
                 if (!status.isOk) {
                     statuses.add(status);
                     log.error(status.error);
@@ -249,14 +248,14 @@ public class FunctionTopLevelService {
 
                     if (S.b(data)) {
                         String es = S.f("#295.120 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
-                        status = new FunctionApiData.FunctionConfigStatus(false, es);
+                        statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
                         continue;
                     }
                     ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
                     if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
                         String es = S.f("#295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
-                        status = new FunctionApiData.FunctionConfigStatus(false, es);
+                        statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
                         continue;
                     }
@@ -266,7 +265,7 @@ public class FunctionTopLevelService {
                             file = new File(srcDir, functionConfig.file);
                             if (!file.exists()) {
                                 final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
-                                status = new FunctionApiData.FunctionConfigStatus(false, es);
+                                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                                 log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
                                 continue;
                             }
@@ -282,7 +281,7 @@ public class FunctionTopLevelService {
                     }
                     if (!checksumWithSignature.checksum.equals(sum)) {
                         String es = S.f("#295.180 Function %s has wrong checksum", functionConfig.code);
-                        status = new FunctionApiData.FunctionConfigStatus(false, es);
+                        statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
                         continue;
                     }
@@ -290,7 +289,7 @@ public class FunctionTopLevelService {
                     if (st!= CheckSumAndSignatureStatus.Status.correct) {
                         if (!checksumWithSignature.checksum.equals(sum)) {
                             String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);
-                            status = new FunctionApiData.FunctionConfigStatus(false, es);
+                            statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                             log.warn(es);
                             continue;
                         }
@@ -300,8 +299,8 @@ public class FunctionTopLevelService {
                 Function function = functionRepository.findByCode(functionConfig.code);
                 // there is a function with the same code
                 if (function !=null) {
-                    status = new FunctionApiData.FunctionConfigStatus(false,
-                            "#295.220 Replacing of existing function isn't supported any more, need to upload a function as a new one. Function code: "+ function.code);
+                    statuses.add(new FunctionApiData.FunctionConfigStatus(false,
+                            "#295.220 Replacing of existing function isn't supported any more, need to upload a function as a new one. Function code: "+ function.code));
                     //noinspection UnnecessaryContinue
                     continue;
                 }
@@ -309,27 +308,21 @@ public class FunctionTopLevelService {
                     FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                     if (file != null) {
                         try (InputStream inputStream = new FileInputStream(file)) {
-                            functionService.createFunctionWithData(scy, inputStream, file.length());
+                            functionService.persistFunction(scy, inputStream, file.length());
                         }
                     }
                     else {
-                        functionService.createFunctionWithData(scy, null, 0);
+                        functionService.persistFunction(scy, null, 0);
                     }
                 }
             }
             catch(VariableSavingException e) {
-                status = new FunctionApiData.FunctionConfigStatus(false, e.getMessage());
+                statuses.add(new FunctionApiData.FunctionConfigStatus(false, e.getMessage()));
             }
             catch(Throwable th) {
                 final String es = "#295.240 Error " + th.getClass().getName() + " while processing function '" + functionConfig.code + "': " + th.toString();
                 log.error(es, th);
-                status = new FunctionApiData.FunctionConfigStatus(false, es);
-            }
-            finally {
-                statuses.add(status!=null
-                        ? status
-                        : new FunctionApiData.FunctionConfigStatus(false,
-                        "#295.260 MetricsStatus of function "+ functionConfig.code+" is unknown, this status needs to be investigated"));
+                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
             }
         }
         return statuses;

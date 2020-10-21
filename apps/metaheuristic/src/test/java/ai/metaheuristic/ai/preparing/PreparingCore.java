@@ -49,7 +49,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -173,7 +172,7 @@ public abstract class PreparingCore {
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #1");
-                function = functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
+                function = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
                 log.info("functionRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
             fitFunction = function;
@@ -194,7 +193,7 @@ public abstract class PreparingCore {
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #2");
-                functionService.createFunctionWithData(sc, new ByteArrayInputStream(bytes), bytes.length);
+                functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
                 log.info("processorRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
             }
