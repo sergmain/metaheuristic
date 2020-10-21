@@ -313,8 +313,7 @@ public class FunctionTopLevelService {
                         }
                     }
                     else {
-                        status = new FunctionApiData.FunctionConfigStatus(false,"#295.230 Fatal error - file is null ");
-//                        functionService.createFunctionWithData(scy, null, 0);
+                        functionService.createFunctionWithData(scy, null, 0);
                     }
                 }
             }
