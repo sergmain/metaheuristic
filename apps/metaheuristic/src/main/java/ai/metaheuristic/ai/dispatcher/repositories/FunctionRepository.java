@@ -45,11 +45,6 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     @NonNull
     List<Function> findAll();
 
-    @Transactional(readOnly = true)
-    @Nullable
-    @Query(value="select b from Function b where b.code=:code")
-    Function findByCodeForUpdate(String code);
-
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     @Query(value="select b.id from Function b")
     List<Long> findAllIds();

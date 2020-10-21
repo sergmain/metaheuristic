@@ -101,15 +101,4 @@ public class FunctionService {
         return function;
     }
 
-    @Transactional
-    public void delete(@Nullable Long functionId) {
-        if (functionId != null) {
-            Function f = functionCache.findById(functionId);
-            if (f!=null) {
-                functionCache.delete(functionId);
-                functionDataService.deleteByFunctionCode(f.code);
-            }
-        }
-    }
-
 }

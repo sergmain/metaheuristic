@@ -18,12 +18,11 @@ package ai.metaheuristic.ai.dispatcher.tx;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -67,6 +66,19 @@ public class TxSupportForTestingService {
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskRepository taskRepository;
     private final ExecContextVariableService execContextVariableService;
+    private final FunctionCache functionCache;
+    private final FunctionDataService functionDataService;
+
+    @Transactional
+    public void delete(@Nullable Long functionId) {
+        if (functionId != null) {
+            Function f = functionCache.findById(functionId);
+            if (f!=null) {
+                functionCache.delete(functionId);
+                functionDataService.deleteByFunctionCode(f.code);
+            }
+        }
+    }
 
     @Transactional
     public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId) {

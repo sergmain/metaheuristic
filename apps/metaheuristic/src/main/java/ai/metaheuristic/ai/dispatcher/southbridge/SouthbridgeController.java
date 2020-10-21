@@ -73,7 +73,7 @@ public class SouthbridgeController {
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
             @PathVariable("variableType") String variableType,
-            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart,
             @Nullable String id, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
         if (S.b(id) || S.b(chunkSize) || chunkNum==null) {

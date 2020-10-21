@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
@@ -107,6 +108,9 @@ public abstract class PreparingCore {
     @Autowired
     private ProcessorTransactionService processorTransactionService;
 
+    @Autowired
+    private TxSupportForTestingService txSupportForTestingService;
+
     public Processor processor = null;
     public String processorIdAsStr;
 
@@ -116,7 +120,7 @@ public abstract class PreparingCore {
     public Function predictFunction = null;
 
     @BeforeEach
-    public void beforePreparingCore() throws IOException {
+    public void beforePreparingCore() {
         assertTrue(globals.isUnitTesting);
 
         try {
@@ -156,7 +160,7 @@ public abstract class PreparingCore {
             byte[] bytes = "some program code".getBytes();
 
             log.info("Start findByCode.save()");
-            Function function = functionRepository.findByCodeForUpdate(TEST_FIT_FUNCTION);
+            Function function = functionRepository.findByCode(TEST_FIT_FUNCTION);
             log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
             if (function == null) {
 
@@ -174,7 +178,7 @@ public abstract class PreparingCore {
             }
             fitFunction = function;
 
-            Function predictFunction = functionRepository.findByCodeForUpdate(TEST_PREDICT_FUNCTION);
+            Function predictFunction = functionRepository.findByCode(TEST_PREDICT_FUNCTION);
             if (predictFunction == null) {
                 predictFunction = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
@@ -221,14 +225,14 @@ public abstract class PreparingCore {
         }
         if (predictFunction != null) {
             try {
-                functionService.delete(predictFunction.getId());
+                txSupportForTestingService.delete(predictFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         }
         if (fitFunction != null) {
             try {
-                functionService.delete(fitFunction.getId());
+                txSupportForTestingService.delete(fitFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

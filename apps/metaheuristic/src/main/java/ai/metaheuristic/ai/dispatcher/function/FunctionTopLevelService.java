@@ -126,12 +126,12 @@ public class FunctionTopLevelService {
                     "#424.025 File with function wasn't selected");
         }
         String originFilename = file.getOriginalFilename();
-        if (originFilename == null) {
+        if (S.b(originFilename)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.030 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
-        if (ext==null) {
+        if (S.b(ext)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.040 file without extension, bad filename: " + originFilename);
         }
@@ -297,7 +297,7 @@ public class FunctionTopLevelService {
                     }
                 }
 
-                Function function = functionRepository.findByCodeForUpdate(functionConfig.code);
+                Function function = functionRepository.findByCode(functionConfig.code);
                 // there is a function with the same code
                 if (function !=null) {
                     status = new FunctionApiData.FunctionConfigStatus(false,

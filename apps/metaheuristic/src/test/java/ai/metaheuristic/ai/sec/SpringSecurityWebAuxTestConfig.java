@@ -78,7 +78,6 @@ public class SpringSecurityWebAuxTestConfig {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            //noinspection UnnecessaryLocalVariable
             Account account = users.get(username);
             return account;
         }

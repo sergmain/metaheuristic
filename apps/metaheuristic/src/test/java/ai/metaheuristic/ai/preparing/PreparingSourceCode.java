@@ -275,7 +275,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         Objects.requireNonNull(sc.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
-            functionService.delete(functionId);
+            txSupportForTestingService.delete(functionId);
         }
 
         byte[] bytes = "some code for testing".getBytes();
@@ -361,7 +361,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     private void deleteFunction(@Nullable Function s) {
         if (s!=null) {
             try {
-                functionService.delete(s.id);
+                txSupportForTestingService.delete(s.id);
             } catch (Throwable th) {
                 log.error("Error", th);
             }

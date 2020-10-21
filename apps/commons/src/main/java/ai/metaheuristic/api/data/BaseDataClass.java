@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -51,6 +52,7 @@ public class BaseDataClass {
         this.infoMessages.add(infoMessage);
     }
 
+    @JsonIgnore
     public @NonNull String getErrorMessagesAsStr() {
         if (!isNotEmpty(errorMessages)) {
             return "";
@@ -61,22 +63,27 @@ public class BaseDataClass {
         return Objects.requireNonNull(errorMessages.toString());
     }
 
+    @JsonIgnore
     public @NonNull List<String> getErrorMessagesAsList() {
         return isNotEmpty(errorMessages) ? errorMessages : List.of();
     }
 
+    @JsonIgnore
     public @NonNull List<String> getInfoMessagesAsList() {
         return isNotEmpty(infoMessages) ? infoMessages : List.of();
     }
 
+    @JsonIgnore
     public boolean isErrorMessages() {
         return isNotEmpty(errorMessages);
     }
 
+    @JsonIgnore
     public boolean isInfoMessages() {
         return isNotEmpty(infoMessages);
     }
 
+    @JsonIgnore
     private static boolean isNotEmpty(@Nullable Collection<?> collection) {
         return collection!=null && !collection.isEmpty();
     }

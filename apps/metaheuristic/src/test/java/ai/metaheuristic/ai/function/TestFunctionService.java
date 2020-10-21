@@ -101,7 +101,7 @@ public class TestFunctionService {
     public Function initFunction() {
         long mills;
         byte[] bytes = "some program code".getBytes();
-        Function f = functionRepository.findByCodeForUpdate(TEST_FUNCTION);
+        Function f = functionRepository.findByCode(TEST_FUNCTION);
         if (f == null) {
             FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_FUNCTION;
