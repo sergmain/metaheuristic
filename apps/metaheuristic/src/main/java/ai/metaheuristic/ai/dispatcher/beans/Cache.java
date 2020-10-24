@@ -20,9 +20,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Blob;
 
@@ -31,14 +32,12 @@ import java.sql.Blob;
  * Date: 10/7/2020
  * Time: 9:13 PM
  */
-/*
 @Entity
 @Table(name = "MH_CACHE")
 @Data
 @EqualsAndHashCode(of = {"keySha256Length"})
-@ToString(exclude={"data", "bytes"})
+@ToString(exclude={"data"})
 @NoArgsConstructor
-*/
 public class Cache implements Serializable {
     private static final long serialVersionUID = -1541017259044013865L;
 
@@ -52,19 +51,20 @@ public class Cache implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @NonNull
+    /**
+     * this field contains SHA256 checksum AND the length of data
+     */
+    @NotNull
+    @NotEmpty
     @Column(name = "KEY_SHA256_LENGTH")
     public String keySha256Length;
 
-    @NonNull
+    @NotNull
+    @NotEmpty
     @Column(name = "KEY_VALUE")
     public String keyValue;
 
     @Column(name = "DATA")
     @Lob
     private Blob data;
-
-    @Transient
-    public byte[] bytes;
-
 }

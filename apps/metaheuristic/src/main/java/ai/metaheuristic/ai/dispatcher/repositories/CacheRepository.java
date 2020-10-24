@@ -31,12 +31,10 @@ import java.sql.Blob;
  * Date: 10/7/2020
  * Time: 9:29 PM
  */
-//@Repository
-//@Transactional
-//@Profile("dispatcher")
-public interface CacheRepository {
-/*
-        extends CrudRepository<Cache, Long> {
+@Repository
+@Transactional(propagation = Propagation.MANDATORY)
+@Profile("dispatcher")
+public interface CacheRepository extends CrudRepository<Cache, Long> {
 
     @Query(value="select b.data from Cache b where b.id=:id")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
@@ -45,6 +43,5 @@ public interface CacheRepository {
     @Query(value="select b.data from Cache b where b.keySha256Length=:key")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamByKey(String key);
-*/
 
 }

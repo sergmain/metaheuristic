@@ -75,6 +75,7 @@ source:
             inputs:
               - name: dataset-processing
               - name: feature-per-task
+              - name: var-inline-permutation
             outputs:
               - name: model
           - code: predict-result
@@ -84,6 +85,7 @@ source:
             inputs:
               - name: dataset-processing
               - name: feature-per-task
+              - name: var-inline-permutation
               - name: model
             outputs:
               - name: metrics
