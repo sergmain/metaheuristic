@@ -127,6 +127,14 @@ public class SourceCodeParamsYaml implements BaseParams {
 
     @Data
     @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Cache {
+        public boolean enabled;
+    }
+
+    @Data
+    @ToString
     public static class Process implements Cloneable {
 
         @SneakyThrows
@@ -157,7 +165,7 @@ public class SourceCodeParamsYaml implements BaseParams {
             return MetaUtils.getMeta(metas, key);
         }
 
-        public boolean cacheOutput;
+        public @Nullable Cache cache;
     }
 
     @Data

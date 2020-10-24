@@ -26,10 +26,11 @@ public class SourceCodeParamsYamlUtils {
     // key - version of SourceCodeParamsYaml
     // value - version of TaskParamsYaml
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
-            1, 1
+            1, 1,
+            2, 1
     );
 
-    public static int getRequiredVertionOfTaskParamsYaml(int sourceCodeParamsYamlVersion) {
+    public static int getRequiredVersionOfTaskParamsYaml(int sourceCodeParamsYamlVersion) {
         Integer version = MIN_TASK_PARAMS_YAML_VERSION.get(sourceCodeParamsYamlVersion);
         if (version==null) {
             throw new IllegalStateException("unknown version of SourceCodeParamsYaml, version: " + sourceCodeParamsYamlVersion);
@@ -38,11 +39,13 @@ public class SourceCodeParamsYamlUtils {
     }
 
     private static final SourceCodeParamsYamlUtilsV1 YAML_UTILS_V_1 = new SourceCodeParamsYamlUtilsV1();
-    private static final SourceCodeParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final SourceCodeParamsYamlUtilsV2 YAML_UTILS_V_2 = new SourceCodeParamsYamlUtilsV2();
+    private static final SourceCodeParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
     public static final BaseYamlUtils<SourceCodeParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS
     );

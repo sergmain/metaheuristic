@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@ import java.util.Map;
 
 /**
  * @author Serge
- * $Date:
+ * Date: 10/24/2020
+ * Time: 11:47 AM
  */
 @Data
-public class SourceCodeParamsYamlV1 implements BaseParams {
+public class SourceCodeParamsYamlV2 implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -45,7 +46,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         if (!b) {
             throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
-        for (ProcessV1 process : source.processes) {
+        for (ProcessV2 process : source.processes) {
             if (process.function ==null) {
                 throw new CheckIntegrityFailedException("(process.function==null)");
             }
@@ -56,16 +57,16 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefForSourceCodeV1 {
+    public static class FunctionDefForSourceCodeV2 {
         public String code;
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefForSourceCodeV1(String code) {
+        public FunctionDefForSourceCodeV2(String code) {
             this.code = code;
         }
 
-        public FunctionDefForSourceCodeV1(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefForSourceCodeV2(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -74,7 +75,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableV1 {
+    public static class VariableV2 {
         public EnumsApi.DataSourcing sourcing;
         public GitInfo git;
         public DiskInfo disk;
@@ -92,7 +93,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
             this.nullable = nullable;
         }
 
-        public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
+        public VariableV2(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -101,26 +102,32 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SubProcessesV1 {
+    public static class SubProcessesV2 {
         public EnumsApi.SourceCodeSubProcessLogic logic;
-        public List<ProcessV1> processes;
+        public List<ProcessV2> processes;
     }
 
     @Data
     @ToString
-    public static class ProcessV1 implements Cloneable {
+    public static class CacheV2 {
+        public boolean enabled;
+    }
+
+    @Data
+    @ToString
+    public static class ProcessV2 implements Cloneable {
 
         @SneakyThrows
-        public ProcessV1 clone() {
-            final ProcessV1 clone = (ProcessV1) super.clone();
+        public ProcessV2 clone() {
+            final ProcessV2 clone = (ProcessV2) super.clone();
             return clone;
         }
 
         public String name;
         public String code;
-        public FunctionDefForSourceCodeV1 function;
-        public List<FunctionDefForSourceCodeV1> preFunctions = new ArrayList<>();
-        public List<FunctionDefForSourceCodeV1> postFunctions = new ArrayList<>();
+        public FunctionDefForSourceCodeV2 function;
+        public List<FunctionDefForSourceCodeV2> preFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCodeV2> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
@@ -128,25 +135,25 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<VariableV1> inputs = new ArrayList<>();
-        public final List<VariableV1> outputs = new ArrayList<>();
+        public final List<VariableV2> inputs = new ArrayList<>();
+        public final List<VariableV2> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
-        public @Nullable SubProcessesV1 subProcesses;
+        @Nullable public SubProcessesV2 subProcesses;
 
-        public boolean cacheOutput;
+        @Nullable public CacheV2 cache;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AccessControlV1 {
+    public static class AccessControlV2 {
         public String groups;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDefinitionV1 {
+    public static class VariableDefinitionV2 {
         public List<String> globals;
         public String startInputAs;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
@@ -154,15 +161,15 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
 
     @Data
     @ToString
-    public static class SourceCodeV1 {
-        public VariableDefinitionV1 variables = new VariableDefinitionV1();
-        public List<ProcessV1> processes = new ArrayList<>();
+    public static class SourceCodeV2 {
+        public VariableDefinitionV2 variables = new VariableDefinitionV2();
+        public List<ProcessV2> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
         public List<Map<String, String>> metas = new ArrayList<>();;
-        public AccessControlV1 ac;
+        public AccessControlV2 ac;
     }
 
-    public SourceCodeV1 source = new SourceCodeV1();
+    public SourceCodeV2 source = new SourceCodeV2();
 
 }

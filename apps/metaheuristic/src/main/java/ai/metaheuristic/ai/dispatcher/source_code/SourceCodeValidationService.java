@@ -310,7 +310,7 @@ public class SourceCodeValidationService {
     // todo 2020-02-27 current version isn't good
     //  because there is duplication of code with ai.metaheuristic.ai.dispatcher.function.FunctionService.isFunctionVersionOk
     private boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(sourceCodeParamsVersion);
+        int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVersionOfTaskParamsYaml(sourceCodeParamsVersion);
         boolean ok = isFunctionVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {
             log.error("#175.460 Version of function {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
