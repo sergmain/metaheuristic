@@ -82,16 +82,19 @@ public class TaskProviderService {
         }
     }
 
-    public int countOfTasks() {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.countOfTasks();
-        }
+    public boolean isQueueEmpty() {
+        return taskProviderTransactionalService.isQueueEmpty();
     }
 
     @Nullable
     private TaskImpl findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
         synchronized (syncObj) {
+
+            if (taskProviderTransactionalService.isQueueEmpty()) {
+                return null;
+            }
+
             TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned);
             if (task!=null) {
                 execContextSyncService.getWithSyncNullable(task.execContextId,
@@ -107,7 +110,7 @@ public class TaskProviderService {
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
-        if (countOfTasks()==0) {
+        if (taskProviderTransactionalService.isQueueEmpty()) {
             return null;
         }
 

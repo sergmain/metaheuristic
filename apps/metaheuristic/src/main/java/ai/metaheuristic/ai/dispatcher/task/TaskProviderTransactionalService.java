@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -66,7 +67,7 @@ public class TaskProviderTransactionalService {
         public Long taskId;
     }
 
-    private final LinkedList<QueuedTask> tasks = new LinkedList<>();
+    private final CopyOnWriteArrayList<QueuedTask> tasks = new CopyOnWriteArrayList<>();
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
@@ -80,12 +81,11 @@ public class TaskProviderTransactionalService {
     }
 
     public void deRegisterTask(Long taskId) {
-        tasks.remove(new QueuedTask(null, taskId));
+        tasks.removeIf(o->o.taskId.equals(taskId));
     }
 
-
-    public int countOfTasks() {
-        return tasks.size();
+    public boolean isQueueEmpty() {
+        return tasks.isEmpty();
     }
 
     @Nullable

@@ -90,7 +90,7 @@ public class ExecContextTopLevelService {
     }
 
     public void findUnassignedTasksAndAssign() {
-        if (taskProviderService.countOfTasks()>0) {
+        if (!taskProviderService.isQueueEmpty()) {
             return;
         }
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
