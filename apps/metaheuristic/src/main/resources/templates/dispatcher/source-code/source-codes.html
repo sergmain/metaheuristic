@@ -56,10 +56,8 @@
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${f.valid}">Is valid?</td>
             <td th:text="${f.locked}">Is locked?</td>
-            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
-                <a class="pure-button pure-button-primary"
-                   th:disabled="${f.locked}"
-                   th:href="${'/dispatcher/source-code/source-code-edit/' + f.id}">Edit</a></td>
+            <td>
+                <a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/source-code-view/' + f.id}">View</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
                 <a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/source-code-delete/' + f.id}">Delete</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
@@ -67,7 +65,7 @@
             <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/exec-contexts/' + f.id}">Exec contexts</a></td>
         </tr>
         <tr>
-            <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated} ? 10 : 7">
+            <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated} ? 10 : 8">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

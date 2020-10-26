@@ -1,0 +1,29 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">The source code</h1>
+
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodeResult"*/-->
+        <form class="pure-form pure-form-stacked" name="f">
+            <fieldset>
+                <table>
+                    <tr>
+                        <td><pre id="source-code" th:if="${result.source}!=null" th:text="${result.source}">Source code</pre></td>
+                    </tr>
+                    <tr>
+                        <td>
+<!--                            <a th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}"-->
+                            <a
+                                    class="pure-button pure-button-primary" href="#" th:href="${'/dispatcher/source-code/source-code-validate/' + result.id}">Validate</a>
+                            &nbsp;
+                            <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/dispatcher/source-code/source-codes'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+</div>
