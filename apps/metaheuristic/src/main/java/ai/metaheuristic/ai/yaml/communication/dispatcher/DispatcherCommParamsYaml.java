@@ -114,11 +114,20 @@ public class DispatcherCommParamsYaml implements BaseParams {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long execContextId;
+            public Long execContextId;
             public EnumsApi.ExecContextState state;
         }
 
         public List<SimpleStatus> statuses;
+
+        public boolean isStarted(Long execContextId) {
+            for (SimpleStatus status : statuses) {
+                if (status.execContextId.equals(execContextId)) {
+                    return status.state== EnumsApi.ExecContextState.STARTED;
+                }
+            }
+            return false;
+        }
     }
 
     @Data

@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
+@SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -149,11 +150,6 @@ public class VariableService {
         }
     }
 
-    /**
-     * @param execContextParamsYaml
-     * @param task
-     * @return
-     */
     @Nullable
     public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
         TxUtils.checkTxExists();
@@ -164,7 +160,7 @@ public class VariableService {
         final Long execContextId = task.execContextId;
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#303.600 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("#171.020 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return null;
         }
 
@@ -221,7 +217,7 @@ public class VariableService {
             return null;
         }
         if (vars.size()>1) {
-            throw new SourceCodeException("Too many variable '"+variable+"', actual count: " + vars.size());
+            throw new SourceCodeException("#171.100 Too many variable '"+variable+"', actual count: " + vars.size());
         }
         return vars.get(0);
     }
@@ -238,7 +234,7 @@ public class VariableService {
     }
 
     @Nullable
-    public SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+    private SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
@@ -251,7 +247,7 @@ public class VariableService {
     }
 
     @Nullable
-    public static String getParentContext(String taskContextId) {
+    private static String getParentContext(String taskContextId) {
         if (!taskContextId.contains(",")) {
             return null;
         }
@@ -262,7 +258,7 @@ public class VariableService {
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
-            final String es = "#087.028 Variable data wasn't found, variableId: " + variableId;
+            final String es = "#171.120 Variable data wasn't found, variableId: " + variableId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -276,11 +272,11 @@ public class VariableService {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 if (nullable) {
-                    log.info("#087.027 Variable #{} is nullable and current value is null", variableId);
+                    log.info("#171.140 Variable #{} is nullable and current value is null", variableId);
                     return null;
                 }
                 else {
-                    final String es = "#087.028 Variable data wasn't found, variableId: " + variableId;
+                    final String es = "#171.160 Variable data wasn't found, variableId: " + variableId;
                     log.warn(es);
                     throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
                 }
@@ -292,8 +288,8 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            log.error("#087.020", th);
-            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), variableId);
+            log.error("#171.180", th);
+            throw new VariableCommonException("#171.200 Error: " + th.getMessage(), variableId);
         }
     }
 
@@ -302,7 +298,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = S.f("#087.030 Data for variableId #%d wasn't found", variableId);
+                String es = S.f("#171.220 Data for variableId #%d wasn't found", variableId);
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
@@ -312,7 +308,7 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#087.050 Error while storing data to file";
+            String es = "#171.240 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -363,7 +359,6 @@ public class VariableService {
 
             SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
             if (sv == null) {
-//                log.info(S.f("Variable %s wasn't initialized for process %s.", variable.name, p.processCode));
                 Variable v = createUninitialized(variable.name, execContextId, contextId);
 
                 // even variable.getNullable() can be false, we set empty to true because variable will be inited later
@@ -374,20 +369,6 @@ public class VariableService {
                                 null, false, variable.type, true, variable.getNullable()
                         ));
             }
-/*
-            else {
-                Variable v = variableRepository.findById(sv.id).orElse(null);
-                if (v!=null) {
-//                    log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables", variable.name, p.processCode));
-                    // TODO 2020-09-28 do we need  taskParams.task.outputs.add()  here?
-//                    v = createOrUpdateUninitialized(v);
-                    continue;
-                }
-                else {
-                    throw new IllegalStateException("!!! A fatal error");
-                }
-            }
-*/
         }
         task.updatedOn = System.currentTimeMillis();
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
@@ -425,7 +406,7 @@ public class VariableService {
 
         Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
         if (data==null) {
-            log.error("#087.075 can't find variable #" + simpleVariable.id);
+            log.error("#171.260 can't find variable #" + simpleVariable.id);
             return;
         }
         data.filename = filename;

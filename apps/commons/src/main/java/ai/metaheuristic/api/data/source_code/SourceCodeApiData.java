@@ -83,6 +83,7 @@ public class SourceCodeApiData {
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -95,6 +96,7 @@ public class SourceCodeApiData {
         public boolean locked;
         public boolean valid;
         public String source;
+        public EnumsApi.DispatcherAssetMode assetMode;
 
         public EnumsApi.SourceCodeLang lang;
         public SourceCodeValidationResult validationResult = new SourceCodeValidationResult(
@@ -114,7 +116,7 @@ public class SourceCodeApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public SourceCodeResult(SourceCode sc, SourceCodeStoredParamsYaml sourceCode) {
+        public SourceCodeResult(SourceCode sc, SourceCodeStoredParamsYaml sourceCode, EnumsApi.DispatcherAssetMode assetMode) {
             this.id = sc.getId();
             this.version = sc.getVersion();
             this.uid = sc.getUid();
@@ -125,9 +127,10 @@ public class SourceCodeApiData {
 
             this.source = sourceCode.source;
             this.lang = sourceCode.lang;
+            this.assetMode = assetMode;
         }
 
-        public SourceCodeResult(SourceCode sc, EnumsApi.SourceCodeLang lang, String sourceCode) {
+        public SourceCodeResult(SourceCode sc, EnumsApi.SourceCodeLang lang, String sourceCode, EnumsApi.DispatcherAssetMode assetMode) {
             this.id = sc.getId();
             this.version = sc.getVersion();
             this.uid = sc.getUid();
@@ -138,6 +141,7 @@ public class SourceCodeApiData {
 
             this.source= sourceCode;
             this.lang = lang;
+            this.assetMode = assetMode;
         }
     }
 

@@ -39,6 +39,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 
+@SuppressWarnings("DuplicatedCode")
 @Controller
 @RequestMapping("/dispatcher/source-code")
 @Slf4j
@@ -82,13 +83,15 @@ public class SourceCodeController {
         return "dispatcher/source-code/source-code-add";
     }
 
-    @GetMapping(value = "/source-code-edit/{id}")
+    @GetMapping(value = "/source-code-view/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+/*
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
+*/
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
@@ -96,7 +99,7 @@ public class SourceCodeController {
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", sourceCodeResultRest);
-        return "dispatcher/source-code/source-code-edit";
+        return "dispatcher/source-code/source-code-view";
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
@@ -112,7 +115,7 @@ public class SourceCodeController {
         model.addAttribute("result", sourceCodeResultRest);
         model.addAttribute("infoMessages", sourceCodeResultRest.infoMessages);
         model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
-        return "dispatcher/source-code/source-code-edit";
+        return "dispatcher/source-code/source-code-view";
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
@@ -142,18 +145,8 @@ public class SourceCodeController {
 
     @PostMapping("/source-code-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String editFormCommit(Model model, Long sourceCodeId, String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
-        if (sourceCodeResultRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
-            return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.id;
-        }
-
-        if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
-        }
-        return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.id;
+    public String editFormCommit(Long sourceCodeId, String sourceCodeYamlAsStr) {
+        throw new IllegalStateException("Not supported any more");
     }
 
     @GetMapping("/source-code-delete/{id}")

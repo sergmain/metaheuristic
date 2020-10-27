@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
@@ -82,7 +81,6 @@ public class ExperimentResultService {
     private final TaskRepository taskRepository;
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
-    private final ExecContextCache execContextCache;
     private final VariableService variableService;
 
     @Data
@@ -151,14 +149,18 @@ public class ExperimentResultService {
         List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
         Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
 
+        List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
+
+        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
+        erpy.numberOfTask = ids.size();
+
         ExperimentResult a = new ExperimentResult();
         try {
-            a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(stored.experimentResultParamsYamlWithCache.experimentResult);
+            a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#604.140 General error while storing experiment, " + e.toString());
         }
-        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
 
         a.name = erpy.name;
         a.description = erpy.description;
@@ -174,13 +176,11 @@ public class ExperimentResultService {
         }
 */
 
-        List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
         AtomicLong featureId = new AtomicLong(1);
         AtomicLong taskFeatureId = new AtomicLong(1);
         final List<ExperimentFeature> features = new ArrayList<>();
         final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
 
-        // store all tasks' results which are the tasks for fitting/predicting only
         for (Long taskId : ids) {
 
             TaskImpl t = taskRepository.findById(taskId).orElse(null);
@@ -225,28 +225,29 @@ public class ExperimentResultService {
                     new ExperimentResultParamsYaml.MetricValues(mvs.values)
             ));
 
-            ExperimentResultTaskParamsYaml atpy = new ExperimentResultTaskParamsYaml();
-            atpy.assignedOn = t.getAssignedOn();
-            atpy.completed = t.isCompleted();
-            atpy.completedOn = t.getCompletedOn();
-            atpy.execState = t.getExecState();
-            atpy.taskId = t.getId();
-            atpy.taskParams = t.getParams();
+            ExperimentResultTaskParamsYaml ertpy = new ExperimentResultTaskParamsYaml();
+            ertpy.assignedOn = t.getAssignedOn();
+            ertpy.completed = t.isCompleted();
+            ertpy.completedOn = t.getCompletedOn();
+            ertpy.execState = t.getExecState();
+            ertpy.taskId = t.getId();
+
+            ertpy.taskParams = t.getParams();
             // typeAsString will have been initialized when ExperimentResultTaskParamsYaml will be requested
             // see method ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.findTasks
-            atpy.typeAsString = null;
-            atpy.functionExecResults = t.getFunctionExecResults();
-            atpy.metrics.values.putAll(mvs.values);
-            atpy.metrics.status = EnumsApi.MetricsStatus.Ok;
+            ertpy.typeAsString = null;
+            ertpy.functionExecResults = t.getFunctionExecResults();
+            ertpy.metrics.values.putAll(mvs.values);
+            ertpy.metrics.status = EnumsApi.MetricsStatus.Ok;
 
             // 2020-04-27 add a support of under/over-fitting checker
-            atpy.fitting = EnumsApi.Fitting.NORMAL;
+            ertpy.fitting = EnumsApi.Fitting.NORMAL;
 
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
             at.taskId = t.getId();
-            at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
+            at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(ertpy);
             experimentTaskRepository.save(at);
         }
 

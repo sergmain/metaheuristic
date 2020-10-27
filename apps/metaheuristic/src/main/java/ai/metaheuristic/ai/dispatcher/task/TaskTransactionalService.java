@@ -45,10 +45,14 @@ public class TaskTransactionalService {
         if (ids.isEmpty()) {
             return null;
         }
+        log.info("Found orphan execContextId: #{}, tasks #{}", execContextId, ids);
+        taskRepository.deleteByIds(ids);
+/*
         for (Long id : ids) {
             log.info("Found orphan task #{}, execContextId: #{}", id, execContextId);
             taskRepository.deleteById(id);
         }
+*/
         return null;
     }
 

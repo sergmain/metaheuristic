@@ -134,12 +134,12 @@ public class DispatcherCommandProcessor {
         checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask;
         try {
-            assignedTask = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+            assignedTask = taskProviderService.findTask(request.reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.045 ObjectOptimisticLockingFailureException", e);
             log.error("#997.047 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                assignedTask = taskProviderService.findTask(request.reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;

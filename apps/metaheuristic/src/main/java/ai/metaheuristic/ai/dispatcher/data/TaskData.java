@@ -44,17 +44,6 @@ public class TaskData {
 
     @Data
     @AllArgsConstructor
-    @NoArgsConstructor
-    public static class SimpleTaskInfo {
-        public Long taskId;
-        public String state;
-        public String context;
-        public String process;
-        public String functionCode;
-    }
-
-    @Data
-    @AllArgsConstructor
     public static class TaskState {
         public Long taskId;
         public Integer execState;

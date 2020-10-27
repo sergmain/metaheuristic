@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.CurrentExecState;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
@@ -54,6 +55,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
+    private final CurrentExecState currentExecState;
 
     @SuppressWarnings("Duplicates")
     public void fixedDelay() {
@@ -86,10 +88,21 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     continue;
             }
             ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
-            if (processorTask !=null && processorTask.finishedOn!=null) {
+            if (processorTask==null) {
+                log.info("Task #{} wasn't found, skip it", task.taskId);
+                continue;
+            }
+            if (processorTask.finishedOn!=null) {
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
+            EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcher.url, processorTask.execContextId);
+            if (state!= EnumsApi.ExecContextState.STARTED) {
+                log.info("ExecContext #{} is stopped, delete task #{}", processorTask.execContextId, task.taskId);
+                processorTaskService.delete(task.dispatcher.url, task.taskId);
+                continue;
+            }
+
             AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId, null, type);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);

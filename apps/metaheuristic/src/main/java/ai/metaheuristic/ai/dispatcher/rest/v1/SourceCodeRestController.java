@@ -80,9 +80,8 @@ public class SourceCodeRestController {
 
     @PostMapping("/source-code-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.SourceCodeResult editFormCommit(Long sourceCodeId, @RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
+    public SourceCodeApiData.SourceCodeResult editFormCommit(Long sourceCodeId, @RequestParam(name = "source") String sourceCodeYamlAsStr) {
+        throw new IllegalStateException("Not supported any more");
     }
 
     @PostMapping("/source-code-delete-commit")

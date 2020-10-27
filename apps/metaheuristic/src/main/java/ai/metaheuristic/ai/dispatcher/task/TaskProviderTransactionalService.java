@@ -19,8 +19,10 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -57,6 +60,7 @@ public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final ExecContextStatusService execContextStatusService;
 
     @Data
     @AllArgsConstructor
@@ -66,7 +70,7 @@ public class TaskProviderTransactionalService {
         public Long taskId;
     }
 
-    private final LinkedList<QueuedTask> tasks = new LinkedList<>();
+    private final CopyOnWriteArrayList<QueuedTask> tasks = new CopyOnWriteArrayList<>();
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
@@ -80,12 +84,11 @@ public class TaskProviderTransactionalService {
     }
 
     public void deRegisterTask(Long taskId) {
-        tasks.remove(new QueuedTask(null, taskId));
+        tasks.removeIf(o->o.taskId.equals(taskId));
     }
 
-
-    public int countOfTasks() {
-        return tasks.size();
+    public boolean isQueueEmpty() {
+        return tasks.isEmpty();
     }
 
     @Nullable
@@ -104,8 +107,12 @@ public class TaskProviderTransactionalService {
         TaskImpl resultTask = null;
         List<QueuedTask> forRemoving = new ArrayList<>();
 
+        DispatcherCommParamsYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
         try {
             for (QueuedTask queuedTask : tasks) {
+                if (!statuses.isStarted(queuedTask.execContextId)) {
+                    continue;
+                }
                 TaskImpl task = taskRepository.findById(queuedTask.taskId).orElse(null);
                 if (task == null) {
                     forRemoving.add(queuedTask);
@@ -115,7 +122,7 @@ public class TaskProviderTransactionalService {
                 try {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 } catch (YAMLException e) {
-                    log.error("#303.440 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
+                    log.error("#317.020 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
                     execContextTaskFinishingService.finishWithError(task, null);
                     forRemoving.add(queuedTask);
                     continue;
@@ -128,7 +135,7 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#303.460 Task #{} with function '{}' was already processed with status {}",
+                    log.warn("#317.040 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                     forRemoving.add(queuedTask);
                     continue;
@@ -141,7 +148,7 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (TaskUtils.gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
-                    log.warn("#303.480 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
+                    log.warn("#317.060 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processorId, task.getId(), psy.gitStatusInfo
                     );
                     continue;
@@ -150,7 +157,7 @@ public class TaskProviderTransactionalService {
                 if (!S.b(taskParamYaml.task.function.env)) {
                     String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
-                        log.warn("#303.500 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
+                        log.warn("#317.080 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 task.getId(), processorId, taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
@@ -160,7 +167,7 @@ public class TaskProviderTransactionalService {
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
                 if (psy.os != null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
-                    log.info("#303.520 Can't assign task #{} to processor #{}, " +
+                    log.info("#317.100 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
                             processorId, task.getId(), psy.os, supportedOS
                     );
@@ -170,7 +177,7 @@ public class TaskProviderTransactionalService {
 
                 if (isAcceptOnlySigned) {
                     if (taskParamYaml.task.function.checksumMap == null || taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
-                        log.warn("#303.540 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
+                        log.warn("#317.120 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
                         continue;
                     }
                 }
@@ -182,7 +189,7 @@ public class TaskProviderTransactionalService {
                     //noinspection unused
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
-                    log.warn("#303.560 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                    log.warn("#317.140 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             resultTask.getId(), processorId, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;

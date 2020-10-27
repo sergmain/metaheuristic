@@ -148,7 +148,7 @@ public class SourceCodeService {
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
         }
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
-        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
     }
 
     @Transactional
@@ -162,7 +162,7 @@ public class SourceCodeService {
         }
 
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -186,7 +186,7 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml());
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml(), globals.assetMode);
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
@@ -229,13 +229,13 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy, globals.assetMode );
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
         return deleteSourceCodeById(sourceCodeId);
     }

@@ -64,7 +64,7 @@ public class ExecContextReconciliationService {
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
         if (rootVertices.size()>1) {
-            log.error("#303.280 Too many root vertices, count: " + rootVertices.size());
+            log.error("#307.020 Too many root vertices, count: " + rootVertices.size());
         }
 
         if (rootVertices.isEmpty()) {
@@ -74,8 +74,6 @@ public class ExecContextReconciliationService {
 
         final Map<Long, TaskData.TaskState> states = getExecStateOfTasks(execContext.id);
 
-        Map<Long, TaskData.TaskState> taskStates = new HashMap<>();
-
         for (ExecContextData.TaskVertex tv : vertices) {
 
             TaskData.TaskState taskState = states.get(tv.taskId);
@@ -83,7 +81,7 @@ public class ExecContextReconciliationService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
-                log.error("#303.300 Found different states for task #"+tv.taskId+", " +
+                log.warn("#307.040 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
 
@@ -100,7 +98,7 @@ public class ExecContextReconciliationService {
         }
 
         if (status.isNullState.get()) {
-            log.info("#303.320 Found non-created task, graph consistency is failed");
+            log.info("#307.060 Found non-created task, graph consistency is failed");
             return status;
         }
 
@@ -124,7 +122,7 @@ public class ExecContextReconciliationService {
                             final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
-                                log.info("#303.340 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
+                                log.info("#307.080 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
                                 status.taskForResettingIds.add(task.id);
                             }
                         }
@@ -160,7 +158,7 @@ public class ExecContextReconciliationService {
             return null;
         }
         if (status.isNullState.get()) {
-            log.info("#303.320 Found non-created task, graph consistency is failed");
+            log.info("#307.100 Found non-created task, graph consistency is failed");
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return null;
@@ -172,11 +170,11 @@ public class ExecContextReconciliationService {
         for (Long taskIsOkId : status.taskIsOkIds) {
             TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);
             if (task==null) {
-                log.error("#305.030 task is null");
+                log.error("#307.120 task is null");
                 return null;
             }
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-            execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);;
+            execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);
         }
         return null;
     }

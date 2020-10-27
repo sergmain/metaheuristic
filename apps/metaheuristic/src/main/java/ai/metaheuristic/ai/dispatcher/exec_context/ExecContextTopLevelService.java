@@ -60,7 +60,9 @@ public class ExecContextTopLevelService {
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
-        return execContextSyncService.getWithSync(execContextId, ()-> execContextService.getExecContextState(sourceCodeId, execContextId, context));
+        ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId, ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
+        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(raw);
+        return r;
     }
 
     public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
@@ -83,14 +85,14 @@ public class ExecContextTopLevelService {
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
             execContextSyncService.getWithSyncNullable(execContextId,
                     ()-> execContextService.changeValidStatus(execContextId, false));
-            return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, " +
+            return new SourceCodeApiData.ExecContextResult("#210.020 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
         return result;
     }
 
     public void findUnassignedTasksAndAssign() {
-        if (taskProviderService.countOfTasks()>0) {
+        if (!taskProviderService.isQueueEmpty()) {
             return;
         }
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
@@ -112,7 +114,7 @@ public class ExecContextTopLevelService {
                     inputStream.close();
                 }
                 catch(Throwable th)  {
-                    log.warn("Error while closing stream", th);
+                    log.warn("#210.040 Error while closing stream", th);
                 }
             }
         }
@@ -121,7 +123,7 @@ public class ExecContextTopLevelService {
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
         if (execState== EnumsApi.ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.020 Unknown exec state, state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
         }
         return execContextSyncService.getWithSync(execContextId,
                 ()-> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
@@ -140,7 +142,7 @@ public class ExecContextTopLevelService {
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
+                    "#210.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
         return execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
@@ -149,7 +151,7 @@ public class ExecContextTopLevelService {
     private void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         Long execContextId = taskRepository.getExecContextId(result.taskId);
         if (execContextId==null) {
-            log.warn("Reporting about non-existed task #{}", result.taskId);
+            log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
         execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result));
@@ -158,7 +160,7 @@ public class ExecContextTopLevelService {
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {
-            log.warn("#317.020 Task obsolete and was already deleted");
+            log.warn("#210.120 Task obsolete and was already deleted");
             return;
         }
 
