@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -279,10 +280,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             catch (SocketTimeoutException e) {
                 log.error("#811.140 SocketTimeoutException: {}", e.toString());
             }
+            catch (ConnectException e) {
+                log.error("#811.143 ConnectException: {}", e.toString());
+            }
             catch (IOException e) {
                 log.error("#811.150 IOException", e);
-            } catch (URISyntaxException e) {
+            }
+            catch (URISyntaxException e) {
                 log.error("#811.160 URISyntaxException", e);
+            }
+            catch (Throwable th) {
+                log.error("#811.165 Throwable", th);
             }
         }
     }

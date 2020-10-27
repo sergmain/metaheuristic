@@ -53,7 +53,7 @@ public class CurrentExecState {
                 }
                 List<Long> ids = new ArrayList<>();
                 v.forEach((key, value) -> {
-                    boolean isFound = statuses.stream().anyMatch(status -> status.execContextId == key);
+                    boolean isFound = statuses.stream().anyMatch(status -> status.execContextId.equals(key));
                     if (!isFound) {
                         ids.add(key);
                     }
@@ -63,7 +63,7 @@ public class CurrentExecState {
         }
     }
 
-    EnumsApi.ExecContextState getState(String host, Long execContextId) {
+    public EnumsApi.ExecContextState getState(String host, Long execContextId) {
         synchronized(execContextState) {
             if (!isInited(host)) {
                 return EnumsApi.ExecContextState.UNKNOWN;
@@ -74,7 +74,7 @@ public class CurrentExecState {
 
     boolean isState(String dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
         EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
-        return currState!=null && currState==state;
+        return currState==state;
     }
 
     boolean isStarted(String dispatcherUrl, Long execContextId) {

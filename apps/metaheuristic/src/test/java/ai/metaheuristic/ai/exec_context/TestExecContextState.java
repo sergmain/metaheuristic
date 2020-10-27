@@ -16,15 +16,16 @@
 
 package ai.metaheuristic.ai.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static ai.metaheuristic.api.EnumsApi.*;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeType;
+import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -39,7 +40,7 @@ public class TestExecContextState {
 
 
 /*
-        Long sourceCodeId, List<TaskData.SimpleTaskInfo> infos, List<List< ExecContextData.TaskVertex>> vertices,
+        Long sourceCodeId, List<TaskApiData.SimpleTaskInfo> infos, List<List< ExecContextData.TaskVertex>> vertices,
                 List<String> processCodes, EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid, boolean sourceCodeValid
 */
 
@@ -50,17 +51,17 @@ public class TestExecContextState {
         public String process;
         public String functionCode;
 */
-        List<TaskData.SimpleTaskInfo> infos = List.of(
-                new TaskData.SimpleTaskInfo(100L, TaskExecState.OK.toString(), "ctx-1", "process-1", "function-1"),
-                new TaskData.SimpleTaskInfo(120L, TaskExecState.IN_PROGRESS.toString(), "ctx-1.1", "process-2", "function-2"),
-                new TaskData.SimpleTaskInfo(140L, TaskExecState.NONE.toString(), "ctx-1.1", "process-3", "function-3"),
-                new TaskData.SimpleTaskInfo(160L, TaskExecState.OK.toString(), "ctx-1.2", "process-2", "function-2"),
-                new TaskData.SimpleTaskInfo(180L, TaskExecState.ERROR.toString(), "ctx-1.2", "process-3", "function-3"),
-                new TaskData.SimpleTaskInfo(190L, TaskExecState.OK.toString(), "ctx-1", "mh.finish", "mh.finish")
+        List<TaskApiData.SimpleTaskInfo> infos = List.of(
+                new TaskApiData.SimpleTaskInfo(100L, TaskExecState.OK.toString(), "ctx-1", "process-1", "function-1"),
+                new TaskApiData.SimpleTaskInfo(120L, TaskExecState.IN_PROGRESS.toString(), "ctx-1.1", "process-2", "function-2"),
+                new TaskApiData.SimpleTaskInfo(140L, TaskExecState.NONE.toString(), "ctx-1.1", "process-3", "function-3"),
+                new TaskApiData.SimpleTaskInfo(160L, TaskExecState.OK.toString(), "ctx-1.2", "process-2", "function-2"),
+                new TaskApiData.SimpleTaskInfo(180L, TaskExecState.ERROR.toString(), "ctx-1.2", "process-3", "function-3"),
+                new TaskApiData.SimpleTaskInfo(190L, TaskExecState.OK.toString(), "ctx-1", "mh.finish", "mh.finish")
         );
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
-        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(
-                1L, infos, processCodes, SourceCodeType.batch, "test-source-code", true);
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(1L, infos, processCodes, SourceCodeType.batch, "test-source-code", true);
+        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(raw);
 
         assertNotNull(r);
         assertNotNull(r.header);

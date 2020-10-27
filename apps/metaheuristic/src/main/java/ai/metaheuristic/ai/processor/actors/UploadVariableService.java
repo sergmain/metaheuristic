@@ -43,6 +43,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -92,8 +93,9 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
-
             final UploadVariableTask finalTask = task;
+//            ProcessorTask.OutputStatus o = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findAny().orElse(null);
+
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findAny().orElse(null);
             if (v==null) {
                 log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
@@ -163,8 +165,12 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
             } catch (HttpResponseException e) {
                 log.error("#311.060 Error uploading resource to server, code: " + e.getStatusCode(), e);
-            } catch (SocketTimeoutException e) {
+            }
+            catch (SocketTimeoutException e) {
                 log.error("#311.070 SocketTimeoutException, {}", e.toString());
+            }
+            catch (ConnectException e) {
+                log.error("#311.073 ConnectException, {}", e.toString());
             }
             catch (IOException e) {
                 log.error("#311.080 IOException", e);

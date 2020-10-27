@@ -60,7 +60,7 @@ public class ExecContextTaskResettingService {
 
         TaskImpl t = taskExecStateService.resetTask(taskId);
         if (t == null) {
-            String es = S.f("#303.200 Found a non-existed task, graph consistency for execContextId #%s is failed",
+            String es = S.f("#320.020 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);
             log.error(es);
             execContext.completedOn = System.currentTimeMillis();

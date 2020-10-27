@@ -8,42 +8,29 @@
     <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData$ExperimentResultData"*/-->
     <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult"*/-->
 
-    <div align="right">
-        <a class="pure-button pure-button-primary" href="experiment-results.html" th:href="${'/dispatcher/ai/experiment-result/experiment-results'}">To list of experiments</a>
-    </div>
-
     <p>&nbsp;</p>
 
-        <h1 class="widget-header">General info</h1>
-        <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
-            <tbody>
-            <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
-            <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
-            <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
-            <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
-            <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of tasks</td></tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
-
-<!--
-        <h1 class="widget-header">Functions</h1>
-        <table class="pure-table pure-table-bordered" id="table-function" th:fragment="table-function">
-            <thead>
-            <tr>
-                <th width="150">Type</th>
-                <th width="700">Code</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <tr th:each="s : ${experiment.functions}">
-                <td th:text="${s.type}">Function type</td>
-                <td th:text="${s.getFunctionCode()}">Function code</td>
-            </tr>
-            </tbody>
-        </table>
--->
+    <h1 class="widget-header">General info</h1>
+    <table>
+        <tbody>
+        <tr width="100%">
+            <td>
+                <table class="pure-table pure-table-bordered" id="dataset-table">
+                    <tbody>
+                    <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
+                    <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
+                    <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
+                    <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
+                    <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of tasks</td></tr>
+                    </tbody>
+                </table>
+            </td>
+            <td width="100%" align="right" valign="top">
+                <a class="pure-button pure-button-primary" href="experiment-results.html" th:href="${'/dispatcher/ai/experiment-result/experiment-results'}">To list of experiments</a>
+            </td>
+        </tr>
+    </table>
+    <p>&nbsp;</p>
 
         <p>&nbsp;</p>
         <h1 class="widget-header">Hyper parameters</h1>

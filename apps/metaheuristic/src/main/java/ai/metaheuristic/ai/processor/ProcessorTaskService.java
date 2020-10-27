@@ -379,6 +379,10 @@ public class ProcessorTaskService {
             List<ProcessorTask> list = new ArrayList<>();
             for (ProcessorTask task : getMapForDispatcherUrl(dispatcherUrl).values()) {
                 if (!task.completed) {
+                    if (task.finishedOn!=null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o->o.uploaded)) {
+                        task.completed = true;
+                        save(task);
+                    }
                     list.add(task);
                 }
             }

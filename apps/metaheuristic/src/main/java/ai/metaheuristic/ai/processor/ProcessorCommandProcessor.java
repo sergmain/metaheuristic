@@ -46,7 +46,8 @@ public class ProcessorCommandProcessor {
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         scpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
-        processExecContextStatus(dispatcherUrl, dispatcherYaml);
+        // !!! processExecContextStatus() must be processed before calling processAssignedTask()
+        processExecContextStatus(dispatcherUrl, dispatcherYaml.execContextStatus);
         processReportResultDelivering(dispatcherUrl, dispatcherYaml);
         processAssignedTask(dispatcherUrl, dispatcherYaml);
         storeProcessorId(dispatcherUrl, dispatcherYaml);
@@ -75,11 +76,11 @@ public class ProcessorCommandProcessor {
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
-    private void processExecContextStatus(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.execContextStatus ==null) {
+    private void processExecContextStatus(String dispatcherUrl, DispatcherCommParamsYaml.ExecContextStatus execContextStatus) {
+        if (execContextStatus ==null) {
             return;
         }
-        currentExecState.register(dispatcherUrl, request.execContextStatus.statuses);
+        currentExecState.register(dispatcherUrl, execContextStatus.statuses);
     }
 
     // processing at processor side

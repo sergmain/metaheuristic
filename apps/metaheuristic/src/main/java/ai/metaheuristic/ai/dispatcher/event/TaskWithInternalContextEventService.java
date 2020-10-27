@@ -69,7 +69,7 @@ public class TaskWithInternalContextEventService {
                     inputStream.close();
                 }
                 catch(Throwable th)  {
-                    log.warn("Error while closing stream", th);
+                    log.warn("#447.040 Error while closing stream", th);
                 }
             }
         }

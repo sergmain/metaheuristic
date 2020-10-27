@@ -41,9 +41,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -254,19 +256,25 @@ public class ExperimentTopLevelService {
 
 
     public OperationStatusRest experimentDeleteCommit(Long id, DispatcherContext context) {
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.260 experiment wasn't found, experimentId: " + id);
-        }
-        ExecContext ex = execContextCache.findById(experiment.execContextId);
-        if (ex != null) {
-            OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
-            if (operationStatusRest.isErrorMessages()) {
-                return operationStatusRest;
+        try {
+            Experiment experiment = experimentCache.findById(id);
+            if (experiment == null) {
+                return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#285.260 experiment wasn't found, experimentId: " + id);
             }
+            ExecContext ex = execContextCache.findById(experiment.execContextId);
+            if (ex != null) {
+                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
+                if (operationStatusRest.isErrorMessages()) {
+                    return operationStatusRest;
+                }
+            }
+            experimentService.deleteExperiment(id);
+        } catch (EmptyResultDataAccessException e) {
+            // it's ok
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Error {}", e.toString());
         }
-        experimentCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

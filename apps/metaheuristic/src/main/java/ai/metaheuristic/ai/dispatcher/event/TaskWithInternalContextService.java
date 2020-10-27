@@ -76,25 +76,24 @@ public class TaskWithInternalContextService {
     public Void processInternalFunctionWithTx(Long execContextId, Long taskId, VariableData.DataStreamHolder holder) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("ExecContext #{} doesn't exist", execContextId);
+            log.warn("#707.020 ExecContext #{} doesn't exist", execContextId);
             return null;
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("Task #{} with internal context doesn't exist", taskId);
+            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
             return null;
         }
         if (!execContextId.equals(task.execContextId)) {
-            log.error("The task #{} has different execContextId, expected: {}, actual: {}",
+            log.error("#707.060 The task #{} has different execContextId, expected: {}, actual: {}",
                     taskId, execContextId, task.execContextId);
-//            execContextFSM.toError(execContext);
             return null;
         }
         processInternalFunction(execContext, task, holder);
         return null;
     }
 
-    public void processInternalFunction(ExecContextImpl execContext, TaskImpl task, VariableData.DataStreamHolder holder) {
+    private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, VariableData.DataStreamHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         lastTaskId = null;
@@ -106,15 +105,15 @@ public class TaskWithInternalContextService {
 
             try {
                 if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.error("#707.012 Task #"+task.id+" already in progress. mustn't happened. it's, actually, illegal state");
+                    log.error("#707.080 Task #"+task.id+" already in progress. mustn't happened. it's, actually, illegal state");
                     return;
                 }
                 if (task.execState!= EnumsApi.TaskExecState.NONE.value) {
-                    log.info("#707.011 Task #"+task.id+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
+                    log.info("#707.100 Task #"+task.id+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
                     return;
                 }
                 if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
-                    log.error("#707.015 Task #"+task.id+" already was finished");
+                    log.error("#707.120 Task #"+task.id+" already was finished");
                     return;
                 }
                 execContextTaskStateService.updateTaskExecStates(
@@ -129,7 +128,7 @@ public class TaskWithInternalContextService {
                         p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                     }
                     else {
-                        log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
+                        log.warn("#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
                         return;
                     }
                 }
@@ -140,9 +139,9 @@ public class TaskWithInternalContextService {
                         execContext, task, p.internalContextId, taskParamsYaml, holder);
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                    log.error("#303.220 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
+                    log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                             result.processing, result.error, execContext.sourceCodeId, execContext.id);
-                    final String console = "#303.240 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
+                    final String console = "#707.180 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
                     final String taskContextId = taskParamsYaml.task.taskContextId;
                     execContextTaskFinishingService.finishWithError(task, console, taskContextId);
                     return;
@@ -158,16 +157,16 @@ public class TaskWithInternalContextService {
                 execContextFSM.storeExecResult(r);
 
             } catch (CommonErrorWithDataException th) {
-                String es = "#707.067 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
+                String es = "#707.200 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
                 execContextTaskFinishingService.finishWithError(task, es, null, -10002);
                 log.error(es);
             } catch (Throwable th) {
-                String es = "#707.070 Task #" + task.id + " was processed with error: " + th.getMessage();
+                String es = "#707.220 Task #" + task.id + " was processed with error: " + th.getMessage();
                 execContextTaskFinishingService.finishWithError(task, es, null, -10003);
                 log.error(es, th);
             }
         } catch (Throwable th) {
-            String es = "#707.080 Task #" + task.id + " was processed with error: " + th.getMessage();
+            String es = "#707.240 Task #" + task.id + " was processed with error: " + th.getMessage();
             execContextTaskFinishingService.finishWithError(task, es, null, -10004);
             log.error(es, th);
         }

@@ -235,7 +235,7 @@ public class SourceCodeService {
         return result;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
         return deleteSourceCodeById(sourceCodeId);
     }

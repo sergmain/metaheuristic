@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
@@ -98,6 +99,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
     List<Long> findActiveForProcessorId(Long processorId);
 
+    @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId")
+    List<TaskImpl> findForProcessorId(Long processorId);
+
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId and t.execState = :execState ")
     List<TaskImpl> findTasksByExecState(Long execContextId, int execState);
@@ -133,5 +138,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Query(value="select v.id from TaskImpl v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
+
+    @Modifying
+    @Query(value="delete from TaskImpl t where t.id in (:ids)")
+    void deleteByIds(List<Long> ids);
 }
 

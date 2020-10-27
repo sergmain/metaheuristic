@@ -41,4 +41,17 @@ public class TaskApiData {
         public Long taskId;
         public String taskContextId;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SimpleTaskInfo {
+        public Long taskId;
+        public String state;
+        public String context;
+        public String process;
+        public String functionCode;
+    }
+
+
 }

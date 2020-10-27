@@ -60,7 +60,7 @@ public class ExecContextTaskFinishingService {
         EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
 
         if (state!=EnumsApi.TaskExecState.IN_PROGRESS) {
-            log.info("#303.175 Task {} already isn't in IN_PROGRESS state, actual: {}", task.id, state);
+            log.info("#318.020 Task {} already isn't in IN_PROGRESS state, actual: {}", task.id, state);
             return;
         }
 
@@ -72,20 +72,20 @@ public class ExecContextTaskFinishingService {
             }
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.functionExecResults);
             if (functionExec == null) {
-                String es = "#303.120 Task #" + task.id + " has empty execResult";
+                String es = "#318.040 Task #" + task.id + " has empty execResult";
                 log.info(es);
                 functionExec = new FunctionApiData.FunctionExec();
             }
             FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec != null ? functionExec.generalExec : functionExec.exec;
             if (!systemExecResult.isOk) {
-                log.warn("#303.140 Task #{} finished with error, functionCode: {}, console: {}",
+                log.warn("#318.060 Task #{} finished with error, functionCode: {}, console: {}",
                         task.id,
                         systemExecResult.functionCode,
                         StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
             }
 
             if (!functionExec.allFunctionsAreOk()) {
-                log.info("#303.160 store result with the state ERROR");
+                log.info("#318.080 store result with the state ERROR");
                 finishWithError(
                         task,
                         StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
@@ -108,7 +108,7 @@ public class ExecContextTaskFinishingService {
     }
 
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
-        finishWithError(task, "#303.260 Task was finished with an unknown error, can't process it", taskContextId);
+        finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {
@@ -131,7 +131,7 @@ public class ExecContextTaskFinishingService {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#305.085 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
+            log.info("#318.120 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
         task.setExecState(EnumsApi.TaskExecState.ERROR.value);

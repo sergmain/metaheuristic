@@ -17,14 +17,13 @@ package ai.metaheuristic.ai.yaml.processor_task;
 
 import ai.metaheuristic.api.data.Meta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @ToString
@@ -34,6 +33,7 @@ public class ProcessorTask {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(of = "variableId")
     public static class OutputStatus {
         // variableId of Variable.
         public Long variableId;
@@ -45,7 +45,7 @@ public class ProcessorTask {
     @Data
     @NoArgsConstructor
     public static class Output {
-        public final List<OutputStatus> outputStatuses = new ArrayList<>();
+        public final Set<OutputStatus> outputStatuses = new HashSet<>();
 
         @JsonIgnore
         public boolean allUploaded() {

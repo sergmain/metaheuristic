@@ -70,7 +70,7 @@ public class ProcessorTransactionService {
     // at least for 20 seconds
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
-    public static String createNewSessionId() {
+    private static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
     }
 
@@ -207,7 +207,7 @@ public class ProcessorTransactionService {
         return null;
     }
 
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.FunctionDownloadStatus status) {
+    private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.FunctionDownloadStatus status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
         }
@@ -255,7 +255,7 @@ public class ProcessorTransactionService {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
-            log.debug("#440.380 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
+            log.debug("#807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
                             "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                             "'    processor.status:\n{},\n" +
                             "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
@@ -280,7 +280,7 @@ public class ProcessorTransactionService {
     public Void checkProcessorId(final long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            log.warn("#807.220 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
             lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
             return null;
         }
@@ -288,13 +288,13 @@ public class ProcessorTransactionService {
         try {
             ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         } catch (Throwable e) {
-            log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#440.300 Error ", e);
+            log.error("#807.280 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#807.300 Error ", e);
             // skip any command from this processor
             return null;
         }
         if (StringUtils.isBlank(sessionId)) {
-            log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            log.debug("#807.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
             // the same processor but with different and expired sessionId
             // so we can continue to use this processorId with new sessionId
             lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
@@ -302,14 +302,14 @@ public class ProcessorTransactionService {
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
-                log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                log.debug("#807.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
                 // the same processor but with different and expired sessionId
                 // so we can continue to use this processorId with new sessionId
                 // we won't use processor's sessionIf to be sure that sessionId has valid format
                 lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
                 return null;
             } else {
-                log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                log.debug("#807.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
                 // different processors with the same processorId
                 // there is other active processor with valid sessionId
                 lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
@@ -358,7 +358,7 @@ public class ProcessorTransactionService {
 
     private @Nullable String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "#807.020 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
+            return "#807.380 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }

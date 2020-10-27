@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -31,12 +30,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
@@ -52,8 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
@@ -99,9 +100,14 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(
-            Long sourceCodeId, List<TaskData.SimpleTaskInfo> infos,
-            List<String> processCodes, EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid, boolean sourceCodeValid) {
+    public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(ExecContextApiData.RawExecContextStateResult raw) {
+
+            Long sourceCodeId = raw.sourceCodeId;
+            List<TaskApiData.SimpleTaskInfo> infos = raw.infos;
+            List<String> processCodes = raw.processCodes;
+            EnumsApi.SourceCodeType sourceCodeType = raw.sourceCodeType;
+            String sourceCodeUid = raw.sourceCodeUid;
+            boolean sourceCodeValid = raw.sourceCodeValid;
 
         ExecContextApiData.ExecContextStateResult r = new ExecContextApiData.ExecContextStateResult();
         r.sourceCodeId = sourceCodeId;
@@ -110,8 +116,8 @@ public class ExecContextService {
         r.sourceCodeValid = sourceCodeValid;
 
         Set<String> contexts = new HashSet<>();
-        Map<String, List<TaskData.SimpleTaskInfo>> map = new HashMap<>();
-        for (TaskData.SimpleTaskInfo info : infos) {
+        Map<String, List<TaskApiData.SimpleTaskInfo>> map = new HashMap<>();
+        for (TaskApiData.SimpleTaskInfo info : infos) {
             contexts.add(info.context);
             map.computeIfAbsent(info.context, (o) -> new ArrayList<>()).add(info);
         }
@@ -132,11 +138,11 @@ public class ExecContextService {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        for (TaskData.SimpleTaskInfo taskInfo : infos) {
+        for (TaskApiData.SimpleTaskInfo taskInfo : infos) {
             for (int i = 0; i < r.lines.length; i++) {
-                TaskData.SimpleTaskInfo simpleTaskInfo = null;
-                List<TaskData.SimpleTaskInfo> tasksInContext = map.get(r.lines[i].context);
-                for (TaskData.SimpleTaskInfo contextTaskInfo : tasksInContext) {
+                TaskApiData.SimpleTaskInfo simpleTaskInfo = null;
+                List<TaskApiData.SimpleTaskInfo> tasksInContext = map.get(r.lines[i].context);
+                for (TaskApiData.SimpleTaskInfo contextTaskInfo : tasksInContext) {
                     if (contextTaskInfo.taskId.equals(taskInfo.taskId)) {
                         simpleTaskInfo = contextTaskInfo;
                         break;
@@ -227,31 +233,37 @@ public class ExecContextService {
     }
 
     @Transactional(readOnly = true)
-    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
+    public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();
         result.sourceCodeId = sourceCodeId;
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        List<TaskData.SimpleTaskInfo> infos = getSimpleTaskInfos(execContextId);
+        List<TaskApiData.SimpleTaskInfo> infos = getSimpleTaskInfos(execContextId);
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec == null) {
-            ExecContextApiData.ExecContextStateResult resultWithError = new ExecContextApiData.ExecContextStateResult();
-            resultWithError.addErrorMessage("Can't find execContext for Id " + execContextId);
+            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params));
-        ExecContextApiData.ExecContextStateResult r = getExecContextStateResult(
+        return new ExecContextApiData.RawExecContextStateResult(
                 sourceCodeId, infos, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid);
-        return r;
     }
 
-    private List<TaskData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
+    private List<TaskApiData.SimpleTaskInfo> getSimpleTaskInfos(Long execContextId) {
+        List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextId);
+        return tasks.stream().map(o-> {
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params);
+            return new TaskApiData.SimpleTaskInfo(o.id,  EnumsApi.TaskExecState.from(o.execState).toString(), tpy.task.taskContextId, tpy.task.processCode, tpy.task.function.code);
+        }).collect(Collectors.toList());
+
+/*
         try (Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)) {
             return stream.map(o-> {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params);
-                return new TaskData.SimpleTaskInfo(o.id,  EnumsApi.TaskExecState.from(o.execState).toString(), tpy.task.taskContextId, tpy.task.processCode, tpy.task.function.code);
+                return new TaskApiData.SimpleTaskInfo(o.id,  EnumsApi.TaskExecState.from(o.execState).toString(), tpy.task.taskContextId, tpy.task.processCode, tpy.task.function.code);
             }).collect(Collectors.toList());
         }
+*/
     }
 
     private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {

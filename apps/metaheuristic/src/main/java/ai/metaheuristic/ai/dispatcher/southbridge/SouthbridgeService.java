@@ -20,9 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Service
 @Profile("dispatcher")
@@ -79,8 +78,8 @@ public class SouthbridgeService {
     private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ExecContextRepository execContextRepository;
     private final ProcessorTopLevelService processorTopLevelService;
+    private final ExecContextStatusService execContextStatusService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -111,7 +110,7 @@ public class SouthbridgeService {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
                 if (assetFile.isError) {
-                    String es = "#440.100 Function with id " + dataId + " is broken";
+                    String es = "#444.100 Function with id " + dataId + " is broken";
                     log.error(es);
                     throw new FunctionDataNotFoundException(dataId, es);
                 }
@@ -120,7 +119,7 @@ public class SouthbridgeService {
             case variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
                 if (assetFile.isError) {
-                    String es = "#440.120 Resource with id " + dataId + " is broken";
+                    String es = "#444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
@@ -129,21 +128,21 @@ public class SouthbridgeService {
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
                 if (assetFile.isError) {
-                    String es = "#440.140 Resource with id " + dataId + " is broken";
+                    String es = "#444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
                 dataSaver = (variableId, trgFile) -> globalVariableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             default:
-                throw new IllegalStateException("#440.160 Unknown type of data: " + binaryType);
+                throw new IllegalStateException("#444.160 Unknown type of data: " + binaryType);
         }
 
         if (!assetFile.isContent) {
             try {
                 dataSaver.accept(dataId, assetFile.file);
             } catch (CommonErrorWithDataException e) {
-                log.error("#440.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
+                log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;
             }
         }
@@ -173,7 +172,7 @@ public class SouthbridgeService {
                 byteToRead = realSize;
                 long skipped = fis.skip(offset);
                 if (skipped!=offset) {
-                    String es = S.f("Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
+                    String es = S.f("#444.190 Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
                     log.error(es);
                     throw new CommonIOErrorWithDataException(es);
 
@@ -189,14 +188,6 @@ public class SouthbridgeService {
         } catch (IOException e) {
             throw new CommonIOErrorWithDataException("Error: " + e.getMessage());
         }
-    }
-
-    private DispatcherCommParamsYaml.ExecContextStatus getExecContextStatuses() {
-        return new DispatcherCommParamsYaml.ExecContextStatus(
-                execContextRepository.findAllExecStates()
-                        .stream()
-                        .map(o -> SouthbridgeService.toSimpleStatus((Long)o[0], (Integer)o[1]))
-                        .collect(Collectors.toList()));
     }
 
     public String processRequest(String data, String remoteAddress) {
@@ -219,14 +210,14 @@ public class SouthbridgeService {
                 return lcpy;
             }
 
-            lcpy.execContextStatus = getExecContextStatuses();
+            lcpy.execContextStatus = execContextStatusService.getExecContextStatuses();
 
             log.debug("Start processing commands");
             dispatcherCommandProcessor.process(scpy, lcpy);
             setDispatcherCommContext(lcpy);
         } catch (Throwable th) {
-            log.error("#440.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
-            log.error("#440.230 Error", th);
+            log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
+            log.error("#444.230 Error", th);
             lcpy.success = false;
             lcpy.msg = th.getMessage();
         }
@@ -247,7 +238,7 @@ public class SouthbridgeService {
 
     private void checkProcessorId(@Nullable String processorIdAsStr, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(processorIdAsStr)) {
-            log.warn("#440.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
+            log.warn("#444.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
             lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
             return;
         }
@@ -258,10 +249,6 @@ public class SouthbridgeService {
 
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {
         return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
-    }
-
-    private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
-        return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
     }
 
 }
