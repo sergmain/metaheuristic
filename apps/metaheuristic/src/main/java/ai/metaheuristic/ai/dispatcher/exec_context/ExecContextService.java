@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -43,6 +44,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -115,7 +117,9 @@ public class ExecContextService {
         r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
-        List<String> sortedContexts = contexts.stream().sorted(String::compareTo).collect(Collectors.toList());
+        List<String> sortedContexts = contexts.stream()
+                .sorted(ExecContextService::compare).collect(Collectors.toList());
+
         for (int i = 0; i < r.lines.length; i++) {
             r.lines[i] = new ExecContextApiData.LineWithState();
         }
@@ -147,6 +151,39 @@ public class ExecContextService {
             }
         }
         return r;
+    }
+
+    public static int compare(String o1, String o2) {
+        int i1 = o1.indexOf(ContextUtils.CONTEXT_SEPARATOR);
+        int i2 = o2.indexOf(ContextUtils.CONTEXT_SEPARATOR);
+
+        String s1 = i1!=-1 ? StringUtils.substring(o1, 0, i1) : o1;
+        String s2 = i2!=-1 ? StringUtils.substring(o2, 0, i2) : o2;
+
+        if (s1.equals(s2)) {
+            if (i1!=-1 && i2!=-1) {
+                int sc1 = Integer.parseInt(o1.substring(i1+ContextUtils.CONTEXT_SEPARATOR.length()));
+                int sc2 = Integer.parseInt(o2.substring(i2+ContextUtils.CONTEXT_SEPARATOR.length()));
+                return Integer.compare(sc1, sc2);
+            }
+            if (i1==-1 && i2==-1) {
+                return 0;
+            }
+            if (i1==-1) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        }
+        if (i1==-1 && i2!=-1) {
+            return -1;
+        }
+
+        if (i1!=-1 && i2==-1) {
+            return 1;
+        }
+        return o1.compareTo(o2);
     }
 
     private static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
