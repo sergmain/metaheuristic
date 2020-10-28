@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -53,7 +52,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
@@ -102,26 +100,19 @@ public class ExecContextService {
 
     public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(ExecContextApiData.RawExecContextStateResult raw) {
 
-            Long sourceCodeId = raw.sourceCodeId;
-            List<TaskApiData.SimpleTaskInfo> infos = raw.infos;
-            List<String> processCodes = raw.processCodes;
-            EnumsApi.SourceCodeType sourceCodeType = raw.sourceCodeType;
-            String sourceCodeUid = raw.sourceCodeUid;
-            boolean sourceCodeValid = raw.sourceCodeValid;
-
         ExecContextApiData.ExecContextStateResult r = new ExecContextApiData.ExecContextStateResult();
-        r.sourceCodeId = sourceCodeId;
-        r.sourceCodeType = sourceCodeType;
-        r.sourceCodeUid = sourceCodeUid;
-        r.sourceCodeValid = sourceCodeValid;
+        r.sourceCodeId = raw.sourceCodeId;
+        r.sourceCodeType = raw.sourceCodeType;
+        r.sourceCodeUid = raw.sourceCodeUid;
+        r.sourceCodeValid = raw.sourceCodeValid;
 
         Set<String> contexts = new HashSet<>();
         Map<String, List<TaskApiData.SimpleTaskInfo>> map = new HashMap<>();
-        for (TaskApiData.SimpleTaskInfo info : infos) {
+        for (TaskApiData.SimpleTaskInfo info : raw.infos) {
             contexts.add(info.context);
             map.computeIfAbsent(info.context, (o) -> new ArrayList<>()).add(info);
         }
-        r.header = processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
+        r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
         List<String> sortedContexts = contexts.stream().sorted(String::compareTo).collect(Collectors.toList());
@@ -138,7 +129,7 @@ public class ExecContextService {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        for (TaskApiData.SimpleTaskInfo taskInfo : infos) {
+        for (TaskApiData.SimpleTaskInfo taskInfo : raw.infos) {
             for (int i = 0; i < r.lines.length; i++) {
                 TaskApiData.SimpleTaskInfo simpleTaskInfo = null;
                 List<TaskApiData.SimpleTaskInfo> tasksInContext = map.get(r.lines[i].context);
@@ -151,14 +142,14 @@ public class ExecContextService {
                 if (simpleTaskInfo == null) {
                     continue;
                 }
-                int j = findCol(r.header, simpleTaskInfo.process);
+                int j = findOrAssignCol(r.header, simpleTaskInfo.process);
                 r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, simpleTaskInfo.state, simpleTaskInfo.context);
             }
         }
         return r;
     }
 
-    private static int findCol(ExecContextApiData.ColumnHeader[] headers, String process) {
+    private static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
         int idx = -1;
         for (int i = 0; i < headers.length; i++) {
             if (headers[i].process == null) {
@@ -312,11 +303,11 @@ public class ExecContextService {
                     }
                 }
                 else {
-                    log.warn("#705.600 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
+                    log.warn("#705.020 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
                 }
             }
             else if (ids.isEmpty()) {
-                log.warn("#705.320 unexpected state, execContextId: {}, ids is empty", execContextId);
+                log.warn("#705.040 unexpected state, execContextId: {}, ids is empty", execContextId);
             }
             execContextCache.deleteById(execContextId);
         }
@@ -326,7 +317,7 @@ public class ExecContextService {
     public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new SourceCodeApiData.ExecContextForDeletion("#778.020 execContext wasn't found, execContextId: " + execContextId);
+            return new SourceCodeApiData.ExecContextForDeletion("#705.060 execContext wasn't found, execContextId: " + execContextId);
         }
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         SourceCodeApiData.ExecContextForDeletion result = new SourceCodeApiData.ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
@@ -349,7 +340,7 @@ public class ExecContextService {
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+            return new OperationStatusRest(OperationStatus.ERROR, "#705.080 ExecContext wasn't found, execContextId: " + execContextId );
         }
         return null;
     }
