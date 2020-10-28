@@ -29,16 +29,16 @@ import java.sql.Blob;
 
 /**
  * @author Serge
- * Date: 10/7/2020
- * Time: 9:13 PM
+ * Date: 10/27/2020
+ * Time: 6:56 PM
  */
 @Entity
-@Table(name = "MH_CACHE")
+@Table(name = "MH_CACHE_VARIABLE")
 @Data
 @EqualsAndHashCode(of = {"keySha256Length"})
 @ToString(exclude={"data"})
 @NoArgsConstructor
-public class Cache implements Serializable {
+public class CacheVariable implements Serializable {
     private static final long serialVersionUID = -1541017259044013865L;
 
     @Id
@@ -47,6 +47,10 @@ public class Cache implements Serializable {
 
     @Version
     private Integer version;
+
+    @NotNull
+    @Column(name = "CACHE_PROCESS_ID")
+    public Long cacheProcessId;
 
     @Column(name="CREATED_ON")
     public long createdOn;

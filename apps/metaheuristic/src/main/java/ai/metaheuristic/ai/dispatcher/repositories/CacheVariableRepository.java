@@ -16,7 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Cache;
+import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -28,19 +29,19 @@ import java.sql.Blob;
 
 /**
  * @author Serge
- * Date: 10/7/2020
- * Time: 9:29 PM
+ * Date: 10/27/2020
+ * Time: 7:09 PM
  */
 @Repository
 @Transactional(propagation = Propagation.MANDATORY)
 @Profile("dispatcher")
-public interface CacheRepository extends CrudRepository<Cache, Long> {
+public interface CacheVariableRepository extends CrudRepository<CacheVariable, Long> {
 
-    @Query(value="select b.data from Cache b where b.id=:id")
+    @Query(value="select b.data from CacheVariable b where b.id=:id")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
 
-    @Query(value="select b.data from Cache b where b.keySha256Length=:key")
+    @Query(value="select b.data from CacheVariable b where b.keySha256Length=:key")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamByKey(String key);
 

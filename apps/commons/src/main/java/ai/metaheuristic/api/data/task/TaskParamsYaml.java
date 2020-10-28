@@ -51,6 +51,9 @@ public class TaskParamsYaml implements BaseParams {
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
+        if (task.execContextId==null) {
+            throw new CheckIntegrityFailedException("execContextId is null");
+        }
         if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
         }
@@ -59,6 +62,12 @@ public class TaskParamsYaml implements BaseParams {
                     "(task.context== EnumsApi.FunctionExecContext.external && " +
                             "task.function.sourcing!= EnumsApi.FunctionSourcing.processor && " +
                             "S.b(task.function.file))");
+        }
+        for (OutputVariable output : task.outputs) {
+            // global variable as output isn't supported right now
+            if (output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array) {
+                throw new CheckIntegrityFailedException("(output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array)");
+            }
         }
         return true;
     }
@@ -153,7 +162,8 @@ public class TaskParamsYaml implements BaseParams {
         public String type;
 
         // Nullable for internal context, NonNull for external
-        public @Nullable String file;
+        @Nullable public String file;
+
         /**
          * params for command line for invoking function
          * <p>
@@ -162,8 +172,8 @@ public class TaskParamsYaml implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
-        public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
-        public @Nullable GitInfo git;
+        @Nullable public Map<EnumsApi.HashAlgo, String> checksumMap;
+        @Nullable public GitInfo git;
 
         /**
          * this field tells Processor to don't add the absolute path to params.yaml file
@@ -172,6 +182,14 @@ public class TaskParamsYaml implements BaseParams {
          */
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
+    }
+
+    @Data
+    @ToString
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Cache {
+        public boolean enabled;
     }
 
     @Data
@@ -187,18 +205,19 @@ public class TaskParamsYaml implements BaseParams {
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;
 
-        public @Nullable Map<String, Map<String, String>> inline;
+        @Nullable public Map<String, Map<String, String>> inline;
         public final List<InputVariable> inputs = new ArrayList<>();
         public final List<OutputVariable> outputs = new ArrayList<>();
         public final List<Map<String, String>> metas = new ArrayList<>();
+
+        @Nullable public Cache cache;
 
         /**
          * Timeout before terminate a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */
-        @Nullable
-        public Long timeoutBeforeTerminate;
+        @Nullable public Long timeoutBeforeTerminate;
 
         // fields which are initialized at processor
         public String workingPath;

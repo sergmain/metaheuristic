@@ -83,7 +83,7 @@ public class SourceCodeParamsYamlUtilsV1
         pr.preFunctions = o.preFunctions.stream().map(d->new SourceCodeParamsYamlV2.FunctionDefForSourceCodeV2(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYamlV2.FunctionDefForSourceCodeV2(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.metas = o.metas;
-        pr.cacheOutput = o.cacheOutput;
+        pr.cache = new SourceCodeParamsYamlV2.CacheV2(o.cacheOutput);
 
         pr.subProcesses = o.subProcesses!=null
                 ?  new SourceCodeParamsYamlV2.SubProcessesV2(

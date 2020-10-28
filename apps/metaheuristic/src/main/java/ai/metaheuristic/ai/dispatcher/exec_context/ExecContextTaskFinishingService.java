@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -52,6 +53,7 @@ public class ExecContextTaskFinishingService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskService taskService;
+    private final CacheService cacheService;
 
     public void checkTaskCanBeFinished(TaskImpl task) {
         TxUtils.checkTxExists();
@@ -104,6 +106,9 @@ public class ExecContextTaskFinishingService {
             execContextTaskStateService.updateTaskExecStates(
                     execContextCache.findById(task.execContextId), task,
                     EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
+            if (tpy.task.cache!=null && tpy.task.cache.enabled) {
+                cacheService.storeVariables(tpy);
+            }
         }
     }
 

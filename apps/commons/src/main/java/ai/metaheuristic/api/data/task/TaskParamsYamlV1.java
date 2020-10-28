@@ -87,7 +87,11 @@ public class TaskParamsYamlV1 implements BaseParams {
         public @Nullable DiskInfo disk;
 
         // name of file if this variable was uploaded from file
+        // for global variable is always null
+        // TODO 2020-08-01 real name of file is stored in db, actually.
+        //  why is it a null for global variable?
         public @Nullable String filename;
+
         public @Nullable String type;
 
         public boolean empty = false;
@@ -146,9 +150,7 @@ public class TaskParamsYamlV1 implements BaseParams {
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
-            if (this.metas != null) {
-                clone.metas = new ArrayList<>(this.metas);
-            }
+            clone.metas.addAll(this.metas);
             return clone;
         }
 
@@ -157,7 +159,10 @@ public class TaskParamsYamlV1 implements BaseParams {
          */
         public String code;
         public String type;
-        public String file;
+
+        // Nullable for internal context, NonNull for external
+        @Nullable public String file;
+
         /**
          * params for command line for invoking function
          * <p>
@@ -166,10 +171,24 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
-        public Map<EnumsApi.HashAlgo, String> checksumMap;
-        public GitInfo git;
+        @Nullable public Map<EnumsApi.HashAlgo, String> checksumMap;
+        @Nullable public GitInfo git;
+
+        /**
+         * this field tells Processor to don't add the absolute path to params.yaml file
+         * as the last parameter in command line.
+         * Useful for defining Function which is invoking curl as a command
+         */
         public boolean skipParams = false;
-        public List<Map<String, String>> metas = new ArrayList<>();
+        public final List<Map<String, String>> metas = new ArrayList<>();
+    }
+
+    @Data
+    @ToString
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class CacheV1 {
+        public boolean enabled;
     }
 
     @Data
@@ -185,17 +204,19 @@ public class TaskParamsYamlV1 implements BaseParams {
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;
 
-        public Map<String, Map<String, String>> inline;
+        @Nullable public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();
         public final List<Map<String, String>> metas = new ArrayList<>();
+
+        @Nullable public CacheV1 cache;
 
         /**
          * Timeout before terminate a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */
-        public Long timeoutBeforeTerminate;
+        @Nullable public Long timeoutBeforeTerminate;
 
         // fields which are initialized at processor
         public String workingPath;

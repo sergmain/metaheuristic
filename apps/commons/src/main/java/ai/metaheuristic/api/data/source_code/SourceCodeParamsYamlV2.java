@@ -109,6 +109,8 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
 
     @Data
     @ToString
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class CacheV2 {
         public boolean enabled;
     }
