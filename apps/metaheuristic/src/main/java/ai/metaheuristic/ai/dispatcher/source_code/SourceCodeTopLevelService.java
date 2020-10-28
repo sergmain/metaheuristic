@@ -127,16 +127,16 @@ public class SourceCodeTopLevelService {
                 sourceCodeYamlAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
             } catch (WrongVersionOfYamlFileException e) {
-                String es = "#560.110 An error parsing yaml: " + e.getMessage();
+                String es = "#560.340 An error parsing yaml: " + e.getMessage();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
             return sourceCodeService.uploadSourceCode(sourceCodeYamlAsStr, ppy, context);
         }
         catch (Throwable e) {
-            log.error("Error", e);
+            log.error("#560.370 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.370 can't load source codes, Error: " + e.toString());
+                    "#560.380 can't load source codes, Error: " + e.toString());
         }
     }
 

@@ -41,19 +41,6 @@ public class ExecContextCreatorTopLevelService {
     private final ExecContextCreatorService execContextCreatorService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId) {
-/*
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyUniqueId);
-        if (sourceCodesForCompany.isErrorMessages()) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyUniqueId);
-        }
-        SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
-        if (sourceCode==null) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#560.072 Error creating execContext: " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyUniqueId);
-        }
-        return execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId);
-*/
         return execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId);
     }
 

@@ -77,9 +77,9 @@ public class SourceCodeService {
                         }
                         return b;
                     } catch (YAMLException e) {
-                        log.error("#560.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
-                        log.error("#560.025 Params:\n{}", sourceCode.getParams());
-                        log.error("#560.030 Error: {}", e.toString());
+                        log.error("#565.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
+                        log.error("#565.025 Params:\n{}", sourceCode.getParams());
+                        log.error("#565.030 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
@@ -105,12 +105,12 @@ public class SourceCodeService {
         }
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
+                    "#565.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+                    "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         sourceCodeCache.deleteById(sourceCodeId);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -142,7 +142,7 @@ public class SourceCodeService {
     public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String errorMessage = "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult(
                     errorMessage,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
@@ -155,7 +155,7 @@ public class SourceCodeService {
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String es = "#560.070 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String es = "#565.280 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult(es,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es)
             );
@@ -195,27 +195,27 @@ public class SourceCodeService {
     @Transactional
     public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new SourceCodeApiData.SourceCodeResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
+            return new SourceCodeApiData.SourceCodeResult("#565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String es = "#560.010 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String es = "#565.320 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult( es,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es));
         }
         if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
-            return new SourceCodeApiData.SourceCodeResult("#560.170 sourceCode yaml is empty");
+            return new SourceCodeApiData.SourceCodeResult("#565.340 sourceCode yaml is empty");
         }
 
         SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
 
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("#560.190 code of sourceCode is empty");
+            return new SourceCodeApiData.SourceCodeResult("#565.360 code of sourceCode is empty");
         }
         SourceCode p = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
         if (p!=null && !p.getId().equals(sourceCode.getId())) {
-            return new SourceCodeApiData.SourceCodeResult("#560.230 sourceCode with such code already exists, code: " + code);
+            return new SourceCodeApiData.SourceCodeResult("#565.380 sourceCode with such code already exists, code: " + code);
         }
         sourceCode.uid = code;
 
@@ -244,11 +244,11 @@ public class SourceCodeService {
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
+                    "#565.400 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#565.420 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         scspy.internalParams.archived = true;
@@ -263,7 +263,7 @@ public class SourceCodeService {
     public OperationStatusRest uploadSourceCode(String yaml, SourceCodeParamsYaml ppy, DispatcherContext context) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.280 Can't upload sourceCode while 'replicated' mode of asset is active");
+                    "#565.440 Can't upload sourceCode while 'replicated' mode of asset is active");
         }
 
         try {
@@ -276,9 +276,9 @@ public class SourceCodeService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable e) {
-            log.error("Error", e);
+            log.error("#565.460 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.370 can't load source codes, Error: " + e.toString());
+                    "#565.480 can't load source codes, Error: " + e.toString());
         }
     }
 
