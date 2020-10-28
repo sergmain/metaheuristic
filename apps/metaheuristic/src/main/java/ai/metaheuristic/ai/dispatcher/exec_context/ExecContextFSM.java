@@ -210,7 +210,7 @@ public class ExecContextFSM {
     public Void processResendTaskOutputVariable(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#303.360 Task obsolete and was already deleted");
+            log.warn("#303.360 Task is obsoleted and was already deleted");
             return null;
         }
 
