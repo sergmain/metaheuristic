@@ -144,11 +144,11 @@ public class ProcessorService {
     private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
-        // is this resource prepared?
+        // is this variable prepared?
         if (assetFile.isError || !assetFile.isContent) {
-            log.warn("#749.040 Resource wasn't found. Considering that this task is broken, {}", assetFile);
+            log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
             processorTaskService.markAsFinishedWithError(dispatcherUrl, taskId,
-                    "#749.050 Resource wasn't found. Considering that this task is broken");
+                    "#749.050 Variable wasn't found. Considering that this task is broken");
 
             // TODO 2020-09-01 do we still need to set uploaded status?
 /*

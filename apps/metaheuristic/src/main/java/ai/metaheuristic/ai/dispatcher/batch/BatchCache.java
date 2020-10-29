@@ -45,13 +45,12 @@ public class BatchCache {
     public Batch save(@NonNull Batch batch) {
         TxUtils.checkTxExists();
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
-        return batchRepository.saveAndFlush(batch);
+        return batchRepository.save(batch);
     }
 
     @Nullable
 //    @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
-        TxUtils.checkTxExists();
         return batchRepository.findById(id).orElse(null);
     }
 

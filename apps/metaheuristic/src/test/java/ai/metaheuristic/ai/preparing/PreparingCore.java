@@ -224,14 +224,14 @@ public abstract class PreparingCore {
         }
         if (predictFunction != null) {
             try {
-                txSupportForTestingService.delete(predictFunction.getId());
+                txSupportForTestingService.deleteFunctionById(predictFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         }
         if (fitFunction != null) {
             try {
-                txSupportForTestingService.delete(fitFunction.getId());
+                txSupportForTestingService.deleteFunctionById(fitFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

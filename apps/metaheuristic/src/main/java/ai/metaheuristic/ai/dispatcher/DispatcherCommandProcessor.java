@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -89,11 +90,11 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     private void processProcessorTaskStatus(ProcessorCommParamsYaml request) {
-        if (request.reportProcessorTaskStatus ==null || request.reportProcessorTaskStatus.statuses==null) {
-            return;
-        }
         if (request.processorCommContext==null) {
             log.warn("#997.020 (request.processorCommContext==null)");
+            return;
+        }
+        if (request.reportProcessorTaskStatus ==null || CollectionUtils.isEmpty(request.reportProcessorTaskStatus.statuses)) {
             return;
         }
         processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);

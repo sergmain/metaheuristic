@@ -183,6 +183,7 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
             public long taskId;
         }
 
+        @Nullable
         public List<SimpleStatus> statuses;
     }
 

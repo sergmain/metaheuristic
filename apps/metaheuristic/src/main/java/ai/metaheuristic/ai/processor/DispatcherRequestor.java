@@ -239,7 +239,7 @@ public class DispatcherRequestor {
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
-                            // let's check resources for not completed and not sent yet tasks
+                            // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
                                     .filter(t -> t.delivered && t.finishedOn!=null && !t.output.allUploaded())
                                     .collect(Collectors.toList());
@@ -254,7 +254,7 @@ public class DispatcherRequestor {
                                 }
                             }
 
-                                setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
+                            setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
                             lastCheckForResendTaskOutputResource = System.currentTimeMillis();
                         }
                     }

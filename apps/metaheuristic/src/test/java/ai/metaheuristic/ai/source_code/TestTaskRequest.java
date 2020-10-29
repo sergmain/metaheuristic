@@ -76,7 +76,7 @@ public class TestTaskRequest extends FeatureMethods {
         String sessionId;
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(Collections.emptyList());
+        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
 
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);

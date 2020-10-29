@@ -201,7 +201,7 @@ public class TaskProviderService {
             if (!statuses.isStarted(task.execContextId)) {
                 continue;
             }
-            if (reportProcessorTaskStatus.statuses.stream().noneMatch(a->a.taskId==task.id)) {
+            if (reportProcessorTaskStatus.statuses==null || reportProcessorTaskStatus.statuses.stream().noneMatch(a->a.taskId==task.id)) {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processorId, task.id, EnumsApi.TaskExecState.from(task.execState));

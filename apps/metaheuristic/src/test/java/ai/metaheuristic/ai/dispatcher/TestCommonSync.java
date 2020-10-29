@@ -20,18 +20,16 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.commons.S;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
 
-import java.util.Date;
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -134,8 +132,8 @@ public class TestCommonSync {
         try {
             while (!isStarted.get()) {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 5_000) {
-                    throw new IllegalStateException("Thread t1 wasn't started in 5 seconds");
+                if (System.currentTimeMillis() - mills > 15_000) {
+                    throw new IllegalStateException("Thread t1 wasn't started in 15 seconds");
                 }
             }
         } catch (InterruptedException e) {
@@ -188,8 +186,8 @@ public class TestCommonSync {
         try {
             while (!isStarted2.get()) {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 5_000) {
-                    throw new IllegalStateException("Threads t2 wasn't started in 5 seconds");
+                if (System.currentTimeMillis() - mills > 15_000) {
+                    throw new IllegalStateException("Threads t2 wasn't started in 15 seconds");
                 }
             }
         } catch (InterruptedException e) {
@@ -206,8 +204,8 @@ public class TestCommonSync {
         try {
             while (isStarted.get()) {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 5_000) {
-                    throw new IllegalStateException("Threads t2 wasn't finished in 5 seconds");
+                if (System.currentTimeMillis() - mills > 15_000) {
+                    throw new IllegalStateException("Threads t2 wasn't finished in 15 seconds");
                 }
             }
         } catch (InterruptedException e) {
