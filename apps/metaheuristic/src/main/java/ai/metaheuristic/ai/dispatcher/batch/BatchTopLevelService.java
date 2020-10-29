@@ -254,7 +254,21 @@ public class BatchTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(companyUniqueId, isVirtualDeletion, batchId));
+        if (isVirtualDeletion) {
+            Batch batch = batchCache.findById(batchId);
+            if (batch == null || !batch.companyId.equals(companyUniqueId)) {
+                final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+                log.info(es);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            }
+            if (batch.deleted) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
+            }
+            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+        }
+        else {
+            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+        }
     }
 
     public BatchData.BulkOperations processBatchBulkDeleteCommit(String batchIdsStr, Long companyUniqueId, boolean isVirtualDeletion) {

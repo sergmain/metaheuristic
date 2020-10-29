@@ -80,7 +80,7 @@ public class ProcessorTopLevelService {
 //        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
     }
 
-    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, @Nullable List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
         if (S.b(processorIdAsStr)) {
             return;
         }
@@ -94,7 +94,7 @@ public class ProcessorTopLevelService {
 //        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy));
     }
 
-    private Void reconcileProcessorTasks(final long processorId, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+    private Void reconcileProcessorTasks(final long processorId, @Nullable List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
         TxUtils.checkTxNotExists();
 
         List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
@@ -107,14 +107,14 @@ public class ProcessorTopLevelService {
                 log.error("#807.190 Processor #{} has a task with assignedOn is null", processorId);
             }
 
-            boolean isFound = statuses.stream().anyMatch(status -> status.taskId == taskId);
+            boolean isFound = statuses!=null && statuses.stream().anyMatch(status -> status.taskId == taskId);
             boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
 
             // if Processor haven't reported back about this task in 90 seconds,
             // this task will be de-assigned from this Processor
             if (!isFound && isExpired) {
                 log.info("#807.200 De-assign task #{} from processor #{}", taskId, processorId);
-                log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
+                log.info("\tstatuses: {}", statuses!=null ? statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()) : null);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
                 OperationStatusRest result = execContextTopLevelService.resetTask(taskId);

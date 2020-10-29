@@ -124,7 +124,7 @@ public class TestRegisterProcessor {
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
 
-        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(new ArrayList<>());
+        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
 
         final ProcessorCommParamsYaml.ReportProcessorStatus ss = new ProcessorCommParamsYaml.ReportProcessorStatus(
                 new EnvYaml(),

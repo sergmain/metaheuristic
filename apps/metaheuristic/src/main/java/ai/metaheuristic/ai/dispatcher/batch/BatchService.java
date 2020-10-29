@@ -268,31 +268,37 @@ public class BatchService {
     }
 
     @Transactional
-    public OperationStatusRest deleteBatch(Long companyUniqueId, boolean isVirtualDeletion, Long batchId) {
+    public OperationStatusRest deleteBatchVirtually(Long execContextId, Long companyUniqueId, Long batchId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId)) {
             final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
-        execContextSyncService.checkWriteLockPresent(batch.execContextId);
-
-        if (isVirtualDeletion) {
-            if (!batch.deleted) {
-                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
-                if (execContext==null) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Batch #" + batch.id + " was deleted successfully.");
-                }
-                execContextFSM.toFinished(execContext);
-
-                Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
-                b.deleted = true;
-                batchCache.save(b);
+        if (!batch.deleted) {
+            ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+            if (execContext==null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Batch #" + batch.id + " was deleted successfully.");
             }
-        } else {
-            execContextService.deleteExecContext(batch.execContextId, companyUniqueId);
-            batchCache.deleteById(batch.id);
+            execContextFSM.toFinished(execContext);
+
+            Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
+            b.deleted = true;
+            batchCache.save(b);
         }
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batch.id + " was deleted successfully.", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
+
+    @Transactional
+    public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
+        execContextService.deleteExecContext(execContextId, companyUniqueId);
+        batchCache.deleteById(batchId);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
+    }
+
+
 }

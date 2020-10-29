@@ -235,7 +235,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
                     log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
                 }
                 try {
-                    variableRepository.deleteByExecContextId(execContextId);
+                    txSupportForTestingService.deleteByExecContextId(execContextId);
                 } catch (Throwable th) {
                     log.error("error", th);
                 }
@@ -275,7 +275,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         Objects.requireNonNull(sc.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
-            txSupportForTestingService.delete(functionId);
+            txSupportForTestingService.deleteFunctionById(functionId);
         }
 
         byte[] bytes = "some code for testing".getBytes();
@@ -361,7 +361,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     private void deleteFunction(@Nullable Function s) {
         if (s!=null) {
             try {
-                txSupportForTestingService.delete(s.id);
+                txSupportForTestingService.deleteFunctionById(s.id);
             } catch (Throwable th) {
                 log.error("Error", th);
             }

@@ -81,7 +81,7 @@ public class TestRestUploadFunction {
 
         Function f = functionRepository.findByCode(FUNCTION_CODE);
         if (f!=null) {
-            txSupportForTestingService.delete(f.id);
+            txSupportForTestingService.deleteFunctionById(f.id);
         }
     }
 

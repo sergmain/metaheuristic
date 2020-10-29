@@ -18,13 +18,11 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.api.data.account.SimpleAccount;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -102,8 +100,12 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
 
-    void deleteById(@NonNull Long id);
+    @Modifying
+    @Query(value="delete from Variable v where v.id=:id")
+    void deleteById(Long id);
 
+    @Modifying
+    @Query(value="delete from Variable v where v.execContextId=:execContextId")
     void deleteByExecContextId(Long execContextId);
 
     void deleteByName(String variable);

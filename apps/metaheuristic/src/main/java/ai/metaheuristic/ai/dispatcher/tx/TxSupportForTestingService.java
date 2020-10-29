@@ -70,7 +70,7 @@ public class TxSupportForTestingService {
     private final FunctionDataService functionDataService;
 
     @Transactional
-    public void delete(@Nullable Long functionId) {
+    public void deleteFunctionById(@Nullable Long functionId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }

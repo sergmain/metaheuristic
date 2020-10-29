@@ -22,19 +22,17 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.lang.NonNull;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Repository
 @Profile("dispatcher")
-public interface BatchRepository extends JpaRepository<Batch, Long> {
+public interface BatchRepository extends CrudRepository<Batch, Long> {
 
     @Transactional(readOnly = true)
     @Nullable
