@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -83,6 +84,20 @@ public class SourceCodeTopLevelService {
             return new SourceCodeApiData.SourceCodeResult(es);
         }
 
+        final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
+        if (sourceCodeResult != null) {
+            return sourceCodeResult;
+        }
+
+        try {
+            return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
+        } catch (DataIntegrityViolationException e) {
+            return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
+        }
+    }
+
+    @Nullable
+    public SourceCodeApiData.SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.130 the code of sourceCode is empty");
@@ -91,12 +106,7 @@ public class SourceCodeTopLevelService {
         if (f!=null) {
             return new SourceCodeApiData.SourceCodeResult("#560.150 the sourceCode with code "+code+" already exists");
         }
-
-        try {
-            return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
-        } catch (DataIntegrityViolationException e) {
-            return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
-        }
+        return null;
     }
 
     public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
@@ -131,7 +141,17 @@ public class SourceCodeTopLevelService {
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
-            return sourceCodeService.uploadSourceCode(sourceCodeYamlAsStr, ppy, context);
+            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
+            if (sourceCodeResult != null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, sourceCodeResult.getErrorMessagesAsList(), sourceCodeResult.getInfoMessagesAsList());
+            }
+
+            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
+
+            if (result.isErrorMessages()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
+            }
+            return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable e) {
             log.error("#560.370 Error", e);
