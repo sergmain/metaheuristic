@@ -65,9 +65,7 @@ public class FunctionController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String uploadFunction(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = functionTopLevelService.uploadFunction(file);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         return REDIRECT_DISPATCHER_FUNCTIONS;
     }
 }

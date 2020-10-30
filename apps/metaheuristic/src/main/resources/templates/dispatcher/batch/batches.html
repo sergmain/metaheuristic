@@ -92,11 +92,11 @@
             <td class="no-wrap"><a class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/batch/batch-delete/' + r.batch.id}">Delete</a>
                 &nbsp;
-                <a th:if="${r.finished()}" class="pure-button pure-button-primary"
+                <a th:if="${r.finished() && !r.execContextDeleted}" class="pure-button pure-button-primary"
                    target="_blank"
                    th:href="${'/dispatcher/batch/batch-download-result/' + r.batch.id + '/result.zip'}">Download result</a>
                 &nbsp;
-                <a th:if="${r.finished()}" class="pure-button pure-button-primary"
+                <a th:if="${r.finished() && !r.execContextDeleted}" class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/batch/batch-status/' + r.batch.id}">Status</a>
             </td>
         </tr>

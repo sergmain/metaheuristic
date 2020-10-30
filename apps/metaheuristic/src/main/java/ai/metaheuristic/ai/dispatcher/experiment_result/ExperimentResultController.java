@@ -113,9 +113,7 @@ public class ExperimentResultController {
     @PostMapping("/experiment-result-delete-commit")
     public String deleteCommit(Long experimentResultId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentResultTopLevelService.experimentResultDeleteCommit(experimentResultId);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, status);
         return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
     }
 
@@ -135,9 +133,7 @@ public class ExperimentResultController {
     public String uploadExperimentResult(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = experimentResultTopLevelService.uploadExperiment(file, context);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
     }
 

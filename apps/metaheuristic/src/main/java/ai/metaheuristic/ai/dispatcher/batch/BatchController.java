@@ -127,9 +127,7 @@ public class BatchController {
     public String processBatchDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, context, true);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, r);
         return REDIRECT_BATCH_BATCHES;
     }
 
@@ -137,9 +135,7 @@ public class BatchController {
     public String uploadFile(final MultipartFile file, Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
-        if (uploadingStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, uploadingStatus);
         return REDIRECT_BATCH_BATCHES;
     }
 
@@ -149,7 +145,7 @@ public class BatchController {
         DispatcherContext context = userContextService.getContext(authentication);
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, context.getCompanyId(), false);
         if (status.isErrorMessages()) {
-            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, status);
             return REDIRECT_BATCH_BATCHES;
         }
         model.addAttribute("batchId", batchId);
