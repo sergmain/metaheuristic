@@ -146,17 +146,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
             return null;
         });
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         step_AssembledRaw();
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         step_DatasetProcessing();
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         //   processCode: feature-processing-1, function code: function-03:1.1
         step_CommonProcessing("feature-output-1");
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         //   processCode: feature-processing-2, function code: function-04:1.1
         step_CommonProcessing("feature-output-2");
 
@@ -204,7 +204,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 20);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
@@ -249,7 +249,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // and 1 'mh.finish' task
             assertEquals(2, taskVertices.size());
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
@@ -265,7 +265,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             return null;
         });
 
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
@@ -310,7 +310,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_FitAndPredict() {
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);

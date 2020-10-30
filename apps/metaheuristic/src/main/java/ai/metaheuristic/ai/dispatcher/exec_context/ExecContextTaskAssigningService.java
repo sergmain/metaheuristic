@@ -60,7 +60,7 @@ public class ExecContextTaskAssigningService {
 
     @Nullable
     @Transactional
-    public Void findUnassignedTasksAndAssign(Long execContextId, VariableData.DataStreamHolder holder) {
+    public Void findUnassignedTasksAndRegisterInQueue(Long execContextId, VariableData.DataStreamHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);

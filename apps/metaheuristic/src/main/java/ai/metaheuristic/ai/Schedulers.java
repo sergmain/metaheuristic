@@ -121,8 +121,8 @@ public class Schedulers {
             if (!globals.dispatcherEnabled) {
                 return;
             }
-            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndAssign()");
-            execContextTopLevelService.findUnassignedTasksAndAssign();
+            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")

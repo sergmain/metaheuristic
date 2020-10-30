@@ -77,7 +77,7 @@ public class VariableData {
             TxUtils.checkTxNotExists();
         }
 
-        public List<InputStream> inputStreams = new ArrayList<>();
+        public final List<InputStream> inputStreams = new ArrayList<>();
     }
 
     @Data

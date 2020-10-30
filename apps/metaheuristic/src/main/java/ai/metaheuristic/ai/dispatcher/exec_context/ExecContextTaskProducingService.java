@@ -121,6 +121,7 @@ public class ExecContextTaskProducingService {
             Set<ExecContextData.ProcessVertex> ancestors = ExecContextProcessGraphService.findAncestors(processGraph, processVertex);
             ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctions(execContextParamsYaml, ancestors, p);
 
+            // TODO 2020.10.29 why we are checking that there is internalFuncProcess?
             if (internalFuncProcess!=null) {
                 log.info(S.f("#701.240 There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
                 continue;
@@ -137,6 +138,9 @@ public class ExecContextTaskProducingService {
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
             }
+
+            execContextCache.checkTaskAndFinishCached(result);
+
             parentProcesses.computeIfAbsent(p.processCode, o->new ArrayList<>()).add(result.taskId);
         }
         return okResult;

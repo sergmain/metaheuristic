@@ -91,22 +91,22 @@ public class ExecContextTopLevelService {
         return result;
     }
 
-    public void findUnassignedTasksAndAssign() {
+    public void findUnassignedTasksAndRegisterInQueue() {
         if (!taskProviderService.isQueueEmpty()) {
             return;
         }
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         execContextIds.sort((Comparator.naturalOrder()));
         for (Long execContextId : execContextIds) {
-            findTaskForAssigning(execContextId);
+            findTaskForRegisteringInQueue(execContextId);
         }
     }
 
-    public void findTaskForAssigning(Long execContextId) {
+    public void findTaskForRegisteringInQueue(Long execContextId) {
         VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
         try {
             execContextSyncService.getWithSyncNullable(execContextId,
-                    ()->execContextTaskAssigningService.findUnassignedTasksAndAssign(execContextId, holder));
+                    ()->execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId, holder));
         }
         finally {
             for (InputStream inputStream : holder.inputStreams) {

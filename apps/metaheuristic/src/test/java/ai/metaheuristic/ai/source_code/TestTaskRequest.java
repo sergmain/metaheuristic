@@ -37,7 +37,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Collections;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -94,7 +93,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(String sessionId) {
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
 
         // get a task for processing
         DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
@@ -135,7 +134,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_3(String sessionId) {
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);

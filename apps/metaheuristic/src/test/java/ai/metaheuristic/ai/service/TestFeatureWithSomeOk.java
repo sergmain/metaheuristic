@@ -55,7 +55,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
             return null;
         });
-        execContextTopLevelService.findTaskForAssigning(execContextForTest.id);
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
 
         getTaskAndAssignToProcessor_mustBeNewTask();
 
