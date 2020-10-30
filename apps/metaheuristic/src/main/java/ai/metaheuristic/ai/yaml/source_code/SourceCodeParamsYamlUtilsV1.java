@@ -102,7 +102,7 @@ public class SourceCodeParamsYamlUtilsV1
 
     @Override
     public SourceCodeParamsYamlUtilsV2 nextUtil() {
-        return (SourceCodeParamsYamlUtilsV2) CompanyParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        return (SourceCodeParamsYamlUtilsV2) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override
