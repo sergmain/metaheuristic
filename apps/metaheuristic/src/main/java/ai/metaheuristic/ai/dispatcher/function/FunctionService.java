@@ -85,6 +85,12 @@ public class FunctionService {
         return functionInfosCache;
     }
 
+    @Transactional
+    public Void deleteFunction(Long functionId, String functionCode) {
+        functionCache.delete(functionId);
+        functionDataService.deleteByFunctionCode(functionCode);
+        return null;
+    }
 
     @Transactional
     public Function persistFunction(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {

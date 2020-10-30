@@ -76,7 +76,6 @@ public class FunctionTopLevelService {
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final FunctionService functionService;
-    private final FunctionDataService functionDataService;
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;
@@ -111,8 +110,7 @@ public class FunctionTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.010 function wasn't found, functionId: " + id);
         }
-        functionCache.delete(function.getId());
-        functionDataService.deleteByFunctionCode(function.getCode());
+        functionService.deleteFunction(function.getId(), function.getCode());
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
