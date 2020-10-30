@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class TestCacheKey {
 
-    private static CacheData.Key KEY = new CacheData.Key("function-01");
+    private static final CacheData.Key KEY = new CacheData.Key("function-01");
     static {
         KEY.inline.put("top-inline",Map.of("key-1","value-1"));
         KEY.inputs.addAll(List.of(
