@@ -258,28 +258,4 @@ public class SourceCodeService {
         sourceCodeCache.save(sourceCode);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
-
-    @Transactional
-    public OperationStatusRest uploadSourceCode(String yaml, SourceCodeParamsYaml ppy, DispatcherContext context) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.440 Can't upload sourceCode while 'replicated' mode of asset is active");
-        }
-
-        try {
-            log.debug("Start loading sourceCode into db");
-            SourceCodeApiData.SourceCodeResult result = createSourceCode(yaml, ppy, context.getCompanyId());
-
-            if (result.isErrorMessages()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
-            }
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        catch (Throwable e) {
-            log.error("#565.460 Error", e);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.480 can't load source codes, Error: " + e.toString());
-        }
-    }
-
 }
