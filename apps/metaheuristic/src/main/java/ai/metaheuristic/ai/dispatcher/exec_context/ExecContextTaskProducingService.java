@@ -32,6 +32,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
@@ -139,7 +140,8 @@ public class ExecContextTaskProducingService {
                 return result;
             }
 
-            execContextCache.checkTaskAndFinishCached(result);
+            if (true) throw new NotImplementedException("not yet");
+//            execContextCache.checkTaskAndFinishCached(result);
 
             parentProcesses.computeIfAbsent(p.processCode, o->new ArrayList<>()).add(result.taskId);
         }
