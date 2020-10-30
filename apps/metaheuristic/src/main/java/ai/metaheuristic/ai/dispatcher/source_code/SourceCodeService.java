@@ -109,8 +109,8 @@ public class SourceCodeService {
         }
         SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.OK,
+                    "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         sourceCodeCache.deleteById(sourceCodeId);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -248,7 +248,7 @@ public class SourceCodeService {
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#565.420 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.OK,"#565.420 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         scspy.internalParams.archived = true;

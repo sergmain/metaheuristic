@@ -86,16 +86,10 @@ public class SourceCodeController {
     @GetMapping(value = "/source-code-view/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-/*
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit sourceCode while 'replicated' mode of asset is active");
-            return REDIRECT_DISPATCHER_SOURCE_CODES;
-        }
-*/
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", sourceCodeResultRest);
@@ -108,7 +102,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.validateSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
 
@@ -123,9 +117,7 @@ public class SourceCodeController {
     public String uploadSourceCode(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }
 
@@ -134,12 +126,10 @@ public class SourceCodeController {
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
-        if (sourceCodeResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
-        }
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
+            sourceCodeResultRest.addInfoMessage("Validation result: OK");
         }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }
 
@@ -159,7 +149,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", sourceCodeResultRest);
@@ -171,9 +161,7 @@ public class SourceCodeController {
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeService.deleteSourceCodeById(id, context);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 sourceCode wasn't found, id: "+id) );
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }
 
@@ -183,7 +171,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", sourceCodeResultRest);
@@ -195,9 +183,7 @@ public class SourceCodeController {
     public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeService.archiveSourceCodeById(id, context);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 source code wasn't found, id: "+id) );
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }
 

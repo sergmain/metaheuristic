@@ -85,6 +85,7 @@ public final class BatchData {
         public boolean ok;
         public String uploadedFileName;
         public String username;
+        public boolean execContextDeleted;
 
         public boolean finished() {
             return execState==Enums.BatchExecState.Finished.code ||  execState==Enums.BatchExecState.Error.code || execState==Enums.BatchExecState.Archived.code;

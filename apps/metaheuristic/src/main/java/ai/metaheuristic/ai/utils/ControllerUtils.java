@@ -17,9 +17,11 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,15 @@ public class ControllerUtils {
             pageable = PageRequest.of(pageable.getPageNumber(), limit);
         }
         return pageable;
+    }
+
+    public static void initRedirectAttributes(RedirectAttributes redirectAttributes, BaseDataClass r) {
+        if (r.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute(Consts.MODEL_ATTR_ERROR_MESSAGE, r.getErrorMessagesAsList());
+        }
+        if (r.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute(Consts.MODEL_ATTR_INFO_MESSAGES, r.getInfoMessagesAsList());
+        }
     }
 
     @SuppressWarnings("unchecked")

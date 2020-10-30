@@ -173,12 +173,6 @@ public class BatchService {
             Batch batch = batchCache.findById(batchId);
             String uid = SOURCE_CODE_NOT_FOUND;
             if (batch!=null) {
-                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
-                if (execContext==null) {
-                    log.warn("Broken batch #{}, execContext #{} doesn't exist", batch.id, batch.execContextId);
-                    continue;
-                }
-
                 SourceCodeImpl sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
                 boolean ok = true;
                 if (sourceCode != null) {
@@ -190,11 +184,21 @@ public class BatchService {
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
 
-                String filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                String filename;
+                boolean execContextDeleted = false;
+                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+                if (execContext==null) {
+                    filename = "<ExecContext was deleted>";
+                    execContextDeleted = true;
+                }
+                else {
+                    filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                }
+
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
-                        S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username ));
+                        S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username, execContextDeleted ));
             }
         }
         return items;
@@ -279,10 +283,9 @@ public class BatchService {
         }
         if (!batch.deleted) {
             ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
-            if (execContext==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Batch #" + batch.id + " was deleted successfully.");
+            if (execContext!=null) {
+                execContextFSM.toFinished(execContext);
             }
-            execContextFSM.toFinished(execContext);
 
             Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
             b.deleted = true;

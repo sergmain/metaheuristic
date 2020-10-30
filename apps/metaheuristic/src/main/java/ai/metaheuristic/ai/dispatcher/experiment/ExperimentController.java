@@ -96,7 +96,7 @@ public class ExperimentController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, status);
             return "redirect:/dispatcher/ai/experiment/experiment-add";
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
@@ -106,7 +106,7 @@ public class ExperimentController {
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         ExperimentApiData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, r);
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
@@ -128,8 +128,8 @@ public class ExperimentController {
             @PathVariable Long experimentId, @PathVariable String state, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = experimentTopLevelService.changeExecContextState(state, experimentId, context);
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
@@ -139,7 +139,7 @@ public class ExperimentController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperimentWithoutProcessing(id);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, result);
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
@@ -151,9 +151,7 @@ public class ExperimentController {
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id, context);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, status);
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 }
