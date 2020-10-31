@@ -16,12 +16,18 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,6 +48,8 @@ public class TaskCheckCachingService {
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskStateService execContextTaskStateService;
+    private final VariableService variableService;
+    private final CacheProcessRepository cacheProcessRepository;
 
     @Transactional
     public Void checkCaching(Long execContextId, Long taskId) {
@@ -57,10 +65,22 @@ public class TaskCheckCachingService {
             return null;
         }
 
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
         boolean canBeFinishedWithCache = false;
         //noinspection ConstantConditions
         if (canBeFinishedWithCache) {
-            // copy value of variables
+            CacheData.Key key = new CacheData.Key(tpy.task.function.code);
+            key.inline.putAll(tpy.task.inline);
+            for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+                key.inputs.add( variableService.getSha256Length(input.id) );
+            }
+
+            String keyAsStr = key.asString();
+            CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(keyAsStr);
+            if (cacheProcess!=null) {
+                // finish task woth cached data
+            }
         }
         else {
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);

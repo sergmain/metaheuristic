@@ -42,5 +42,8 @@ public interface CacheProcessRepository extends CrudRepository<CacheProcess, Lon
     Blob getDataAsStreamById(Long id);
 */
 
+    @Query(value="select c from CacheProcess c where c.keySha256Length=:keySha256Length")
+    CacheProcess findByKeySha256Length(String keySha256Length);
+
 
 }

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -36,6 +37,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
@@ -43,6 +45,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
@@ -438,4 +441,25 @@ public class VariableService {
         return null;
     }
 
+    public CacheData.Sha256PlusLength getSha256Length(Long variableId) {
+        try {
+            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            if (blob==null) {
+                String es = S.f("#171.220 Data for variableId #%d wasn't found", variableId);
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+            }
+            try (InputStream is = blob.getBinaryStream(); CountingInputStream cis = new CountingInputStream(is)) {
+                String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
+                long length = cis.getBytesRead();
+                return new CacheData.Sha256PlusLength(sha256, length);
+            }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Exception e) {
+            String es = "#171.240 Error while storing data to file";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        }
+    }
 }

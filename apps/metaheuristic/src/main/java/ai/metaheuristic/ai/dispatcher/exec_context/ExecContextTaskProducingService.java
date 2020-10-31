@@ -122,7 +122,6 @@ public class ExecContextTaskProducingService {
 
             // internal functions will be processed in another thread
             if (internalFuncProcess!=null) {
-                log.warn(S.f("#701.240 !!! Need to investigate. There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
                 continue;
             }
 
