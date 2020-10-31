@@ -60,7 +60,11 @@ public class ExecContextGraphTopLevelService {
     }
 
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
-        return execContextGraphService.findAllForAssigning(execContext);
+        return findAllForAssigning(execContext, false);
+    }
+
+    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext, boolean includeForCaching) {
+        return execContextGraphService.findAllForAssigning(execContext, includeForCaching);
     }
 
     public Long getCountUnfinishedTasks(ExecContextImpl execContext) {

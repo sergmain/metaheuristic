@@ -32,7 +32,6 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
@@ -66,8 +65,7 @@ public class ExecContextTaskProducingService {
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         log.info("#701.100 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
 
-        if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
-                result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
+        if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
             log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
             execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
             return result;
@@ -124,7 +122,7 @@ public class ExecContextTaskProducingService {
 
             // TODO 2020.10.29 why we are checking that there is internalFuncProcess?
             if (internalFuncProcess!=null) {
-                log.info(S.f("#701.240 There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
+                log.warn(S.f("#701.240 !!! Need to investigate. There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
                 continue;
             }
 
@@ -140,16 +138,13 @@ public class ExecContextTaskProducingService {
                 return result;
             }
 
-            if (true) throw new NotImplementedException("not yet");
-//            execContextCache.checkTaskAndFinishCached(result);
-
             parentProcesses.computeIfAbsent(p.processCode, o->new ArrayList<>()).add(result.taskId);
         }
         return okResult;
     }
 
     @Nullable
-    private ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
+    private static ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
         for (ExecContextData.ProcessVertex ancestor : ancestors) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
             if (p==null) {

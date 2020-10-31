@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -68,7 +69,7 @@ public class ExecContextTaskAssigningService {
             return null;
         }
 
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
+        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext, true);
         if (vertices.isEmpty()) {
             return null;
         }
@@ -95,19 +96,22 @@ public class ExecContextTaskAssigningService {
                     execContextTaskFinishingService.finishWithError(task, null);
                     continue;
                 }
-                if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
-                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
-                    continue;
+                if (task.execState == EnumsApi.TaskExecState.NONE.value) {
+                    // all tasks with internal function will be processed in a different thread
+                    if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
+                        log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
+                    }
+                    else {
+                        event.tasks.add(new RegisterTaskForProcessingEvent.ExecContextWithTaskIds(execContextId, taskId));
+                    }
                 }
-                // all tasks with internal function will be processed in a different thread
-                if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
-                    log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-//                    taskWithInternalContextService.processInternalFunction(execContext, task, holder);
-                    eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
+                else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
+                    eventPublisher.publishEvent(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
                 }
                 else {
-                    event.tasks.add(new RegisterTaskForProcessingEvent.ExecContextWithTaskIds(execContextId, taskId));
+                    log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
+                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                 }
             }
         }

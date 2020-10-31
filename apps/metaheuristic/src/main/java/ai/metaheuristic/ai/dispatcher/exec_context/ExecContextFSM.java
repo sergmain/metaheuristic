@@ -130,17 +130,6 @@ public class ExecContextFSM {
         return null;
     }
 
-    public OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        TxUtils.checkTxExists();
-
-        if (execContext==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        execContextSyncService.checkWriteLockPresent(execContext.id);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds);
-        return osr;
-    }
-
     private void toStateWithCompletion(ExecContextImpl execContext, EnumsApi.ExecContextState state) {
         if (execContext.state != state.code) {
             execContext.setCompletedOn(System.currentTimeMillis());

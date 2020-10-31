@@ -69,6 +69,13 @@ public class ExecContextData {
             this.taskIdStr = taskId.toString();
             this.taskContextId = taskContextId;
         }
+
+        public TaskVertex(Long taskId, String taskContextId, EnumsApi.TaskExecState execState) {
+            this.taskId = taskId;
+            this.taskIdStr = taskId.toString();
+            this.taskContextId = taskContextId;
+            this.execState = execState;
+        }
     }
 
     @Data

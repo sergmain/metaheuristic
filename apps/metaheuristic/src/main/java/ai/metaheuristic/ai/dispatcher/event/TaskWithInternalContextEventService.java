@@ -25,8 +25,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -49,12 +47,7 @@ public class TaskWithInternalContextEventService {
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
 
-    @Async
-    @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
-//        log.info("#447.020 processInternalFunction(), thread #{}, task #{}, execContext #{}, {}",
-//                Thread.currentThread().getId(), event.taskId, event.execContextId, execContextCache.findById(event.execContextId));
-
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 

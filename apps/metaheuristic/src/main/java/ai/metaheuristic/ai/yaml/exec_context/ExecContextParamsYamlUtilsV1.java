@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtilsV2;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -33,7 +35,9 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class ExecContextParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV1, ExecContextParamsYamlV2, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<
+        ExecContextParamsYamlV1, ExecContextParamsYamlV2, ExecContextParamsYamlUtilsV2,
+        Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -98,8 +102,8 @@ public class ExecContextParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ExecContextParamsYamlUtilsV2 nextUtil() {
+        return (ExecContextParamsYamlUtilsV2) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

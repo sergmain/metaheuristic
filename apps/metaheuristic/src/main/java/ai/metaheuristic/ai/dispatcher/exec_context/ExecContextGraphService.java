@@ -41,7 +41,6 @@ import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -312,7 +311,7 @@ public class ExecContextGraphService {
         return ancestors;
     }
 
-    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext, boolean includeForCaching) {
         return readOnlyGraph(execContext, graph -> {
 
             log.debug("Start find a task for assigning");
@@ -322,7 +321,17 @@ public class ExecContextGraphService {
             }
 
             ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
-                    .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
+                    .filter( v -> {
+                        if (!graph.incomingEdgesOf(v).isEmpty()) {
+                            return false;
+                        }
+                        if (includeForCaching) {
+                            return (v.execState == EnumsApi.TaskExecState.NONE || v.execState == EnumsApi.TaskExecState.CHECK_CACHE);
+                        }
+                        else {
+                            return v.execState == EnumsApi.TaskExecState.NONE;
+                        }
+                    })
                     .findFirst()
                     .orElse(null);
 
@@ -339,10 +348,20 @@ public class ExecContextGraphService {
             List<ExecContextData.TaskVertex> vertices = new ArrayList<>();
 
             iterator.forEachRemaining(v -> {
-                if (v.execState==EnumsApi.TaskExecState.NONE) {
-                    // remove all tasks which have non-processed tasks as a direct parent
-                    if (isParentFullyProcessed(graph, v)) {
-                        vertices.add(v);
+                if (includeForCaching) {
+                    if (v.execState == EnumsApi.TaskExecState.NONE || v.execState == EnumsApi.TaskExecState.CHECK_CACHE) {
+                        // remove all tasks which have non-processed tasks as a direct parent
+                        if (isParentFullyProcessed(graph, v)) {
+                            vertices.add(v);
+                        }
+                    }
+                }
+                else {
+                    if (v.execState == EnumsApi.TaskExecState.NONE) {
+                        // remove all tasks which have non-processed tasks as a direct parent
+                        if (isParentFullyProcessed(graph, v)) {
+                            vertices.add(v);
+                        }
                     }
                 }
             });
@@ -361,7 +380,17 @@ public class ExecContextGraphService {
 
             // this case is about when all tasks in graph is completed and only mh_finish is left
             ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
-                    .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
+                    .filter( v -> {
+                        if (!graph.outgoingEdgesOf(v).isEmpty()) {
+                            return false;
+                        }
+                        if (includeForCaching) {
+                            return (v.execState == EnumsApi.TaskExecState.NONE || v.execState == EnumsApi.TaskExecState.CHECK_CACHE);
+                        }
+                        else {
+                            return v.execState == EnumsApi.TaskExecState.NONE;
+                        }
+                    })
                     .findFirst()
                     .orElse(null);
 
@@ -459,7 +488,7 @@ public class ExecContextGraphService {
         withTaskList.childrenTasks.addAll(setFiltered);
     }
 
-    public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+    public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
         changeGraph(execContext, graph -> {
             List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
                     .stream()
@@ -467,7 +496,7 @@ public class ExecContextGraphService {
                     .collect(Collectors.toList());
 
             taskIds.forEach(taskWithContext -> {
-                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId);
+                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId, state);
                 graph.addVertex(v);
                 vertices.forEach(parentV -> graph.addEdge(parentV, v) );
             });

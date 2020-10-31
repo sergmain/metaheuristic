@@ -75,7 +75,12 @@ public class TaskProducingService {
 
         result.taskId = t.getId();
         List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
-        execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskWithContexts);
+        final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
+        if (targetState.value!=t.execState) {
+            log.info("(targetState.value!=t.execState)");
+            throw new IllegalStateException("(targetState.value!=t.execState)");
+        }
+        execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskWithContexts, targetState);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
@@ -128,8 +133,13 @@ public class TaskProducingService {
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
             }
+            final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
+            if (targetState.value!=t.execState) {
+                log.info("(targetState.value!=t.execState)");
+                throw new IllegalStateException("(targetState.value!=t.execState)");
+            }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, currTaskIds);
+            execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, currTaskIds, targetState);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
@@ -179,6 +189,7 @@ public class TaskProducingService {
         String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);
 
         TaskImpl task = new TaskImpl();
+        task.execState = process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
         task.execContextId = execContextId;
         task.params = params;
         task = taskService.save(task);

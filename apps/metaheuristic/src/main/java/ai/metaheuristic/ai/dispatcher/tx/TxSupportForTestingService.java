@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -232,7 +233,7 @@ public class TxSupportForTestingService {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.findAllForAssigning(execContext);
+        return execContextGraphService.findAllForAssigning(execContext, true);
     }
 
     @Transactional
@@ -301,7 +302,18 @@ public class TxSupportForTestingService {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextFSM.addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
+        return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
+    }
+
+    private OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        TxUtils.checkTxExists();
+
+        if (execContext==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        execContextSyncService.checkWriteLockPresent(execContext.id);
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
+        return osr;
     }
 
 
