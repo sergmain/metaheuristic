@@ -49,11 +49,13 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -206,24 +208,9 @@ public class BatchSplitterFunction implements InternalFunction {
                     File file = dataFilePath.toFile();
                     currTaskNumber.incrementAndGet();
                     try {
-                        VariableData.VariableDataSource variableDataSource;
-                        if (file.isDirectory()) {
-                            final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
-                                    .filter(o -> o.toFile().isFile())
-                                    .map(f -> {
-                                        final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
-                                        final String actualFileName = mapping.get(currFileName);
-                                        return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
-                                    }).collect(Collectors.toList());
-
-                            if (files.isEmpty()) {
-                                log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
-                                return;
-                            }
-                            variableDataSource = new VariableData.VariableDataSource(files);
-                        } else {
-                            variableDataSource = new VariableData.VariableDataSource(
-                                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getName()))));
+                        VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
+                        if (variableDataSource == null) {
+                            return;
                         }
                         variableService.createInputVariablesForSubProcess(
                                 variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
@@ -240,6 +227,30 @@ public class BatchSplitterFunction implements InternalFunction {
                 });
         execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
         return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
+    }
+
+    @Nullable
+    private VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
+        VariableData.VariableDataSource variableDataSource;
+        if (file.isDirectory()) {
+            final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
+                    .filter(o -> o.toFile().isFile())
+                    .map(f -> {
+                        final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                        final String actualFileName = mapping.get(currFileName);
+                        return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
+                    }).collect(Collectors.toList());
+
+            if (files.isEmpty()) {
+                log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
+                return null;
+            }
+            variableDataSource = new VariableData.VariableDataSource(files);
+        } else {
+            variableDataSource = new VariableData.VariableDataSource(
+                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getName()))));
+        }
+        return variableDataSource;
     }
 
 }
