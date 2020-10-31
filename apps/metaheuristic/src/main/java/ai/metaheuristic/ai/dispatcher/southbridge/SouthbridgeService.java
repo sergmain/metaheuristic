@@ -224,7 +224,6 @@ public class SouthbridgeService {
         return lcpy;
     }
 
-
     private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
         return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;
     }

@@ -326,7 +326,7 @@ public class BatchTopLevelService {
         return getBatchProcessingResult(batchId, companyUniqueId, includeDeleted);
     }
 
-    private CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+    private CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
