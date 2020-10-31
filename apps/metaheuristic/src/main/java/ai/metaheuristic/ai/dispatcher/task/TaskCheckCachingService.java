@@ -34,6 +34,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+
 /**
  * @author Serge
  * Date: 10/30/2020
@@ -67,20 +69,25 @@ public class TaskCheckCachingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        boolean canBeFinishedWithCache = false;
-        //noinspection ConstantConditions
-        if (canBeFinishedWithCache) {
-            CacheData.Key key = new CacheData.Key(tpy.task.function.code);
+        CacheData.Key key = new CacheData.Key(tpy.task.function.code);
+        if (tpy.task.inline!=null) {
             key.inline.putAll(tpy.task.inline);
-            for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-                key.inputs.add( variableService.getSha256Length(input.id) );
-            }
+        }
+        tpy.task.inputs.stream()
+                .map(v->v.id)
+                .sorted(Comparator.naturalOrder())
+                .map(variableService::getSha256Length)
+                .forEach(key.inputs::add);
 
-            String keyAsStr = key.asString();
-            CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(keyAsStr);
-            if (cacheProcess!=null) {
-                // finish task woth cached data
-            }
+        String keyAsStr = key.asString();
+        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(keyAsStr);
+
+        if (cacheProcess!=null) {
+            // finish task with cached data
+
+
+            // TODO need to be changed to set finished()
+            execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
         }
         else {
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
