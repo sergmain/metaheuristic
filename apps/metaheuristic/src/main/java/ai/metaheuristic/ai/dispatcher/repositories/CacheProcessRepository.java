@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ public interface CacheProcessRepository extends CrudRepository<CacheProcess, Lon
     Blob getDataAsStreamById(Long id);
 */
 
+    @Nullable
     @Query(value="select c from CacheProcess c where c.keySha256Length=:keySha256Length")
     CacheProcess findByKeySha256Length(String keySha256Length);
 

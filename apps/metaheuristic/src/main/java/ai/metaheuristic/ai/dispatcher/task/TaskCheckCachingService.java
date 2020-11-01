@@ -27,13 +27,22 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.CountingInputStream;
+import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
 /**
@@ -69,27 +78,45 @@ public class TaskCheckCachingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        CacheData.Key key = new CacheData.Key(tpy.task.function.code);
+        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
         if (tpy.task.inline!=null) {
-            key.inline.putAll(tpy.task.inline);
+            fullKey.inline.putAll(tpy.task.inline);
         }
-        tpy.task.inputs.stream()
-                .map(v->v.id)
-                .sorted(Comparator.naturalOrder())
-                .map(variableService::getSha256Length)
-                .forEach(key.inputs::add);
+        tpy.task.inputs.sort(Comparator.comparingLong(o -> o.id));
 
-        String keyAsStr = key.asString();
-        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(keyAsStr);
+        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+            if (input.context== EnumsApi.VariableContext.array) {
+                String data = variableService.getVariableDataAsString(input.id);
+                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
+                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
+                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
+                }
+            }
+            else {
+                fullKey.inputs.add(variableService.getSha256Length(input.id));
+            }
+        }
+        String keyAsStr = fullKey.asString();
+        byte[] bytes = keyAsStr.getBytes();
+
+        CacheProcess cacheProcess=null;
+        try (InputStream is = new ByteArrayInputStream(bytes)) {
+            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
+            String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
+            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
+        } catch (IOException e) {
+            log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
+        }
 
         if (cacheProcess!=null) {
+            log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as FINISHED", taskId);
             // finish task with cached data
-
 
             // TODO need to be changed to set finished()
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
         }
         else {
+            log.info("#609.080 cached data wasn't found for task #{}", taskId);
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
         }
         return null;

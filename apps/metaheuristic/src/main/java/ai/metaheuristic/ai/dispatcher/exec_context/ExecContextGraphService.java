@@ -182,14 +182,14 @@ public class ExecContextGraphService {
                     .findFirst()
                     .orElse(null);
 
-            // Don't combine streams, a side-effect could be occurred
+            // Don't combine with stream, a side-effect could be occurred
             if (tv!=null) {
                 tv.execState = execState;
                 if (tv.execState==EnumsApi.TaskExecState.ERROR) {
                     setStateForAllChildrenTasksInternal(graph, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                 }
                 else if (tv.execState==EnumsApi.TaskExecState.NONE || tv.execState==EnumsApi.TaskExecState.OK) {
-                    setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
+                    // setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
                 }
                 else if (tv.execState == EnumsApi.TaskExecState.SKIPPED) {
                     log.info("#915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);

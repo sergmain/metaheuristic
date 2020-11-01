@@ -39,6 +39,10 @@ public class CacheData {
     public static class Sha256PlusLength  {
         public String sha256;
         public long length;
+
+        public String asString() {
+            return sha256 + "###" + length;
+        }
     }
 
     @Data
