@@ -404,12 +404,12 @@ public class VariableService {
         data.nullified = false;
     }
 
-    public void storeData(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
+    public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
         TxUtils.checkTxExists();
 
-        Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
+        Variable data = variableRepository.findById(variableId).orElse(null);
         if (data==null) {
-            log.error("#171.260 can't find variable #" + simpleVariable.id);
+            log.error("#171.260 can't find variable #" + variableId);
             return;
         }
         data.filename = filename;

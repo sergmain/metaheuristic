@@ -221,8 +221,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
                     S.f("#993.040 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext.id));
         }
-        SimpleVariable batchResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContext.id);
-        if (batchResult==null) {
+        SimpleVariable batchResultVar = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContext.id);
+        if (batchResultVar==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
                     S.f("#993.060 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContext.id));
         }
@@ -242,7 +242,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         FileInputStream fis = new FileInputStream(zipFile);
         holder.inputStreams.add(fis);
 
-        variableService.storeData(fis, zipFile.length(), batchResult, originBatchFilename);
+        variableService.storeData(fis, zipFile.length(), batchResultVar.id, originBatchFilename);
         return null;
     }
 
@@ -260,8 +260,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
                     S.f("#993.100 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext));
         }
-        SimpleVariable batchStatus = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContext.id);
-        if (batchStatus==null) {
+        SimpleVariable batchStatusVar = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContext.id);
+        if (batchStatusVar==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
                     S.f("#993.120 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContext));
         }
@@ -271,7 +271,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         holder.inputStreams.add(inputStream);
 
-        variableService.storeData(inputStream, bytes.length, batchStatus, null);
+        variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null);
         return null;
     }
 

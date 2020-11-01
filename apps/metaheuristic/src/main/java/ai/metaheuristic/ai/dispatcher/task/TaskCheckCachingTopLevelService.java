@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +43,19 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
 
-    public void checkCaching(RegisterTaskForCheckCachingEvent event) {
+    public void checkCaching(RegisterTaskForCheckCachingEvent event, VariableData.DataStreamHolder holder) {
         TxUtils.checkTxNotExists();
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", event.execContextId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(execContext.id,
-                () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId));
-
+        execContextSyncService.getWithSyncNullable(execContext.id, () -> {
+            try {
+                return taskCheckCachingService.checkCaching(event.execContextId, event.taskId, holder);
+            } catch (InvalidateCacheProcessException e) {
+                return taskCheckCachingService.invalidateAndSetToNone(e.execContextId, e.taskId, e.cacheProcessId);
+            }
+        });
     }
 }

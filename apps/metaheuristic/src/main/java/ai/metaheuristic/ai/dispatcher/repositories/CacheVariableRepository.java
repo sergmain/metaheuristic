@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
+import java.util.List;
 
 /**
  * @author Serge
@@ -33,16 +34,18 @@ import java.sql.Blob;
  * Time: 7:09 PM
  */
 @Repository
-@Transactional(propagation = Propagation.MANDATORY)
 @Profile("dispatcher")
 public interface CacheVariableRepository extends CrudRepository<CacheVariable, Long> {
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    void deleteByCacheProcessId(Long cacheProcessId);
 
     @Query(value="select b.data from CacheVariable b where b.id=:id")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
 
-    @Query(value="select b.data from CacheVariable b where b.keySha256Length=:key")
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
-    Blob getDataAsStreamByKey(String key);
+    @Query(value="select b.id, b.variableName from CacheVariable b where b.cacheProcessId=:cacheProcessId")
+    @Transactional(readOnly = true)
+    List<Object[]> getIdsByCacheProcessId(Long cacheProcessId);
 
 }

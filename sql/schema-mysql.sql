@@ -24,8 +24,7 @@ CREATE TABLE mh_cache_variable
     VERSION             NUMERIC(5, 0)  NOT NULL,
     CACHE_PROCESS_ID    INT UNSIGNED    not null,
     CREATED_ON          bigint not null,
-    KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
-    KEY_VALUE           VARCHAR(512) NOT NULL,
+    VARIABLE_NAME       VARCHAR(250) NOT NULL,
     DATA                LONGBLOB NOT NULL
 );
 

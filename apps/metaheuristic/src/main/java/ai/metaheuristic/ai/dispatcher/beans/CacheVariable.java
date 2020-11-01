@@ -35,7 +35,7 @@ import java.sql.Blob;
 @Entity
 @Table(name = "MH_CACHE_VARIABLE")
 @Data
-@EqualsAndHashCode(of = {"keySha256Length"})
+@EqualsAndHashCode(of = {"cacheProcessId", "variableName"})
 @ToString(exclude={"data"})
 @NoArgsConstructor
 public class CacheVariable implements Serializable {
@@ -55,18 +55,10 @@ public class CacheVariable implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    /**
-     * this field contains SHA256 checksum AND the length of data
-     */
     @NotNull
     @NotEmpty
-    @Column(name = "KEY_SHA256_LENGTH")
-    public String keySha256Length;
-
-    @NotNull
-    @NotEmpty
-    @Column(name = "KEY_VALUE")
-    public String keyValue;
+    @Column(name = "VARIABLE_NAME")
+    public String variableName;
 
     @Column(name = "DATA")
     @Lob
