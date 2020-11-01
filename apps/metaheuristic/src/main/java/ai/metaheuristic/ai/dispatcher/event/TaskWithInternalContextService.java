@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -73,7 +73,7 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public Void processInternalFunctionWithTx(Long execContextId, Long taskId, VariableData.DataStreamHolder holder) {
+    public Void processInternalFunctionWithTx(Long execContextId, Long taskId, DataHolder holder) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#707.020 ExecContext #{} doesn't exist", execContextId);
@@ -93,7 +93,7 @@ public class TaskWithInternalContextService {
         return null;
     }
 
-    private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, VariableData.DataStreamHolder holder) {
+    private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         lastTaskId = null;

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -74,7 +75,7 @@ public class ExecContextVariableService {
     }
 
     @Transactional
-    public UploadResult updateStatusOfVariable(Long taskId, Long variableId) {
+    public UploadResult updateStatusOfVariable(Long taskId, Long variableId, DataHolder holder) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.020 Task "+taskId+" is obsolete and was already deleted";
@@ -83,7 +84,7 @@ public class ExecContextVariableService {
         }
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
-            execContextTaskFinishingService.checkTaskCanBeFinished(task);
+            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
             return OK_UPLOAD_RESULT;
         }
         else {

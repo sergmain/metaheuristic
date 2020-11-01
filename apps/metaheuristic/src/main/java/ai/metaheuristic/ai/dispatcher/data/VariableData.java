@@ -71,16 +71,6 @@ public class VariableData {
    }
 
     @Data
-    public static class DataStreamHolder {
-
-        public DataStreamHolder() {
-            TxUtils.checkTxNotExists();
-        }
-
-        public final List<InputStream> inputStreams = new ArrayList<>();
-    }
-
-    @Data
     @AllArgsConstructor
     public static class UploadVariableStatusResult {
         @Nullable

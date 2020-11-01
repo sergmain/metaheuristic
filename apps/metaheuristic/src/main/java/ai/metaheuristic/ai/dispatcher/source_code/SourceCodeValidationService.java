@@ -98,6 +98,12 @@ public class SourceCodeValidationService {
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
                         "#177.100 There are at least two processes with the same code '" + process.code+"'");
             }
+            if (process.function.context==EnumsApi.FunctionExecContext.internal && process.cache!=null && process.cache.enabled) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
+                        "#177.110 Caching isn't supported for internal functions. Process: " + process.code);
+            }
+
             if (MetaUtils.isTrue(process.metas, ConstsApi.META_MH_OUTPUT_IS_DYNAMIC)) {
                 if (process.function.context!= EnumsApi.FunctionExecContext.internal) {
                     return new SourceCodeApiData.SourceCodeValidationResult(

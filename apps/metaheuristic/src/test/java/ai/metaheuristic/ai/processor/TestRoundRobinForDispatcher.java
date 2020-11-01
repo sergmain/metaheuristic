@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import org.junit.jupiter.api.Test;
 

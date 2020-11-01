@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -140,8 +141,9 @@ public class ExecContextVariableTopLevelService {
             if (uploadResult.status!= Enums.UploadVariableStatus.OK) {
                 return uploadResult;
             }
-            uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId));
-
+            try (DataHolder holder = new DataHolder()) {
+                uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+            }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findById(taskId).orElse(null);
                 if (t==null) {

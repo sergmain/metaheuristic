@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
@@ -89,7 +90,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
+            @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
@@ -145,7 +146,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     private InternalFunctionProcessingResult createTasks(
-            Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, VariableData.DataStreamHolder holder) throws IOException {
+            Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, DataHolder holder) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {

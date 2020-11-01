@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
@@ -61,7 +61,7 @@ public class ExecContextTaskAssigningService {
 
     @Nullable
     @Transactional
-    public Void findUnassignedTasksAndRegisterInQueue(Long execContextId, VariableData.DataStreamHolder holder) {
+    public Void findUnassignedTasksAndRegisterInQueue(Long execContextId, DataHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);

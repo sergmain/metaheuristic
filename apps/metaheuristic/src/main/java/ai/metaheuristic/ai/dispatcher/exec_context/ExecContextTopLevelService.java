@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
@@ -103,20 +103,9 @@ public class ExecContextTopLevelService {
     }
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
-        VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
-        try {
+        try (DataHolder holder = new DataHolder()) {
             execContextSyncService.getWithSyncNullable(execContextId,
                     ()->execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId, holder));
-        }
-        finally {
-            for (InputStream inputStream : holder.inputStreams) {
-                try {
-                    inputStream.close();
-                }
-                catch(Throwable th)  {
-                    log.warn("#210.040 Error while closing stream", th);
-                }
-            }
         }
     }
 

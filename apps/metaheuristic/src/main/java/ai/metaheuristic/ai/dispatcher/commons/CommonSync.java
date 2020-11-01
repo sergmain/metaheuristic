@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher;
+package ai.metaheuristic.ai.dispatcher.commons;
 
 import lombok.Data;
 

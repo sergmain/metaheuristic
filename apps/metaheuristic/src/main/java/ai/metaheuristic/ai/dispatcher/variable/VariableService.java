@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -89,7 +90,7 @@ public class VariableService {
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName,
-            VariableData.DataStreamHolder holder, String subProcessContextId) {
+            DataHolder holder, String subProcessContextId) {
 
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
         String inputVariableContent = variableDataSource.inputVariableContent;

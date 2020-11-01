@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,20 +44,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void registerTask(RegisterTaskForCheckCachingEvent event) {
-        VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
-        try {
-            taskCheckCachingService.checkCaching(event, holder);
-        }
-        finally {
-                for (InputStream inputStream : holder.inputStreams) {
-                    try {
-                        inputStream.close();
-                    }
-                    catch(Throwable th)  {
-                        log.warn("#447.040 Error while closing stream", th);
-                    }
-                }
-            }
+        taskCheckCachingService.checkCaching(event);
     }
 
     @Async

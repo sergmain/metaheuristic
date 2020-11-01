@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -63,9 +65,11 @@ public class TaskCheckCachingService {
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskStateService execContextTaskStateService;
+    private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final VariableService variableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
+    private final ExecContextVariableService execContextVariableService;
 
     @Data
     @AllArgsConstructor
@@ -95,7 +99,7 @@ public class TaskCheckCachingService {
     }
 
     @Transactional
-    public Void checkCaching(Long execContextId, Long taskId, VariableData.DataStreamHolder holder) {
+    public Void checkCaching(Long execContextId, Long taskId, DataHolder holder) {
 
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
@@ -165,19 +169,21 @@ public class TaskCheckCachingService {
                 final File tempFile;
                 try {
                     tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
+                    holder.files.add(tempFile);
                     StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], tempFile);
                     variableService.storeToFile(storedVariable.id, storedVariable.file);
 
                     InputStream is = new FileInputStream(storedVariable.file);
                     holder.inputStreams.add(is);
                     variableService.storeData(is, storedVariable.file.length(), output.id, output.filename);
+                    execContextVariableService.setVariableReceived(task, storedVariable.id);
 
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
-
+            execContextTaskFinishingService.checkTaskCanBeFinished(task, false);
 
             // TODO need to be changed to set finished()
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);

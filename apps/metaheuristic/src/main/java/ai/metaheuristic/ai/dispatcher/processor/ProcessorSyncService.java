@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.processor;
 
-import ai.metaheuristic.ai.dispatcher.CommonSync;
+import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -26,8 +26,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.io.InputStream;
 
 /**
  * @author Serge
@@ -51,21 +49,9 @@ public class TaskWithInternalContextEventService {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
-        VariableData.DataStreamHolder holder = new VariableData.DataStreamHolder();
-        try {
+        try (DataHolder holder = new DataHolder()) {
             execContextSyncService.getWithSyncNullable(event.execContextId,
                     () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder));
         }
-        finally {
-            for (InputStream inputStream : holder.inputStreams) {
-                try {
-                    inputStream.close();
-                }
-                catch(Throwable th)  {
-                    log.warn("#447.040 Error while closing stream", th);
-                }
-            }
-        }
     }
-
 }

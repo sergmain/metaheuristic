@@ -26,9 +26,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -72,7 +72,6 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
@@ -142,7 +141,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
             @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
 
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
@@ -215,7 +214,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(
             Long sourceCodeId, ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml,
-            File zipFile, VariableData.DataStreamHolder holder) {
+            File zipFile, DataHolder holder) {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
@@ -249,7 +248,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @SneakyThrows
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
-            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, VariableData.DataStreamHolder holder) {
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, DataHolder holder) {
         BatchStatusProcessor status = prepareStatus(execContext);
 
         File statusFile = new File(zipDir, "status.txt");

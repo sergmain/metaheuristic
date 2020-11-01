@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;

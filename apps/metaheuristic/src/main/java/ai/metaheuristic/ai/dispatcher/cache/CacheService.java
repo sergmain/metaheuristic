@@ -16,13 +16,29 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.util.Comparator;
 
 /**
  * @author Serge
@@ -35,10 +51,73 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CacheService {
 
+    private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;
-    private final CacheVariableRepository cacheVariableRepository;
+    private final CacheVariableService cacheVariableService;
+    private final VariableService variableService;
 
-    public void storeVariables(TaskParamsYaml tpy) {
+    public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
+
+        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
+        if (tpy.task.inline!=null) {
+            fullKey.inline.putAll(tpy.task.inline);
+        }
+        tpy.task.inputs.sort(Comparator.comparingLong(o -> o.id));
+
+        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+            if (input.context== EnumsApi.VariableContext.array) {
+                String data = variableService.getVariableDataAsString(input.id);
+                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
+                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
+                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
+                }
+            }
+            else {
+                fullKey.inputs.add(variableService.getSha256Length(input.id));
+            }
+        }
+        String keyAsStr = fullKey.asString();
+        byte[] bytes = keyAsStr.getBytes();
+
+        CacheProcess cacheProcess=null;
+        String key = null;
+        try (InputStream is = new ByteArrayInputStream(bytes)) {
+            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
+            key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
+            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
+        } catch (IOException e) {
+            log.error("#611.020 Error while preparing a cache key, task will be processed without cached data", e);
+        }
+
+        if (cacheProcess==null) {
+
+            cacheProcess = new CacheProcess();
+            cacheProcess.createdOn = System.currentTimeMillis();
+            cacheProcess.keySha256Length = key;
+            cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
+            cacheProcess = cacheProcessRepository.save(cacheProcess);
+
+
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                final File tempFile;
+                try {
+                    tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
+                    holder.files.add(tempFile);
+                    variableService.storeToFile(output.id, tempFile);
+
+                    InputStream is = new FileInputStream(tempFile);
+                    holder.inputStreams.add(is);
+                    cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
+
+                } catch (IOException e) {
+                    log.warn("#609.160 error", e);
+                    throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
+                }
+            }
+        }
+        else {
+            log.info("#611.200 process {} was already cached", tpy.task.processCode);
+        }
 
     }
 }

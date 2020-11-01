@@ -19,8 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -46,7 +45,7 @@ public class InternalFunctionProcessor {
     private final ExecContextSyncService execContextSyncService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public InternalFunctionProcessingResult process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml, VariableData.DataStreamHolder holder) {
+    public InternalFunctionProcessingResult process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml, DataHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
