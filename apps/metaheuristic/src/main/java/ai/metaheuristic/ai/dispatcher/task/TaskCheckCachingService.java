@@ -76,7 +76,7 @@ public class TaskCheckCachingService {
     private static class StoredVariable {
         public Long id;
         public String name;
-        public File file;
+        public boolean nullified;
     }
 
     @Transactional
@@ -166,16 +166,21 @@ public class TaskCheckCachingService {
                 if (obj==null) {
                     throw new IllegalStateException("#609.120 ???? How???");
                 }
-                final File tempFile;
                 try {
-                    tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
-                    holder.files.add(tempFile);
-                    StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], tempFile);
-                    variableService.storeToFile(storedVariable.id, storedVariable.file);
+                    StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
+                    if (storedVariable.nullified) {
+                        execContextVariableService.setVariableAsNull(taskId, output.id, holder);
+                    }
+                    else {
+                        final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
+                        holder.files.add(tempFile);
 
-                    InputStream is = new FileInputStream(storedVariable.file);
-                    holder.inputStreams.add(is);
-                    variableService.storeData(is, storedVariable.file.length(), output.id, output.filename);
+                        variableService.storeToFile(storedVariable.id, tempFile);
+
+                        InputStream is = new FileInputStream(tempFile);
+                        holder.inputStreams.add(is);
+                        variableService.storeData(is, tempFile.length(), output.id, output.filename);
+                    }
                     execContextVariableService.setVariableReceived(task, storedVariable.id);
 
                 } catch (IOException e) {

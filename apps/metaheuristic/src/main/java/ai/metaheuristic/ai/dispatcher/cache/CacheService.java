@@ -52,6 +52,7 @@ import java.util.Comparator;
  * Date: 10/27/2020
  * Time: 6:54 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Profile("dispatcher")
 @Slf4j
