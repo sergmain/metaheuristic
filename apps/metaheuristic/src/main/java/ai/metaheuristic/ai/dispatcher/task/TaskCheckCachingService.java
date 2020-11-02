@@ -16,10 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -31,12 +34,12 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +49,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -67,6 +69,8 @@ public class TaskCheckCachingService {
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final VariableService variableService;
+    private final CacheService cacheService;
+    private final CacheVariableService cacheVariableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ExecContextVariableService execContextVariableService;
@@ -114,24 +118,8 @@ public class TaskCheckCachingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
-        if (tpy.task.inline!=null) {
-            fullKey.inline.putAll(tpy.task.inline);
-        }
-        tpy.task.inputs.sort(Comparator.comparingLong(o -> o.id));
+        CacheData.Key fullKey = cacheService.getKey(tpy);
 
-        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-            if (input.context== EnumsApi.VariableContext.array) {
-                String data = variableService.getVariableDataAsString(input.id);
-                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
-                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
-                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
-                }
-            }
-            else {
-                fullKey.inputs.add(variableService.getSha256Length(input.id));
-            }
-        }
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
 
@@ -175,23 +163,31 @@ public class TaskCheckCachingService {
                         final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
                         holder.files.add(tempFile);
 
-                        variableService.storeToFile(storedVariable.id, tempFile);
+                        cacheVariableService.storeToFile(storedVariable.id, tempFile);
 
                         InputStream is = new FileInputStream(tempFile);
                         holder.inputStreams.add(is);
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
-                    execContextVariableService.setVariableReceived(task, storedVariable.id);
+                    Enums.UploadVariableStatus status = execContextVariableService.setVariableReceived(task, output.id);
+                    if (status!= Enums.UploadVariableStatus.OK) {
+                        log.error("#609.155 error while setting variable was received, status: {}", status);
+                        throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
+                    }
 
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
-            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
+            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, true, 0,
+                    "Process was finished with cached data, cacheProcessId: "+ cacheProcess.id);
 
-            // TODO need to be changed to set finished()
-            execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
+            task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
+            task.setResultReceived(true);
+
+            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

@@ -16,20 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -40,12 +35,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.util.Comparator;
 
 /**
  * @author Serge
@@ -68,24 +60,8 @@ public class CacheService {
     @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
 
-        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
-        if (tpy.task.inline!=null) {
-            fullKey.inline.putAll(tpy.task.inline);
-        }
-        tpy.task.inputs.sort(Comparator.comparingLong(o -> o.id));
+        CacheData.Key fullKey = getKey(tpy);
 
-        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-            if (input.context== EnumsApi.VariableContext.array) {
-                String data = variableService.getVariableDataAsString(input.id);
-                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
-                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
-                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
-                }
-            }
-            else {
-                fullKey.inputs.add(variableService.getSha256Length(input.id));
-            }
-        }
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
 
@@ -143,6 +119,27 @@ public class CacheService {
             log.info("#611.200 process {} was already cached", tpy.task.processCode);
         }
 
+    }
+
+    public CacheData.Key getKey(TaskParamsYaml tpy) {
+        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
+        if (tpy.task.inline!=null) {
+            fullKey.inline.putAll(tpy.task.inline);
+        }
+        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+            if (input.context== EnumsApi.VariableContext.array) {
+                String data = variableService.getVariableDataAsString(input.id);
+                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
+                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
+                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
+                }
+            }
+            else {
+                fullKey.inputs.add(variableService.getSha256Length(input.id));
+            }
+        }
+        fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
+        return fullKey;
     }
 
 }

@@ -16,26 +16,26 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.File;
 import java.io.InputStream;
 import java.sql.Blob;
 
@@ -52,6 +52,28 @@ public class CacheVariableService {
 
     private final EntityManager em;
     private final CacheVariableRepository cacheVariableRepository;
+    private final VariableRepository variableRepository;
+
+    @Transactional(readOnly = true)
+    public void storeToFile(Long variableId, File trgFile) {
+        try {
+            Blob blob = cacheVariableRepository.getDataAsStreamById(variableId);
+            if (blob==null) {
+                String es = S.f("#171.220 Data for variableId #%d wasn't found", variableId);
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+            }
+            try (InputStream is = blob.getBinaryStream()) {
+                FileUtils.copyInputStreamToFile(is, trgFile);
+            }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Exception e) {
+            String es = "#171.240 Error while storing data to file";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        }
+    }
 
     public CacheVariable createInitialized(Long cacheProcessId, InputStream is, long size, String variable) {
         return createInitializedInternal(cacheProcessId, is, size, variable);

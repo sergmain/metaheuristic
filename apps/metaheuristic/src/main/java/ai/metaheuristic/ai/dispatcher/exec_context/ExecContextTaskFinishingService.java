@@ -66,8 +66,8 @@ public class ExecContextTaskFinishingService {
 
         EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
 
-        if (state!=EnumsApi.TaskExecState.IN_PROGRESS) {
-            log.info("#318.020 Task {} already isn't in IN_PROGRESS state, actual: {}", task.id, state);
+        if (state!=EnumsApi.TaskExecState.IN_PROGRESS && state!=EnumsApi.TaskExecState.CHECK_CACHE) {
+            log.warn("#318.020 Task {} already isn't in IN_PROGRESS or CHECK_CACHE state, actual: {}", task.id, state);
             return;
         }
 

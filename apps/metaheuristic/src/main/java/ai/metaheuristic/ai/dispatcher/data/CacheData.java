@@ -22,10 +22,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Serge
@@ -33,6 +30,8 @@ import java.util.Map;
  * Time: 12:52 PM
  */
 public class CacheData {
+
+    public static final Comparator<Sha256PlusLength> SHA_256_PLUS_LENGTH_COMPARATOR = (o1, o2) -> o1.sha256.equals(o2.sha256) ? Long.compare(o1.length, o2.length) : o1.sha256.compareTo(o2.sha256);
 
     @Data
     @AllArgsConstructor
