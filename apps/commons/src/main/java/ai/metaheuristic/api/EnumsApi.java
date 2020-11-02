@@ -21,6 +21,8 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum BatchMappingKey {id, name }
+
     public enum SourceCodeLang { yaml }
 
     public enum SourceCodeType { not_exist, common, experiment, batch }

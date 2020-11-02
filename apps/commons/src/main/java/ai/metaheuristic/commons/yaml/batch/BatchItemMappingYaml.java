@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.batch;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 
@@ -39,6 +40,8 @@ public class BatchItemMappingYaml implements BaseParams {
 
     public String targetDir;
 
-    // key is Id of variable
+    // value of key depends on value of field 'key'
     public Map<String, String> filenames = new HashMap<>();
+
+    public EnumsApi.BatchMappingKey key = EnumsApi.BatchMappingKey.id;
 }

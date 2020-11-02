@@ -49,6 +49,7 @@ public class BatchItemMappingYamlUtilsV1
         BatchItemMappingYaml trg = new BatchItemMappingYaml();
         trg.targetDir = src.targetDir;
         trg.filenames = src.filenames;
+        trg.key = src.key;
         trg.checkIntegrity();
         return trg;
     }
