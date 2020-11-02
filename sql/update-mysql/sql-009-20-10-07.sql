@@ -15,8 +15,9 @@ CREATE TABLE mh_cache_variable
     ID                  INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             NUMERIC(5, 0)  NOT NULL,
     CACHE_PROCESS_ID    INT UNSIGNED    not null,
-    CREATED_ON          bigint not null,
+    VARIABLE_ID         INT UNSIGNED    not null,
     VARIABLE_NAME       VARCHAR(250) NOT NULL,
+    CREATED_ON          bigint not null,
     DATA                LONGBLOB,
     IS_NULLIFIED        BOOLEAN not null default false
 );
