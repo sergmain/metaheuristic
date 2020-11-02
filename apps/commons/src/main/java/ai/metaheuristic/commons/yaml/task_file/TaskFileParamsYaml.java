@@ -20,10 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -122,6 +119,14 @@ public class TaskFileParamsYaml implements BaseParams {
             this.name = name;
             this.sourcing = sourcing;
         }
+    }
+
+    @Data
+    @ToString
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Cache {
+        public boolean enabled;
     }
 
     @Data
