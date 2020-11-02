@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -142,11 +143,11 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public Void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        return storeExecResult(result);
+    public Void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, DataHolder holder) {
+        return storeExecResult(result, holder);
     }
 
-    public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, DataHolder holder) {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
@@ -158,7 +159,7 @@ public class ExecContextFSM {
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(true);
 
-        execContextTaskFinishingService.checkTaskCanBeFinished(task);
+        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
         return null;
     }
 

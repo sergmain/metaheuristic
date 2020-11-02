@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -302,11 +303,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            txSupportForTestingService.checkTaskCanBeFinished(task32.id);
-            return null;
-        });
-//        execContextSchedulerService.updateExecContextStatuses(true);
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+                txSupportForTestingService.checkTaskCanBeFinished(task32.id, holder);
+                return null;
+            });
+        }
     }
 
     private void step_FitAndPredict() {
@@ -351,14 +353,15 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         storeExecResult(simpleTask32);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, ()-> {
-            for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
-                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id);
-                assertEquals(Enums.UploadVariableStatus.OK, status);
-            }
-            return txSupportForTestingService.checkTaskCanBeFinishedWithTx(simpleTask32.taskId);
-        });
-
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+                for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
+                    Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id);
+                    assertEquals(Enums.UploadVariableStatus.OK, status);
+                }
+                return txSupportForTestingService.checkTaskCanBeFinishedWithTx(simpleTask32.taskId, holder);
+            });
+        }
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
@@ -385,11 +388,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            txSupportForTestingService.checkTaskCanBeFinished(task3.id);
-            return null;
-        });
-//        execContextSchedulerService.updateExecContextStatuses(true);
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+                txSupportForTestingService.checkTaskCanBeFinished(task3.id, holder);
+                return null;
+            });
+        }
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -465,11 +469,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            txSupportForTestingService.checkTaskCanBeFinished(task.id);
-            return null;
-        });
-//        execContextSchedulerService.updateExecContextStatuses(true);
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+                txSupportForTestingService.checkTaskCanBeFinished(task.id, holder);
+                return null;
+            });
+        }
     }
 
     private void waitForFinishing(Long id, int secs) {
@@ -516,7 +521,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r, holder));
+        }
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);

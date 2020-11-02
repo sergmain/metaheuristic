@@ -21,17 +21,14 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -56,6 +53,7 @@ public class CacheService {
     private final CacheVariableService cacheVariableService;
     private final VariableService variableService;
 
+    @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
 
         CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
@@ -100,7 +98,9 @@ public class CacheService {
 
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 final File tempFile;
+/*
                 try {
+*/
                     tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
                     holder.files.add(tempFile);
                     variableService.storeToFile(output.id, tempFile);
@@ -109,10 +109,12 @@ public class CacheService {
                     holder.inputStreams.add(is);
                     cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
 
+/*
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
+*/
             }
         }
         else {

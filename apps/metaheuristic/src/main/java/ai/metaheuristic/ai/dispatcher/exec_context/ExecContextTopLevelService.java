@@ -143,7 +143,9 @@ public class ExecContextTopLevelService {
             log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result));
+        try (DataHolder holder = new DataHolder()) {
+            execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result, holder));
+        }
     }
 
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {

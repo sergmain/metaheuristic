@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.tx;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -184,7 +185,7 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void checkTaskCanBeFinished(Long taskId) {
+    public void checkTaskCanBeFinished(Long taskId, DataHolder holder) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
@@ -192,11 +193,11 @@ public class TxSupportForTestingService {
         if (task==null) {
             return;
         }
-        execContextTaskFinishingService.checkTaskCanBeFinished(task);
+        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
     }
 
     @Transactional
-    public Void checkTaskCanBeFinishedWithTx(Long taskId) {
+    public Void checkTaskCanBeFinishedWithTx(Long taskId, DataHolder holder) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
@@ -204,7 +205,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             return null;
         }
-        execContextTaskFinishingService.checkTaskCanBeFinished(task);
+        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
         return null;
     }
 

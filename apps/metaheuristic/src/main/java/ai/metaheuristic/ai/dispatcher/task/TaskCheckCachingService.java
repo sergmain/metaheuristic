@@ -183,7 +183,7 @@ public class TaskCheckCachingService {
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
-            execContextTaskFinishingService.checkTaskCanBeFinished(task, false);
+            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
 
             // TODO need to be changed to set finished()
             execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);

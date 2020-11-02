@@ -67,9 +67,9 @@ public class ExecContextVariableTopLevelService {
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
 
-        try {
+        try (DataHolder holder = new DataHolder()) {
             final UploadResult uploadResult = execContextSyncService.getWithSync(execContextId,
-                    () -> execContextVariableService.setVariableAsNull(taskId, variableId));
+                    () -> execContextVariableService.setVariableAsNull(taskId, variableId, holder));
             return uploadResult;
         }
         catch (ObjectOptimisticLockingFailureException th) {

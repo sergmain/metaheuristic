@@ -93,7 +93,7 @@ public class ExecContextVariableService {
     }
 
     @Transactional
-    public UploadResult setVariableAsNull(Long taskId, Long variableId) {
+    public UploadResult setVariableAsNull(Long taskId, Long variableId, DataHolder holder) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.100 Task "+taskId+" is obsolete and was already deleted";
@@ -119,7 +119,7 @@ public class ExecContextVariableService {
 
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
-            execContextTaskFinishingService.checkTaskCanBeFinished(task);
+            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
             return OK_UPLOAD_RESULT;
         }
         else {

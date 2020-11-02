@@ -195,6 +195,10 @@ public class ExecContextGraphService {
                     log.info("#915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);
                     // todo 2020-08-16 need to decide what to do here
                 }
+                else if (tv.execState == EnumsApi.TaskExecState.CHECK_CACHE) {
+                    log.info("#915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
+                    // todo 2020-11-01 need to decide what to do here
+                }
                 else if (tv.execState==EnumsApi.TaskExecState.IN_PROGRESS) {
                     // do nothing
                 }
@@ -208,7 +212,7 @@ public class ExecContextGraphService {
         return readOnlyGraphLong(execContext, graph -> graph
                 .vertexSet()
                 .stream()
-                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
+                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS || o.execState==EnumsApi.TaskExecState.CHECK_CACHE)
                 .count());
     }
 
@@ -216,7 +220,7 @@ public class ExecContextGraphService {
         return readOnlyGraph(execContext, graph -> graph
                 .vertexSet()
                 .stream()
-                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
+                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS || o.execState==EnumsApi.TaskExecState.CHECK_CACHE)
                 .collect(Collectors.toList()));
     }
 
@@ -400,7 +404,8 @@ public class ExecContextGraphService {
                 boolean allDone = graph.incomingEdgesOf(endVertex).stream()
                         .map(graph::getEdgeSource)
                         .peek(o->log.debug("\t\tancestor of task #{} is #{}, state {}", endVertex.taskId, o.taskId, o.execState))
-                        .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
+                        .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS
+                                && v.execState!=EnumsApi.TaskExecState.CHECK_CACHE);
 
                 log.debug("\tall done: {}", allDone);
                 if (allDone) {
@@ -422,7 +427,7 @@ public class ExecContextGraphService {
         // we don't need to get all ancestors, we need only direct.
         // So it can be done just with edges
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
-            if (ancestor.execState==EnumsApi.TaskExecState.NONE || ancestor.execState==EnumsApi.TaskExecState.IN_PROGRESS) {
+            if (ancestor.execState==EnumsApi.TaskExecState.NONE || ancestor.execState==EnumsApi.TaskExecState.IN_PROGRESS || ancestor.execState==EnumsApi.TaskExecState.CHECK_CACHE) {
                 return false;
             }
         }

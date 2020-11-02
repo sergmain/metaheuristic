@@ -154,7 +154,7 @@ public class TaskWithInternalContextService {
                 functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
                 r.result = FunctionExecUtils.toString(functionExec);
 
-                execContextFSM.storeExecResult(r);
+                execContextFSM.storeExecResult(r, holder);
 
             } catch (CommonErrorWithDataException th) {
                 String es = "#707.200 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
