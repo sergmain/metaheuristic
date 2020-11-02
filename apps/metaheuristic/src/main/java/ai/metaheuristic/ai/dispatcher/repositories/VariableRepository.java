@@ -76,6 +76,11 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     SimpleVariable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
+    @Nullable
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
+            "from Variable v where v.id=:variableId")
+    SimpleVariable findByIdAsSimple(Long variableId);
+
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
     List<Long> findIdByNameAndExecContextId(String name, Long execContextId);

@@ -16,15 +16,24 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.InputStream;
@@ -45,6 +54,14 @@ public class CacheVariableService {
     private final CacheVariableRepository cacheVariableRepository;
 
     public CacheVariable createInitialized(Long cacheProcessId, InputStream is, long size, String variable) {
+        return createInitializedInternal(cacheProcessId, is, size, variable);
+    }
+
+    public CacheVariable createAsNull(Long cacheProcessId, String variable) {
+        return createInitializedInternal(cacheProcessId, null, 0, variable);
+    }
+
+    private CacheVariable createInitializedInternal(Long cacheProcessId, @Nullable InputStream is, long size, String variable) {
         TxUtils.checkTxExists();
 
         CacheVariable data = new CacheVariable();
@@ -52,12 +69,17 @@ public class CacheVariableService {
         data.variableName = variable;
         data.createdOn = System.currentTimeMillis();
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
-        data.setData(blob);
+        if (is==null) {
+            data.setData(null);
+            data.nullified = true;
+        }
+        else {
+            data.data = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+            data.nullified = false;
+        }
 
         data = cacheVariableRepository.save(data);
 
         return data;
     }
-
 }

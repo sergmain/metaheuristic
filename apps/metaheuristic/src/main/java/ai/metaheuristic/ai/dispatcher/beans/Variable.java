@@ -64,6 +64,7 @@ public class Variable implements Serializable {
     @Column(name = "UPLOAD_TS")
     public Timestamp uploadTs;
 
+    @Nullable
     @Column(name = "DATA")
     @Lob
     private Blob data;

@@ -16,12 +16,20 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -32,6 +40,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -52,6 +62,7 @@ public class CacheService {
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableService cacheVariableService;
     private final VariableService variableService;
+    private final VariableRepository variableRepository;
 
     @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
@@ -98,6 +109,15 @@ public class CacheService {
 
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 final File tempFile;
+
+                SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
+                if (simple==null) {
+                    throw new VariableCommonException("ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
+                }
+                if (simple.nullified) {
+                    cacheVariableService.createAsNull(cacheProcess.id, output.name);
+                }
+                else {
 /*
                 try {
 */
@@ -115,6 +135,7 @@ public class CacheService {
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
 */
+                }
             }
         }
         else {
@@ -122,4 +143,5 @@ public class CacheService {
         }
 
     }
+
 }

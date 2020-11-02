@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
@@ -60,7 +61,12 @@ public class CacheVariable implements Serializable {
     @Column(name = "VARIABLE_NAME")
     public String variableName;
 
+    @Column(name = "IS_NULLIFIED")
+    public boolean nullified;
+
+    @Nullable
     @Column(name = "DATA")
     @Lob
-    private Blob data;
+    public Blob data;
+
 }

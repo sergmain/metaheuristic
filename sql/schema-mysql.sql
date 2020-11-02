@@ -25,7 +25,8 @@ CREATE TABLE mh_cache_variable
     CACHE_PROCESS_ID    INT UNSIGNED    not null,
     CREATED_ON          bigint not null,
     VARIABLE_NAME       VARCHAR(250) NOT NULL,
-    DATA                LONGBLOB NOT NULL
+    DATA                LONGBLOB,
+    IS_NULLIFIED        BOOLEAN not null default false
 );
 
 CREATE INDEX mh_cache_variable_cache_function_id_idx
