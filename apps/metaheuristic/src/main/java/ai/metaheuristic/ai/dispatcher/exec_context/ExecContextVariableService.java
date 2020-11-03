@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -84,7 +85,9 @@ public class ExecContextVariableService {
         }
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
-            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
+//            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+
             return OK_UPLOAD_RESULT;
         }
         else {
@@ -119,7 +122,8 @@ public class ExecContextVariableService {
 
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
-            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
+//            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
             return OK_UPLOAD_RESULT;
         }
         else {
@@ -129,7 +133,7 @@ public class ExecContextVariableService {
 
     public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+//        execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
             log.warn("#441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;

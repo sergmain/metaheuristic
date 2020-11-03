@@ -44,6 +44,7 @@ public class TaskWithInternalContextEventService {
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
+    private final EventSenderService eventSenderService;
 
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
@@ -52,6 +53,7 @@ public class TaskWithInternalContextEventService {
         try (DataHolder holder = new DataHolder()) {
             execContextSyncService.getWithSyncNullable(event.execContextId,
                     () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder));
+            eventSenderService.sendEvents(holder);
         }
     }
 }

@@ -62,7 +62,7 @@ public class TaskService {
 
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+//        execContextSyncService.checkWriteLockPresent(task.execContextId);
         task.setUpdatedOn( System.currentTimeMillis() );
 
         if (task.id==null) {

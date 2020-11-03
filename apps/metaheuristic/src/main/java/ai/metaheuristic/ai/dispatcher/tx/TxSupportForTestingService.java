@@ -193,7 +193,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             return;
         }
-        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+        execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
     }
 
     @Transactional
@@ -205,7 +205,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             return null;
         }
-        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+        execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
         return null;
     }
 

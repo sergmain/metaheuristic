@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -50,6 +51,7 @@ public class ExecContextVariableTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextVariableService execContextVariableService;
+    private final EventSenderService eventSenderService;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
         TxUtils.checkTxNotExists();
@@ -70,6 +72,7 @@ public class ExecContextVariableTopLevelService {
         try (DataHolder holder = new DataHolder()) {
             final UploadResult uploadResult = execContextSyncService.getWithSync(execContextId,
                     () -> execContextVariableService.setVariableAsNull(taskId, variableId, holder));
+            eventSenderService.sendEvents(holder);
             return uploadResult;
         }
         catch (ObjectOptimisticLockingFailureException th) {
@@ -143,6 +146,7 @@ public class ExecContextVariableTopLevelService {
             }
             try (DataHolder holder = new DataHolder()) {
                 uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                eventSenderService.sendEvents(holder);
             }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findById(taskId).orElse(null);

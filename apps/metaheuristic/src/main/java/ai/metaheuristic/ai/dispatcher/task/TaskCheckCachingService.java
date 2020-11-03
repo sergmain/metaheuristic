@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
+import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
@@ -187,7 +188,8 @@ public class TaskCheckCachingService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             task.setResultReceived(true);
 
-            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
+            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, false));
+//            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

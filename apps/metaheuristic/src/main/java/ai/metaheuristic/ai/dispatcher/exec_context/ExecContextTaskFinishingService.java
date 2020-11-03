@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -35,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -55,9 +57,18 @@ public class ExecContextTaskFinishingService {
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskService taskService;
     private final CacheService cacheService;
+    private final TaskRepository taskRepository;
 
-    public void checkTaskCanBeFinished(TaskImpl task, DataHolder holder) {
-        checkTaskCanBeFinished(task, true, holder);
+    @Transactional
+    public Void checkTaskCanBeFinished(Long taskId, boolean checkCaching, DataHolder holder) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#303.100 Reporting about non-existed task #{}", taskId);
+        }
+        else {
+            checkTaskCanBeFinished(task, checkCaching, holder);
+        }
+        return null;
     }
 
     public void checkTaskCanBeFinished(TaskImpl task, boolean checkCaching, DataHolder holder) {

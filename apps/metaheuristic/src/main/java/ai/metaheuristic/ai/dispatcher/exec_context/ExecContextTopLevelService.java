@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
@@ -33,7 +34,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -58,6 +58,7 @@ public class ExecContextTopLevelService {
     private final TaskProviderService taskProviderService;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final EventSenderService eventSenderService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId, ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
@@ -144,7 +145,8 @@ public class ExecContextTopLevelService {
             return;
         }
         try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.storeExecResultWithTx(result, holder));
+            execContextFSM.storeExecResultWithTx(result, holder);
+            eventSenderService.sendEvents(holder);
         }
     }
 

@@ -21,13 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -54,7 +54,6 @@ import java.util.List;
 public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -104,6 +103,9 @@ public class ExecContextFSM {
     }
 
     public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContext.id);
+
         execContext.setState(execState.code);
         eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -144,22 +146,22 @@ public class ExecContextFSM {
 
     @Transactional
     public Void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, DataHolder holder) {
-        return storeExecResult(result, holder);
-    }
-
-    public Void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, DataHolder holder) {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
+        return storeExecResult(task, result, holder);
+    }
+
+    public Void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, DataHolder holder) {
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(true);
 
-        execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+        holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
+        // execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
         return null;
     }
 
@@ -175,7 +177,8 @@ public class ExecContextFSM {
             execContextReconciliationService.finishReconciliation(status);
         }
         else {
-/*
+            // TODO 2020-11-02 should this commented code be deleted?
+            /*
             long countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
             if (countUnfinishedTasks == 0) {
                 // workaround for situation when states in graph and db are different

@@ -14,36 +14,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 /**
  * @author Serge
- * Date: 9/28/2020
- * Time: 11:00 PM
+ * Date: 11/2/2020
+ * Time: 3:49 PM
  */
 @Service
-@Profile("dispatcher")
 @Slf4j
+@Profile("dispatcher")
 @RequiredArgsConstructor
-public class VariableTopLevelService {
+public class EventSenderService {
 
-    private final VariableService variableService;
-    private final ExecContextSyncService execContextSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public void deleteOrphanVariables(List<Long> orphanExecContextIds) {
-        for (Long execContextId : orphanExecContextIds) {
-//            execContextSyncService.getWithSyncNullable(execContextId, ()->
-                variableService.deleteOrphanVariables(execContextId);
-//            );
+    @SuppressWarnings("RedundantCast")
+    public void sendEvents(DataHolder holder) {
+        TxUtils.checkTxNotExists();
+        for (CommonEvent event : holder.events) {
+            if (event instanceof CheckTaskCanBeFinishedEvent) {
+                eventPublisher.publishEvent((CheckTaskCanBeFinishedEvent)event);
+            }
         }
-    }
 
+    }
 }
