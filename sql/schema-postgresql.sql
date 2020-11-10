@@ -4,18 +4,32 @@ create table MH_IDS
     STUB    varchar(1) null
 );
 
-CREATE TABLE MH_CACHE
+CREATE TABLE MH_CACHE_PROCESS
 (
     ID                  SERIAL PRIMARY KEY,
     VERSION             NUMERIC(10, 0)  NOT NULL,
     CREATED_ON          bigint not null,
     KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
-    KEY_VALUE           VARCHAR(512) NOT NULL,
-    DATA                OID NOT NULL
+    KEY_VALUE           VARCHAR(512) NOT NULL
 );
 
-CREATE UNIQUE INDEX MH_CACHE_KEY_SHA256_LENGTH_UNQ_IDX
-    ON MH_CACHE (KEY_SHA256_LENGTH);
+CREATE UNIQUE INDEX MH_CACHE_PROCESS_KEY_SHA256_LENGTH_UNQ_IDX
+    ON MH_CACHE_PROCESS (KEY_SHA256_LENGTH);
+
+CREATE TABLE mh_cache_variable
+(
+    ID                  SERIAL PRIMARY KEY,
+    VERSION             NUMERIC(5, 0)  NOT NULL,
+    CACHE_PROCESS_ID    NUMERIC(10, 0) NOT NULL,
+    VARIABLE_ID         NUMERIC(10, 0) NOT NULL,
+    VARIABLE_NAME       VARCHAR(250) NOT NULL,
+    CREATED_ON          bigint not null,
+    DATA                OID,
+    IS_NULLIFIED        BOOLEAN not null default false
+);
+
+CREATE INDEX mh_cache_variable_cache_function_id_idx
+    ON mh_cache_variable (CACHE_PROCESS_ID);
 
 create table MH_GEN_IDS
 (
@@ -105,7 +119,7 @@ CREATE TABLE MH_LOG_DATA
   ID          SERIAL PRIMARY KEY,
   REF_ID      NUMERIC(10, 0) NOT NULL,
   VERSION     NUMERIC(5, 0)  NOT NULL,
-  UPDATE_TS   TIMESTAMP DEFAULT to_timestamp(0),
+  UPDATE_TS   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   LOG_TYPE    NUMERIC(5, 0)  NOT NULL,
   LOG_DATA    TEXT not null
 );
@@ -119,7 +133,7 @@ CREATE TABLE MH_VARIABLE
   NAME              VARCHAR(250) not null,
   TASK_CONTEXT_ID   VARCHAR(250) not null,
   EXEC_CONTEXT_ID   NUMERIC(10, 0) not null,
-  UPLOAD_TS         TIMESTAMP DEFAULT to_timestamp(0),
+  UPLOAD_TS         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   DATA              OID,
   FILENAME          VARCHAR(150),
   PARAMS            TEXT not null
@@ -140,7 +154,7 @@ CREATE TABLE MH_VARIABLE_GLOBAL
     ID            SERIAL PRIMARY KEY,
     VERSION       NUMERIC(5, 0) NOT NULL,
     NAME          VARCHAR(250) not null,
-    UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),
+    UPLOAD_TS     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     DATA          OID,
     FILENAME      VARCHAR(150),
     PARAMS        TEXT not null
@@ -154,7 +168,7 @@ CREATE TABLE MH_FUNCTION_DATA
     ID              SERIAL PRIMARY KEY,
     VERSION         NUMERIC(5, 0) NOT NULL,
     FUNCTION_CODE    VARCHAR(100) not null,
-    UPLOAD_TS       TIMESTAMP DEFAULT to_timestamp(0),
+    UPLOAD_TS       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     DATA            OID,
     PARAMS          TEXT not null
 );
@@ -180,7 +194,7 @@ CREATE UNIQUE INDEX MH_EXPERIMENT_CODE_UNQ_IDX
 CREATE TABLE MH_TASK
 (
   ID            SERIAL PRIMARY KEY,
-  VERSION       NUMERIC(5, 0)  NOT NULL,
+  VERSION       NUMERIC(10, 0)  NOT NULL,
   PARAMS        TEXT not null,
   PROCESSOR_ID    NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
@@ -230,12 +244,12 @@ CREATE TABLE MH_EXEC_CONTEXT
 (
   ID                SERIAL PRIMARY KEY,
   VERSION           NUMERIC(5, 0)  NOT NULL,
-  COMPANY_ID        NUMERIC(10, 0) NOT NULL,
   SOURCE_CODE_ID    NUMERIC(10, 0) NOT NULL,
+  COMPANY_ID        NUMERIC(10, 0) NOT NULL,
   CREATED_ON        bigint NOT NULL,
   COMPLETED_ON      bigint,
   PARAMS            TEXT NOT NULL,
-  IS_VALID          BOOLEAN not null default false,
+  IS_VALID          BOOLEAN default false not null,
   STATE             smallint not null default 0
 );
 
@@ -272,7 +286,7 @@ CREATE UNIQUE INDEX MH_EXPERIMENT_TASK_EXPERIMENT_RESULT_ID_TASK_ID_IDX
 create table MH_BATCH
 (
   ID                SERIAL PRIMARY KEY,
-  VERSION           NUMERIC(5, 0)  NOT NULL,
+  VERSION           NUMERIC(10, 0)  NOT NULL,
   COMPANY_ID        NUMERIC(10, 0) NOT NULL,
   ACCOUNT_ID        NUMERIC(10, 0) NOT NULL,
   SOURCE_CODE_ID           NUMERIC(10, 0) NOT NULL,
@@ -290,7 +304,7 @@ CREATE INDEX MH_BATCH_EXEC_CONTEXT_ID_IDX
 CREATE TABLE MH_EVENT
 (
     ID              SERIAL PRIMARY KEY,
-    VERSION         NUMERIC(5, 0)  NOT NULL,
+    VERSION         NUMERIC(10, 0)  NOT NULL,
     -- company_id can be null
     COMPANY_ID      NUMERIC(10, 0),
     CREATED_ON      bigint         NOT NULL,
