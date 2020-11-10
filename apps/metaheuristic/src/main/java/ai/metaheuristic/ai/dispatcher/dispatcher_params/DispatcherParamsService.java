@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheCheckingEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
@@ -29,12 +30,15 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -51,15 +55,30 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class DispatcherParamsService {
 
+    private final ApplicationEventPublisher eventPublisher;
+
     private final DispatcherParamsRepository dispatcherParamsRepository;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
+    @PostConstruct
+    @Transactional
+    public void checkAndCreateNewDispatcher() {
+        Dispatcher dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
+        if (dispatcherCacheValue==null) {
+            Dispatcher entity = new Dispatcher();
+            entity.code = Consts.DISPATCHERS_CACHE;
+            dispatcherParamsYaml = new DispatcherParamsYaml();
+            entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
+            dispatcherParamsRepository.save(entity);
+        }
+    }
+
     @Async
     @EventListener
-    public void handleAsync(final DispatcherCacheRemoveSourceCodeEvent event) {
+    public void handleDispatcherCacheRemoveSourceCodeEvent(final DispatcherCacheRemoveSourceCodeEvent event) {
         unregisterSourceCode(event.sourceCodeUid);
     }
 
@@ -172,6 +191,9 @@ public class DispatcherParamsService {
         try {
             writeLock.lock();
             Dispatcher d = find();
+            if (d==null) {
+                throw new IllegalStateException("Dispatcher cache must be initialized at this point");
+            }
             DispatcherParamsYaml dpy = d.getDispatcherParamsYaml();
             consumer.accept(dpy);
             d.updateParams(dpy);
@@ -237,18 +259,22 @@ public class DispatcherParamsService {
         }
     }
 
+    @Nullable
     private Dispatcher find() {
         try {
             writeLock.lock();
             if (dispatcherCacheValue==null) {
                 dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
                 if (dispatcherCacheValue==null) {
-
+                    eventPublisher.publishEvent(new DispatcherCacheCheckingEvent());
+/*
                     Dispatcher entity = new Dispatcher();
                     entity.code = Consts.DISPATCHERS_CACHE;
                     dispatcherParamsYaml = new DispatcherParamsYaml();
                     entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
                     dispatcherCacheValue = dispatcherParamsRepository.save(entity);
+*/
+                    return null;
                 }
                 else {
                     dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
@@ -43,6 +44,7 @@ public class EventBusService {
     public final ExecContextTaskFinishingService execContextTaskFinishingService;
     public final ExecContextSyncService execContextSyncService;
     public final EventSenderService eventSenderService;
+    public final DispatcherParamsService dispatcherParamsService;
 
     @Async
     @EventListener
@@ -64,5 +66,13 @@ public class EventBusService {
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         taskWithInternalContextEventService.processInternalFunction(event);
     }
+
+    @SuppressWarnings("unused")
+    @Async
+    @EventListener
+    public void checkAndCreateNewDispatcher(final DispatcherCacheCheckingEvent event) {
+        dispatcherParamsService.checkAndCreateNewDispatcher();
+    }
+
 
 }
