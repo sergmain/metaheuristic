@@ -25,8 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertNull;;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+;import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -35,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestFeatureWithAllError extends FeatureMethods {
 
     @Test
-    public void testFeatureCompletionWithAllError() {
+    public void testFeatureCompletionWithAllError() throws InterruptedException {
         createExperiment();
         assertTrue(isCorrectInit);
 
@@ -45,7 +44,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         toStarted();
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");

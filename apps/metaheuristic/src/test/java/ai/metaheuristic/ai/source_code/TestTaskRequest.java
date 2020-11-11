@@ -72,11 +72,11 @@ public class TestTaskRequest extends FeatureMethods {
         step_4(sessionId);
     }
 
-    public String step_1() {
+    private String step_1() {
         String sessionId;
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
+//        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
 
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
@@ -94,7 +94,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(String sessionId) {
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         // get a task for processing
         DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
@@ -137,7 +137,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_3(String sessionId) {
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);

@@ -94,7 +94,7 @@ public class DispatcherCommandProcessor {
             log.warn("#997.020 (request.processorCommContext==null)");
             return;
         }
-        if (request.reportProcessorTaskStatus ==null || CollectionUtils.isEmpty(request.reportProcessorTaskStatus.statuses)) {
+        if (request.reportProcessorTaskStatus==null || CollectionUtils.isEmpty(request.reportProcessorTaskStatus.statuses)) {
             return;
         }
         processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
@@ -133,14 +133,18 @@ public class DispatcherCommandProcessor {
             return null;
         }
         checkProcessorId(request);
+        final ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus = request.reportProcessorTaskStatus!=null
+                ? request.reportProcessorTaskStatus
+                : new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
+
         DispatcherCommParamsYaml.AssignedTask assignedTask;
         try {
-            assignedTask = taskProviderService.findTask(request.reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+            assignedTask = taskProviderService.findTask(reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.045 ObjectOptimisticLockingFailureException", e);
             log.error("#997.047 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(request.reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                assignedTask = taskProviderService.findTask(reportProcessorTaskStatus, Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;

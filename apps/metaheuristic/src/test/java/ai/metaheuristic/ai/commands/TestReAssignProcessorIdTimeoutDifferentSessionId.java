@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -51,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
+    private static final long EXPIRED_SESSION_CREATED_ON = 1L;
     @Autowired
     public SouthbridgeService serverService;
 
@@ -66,9 +68,11 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     @Autowired
     public ProcessorTransactionService processorTransactionService;
 
+    @Autowired
+    public TxSupportForTestingService txSupportForTestingService;
+
     private Long processorIdBefore;
     private String sessionIdBefore;
-    private long sessionCreatedOn;
 
     @BeforeEach
     public void before() {
@@ -119,8 +123,10 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         // in this scenario we test that a processor has got a refreshed sessionId
 
         // TODO 2020-10-06 right now this test isn't working because
-        //  clause ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) is wrong (i.e. sessionCreatedOn is less that 30 minutes)
+        //  clause ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) is false (i.e. sessionCreatedOn is less that 30 minutes)
         //  for correcting this test sessionCreatedOn must be changed
+
+        setSessionAsExpired();
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         final String newSessionId = sessionIdBefore + '-';
@@ -144,9 +150,24 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
         assertNotNull(s);
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+
+        // 0L is default for long type
         assertNotEquals(0L, ss.sessionCreatedOn);
-        assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
+
+        // 1L was used as an expired value
+        assertNotEquals(EXPIRED_SESSION_CREATED_ON, ss.sessionCreatedOn);
+
         assertEquals(d.getReAssignedProcessorId().getSessionId(), ss.sessionId);
-        assertTrue(ss.sessionCreatedOn > sessionCreatedOn);
+        assertTrue(ss.sessionCreatedOn > EXPIRED_SESSION_CREATED_ON);
+    }
+
+    private void setSessionAsExpired() {
+        final Processor processor = processorCache.findById(processorIdBefore);
+        assertNotNull(processor);
+        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        ss.sessionCreatedOn = EXPIRED_SESSION_CREATED_ON;
+
+        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        txSupportForTestingService.saveProcessor(processor);
     }
 }

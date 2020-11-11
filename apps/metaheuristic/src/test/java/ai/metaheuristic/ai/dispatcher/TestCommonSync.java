@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.commons.S;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -29,15 +29,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 9/25/2020
  * Time: 4:43 PM
  */
+@Execution(CONCURRENT)
 public class TestCommonSync {
+
+    private static final int DURATION = 10;
 
     public static class TestSync {
 
@@ -93,140 +96,213 @@ public class TestCommonSync {
         }
     }
 
-    TestSync testSync = new TestSync();
-
-    @RepeatedTest(10)
+    @RepeatedTest(200)
     public void test() throws InterruptedException {
 
-        final AtomicBoolean isRun = new AtomicBoolean(true);
-        final AtomicBoolean isRun2 = new AtomicBoolean(true);
-        final AtomicBoolean isRun3 = new AtomicBoolean(true);
-        final AtomicBoolean isStarted = new AtomicBoolean(false);
-        final AtomicBoolean isStarted2 = new AtomicBoolean(false);
-        final AtomicBoolean isStarted3 = new AtomicBoolean(false);
+        Thread t1 = null;
+        Thread t2 = null;
+        Thread t3 = null;
 
-        final AtomicLong started2 = new AtomicLong();
-        final AtomicLong started3 = new AtomicLong();
-
-        final AtomicLong finished1 = new AtomicLong();
-        final AtomicLong finished2 = new AtomicLong();
-
-
-        Thread t1 = new Thread(() -> {
-            testSync.getWithSyncNullable(42L, ()->{
-                isStarted.set(true);
-                try {
-                    while (isRun.get()) {
-                        Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
-                    }
-                } catch (InterruptedException e) {
-                    ExceptionUtils.rethrow(e);
-                }
-                finished1.set(System.currentTimeMillis());
-                return null;
-            });
-            isStarted.set(false);
-        }, "My thread #1");
-        t1.start();
-
-        long mills = System.currentTimeMillis();
         try {
-            while (!isStarted.get()) {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 15_000) {
-                    throw new IllegalStateException("Thread t1 wasn't started in 15 seconds");
-                }
+            TestSync testSync = new TestSync();
+
+            final AtomicBoolean isRun = new AtomicBoolean(true);
+            final AtomicBoolean isRun2 = new AtomicBoolean(true);
+            final AtomicBoolean isRun3 = new AtomicBoolean(true);
+
+            final AtomicBoolean isStarted = new AtomicBoolean(false);
+            final AtomicBoolean isStarted2 = new AtomicBoolean(false);
+            final AtomicBoolean isStarted3 = new AtomicBoolean(false);
+
+            final AtomicLong started1 = new AtomicLong();
+            final AtomicLong started2 = new AtomicLong();
+            final AtomicLong started3 = new AtomicLong();
+
+            final AtomicLong finished1 = new AtomicLong();
+            final AtomicLong finished2 = new AtomicLong();
+            final AtomicLong finished3 = new AtomicLong();
+
+
+            t1 = new Thread(() -> {
+                testSync.getWithSyncNullable(42L, () -> {
+                    isStarted.set(true);
+                    try {
+                        while (isRun.get()) {
+                            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+                        }
+                    } catch (InterruptedException e) {
+//                        ExceptionUtils.rethrow(e);
+                    }
+                    finished1.set(System.currentTimeMillis());
+                    return null;
+                });
+                isStarted.set(false);
+            }, "My thread #1");
+            t1.start();
+
+            waitForStartingThread(isStarted, "t1");
+
+            AtomicBoolean insideSync2 = new AtomicBoolean();
+            t2 = new Thread(() -> {
+                isStarted2.set(true);
+                testSync.getWithSyncNullable(42L, () -> {
+                    insideSync2.set(true);
+                    started2.set(System.currentTimeMillis());
+                    try {
+                        while (isRun2.get()) {
+                            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+                        }
+                    } catch (InterruptedException e) {
+//                        ExceptionUtils.rethrow(e);
+                    }
+                    finished2.set(System.currentTimeMillis());
+                    return null;
+                });
+                isStarted2.set(false);
+            }, "My thread #2");
+            t2.start();
+
+            AtomicBoolean insideSync3 = new AtomicBoolean();
+            t3 = new Thread(() -> {
+                isStarted3.set(true);
+                testSync.getWithSyncNullable(42L, () -> {
+                    insideSync3.set(true);
+                    started3.set(System.currentTimeMillis());
+                    try {
+                        while (isRun3.get()) {
+                            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+                        }
+                    } catch (InterruptedException e) {
+//                        ExceptionUtils.rethrow(e);
+                    }
+                    finished3.set(System.currentTimeMillis());
+                    return null;
+                });
+                isStarted3.set(false);
+            }, "My thread #3");
+            t3.start();
+
+            waitForStartingThreads("t2, t3", isStarted2, isStarted3);
+            assertFalse(insideSync2.get());
+            assertFalse(insideSync3.get());
+
+            isRun.set(false);
+            waitForStoppingThread(isStarted, "t1");
+
+            waitForAnyInsideThreads("t2, t3", insideSync2, insideSync3);
+
+            final boolean b = insideSync2.get();
+            final boolean b1 = insideSync3.get();
+            assertNotEquals(b, b1, S.f("insideSync2.get(): %s, insideSync3.get(): %s", b, b1));
+
+            if (insideSync2.get()) {
+                assertTrue(started2.get() >= finished1.get(), S.f("started2: %d, finished1: %d", started2.get(), finished1.get()));
             }
-        } catch (InterruptedException e) {
-            ExceptionUtils.rethrow(e);
+            else if (insideSync3.get()) {
+                assertTrue(started3.get() >= finished1.get(), S.f("started3: %d, finished1: %d", started3.get(), finished1.get()));
+            }
+            else {
+                throw new IllegalStateException("something wrong");
+            }
+
+            isRun2.set(false);
+            isRun3.set(false);
+            waitForStoppingThreads("t2, t3", isStarted2, isStarted3);
+
+            boolean lockOk = false;
+            if (!testSync.getWriteLock(42L).isHeldByCurrentThread()) {
+                lockOk = true;
+            }
+
+            assertTrue(lockOk);
+            final ReentrantReadWriteLock.WriteLock writeLock = testSync.getWriteLock(42L);
+            final boolean condition = writeLock.tryLock();
+            assertTrue(condition);
+            writeLock.unlock();
         }
+        finally {
+            terminateThread(t1);
+            terminateThread(t2);
+            terminateThread(t3);
+        }
+    }
 
-        AtomicBoolean insideSync2 = new AtomicBoolean();
-        Thread t2 = new Thread(() -> {
-            isStarted2.set(true);
-            testSync.getWithSyncNullable(42L, ()->{
-                insideSync2.set(true);
-                started2.set(System.currentTimeMillis());
-                try {
-                    while (isRun2.get()) {
-                        Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
-                    }
-                } catch (InterruptedException e) {
-                    ExceptionUtils.rethrow(e);
-                }
-                finished2.set(System.currentTimeMillis());
-                return null;
-            });
-            isStarted2.set(false);
-        }, "My thread #2");
-        t2.start();
+    private void terminateThread(@Nullable Thread t) {
+        if (t!=null) {
+            t.interrupt();
+        }
+    }
 
-        AtomicBoolean insideSync3 = new AtomicBoolean();
-        Thread t3 = new Thread(() -> {
-            isStarted3.set(true);
-            testSync.getWithSyncNullable(42L, ()->{
-                insideSync3.set(true);
-                started3.set(System.currentTimeMillis());
-                try {
-                    while (isRun3.get()) {
-                        Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
-                    }
-                } catch (InterruptedException e) {
-                    ExceptionUtils.rethrow(e);
-                }
-                return null;
-            });
-            isStarted3.set(false);
-        }, "My thread #3");
-        t3.start();
-
-        assertFalse(insideSync2.get());
-        assertFalse(insideSync3.get());
-
+    private void waitForStoppingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
+        long mills;
         mills = System.currentTimeMillis();
-        try {
-            while (!isStarted2.get()) {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 15_000) {
-                    throw new IllegalStateException("Threads t2 wasn't started in 15 seconds");
-                }
+        while (isStarted.get()) {
+            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+            if (System.currentTimeMillis() - mills > 15_000) {
+                throw new IllegalStateException("Thread "+threadName+" wasn't ended in 15 seconds");
             }
-        } catch (InterruptedException e) {
-            ExceptionUtils.rethrow(e);
         }
+    }
 
-        boolean lockOk = false;
-        if (!testSync.getWriteLock(42L).isHeldByCurrentThread()) {
-            lockOk = true;
-        }
-
-        isRun.set(false);
+    private void waitForStoppingThreads(String threadNames, AtomicBoolean ... isStarteds) throws InterruptedException {
+        long mills;
         mills = System.currentTimeMillis();
-        try {
-            while (isStarted.get()) {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-                if (System.currentTimeMillis() - mills > 15_000) {
-                    throw new IllegalStateException("Threads t2 wasn't finished in 15 seconds");
-                }
+        while (isAny(isStarteds)) {
+            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+            if (System.currentTimeMillis() - mills > 15_000) {
+                throw new IllegalStateException("Threads "+threadNames+" weren't stopped in 15 seconds");
             }
-        } catch (InterruptedException e) {
-            ExceptionUtils.rethrow(e);
         }
+    }
 
-        assertTrue(started2.get()>=finished1.get(), S.f("started2: %d, finished1: %d", started2.get(), finished1.get()));
+    private void waitForAnyInsideThreads(String threadNames, AtomicBoolean ... isStarteds) throws InterruptedException {
+        long mills;
+        mills = System.currentTimeMillis();
+        while (!isAny(isStarteds)) {
+            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+            if (System.currentTimeMillis() - mills > 15_000) {
+                throw new IllegalStateException("Any thread "+threadNames+" wasn't stepped inside in 15 seconds");
+            }
+        }
+    }
 
-        isRun.set(false);
-        isRun2.set(false);
+    private void waitForStartingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
+        long mills;
+        mills = System.currentTimeMillis();
+        while (!isStarted.get()) {
+            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+            if (System.currentTimeMillis() - mills > 15_000) {
+                throw new IllegalStateException("Thread "+threadName+" wasn't started in 15 seconds");
+            }
+        }
+    }
 
-        isRun3.set(false);
-        Thread.sleep(TimeUnit.MILLISECONDS.toMillis(1000));
+    private void waitForStartingThreads(String threadName, AtomicBoolean ... isStarteds) throws InterruptedException {
+        long mills;
+        mills = System.currentTimeMillis();
+        while (!isStarted(isStarteds)) {
+            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
+            if (System.currentTimeMillis() - mills > 15_000) {
+                throw new IllegalStateException("Threads "+threadName+" weren't started in 15 seconds");
+            }
+        }
+    }
 
-        assertTrue(lockOk);
-        assertFalse(isStarted.get());
-        final ReentrantReadWriteLock.WriteLock writeLock = testSync.getWriteLock(42L);
-        final boolean condition = writeLock.tryLock();
-        assertTrue(condition);
-        writeLock.unlock();
+    private boolean isStarted(AtomicBoolean ... isStarteds) {
+        for (AtomicBoolean isStarted : isStarteds) {
+            if (!isStarted.get()) {
+                return false;
+            }
+        }
+        return true;
+    }
 
+    private boolean isAny(AtomicBoolean ... isStarteds) {
+        for (AtomicBoolean isStarted : isStarteds) {
+            if (isStarted.get()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -70,6 +71,15 @@ public class TxSupportForTestingService {
     private final ExecContextVariableService execContextVariableService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
+    private final ProcessorCache processorCache;
+
+    @Transactional
+    public void saveProcessor(Processor processor) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        processorCache.save(processor);
+    }
 
     @Transactional
     public void deleteFunctionById(@Nullable Long functionId) {
@@ -132,6 +142,18 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("Need better solution for this state");
         }
         return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContext, taskId);
+    }
+
+    @Transactional
+    public void setStateForAllChildrenTasksInternal(Long execContextId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            throw new IllegalStateException("Need better solution for this state");
+        }
+        execContextGraphService.setStateForAllChildrenTasks(execContext, taskId, withTaskList, state);
     }
 
     @Transactional
@@ -274,7 +296,7 @@ public class TxSupportForTestingService {
                 return null;
             }
             Blob blob = v.getData();
-            v.bytes = blob.getBytes(1, (int) blob.length());
+            v.bytes = blob==null ? new byte[0] : blob.getBytes(1, (int) blob.length());
             return v;
         } catch (Throwable th) {
             throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);

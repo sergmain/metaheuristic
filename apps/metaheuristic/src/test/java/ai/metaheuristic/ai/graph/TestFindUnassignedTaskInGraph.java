@@ -169,8 +169,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-            execContextGraphService.updateTaskExecState(
-                    execContextForTest, 22L, EnumsApi.TaskExecState.ERROR, null);
+            txSupportForTestingService.updateTaskExecState(
+                    execContextForTest.id, 22L, EnumsApi.TaskExecState.ERROR, null);
 
 //            txSupportForTestingService.finishWithErrorWithTx(22L, "An error", null);
 
@@ -193,11 +193,14 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
             assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
+            // in production code this will never happened, i.e. switching from ERROR state to OK state
             status = txSupportForTestingService.updateTaskExecState(
                     execContextForTest.id,22L, EnumsApi.TaskExecState.OK, "123###1");
+            // so we update children manually
+            txSupportForTestingService.setStateForAllChildrenTasksInternal(execContextForTest.id, 22L, status, EnumsApi.TaskExecState.NONE);
+
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-
 
             vertices = txSupportForTestingService.findAllForAssigningWithTx(
                     Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));

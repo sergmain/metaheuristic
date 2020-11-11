@@ -52,7 +52,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     public @Nullable ProcessorCommContext processorCommContext;
     public @Nullable RequestProcessorId requestProcessorId;
     public @Nullable ReportProcessorStatus reportProcessorStatus;
-    public ReportProcessorTaskStatus reportProcessorTaskStatus;
+    public @Nullable ReportProcessorTaskStatus reportProcessorTaskStatus;
     public @Nullable RequestTask requestTask;
     public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
     public CheckForMissingOutputResources checkForMissingOutputResources;

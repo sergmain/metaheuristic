@@ -215,6 +215,22 @@ public abstract class PreparingSourceCode extends PreparingCore {
         execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
     }
 
+    @SuppressWarnings("WeakerAccess")
+    @SneakyThrows
+    public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextId);
+
+        boolean isQueueEmpty = true;
+        for (int i = 0; i < 30; i++) {
+            Thread.sleep(2_000);
+            isQueueEmpty = taskProviderService.isQueueEmpty();
+            if (!isQueueEmpty) {
+                break;
+            }
+        }
+        assertFalse(isQueueEmpty);
+    }
+
     private void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
         Company c = null;

@@ -467,6 +467,12 @@ public class ExecContextGraphService {
         });
     }
 
+    public void setStateForAllChildrenTasks(ExecContextImpl execContext, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+        changeGraph(execContext, graph -> {
+            setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, state);
+        });
+    }
+
     @SuppressWarnings("SameParameterValue")
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,

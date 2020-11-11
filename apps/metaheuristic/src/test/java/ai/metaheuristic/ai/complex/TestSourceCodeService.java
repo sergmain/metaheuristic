@@ -151,17 +151,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
             return null;
         });
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         step_AssembledRaw();
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         step_DatasetProcessing();
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         //   processCode: feature-processing-1, function code: function-03:1.1
         step_CommonProcessing("feature-output-1");
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         //   processCode: feature-processing-2, function code: function-04:1.1
         step_CommonProcessing("feature-output-2");
 
@@ -209,6 +209,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
+//        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 20);
 
@@ -316,7 +317,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_FitAndPredict() {
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
