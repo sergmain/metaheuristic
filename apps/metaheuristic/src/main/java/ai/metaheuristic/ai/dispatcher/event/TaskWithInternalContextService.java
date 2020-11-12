@@ -71,7 +71,7 @@ public class TaskWithInternalContextService {
     private static Long lastTaskId=null;
 
     // this code is only for testing
-    public static boolean taskFinished(Long id) {
+    public static boolean taskProcessed(Long id) {
         return id.equals(lastTaskId);
     }
 

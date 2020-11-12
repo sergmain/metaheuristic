@@ -44,11 +44,11 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -211,7 +211,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 //        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
-        waitForFinishing(permuteTask.task.id, 20);
+        waitForFinishing(permuteTask.task.id, 300);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -482,25 +482,45 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
     }
 
+    @SneakyThrows
     private void waitForFinishing(Long id, int secs) {
         TaskWithInternalContextService.resetLastTask();
-        try {
-            long mills = System.currentTimeMillis();
-            boolean finished = false;
-            System.out.println("Start waiting for finishing of task #"+ id);
-            int period = secs * 1000;
-            while(true) {
-                if (!(System.currentTimeMillis() - mills < period)) break;
-                TimeUnit.SECONDS.sleep(1);
-                finished = TaskWithInternalContextService.taskFinished(id);
-                if (finished) {
-                    break;
-                }
+        long mills = System.currentTimeMillis();
+        boolean processed = false;
+        System.out.println("Start waiting for processing of task #"+ id);
+        int period = secs * 1000;
+        while(true) {
+            if (!(System.currentTimeMillis() - mills < period)) break;
+            TimeUnit.SECONDS.sleep(1);
+            processed = TaskWithInternalContextService.taskProcessed(id);
+            if (processed) {
+                break;
             }
-            assertTrue(finished, "After "+secs+" seconds permuteTask still isn't finished ");
-        } catch (InterruptedException e) {
-            ExceptionUtils.rethrow(e);
         }
+        assertTrue(processed, "After "+secs+" seconds task #"+id+" still isn't processed ");
+        System.out.println(S.f("Task #%d was processed for %d", id, System.currentTimeMillis() - mills));
+
+        mills = System.currentTimeMillis();
+        boolean finished = false;
+        System.out.println("Start waiting for finishing of task #"+ id);
+        period = secs * 1000;
+        while(true) {
+            if (!(System.currentTimeMillis() - mills < period)) break;
+            TimeUnit.SECONDS.sleep(1);
+            TaskImpl task = taskRepository.findById(id).orElse(null);
+            if (task==null) {
+                throw new IllegalStateException("(task==null)");
+            }
+
+            final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
+            finished = execState==EnumsApi.TaskExecState.OK || execState==EnumsApi.TaskExecState.ERROR;
+            if (finished) {
+                break;
+            }
+        }
+        assertTrue(finished, "After "+secs+" seconds task #"+id+" still isn't finished ");
+        System.out.println(S.f("Task #%d was finished for %d", id, System.currentTimeMillis() - mills));
+
     }
 
     private void verifyGraphIntegrity() {
