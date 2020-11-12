@@ -260,7 +260,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
-        waitForFinishing(aggregateTask.task.id, 20);
+        waitForFinishing(aggregateTask.task.id, 40);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -275,7 +275,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
-        waitForFinishing(finishTask.task.id, 20);
+        waitForFinishing(finishTask.task.id, 40);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
