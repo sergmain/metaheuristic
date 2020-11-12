@@ -37,8 +37,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -72,10 +71,16 @@ public class TestSingleInternalFunction extends FeatureMethods {
         List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextForTest.id);
         assertEquals(2, list.size());
 
-        TaskImpl task = taskRepository.findById((Long)list.get(1)[0]).orElse(null);
+        final List<String> codes = List.of(getFunctionCode(list.get(0)[0]), getFunctionCode(list.get(1)[0]));
+        assertTrue(codes.contains(Consts.MH_FINISH_FUNCTION));
+        assertTrue(codes.contains(Consts.MH_BATCH_SPLITTER_FUNCTION));
+    }
+
+    private String getFunctionCode(Object object) {
+        TaskImpl task = taskRepository.findById((Long) object).orElse(null);
         assertNotNull(task);
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        assertEquals(Consts.MH_FINISH_FUNCTION, taskParamsYaml.task.function.code);
+        return taskParamsYaml.task.function.code;
     }
 }
 

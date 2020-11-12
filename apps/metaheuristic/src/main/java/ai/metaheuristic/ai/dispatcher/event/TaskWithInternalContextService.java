@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
@@ -65,15 +66,24 @@ public class TaskWithInternalContextService {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+
     @Nullable
     private static Long lastTaskId=null;
+
     // this code is only for testing
     public static boolean taskFinished(Long id) {
         return id.equals(lastTaskId);
     }
 
+    // this code is only for testing
+    public static void resetLastTask() {
+        lastTaskId=null;
+    }
+
     @Transactional
     public Void processInternalFunctionWithTx(Long execContextId, Long taskId, DataHolder holder) {
+        lastTaskId = null;
+
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#707.020 ExecContext #{} doesn't exist", execContextId);
@@ -96,7 +106,6 @@ public class TaskWithInternalContextService {
     private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
-        lastTaskId = null;
 
         try {
             task.setAssignedOn(System.currentTimeMillis());

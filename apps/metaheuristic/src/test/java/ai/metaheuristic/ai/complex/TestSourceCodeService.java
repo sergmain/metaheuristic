@@ -483,6 +483,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void waitForFinishing(Long id, int secs) {
+        TaskWithInternalContextService.resetLastTask();
         try {
             long mills = System.currentTimeMillis();
             boolean finished = false;

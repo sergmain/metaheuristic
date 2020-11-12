@@ -28,8 +28,8 @@ CREATE TABLE mh_cache_variable
     IS_NULLIFIED        BOOLEAN not null default false
 );
 
-CREATE INDEX mh_cache_variable_cache_function_id_idx
-    ON mh_cache_variable (CACHE_PROCESS_ID);
+CREATE INDEX MH_CACHE_VARIABLE_CACHE_FUNCTION_ID_IDX
+    ON MH_CACHE_VARIABLE (CACHE_PROCESS_ID);
 
 create table MH_GEN_IDS
 (
@@ -66,10 +66,10 @@ CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
 insert into MH_COMPANY
 (id, version, UNIQUE_ID, name, params)
 VALUES
-(1, 0, 1, 'master company', '');
+(nextval('mh_company_id_seq'), 0, 1, 'master company', '');
 
 -- !!! this insert must be after creating 'master company'
-insert into mh_gen_ids
+insert into MH_GEN_IDS
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 select 'mh_ids', max(UNIQUE_ID) from mh_company;
 
