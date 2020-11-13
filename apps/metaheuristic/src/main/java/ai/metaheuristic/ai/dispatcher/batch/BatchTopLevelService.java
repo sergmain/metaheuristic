@@ -178,6 +178,8 @@ public class BatchTopLevelService {
     }
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
+        log.info("#981.055 Staring of batchUploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
+
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
