@@ -32,6 +32,9 @@ public class EnvYaml {
     public final List<DiskStorage> disk = new ArrayList<>();
 
     @Nullable
+    public String tag;
+
+    @Nullable
     public DiskStorage findDiskStorageByCode(String code) {
         for (DiskStorage diskStorage : disk) {
             if (Objects.equals(diskStorage.code, code)) {

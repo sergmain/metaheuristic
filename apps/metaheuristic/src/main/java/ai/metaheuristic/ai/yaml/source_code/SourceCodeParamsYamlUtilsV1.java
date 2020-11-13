@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.source_code;
 
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV2;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -84,6 +83,7 @@ public class SourceCodeParamsYamlUtilsV1
         pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYamlV2.FunctionDefForSourceCodeV2(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.metas = o.metas;
         pr.cache = new SourceCodeParamsYamlV2.CacheV2(o.cacheOutput);
+        pr.priority = 0;
 
         pr.subProcesses = o.subProcesses!=null
                 ?  new SourceCodeParamsYamlV2.SubProcessesV2(

@@ -129,6 +129,11 @@ public class ExecContextTaskFinishingService {
         }
     }
 
+    @Transactional
+    public void finishWithErrorWithTx(TaskImpl task, @Nullable String taskContextId) {
+        finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
+    }
+
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
         finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
     }

@@ -143,6 +143,8 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
         @Nullable public SubProcessesV2 subProcesses;
 
         @Nullable public CacheV2 cache;
+        @Nullable public String tag;
+        public int priority;
     }
 
     @Data

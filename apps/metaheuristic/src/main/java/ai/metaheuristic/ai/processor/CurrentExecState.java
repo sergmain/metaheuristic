@@ -30,7 +30,7 @@ public class CurrentExecState {
     // this is a map for holding the current status of ExecContext, not of task
     private final Map<String, Map<Long, EnumsApi.ExecContextState>> execContextState = new HashMap<>();
 
-    private Map<String, AtomicBoolean> isInit = new HashMap<>();
+    private final Map<String, AtomicBoolean> isInit = new HashMap<>();
 
     public boolean isInited(String dispatcherUrl) {
         synchronized(execContextState) {

@@ -80,6 +80,8 @@ public class ExecContextParamsYamlUtilsV2
         if (p2.cache!=null) {
             p.cache = new ExecContextParamsYaml.Cache(p2.cache.enabled);
         }
+        p.tag = p2.tag;
+        p.priority = p2.priority;
         return p;
     }
 

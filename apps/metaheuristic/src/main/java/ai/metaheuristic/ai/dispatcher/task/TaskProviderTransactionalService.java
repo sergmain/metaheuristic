@@ -17,14 +17,18 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -61,6 +65,7 @@ public class TaskProviderTransactionalService {
     private final TaskRepository taskRepository;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextStatusService execContextStatusService;
+    private final ExecContextService execContextService;
 
     @Data
     @AllArgsConstructor
@@ -68,6 +73,10 @@ public class TaskProviderTransactionalService {
     public static class QueuedTask {
         public Long execContextId;
         public Long taskId;
+        public TaskImpl task;
+        public TaskParamsYaml taskParamYaml;
+        public String tag;
+        public int priority;
     }
 
     private final CopyOnWriteArrayList<QueuedTask> tasks = new CopyOnWriteArrayList<>();
@@ -75,12 +84,46 @@ public class TaskProviderTransactionalService {
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     public void registerTask(RegisterTaskForProcessingEvent event) {
-        for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds task : event.tasks) {
-            final QueuedTask queuedTask = new QueuedTask(task.execContextId, task.taskId);
+        for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds eventTask : event.tasks) {
+            ExecContextImpl ec =  execContextService.findById(eventTask.execContextId);
+            if (ec==null) {
+                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", eventTask.taskId, eventTask.execContextId);
+                continue;
+            }
+            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+
+            TaskImpl task = taskRepository.findById(eventTask.taskId).orElse(null);
+            if (task == null) {
+                log.warn("#317.015 Can't register task #{}, task doesn't exist", eventTask.taskId);
+                continue;
+            }
+            final TaskParamsYaml taskParamYaml;
+            try {
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            } catch (YAMLException e) {
+                log.error("#317.020 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
+                execContextTaskFinishingService.finishWithErrorWithTx(task, null);
+                continue;
+            }
+
+            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+            if (p==null) {
+                log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", eventTask.taskId, taskParamYaml.task.processCode, eventTask.execContextId);
+                continue;
+            }
+
+            final QueuedTask queuedTask = new QueuedTask(task.execContextId, eventTask.taskId, task, taskParamYaml, p.tag, p.priority);
             if (!tasks.contains(queuedTask)) {
                 tasks.add(queuedTask);
             }
         }
+        tasks.sort((o1, o2)->{
+            if(o1.priority!=o2.priority) {
+                // sort in descendant order;
+                return Integer.compare(o2.priority, o1.priority);
+            }
+            return Long.compare(o1.taskId, o2.taskId);
+        });
     }
 
     public void deRegisterTask(Long taskId) {
@@ -113,79 +156,65 @@ public class TaskProviderTransactionalService {
                 if (!statuses.isStarted(queuedTask.execContextId)) {
                     continue;
                 }
-                TaskImpl task = taskRepository.findById(queuedTask.taskId).orElse(null);
-                if (task == null) {
-                    forRemoving.add(queuedTask);
-                    continue;
-                }
-                final TaskParamsYaml taskParamYaml;
-                try {
-                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                } catch (YAMLException e) {
-                    log.error("#317.020 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
-                    execContextTaskFinishingService.finishWithError(task, null);
-                    forRemoving.add(queuedTask);
-                    continue;
-                }
 
-                if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // may be happened because of multi-threaded processing of internal function
                     forRemoving.add(queuedTask);
                     continue;
                 }
 
-                if (task.execState != EnumsApi.TaskExecState.NONE.value) {
+                if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
                     log.warn("#317.040 Task #{} with function '{}' was already processed with status {}",
-                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
+                            queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
                     forRemoving.add(queuedTask);
                     continue;
                 }
 
                 // all tasks with internal function will be processed by scheduler
-                if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
+                if (queuedTask.taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
                     forRemoving.add(queuedTask);
                     continue;
                 }
 
-                if (TaskUtils.gitUnavailable(taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
+                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
                     log.warn("#317.060 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
-                            processorId, task.getId(), psy.gitStatusInfo
+                            processorId, queuedTask.task.getId(), psy.gitStatusInfo
                     );
                     continue;
                 }
 
-                if (!S.b(taskParamYaml.task.function.env)) {
-                    String interpreter = psy.env.getEnvs().get(taskParamYaml.task.function.env);
+                if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
+                    String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#317.080 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                task.getId(), processorId, taskParamYaml.task.function.env
+                                queuedTask.task.getId(), processorId, queuedTask.taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
                         continue;
                     }
                 }
 
-                final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
+                final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(queuedTask.taskParamYaml.task.function.metas);
                 if (psy.os != null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
                     log.info("#317.100 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            processorId, task.getId(), psy.os, supportedOS
+                            processorId, queuedTask.task.getId(), psy.os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (taskParamYaml.task.function.checksumMap == null || taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
-                        log.warn("#317.120 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
+                    if (queuedTask.taskParamYaml.task.function.checksumMap == null || queuedTask.taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
+                        log.warn("#317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
                         continue;
                     }
                 }
 
-                resultTask = task;
-                // check that downgrading is supported
+                resultTask = queuedTask.task;
+                // check that downgrading is supporting
                 try {
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
                     //noinspection unused
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {

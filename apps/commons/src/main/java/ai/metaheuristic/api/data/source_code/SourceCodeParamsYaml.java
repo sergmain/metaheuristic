@@ -158,14 +158,16 @@ public class SourceCodeParamsYaml implements BaseParams {
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
-        public @Nullable SubProcesses subProcesses;
+        @Nullable public SubProcesses subProcesses;
 
         @JsonIgnore
-        public @Nullable Meta getMeta(String key) {
+        @Nullable public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);
         }
 
-        public @Nullable Cache cache;
+        @Nullable public Cache cache;
+        @Nullable public String tag;
+        public int priority;
     }
 
     @Data

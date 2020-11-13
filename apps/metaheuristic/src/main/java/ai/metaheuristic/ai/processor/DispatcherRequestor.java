@@ -330,14 +330,18 @@ public class DispatcherRequestor {
                     log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
-                log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
-
-                //noinspection StatementWithEmptyBody
-                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 & ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
-                    // short info for all 5xx errors
+                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
+                    int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
+                    if (errorCode==503) {
+                        log.error("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                    }
+                    else {
+                        log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
+                    }
                 }
                 else {
-                    log.error("#775.120 Stacktrace", e);
+                    log.error("#775.120 Error accessing url: {}", url);
+                    log.error("#775.125 Stacktrace", e);
                 }
             }
         } catch (Throwable e) {

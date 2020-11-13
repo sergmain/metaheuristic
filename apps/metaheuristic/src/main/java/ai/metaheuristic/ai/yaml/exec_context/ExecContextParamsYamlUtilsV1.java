@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtilsV2;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -83,6 +81,8 @@ public class ExecContextParamsYamlUtilsV1
         p1.outputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p2.outputs));
         p2.metas.addAll(p1.metas);
         p2.cache = null;
+        p2.tag = null;
+        p2.priority = 0;
         return p2;
     }
 

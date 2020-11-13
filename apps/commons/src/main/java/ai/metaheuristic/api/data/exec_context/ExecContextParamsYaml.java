@@ -150,6 +150,10 @@ public class ExecContextParamsYaml implements BaseParams {
         @Nullable
         public Cache cache;
 
+        @Nullable
+        public String tag;
+        public int priority;
+
         public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
             this.processName = processName;
             this.processCode = processCode;
