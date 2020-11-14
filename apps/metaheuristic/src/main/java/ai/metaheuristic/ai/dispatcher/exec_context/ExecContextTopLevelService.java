@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
+import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
@@ -60,6 +61,7 @@ public class ExecContextTopLevelService {
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final EventSenderService eventSenderService;
+    private final ExecContextStatusService execContextStatusService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId, ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
@@ -170,6 +172,11 @@ public class ExecContextTopLevelService {
 
         execContextSyncService.getWithSyncNullable(execContextId,
                 () -> execContextFSM.processResendTaskOutputVariable(processorId, status, taskId, variableId));
+    }
+
+    public void registerCreatedTask(TaskCreatedEvent event) {
+        execContextSyncService.getWithSyncNullable(event.execContextId,
+                () -> execContextStatusService.registerCreatedTask(event));
     }
 
 }

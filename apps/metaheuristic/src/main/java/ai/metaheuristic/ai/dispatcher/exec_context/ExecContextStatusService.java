@@ -16,13 +16,18 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -39,6 +44,8 @@ import java.util.stream.Collectors;
 public class ExecContextStatusService {
 
     private final ExecContextRepository execContextRepository;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextCache execContextCache;
 
     private DispatcherCommParamsYaml.ExecContextStatus cachedStatus = null;
     private long updatedOn = 0L;
@@ -66,4 +73,20 @@ public class ExecContextStatusService {
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
         return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
     }
+
+    @Transactional
+    public Void registerCreatedTask(TaskCreatedEvent event) {
+        execContextSyncService.checkWriteLockPresent(event.execContextId);
+
+        ExecContextImpl execContext = execContextCache.findById(event.execContextId);
+        if (execContext==null) {
+            return null;
+        }
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+
+
+
+        return null;
+    }
+
 }

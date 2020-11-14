@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,13 @@ public class EventBusService {
     public final ExecContextSyncService execContextSyncService;
     public final EventSenderService eventSenderService;
     public final DispatcherParamsService dispatcherParamsService;
+    public final ExecContextTopLevelService execContextTopLevelService;
+
+    @Async
+    @EventListener
+    public void registerCreatedTask(TaskCreatedEvent event) {
+        execContextTopLevelService.registerCreatedTask(event);
+    }
 
     @Async
     @EventListener
