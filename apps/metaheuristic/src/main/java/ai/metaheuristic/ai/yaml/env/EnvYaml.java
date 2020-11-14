@@ -32,7 +32,7 @@ public class EnvYaml {
     public final List<DiskStorage> disk = new ArrayList<>();
 
     @Nullable
-    public String tag;
+    public String tags;
 
     @Nullable
     public DiskStorage findDiskStorageByCode(String code) {

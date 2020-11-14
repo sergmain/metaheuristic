@@ -81,7 +81,7 @@ public class ExecContextParamsYamlUtilsV1
         p1.outputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p2.outputs));
         p2.metas.addAll(p1.metas);
         p2.cache = null;
-        p2.tag = null;
+        p2.tags = null;
         p2.priority = 0;
         return p2;
     }

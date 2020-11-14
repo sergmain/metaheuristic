@@ -166,7 +166,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         }
 
         @Nullable public Cache cache;
-        @Nullable public String tag;
+        @Nullable public String tags;
         public int priority;
     }
 

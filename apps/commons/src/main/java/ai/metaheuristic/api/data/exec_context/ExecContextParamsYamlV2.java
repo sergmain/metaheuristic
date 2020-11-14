@@ -153,7 +153,7 @@ public class ExecContextParamsYamlV2 implements BaseParams {
         @Nullable
         public CacheV2 cache;
         @Nullable
-        public String tag;
+        public String tags;
         public int priority;
 
         public ProcessV2(String processName, String processCode, String internalContextId, FunctionDefinitionV2 function) {

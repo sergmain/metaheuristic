@@ -41,7 +41,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -52,7 +51,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -79,7 +77,7 @@ public class TaskProviderTransactionalService {
         public Long taskId;
         public TaskImpl task;
         public TaskParamsYaml taskParamYaml;
-        public String tag;
+        public String tags;
         public int priority;
     }
 
@@ -116,7 +114,7 @@ public class TaskProviderTransactionalService {
                 continue;
             }
 
-            final QueuedTask queuedTask = new QueuedTask(task.execContextId, eventTask.taskId, task, taskParamYaml, p.tag, p.priority);
+            final QueuedTask queuedTask = new QueuedTask(task.execContextId, eventTask.taskId, task, taskParamYaml, p.tags, p.priority);
             if (!tasks.contains(queuedTask)) {
                 tasks.add(queuedTask);
             }
@@ -189,7 +187,7 @@ public class TaskProviderTransactionalService {
                 }
 
                 // check of tags
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tag)) {
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env.tags)) {
                     continue;
                 }
 

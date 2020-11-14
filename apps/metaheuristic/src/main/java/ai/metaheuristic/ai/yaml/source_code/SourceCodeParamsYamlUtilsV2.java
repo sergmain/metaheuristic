@@ -88,7 +88,7 @@ public class SourceCodeParamsYamlUtilsV2
         if (o.cache!=null) {
             pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled);
         }
-        pr.tag = o.tag;
+        pr.tags = o.tags;
         pr.priority = o.priority;
 
         pr.subProcesses = o.subProcesses!=null
