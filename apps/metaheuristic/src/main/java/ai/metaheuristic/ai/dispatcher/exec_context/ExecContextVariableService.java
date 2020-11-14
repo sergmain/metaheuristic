@@ -56,7 +56,6 @@ public class ExecContextVariableService {
     private final TaskService taskService;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {

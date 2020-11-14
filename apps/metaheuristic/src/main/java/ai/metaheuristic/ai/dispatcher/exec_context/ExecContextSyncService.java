@@ -77,6 +77,7 @@ public class ExecContextSyncService {
         }
     }
 
+    // ForCreation means that the presence of TX won't be checked
     @Nullable
     public <T> T getWithSyncNullableForCreation(Long execContextId, Supplier<T> supplier) {
         checkWriteLockNotPresent(execContextId);

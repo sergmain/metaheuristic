@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -41,25 +40,25 @@ public class SourceCodeSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long execContextId) {
-        if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
+    public void checkWriteLockPresent(Long sourceCodeId) {
+        if (!getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long execContextId) {
-        if (getWriteLock(execContextId).isHeldByCurrentThread()) {
+    public void checkWriteLockNotPresent(Long sourceCodeId) {
+        if (getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
-        return commonSync.getWriteLock(execContextId);
+    public ReentrantReadWriteLock.WriteLock getWriteLock(Long sourceCodeId) {
+        return commonSync.getWriteLock(sourceCodeId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
-        return commonSync.getReadLock(execContextId);
+    private ReentrantReadWriteLock.ReadLock getReadLock(Long sourceCodeId) {
+        return commonSync.getReadLock(sourceCodeId);
     }
 
     public <T> T getWithSync(Long sourceCodeId, Supplier<T> supplier) {
@@ -75,6 +74,7 @@ public class SourceCodeSyncService {
         }
     }
 
+    // ForCreation means that the presence of TX won't be checked
     public <T> T getWithSyncForCreation(Long sourceCodeId, Supplier<T> supplier) {
         checkWriteLockNotPresent(sourceCodeId);
 
@@ -87,6 +87,7 @@ public class SourceCodeSyncService {
         }
     }
 
+    // ForCreation means that the presence of TX won't be checked
     @Nullable
     public <T> T getWithSyncNullableForCreation(Long sourceCodeId, Supplier<T> supplier) {
         checkWriteLockNotPresent(sourceCodeId);

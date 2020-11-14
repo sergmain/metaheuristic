@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -144,6 +145,16 @@ public class ExecContextTopLevelService {
             log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
+        try {
+            storeExecResultInternal(result);
+        }
+        catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("#210.105 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
+            storeExecResultInternal(result);
+        }
+    }
+
+    private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         try (DataHolder holder = new DataHolder()) {
             execContextFSM.storeExecResultWithTx(result, holder);
             eventSenderService.sendEvents(holder);

@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
@@ -57,6 +57,9 @@ public class TestTaskRequest extends FeatureMethods {
     @Autowired
     public ExecContextSchedulerService execContextSchedulerService;
 
+    @Autowired
+    public ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -76,8 +79,6 @@ public class TestTaskRequest extends FeatureMethods {
         String sessionId;
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-//        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
-
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
@@ -118,15 +119,14 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-                for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                    Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
-                    assertEquals(Enums.UploadVariableStatus.OK, status);
-                }
-                return txSupportForTestingService.checkTaskCanBeFinishedWithTx(task.id, holder);
-            });
-        }
+        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+                assertEquals(Enums.UploadVariableStatus.OK, status);
+            }
+            return null;
+        });
+        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);

@@ -16,10 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +40,7 @@ public class EventBusService {
 
     public final TaskCheckCachingTopLevelService taskCheckCachingService;
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
-    public final ExecContextTaskFinishingService execContextTaskFinishingService;
+    public final ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
     public final ExecContextSyncService execContextSyncService;
     public final EventSenderService eventSenderService;
     public final DispatcherParamsService dispatcherParamsService;
@@ -49,10 +48,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void checkTaskCanBeFinished(CheckTaskCanBeFinishedEvent event) {
-        try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSyncNullable(event.execContextId,
-                    () -> execContextTaskFinishingService.checkTaskCanBeFinished(event.taskId, event.checkCaching, holder));
-        }
+        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId, event.checkCaching);
     }
 
     @Async

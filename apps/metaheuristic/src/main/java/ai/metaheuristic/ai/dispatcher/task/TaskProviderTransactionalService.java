@@ -245,15 +245,20 @@ public class TaskProviderTransactionalService {
             return null;
         }
 
+        TaskImpl t = taskRepository.findById(resultTask.id).orElse(null);
+        if (t==null) {
+            log.warn("#317.015 Can't assign task #{}, task doesn't exist", resultTask.id);
+            return null;
+        }
         // normal way of operation for this Processor
         longHolder.set(0);
 
-        resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setProcessorId(processor.id);
-        resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        resultTask.setResultResourceScheduledOn(0);
+        t.setAssignedOn(System.currentTimeMillis());
+        t.setProcessorId(processor.id);
+        t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+        t.setResultResourceScheduledOn(0);
 
-        return resultTask;
+        return t;
     }
 
     public void deregisterTasksByExecContextId(Long execContextId) {

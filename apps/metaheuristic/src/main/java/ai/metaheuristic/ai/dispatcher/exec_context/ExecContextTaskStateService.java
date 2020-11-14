@@ -67,16 +67,12 @@ public class ExecContextTaskStateService {
         return updateTaskExecStates(execContext, task, execState, taskContextId);
     }
 
-    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public OperationStatusRest updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         return updateTaskExecStates(execContext, task, execState, taskContextId, false);
     }
 
-    public OperationStatusRest updateTaskExecStates(@Nullable ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
+    public OperationStatusRest updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
         TxUtils.checkTxExists();
-        if (execContext==null) {
-            // this execContext was deleted
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
         execContextSyncService.checkWriteLockPresent(execContext.id);
         TaskImpl t = taskExecStateService.changeTaskState(task, execState);
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, t.id, execState, taskContextId);

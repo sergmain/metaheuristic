@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -26,8 +25,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Serge
@@ -41,54 +39,78 @@ import java.util.function.Function;
 @Profile("dispatcher")
 public class TaskSyncService {
 
-    private final TaskRepository taskRepository;
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long execContextId) {
-        if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+    public void checkWriteLockPresent(Long taskId) {
+        if (!getWriteLock(taskId).isHeldByCurrentThread()) {
+            throw new IllegalStateException("#978.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long execContextId) {
-        if (getWriteLock(execContextId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+    public void checkWriteLockNotPresent(Long taskId) {
+        if (getWriteLock(taskId).isHeldByCurrentThread()) {
+            throw new IllegalStateException("#978.025 The thread was already locked by WriteLock");
         }
     }
 
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
-        return commonSync.getWriteLock(execContextId);
+    @SuppressWarnings("WeakerAccess")
+    public ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
+        return commonSync.getWriteLock(taskId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
-        return commonSync.getReadLock(execContextId);
+    private ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
+        return commonSync.getReadLock(taskId);
     }
 
-    public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
+    public <T> T getWithSync(Long taskId, Supplier<T> supplier) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
         try {
             lock.lock();
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
-            if (task==null) {
-                log.warn("#306.010 Can't find Task for Id: {}", taskId);
-                return null;
-            }
-            return function.apply(task);
+            return supplier.get();
         } finally {
             lock.unlock();
         }
     }
 
-    public void getWithSyncVoid(Long taskId, Consumer<TaskImpl> supplier) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
+    // ForCreation means that the presence of TX won't be checked
+    public <T> T getWithSyncForCreation(Long taskId, Supplier<T> supplier) {
+        checkWriteLockNotPresent(taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
         try {
             lock.lock();
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
-            if (task==null) {
-                log.warn("#306.040 Can't find Task for Id: {}", taskId);
-                return;
-            }
-            supplier.accept(task);
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // ForCreation means that the presence of TX won't be checked
+    @Nullable
+    public <T> T getWithSyncNullableForCreation(Long taskId, Supplier<T> supplier) {
+        checkWriteLockNotPresent(taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
+        try {
+            lock.lock();
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Nullable
+    public <T> T getWithSyncNullable(Long taskId, Supplier<T> supplier) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
+        try {
+            lock.lock();
+            return supplier.get();
         } finally {
             lock.unlock();
         }
