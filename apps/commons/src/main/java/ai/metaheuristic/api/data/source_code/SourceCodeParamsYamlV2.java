@@ -140,10 +140,13 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
         public final List<VariableV2> inputs = new ArrayList<>();
         public final List<VariableV2> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
-        @Nullable public SubProcessesV2 subProcesses;
+        @Nullable
+        public SubProcessesV2 subProcesses;
 
-        @Nullable public CacheV2 cache;
-        @Nullable public String tags;
+        @Nullable
+        public CacheV2 cache;
+        @Nullable
+        public String tags;
         public int priority;
     }
 
@@ -166,6 +169,8 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
     @Data
     @ToString
     public static class SourceCodeV2 {
+        @Nullable
+        public Integer instances;
         public VariableDefinitionV2 variables = new VariableDefinitionV2();
         public List<ProcessV2> processes = new ArrayList<>();
         public boolean clean = false;

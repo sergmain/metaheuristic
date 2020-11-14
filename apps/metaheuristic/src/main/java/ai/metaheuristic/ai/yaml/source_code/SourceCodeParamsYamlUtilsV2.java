@@ -55,6 +55,7 @@ public class SourceCodeParamsYamlUtilsV2
 
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
+        p.source.instances = v2.source.instances;
         if (v2.source.metas!=null){
             p.source.metas = v2.source.metas;
         }

@@ -371,7 +371,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest() {
-        return execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
+        return txSupportForTestingService.createExecContext(sourceCode, company.getUniqueId());
     }
 
     private void deleteFunction(@Nullable Function s) {

@@ -66,8 +66,20 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     List<Long> findIdByState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
-//    @Transactional(readOnly = true)
     List<Long> findIdsByExecState(int execState);
+
+/*
+    ERROR(-2),          // some error in configuration
+    UNKNOWN(-1),        // unknown state
+    NONE(0),            // just created execContext
+    PRODUCING(1),       // producing was just started
+    NOT_USED_ANYMORE(2),        // former 'PRODUCED' status
+    STARTED(3),         // started
+    STOPPED(4),         // stopped
+
+*/
+    @Query(value="select count(*) from ExecContextImpl e where e.state in (1, 3, 4)")
+    long countInProgress();
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
 //    @Transactional(readOnly = true)

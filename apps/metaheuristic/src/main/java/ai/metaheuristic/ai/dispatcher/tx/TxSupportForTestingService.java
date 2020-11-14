@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -72,6 +73,17 @@ public class TxSupportForTestingService {
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
+    private final ExecContextCreatorService execContextCreatorService;
+    private final SourceCodeSyncService sourceCodeSyncService;
+
+    @Transactional
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
+                () -> execContextCreatorService.createExecContext(sourceCode, companyId));
+    }
 
     @Transactional
     public void saveProcessor(Processor processor) {

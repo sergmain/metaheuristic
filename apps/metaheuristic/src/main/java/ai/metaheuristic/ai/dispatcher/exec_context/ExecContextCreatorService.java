@@ -20,17 +20,22 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -53,14 +58,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class ExecContextCreatorService {
 
     private final ExecContextTaskProducingService execContextTaskProducingService;
+    private final ExecContextRepository execContextRepository;
     private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
+    private final SourceCodeSyncService sourceCodeSyncService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -88,6 +94,8 @@ public class ExecContextCreatorService {
 
     @Transactional
     public ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
+        sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
+
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#562.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
@@ -103,6 +111,8 @@ public class ExecContextCreatorService {
 
     @Transactional
     public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId) {
+        sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
+
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
@@ -140,6 +150,7 @@ public class ExecContextCreatorService {
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
         TxUtils.checkTxExists();
+        sourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
@@ -148,6 +159,17 @@ public class ExecContextCreatorService {
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+
+        if (scpy.source.instances!=null && scpy.source.instances>0) {
+            long count = execContextRepository.countInProgress();
+            if (count>=scpy.source.instances) {
+                return new ExecContextCreationResult(
+                        S.f("#562.115 Too many instances of SourceCode %s, max allowed: %d, current count: %d",
+                                sourceCode.uid, scpy.source.instances, count));
+            }
+        }
+
         AtomicLong contextId = new AtomicLong();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
                 EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());

@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -39,9 +41,16 @@ public class ExecContextCreatorTopLevelService {
 
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
+    private final SourceCodeSyncService sourceCodeSyncService;
+
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
+        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
+                () -> execContextCreatorService.createExecContext(sourceCodeId, context));
+    }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId) {
-        return execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId);
+        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
+                () -> execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId));
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
@@ -56,7 +65,9 @@ public class ExecContextCreatorTopLevelService {
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
         try {
-            return execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId);
+            return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
+                    () -> execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId));
+
         } catch (Throwable th) {
             final String es = "#563.060 General error of creating execContext. " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid + ", companyId: " + companyUniqueId + ", error: " + th.getMessage();
