@@ -16,13 +16,39 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.commons.S;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class CollectionUtils {
+
+    @SuppressWarnings("ConstantConditions")
+    public static boolean checkTagAllowed(@Nullable String taskTag, @Nullable String processorTag) {
+        boolean taskTagEmpty = S.b(taskTag);
+        boolean processorTagEmpty = S.b(processorTag);
+
+        if (taskTagEmpty && processorTagEmpty) {
+            return true;
+        }
+        if (taskTagEmpty && !processorTagEmpty) {
+            return false;
+        }
+        if (!taskTagEmpty && processorTagEmpty) {
+            return true;
+        }
+
+        return org.springframework.util.CollectionUtils.containsAny(toSet(taskTag), toSet(processorTag));
+    }
+
+    private static Set<String> toSet(String tags) {
+        final Set<String> set = new HashSet<>();
+        String[] arr = StringUtils.split(tags, ',');
+        Stream.of(arr).forEach(s-> set.add(s.strip()));
+        return set;
+    }
 
     public static boolean isNotEmpty(@Nullable Collection<?> collection) {
         return collection!=null && !collection.isEmpty();

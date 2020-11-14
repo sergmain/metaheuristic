@@ -88,7 +88,7 @@ public class TaskProviderService {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
         synchronized (syncObj) {
 
@@ -96,12 +96,12 @@ public class TaskProviderService {
                 return null;
             }
 
-            TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned);
+            TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
             if (task!=null) {
                 execContextSyncService.getWithSyncNullable(task.execContextId,
                         ()->execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null));
 
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorId, task.id, task.execContextId);
+                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
                 taskProviderTransactionalService.deRegisterTask(task.id);
             }
             return task;
@@ -126,7 +126,7 @@ public class TaskProviderService {
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(
-                reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned);
+                reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned);
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -155,10 +155,10 @@ public class TaskProviderService {
 
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
 
-        final TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processorId, psy, isAcceptOnlySigned);
+        final TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned);
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -177,7 +177,7 @@ public class TaskProviderService {
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
                 log.warn("#393.120 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.getId(), processorId, psy.taskParamsVersion);
+                        task.getId(), processor.id, psy.taskParamsVersion);
                 return null;
             }
 
@@ -191,12 +191,12 @@ public class TaskProviderService {
 
     @Nullable
     private TaskImpl getTaskAndAssignToProcessorInternal(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
 
         DispatcherCommParamsYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
 
-        List<TaskImpl> tasks = taskRepository.findForProcessorId(processorId);
+        List<TaskImpl> tasks = taskRepository.findForProcessorId(processor.id);
         for (TaskImpl task : tasks) {
             if (!statuses.isStarted(task.execContextId)) {
                 continue;
@@ -204,13 +204,13 @@ public class TaskProviderService {
             if (reportProcessorTaskStatus.statuses==null || reportProcessorTaskStatus.statuses.stream().noneMatch(a->a.taskId==task.id)) {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
-                            processorId, task.id, EnumsApi.TaskExecState.from(task.execState));
+                            processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
                     return task;
                 }
             }
         }
 
-        TaskImpl result = findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned);
+        TaskImpl result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
         return result;
     }
 

@@ -18,12 +18,14 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -39,6 +41,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -136,13 +140,13 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
 
         if (tasks.isEmpty()) {
             return null;
         }
 
-        AtomicLong longHolder = bannedSince.computeIfAbsent(processorId, o -> new AtomicLong(0));
+        AtomicLong longHolder = bannedSince.computeIfAbsent(processor.id, o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
@@ -176,10 +180,16 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
+                // check of git availability
                 if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
                     log.warn("#317.060 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
-                            processorId, queuedTask.task.getId(), psy.gitStatusInfo
+                            processor.id, queuedTask.task.getId(), psy.gitStatusInfo
                     );
+                    continue;
+                }
+
+                // check of tags
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tag)) {
                     continue;
                 }
 
@@ -187,7 +197,7 @@ public class TaskProviderTransactionalService {
                     String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#317.080 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                queuedTask.task.getId(), processorId, queuedTask.taskParamYaml.task.function.env
+                                queuedTask.task.getId(), processor.id, queuedTask.taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
                         continue;
@@ -198,7 +208,7 @@ public class TaskProviderTransactionalService {
                 if (psy.os != null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
                     log.info("#317.100 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            processorId, queuedTask.task.getId(), psy.os, supportedOS
+                            processor.id, queuedTask.task.getId(), psy.os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
                     continue;
@@ -219,7 +229,7 @@ public class TaskProviderTransactionalService {
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#317.140 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), processorId, psy.taskParamsVersion);
+                            resultTask.getId(), processor.id, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
                 }
@@ -241,7 +251,7 @@ public class TaskProviderTransactionalService {
         longHolder.set(0);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setProcessorId(processorId);
+        resultTask.setProcessorId(processor.id);
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
