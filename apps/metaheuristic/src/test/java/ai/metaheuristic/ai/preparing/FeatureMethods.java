@@ -36,13 +36,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.dispatcher.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -89,7 +87,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     }
 
     public long countTasks(@Nullable List<EnumsApi.ExecContextState> states) {
-        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepository.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
         if (states==null) {
             return list.size();
         }

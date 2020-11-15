@@ -23,16 +23,15 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,11 +71,11 @@ public class ExecContextReconciliationService {
         }
         Set<ExecContextData.TaskVertex> vertices = execContextGraphService.findDescendants(execContext, rootVertices.get(0).taskId);
 
-        final Map<Long, TaskData.TaskState> states = getExecStateOfTasks(execContext.id);
+        final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
 
         for (ExecContextData.TaskVertex tv : vertices) {
 
-            TaskData.TaskState taskState = states.get(tv.taskId);
+            TaskApiData.TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {
                 status.isNullState.set(true);
             }
@@ -86,6 +85,7 @@ public class ExecContextReconciliationService {
                         "graph: "+tv.execState);
 
 /*
+                // TODO 2020.11.14 need to decide what to do with different states. if nothing, then delete the following commented code
                 if (taskState.execState== EnumsApi.TaskExecState.ERROR.value) {
                     finishWithErrorWithTx(tv.taskId, null, null);
                 }
@@ -102,7 +102,7 @@ public class ExecContextReconciliationService {
             return status;
         }
 
-        final Map<Long, TaskData.TaskState> newStates = getExecStateOfTasks(execContext.id);
+        final Map<Long, TaskApiData.TaskState> newStates = execContextService.getExecStateOfTasks(execContext.id);
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
         // fix IN_PROCESSING state
@@ -132,18 +132,6 @@ public class ExecContextReconciliationService {
                     }
                 });
         return status;
-    }
-
-    @NonNull
-    private Map<Long, TaskData.TaskState> getExecStateOfTasks(Long execContextId) {
-        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
-
-        Map<Long, TaskData.TaskState> states = new HashMap<>(list.size()+1);
-        for (Object[] o : list) {
-            TaskData.TaskState taskState = new TaskData.TaskState(o);
-            states.put(taskState.taskId, taskState);
-        }
-        return states;
     }
 
     @Transactional

@@ -68,7 +68,7 @@ public class TestSingleInternalFunction extends FeatureMethods {
     @Test
     public void test() {
         produceTasks();
-        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepository.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
         assertEquals(2, list.size());
 
         final List<String> codes = List.of(getFunctionCode(list.get(0)[0]), getFunctionCode(list.get(1)[0]));

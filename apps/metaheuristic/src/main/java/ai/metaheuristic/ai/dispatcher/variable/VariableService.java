@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -34,6 +35,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -51,6 +53,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -85,6 +88,7 @@ public class VariableService {
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
     private final GlobalVariableRepository globalVariableRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @SneakyThrows
     public void createInputVariablesForSubProcess(
@@ -365,7 +369,7 @@ public class VariableService {
             if (sv == null) {
                 Variable v = createUninitialized(variable.name, execContextId, contextId);
 
-                // even variable.getNullable() can be false, we set empty to true because variable will be inited later
+                // even that a variable.getNullable() can be false, we set a field 'empty' as true because variable will be inited later
                 // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
                 taskParamsYaml.task.outputs.add(
                         new TaskParamsYaml.OutputVariable(
@@ -376,6 +380,13 @@ public class VariableService {
         }
         task.updatedOn = System.currentTimeMillis();
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
+
+        eventPublisher.publishEvent(new TaskCreatedEvent(
+                new ExecContextApiData.TaskStateInfo(task.id, execContextId,
+                        taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
+                        null,
+                        taskParamsYaml.task.outputs.stream().map(o->new ExecContextApiData.VariableInfo(o.id, o.name, o.context)).collect(Collectors.toList())) ));
+
         return task;
     }
 

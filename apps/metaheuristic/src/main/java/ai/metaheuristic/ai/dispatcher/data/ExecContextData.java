@@ -18,7 +18,10 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.Task;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

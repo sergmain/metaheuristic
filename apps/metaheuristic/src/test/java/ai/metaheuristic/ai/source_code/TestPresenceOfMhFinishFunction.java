@@ -68,7 +68,7 @@ public class TestPresenceOfMhFinishFunction extends FeatureMethods {
     @Test
     public void test() {
         produceTasks();
-        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepository.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
         assertEquals(1, list.size());
         TaskImpl task = taskRepository.findById((Long)list.get(0)[0]).orElse(null);
         assertNotNull(task);

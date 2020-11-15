@@ -48,10 +48,25 @@ public class TaskApiData {
     public static class SimpleTaskInfo {
         public Long taskId;
         public String state;
+        // taskContextId
         public String context;
         public String process;
         public String functionCode;
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class TaskState {
+        public Long taskId;
+        public Integer execState;
+        public long updatedOn;
+
+        public TaskState(Object[] o) {
+            this.taskId = (Long) o[0];
+            this.execState = (Integer) o[1];
+            Long longObj = (Long) o[2];
+            this.updatedOn = longObj!=null ? longObj : 0;
+        }
+    }
 
 }

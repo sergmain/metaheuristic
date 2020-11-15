@@ -14,21 +14,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.event;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.commons.S;
+import lombok.SneakyThrows;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
  * Date: 11/14/2020
- * Time: 5:55 AM
+ * Time: 8:20 PM
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TaskCreatedEvent {
-    public ExecContextApiData.TaskStateInfo taskVariablesInfo;
+public class ExecContextUtils {
+
+    @SneakyThrows
+    public static ExecContextApiData.ExecContextTasksStatesInfo getExecContextTasksVariablesInfo(@Nullable String tasksVariablesInfo) {
+        ExecContextApiData.ExecContextTasksStatesInfo info;
+        if (S.b(tasksVariablesInfo)) {
+            info = new ExecContextApiData.ExecContextTasksStatesInfo();
+        }
+        else {
+            info = JsonUtils.getMapper().readValue(tasksVariablesInfo, ExecContextApiData.ExecContextTasksStatesInfo.class);
+        }
+        return info;
+    }
+
 }

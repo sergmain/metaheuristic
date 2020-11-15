@@ -173,7 +173,12 @@ public class ExecContextParamsYaml implements BaseParams {
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
 
+    // key - processCode, value - Process
     private HashMap<String, Process> processMap = null;
+
+    // json format, string form of ai.metaheuristic.ai.dispatcher.data.ExecContextData.ExecContextTasksVariablesInfo
+    @Nullable
+    public String tasksVariablesInfo;
 
     @JsonIgnore
     @SuppressWarnings("unused")

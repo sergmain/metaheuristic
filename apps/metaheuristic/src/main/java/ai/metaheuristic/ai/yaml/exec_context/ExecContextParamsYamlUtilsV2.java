@@ -58,6 +58,7 @@ public class ExecContextParamsYamlUtilsV2
         t.processesGraph = v1.processesGraph;
         v1.processes.stream().map(ExecContextParamsYamlUtilsV2::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v1.variables, t.variables);
+        t.tasksVariablesInfo = v1.tasksVariablesInfo;
 
         return t;
     }

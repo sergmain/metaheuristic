@@ -19,13 +19,18 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -33,6 +38,55 @@ import java.util.List;
  * Time: 12:04 AM
  */
 public class ExecContextApiData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class VariableInfo {
+        public Long id;
+        public String name;
+
+        @Nullable
+        public EnumsApi.VariableContext context;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskStateInfo {
+        @JsonProperty("tId")
+        public Long taskId;
+
+        @JsonProperty("ecId")
+        public Long execContextId;
+
+        @JsonProperty("tCtxId")
+        public String taskContextId;
+
+        @JsonProperty("p")
+        public String process;
+
+        @JsonProperty("f")
+        public String functionCode;
+
+        @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
+        @Nullable
+        @JsonProperty("ins")
+        public List<VariableInfo> inputs;
+
+        @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
+        @Nullable
+        @JsonProperty("outs")
+        public List<VariableInfo> outputs;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextTasksStatesInfo {
+        public List<TaskStateInfo> tasks = new ArrayList<>();
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -50,13 +104,18 @@ public class ExecContextApiData {
         public boolean empty = true;
         public Long taskId;
         public String state;
+        // context of function
         public String context;
 
-        public StateCell(Long taskId, String state, String context) {
+        @Nullable
+        public List<VariableInfo> outs;
+
+        public StateCell(Long taskId, String state, String context, @Nullable List<VariableInfo> outs) {
             this.empty = false;
             this.taskId = taskId;
             this.state = state;
             this.context = context;
+            this.outs = outs;
         }
     }
 
@@ -89,11 +148,12 @@ public class ExecContextApiData {
     @AllArgsConstructor
     public static class RawExecContextStateResult extends BaseDataClass {
         public Long sourceCodeId;
-        public List<TaskApiData.SimpleTaskInfo> infos;
+        public List<ExecContextApiData.TaskStateInfo> infos;
         public List<String> processCodes;
         public EnumsApi.SourceCodeType sourceCodeType;
         public String sourceCodeUid;
         public boolean sourceCodeValid;
+        public Map<Long, TaskApiData.TaskState> states;
 
         public RawExecContextStateResult(String error) {
             addErrorMessage(error);

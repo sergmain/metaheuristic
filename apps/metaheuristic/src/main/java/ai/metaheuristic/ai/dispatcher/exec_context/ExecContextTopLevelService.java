@@ -64,7 +64,8 @@ public class ExecContextTopLevelService {
     private final ExecContextStatusService execContextStatusService;
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
-        ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId, ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
+        ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId,
+                ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
         ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(raw);
         return r;
     }
@@ -175,7 +176,7 @@ public class ExecContextTopLevelService {
     }
 
     public void registerCreatedTask(TaskCreatedEvent event) {
-        execContextSyncService.getWithSyncNullable(event.execContextId,
+        execContextSyncService.getWithSyncNullable(event.taskVariablesInfo.execContextId,
                 () -> execContextStatusService.registerCreatedTask(event));
     }
 

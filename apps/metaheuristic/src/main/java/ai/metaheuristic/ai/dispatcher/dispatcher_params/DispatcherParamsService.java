@@ -238,14 +238,6 @@ public class DispatcherParamsService {
             if (S.b(dispatcher.params)) {
                 throw new IllegalStateException("(S.b(dispatcher.params))");
             }
-/*
-        // todo 2020-04-24 this isn't working. need better solution to reduce number of db interaction
-        //  2020-10-12 what is the problem?
-        if (dispatcherCacheValue!=null && dispatcher.params.equals(dispatcherCacheValue.params)) {
-            log.info("Dispatcher params is the same. Won't be saved  to db");
-            return;
-        }
-*/
             try {
                 dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
                 dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
@@ -267,13 +259,6 @@ public class DispatcherParamsService {
                 dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
                 if (dispatcherCacheValue==null) {
                     eventPublisher.publishEvent(new DispatcherCacheCheckingEvent());
-/*
-                    Dispatcher entity = new Dispatcher();
-                    entity.code = Consts.DISPATCHERS_CACHE;
-                    dispatcherParamsYaml = new DispatcherParamsYaml();
-                    entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
-                    dispatcherCacheValue = dispatcherParamsRepository.save(entity);
-*/
                     return null;
                 }
                 else {
