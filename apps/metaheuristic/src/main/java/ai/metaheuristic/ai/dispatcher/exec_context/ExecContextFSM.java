@@ -161,7 +161,6 @@ public class ExecContextFSM {
         task.setResultReceived(true);
 
         holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-        // execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
         return null;
     }
 

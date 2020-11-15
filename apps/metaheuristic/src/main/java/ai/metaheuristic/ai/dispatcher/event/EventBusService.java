@@ -49,6 +49,12 @@ public class EventBusService {
 
     @Async
     @EventListener
+    public void registerVariableState(VariableUploadedEvent event) {
+        execContextTopLevelService.registerVariableState(event);
+    }
+
+    @Async
+    @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
         execContextTopLevelService.registerCreatedTask(event);
     }

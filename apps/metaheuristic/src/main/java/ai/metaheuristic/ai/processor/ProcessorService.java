@@ -66,6 +66,7 @@ public class ProcessorService {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
+        // TODO 2020-11-14 or it's about using TimeZoned value?
         ProcessorCommParamsYaml.ReportProcessorStatus status = new ProcessorCommParamsYaml.ReportProcessorStatus(
                 envService.getEnvYaml(),
                 gitSourcingService.gitStatusInfo,
@@ -129,7 +130,7 @@ public class ProcessorService {
                 case inline:
                 default:
                     if (true) {
-                        throw new NotImplementedException("need to set uploaded in params for this variableId");
+                        throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
                     }
                     status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
                     break;
@@ -150,12 +151,6 @@ public class ProcessorService {
             processorTaskService.markAsFinishedWithError(dispatcherUrl, taskId,
                     "#749.050 Variable wasn't found. Considering that this task is broken");
 
-            // TODO 2020-09-01 do we still need to set uploaded status?
-/*
-            if (true) {
-                throw new NotImplementedException("need to set uploaded in params, not completed for task");
-            }
-*/
             processorTaskService.setCompleted(dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }

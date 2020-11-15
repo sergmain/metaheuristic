@@ -189,7 +189,6 @@ public class TaskCheckCachingService {
             task.setResultReceived(true);
 
             holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, false));
-//            execContextTaskFinishingService.checkTaskCanBeFinished(task, false, holder);
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

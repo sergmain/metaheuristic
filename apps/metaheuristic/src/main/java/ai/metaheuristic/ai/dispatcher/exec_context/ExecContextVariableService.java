@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -85,7 +86,7 @@ public class ExecContextVariableService {
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
             holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-//            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variableId, false));
 
             return OK_UPLOAD_RESULT;
         }
@@ -122,7 +123,7 @@ public class ExecContextVariableService {
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
             holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-//            execContextTaskFinishingService.checkTaskCanBeFinished(task, holder);
+            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variable.getId(), true));
             return OK_UPLOAD_RESULT;
         }
         else {

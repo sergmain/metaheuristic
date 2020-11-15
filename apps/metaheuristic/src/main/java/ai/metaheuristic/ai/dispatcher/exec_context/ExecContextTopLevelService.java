@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
@@ -178,6 +179,11 @@ public class ExecContextTopLevelService {
     public void registerCreatedTask(TaskCreatedEvent event) {
         execContextSyncService.getWithSyncNullable(event.taskVariablesInfo.execContextId,
                 () -> execContextStatusService.registerCreatedTask(event));
+    }
+
+    public void registerVariableState(VariableUploadedEvent event) {
+        execContextSyncService.getWithSyncNullable(event.execContextId,
+                () -> execContextStatusService.registerVariableState(event));
     }
 
 }

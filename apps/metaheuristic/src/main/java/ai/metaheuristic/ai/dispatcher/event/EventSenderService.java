@@ -44,6 +44,12 @@ public class EventSenderService {
             if (event instanceof CheckTaskCanBeFinishedEvent) {
                 eventPublisher.publishEvent((CheckTaskCanBeFinishedEvent)event);
             }
+            else if (event instanceof VariableUploadedEvent) {
+                eventPublisher.publishEvent((VariableUploadedEvent)event);
+            }
+            else {
+                throw new IllegalStateException("Not supported event: " +  event.getClass().getName());
+            }
         }
 
     }

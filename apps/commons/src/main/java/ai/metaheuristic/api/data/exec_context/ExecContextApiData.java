@@ -40,14 +40,27 @@ import java.util.Map;
 public class ExecContextApiData {
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class VariableInfo {
         public Long id;
+
+        @JsonProperty("nm")
         public String name;
 
-        @Nullable
+        @JsonProperty("ctx")
         public EnumsApi.VariableContext context;
+
+        @JsonProperty("i")
+        public boolean inited;
+
+        @JsonProperty("n")
+        public boolean nullified;
+
+        public VariableInfo(Long id, String name, EnumsApi.VariableContext context) {
+            this.id = id;
+            this.name = name;
+            this.context = context;
+        }
     }
 
     @Data
