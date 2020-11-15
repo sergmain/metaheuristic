@@ -59,7 +59,7 @@ public class TestExecContextState {
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
         ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
                 1L, infos, processCodes, SourceCodeType.batch, "test-source-code", true, states);
-        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(raw);
+        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(42L, raw, true);
 
         assertNotNull(r);
         assertNotNull(r.header);

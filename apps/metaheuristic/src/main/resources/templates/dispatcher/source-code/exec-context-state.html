@@ -29,8 +29,13 @@
             <div th:remove="tag" th:each="c : ${l.cells}">
                 <td th:if="${c.empty}" th:text="${''}">Empty cell</td>
                 <td th:if="${!c.empty}">
-                    <div th:text="${c.state}" class="no-wrap">State</div>
-                    <div th:text="${c.taskId}" class="no-wrap">TaskId</div>
+                    <div th:text="${c.taskId +', ' + c.state}" class="no-wrap">State</div>
+                    <div th:if="${c.outs!=null}" th:remove="tag" th:each="o : ${c.outs}">
+                        <div class="no-wrap">
+                            <a href="#" th:href="${'/dispatcher/source-code/exec-context/'+result.execContextId+'/download-variable/' + o.id}"
+                               th:text="${o.id+', ' + o.name}">Download var</a>
+                        </div>
+                    </div>
                 </td>
             </div>
         </tr>

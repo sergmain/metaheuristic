@@ -46,7 +46,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 @SuppressWarnings("DuplicatedCode")
 @Controller
@@ -166,7 +165,7 @@ public class BatchForOperatorController {
             HttpServletRequest request,
             @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) {
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, companyUniqueId, true);
             if (resource==null) {

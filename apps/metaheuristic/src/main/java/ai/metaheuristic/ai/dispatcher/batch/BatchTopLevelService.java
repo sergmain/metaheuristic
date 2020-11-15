@@ -107,7 +107,6 @@ public class BatchTopLevelService {
     private final BatchService batchService;
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
-    private final ExecContextCreatorService execContextCreatorService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
@@ -326,7 +325,7 @@ public class BatchTopLevelService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+    public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         return getBatchProcessingResult(batchId, companyUniqueId, includeDeleted);
     }
 

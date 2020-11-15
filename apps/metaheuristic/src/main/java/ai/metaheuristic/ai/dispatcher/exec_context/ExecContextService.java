@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -27,9 +28,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -39,17 +45,23 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,6 +84,7 @@ public class ExecContextService {
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
+    private final VariableService variableService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -96,13 +109,14 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(ExecContextApiData.RawExecContextStateResult raw) {
+    public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(Long execContextId, ExecContextApiData.RawExecContextStateResult raw, boolean managerRole) {
 
         ExecContextApiData.ExecContextStateResult r = new ExecContextApiData.ExecContextStateResult();
         r.sourceCodeId = raw.sourceCodeId;
         r.sourceCodeType = raw.sourceCodeType;
         r.sourceCodeUid = raw.sourceCodeUid;
         r.sourceCodeValid = raw.sourceCodeValid;
+        r.execContextId = execContextId;
 
         Set<String> contexts = new HashSet<>();
         Map<String, List<ExecContextApiData.TaskStateInfo>> map = new HashMap<>();
@@ -145,7 +159,20 @@ public class ExecContextService {
                 int j = findOrAssignCol(r.header, simpleTaskInfo.process);
 
                 TaskApiData.TaskState state = raw.states.get(simpleTaskInfo.taskId);
-                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, state!=null ? EnumsApi.TaskExecState.from(state.execState).toString() : "<ILLEGAL STATE>", simpleTaskInfo.taskContextId, simpleTaskInfo.outputs);
+                String stateAsStr;
+                List<ExecContextApiData.VariableInfo> outputs = null;
+                if (state==null) {
+                    stateAsStr = "<ILLEGAL STATE>";
+                }
+                else {
+                    EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState);
+                    stateAsStr = taskExecState.toString();
+
+                    if (managerRole && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState== EnumsApi.TaskExecState.ERROR)) {
+                        outputs = simpleTaskInfo.outputs;
+                    }
+                }
+                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
             }
         }
         return r;
@@ -366,5 +393,58 @@ public class ExecContextService {
     }
 
 
+    public CleanerInfo downloadVariable(Long execContextId, Long variableId, Long companyId) {
+        CleanerInfo resource = new CleanerInfo();
+        try {
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                return resource;
+            }
 
+            File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+            resource.toClean.add(resultDir);
+
+            File zipDir = new File(resultDir, "zip");
+            //noinspection ResultOfMethodCallIgnored
+            zipDir.mkdir();
+
+            SourceCodeImpl sc = sourceCodeCache.findById(execContext.sourceCodeId);
+            if (sc==null) {
+                final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + execContext.sourceCodeId;
+                log.warn(es);
+                return resource;
+            }
+
+            SimpleVariable variable = variableRepository.findByIdAsSimple(variableId);
+            if (variable==null) {
+                final String es = "#981.480 Can't find variable #"+variableId;
+                log.warn(es);
+                return resource;
+            }
+
+            String filename = variable.filename;
+            if (S.b(filename)) {
+                filename = "variable-"+variableId+".bin";
+            }
+
+            File varFile = new File(resultDir, "variable-"+variableId+".bin");
+            variableService.storeToFile(variable.id, varFile);
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+            httpHeaders.setContentDisposition(ContentDisposition.parse(
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, varFile.length()), HttpStatus.OK);
+            return resource;
+        } catch (VariableDataNotFoundException e) {
+            log.error("Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            return resource;
+        } catch (Throwable th) {
+            log.error("#981.515 General error", th);
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            return resource;
+        }
+    }
 }

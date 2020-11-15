@@ -131,7 +131,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
     public ExecContextApiData.ExecContextStateResult execContextsState(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, context);
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, context, authentication);
         return execContextState;
     }
 

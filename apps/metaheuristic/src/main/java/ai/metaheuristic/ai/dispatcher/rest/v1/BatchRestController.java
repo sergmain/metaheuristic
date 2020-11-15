@@ -133,7 +133,7 @@ public class BatchRestController {
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, context.getCompanyId(), false);

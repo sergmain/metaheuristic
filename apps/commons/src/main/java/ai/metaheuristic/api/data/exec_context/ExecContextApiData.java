@@ -151,6 +151,7 @@ public class ExecContextApiData {
         public Long sourceCodeId;
         public String sourceCodeUid;
         public boolean sourceCodeValid;
+        public Long execContextId;
         public EnumsApi.SourceCodeType sourceCodeType;
         public ColumnHeader[] header;
         public LineWithState[] lines;

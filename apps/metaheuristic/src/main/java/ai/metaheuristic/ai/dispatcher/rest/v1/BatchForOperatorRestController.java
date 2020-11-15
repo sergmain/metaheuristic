@@ -42,7 +42,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 /**
  * @author Serge
@@ -124,7 +123,7 @@ public class BatchForOperatorRestController {
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
-            @PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) throws IOException {
+            @PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
         final ResponseEntity<AbstractResource> entity;
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, companyUniqueId, true);

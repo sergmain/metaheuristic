@@ -46,7 +46,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.List;
 
 @SuppressWarnings("DuplicatedCode")
@@ -156,7 +155,7 @@ public class BatchController {
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
 
         final ResponseEntity<AbstractResource> entity;

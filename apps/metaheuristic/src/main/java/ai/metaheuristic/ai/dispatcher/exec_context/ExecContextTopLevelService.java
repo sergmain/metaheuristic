@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -64,10 +65,24 @@ public class ExecContextTopLevelService {
     private final EventSenderService eventSenderService;
     private final ExecContextStatusService execContextStatusService;
 
-    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
+    private static boolean isManagerRole(String role) {
+        switch (role) {
+            case "ROLE_ADMIN":
+            case "ROLE_DATA":
+            case "MANAGER":
+            case "OPERATOR":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
+        boolean managerRole = authentication.getAuthorities().stream().anyMatch(o->isManagerRole(o.getAuthority()));
+
         ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId,
                 ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
-        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(raw);
+        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(execContextId, raw, managerRole);
         return r;
     }
 
