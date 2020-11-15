@@ -73,7 +73,6 @@ public class ExecContextService {
     private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
 
-    @Transactional(readOnly = true)
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
         result.sourceCodeId = sourceCodeId;
@@ -221,18 +220,6 @@ public class ExecContextService {
         if (execContext.id!=null) {
             execContextSyncService.checkWriteLockPresent(execContext.id);
         }
-/*
-
-        if (log.isDebugEnabled()) {
-            log.debug("#462.010 save execContext, id: #{}, ver: {}, execContext: {}", execContext.id, execContext.version, execContext);
-            try {
-                throw new RuntimeException("execContext stacktrace");
-            }
-            catch(RuntimeException e) {
-                log.debug("execContext stacktrace", e);
-            }
-        }
-*/
         if (execContext.id==null) {
             final ExecContextImpl ec = execContextCache.save(execContext);
             return ec;
@@ -314,7 +301,6 @@ public class ExecContextService {
         return EnumsApi.SourceCodeType.common;
     }
 
-    @Transactional(readOnly = true)
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();

@@ -53,7 +53,7 @@ public class TestExecContextJson {
 
         assertFalse(s.contains("ins"));
         assertFalse(s.contains("outs"));
-        assertEquals("{\"tId\":1,\"ecId\":2}", s);
+        assertEquals("{\"tId\":1,\"ecId\":2,\"tCtxId\":\"1,2###1\",\"p\":\"process-1\",\"f\":\"function-1\"}", s);
 
         System.out.println(s);
     }
