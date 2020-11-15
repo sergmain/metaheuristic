@@ -422,10 +422,7 @@ public class ExecContextService {
                 return resource;
             }
 
-            String filename = variable.filename;
-            if (S.b(filename)) {
-                filename = "variable-"+variableId+".bin";
-            }
+            String filename = S.f("variable-%s-%s.bin", variableId, variable.variable);
 
             File varFile = new File(resultDir, "variable-"+variableId+".bin");
             variableService.storeToFile(variable.id, varFile);
