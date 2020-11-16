@@ -162,7 +162,7 @@ public class ExecContextCreatorService {
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
         if (scpy.source.instances!=null && scpy.source.instances>0) {
-            long count = execContextRepository.countInProgress();
+            long count = execContextRepository.countInProgress(scpy.source.uid);
             if (count>=scpy.source.instances) {
                 return new ExecContextCreationResult(
                         S.f("#562.115 Too many instances of SourceCode %s, max allowed: %d, current count: %d",

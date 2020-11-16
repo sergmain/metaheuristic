@@ -36,6 +36,11 @@ import java.util.List;
 //@Transactional
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
+    @Query(nativeQuery = true, value =
+            "select distinct d.ID from mh_exec_context d where d.SOURCE_CODE_ID not in (select z.id from mh_source_code z)")
+    List<Long> findAllIdsForOrphanExecContexts();
+
+
     @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
 ////    @Transactional(readOnly = true)
@@ -78,8 +83,8 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     STOPPED(4),         // stopped
 
 */
-    @Query(value="select count(*) from ExecContextImpl e where e.state in (1, 3, 4)")
-    long countInProgress();
+    @Query(value="select count(e) from SourceCodeImpl sc, ExecContextImpl e where e.state in (1, 3, 4) and sc.uid=:sourceCodeUid and sc.id=e.sourceCodeId")
+    long countInProgress(String sourceCodeUid);
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
 //    @Transactional(readOnly = true)

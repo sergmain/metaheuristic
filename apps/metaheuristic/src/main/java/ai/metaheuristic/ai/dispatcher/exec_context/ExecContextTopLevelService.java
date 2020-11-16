@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -32,6 +33,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -64,6 +66,7 @@ public class ExecContextTopLevelService {
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final EventSenderService eventSenderService;
     private final ExecContextStatusService execContextStatusService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static boolean isManagerRole(String role) {
         switch (role) {
@@ -201,4 +204,12 @@ public class ExecContextTopLevelService {
                 () -> execContextStatusService.registerVariableState(event));
     }
 
+    public void deleteOrphanExecContexts(List<Long> execContextIds) {
+        for (Long execContextId : execContextIds) {
+            log.info("Found orphan execContext #{}", execContextId);
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+        }
+
+    }
 }

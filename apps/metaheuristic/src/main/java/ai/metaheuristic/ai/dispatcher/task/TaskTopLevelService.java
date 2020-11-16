@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +39,12 @@ public class TaskTopLevelService {
 
     private final ExecContextSyncService execContextSyncService;
     private final TaskTransactionalService taskTransactionalService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
         for (Long execContextId : orphanExecContextIds) {
             execContextSyncService.getWithSyncNullable(execContextId, ()-> taskTransactionalService.deleteOrphanTasks(execContextId));
+            eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
         }
     }
 }

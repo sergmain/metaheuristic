@@ -82,6 +82,7 @@ public class TaskWithInternalContextService {
 
     @Transactional
     public Void processInternalFunctionWithTx(Long execContextId, Long taskId, DataHolder holder) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
         lastTaskId = null;
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -104,9 +105,6 @@ public class TaskWithInternalContextService {
     }
 
     private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, DataHolder holder) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-
         try {
             task.setAssignedOn(System.currentTimeMillis());
             task.setResultResourceScheduledOn(0);

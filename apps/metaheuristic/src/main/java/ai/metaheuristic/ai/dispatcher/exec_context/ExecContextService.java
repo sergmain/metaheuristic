@@ -357,7 +357,17 @@ public class ExecContextService {
                 log.warn("#705.040 unexpected state, execContextId: {}, ids is empty", execContextId);
             }
             execContextCache.deleteById(execContextId);
+            // tasks will be deleted in another thread launched by Scheduler
         }
+    }
+
+    @Transactional
+    public Void deleteExecContext(Long execContextId) {
+        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
+        variableRepository.deleteByExecContextId(execContextId);
+        execContextCache.deleteById(execContextId);
+        // tasks will be deleted in another thread launched by Scheduler
+        return null;
     }
 
     @Transactional(readOnly = true)

@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.ai.dispatcher.commons;
 
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
@@ -34,10 +36,17 @@ public class ArtifactCleanerAtDispatcher {
     private final TaskTopLevelService taskTopLevelService;
     private final VariableRepository variableRepository;
     private final VariableTopLevelService variableTopLevelService;
+    private final ExecContextTopLevelService execContextTopLevelService;
+    private final ExecContextRepository execContextRepository;
 
     public void fixedDelay() {
+        deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
+    }
+
+    private void deleteOrphanExecContexts() {
+        execContextTopLevelService.deleteOrphanExecContexts(execContextRepository.findAllIdsForOrphanExecContexts());
     }
 
     private void deleteOrphanTasks() {

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -72,6 +73,14 @@ public class TaskProviderService {
     public void registerTask(RegisterTaskForProcessingEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.registerTask(event);
+        }
+    }
+
+    @Async
+    @EventListener
+    public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.processDeletedExecContext(event);
         }
     }
 

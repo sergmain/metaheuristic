@@ -88,7 +88,7 @@ public class ExecContextTaskFinishingTopLevelService {
                 log.info("#318.080 store result with the state ERROR");
                 execContextSyncService.getWithSyncNullable(task.execContextId,
                         () -> execContextTaskFinishingService.finishWithErrorWithTx(
-                                task, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
+                                taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
                                 tpy.task.taskContextId));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);

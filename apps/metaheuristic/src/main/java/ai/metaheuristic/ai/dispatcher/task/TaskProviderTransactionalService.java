@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -85,6 +86,18 @@ public class TaskProviderTransactionalService {
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
+    public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
+        List<QueuedTask> forRemoving = new ArrayList<>();
+        for (QueuedTask task : tasks) {
+            if (task.execContextId.equals(event.execContextId)) {
+                forRemoving.add(task);
+            }
+        }
+        if (!forRemoving.isEmpty()) {
+            tasks.removeAll(forRemoving);
+        }
+    }
+
     public void registerTask(RegisterTaskForProcessingEvent event) {
         for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds eventTask : event.tasks) {
             ExecContextImpl ec =  execContextService.findById(eventTask.execContextId);
@@ -104,7 +117,7 @@ public class TaskProviderTransactionalService {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 log.error("#317.020 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
-                execContextTaskFinishingService.finishWithErrorWithTx(task, null);
+                execContextTaskFinishingService.finishWithErrorWithTx(task.id, null);
                 continue;
             }
 

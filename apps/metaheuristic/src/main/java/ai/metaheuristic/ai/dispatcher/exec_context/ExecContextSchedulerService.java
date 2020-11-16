@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +40,9 @@ public class ExecContextSchedulerService {
     private final ExecContextTopLevelService execContextTopLevelService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
-        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.STARTED.code);
-        for (ExecContextImpl execContext : execContexts) {
-            execContextTopLevelService.updateExecContextStatus(execContext.id, needReconciliation);
+        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+        for (Long execContextId : execContextIds) {
+            execContextTopLevelService.updateExecContextStatus(execContextId, needReconciliation);
         }
     }
 

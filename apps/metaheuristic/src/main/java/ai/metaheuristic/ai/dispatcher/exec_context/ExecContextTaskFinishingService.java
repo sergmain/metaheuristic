@@ -87,16 +87,22 @@ public class ExecContextTaskFinishingService {
     }
 
     @Transactional
-    public void finishWithErrorWithTx(TaskImpl task, @Nullable String taskContextId) {
-        finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
+    public void finishWithErrorWithTx(Long taskId, @Nullable String taskContextId) {
+        finishWithErrorWithTx(taskId, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
     @Transactional
-    public Void finishWithErrorWithTx(TaskImpl task, String console, @Nullable String taskContextId) {
+    public Void finishWithErrorWithTx(Long taskId, String console, @Nullable String taskContextId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#318.095 task #{} wasn't found", taskId);
+            return null;
+        }
         return finishWithError(task, console, taskContextId, -10001);
     }
 
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
+        TxUtils.checkTxExists();
         finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
@@ -105,6 +111,7 @@ public class ExecContextTaskFinishingService {
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
         finishTaskAsError(task, exitCode, console);
 
