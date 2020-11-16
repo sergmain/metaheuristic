@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.tx;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -246,7 +247,7 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml, DataHolder holder) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
@@ -254,7 +255,7 @@ public class TxSupportForTestingService {
         if (execContext==null) {
             throw new IllegalStateException("Need better solution for this state");
         }
-        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml, holder);
     }
 
     /**

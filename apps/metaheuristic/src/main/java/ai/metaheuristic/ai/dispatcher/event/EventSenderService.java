@@ -47,10 +47,14 @@ public class EventSenderService {
             else if (event instanceof VariableUploadedEvent) {
                 eventPublisher.publishEvent((VariableUploadedEvent)event);
             }
+            else if (event instanceof TaskCreatedEvent) {
+                eventPublisher.publishEvent((TaskCreatedEvent)event);
+            }
             else {
                 throw new IllegalStateException("Not supported event: " +  event.getClass().getName());
             }
         }
 
+        holder.events.clear();
     }
 }

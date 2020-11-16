@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class ExecContextCreatorTopLevelService {
 
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSyncService sourceCodeSyncService;
+    private final EventSenderService eventSenderService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
@@ -50,7 +52,13 @@ public class ExecContextCreatorTopLevelService {
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId) {
         return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
-                () -> execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId));
+                () -> {
+                    try (DataHolder holder = new DataHolder()) {
+                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId, holder);
+                        eventSenderService.sendEvents(holder);
+                        return result;
+                    }
+                });
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
@@ -66,7 +74,13 @@ public class ExecContextCreatorTopLevelService {
         }
         try {
             return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                    () -> execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId));
+                    () -> {
+                        try (DataHolder holder = new DataHolder()) {
+                            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId, holder);
+                            eventSenderService.sendEvents(holder);
+                            return result;
+                        }
+                    });
 
         } catch (Throwable th) {
             final String es = "#563.060 General error of creating execContext. " +

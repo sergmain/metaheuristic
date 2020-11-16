@@ -66,6 +66,7 @@ public class ExecContextApiData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(of={"taskId","execContextId"})
     public static class TaskStateInfo {
         @JsonProperty("tId")
         public Long taskId;

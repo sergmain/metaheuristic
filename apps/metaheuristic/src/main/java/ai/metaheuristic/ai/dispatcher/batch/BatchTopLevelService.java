@@ -23,10 +23,12 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -113,6 +115,7 @@ public class BatchTopLevelService {
     private final BatchHelperService batchHelperService;
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventSenderService eventSenderService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -227,7 +230,14 @@ public class BatchTopLevelService {
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = file.getInputStream()) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> batchService.createBatchForFile(is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
+                        () -> {
+                            try (DataHolder holder = new DataHolder()) {
+                                BatchData.UploadingStatus status = batchService.createBatchForFile(
+                                        is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext, holder);
+                                eventSenderService.sendEvents(holder);
+                                return status;
+                            }
+                        });
             }
             eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
             return uploadingStatus;

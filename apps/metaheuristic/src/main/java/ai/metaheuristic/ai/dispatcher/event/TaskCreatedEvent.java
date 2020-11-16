@@ -29,6 +29,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskCreatedEvent {
+public class TaskCreatedEvent implements CommonEvent{
     public ExecContextApiData.TaskStateInfo taskVariablesInfo;
 }

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
@@ -218,7 +219,7 @@ public class BatchService {
     public BatchData.UploadingStatus createBatchForFile(
             InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, Long execContextId,
             ExecContextParamsYaml execContextParamsYaml,
-            final DispatcherContext dispatcherContext) {
+            final DispatcherContext dispatcherContext, DataHolder holder) {
 
         String startInputAs = execContextParamsYaml.variables.startInputAs;
         if (S.b(startInputAs)) {
@@ -240,7 +241,7 @@ public class BatchService {
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml, holder);
 
         if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
             throw new BatchResourceProcessingException(result.sourceCodeValidationResult.error);

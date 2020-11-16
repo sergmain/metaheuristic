@@ -94,7 +94,7 @@ public class VariableService {
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName,
-            DataHolder holder, String subProcessContextId) {
+            String subProcessContextId, DataHolder holder) {
 
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
         String inputVariableContent = variableDataSource.inputVariableContent;
@@ -159,7 +159,7 @@ public class VariableService {
     }
 
     @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
@@ -176,7 +176,7 @@ public class VariableService {
                 .map(v -> toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        return initOutputVariables(execContextId, task, p, taskParams);
+        return initOutputVariables(execContextId, task, p, taskParams, holder);
     }
 
     private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
@@ -353,7 +353,7 @@ public class VariableService {
         return data;
     }
 
-    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
+    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -381,11 +381,13 @@ public class VariableService {
         task.updatedOn = System.currentTimeMillis();
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
 
-        eventPublisher.publishEvent(new TaskCreatedEvent(
+        TaskCreatedEvent event = new TaskCreatedEvent(
                 new ExecContextApiData.TaskStateInfo(task.id, execContextId,
                         taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
                         null,
-                        taskParamsYaml.task.outputs.stream().map(o->new ExecContextApiData.VariableInfo(o.id, o.name, o.context)).collect(Collectors.toList())) ));
+                        taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context)).collect(Collectors.toList())));
+        holder.events.add(event);
+//        eventPublisher.publishEvent(event);
 
         return task;
     }

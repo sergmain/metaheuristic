@@ -114,6 +114,11 @@ public class ExecContextStatusService {
         register(event.taskVariablesInfo.execContextId, (ecpy)-> {
             ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksVariablesInfo(ecpy.tasksVariablesInfo);
 
+/*
+            log.debug("#211.020 registerCreatedTask(), task: {}", event.taskVariablesInfo);
+            log.debug("#211.040 registerCreatedTask(), tasksVariablesInfo: {}", ecpy.tasksVariablesInfo);
+            log.debug("#211.060 registerCreatedTask(), info: {}", info);
+*/
             boolean isNew = true;
             for (ExecContextApiData.TaskStateInfo task : info.tasks) {
                 if (task.taskId.equals(event.taskVariablesInfo.taskId)) {
@@ -136,7 +141,7 @@ public class ExecContextStatusService {
             try {
                 ecpy.tasksVariablesInfo = JsonUtils.getMapper().writeValueAsString(info);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("error", e);
+                throw new RuntimeException("#211.100 error", e);
             }
         });
         return null;
@@ -147,6 +152,7 @@ public class ExecContextStatusService {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
+            log.warn("#211.120 ExecContext #{} wasn't found", execContextId);
             return null;
         }
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);

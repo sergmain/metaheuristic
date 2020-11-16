@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -59,7 +60,7 @@ public class TaskProducingService {
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, ExecContextImpl execContext,
-            List<Long> parentTaskIds) {
+            List<Long> parentTaskIds, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
@@ -67,7 +68,7 @@ public class TaskProducingService {
 
         // for external Functions internalContextId==process.internalContextId
         TaskImpl t = createTaskInternal(execContext.id, execContextParamsYaml, process, process.internalContextId,
-                execContextParamsYaml.variables.inline);
+                execContextParamsYaml.variables.inline, holder);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
                     EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.020 Unknown reason of error while task creation");
@@ -94,7 +95,7 @@ public class TaskProducingService {
      */
     public void createTasksForSubProcesses(
             ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
-            AtomicInteger currTaskNumber, Long parentTaskId, List<Long> lastIds) {
+            AtomicInteger currTaskNumber, Long parentTaskId, List<Long> lastIds, DataHolder holder) {
         TxUtils.checkTxExists();
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
@@ -128,7 +129,7 @@ public class TaskProducingService {
 
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
 
-            t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines, holder);
 
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
@@ -149,7 +150,7 @@ public class TaskProducingService {
     @Nullable
     private TaskImpl createTaskInternal(
             Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
-            String taskContextId, @Nullable Map<String, Map<String, String>> inlines) {
+            String taskContextId, @Nullable Map<String, Map<String, String>> inlines, DataHolder holder) {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
@@ -197,7 +198,7 @@ public class TaskProducingService {
         task.params = params;
         task = taskService.save(task);
 
-        task = variableService.prepareVariables(execContextParamsYaml, task);
+        task = variableService.prepareVariables(execContextParamsYaml, task, holder);
         return task;
     }
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
@@ -110,7 +111,7 @@ public class ExecContextCreatorService {
     }
 
     @Transactional
-    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId) {
+    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId, DataHolder holder) {
         sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
@@ -130,7 +131,8 @@ public class ExecContextCreatorService {
 
         execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
             final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
-            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, creationResult.execContext, execContextParamsYaml);
+            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
+                    sourceCode, creationResult.execContext, execContextParamsYaml, holder);
             if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
                 creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
             }

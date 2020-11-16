@@ -178,10 +178,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                             new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
 
                                     variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                                            variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                                     taskProducingService.createTasksForSubProcesses(
-                                            execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                                            execContext, executionContextData, currTaskNumber, task.id, lastIds, holder);
                                 }
                             }
                             else {
@@ -191,10 +191,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                         new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of()));
 
                                 variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                                 taskProducingService.createTasksForSubProcesses(
-                                        execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                                        execContext, executionContextData, currTaskNumber, task.id, lastIds, holder);
                             }
                             return true;
                         }

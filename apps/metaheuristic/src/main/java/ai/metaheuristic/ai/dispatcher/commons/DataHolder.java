@@ -46,6 +46,9 @@ public class DataHolder implements AutoCloseable {
 
     @Override
     public void close() {
+        if (!events.isEmpty()) {
+            throw new IllegalStateException("There are not sended events: " + events);
+        }
         for (InputStream inputStream : inputStreams) {
             try {
                 inputStream.close();

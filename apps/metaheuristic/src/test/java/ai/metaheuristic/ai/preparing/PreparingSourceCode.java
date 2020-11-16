@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
@@ -142,6 +144,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public TaskProviderService taskProviderService;
+
+    @Autowired
+    public EventSenderService eventSenderService;
 
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
@@ -360,7 +365,10 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+            try (DataHolder holder = new DataHolder()) {
+                txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
+                eventSenderService.sendEvents(holder);
+            }
 
             return null;
         });

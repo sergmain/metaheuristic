@@ -214,10 +214,10 @@ public class BatchSplitterFunction implements InternalFunction {
                             return;
                         }
                         variableService.createInputVariablesForSubProcess(
-                                variableDataSource, execContext, currTaskNumber, variableName, holder, subProcessContextId);
+                                variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                         taskProducingService.createTasksForSubProcesses(
-                                execContext, executionContextData, currTaskNumber, taskId, lastIds);
+                                execContext, executionContextData, currTaskNumber, taskId, lastIds, holder);
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {

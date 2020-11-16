@@ -27,6 +27,7 @@ import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactor
 import org.springframework.boot.web.server.ConfigurableWebServerFactory;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
@@ -98,10 +99,12 @@ public class Config {
     }
 
     @Configuration
+    @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
     public static class SpringAsyncConfig implements AsyncConfigurer {
         @Override
         public Executor getAsyncExecutor() {
+//            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
             ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()/2));
             return new ConcurrentTaskExecutor(executor);
         }
