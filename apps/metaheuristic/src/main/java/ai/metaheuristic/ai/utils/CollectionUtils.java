@@ -25,19 +25,15 @@ import java.util.stream.Stream;
 
 public class CollectionUtils {
 
-    @SuppressWarnings("ConstantConditions")
     public static boolean checkTagAllowed(@Nullable String taskTag, @Nullable String processorTag) {
         boolean taskTagEmpty = S.b(taskTag);
         boolean processorTagEmpty = S.b(processorTag);
 
-        if (taskTagEmpty && processorTagEmpty) {
+        if (taskTagEmpty) {
             return true;
         }
-        if (taskTagEmpty && !processorTagEmpty) {
+        if (processorTagEmpty) {
             return false;
-        }
-        if (!taskTagEmpty && processorTagEmpty) {
-            return true;
         }
 
         return org.springframework.util.CollectionUtils.containsAny(toSet(taskTag), toSet(processorTag));
