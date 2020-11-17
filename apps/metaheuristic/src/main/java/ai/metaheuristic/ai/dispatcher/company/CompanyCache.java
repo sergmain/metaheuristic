@@ -36,14 +36,14 @@ public class CompanyCache {
 
     private final CompanyRepository companyRepository;
 
-    @CachePut(cacheNames = Consts.COMPANIES_CACHE, key = "#result.uniqueId")
+//    @CachePut(cacheNames = Consts.COMPANIES_CACHE, key = "#result.uniqueId")
     public Company save(Company account) {
         TxUtils.checkTxExists();
         return companyRepository.save(account);
     }
 
     @Nullable
-    @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
+//    @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
     public Company findByUniqueId(Long uniqueId) {
         return companyRepository.findByUniqueId(uniqueId);
     }

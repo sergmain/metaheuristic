@@ -18,10 +18,15 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
+import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.catalina.connector.Connector;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.CacheManagerConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.ConfigurableWebServerFactory;
@@ -38,6 +43,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.File;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -52,6 +58,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToBatchRepositories.class} )
 @RequiredArgsConstructor
+@Slf4j
 public class Config {
 
     private final Globals globals;
@@ -86,7 +93,8 @@ public class Config {
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
+        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.schedulerThreadNumber);
+        threadPoolTaskScheduler.setPoolSize(globals.schedulerThreadNumber);
         return threadPoolTaskScheduler;
     }
 
@@ -101,35 +109,71 @@ public class Config {
     @Configuration
     @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
+    @RequiredArgsConstructor
+    @Slf4j
     public static class SpringAsyncConfig implements AsyncConfigurer {
+
+        private final Globals globals;
+
         @Override
         public Executor getAsyncExecutor() {
-//            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
-            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()/2));
+            Integer threads = globals.eventThreadNumber;
+            if (threads==null) {
+                threads = Math.max(2, Runtime.getRuntime().availableProcessors()/2);
+            }
+            threads = EnvProperty.minMax( threads, 1, 16);
+            log.info("Config.SpringAsyncConfig will use {} as a number of threads for an event processing", threads);
+
+            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
             return new ConcurrentTaskExecutor(executor);
         }
     }
 
-/*
-    @Bean
-    public Caffeine caffeineConfig() {
-        return Caffeine.newBuilder().expireAfterWrite(60, TimeUnit.MINUTES).maximumSize(10000);
-    }
+    @EnableCaching
+    @Configuration
+    @RequiredArgsConstructor
+    public static class CacheConfig {
 
-    @Bean
-    public CacheManager cacheManager(Caffeine caffeine) {
-        CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
-        caffeineCacheManager.setCaffeine(caffeine);
-        return new TransactionAwareCacheManagerProxy(caffeineCacheManager);
-    }
+        private final Globals globals;
+
+/*
+        @Primary
+        @Bean("cacheManager")
+        public CompositeCacheManager cacheManager() {
+            CompositeCacheManager compositeCacheManager = new CompositeCacheManager();
+            compositeCacheManager.setFallbackToNoOpCache(true);
+            compositeCacheManager.setCacheManagers(Collections.singleton(ehCacheManager()));
+            return compositeCacheManager;
+        }
 */
 
 /*
-    @Bean
-    public CacheManager cacheManager(CaffeineCacheManager caffeineCacheManager) {
-        return new TransactionAwareCacheManagerProxy(caffeineCacheManager);
-    }
+        @Bean("ehCacheManager")
+        public EhCacheCacheManager ehCacheManager() {
+            EhCacheCacheManager ehCacheCacheManager = new EhCacheCacheManager();
+            ehCacheCacheManager.setCacheManager(getCustomCacheManager());
+            return ehCacheCacheManager;
+        }
 */
+
+        @Bean
+        public CacheManager getCustomCacheManager() {
+            CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+                    .with(getEhCacheConfiguration()).build(true);
+
+//            CacheManager cacheManager = CacheManager.create(getEhCacheConfiguration());
+//            cacheManager.setName("custom_eh_cache");
+//            cacheManager.addCache(createCache("users"));
+//            cacheManager.addCache(createCache("roles"));
+            return cacheManager;
+        }
+
+        private CacheManagerConfiguration getEhCacheConfiguration() {
+            CacheManagerConfiguration configuration = CacheManagerBuilder.persistence( new File(globals.dispatcherDir, "cache").getAbsolutePath());
+            return configuration;
+        }
+
+    }
 
 /*
     @Bean(name = "applicationEventMulticaster")

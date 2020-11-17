@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -164,11 +165,9 @@ public class ExecContextCreatorService {
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
         if (scpy.source.instances!=null && scpy.source.instances>0) {
-            long count = execContextRepository.countInProgress(scpy.source.uid);
+            int count = execContextRepository.countInProgress(scpy.source.uid);
             if (count>=scpy.source.instances) {
-                return new ExecContextCreationResult(
-                        S.f("#562.115 Too many instances of SourceCode %s, max allowed: %d, current count: %d",
-                                sourceCode.uid, scpy.source.instances, count));
+                throw new ExecContextTooManyInstancesException(sourceCode.uid, scpy.source.instances, count);
             }
         }
 

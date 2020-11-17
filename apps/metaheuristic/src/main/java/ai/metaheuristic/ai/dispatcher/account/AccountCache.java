@@ -34,13 +34,13 @@ public class AccountCache {
 
     private final AccountRepository accountRepository;
 
-    @CachePut(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
+//    @CachePut(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
     public Account save(Account account) {
         TxUtils.checkTxExists();
         return accountRepository.save(account);
     }
 
-    @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
+//    @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
     public @Nullable Account findByUsername(String username) {
         return accountRepository.findByUsername(username);
     }

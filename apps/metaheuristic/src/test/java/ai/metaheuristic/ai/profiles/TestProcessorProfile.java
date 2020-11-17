@@ -39,6 +39,6 @@ public class TestProcessorProfile {
         System.out.println("We don't need any test here " +
                 "because this test is about " +
                 "correctness of class wiring for 'processor' profile." +
-                "Number of threads: " + globals.threadNumber);
+                "Number of threads: " + globals.schedulerThreadNumber);
     }
 }

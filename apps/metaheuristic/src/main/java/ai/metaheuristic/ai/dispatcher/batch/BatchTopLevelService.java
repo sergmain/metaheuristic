@@ -40,6 +40,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -240,6 +241,13 @@ public class BatchTopLevelService {
                         });
             }
             eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
+            return uploadingStatus;
+        }
+        catch (ExecContextTooManyInstancesException e) {
+            String es = S.f("#981.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
+            log.warn(es);
+            BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus();
+            uploadingStatus.addInfoMessage(es);
             return uploadingStatus;
         }
         catch (Throwable th) {

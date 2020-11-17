@@ -84,7 +84,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 
 */
     @Query(value="select count(e) from SourceCodeImpl sc, ExecContextImpl e where e.state in (1, 3, 4) and sc.uid=:sourceCodeUid and sc.id=e.sourceCodeId")
-    long countInProgress(String sourceCodeUid);
+    int countInProgress(String sourceCodeUid);
 
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
 //    @Transactional(readOnly = true)

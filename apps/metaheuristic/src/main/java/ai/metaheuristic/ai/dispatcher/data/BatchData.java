@@ -54,6 +54,7 @@ public final class BatchData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class UploadingStatus extends BaseDataClass {
         public Long batchId;
         public Long execContextId;

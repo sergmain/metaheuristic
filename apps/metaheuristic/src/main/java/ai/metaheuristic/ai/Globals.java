@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
+import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
@@ -56,8 +57,14 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 16, 4) }")
-    public int threadNumber;
+    @Value("${mh.thread-number:#{null}}")
+    public Integer oldThreadNumber;
+
+    @Value("${mh.thread-number.scheduler:#{null}}")
+    public Integer schedulerThreadNumber;
+
+    @Value("${mh.thread-number.event:#{null}}")
+    public Integer eventThreadNumber;
 
     @Value("${mh.is-testing:#{false}}")
     public boolean isUnitTesting = false;
@@ -207,17 +214,7 @@ public class Globals {
             throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
 
-        String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
-        int oldValue = threadNumber;
-        if (threadNumberAsStr!=null && !threadNumberAsStr.isBlank()) {
-            try {
-                threadNumber = Integer.parseInt(threadNumberAsStr);
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_THREAD_NUMBER, must be digit, " +
-                        "actual: " + threadNumberAsStr+". Will be used "+oldValue+" as a value for number of threads.");
-                threadNumber = oldValue;
-            }
-        }
+        initSchedulerThreadNumber();
 
         String origins = env.getProperty("MH_CORS_ALLOWED_ORIGINS");
         if (!S.b(origins)) {
@@ -380,6 +377,41 @@ public class Globals {
         logDepricated();
     }
 
+    private void initSchedulerThreadNumber() {
+        String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
+        Integer oldValue = oldThreadNumber;
+        if (!S.b(threadNumberAsStr)) {
+            try {
+                oldThreadNumber = Integer.parseInt(threadNumberAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_THREAD_NUMBER, must be digit, " +
+                        "actual: " + threadNumberAsStr+". Will be used "+oldValue+" as a value for number of threads.");
+                oldThreadNumber = oldValue;
+            }
+        }
+
+        String schedulerThreadNumberAsStr = env.getProperty("MH_THREAD_NUMBER_SCHEDULER");
+        Integer schedulerOldValue = schedulerThreadNumber;
+        if (!S.b(threadNumberAsStr)) {
+            try {
+                schedulerThreadNumber = Integer.parseInt(threadNumberAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_THREAD_NUMBER_SCHEDULER, must be digit, " +
+                        "actual: " + schedulerThreadNumberAsStr+". Will be used "+schedulerOldValue+" as a value for number of threads.");
+                schedulerThreadNumber = schedulerOldValue;
+            }
+        }
+        if (schedulerThreadNumber==null) {
+            schedulerThreadNumber = oldThreadNumber;
+        }
+        if (schedulerThreadNumber==null) {
+            schedulerThreadNumber = 4;
+        }
+        else {
+            schedulerThreadNumber = EnvProperty.minMax( schedulerThreadNumber, 1, 16);
+        }
+    }
+
     private void checkProfiles() {
         List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
                 .filter(o-> !POSSIBLE_PROFILES.contains(o))
@@ -396,6 +428,9 @@ public class Globals {
     private void logDepricated() {
         if (isReplaceSnapshot!=null) {
             log.warn("property 'mh.dispatcher.is-replace-snapshot' isn't supported any more and need to be deleted");
+        }
+        if (oldThreadNumber!=null) {
+            log.warn("property 'mh.thread-number' is deprecated, use 'mh.thread-number.scheduler' instead of. Or env 'MH_THREAD_NUMBER_SCHEDULER' instead of 'MH_THREAD_NUMBER' ");
         }
     }
 
@@ -482,7 +517,9 @@ public class Globals {
         log.warn("Memory, free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
-        log.info("'\tthreadNumber: {}", threadNumber);
+        log.info("'\toldThreadNumber: {}", oldThreadNumber);
+        log.info("'\tschedulerThreadNumber: {}", schedulerThreadNumber);
+        log.info("'\teventThreadNumber: {}", eventThreadNumber);
         log.info("'\tallowedOrigins: {}", allowedOriginsStr);
         log.info("'\tbranding: {}", branding);
         log.info("'\tisUnitTesting: {}", isUnitTesting);

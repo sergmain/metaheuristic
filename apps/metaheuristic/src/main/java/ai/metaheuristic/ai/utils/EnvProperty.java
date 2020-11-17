@@ -51,10 +51,15 @@ public class EnvProperty {
             return defForBlank;
         }
         int i = Integer.parseInt(prop);
-        if (i>=min && i<=max) {
-            return i;
+        int value = minMax(i, min, max);
+        return value;
+    }
+
+    public static int minMax(int curr, int min, int max) {
+        if (curr >=min && curr <=max) {
+            return curr;
         }
-        else if (i<min) {
+        else if (curr <min) {
             return min;
         }
         return max;

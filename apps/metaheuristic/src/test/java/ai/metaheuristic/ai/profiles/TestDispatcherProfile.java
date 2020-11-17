@@ -39,6 +39,6 @@ public class TestDispatcherProfile {
         System.out.println("We don't need any test here " +
                 "because this test is about " +
                 "correctness of class wiring for profile. " +
-                "Number of threads: " + globals.threadNumber);
+                "Number of threads: " + globals.schedulerThreadNumber);
     }
 }
