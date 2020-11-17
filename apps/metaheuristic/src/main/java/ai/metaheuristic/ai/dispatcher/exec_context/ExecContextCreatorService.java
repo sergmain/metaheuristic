@@ -37,7 +37,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.commons.S;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -113,36 +112,44 @@ public class ExecContextCreatorService {
 
     @Transactional
     public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId, DataHolder holder) {
-        sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
+        try {
+            sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
-        if (sourceCodesForCompany.isErrorMessages()) {
-            return new ExecContextCreationResult("#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
-        }
-        SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
-        if (sourceCode==null) {
-            return new ExecContextCreationResult("#562.080 Error creating execContext: " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
-        }
-        final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId);
-        if (creationResult.isErrorMessages()) {
+            SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
+            if (sourceCodesForCompany.isErrorMessages()) {
+                return new ExecContextCreationResult("#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+                        "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
+            }
+            SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
+            if (sourceCode==null) {
+                return new ExecContextCreationResult("#562.080 Error creating execContext: " +
+                        "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
+            }
+            final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId);
+            if (creationResult.isErrorMessages()) {
+                return creationResult;
+            }
+
+            execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
+                final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+                SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
+                        sourceCode, creationResult.execContext, execContextParamsYaml, holder);
+                if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
+                    creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
+                }
+                if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
+                    creationResult.addErrorMessage("#562.100 Error while producing new tasks " + result.taskProducingStatus);
+                }
+                return null;
+            });
             return creationResult;
         }
-
-        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
-            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
-            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
-                    sourceCode, creationResult.execContext, execContextParamsYaml, holder);
-            if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
-                creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
-            }
-            if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
-                creationResult.addErrorMessage("#562.100 Error while producing new tasks " + result.taskProducingStatus);
-            }
-            return null;
-        });
-        return creationResult;
+        catch (Throwable th) {
+            String es = "#562.110 Error adding new execContext: " + th.getMessage();
+            log.error(es, th);
+            final ExecContextCreationResult r = new ExecContextCreationResult(es);
+            return r;
+        }
     }
 
     /**
