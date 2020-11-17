@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -325,14 +325,15 @@ public abstract class PreparingSourceCode extends PreparingCore {
         deleteFunction(s3);
         deleteFunction(s4);
         deleteFunction(s5);
-        if (execContextForTest !=null) {
-            try {
-                execContextRepository.deleteById(execContextForTest.getId());
+        if (execContextForTest != null) {
+            if (execContextCache.findById(execContextForTest.getId()) != null) {
+                try {
+                    execContextRepository.deleteById(execContextForTest.getId());
+                } catch (Throwable th) {
+                    log.error("Error while workbookRepository.deleteById()", th);
+                }
             }
-            catch (Throwable th) {
-                log.error("Error while workbookRepository.deleteById()", th);
-            }
-            assertDoesNotThrow(()->{
+            assertDoesNotThrow(() -> {
                 taskRepository.deleteByExecContextId(execContextForTest.getId());
             });
         }

@@ -21,14 +21,16 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.tx.TxTestingService;
-import ai.metaheuristic.ai.dispatcher.tx.TxTestingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -45,6 +47,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
+@DirtiesContext
+@AutoConfigureCache
 public class TestTx extends PreparingSourceCode {
 
     @Override

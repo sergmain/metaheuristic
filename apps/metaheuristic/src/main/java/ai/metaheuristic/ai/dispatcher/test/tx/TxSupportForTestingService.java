@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.tx;
+package ai.metaheuristic.ai.dispatcher.test.tx;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;

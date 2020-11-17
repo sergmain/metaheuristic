@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.cache;
+package ai.metaheuristic.ai.dispatcher.test.cache;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 /**
  * @author Serge
@@ -30,7 +32,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class SimpleBeanForTest {
+public class SimpleBeanForTest implements Serializable {
+
+    private static final long serialVersionUID = 5060083957904925107L;
 
     public int id;
     public String s;

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.cache;
+package ai.metaheuristic.ai.dispatcher.test.cache;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class CacheForTest {
 
     public static boolean cacheWasMissed;
 
-    @CacheEvict(value = "testCache", key = "#result.id")
+    @CachePut(value = "testCache", key = "#result.id")
     public SimpleBeanForTest save(SimpleBeanForTest value) {
         map.put(value.id, value);
         return value;

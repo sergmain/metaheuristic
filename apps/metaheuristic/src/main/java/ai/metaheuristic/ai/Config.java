@@ -24,9 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.catalina.connector.Connector;
-import org.ehcache.CacheManager;
-import org.ehcache.config.builders.CacheManagerBuilder;
-import org.ehcache.config.builders.CacheManagerConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.ConfigurableWebServerFactory;
@@ -43,7 +40,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.io.File;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -54,7 +50,6 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Time: 17:21
  */
 @Configuration
-@EnableCaching
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToBatchRepositories.class} )
 @RequiredArgsConstructor
@@ -131,10 +126,9 @@ public class Config {
 
     @EnableCaching
     @Configuration
+    @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @RequiredArgsConstructor
     public static class CacheConfig {
-
-        private final Globals globals;
 
 /*
         @Primary
@@ -156,10 +150,11 @@ public class Config {
         }
 */
 
+/*
         @Bean
         public CacheManager getCustomCacheManager() {
-            CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                    .with(getEhCacheConfiguration()).build(true);
+            CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
+//            CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder().with(getEhCacheConfiguration()).build(true);
 
 //            CacheManager cacheManager = CacheManager.create(getEhCacheConfiguration());
 //            cacheManager.setName("custom_eh_cache");
@@ -167,11 +162,14 @@ public class Config {
 //            cacheManager.addCache(createCache("roles"));
             return cacheManager;
         }
+*/
 
+/*
         private CacheManagerConfiguration getEhCacheConfiguration() {
-            CacheManagerConfiguration configuration = CacheManagerBuilder.persistence( new File(globals.dispatcherDir, "cache").getAbsolutePath());
+            CacheManagerConfiguration configuration = CacheManagerBuilder.persistence(new File(globals.dispatcherDir, "cache").getAbsolutePath());
             return configuration;
         }
+*/
 
     }
 
