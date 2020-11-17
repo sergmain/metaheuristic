@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -45,15 +46,22 @@ public class TaskWithInternalContextEventService {
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
     private final EventSenderService eventSenderService;
+    private final ExecContextTaskFinishingService execContextTaskFinishingService;
 
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
-        try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSyncNullable(event.execContextId,
-                    () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder));
-            eventSenderService.sendEvents(holder);
+        try {
+            try (DataHolder holder = new DataHolder()) {
+                execContextSyncService.getWithSyncNullable(event.execContextId,
+                        () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder));
+                eventSenderService.sendEvents(holder);
+            }
+        } catch (Throwable th) {
+            String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";
+            log.error(es, th);
+            execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es, null);
         }
     }
 }
