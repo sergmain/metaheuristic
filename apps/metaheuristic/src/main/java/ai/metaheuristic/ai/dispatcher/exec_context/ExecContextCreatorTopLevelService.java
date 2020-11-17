@@ -23,11 +23,12 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -46,19 +47,7 @@ public class ExecContextCreatorTopLevelService {
     private final EventSenderService eventSenderService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
-        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
-                () -> execContextCreatorService.createExecContext(sourceCodeId, context));
-    }
-
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId) {
-        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
-                () -> {
-                    try (DataHolder holder = new DataHolder()) {
-                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId, holder);
-                        eventSenderService.sendEvents(holder);
-                        return result;
-                    }
-                });
+        return createExecContextAndStart(sourceCodeId, context.getCompanyId(), false);
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
@@ -72,22 +61,31 @@ public class ExecContextCreatorTopLevelService {
             return new ExecContextCreatorService.ExecContextCreationResult("#563.040 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
         }
-        try {
-            return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                    () -> {
-                        try (DataHolder holder = new DataHolder()) {
-                            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCode.id, companyUniqueId, holder);
-                            eventSenderService.sendEvents(holder);
-                            return result;
-                        }
-                    });
+        return createExecContextAndStart(sourceCode.id, companyUniqueId, true);
+    }
 
-        } catch (Throwable th) {
-            final String es = "#563.060 General error of creating execContext. " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid + ", companyId: " + companyUniqueId + ", error: " + th.getMessage();
-            log.error(es, th);
-            return new ExecContextCreatorService.ExecContextCreationResult(es);
-        }
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId, boolean isStart) {
+        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
+                () -> {
+                    try (DataHolder holder = new DataHolder()) {
+                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId, holder, isStart);
+                        eventSenderService.sendEvents(holder);
+                        return result;
+                    }
+                    catch (ExecContextTooManyInstancesException e) {
+                        String es = S.f("#562.105 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
+                        log.warn(es);
+                        ExecContextCreatorService.ExecContextCreationResult result = new ExecContextCreatorService.ExecContextCreationResult();
+                        result.addInfoMessage(es);
+                        return result;
+                    }
+                    catch (Throwable th) {
+                        String es = "#562.110 Error adding new execContext: " + th.getMessage();
+                        log.error(es, th);
+                        final ExecContextCreatorService.ExecContextCreationResult r = new ExecContextCreatorService.ExecContextCreationResult(es);
+                        return r;
+                    }
+                });
     }
 
 

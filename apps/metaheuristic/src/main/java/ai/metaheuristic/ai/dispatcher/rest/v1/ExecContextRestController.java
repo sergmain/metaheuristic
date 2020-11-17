@@ -98,7 +98,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId());
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
         return result;
