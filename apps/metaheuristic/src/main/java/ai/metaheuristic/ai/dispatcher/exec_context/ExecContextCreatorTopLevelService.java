@@ -75,7 +75,7 @@ public class ExecContextCreatorTopLevelService {
                     catch (ExecContextTooManyInstancesException e) {
                         String es = S.f("#562.105 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
                         log.warn(es);
-                        ExecContextCreatorService.ExecContextCreationResult result = new ExecContextCreatorService.ExecContextCreationResult();
+                        ExecContextCreatorService.ExecContextCreationResult result = new ExecContextCreatorService.ExecContextCreationResult(es);
                         result.addInfoMessage(es);
                         return result;
                     }
