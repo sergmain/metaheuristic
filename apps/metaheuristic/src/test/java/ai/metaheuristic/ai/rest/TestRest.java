@@ -62,7 +62,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestRest {
 
