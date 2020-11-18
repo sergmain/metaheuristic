@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,14 +39,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 /**
  * @author Serge
@@ -87,9 +86,14 @@ public class ExecContextController {
     @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
     public String execContextsState(Model model, @PathVariable Long sourceCodeId,  @PathVariable Long execContextId,
-                                    @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
+                                    @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        model.addAttribute("result", execContextTopLevelService.getExecContextState(sourceCodeId, execContextId,  context, authentication));
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, context, authentication);
+        if (execContextState.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", execContextState.getErrorMessagesAsList());
+            return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;
+        }
+        model.addAttribute("result", execContextState);
         return "dispatcher/source-code/exec-context-state";
     }
 

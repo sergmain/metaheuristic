@@ -68,6 +68,7 @@ public class SourceCodeImpl implements Serializable, SourceCode {
         return params;
     }
 
+    @Deprecated(forRemoval = true)
     @Column(name = "IS_LOCKED")
     public boolean locked;
 

@@ -148,6 +148,7 @@ public class ExecContextApiData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class ExecContextStateResult extends BaseDataClass {
         public Long sourceCodeId;
         public String sourceCodeUid;
@@ -156,6 +157,14 @@ public class ExecContextApiData {
         public EnumsApi.SourceCodeType sourceCodeType;
         public ColumnHeader[] header;
         public LineWithState[] lines;
+
+        public ExecContextStateResult(String error) {
+            addErrorMessage(error);
+        }
+
+        public ExecContextStateResult(List<String> errors) {
+            addErrorMessages(errors);
+        }
     }
 
     @Data

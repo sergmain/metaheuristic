@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -32,10 +31,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -52,20 +49,9 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @RequiredArgsConstructor
 public class SourceCodeTopLevelService {
 
-    private final SourceCodeStateService sourceCodeStateService;
     private final SourceCodeService sourceCodeService;
     private final Globals globals;
     private final SourceCodeRepository sourceCodeRepository;
-
-    private final static Object syncObj = new Object();
-
-    @Async
-    @EventListener
-    public void setLockedTo(DispatcherInternalEvent.SourceCodeLockingEvent event) {
-        synchronized (syncObj) {
-            sourceCodeStateService.setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
-        }
-    }
 
     public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {

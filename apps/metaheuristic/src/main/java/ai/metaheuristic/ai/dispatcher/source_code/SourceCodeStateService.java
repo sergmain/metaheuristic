@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -50,22 +49,6 @@ public class SourceCodeStateService {
 
         if (sc.isValid()!=valid) {
             sc.setValid(valid);
-            saveInternal(sc);
-        }
-    }
-
-    @Transactional
-    public void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
-        SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
-        if (sc==null) {
-            return;
-        }
-        if (companyUniqueId!=null && !companyUniqueId.equals(sc.companyId)) {
-            log.warn("#373.040 SourceCode.companyId!=companyUniqueId, sc.id: {}, sc.companyId: {}, companyUniqueId: {}", sc.id, sc.companyId, companyUniqueId);
-//            return;
-        }
-        if (sc.isLocked()!=locked) {
-            sc.setLocked(locked);
             saveInternal(sc);
         }
     }

@@ -85,6 +85,9 @@ public class ExecContextTopLevelService {
 
         ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId,
                 ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
+        if (raw.isErrorMessages()) {
+            return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
+        }
         ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(execContextId, raw, managerRole);
         return r;
     }

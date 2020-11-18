@@ -21,7 +21,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.lang.Nullable;
 
 import java.util.function.Consumer;
 
@@ -48,15 +47,6 @@ public class DispatcherInternalEvent {
     @AllArgsConstructor
     public static class DeleteExperimentEvent {
         public Long experimentId;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class SourceCodeLockingEvent {
-        public Long sourceCodeId;
-        @Nullable
-        public Long companyUniqueId;
-        public boolean lock;
     }
 
     public static class ExecContextDeletionEvent extends ApplicationEvent {

@@ -337,28 +337,7 @@ public class ExecContextService {
 
     @Transactional
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
-        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
-        variableRepository.deleteByExecContextId(execContextId);
-        ExecContext execContext = execContextCache.findById(execContextId);
-        if (execContext != null) {
-            // unlock sourceCode if this is the last execContext in the sourceCode
-            List<Long> ids = execContextRepository.findIdsBySourceCodeId(execContext.getSourceCodeId());
-            if (ids.size()==1) {
-                if (ids.get(0).equals(execContextId)) {
-                    if (execContext.getSourceCodeId() != null) {
-                        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
-                    }
-                }
-                else {
-                    log.warn("#705.020 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
-                }
-            }
-            else if (ids.isEmpty()) {
-                log.warn("#705.040 unexpected state, execContextId: {}, ids is empty", execContextId);
-            }
-            execContextCache.deleteById(execContextId);
-            // tasks will be deleted in another thread launched by Scheduler
-        }
+        deleteExecContext(execContextId);
     }
 
     @Transactional

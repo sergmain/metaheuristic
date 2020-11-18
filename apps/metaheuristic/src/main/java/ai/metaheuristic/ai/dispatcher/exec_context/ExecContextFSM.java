@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -33,7 +32,6 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -56,7 +54,6 @@ public class ExecContextFSM {
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextService execContextService;
@@ -107,7 +104,6 @@ public class ExecContextFSM {
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         execContext.setState(execState.code);
-        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -119,7 +115,6 @@ public class ExecContextFSM {
 
         if (execContext.state !=execState.code) {
             toState(execContext.id, execState);
-            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

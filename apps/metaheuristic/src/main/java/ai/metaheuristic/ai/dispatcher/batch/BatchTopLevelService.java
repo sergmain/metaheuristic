@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -61,7 +60,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -115,7 +113,6 @@ public class BatchTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
     private final ExecContextService execContextService;
-    private final ApplicationEventPublisher eventPublisher;
     private final EventSenderService eventSenderService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -240,7 +237,6 @@ public class BatchTopLevelService {
                             }
                         });
             }
-            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.id, dispatcherContext.getCompanyId(), true));
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {
