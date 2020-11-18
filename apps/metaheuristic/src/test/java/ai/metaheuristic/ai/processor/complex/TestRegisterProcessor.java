@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -137,7 +138,7 @@ public class TestRegisterProcessor {
                 sessionId,
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, true,
-                1, EnumsApi.OS.unknown);
+                1, EnumsApi.OS.unknown, SystemUtils.getUserHome().getAbsolutePath());
 
         processorComm.reportProcessorStatus = ss;
 

@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.preparing;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
@@ -141,8 +142,8 @@ public abstract class PreparingCore {
             ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
-                    "[unknown]", "[unknown]", null, false,
-                    TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown);
+                    Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
+                    TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO);
             final String description = "Test processor. Must be deleted automatically";
 
             mills = System.currentTimeMillis();

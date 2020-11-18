@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,9 @@ public class ProcessorStatusYamlV1 implements BaseParams {
     public boolean logDownloadable;
     public int taskParamsVersion;
     public EnumsApi.OS os;
+
+    @Nullable
+    public String currDir;
 
     public final int version = 1;
 }

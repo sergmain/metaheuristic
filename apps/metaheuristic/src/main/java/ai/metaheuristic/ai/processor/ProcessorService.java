@@ -75,7 +75,7 @@ public class ProcessorService {
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
-                globals.os);
+                globals.os, globals.processorDir.getAbsolutePath());
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();

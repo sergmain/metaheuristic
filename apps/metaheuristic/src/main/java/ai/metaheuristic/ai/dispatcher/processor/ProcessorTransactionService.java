@@ -91,7 +91,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown);
+                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO);
 
         final Processor p = createProcessor(null, null, psy);
         return new ProcessorData.ProcessorWithSessionId(p, sessionId);
@@ -176,6 +176,7 @@ public class ProcessorTransactionService {
             ss.logDownloadable = status.logDownloadable;
             ss.taskParamsVersion = status.taskParamsVersion;
             ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
+            ss.currDir = status.currDir;
 
             processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
             processor.updatedOn = System.currentTimeMillis();
@@ -231,7 +232,8 @@ public class ProcessorTransactionService {
                         !Objects.equals(ss.errors, status.errors) ||
                         ss.logDownloadable!=status.logDownloadable ||
                         ss.taskParamsVersion!=status.taskParamsVersion||
-                        ss.os!=status.os;
+                        ss.os!=status.os ||
+                        !Objects.equals(ss.currDir, status.currDir);
     }
 
     @Transactional
@@ -240,7 +242,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
+                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO);
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
@@ -348,8 +350,8 @@ public class ProcessorTransactionService {
                     isFunctionProblem,
                     blacklistReason!=null, blacklistReason,
                     processor.updatedOn,
-                    (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
-                    (StringUtils.isNotBlank(status.host) ? status.host : "[unknown]")
+                    (StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO),
+                    (StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO)
             ));
         }
         result.items =  new SliceImpl<>(ss, pageable, ids.hasNext());

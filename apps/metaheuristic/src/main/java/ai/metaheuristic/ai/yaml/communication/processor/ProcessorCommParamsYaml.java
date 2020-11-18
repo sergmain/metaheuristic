@@ -125,6 +125,9 @@ public class ProcessorCommParamsYaml implements BaseParams {
 
         public EnumsApi.OS os;
 
+        @Nullable
+        public String currDir;
+
         public void addError(String error) {
             if (errors==null) {
                 errors = new ArrayList<>();

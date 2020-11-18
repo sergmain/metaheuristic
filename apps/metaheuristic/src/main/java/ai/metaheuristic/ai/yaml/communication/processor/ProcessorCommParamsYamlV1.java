@@ -106,18 +106,6 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportProcessorStatusV1 {
-/*
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class FunctionStatus {
-            public String code;
-            public Enums.FunctionState state;
-        }
-
-        public List<FunctionStatus> functionStatuses = null;
-
-*/
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
@@ -136,6 +124,9 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         public int taskParamsVersion;
 
         public EnumsApi.OS os;
+
+        @Nullable
+        public String currDir;
 
         public void addError(String error) {
             if (errors==null) {
