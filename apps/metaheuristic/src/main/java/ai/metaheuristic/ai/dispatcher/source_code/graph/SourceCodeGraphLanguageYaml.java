@@ -164,6 +164,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         if (o.cache!=null) {
             pr.cache = new ExecContextParamsYaml.Cache(o.cache.enabled);
         }
+        pr.tags = o.tags;
+        pr.priority = o.priority;
         return pr;
     }
 

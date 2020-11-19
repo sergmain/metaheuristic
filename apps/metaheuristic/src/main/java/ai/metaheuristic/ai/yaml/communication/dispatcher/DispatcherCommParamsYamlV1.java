@@ -53,6 +53,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     public @Nullable ReportResultDeliveringV1 reportResultDelivering;
     public ExecContextStatusV1 execContextStatus;
     public @Nullable ResendTaskOutputsV1 resendTaskOutputs;
+    public @Nullable RequestLogFileV1 requestLogFile;
 
     @Data
     @AllArgsConstructor
@@ -141,6 +142,13 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         public Long chunkSize;
         // Processor's version for communicating with dispatcher
         public Integer processorCommVersion;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestLogFileV1 {
+        public long requestedOn;
     }
 
     public boolean success = true;

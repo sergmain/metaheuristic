@@ -56,6 +56,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @NoArgsConstructor
     public static class Log {
         public boolean logRequested;
+        public long requestedOn;
 
         @Nullable
         public Long logReceivedOn;

@@ -96,6 +96,7 @@ public class ProcessorTransactionService {
         }
 
         psy.log.logRequested = true;
+        psy.log.requestedOn = System.currentTimeMillis();
         processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
         processorCache.save(processor);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Log file for processor #"+processorId+" was requested successfully", null);
@@ -198,7 +199,9 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public Void storeProcessorStatuses(Long processorId, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
+    public Void storeProcessorStatuses(
+            Long processorId, @Nullable ProcessorCommParamsYaml.ReportProcessorStatus status,
+            ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, DispatcherCommParamsYaml dcpy) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -206,52 +209,63 @@ public class ProcessorTransactionService {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
         }
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-        boolean isUpdated = false;
-        if (isProcessorStatusDifferent(ss, status)) {
-            ss.env = status.env;
-            ss.gitStatusInfo = status.gitStatusInfo;
-            ss.schedule = status.schedule;
+        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        if (status!=null) {
 
-            // Do not include updating of sessionId
-            // ss.sessionId = command.status.sessionId;
+            boolean isUpdated = false;
+            if (isProcessorStatusDifferent(psy, status)) {
+                psy.env = status.env;
+                psy.gitStatusInfo = status.gitStatusInfo;
+                psy.schedule = status.schedule;
 
-            // Do not include updating of sessionCreatedOn!
-            // ss.sessionCreatedOn = command.status.sessionCreatedOn;
+                // Do not include updating of sessionId
+                // psy.sessionId = command.status.sessionId;
 
-            ss.ip = status.ip;
-            ss.host = status.host;
-            ss.errors = status.errors;
-            ss.logDownloadable = status.logDownloadable;
-            ss.taskParamsVersion = status.taskParamsVersion;
-            ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
-            ss.currDir = status.currDir;
+                // Do not include updating of sessionCreatedOn!
+                // psy.sessionCreatedOn = command.status.sessionCreatedOn;
 
-            processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-            processor.updatedOn = System.currentTimeMillis();
-            isUpdated = true;
-        }
-        if (isProcessorFunctionDownloadStatusDifferent(ss, functionDownloadStatus)) {
-            ss.downloadStatuses = functionDownloadStatus.statuses.stream()
-                    .map(o -> new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
-                    .collect(Collectors.toList());
-            processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-            processor.updatedOn = System.currentTimeMillis();
-            isUpdated = true;
-        }
-        if (isUpdated) {
-            try {
-                log.debug("#807.120 Save new processor status, processor: {}", processor);
-                processorCache.save(processor);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                log.warn("#807.140 ObjectOptimisticLockingFailureException was encountered\n" +
-                        "new processor:\n{}\n" +
-                        "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
+                psy.ip = status.ip;
+                psy.host = status.host;
+                psy.errors = status.errors;
+                psy.logDownloadable = status.logDownloadable;
+                psy.taskParamsVersion = status.taskParamsVersion;
+                psy.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
+                psy.currDir = status.currDir;
 
-                processorCache.clearCache();
+                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+                processor.updatedOn = System.currentTimeMillis();
+                isUpdated = true;
             }
-        } else {
-            log.debug("#807.160 Processor status is equal to the status stored in db");
+            if (isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus)) {
+                psy.downloadStatuses = functionDownloadStatus.statuses.stream()
+                        .map(o -> new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
+                        .collect(Collectors.toList());
+                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+                processor.updatedOn = System.currentTimeMillis();
+                isUpdated = true;
+            }
+            if (isUpdated) {
+                try {
+                    log.debug("#807.120 Save new processor status, processor: {}", processor);
+                    processorCache.save(processor);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    log.warn("#807.140 ObjectOptimisticLockingFailureException was encountered\n" +
+                            "new processor:\n{}\n" +
+                            "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
+
+                    processorCache.clearCache();
+                }
+            } else {
+                log.debug("#807.160 Processor status is equal to the status stored in db");
+            }
+        }
+        if (psy.log!=null && psy.log.logRequested) {
+            if (psy.log.requestedOn==0) {
+                throw new IllegalStateException("(psy.log.requestedOn==0)");
+            }
+            // we will send request for a log file constantly until it'll be received.
+            // Double requests will be handled at the Processor side.
+            dcpy.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(psy.log.requestedOn);
         }
         return null;
     }

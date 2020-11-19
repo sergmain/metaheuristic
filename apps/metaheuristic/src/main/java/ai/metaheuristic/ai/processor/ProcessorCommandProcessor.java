@@ -44,15 +44,16 @@ public class ProcessorCommandProcessor {
     private final CurrentExecState currentExecState;
 
     // this method is synchronized outside
-    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        scpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
+    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+        pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
         // !!! processExecContextStatus() must be processed before calling processAssignedTask()
         processExecContextStatus(dispatcherUrl, dispatcherYaml.execContextStatus);
         processReportResultDelivering(dispatcherUrl, dispatcherYaml);
         processAssignedTask(dispatcherUrl, dispatcherYaml);
         storeProcessorId(dispatcherUrl, dispatcherYaml);
         reAssignProcessorId(dispatcherUrl, dispatcherYaml);
-        registerFunctions(scpy.functionDownloadStatus, dispatcherUrl, dispatcherYaml);
+        registerFunctions(pcpy.functionDownloadStatus, dispatcherUrl, dispatcherYaml);
+//        processRequestLogFile(pcpy)
     }
 
     private void registerFunctions(ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {

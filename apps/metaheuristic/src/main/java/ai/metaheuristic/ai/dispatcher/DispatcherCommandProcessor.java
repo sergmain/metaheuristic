@@ -57,7 +57,7 @@ public class DispatcherCommandProcessor {
         processProcessorTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
         lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
-        processReportProcessorStatus(scpy);
+        processReportProcessorStatus(scpy, lcpy);
         lcpy.assignedTask = processRequestTask(scpy);
         lcpy.assignedProcessorId = getNewProcessorId(scpy.requestProcessorId);
         lcpy.functions.infos.addAll( functionService.getFunctionInfos() );
@@ -113,16 +113,24 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    private void processReportProcessorStatus(ProcessorCommParamsYaml request) {
-        if (request.reportProcessorStatus ==null) {
+    private void processReportProcessorStatus(ProcessorCommParamsYaml request, DispatcherCommParamsYaml lcpy) {
+/*
+        if (request.reportProcessorStatus==null) {
             return;
         }
         if (request.processorCommContext==null) {
             log.warn("#997.030 (request.processorCommContext==null)");
             return;
         }
+*/
         checkProcessorId(request);
-        processorTopLevelService.storeProcessorStatuses(request.processorCommContext.processorId, request.reportProcessorStatus, request.functionDownloadStatus);
+        // IDEA has become too lazy
+        if (S.b(request.processorCommContext.processorId)) {
+            log.warn("#997.030 (request.processorCommContext==null)");
+            return;
+        }
+        final Long processorId = Long.valueOf(request.processorCommContext.processorId);
+        processorTopLevelService.processProcessorStatuses(processorId, request.reportProcessorStatus, request.functionDownloadStatus, lcpy);
     }
 
     // processing at dispatcher side
@@ -158,7 +166,7 @@ public class DispatcherCommandProcessor {
     }
 
     private void checkProcessorId(ProcessorCommParamsYaml request) {
-        if (request.processorCommContext ==null  || request.processorCommContext.processorId ==null) {
+        if (request.processorCommContext ==null  || S.b(request.processorCommContext.processorId)) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");
         }

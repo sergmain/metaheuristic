@@ -92,13 +92,12 @@ public class ProcessorTopLevelService {
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.assignNewSessionIdWithTx(processorId, ss));
     }
 
-    public void storeProcessorStatuses(@Nullable String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
-        if (S.b(processorIdAsStr)) {
-            return;
-        }
-        final Long processorId = Long.valueOf(processorIdAsStr);
-//        processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus);
-        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
+    public void processProcessorStatuses(
+            final Long processorId, @Nullable ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus,
+            DispatcherCommParamsYaml lcpy) {
+
+//        processorTransactionService.processProcessorStatuses(processorId, status, functionDownloadStatus);
+        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus, lcpy));
     }
 
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, @Nullable List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {

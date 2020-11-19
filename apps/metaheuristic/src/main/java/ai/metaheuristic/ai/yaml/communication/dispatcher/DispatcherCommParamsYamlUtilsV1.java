@@ -93,6 +93,9 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             t.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
             v1.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> t.resendTaskOutputs.resends));
         }
+        if (v1.requestLogFile!=null) {
+            t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v1.requestLogFile.requestedOn);
+        }
 
         BeanUtils.copyProperties(v1, t);
         return t;

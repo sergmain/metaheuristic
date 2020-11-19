@@ -75,7 +75,7 @@ public class ProcessorStatusYamlUtilsV1
             }
         }
         if (src.log!=null) {
-            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.logReceivedOn);
+            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors");
         trg.checkIntegrity();
