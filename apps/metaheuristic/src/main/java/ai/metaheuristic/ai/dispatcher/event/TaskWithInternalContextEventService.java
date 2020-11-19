@@ -61,7 +61,8 @@ public class TaskWithInternalContextEventService {
         } catch (Throwable th) {
             String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";
             log.error(es, th);
-            execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es, null);
+            execContextSyncService.getWithSyncNullable(event.execContextId,
+                    () -> execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es, null));
         }
     }
 }
