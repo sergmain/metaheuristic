@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -32,6 +33,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from SourceCodeImpl t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable

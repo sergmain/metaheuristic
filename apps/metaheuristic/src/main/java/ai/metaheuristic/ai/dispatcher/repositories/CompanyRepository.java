@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -39,6 +40,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface CompanyRepository extends CrudRepository<Company, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Company t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable

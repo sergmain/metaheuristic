@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -36,6 +37,11 @@ import java.util.List;
 @Repository
 @Profile("dispatcher")
 public interface CacheVariableRepository extends CrudRepository<CacheVariable, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from CacheVariable t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(propagation = Propagation.MANDATORY)
     void deleteByCacheProcessId(Long cacheProcessId);

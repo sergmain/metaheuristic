@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -36,6 +37,11 @@ import java.sql.Blob;
 //@Transactional
 @Profile("dispatcher")
 public interface FunctionDataRepository extends CrudRepository<FunctionData, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from FunctionData t where t.id=:id")
+    void deleteById(Long id);
 
     @Nullable
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)

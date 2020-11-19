@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.account.SimpleAccount;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -39,6 +40,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface AccountRepository extends CrudRepository<Account, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Account t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable

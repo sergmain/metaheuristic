@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -33,6 +34,11 @@ import java.util.List;
 @Repository
 @Profile("dispatcher")
 public interface BatchRepository extends CrudRepository<Batch, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Batch t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable

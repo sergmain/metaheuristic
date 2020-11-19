@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -31,6 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 @Transactional
 public interface ExperimentResultRepository extends CrudRepository<ExperimentResult, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from ExperimentResult t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple(" +

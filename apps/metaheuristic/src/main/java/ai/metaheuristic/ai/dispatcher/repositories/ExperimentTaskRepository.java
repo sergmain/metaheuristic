@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -34,6 +35,11 @@ import java.util.Set;
 @Transactional
 @Profile("dispatcher")
 public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from ExperimentTask t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id from ExperimentTask t where t.experimentResultId=:experimentResultId ")

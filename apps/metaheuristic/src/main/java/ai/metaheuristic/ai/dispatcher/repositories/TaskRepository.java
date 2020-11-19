@@ -37,6 +37,11 @@ import java.util.stream.Stream;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
+    @Override
+    @Modifying
+    @Query(value="delete from TaskImpl t where t.id=:id")
+    void deleteById(Long id);
+
     @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     @Query(value="select t.execContextId from TaskImpl t where t.id=:taskId")
     Long getExecContextId(Long taskId);

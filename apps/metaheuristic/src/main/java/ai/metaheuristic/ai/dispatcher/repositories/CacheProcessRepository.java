@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -36,6 +37,11 @@ import java.sql.Blob;
 @Transactional(propagation = Propagation.MANDATORY)
 @Profile("dispatcher")
 public interface CacheProcessRepository extends CrudRepository<CacheProcess, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from CacheProcess t where t.id=:id")
+    void deleteById(Long id);
 
 /*
     @Query(value="select b.data from CacheProcess b where b.id=:id")

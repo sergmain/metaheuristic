@@ -21,11 +21,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
 
 /**
  * User: Serg
@@ -35,6 +34,11 @@ import java.util.Optional;
 @Repository
 @Profile("dispatcher")
 public interface ProcessorRepository extends CrudRepository<Processor, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Processor t where t.id=:id")
+    void deleteById(Long id);
 
     Page<Processor> findAll(Pageable pageable);
 

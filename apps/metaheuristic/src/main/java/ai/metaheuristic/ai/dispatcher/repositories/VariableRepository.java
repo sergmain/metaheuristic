@@ -43,7 +43,12 @@ import java.util.Set;
 @Profile("dispatcher")
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    @Override
+    @Modifying
+    @Query(value="delete from Variable t where t.id=:id")
+    void deleteById(Long id);
+
+    //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT v.taskContextId FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
     Set<String> findTaskContextIdsByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
 
@@ -104,10 +109,6 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select b.data from Variable b where b.id=:id")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
-
-    @Modifying
-    @Query(value="delete from Variable v where v.id=:id")
-    void deleteById(Long id);
 
     @Modifying
     @Query(value="delete from Variable v where v.execContextId=:execContextId")

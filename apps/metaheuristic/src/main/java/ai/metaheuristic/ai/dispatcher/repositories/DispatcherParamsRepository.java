@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -35,6 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @Profile("dispatcher")
 public interface DispatcherParamsRepository extends CrudRepository<Dispatcher, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Dispatcher t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable

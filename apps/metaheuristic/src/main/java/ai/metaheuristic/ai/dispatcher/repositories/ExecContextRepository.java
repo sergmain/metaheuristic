@@ -22,6 +22,7 @@ import lombok.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -35,6 +36,11 @@ import java.util.List;
 @Profile("dispatcher")
 //@Transactional
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from ExecContextImpl t where t.id=:id")
+    void deleteById(Long id);
 
     @Query(nativeQuery = true, value =
             "select distinct d.ID from mh_exec_context d where d.SOURCE_CODE_ID not in (select z.id from mh_source_code z)")

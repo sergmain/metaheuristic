@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -39,6 +40,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
+
+    @Override
+    @Modifying
+    @Query(value="delete from Experiment t where t.id=:id")
+    void deleteById(Long id);
 
     @Transactional(readOnly = true)
     @Nullable
