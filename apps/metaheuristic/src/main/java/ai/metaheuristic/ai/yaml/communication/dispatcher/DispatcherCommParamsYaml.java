@@ -50,7 +50,7 @@ public class DispatcherCommParamsYaml implements BaseParams {
     public Functions functions = new Functions();
     public @Nullable AssignedTask assignedTask;
     public @Nullable AssignedProcessorId assignedProcessorId;
-    public ReAssignProcessorId reAssignedProcessorId;
+    public @Nullable ReAssignProcessorId reAssignedProcessorId;
     public @Nullable ReportResultDelivering reportResultDelivering;
     public ExecContextStatus execContextStatus;
     public @Nullable ResendTaskOutputs resendTaskOutputs;

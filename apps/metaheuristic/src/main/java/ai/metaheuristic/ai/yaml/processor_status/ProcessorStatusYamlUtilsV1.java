@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.processor_status;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -73,6 +74,9 @@ public class ProcessorStatusYamlUtilsV1
                 trg.env.mirrors.putAll(mirrorMap);
             }
         }
+        if (src.log!=null) {
+            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.logReceivedOn);
+        }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors");
         trg.checkIntegrity();
         return trg;
@@ -103,9 +107,8 @@ public class ProcessorStatusYamlUtilsV1
     @Override
     public ProcessorStatusYamlV1 to(@NonNull String s) {
         if (S.b(s)) {
-            return null;
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        //noinspection UnnecessaryLocalVariable
         final ProcessorStatusYamlV1 p = getYaml().load(s);
         return p;
     }

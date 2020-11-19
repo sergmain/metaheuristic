@@ -49,6 +49,16 @@ public class ProcessorStatusYamlV1 implements BaseParams {
         public String functionCode;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class LogV1 {
+        public boolean logRequested;
+
+        @Nullable
+        public Long logReceivedOn;
+    }
+
     public List<DownloadStatusV1> downloadStatuses = new ArrayList<>();
 
     public EnvYaml env;
@@ -71,6 +81,9 @@ public class ProcessorStatusYamlV1 implements BaseParams {
 
     @Nullable
     public String currDir;
+
+    @Nullable
+    public LogV1 log;
 
     public final int version = 1;
 }

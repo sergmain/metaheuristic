@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +63,10 @@ public class ProcessorService {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
+//    @Value("${logging.file.name:#{null}}")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
+    public File logFile;
+
     ProcessorCommParamsYaml.ReportProcessorStatus produceReportProcessorStatus(String dispatcherUrl, DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
@@ -73,7 +78,8 @@ public class ProcessorService {
                 schedule.asString,
                 metadataService.getSessionId(dispatcherUrl),
                 System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists(),
+                "[unknown]", "[unknown]", null,
+                logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
                 globals.os, globals.processorDir.getAbsolutePath());
 

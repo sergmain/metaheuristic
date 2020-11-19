@@ -8,7 +8,7 @@
 
         let /*boolean*/ isShowStatus = false;
 
-        var table = function (html) {
+        const table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
@@ -18,8 +18,8 @@
         };
 
         $(function () {
-            var token = $("meta[name='_csrf']").attr("content");
-            var header = $("meta[name='_csrf_header']").attr("content");
+            const token = $("meta[name='_csrf']").attr("content");
+            const header = $("meta[name='_csrf_header']").attr("content");
 
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
@@ -85,6 +85,13 @@
             <td th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-edit/' + r.processor.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-delete/' + r.processor.id}">Delete</a></td>
+            <td>
+                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/processor/processor-request-logfile-commit}" accept-charset="UTF-8" id="processor-form" name="f">
+                    <input type="hidden" th:field="${r.processor.id}"/>
+                    <button type="submit" class="pure-button pure-button-primary">Request log file</button>
+                </form>
+
+            </td>
         </tr>
         <tr>
             <td colspan="8">

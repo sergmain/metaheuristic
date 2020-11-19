@@ -51,6 +51,16 @@ public class ProcessorStatusYaml implements BaseParams {
         public String functionCode;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Log {
+        public boolean logRequested;
+
+        @Nullable
+        public Long logReceivedOn;
+    }
+
     public List<DownloadStatus> downloadStatuses = new ArrayList<>();
 
     public EnvYaml env;
@@ -75,6 +85,9 @@ public class ProcessorStatusYaml implements BaseParams {
 
     @Nullable
     public String currDir;
+
+    @Nullable
+    public Log log;
 
     public void addError(String error) {
         if (errors==null) {

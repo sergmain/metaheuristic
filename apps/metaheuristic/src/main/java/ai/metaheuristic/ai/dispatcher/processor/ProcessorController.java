@@ -68,7 +68,7 @@ public class ProcessorController {
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult processorResultRest = processorTopLevelService.getProcessor(id);
         if (processorResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, processorResultRest);
             return "redirect:/dispatcher/processor/processors";
         }
         ControllerUtils.addMessagesToModel(model, processorResultRest);
@@ -79,9 +79,7 @@ public class ProcessorController {
     @PostMapping("/processor-form-commit")
     public String updateDescription(Processor processor, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult r = processorTopLevelService.updateDescription(processor.id, processor.description);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, r);
         return "redirect:/dispatcher/processor/processors";
     }
 
@@ -89,7 +87,7 @@ public class ProcessorController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult processorResultRest = processorTopLevelService.getProcessor(id);
         if (processorResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.getErrorMessagesAsList());
+            ControllerUtils.initRedirectAttributes(redirectAttributes, processorResultRest);
             return "redirect:/dispatcher/processor/processors";
         }
         model.addAttribute("processor", processorResultRest.processor);
@@ -99,9 +97,14 @@ public class ProcessorController {
     @PostMapping("/processor-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest r = processorTopLevelService.deleteProcessorById(id);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
-        }
+        ControllerUtils.initRedirectAttributes(redirectAttributes, r);
+        return "redirect:/dispatcher/processor/processors";
+    }
+
+    @PostMapping("/processor-request-logfile-commit")
+    public String requestLofFileCommit(Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest r = processorTopLevelService.requestLogFile(id);
+        ControllerUtils.initRedirectAttributes(redirectAttributes, r);
         return "redirect:/dispatcher/processor/processors";
     }
 

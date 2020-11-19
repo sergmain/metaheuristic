@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -32,17 +33,8 @@ import java.sql.Timestamp;
 public class LogData implements Serializable {
     private static final long serialVersionUID = -6065599957629315147L;
 
-    public void setType(Type type) {
+    public void setType(Enums.LogType type) {
         this.logType = type.typeNumber;
-    }
-
-    public enum Type{ ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5), PRODUCING(6);
-
-        public int typeNumber;
-
-        Type(int typeNumber) {
-            this.typeNumber = typeNumber;
-        }
     }
 
     @Id

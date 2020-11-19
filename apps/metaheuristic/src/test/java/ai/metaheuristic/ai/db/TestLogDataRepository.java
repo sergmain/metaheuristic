@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.db;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.LogData;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +54,7 @@ public class TestLogDataRepository {
         logData.setId(42L);
         logData.setVersion(5);
         logData.setLogData("This is log data");
-        logData.setType(LogData.Type.ASSEMBLING);
+        logData.setType(Enums.LogType.ASSEMBLING);
         logData.setRefId(42L);
         logData = logDataRepository.save(logData);
         assertNotNull(logData);

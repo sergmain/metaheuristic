@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -50,6 +51,9 @@ public class TestReAssignProcessorIdUnknownProcessorId {
     public SouthbridgeService serverService;
 
     @Autowired
+    public ProcessorCache processorCache;
+
+    @Autowired
     public ProcessorTransactionService processorTransactionService;
 
     private Long processorIdBefore;
@@ -65,7 +69,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
 
         for (int i = 0; i < 100; i++) {
             final long id = -1L - i;
-            Processor s = processorTransactionService.findById(id);
+            Processor s = processorCache.findById(id);
             if (s==null) {
                 unknownProcessorId = id;
                 break;
@@ -129,7 +133,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
 
         assertNotEquals(unknownProcessorId, processorId);
 
-        Processor s = processorTransactionService.findById(processorId);
+        Processor s = processorCache.findById(processorId);
 
         assertNotNull(s);
     }

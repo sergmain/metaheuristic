@@ -63,6 +63,9 @@ public class Processor implements Serializable {
     @Column(name = "DESCRIPTION")
     public String description;
 
+    /**
+     *  contains data in yaml format
+     */
     @Column(name = "STATUS")
     public String status;
 

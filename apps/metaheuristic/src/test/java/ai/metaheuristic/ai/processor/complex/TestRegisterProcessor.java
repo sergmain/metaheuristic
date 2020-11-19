@@ -51,7 +51,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -80,7 +79,7 @@ public class TestRegisterProcessor {
 
     private String processorIdAsStr = null;
     private Long processorId = null;
-    private Set<Long> processorIds =new HashSet<>();
+    private final Set<Long> processorIds =new HashSet<>();
     private String sessionId = null;
 
     @Autowired
@@ -162,7 +161,7 @@ public class TestRegisterProcessor {
         int i=0;
     }
 
-    public DispatcherCommParamsYaml requestServer(ProcessorCommParamsYaml data) throws Exception {
+    private DispatcherCommParamsYaml requestServer(ProcessorCommParamsYaml data) throws Exception {
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
 
         final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
@@ -178,7 +177,7 @@ public class TestRegisterProcessor {
         return d;
     }
 
-    public MockHttpServletRequestBuilder buildPostRequest(String data, String url) {
+    private MockHttpServletRequestBuilder buildPostRequest(String data, String url) {
         return MockMvcRequestBuilders
                 .post(url)
                 .contentType(MediaType.APPLICATION_JSON)

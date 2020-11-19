@@ -49,7 +49,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     public FunctionsV1 functions = new FunctionsV1();
     public @Nullable AssignedTaskV1 assignedTask;
     public @Nullable AssignedProcessorIdV1 assignedProcessorId;
-    public ReAssignProcessorIdV1 reAssignedProcessorId;
+    public @Nullable ReAssignProcessorIdV1 reAssignedProcessorId;
     public @Nullable ReportResultDeliveringV1 reportResultDelivering;
     public ExecContextStatusV1 execContextStatus;
     public @Nullable ResendTaskOutputsV1 resendTaskOutputs;

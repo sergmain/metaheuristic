@@ -150,4 +150,14 @@ public final class Enums {
     }
 
     public enum ChecksumStateEnum { unknown, signature_ok, signature_not_required, signature_not_valid }
+
+    public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
+        PRODUCING(6), PROCESSOR_LOG(7);
+
+        public int typeNumber;
+
+        LogType(int typeNumber) {
+            this.typeNumber = typeNumber;
+        }
+    }
 }

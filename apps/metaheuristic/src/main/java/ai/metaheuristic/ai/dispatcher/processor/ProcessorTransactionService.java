@@ -18,33 +18,28 @@ package ai.metaheuristic.ai.dispatcher.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -55,27 +50,94 @@ import java.util.stream.Collectors;
  * Date: 9/29/2020
  * Time: 7:54 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class ProcessorTransactionService {
 
-    private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
+    private final ProcessorSyncService processorSyncService;
 
-    // Attention, this value must be greater than
-    // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
-    // at least for 20 seconds
-    public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
+    private static final int COOL_DOWN_MINUTES = 2;
+    private static final long LOG_FILE_REQUEST_COOL_DOWN_TIMEOUT = TimeUnit.MINUTES.toMillis(COOL_DOWN_MINUTES);
 
     private static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
     }
 
     @Transactional
-    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+    public OperationStatusRest requestLogFile(Long processorId) {
+        processorSyncService.checkWriteLockPresent(processorId);
+
+        Processor processor = processorCache.findById(processorId);
+        if (processor==null) {
+            String es = "#807.040 Can't find Processor #" + processorId;
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        if (psy.log==null) {
+            psy.log = new ProcessorStatusYaml.Log();
+        }
+        if (psy.log.logRequested) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Log file for processor #"+processorId+" was already requested", null);
+        }
+        if (psy.log.logReceivedOn != null) {
+            long diff = System.currentTimeMillis() - psy.log.logReceivedOn;
+            if (diff<=LOG_FILE_REQUEST_COOL_DOWN_TIMEOUT) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.OK,
+                        S.f("Log file can be requested not often than 1 time in %s minutes. Cool down in %d seconds",
+                                COOL_DOWN_MINUTES, (LOG_FILE_REQUEST_COOL_DOWN_TIMEOUT - diff)/1_000),
+                        null);
+            }
+        }
+
+        psy.log.logRequested = true;
+        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+        processorCache.save(processor);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Log file for processor #"+processorId+" was requested successfully", null);
+    }
+
+    @Transactional
+    public Void setLogFileReceived(Long processorId) {
+        processorSyncService.checkWriteLockPresent(processorId);
+
+        Processor processor = processorCache.findById(processorId);
+        if (processor==null) {
+            log.warn("#807.045 Can't find Processor #{}", processorId);
+            return null;
+        }
+        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        if (psy.log==null) {
+            psy.log = new ProcessorStatusYaml.Log();
+        }
+        psy.log.logReceivedOn = System.currentTimeMillis();
+        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+        processorCache.save(processor);
+        return null;
+
+    }
+
+    @Nullable
+    @Transactional
+    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
+        processorSyncService.checkWriteLockPresent(processorId);
+        Processor processor = processorCache.findById(processorId);
+        if (processor==null) {
+            log.warn("#807.040 Can't find Processor #{}", processorId);
+            return null;
+        }
+        return assignNewSessionId(processor, ss);
+
+    }
+
+    private DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+        TxUtils.checkTxExists();
+        processorSyncService.checkWriteLockPresent(processor.id);
+
         ss.sessionId = createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
@@ -91,7 +153,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO);
+                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
 
         final Processor p = createProcessor(null, null, psy);
         return new ProcessorData.ProcessorWithSessionId(p, sessionId);
@@ -107,29 +169,14 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public ProcessorData.ProcessorResult getProcessor(Long id) {
-        Processor processor = processorCache.findById(id);
-        if (processor==null) {
-            return new ProcessorData.ProcessorResult("#807.040 Processor wasn't found for id #"+ id);
-        }
-        ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
-        return r;
-    }
-
-    @Nullable
-    @Transactional
-    public Processor findById(Long id) {
-        Processor processor = processorCache.findById(id);
-        return processor;
-    }
-
-    @Transactional
     public void deleteById(Long id) {
+        processorSyncService.checkWriteLockPresent(id);
         processorCache.deleteById(id);
     }
 
     @Transactional
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
+        processorSyncService.checkWriteLockPresent(processorId);
         Processor s = processorCache.findById(processorId);
         if (s==null) {
             return new ProcessorData.ProcessorResult("#807.060 processor wasn't found, processorId: " + processorId);
@@ -141,6 +188,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public OperationStatusRest deleteProcessorById(Long id) {
+        processorSyncService.checkWriteLockPresent(id);
         Processor processor = processorCache.findById(id);
         if (processor == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
@@ -151,7 +199,8 @@ public class ProcessorTransactionService {
 
     @Transactional
     public Void storeProcessorStatuses(Long processorId, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
-        log.debug("Before entering in sync block, storeProcessorStatus()");
+        processorSyncService.checkWriteLockPresent(processorId);
+
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             // we throw ISE cos all checks have to be made early
@@ -204,7 +253,6 @@ public class ProcessorTransactionService {
         } else {
             log.debug("#807.160 Processor status is equal to the status stored in db");
         }
-        log.debug("#807.180 After leaving sync block");
         return null;
     }
 
@@ -242,7 +290,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO);
+                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
@@ -251,9 +299,7 @@ public class ProcessorTransactionService {
     /**
      * session is Ok, so we need to update session's timestamp periodically
      */
-    @Transactional
-    @SuppressWarnings("UnnecessaryReturnStatement")
-    public void updateSession(Processor processor, ProcessorStatusYaml ss) {
+    private void updateSession(Processor processor, ProcessorStatusYaml ss) {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
@@ -279,7 +325,9 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public Void checkProcessorId(final long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+    public Void checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+        processorSyncService.checkWriteLockPresent(processorId);
+
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.warn("#807.220 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
@@ -320,47 +368,6 @@ public class ProcessorTransactionService {
         } else {
             // see logs in method
             updateSession(processor, ss);
-        }
-        return null;
-    }
-
-    @Transactional
-    public ProcessorData.ProcessorsResult getProcessors(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.processorRowsLimit, pageable);
-        ProcessorData.ProcessorsResult result = new ProcessorData.ProcessorsResult();
-        Slice<Long> ids = processorRepository.findAllByOrderByUpdatedOnDescId(pageable);
-        List<ProcessorData.ProcessorStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
-        for (Long processorId : ids) {
-            Processor processor = processorCache.findById(processorId);
-            if (processor ==null) {
-                continue;
-            }
-            ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-
-            String blacklistReason = processorBlacklisted(status);
-
-            boolean isFunctionProblem = status.downloadStatuses.stream()
-                    .anyMatch(s->s.functionState != Enums.FunctionState.none &&
-                            s.functionState != Enums.FunctionState.ready &&
-                            s.functionState != Enums.FunctionState.not_found &&
-                            s.functionState != Enums.FunctionState.ok);
-
-            ss.add(new ProcessorData.ProcessorStatus(
-                    processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,
-                    isFunctionProblem,
-                    blacklistReason!=null, blacklistReason,
-                    processor.updatedOn,
-                    (StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO),
-                    (StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO)
-            ));
-        }
-        result.items =  new SliceImpl<>(ss, pageable, ids.hasNext());
-        return result;
-    }
-
-    private @Nullable String processorBlacklisted(ProcessorStatusYaml status) {
-        if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "#807.380 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }
