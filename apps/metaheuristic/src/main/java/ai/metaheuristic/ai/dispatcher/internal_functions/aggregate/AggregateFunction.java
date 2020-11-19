@@ -33,7 +33,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -43,6 +42,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,7 +73,6 @@ public class AggregateFunction implements InternalFunction {
         return Consts.MH_AGGREGATE_FUNCTION;
     }
 
-    @SneakyThrows
     @Override
     public InternalFunctionProcessingResult process(
             @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
@@ -129,9 +128,14 @@ public class AggregateFunction implements InternalFunction {
         File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
 
         ZipUtils.createZip(outputDir, zipFile);
-        InputStream is = new FileInputStream(zipFile);
-        holder.inputStreams.add(is);
-        variableService.update(is, zipFile.length(), variable);
+        try {
+            InputStream is = new FileInputStream(zipFile);
+            holder.inputStreams.add(is);
+            variableService.update(is, zipFile.length(), variable);
+        } catch (FileNotFoundException e) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "Can't open zipFile   "+ zipFile.getAbsolutePath());
+        }
 
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
