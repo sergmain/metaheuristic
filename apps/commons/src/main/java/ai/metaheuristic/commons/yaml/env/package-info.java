@@ -14,16 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.env;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.commons.yaml.env;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class DiskStorage {
-    public String code;
-    public String path;
-}
+import javax.annotation.ParametersAreNonnullByDefault;

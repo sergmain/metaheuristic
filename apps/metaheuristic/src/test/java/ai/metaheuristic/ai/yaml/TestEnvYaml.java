@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.EnvYamlUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

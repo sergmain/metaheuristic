@@ -16,8 +16,8 @@
 package ai.metaheuristic.ai.yaml.processor_status;
 
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.ai.yaml.env.DiskStorage;
-import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.DiskStorage;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;

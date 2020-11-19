@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor.env;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.EnvYamlUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
