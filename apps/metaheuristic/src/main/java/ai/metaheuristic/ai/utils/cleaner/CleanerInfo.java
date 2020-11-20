@@ -16,7 +16,10 @@
 
 package ai.metaheuristic.ai.utils.cleaner;
 
+import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.ResponseEntity;
 
@@ -31,8 +34,14 @@ import java.util.List;
  * Time: 5:20 PM
  */
 @Data
-public class CleanerInfo {
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+public class CleanerInfo extends BaseDataClass {
     public ResponseEntity<AbstractResource> entity;
     public List<File> toClean = new ArrayList<>();
     public List<InputStream> inputStreams = new ArrayList<>();
+
+    public CleanerInfo(String error) {
+        addErrorMessage(error);
+    }
 }

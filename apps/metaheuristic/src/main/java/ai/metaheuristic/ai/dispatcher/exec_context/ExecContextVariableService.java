@@ -34,7 +34,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,7 +91,7 @@ public class ExecContextVariableService {
             return OK_UPLOAD_RESULT;
         }
         else {
-            return new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ variableId+"");
+            return new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId);
         }
     }
 
@@ -128,7 +127,7 @@ public class ExecContextVariableService {
             return OK_UPLOAD_RESULT;
         }
         else {
-            return new UploadResult(status, "#441.160 can't update resultReceived field for task #"+ variable.getId()+"");
+            return new UploadResult(status, "#441.160 can't update resultReceived field for task #"+ taskId+", variable #" +variable.getId());
         }
     }
 

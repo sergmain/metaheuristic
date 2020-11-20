@@ -164,6 +164,9 @@ public class BatchController {
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
+            if (resource.isErrorMessages()) {
+                throw new RuntimeException(resource.getErrorMessagesAsStr());
+            }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {
