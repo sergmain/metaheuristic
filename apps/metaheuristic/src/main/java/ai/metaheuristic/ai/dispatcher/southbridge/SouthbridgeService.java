@@ -36,6 +36,10 @@ import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -188,6 +192,19 @@ public class SouthbridgeService {
         } catch (IOException e) {
             throw new CommonIOErrorWithDataException("Error: " + e.getMessage());
         }
+    }
+
+    public String keepAlive(String data, String remoteAddr) {
+        KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
+        KeepAliveResponseParamYaml response = processKeepAlive(karpy);
+        String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
+        return yaml;
+    }
+
+    private KeepAliveResponseParamYaml processKeepAlive(KeepAliveRequestParamYaml karpy) {
+        KeepAliveResponseParamYaml response = new KeepAliveResponseParamYaml();
+
+        return response;
     }
 
     public String processRequest(String data, String remoteAddress) {

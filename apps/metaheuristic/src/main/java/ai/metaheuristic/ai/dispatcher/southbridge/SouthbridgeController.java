@@ -69,6 +69,20 @@ public class SouthbridgeController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
+    @PostMapping("/keep-alive/{random-part}")
+    public String keepAlive(
+            HttpServletRequest request, HttpServletResponse response,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @Nullable @RequestBody String data
+    ) throws IOException {
+        log.debug("keepAlive(), data: {}", data);
+        if (S.b(data)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
+        return serverService.keepAlive(data, request.getRemoteAddr());
+    }
+
     @GetMapping(value="/payload/resource/{variableType}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
