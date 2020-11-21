@@ -16,8 +16,14 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * @author Serge
@@ -34,5 +40,30 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         return true;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextStatus {
 
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SimpleStatus {
+            public Long execContextId;
+            public EnumsApi.ExecContextState state;
+        }
+
+        public List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses;
+
+        public boolean isStarted(Long execContextId) {
+            for (DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus status : statuses) {
+                if (status.execContextId.equals(execContextId)) {
+                    return status.state== EnumsApi.ExecContextState.STARTED;
+                }
+            }
+            return false;
+        }
+    }
+
+    public ExecContextStatus execContextStatus;
 }

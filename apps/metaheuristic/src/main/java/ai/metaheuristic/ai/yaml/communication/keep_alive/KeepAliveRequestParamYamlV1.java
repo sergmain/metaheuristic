@@ -36,7 +36,7 @@ import java.util.List;
  * Time: 1:03 AM
  */
 @Data
-public class KeepAliveRequestParamYaml implements BaseParams {
+public class KeepAliveRequestParamYamlV1 implements BaseParams {
 
     public final int version=1;
 
@@ -48,7 +48,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportProcessor {
+    public static class ReportProcessorV1 {
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
@@ -80,7 +80,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     }
 
     @Data
-    public static class FunctionDownloadStatus {
+    public static class FunctionDownloadStatusV1 {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -106,11 +106,12 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public boolean keep = true;
     }
 
-    public ReportProcessor processor;
-    public FunctionDownloadStatus functions;
+    public ReportProcessorV1 processor;
+    public FunctionDownloadStatusV1 functions;
     public RequestProcessorIdV1 requestProcessorId;
 
     @Nullable
     public String taskIds;
+
 
 }

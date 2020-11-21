@@ -218,7 +218,23 @@ public class Schedulers {
         }
 
         @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
+        public void keepAlive() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.processorEnabled) {
+                return;
+            }
+            log.info("Run envHotDeployService.monitorHotDeployDir()");
+            envService.monitorHotDeployDir();
+        }
+
+        @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
         public void monitorHotDeployDir() {
+            // TODO 2020-11-20 need to decide to is a hot-deploy needed or not?
+            if (true) {
+                return;
+            }
             if (globals.isUnitTesting) {
                 return;
             }

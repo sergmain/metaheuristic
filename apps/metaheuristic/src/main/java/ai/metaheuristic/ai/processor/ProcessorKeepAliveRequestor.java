@@ -21,13 +21,17 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.client.HttpClient;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -39,12 +43,15 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static org.apache.http.client.config.RequestConfig.custom;
 
 /**
  * User: Serg
@@ -53,7 +60,7 @@ import java.util.stream.Collectors;
  */
 
 @Slf4j
-public class DispatcherRequestor {
+public class ProcessorKeepAliveRequestor {
 
     private final String dispatcherUrl;
     private final Globals globals;
@@ -71,7 +78,7 @@ public class DispatcherRequestor {
     private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
 
-    public DispatcherRequestor(String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public ProcessorKeepAliveRequestor(String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -88,13 +95,7 @@ public class DispatcherRequestor {
             throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
         serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
-        nextRequest = new ProcessorCommParamsYaml();
     }
-
-    private long lastRequestForMissingResources = 0;
-    private long lastCheckForResendTaskOutputResource = 0;
-
-    private ProcessorCommParamsYaml nextRequest;
 
     private static final Object syncObj = new Object();
     private static <T> T getWithSync(Supplier<T> function) {
@@ -173,14 +174,6 @@ public class DispatcherRequestor {
             : 3;
     }
 
-    private ProcessorCommParamsYaml swap() {
-        return getWithSync(() -> {
-            ProcessorCommParamsYaml temp = nextRequest;
-            nextRequest = new ProcessorCommParamsYaml();
-            return temp;
-        });
-    }
-
     public void proceedWithRequest() {
         if (globals.isUnitTesting) {
             return;
@@ -190,7 +183,7 @@ public class DispatcherRequestor {
         }
 
         try {
-            ProcessorCommParamsYaml scpy = swap();
+            KeepAliveRequestParamYaml scpy = new KeepAliveRequestParamYaml();
 
             final String processorId = metadataService.getProcessorId(dispatcherUrl);
             final String sessionId = metadataService.getSessionId(dispatcherUrl);
