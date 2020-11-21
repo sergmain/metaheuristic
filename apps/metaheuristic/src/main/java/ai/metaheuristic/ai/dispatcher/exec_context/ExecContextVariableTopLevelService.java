@@ -147,11 +147,11 @@ public class ExecContextVariableTopLevelService {
             }
             try (DataHolder holder = new DataHolder()) {
                 try {
-                    uploadResult = taskSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(taskId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 catch (ObjectOptimisticLockingFailureException th) {
                     log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
-                    uploadResult = taskSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(taskId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 eventSenderService.sendEvents(holder);
             }
