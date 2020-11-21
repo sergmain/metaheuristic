@@ -109,16 +109,16 @@ public class DispatcherRequestor {
         }
     }
 
-    private void setRequestProcessorId(ProcessorCommParamsYaml scpy, final ProcessorCommParamsYaml.RequestProcessorId requestProcessorId) {
+    public void setNextRequestProcessorId() {
+        withSync(() -> { nextRequest.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(); return null; });
+    }
+
+    public void setRequestProcessorId(ProcessorCommParamsYaml scpy, final ProcessorCommParamsYaml.RequestProcessorId requestProcessorId) {
         withSync(() -> { scpy.requestProcessorId = requestProcessorId; return null; });
     }
 
     private void setProcessorCommContext(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ProcessorCommContext processorCommContext) {
         withSync(() -> { scpy.processorCommContext = processorCommContext; return null; });
-    }
-
-    private void setReportProcessorStatus(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportProcessorStatus produceReportProcessorStatus) {
-        withSync(() -> { scpy.reportProcessorStatus = produceReportProcessorStatus; return null; });
     }
 
     private void setReportProcessorTaskStatus(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportProcessorTaskStatus produceProcessorTaskStatus) {
@@ -203,7 +203,6 @@ public class DispatcherRequestor {
 
                 // always report about current active tasks, if we have actual processorId
                 setReportProcessorTaskStatus(scpy, processorTaskService.produceProcessorTaskStatus(dispatcherUrl));
-                setReportProcessorStatus(scpy, processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule));
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
@@ -322,6 +321,7 @@ public class DispatcherRequestor {
             log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
     }
+
 }
 
 

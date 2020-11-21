@@ -19,23 +19,17 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.client.HttpClient;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -43,15 +37,9 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static org.apache.http.client.config.RequestConfig.custom;
 
 /**
  * User: Serg
@@ -70,7 +58,8 @@ public class ProcessorKeepAliveRequestor {
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final ProcessorCommandProcessor processorCommandProcessor;
+    private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
+    private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
@@ -78,7 +67,11 @@ public class ProcessorKeepAliveRequestor {
     private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
 
-    public ProcessorKeepAliveRequestor(String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public ProcessorKeepAliveRequestor(
+            String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
+            ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState,
+            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+            DispatcherRequestorHolderService dispatcherRequestorHolderService) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -86,73 +79,26 @@ public class ProcessorKeepAliveRequestor {
         this.metadataService = metadataService;
         this.currentExecState = currentExecState;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
-        this.processorCommandProcessor = processorCommandProcessor;
+        this.processorKeepAliveProcessor = processorKeepAliveProcessor;
+        this.dispatcherRequestorHolderService = dispatcherRequestorHolderService;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-        if (dispatcher == null) {
-            throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
+        if (this.dispatcher == null) {
+            throw new IllegalStateException("#776.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
-        serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        this.serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
-    private static final Object syncObj = new Object();
-    private static <T> T getWithSync(Supplier<T> function) {
-        synchronized (syncObj) {
-            return function.get();
-        }
+    private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+        log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
+        storeDispatcherContext(dispatcherUrl, responseParamYaml);
+        processorKeepAliveProcessor.processDispatcherCommParamsYaml(karpy, dispatcherUrl, responseParamYaml);
     }
 
-    private static void withSync(Supplier<Void> function) {
-        synchronized (syncObj) {
-            function.get();
-        }
-    }
-
-    private void setRequestProcessorId(ProcessorCommParamsYaml scpy, final ProcessorCommParamsYaml.RequestProcessorId requestProcessorId) {
-        withSync(() -> { scpy.requestProcessorId = requestProcessorId; return null; });
-    }
-
-    private void setProcessorCommContext(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ProcessorCommContext processorCommContext) {
-        withSync(() -> { scpy.processorCommContext = processorCommContext; return null; });
-    }
-
-    private void setReportProcessorStatus(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportProcessorStatus produceReportProcessorStatus) {
-        withSync(() -> { scpy.reportProcessorStatus = produceReportProcessorStatus; return null; });
-    }
-
-    private void setReportProcessorTaskStatus(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportProcessorTaskStatus produceProcessorTaskStatus) {
-        withSync(() -> { scpy.reportProcessorTaskStatus = produceProcessorTaskStatus; return null; });
-    }
-
-    private void setRequestTask(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.RequestTask requestTask) {
-        withSync(() -> { scpy.requestTask = requestTask; return null; });
-    }
-
-    private void setResendTaskOutputResourceResult(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResourceResult) {
-        withSync(() -> { scpy.resendTaskOutputResourceResult = resendTaskOutputResourceResult; return null; });
-    }
-
-    private void setCheckForMissingOutputResources(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.CheckForMissingOutputResources checkForMissingOutputResources) {
-        withSync(() -> { scpy.checkForMissingOutputResources = checkForMissingOutputResources; return null; });
-    }
-
-    private void setReportTaskProcessingResult(ProcessorCommParamsYaml scpy, @Nullable ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult) {
-        withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
-    }
-
-    private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
-        withSync(() -> {
-            storeDispatcherContext(dispatcherUrl, dispatcherYaml);
-            processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
-            return null;
-        });
-    }
-
-    private void storeDispatcherContext(String dispatcherUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
-        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
+    private void storeDispatcherContext(String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+        if (responseParamYaml.dispatcherInfo ==null) {
             return;
         }
         DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
@@ -161,17 +107,10 @@ public class ProcessorKeepAliveRequestor {
         if (dispatcher==null) {
             return;
         }
-        storeDispatcherContext(dispatcherCommParamsYaml, dispatcher);
-    }
-
-    private void storeDispatcherContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
-        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
-            return;
-        }
-        dispatcher.context.chunkSize = dispatcherCommParamsYaml.dispatcherCommContext.chunkSize;
-        dispatcher.context.maxVersionOfProcessor = dispatcherCommParamsYaml.dispatcherCommContext.processorCommVersion !=null
-            ? dispatcherCommParamsYaml.dispatcherCommContext.processorCommVersion
-            : 3;
+        dispatcher.context.chunkSize = responseParamYaml.dispatcherInfo.chunkSize;
+        dispatcher.context.maxVersionOfProcessor = responseParamYaml.dispatcherInfo.processorCommVersion !=null
+            ? responseParamYaml.dispatcherInfo.processorCommVersion
+            : 1;
     }
 
     public void proceedWithRequest() {
@@ -182,60 +121,23 @@ public class ProcessorKeepAliveRequestor {
             return;
         }
 
-/*
         try {
-            KeepAliveRequestParamYaml scpy = new KeepAliveRequestParamYaml();
-
             final String processorId = metadataService.getProcessorId(dispatcherUrl);
             final String sessionId = metadataService.getSessionId(dispatcherUrl);
 
             if (processorId == null || sessionId==null) {
-                setRequestProcessorId(scpy, new ProcessorCommParamsYaml.RequestProcessorId());
+                dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcherUrl).setNextRequestProcessorId();
+                return;
             }
-            else {
-                setProcessorCommContext(scpy, new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId));
 
-                // always report about current active tasks, if we have actual processorId
-                setReportProcessorTaskStatus(scpy, processorTaskService.produceProcessorTaskStatus(dispatcherUrl));
-                setReportProcessorStatus(scpy, processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule));
+            KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
 
-                // we have to pull new tasks from server constantly
-                if (currentExecState.isInited(dispatcherUrl)) {
-                    final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
-                    if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired));
-                    }
-                    else {
-                        if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
-                            // let's check variables for not completed and not sent yet tasks
-                            List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
-                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.output.allUploaded())
-                                    .collect(Collectors.toList());
+            karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
 
-                            List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
-                            for (ProcessorTask processorTask : processorTasks) {
-                                for (ProcessorTask.OutputStatus outputStatus : processorTask.output.outputStatuses) {
-                                    statuses.add(new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                            processorTask.taskId, outputStatus.variableId,
-                                            processorService.resendTaskOutputResources(dispatcherUrl, processorTask.taskId, outputStatus.variableId))
-                                    );
-                                }
-                            }
-
-                            setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
-                            lastCheckForResendTaskOutputResource = System.currentTimeMillis();
-                        }
-                    }
-                }
-                if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
-                    setCheckForMissingOutputResources(scpy, new ProcessorCommParamsYaml.CheckForMissingOutputResources());
-                    lastRequestForMissingResources = System.currentTimeMillis();
-                }
-
-                setReportTaskProcessingResult(scpy, processorTaskService.reportTaskProcessingResult(dispatcherUrl));
-
-                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
-            }
+            // always report about current active tasks, if we have actual processorId
+            karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o->o.taskId.toString()).collect(Collectors.joining(","));
+            karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
+            karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
             try {
@@ -248,7 +150,7 @@ public class ProcessorKeepAliveRequestor {
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set(HttpHeaders.AUTHORIZATION, authHeader);
 
-                String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
+                String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(karpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
 
                 log.debug("Start to request a dispatcher at {}", url);
@@ -257,16 +159,16 @@ public class ProcessorKeepAliveRequestor {
                 String result = response.getBody();
                 log.debug("ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
-                    log.warn("#775.050 Dispatcher returned null as a result");
+                    log.warn("#776.050 Dispatcher returned null as a result");
                     return;
                 }
-                DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+                KeepAliveResponseParamYaml responseParamYaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(result);
 
-                if (!dispatcherYaml.success) {
-                    log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+                if (!responseParamYaml.success) {
+                    log.error("#776.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
-                processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
+                processDispatcherCommParamsYaml(karpy, dispatcherUrl, responseParamYaml);
             } catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {
                     case UNAUTHORIZED:
@@ -315,7 +217,6 @@ public class ProcessorKeepAliveRequestor {
         } catch (Throwable e) {
             log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
-*/
     }
 }
 

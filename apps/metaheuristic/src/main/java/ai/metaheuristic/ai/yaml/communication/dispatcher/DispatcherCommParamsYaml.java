@@ -74,9 +74,10 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AssignedTask {
-        public @NonNull String params;
-        public @NonNull Long taskId;
-        public @NonNull Long execContextId;
+        public String params;
+        public Long taskId;
+        public Long execContextId;
+        public EnumsApi.ExecContextState state;
     }
 
     @Data
@@ -104,31 +105,6 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class ReportResultDelivering {
         public List<Long> ids;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExecContextStatus {
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public Long execContextId;
-            public EnumsApi.ExecContextState state;
-        }
-
-        public List<SimpleStatus> statuses;
-
-        public boolean isStarted(Long execContextId) {
-            for (SimpleStatus status : statuses) {
-                if (status.execContextId.equals(execContextId)) {
-                    return status.state== EnumsApi.ExecContextState.STARTED;
-                }
-            }
-            return false;
-        }
     }
 
     @Data

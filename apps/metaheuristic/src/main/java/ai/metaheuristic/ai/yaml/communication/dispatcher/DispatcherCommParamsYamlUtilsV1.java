@@ -79,16 +79,6 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             t.reportResultDelivering.ids =
                     v1.reportResultDelivering.ids!=null ? new ArrayList<>(v1.reportResultDelivering.ids) : new ArrayList<>();
         }
-        if (v1.execContextStatus !=null) {
-            t.execContextStatus = new DispatcherCommParamsYaml.ExecContextStatus();
-            t.execContextStatus.statuses =
-                    v1.execContextStatus.statuses!=null
-                            ? v1.execContextStatus.statuses
-                            .stream()
-                            .map(o->new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(o.execContextId, o.state))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
         if (v1.resendTaskOutputs!=null) {
             t.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
             v1.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> t.resendTaskOutputs.resends));

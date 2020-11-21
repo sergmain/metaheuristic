@@ -51,7 +51,6 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     public @Nullable AssignedProcessorIdV1 assignedProcessorId;
     public @Nullable ReAssignProcessorIdV1 reAssignedProcessorId;
     public @Nullable ReportResultDeliveringV1 reportResultDelivering;
-    public ExecContextStatusV1 execContextStatus;
     public @Nullable ResendTaskOutputsV1 resendTaskOutputs;
     public @Nullable RequestLogFileV1 requestLogFile;
 
@@ -76,6 +75,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         public String params;
         public Long taskId;
         public Long execContextId;
+        public EnumsApi.ExecContextState state;
     }
 
     @Data
@@ -103,22 +103,6 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @AllArgsConstructor
     public static class ReportResultDeliveringV1 {
         public List<Long> ids;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExecContextStatusV1 {
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public long execContextId;
-            public EnumsApi.ExecContextState state;
-        }
-
-        public List<SimpleStatus> statuses;
     }
 
     @Data

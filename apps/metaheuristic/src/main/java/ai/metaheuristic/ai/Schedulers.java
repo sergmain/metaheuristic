@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
-import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
@@ -35,8 +35,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -179,42 +177,31 @@ public class Schedulers {
         private final DownloadVariableService downloadResourceActor;
         private final UploadVariableService uploadResourceActor;
         private final ArtifactCleanerAtProcessor artifactCleaner;
-        private final MetadataService metadataService;
-        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-        private final CurrentExecState currentExecState;
         private final EnvService envService;
-        private final ProcessorCommandProcessor processorCommandProcessor;
-
+        private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
         private final RoundRobinForDispatcher roundRobin;
-        private final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
 
-        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionService downloadFunctionActor, DownloadVariableService downloadResourceActor, UploadVariableService uploadResourceActor, ArtifactCleanerAtProcessor artifactCleaner, ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, ProcessorCommandProcessor processorCommandProcessor) {
+        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor,
+                                   DownloadFunctionService downloadFunctionActor, DownloadVariableService downloadResourceActor,
+                                   UploadVariableService uploadVariableService, ArtifactCleanerAtProcessor artifactCleaner,
+                                   DispatcherLookupExtendedService dispatcherLookupExtendedService,
+                                   EnvService envService,
+                                   DispatcherRequestorHolderService dispatcherRequestorHolderService
+                                   ) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
             this.downloadFunctionActor = downloadFunctionActor;
             this.downloadResourceActor = downloadResourceActor;
-            this.uploadResourceActor = uploadResourceActor;
+            this.uploadResourceActor = uploadVariableService;
             this.artifactCleaner = artifactCleaner;
             this.envService = envService;
-            this.processorCommandProcessor = processorCommandProcessor;
+            this.dispatcherRequestorHolderService = dispatcherRequestorHolderService;
 
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
             this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
-            this.metadataService = metadataService;
-            this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
-            this.currentExecState = currentExecState;
-
-            for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
-                final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.url, globals,
-                        processorTaskService, processorService, this.metadataService, this.currentExecState,
-                        this.dispatcherLookupExtendedService, this.processorCommandProcessor);
-
-                dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, requestor);
-            }
         }
 
         @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
@@ -266,7 +253,7 @@ public class Schedulers {
             for (String dispatcher : dispatchers) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
-                    dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
+                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
                 }

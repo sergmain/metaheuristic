@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class KeepAliveResponseParamYamlUtilsV1 extends
-        AbstractParamsYamlUtils<DispatcherCommParamsYamlV1, DispatcherCommParamsYaml, Void, Void, Void, Void> {
+        AbstractParamsYamlUtils<KeepAliveResponseParamYamlV1, KeepAliveResponseParamYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -43,13 +43,13 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(DispatcherCommParamsYamlV1.class);
+        return YamlUtils.init(KeepAliveResponseParamYamlV1.class);
     }
 
     @NonNull
     @Override
-    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1, Long ... vars) {
-        DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
+    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1, Long ... vars) {
+        KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
 
         if( v1.dispatcherCommContext !=null ) {
             t.dispatcherCommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
@@ -163,14 +163,14 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull DispatcherCommParamsYamlV1 yaml) {
+    public String toString(@NonNull KeepAliveResponseParamYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherCommParamsYamlV1 to(@NonNull String s) {
-        final DispatcherCommParamsYamlV1 p = getYaml().load(s);
+    public KeepAliveResponseParamYamlV1 to(@NonNull String s) {
+        final KeepAliveResponseParamYamlV1 p = getYaml().load(s);
         return p;
     }
 

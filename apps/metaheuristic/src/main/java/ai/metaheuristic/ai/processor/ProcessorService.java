@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -67,12 +68,12 @@ public class ProcessorService {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
     public File logFile;
 
-    ProcessorCommParamsYaml.ReportProcessorStatus produceReportProcessorStatus(String dispatcherUrl, DispatcherSchedule schedule) {
+    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(String dispatcherUrl, DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
-        ProcessorCommParamsYaml.ReportProcessorStatus status = new ProcessorCommParamsYaml.ReportProcessorStatus(
+        KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
                 envService.getEnvYaml(),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,

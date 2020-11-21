@@ -154,7 +154,7 @@ public class SouthbridgeService {
         try {
             fis = new FileInputStream(assetFile.file);
             CleanerInfo resource = new CleanerInfo();
-            resource.inputStreams = List.of(fis);
+            resource.inputStreams.add(fis);
 
             InputStream realInputStream = fis;
 

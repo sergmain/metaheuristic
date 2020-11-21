@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -51,7 +49,6 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
     public FunctionDownloadStatusV1 functionDownloadStatus = new FunctionDownloadStatusV1();
     public ProcessorCommContextV1 processorCommContext;
     public RequestProcessorIdV1 requestProcessorId;
-    public ReportProcessorStatusV1 reportProcessorStatus;
     public ReportProcessorTaskStatusV1 reportProcessorTaskStatus;
     public RequestTaskV1 requestTask;
     public ReportTaskProcessingResultV1 reportTaskProcessingResult;
@@ -100,40 +97,6 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         @Nullable
         public Boolean newTask;
         public boolean acceptOnlySigned;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ReportProcessorStatusV1 {
-        public EnvYaml env;
-        public GitSourcingService.GitStatusInfo gitStatusInfo;
-        public String schedule;
-        public String sessionId;
-
-        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        // it'll work but in some cases behaviour can be different
-        // need to change it to UTC, Coordinated Universal Time
-        public long sessionCreatedOn;
-        public String ip;
-        public String host;
-
-        // contains text of error which can occur while preparing a processor status
-        public List<String> errors = null;
-        public boolean logDownloadable;
-        public int taskParamsVersion;
-
-        public EnumsApi.OS os;
-
-        @Nullable
-        public String currDir;
-
-        public void addError(String error) {
-            if (errors==null) {
-                errors = new ArrayList<>();
-            }
-            errors.add(error);
-        }
     }
 
     @Data

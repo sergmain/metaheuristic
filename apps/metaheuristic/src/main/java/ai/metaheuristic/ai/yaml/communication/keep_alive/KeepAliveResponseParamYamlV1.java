@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,7 @@ import java.util.List;
  * Time: 1:11 AM
  */
 @Data
-public class KeepAliveResponseParamYaml implements BaseParams {
+public class KeepAliveResponseParamYamlV1 implements BaseParams {
 
     public final int version=1;
 
@@ -42,7 +43,7 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExecContextStatus {
+    public static class ExecContextStatusV1 {
 
         @Data
         @AllArgsConstructor
@@ -67,14 +68,14 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class DispatcherInfo {
+    public static class DispatcherInfoV1 {
         public Long chunkSize;
         // Processor's version for communicating with Dispatcher
         public Integer processorCommVersion;
     }
 
-    public ExecContextStatus execContextStatus;
-    public DispatcherInfo dispatcherInfo;
+    public ExecContextStatusV1 execContextStatus;
+    public DispatcherInfoV1 dispatcherInfo;
 
     public boolean success = true;
     public String msg;

@@ -69,10 +69,6 @@ public class ProcessorCommParamsYamlUtilsV1
         if (v1.requestProcessorId !=null) {
             t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
         }
-        if (v1.reportProcessorStatus !=null) {
-            t.reportProcessorStatus = new ProcessorCommParamsYaml.ReportProcessorStatus();
-            BeanUtils.copyProperties(v1.reportProcessorStatus, t.reportProcessorStatus);
-        }
         if (v1.reportProcessorTaskStatus !=null) {
             t.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
             t.reportProcessorTaskStatus.statuses =

@@ -42,6 +42,7 @@ public class Consts {
 
 
     public static final String SERVER_REST_URL_V2 = "/srv-v2";
+    public static final String KEEP_ALIVE_REST_URL = "/keep-alive";
     public static final String UPLOAD_REST_URL = "/upload";
     public static final String REST_ASSET_URL = "/rest/v1/asset";
 
