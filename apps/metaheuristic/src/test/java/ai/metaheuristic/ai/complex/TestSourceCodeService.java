@@ -361,13 +361,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         storeExecResult(simpleTask32);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
-                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id);
-                assertEquals(Enums.UploadVariableStatus.OK, status);
-            }
-            return null;
-        });
+        for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
+            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(simpleTask32.taskId,
+                    () -> txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id));
+            assertEquals(Enums.UploadVariableStatus.OK, status);
+        }
         execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId, false);
         execContextSchedulerService.updateExecContextStatuses(true);
     }
@@ -547,14 +545,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        taskSyncService.getWithSyncNullable(task.id, () -> {
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
-                assertEquals(Enums.UploadVariableStatus.OK, status);
-            }
-            return null;
-        });
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(task.id,
+                    () -> txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id));
+            assertEquals(Enums.UploadVariableStatus.OK, status);
+        }
 
         verifyGraphIntegrity();
     }

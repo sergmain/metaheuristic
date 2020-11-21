@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -68,6 +69,9 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     @Autowired
     public ExecContextSchedulerService execContextSchedulerService;
 
+    @Autowired
+    private TaskSyncService taskSyncService;
+
     @Override
     @SneakyThrows
     public String getSourceCodeYamlAsString() {
@@ -88,7 +92,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        final DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -107,7 +111,8 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(t.taskId,
+                    ()-> txSupportForTestingService.setVariableReceivedWithTx(t.taskId, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 

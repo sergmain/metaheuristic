@@ -57,7 +57,8 @@ public class TaskWithInternalContextEventService {
         try {
             try (DataHolder holder = new DataHolder()) {
                 execContextSyncService.getWithSyncNullable(event.execContextId,
-                        () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder));
+                        () -> taskSyncService.getWithSyncNullable(event.taskId,
+                                () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder)));
                 eventSenderService.sendEvents(holder);
             }
         } catch (Throwable th) {
