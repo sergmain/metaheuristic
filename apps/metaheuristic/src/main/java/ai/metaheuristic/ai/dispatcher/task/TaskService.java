@@ -63,7 +63,6 @@ public class TaskService {
 
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
 
         task.setUpdatedOn( System.currentTimeMillis() );
 
@@ -71,7 +70,9 @@ public class TaskService {
             final TaskImpl t = taskRepository.save(task);
             return t;
         }
-        else if (!em.contains(task) ) {
+        taskSyncService.checkWriteLockPresent(task.id);
+
+        if (!em.contains(task) ) {
 //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
             throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", task));
         }

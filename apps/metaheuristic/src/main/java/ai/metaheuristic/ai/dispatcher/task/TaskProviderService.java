@@ -65,6 +65,7 @@ public class TaskProviderService {
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final ExecContextStatusService execContextStatusService;
+    private final TaskSyncService taskSyncService;
 
     private static final Object syncObj = new Object();
 
@@ -108,7 +109,8 @@ public class TaskProviderService {
             TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
             if (task!=null) {
                 execContextSyncService.getWithSyncNullable(task.execContextId,
-                        ()->execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null));
+                        () -> taskSyncService.getWithSyncNullable(task.id,
+                                ()-> execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null)));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
                 taskProviderTransactionalService.deRegisterTask(task.id);

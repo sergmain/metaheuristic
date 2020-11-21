@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -101,6 +102,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     public ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+
+    @Autowired
+    private TaskSyncService taskSyncService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -543,7 +547,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+        taskSyncService.getWithSyncNullable(task.id, () -> {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);

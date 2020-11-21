@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -59,6 +60,9 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
     public ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+
+    @Autowired
+    private TaskSyncService taskSyncService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -119,7 +123,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+        taskSyncService.getWithSyncNullable(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
                 assertEquals(Enums.UploadVariableStatus.OK, status);

@@ -99,7 +99,6 @@ public class ExecContextTaskFinishingService {
             log.warn("#318.095 task #{} wasn't found", taskId);
             return null;
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
         String taskContextId = null;
         try {
             final TaskParamsYaml taskParamYaml;

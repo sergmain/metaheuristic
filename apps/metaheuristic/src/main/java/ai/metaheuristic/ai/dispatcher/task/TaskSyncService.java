@@ -104,7 +104,6 @@ public class TaskSyncService {
 
     @Nullable
     public <T> T getWithSyncNullable(Long taskId, Supplier<T> supplier) {
-        TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(taskId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
