@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
@@ -200,8 +201,8 @@ public class ProcessorTransactionService {
 
     @Transactional
     public Void storeProcessorStatuses(
-            Long processorId, @Nullable ProcessorCommParamsYaml.ReportProcessorStatus status,
-            ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, DispatcherCommParamsYaml dcpy) {
+            Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
+            KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, DispatcherCommParamsYaml dcpy) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -270,12 +271,12 @@ public class ProcessorTransactionService {
         return null;
     }
 
-    private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.FunctionDownloadStatus status) {
+    private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatus status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
         }
         for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
-            for (ProcessorCommParamsYaml.FunctionDownloadStatus.Status sds : status.statuses) {
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatus.Status sds : status.statuses) {
                 if (downloadStatus.functionCode.equals(sds.functionCode) && !downloadStatus.functionState.equals(sds.functionState)) {
                     return true;
                 }
@@ -284,7 +285,7 @@ public class ProcessorTransactionService {
         return false;
     }
 
-    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.ReportProcessorStatus status) {
+    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
         return
                 !Objects.equals(ss.env, status.env) ||
                         !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||

@@ -54,7 +54,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Functions {
         @Data

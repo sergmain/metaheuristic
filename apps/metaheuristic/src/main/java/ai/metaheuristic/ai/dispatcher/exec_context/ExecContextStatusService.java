@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -52,11 +54,11 @@ public class ExecContextStatusService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
 
-    private DispatcherCommParamsYaml.ExecContextStatus cachedStatus = null;
+    private KeepAliveResponseParamYaml.ExecContextStatus cachedStatus = null;
     private long updatedOn = 0L;
     private static final long TTL_FOR_STATUS = TimeUnit.SECONDS.toMillis(10);
 
-    public synchronized DispatcherCommParamsYaml.ExecContextStatus getExecContextStatuses() {
+    public synchronized KeepAliveResponseParamYaml.ExecContextStatus getExecContextStatuses() {
         if (cachedStatus==null) {
             resetStatus();
         }
@@ -67,7 +69,7 @@ public class ExecContextStatusService {
     }
 
     private void resetStatus() {
-        cachedStatus = new DispatcherCommParamsYaml.ExecContextStatus(
+        cachedStatus = new KeepAliveResponseParamYaml.ExecContextStatus(
                 execContextRepository.findAllExecStates()
                         .stream()
                         .map(o -> toSimpleStatus((Long)o[0], (Integer)o[1]))
