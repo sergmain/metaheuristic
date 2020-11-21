@@ -182,6 +182,7 @@ public class ProcessorKeepAliveRequestor {
             return;
         }
 
+/*
         try {
             KeepAliveRequestParamYaml scpy = new KeepAliveRequestParamYaml();
 
@@ -314,6 +315,7 @@ public class ProcessorKeepAliveRequestor {
         } catch (Throwable e) {
             log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
+*/
     }
 }
 

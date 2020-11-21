@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.processor.DispatcherRequestor;
+import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -108,7 +109,7 @@ public class TestRest {
     @Test
 //    @WithUserDetails("data_rest")
     public void testRestMessages_02() {
-        RestTemplate restTemplate = new RestTemplate(DispatcherRequestor.getHttpRequestFactory());
+        RestTemplate restTemplate = new RestTemplate(DispatcherUtils.getHttpRequestFactory());
         // RestTemplate must be working without this
 //        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
 
