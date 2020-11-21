@@ -75,6 +75,7 @@ public class TaskCheckCachingService {
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ExecContextVariableService execContextVariableService;
+    private final TaskSyncService taskSyncService;
 
     @Data
     @AllArgsConstructor
@@ -85,7 +86,7 @@ public class TaskCheckCachingService {
     }
 
     @Transactional
-    public Void invalidateAndSetToNone(Long execContextId, Long taskId, Long cacheProcessId) {
+    public Void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
@@ -196,5 +197,4 @@ public class TaskCheckCachingService {
         }
         return null;
     }
-
 }

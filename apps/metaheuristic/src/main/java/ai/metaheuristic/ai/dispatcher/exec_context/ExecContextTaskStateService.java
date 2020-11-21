@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -46,6 +47,7 @@ public class ExecContextTaskStateService {
     private final ExecContextService execContextService;
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
+    private final TaskSyncService taskSyncService;
 
     @Transactional
     public OperationStatusRest updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
@@ -73,6 +75,7 @@ public class ExecContextTaskStateService {
 
     public OperationStatusRest updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
         TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(task.id);
         execContextSyncService.checkWriteLockPresent(execContext.id);
         TaskImpl t = taskExecStateService.changeTaskState(task, execState);
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, t.id, execState, taskContextId);

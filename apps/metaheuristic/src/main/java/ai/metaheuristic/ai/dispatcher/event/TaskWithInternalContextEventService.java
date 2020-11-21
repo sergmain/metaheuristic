@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ public class TaskWithInternalContextEventService {
     private final TaskRepository taskRepository;
     private final EventSenderService eventSenderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskSyncService taskSyncService;
 
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
@@ -61,8 +63,8 @@ public class TaskWithInternalContextEventService {
         } catch (Throwable th) {
             String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";
             log.error(es, th);
-            execContextSyncService.getWithSyncNullable(event.execContextId,
-                    () -> execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es, null));
+            taskSyncService.getWithSyncNullable(event.taskId,
+                    () -> execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es));
         }
     }
 }

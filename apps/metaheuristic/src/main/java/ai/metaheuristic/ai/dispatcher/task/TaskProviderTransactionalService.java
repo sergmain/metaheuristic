@@ -116,8 +116,9 @@ public class TaskProviderTransactionalService {
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
-                log.error("#317.020 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(), task.getParams());
-                execContextTaskFinishingService.finishWithErrorWithTx(task.id, null);
+                String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                log.error(es, e.getMessage());
+                execContextTaskFinishingService.finishWithErrorWithTx(task.id, es);
                 continue;
             }
 

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,6 +49,7 @@ public class ExecContextTaskFinishingTopLevelService {
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskSyncService taskSyncService;
 
     public void checkTaskCanBeFinished(Long taskId, boolean checkCaching) {
         TxUtils.checkTxNotExists();
@@ -87,9 +89,9 @@ public class ExecContextTaskFinishingTopLevelService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
                 execContextSyncService.getWithSyncNullable(task.execContextId,
-                        () -> execContextTaskFinishingService.finishWithErrorWithTx(
-                                taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>",
-                                tpy.task.taskContextId));
+                        () -> taskSyncService.getWithSyncNullable(task.id,
+                                () -> execContextTaskFinishingService.finishWithErrorWithTx(
+                                        taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>")));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
                 return;
@@ -104,7 +106,8 @@ public class ExecContextTaskFinishingTopLevelService {
 
             try (DataHolder holder = new DataHolder()) {
                 execContextSyncService.getWithSyncNullable(task.execContextId,
-                        () -> execContextTaskFinishingService.finishedAndStoreVariable(taskId, checkCaching, holder));
+                        () -> taskSyncService.getWithSyncNullable(task.id,
+                                () -> execContextTaskFinishingService.finishAndStoreVariable(taskId, checkCaching, holder)));
             }
         }
     }

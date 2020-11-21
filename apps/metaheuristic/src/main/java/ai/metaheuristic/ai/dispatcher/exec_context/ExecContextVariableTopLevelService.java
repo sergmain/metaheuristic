@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -49,9 +50,9 @@ import java.io.*;
 public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextVariableService execContextVariableService;
     private final EventSenderService eventSenderService;
+    private final TaskSyncService taskSyncService;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
         TxUtils.checkTxNotExists();
@@ -70,7 +71,7 @@ public class ExecContextVariableTopLevelService {
         }
 
         try (DataHolder holder = new DataHolder()) {
-            final UploadResult uploadResult = execContextSyncService.getWithSync(execContextId,
+            final UploadResult uploadResult = taskSyncService.getWithSync(taskId,
                     () -> execContextVariableService.setVariableAsNull(taskId, variableId, holder));
             eventSenderService.sendEvents(holder);
             return uploadResult;
@@ -146,11 +147,11 @@ public class ExecContextVariableTopLevelService {
             }
             try (DataHolder holder = new DataHolder()) {
                 try {
-                    uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 catch (ObjectOptimisticLockingFailureException th) {
                     log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
-                    uploadResult = execContextSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(execContextId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 eventSenderService.sendEvents(holder);
             }

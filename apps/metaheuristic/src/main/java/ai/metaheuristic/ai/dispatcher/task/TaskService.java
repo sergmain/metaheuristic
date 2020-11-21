@@ -42,11 +42,12 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TaskSyncService taskSyncService;
     private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
 
     @Transactional(readOnly = true)
-    public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(long processorId) {
+    public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(Long processorId) {
         List<Task> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
         for (Task task : tasks) {
@@ -62,7 +63,7 @@ public class TaskService {
 
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        taskSyncService.checkWriteLockPresent(task.id);
 
         task.setUpdatedOn( System.currentTimeMillis() );
 

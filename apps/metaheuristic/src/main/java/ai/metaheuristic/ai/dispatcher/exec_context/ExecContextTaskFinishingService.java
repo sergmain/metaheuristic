@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -37,6 +38,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * @author Serge
@@ -58,9 +60,12 @@ public class ExecContextTaskFinishingService {
     private final TaskService taskService;
     private final CacheService cacheService;
     private final TaskRepository taskRepository;
+    private final TaskSyncService taskSyncService;
 
     @Transactional
-    public Void finishedAndStoreVariable(Long taskId, boolean checkCaching, DataHolder holder) {
+    public Void finishAndStoreVariable(Long taskId, boolean checkCaching, DataHolder holder) {
+        taskSyncService.checkWriteLockPresent(taskId);
+
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#303.100 Reporting about non-existed task #{}", taskId);
@@ -87,22 +92,28 @@ public class ExecContextTaskFinishingService {
     }
 
     @Transactional
-    public void finishWithErrorWithTx(Long taskId, @Nullable String taskContextId) {
-        finishWithErrorWithTx(taskId, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
-    }
-
-    @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console, @Nullable String taskContextId) {
+    public Void finishWithErrorWithTx(Long taskId, String console) {
+        taskSyncService.checkWriteLockPresent(taskId);
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#318.095 task #{} wasn't found", taskId);
             return null;
         }
+        execContextSyncService.checkWriteLockPresent(task.execContextId);
+        String taskContextId = null;
+        try {
+            final TaskParamsYaml taskParamYaml;
+            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            taskContextId = taskParamYaml.task.taskContextId;
+        } catch (YAMLException e) {
+            String es = S.f("#318.097 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+            log.error(es, e.getMessage());
+        }
+
         return finishWithError(task, console, taskContextId, -10001);
     }
 
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
-        TxUtils.checkTxExists();
         finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
@@ -113,6 +124,8 @@ public class ExecContextTaskFinishingService {
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
+        taskSyncService.checkWriteLockPresent(task.id);
+
         finishTaskAsError(task, exitCode, console);
 
         final ExecContextImpl execContext = execContextCache.findById(task.execContextId);
@@ -126,8 +139,6 @@ public class ExecContextTaskFinishingService {
     }
 
     private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
             log.info("#318.120 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;

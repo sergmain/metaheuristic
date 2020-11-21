@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,6 +58,7 @@ public class ExecContextVariableService {
     private final TaskService taskService;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
+    private final TaskSyncService taskSyncService;
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
@@ -77,6 +79,8 @@ public class ExecContextVariableService {
 
     @Transactional
     public UploadResult updateStatusOfVariable(Long taskId, Long variableId, DataHolder holder) {
+        taskSyncService.checkWriteLockPresent(taskId);
+
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.020 Task "+taskId+" is obsolete and was already deleted";
@@ -97,13 +101,14 @@ public class ExecContextVariableService {
 
     @Transactional
     public UploadResult setVariableAsNull(Long taskId, Long variableId, DataHolder holder) {
+        taskSyncService.checkWriteLockPresent(taskId);
+
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.100 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
@@ -133,7 +138,7 @@ public class ExecContextVariableService {
 
     public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
         TxUtils.checkTxExists();
-//        execContextSyncService.checkWriteLockPresent(task.execContextId);
+
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
             log.warn("#441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;

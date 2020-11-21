@@ -193,37 +193,6 @@ public class ExecContextFSM {
         return null;
     }
 
-    @Transactional
-    public Void processResendTaskOutputVariable(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#303.360 Task is obsoleted and was already deleted");
-            return null;
-        }
-
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        switch (status) {
-            case SEND_SCHEDULED:
-                log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, task.id);
-                break;
-            case VARIABLE_NOT_FOUND:
-            case TASK_IS_BROKEN:
-            case TASK_PARAM_FILE_NOT_FOUND:
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                execContextTaskFinishingService.finishWithError(task, tpy.task.taskContextId);
-                break;
-            case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-                Enums.UploadVariableStatus statusResult = execContextVariableService.setVariableReceived(task, variableId);
-                if (statusResult == Enums.UploadVariableStatus.OK) {
-                    log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", task.id);
-                } else {
-                    log.info("#303.420 can't update isCompleted field for task #{}", task.id);
-                }
-                break;
-        }
-        return null;
-    }
-
     public List<Long> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = ExecContextService.getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {

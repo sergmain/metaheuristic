@@ -46,6 +46,7 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
     private final EventSenderService eventSenderService;
+    private final TaskSyncService taskSyncService;
 
 //    private static final int N_THREADS = Math.max(2, Runtime.getRuntime().availableProcessors() - 2);
     private static final int N_THREADS = 2;
@@ -53,26 +54,26 @@ public class TaskCheckCachingTopLevelService {
 
     public void checkCaching(final RegisterTaskForCheckCachingEvent event) {
         executor.submit(() -> {
-            try (DataHolder holder = new DataHolder()) {
-                ExecContextImpl execContext = execContextService.findById(event.execContextId);
-                if (execContext == null) {
-                    log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
-                    return;
+            ExecContextImpl execContext = execContextService.findById(event.execContextId);
+            if (execContext == null) {
+                log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
+                return;
+            }
+            try {
+                try (DataHolder holder = new DataHolder()) {
+                    execContextSyncService.getWithSyncNullable(execContext.id,
+                            () -> taskSyncService.getWithSyncNullable(event.taskId,
+                                    () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, holder)));
+                    eventSenderService.sendEvents(holder);
                 }
-                execContextSyncService.getWithSyncNullable(execContext.id, () -> {
-                    try {
-                        taskCheckCachingService.checkCaching(event.execContextId, event.taskId, holder);
-                        eventSenderService.sendEvents(holder);
-                        return null;
-                    } catch (InvalidateCacheProcessException e) {
-                        try {
-                            return taskCheckCachingService.invalidateAndSetToNone(e.execContextId, e.taskId, e.cacheProcessId);
-                        } catch (Throwable th) {
-                            log.error("#610.020 error while invalidating task #"+e.taskId, th);
-                            return null;
-                        }
-                    }
-                });
+            } catch (InvalidateCacheProcessException e) {
+                try {
+                    execContextSyncService.getWithSyncNullable(execContext.id,
+                            () -> taskSyncService.getWithSyncNullable(e.taskId,
+                                    () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
+                } catch (Throwable th) {
+                    log.error("#610.020 error while invalidating task #"+e.taskId, th);
+                }
             }
         });
     }

@@ -42,17 +42,18 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
+    private final TaskSyncService taskSyncService;
 
     @Nullable
     public TaskImpl resetTask(final Long taskId) {
         TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(taskId);
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("#305.025 Start re-setting task #{}", taskId);
         if (task==null) {
             log.error("#305.030 task is null");
             return null;
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         task.setFunctionExecResults(null);
         task.setProcessorId(null);
@@ -70,6 +71,7 @@ public class TaskExecStateService {
 
     public TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(task.id);
 
         log.info("#305.140 set task #{} as {}", task.id, state);
         switch (state) {
@@ -99,14 +101,19 @@ public class TaskExecStateService {
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
         TxUtils.checkTxExists();
 
-        status.childrenTasks.forEach(t -> {
-            TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
-            if (task != null) {
-                changeTaskState(task, t.execState);
-            } else {
-                log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
-            }
-        });
+        status.childrenTasks.forEach(
+                // TODO 2020-11-20 need to watch this code for a possible dead lock. In general, the dead-lock won't be occurred
+                t -> taskSyncService.getWithSyncNullable(t.taskId, () -> {
+
+                    TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+                    if (task != null) {
+                        changeTaskState(task, t.execState);
+                    } else {
+                        log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
+                    }
+                    return null;
+                })
+        );
     }
 
 
