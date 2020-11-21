@@ -16,19 +16,15 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,41 +41,22 @@ public class ProcessorKeepAliveProcessor {
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
 
-    // this method is synchronized outside
-    public void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-        karpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, responseParamYaml);
-        // !!! processExecContextStatus() must be processed before calling processAssignedTask()
+    public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
-        processReportResultDelivering(dispatcherUrl, responseParamYaml);
-        processAssignedTask(dispatcherUrl, responseParamYaml);
         storeProcessorId(dispatcherUrl, responseParamYaml);
         reAssignProcessorId(dispatcherUrl, responseParamYaml);
-        registerFunctions(karpy.functionDownloadStatus, dispatcherUrl, responseParamYaml);
+        registerFunctions(karpy.functions, dispatcherUrl, responseParamYaml);
 //        processRequestLogFile(pcpy)
     }
 
-    private void registerFunctions(ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
         List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (FunctionDownloadStatusYaml.Status status : statuses) {
-            functionDownloadStatus.statuses.add(new ProcessorCommParamsYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
+            functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
         }
     }
 
-    // processing at processor side
-    @Nullable
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
-            return null;
-        }
-        List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
-        for (DispatcherCommParamsYaml.ResendTaskOutput output : request.resendTaskOutputs.resends) {
-            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(dispatcherUrl, output.taskId, output.variableId);
-            statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
-        }
-        return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
-    }
-
-    private void processExecContextStatus(String dispatcherUrl, DispatcherCommParamsYaml.ExecContextStatus execContextStatus) {
+    private void processExecContextStatus(String dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
         if (execContextStatus ==null) {
             return;
         }
@@ -87,22 +64,7 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void processReportResultDelivering(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.reportResultDelivering==null) {
-            return;
-        }
-        processorService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
-    }
-
-    private void processAssignedTask(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.assignedTask==null) {
-            return;
-        }
-        processorService.assignTasks(dispatcherUrl, request.assignedTask);
-    }
-
-    // processing at processor side
-    private void storeProcessorId(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void storeProcessorId(String dispatcherUrl, KeepAliveResponseParamYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
@@ -112,15 +74,15 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.reAssignedProcessorId ==null) {
+    private void reAssignProcessorId(String dispatcherUrl, KeepAliveResponseParamYaml request) {
+        if (request.reAssignProcessorId ==null) {
             return;
         }
         final String currProcessorId = metadataService.getProcessorId(dispatcherUrl);
         final String currSessionId = metadataService.getSessionId(dispatcherUrl);
         if (currProcessorId!=null && currSessionId!=null &&
-                currProcessorId.equals(request.reAssignedProcessorId.getReAssignedProcessorId()) &&
-                currSessionId.equals(request.reAssignedProcessorId.sessionId)
+                currProcessorId.equals(request.reAssignProcessorId.getReAssignedProcessorId()) &&
+                currSessionId.equals(request.reAssignProcessorId.sessionId)
         ) {
             return;
         }
@@ -128,10 +90,10 @@ public class ProcessorKeepAliveProcessor {
         log.info("reAssignProcessorId(),\n\t\tcurrent processorId: {}, sessionId: {}\n\t\t" +
                         "new processorId: {}, sessionId: {}",
                 currProcessorId, currSessionId,
-                request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId
+                request.reAssignProcessorId.getReAssignedProcessorId(), request.reAssignProcessorId.sessionId
         );
         metadataService.setProcessorIdAndSessionId(
-                dispatcherUrl, request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId);
+                dispatcherUrl, request.reAssignProcessorId.getReAssignedProcessorId(), request.reAssignProcessorId.sessionId);
     }
 
 }

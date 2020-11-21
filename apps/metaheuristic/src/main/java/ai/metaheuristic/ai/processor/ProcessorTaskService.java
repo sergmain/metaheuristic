@@ -20,8 +20,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.commons.yaml.env.DiskStorage;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -31,6 +29,8 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.env.DiskStorage;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -419,15 +419,6 @@ public class ProcessorTaskService {
 
     private Stream<ProcessorTask> findAllByFinishedOnIsNotNull(String dispatcherUrl) {
         return getMapForDispatcherUrl(dispatcherUrl).values().stream().filter(o -> o.finishedOn!=null);
-    }
-
-    public ProcessorCommParamsYaml.ReportProcessorTaskStatus produceProcessorTaskStatus(String dispatcherUrl) {
-        List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses = new ArrayList<>();
-        List<ProcessorTask> list = findAll(dispatcherUrl);
-        for (ProcessorTask task : list) {
-            statuses.add( new ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus(task.getTaskId()));
-        }
-        return new ProcessorCommParamsYaml.ReportProcessorTaskStatus(statuses);
     }
 
     public void createTask(String dispatcherUrl, long taskId, Long execContextId, String params) {

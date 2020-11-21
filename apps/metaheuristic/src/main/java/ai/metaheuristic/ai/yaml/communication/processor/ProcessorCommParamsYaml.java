@@ -44,28 +44,12 @@ public class ProcessorCommParamsYaml implements BaseParams {
         return true;
     }
 
-    // always report info about functions
-    public FunctionDownloadStatus functionDownloadStatus = new FunctionDownloadStatus();
     public @Nullable ProcessorCommContext processorCommContext;
     public @Nullable RequestProcessorId requestProcessorId;
-    public @Nullable ReportProcessorTaskStatus reportProcessorTaskStatus;
     public @Nullable RequestTask requestTask;
     public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
     public CheckForMissingOutputResources checkForMissingOutputResources;
     public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
-
-    @Data
-    public static class FunctionDownloadStatus {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class Status {
-            public Enums.FunctionState functionState;
-            public String functionCode;
-        }
-
-        public List<Status> statuses = new ArrayList<>();
-    }
 
     @Data
     @NoArgsConstructor
@@ -113,22 +97,6 @@ public class ProcessorCommParamsYaml implements BaseParams {
         }
 
         public List<SimpleTaskExecResult> results = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ReportProcessorTaskStatus {
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public long taskId;
-        }
-
-        @Nullable
-        public List<SimpleStatus> statuses;
     }
 
     @Data

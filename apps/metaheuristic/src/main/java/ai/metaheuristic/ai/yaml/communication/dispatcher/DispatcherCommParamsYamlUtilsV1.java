@@ -49,19 +49,6 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1, Long ... vars) {
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
 
-        if( v1.dispatcherCommContext !=null ) {
-            t.dispatcherCommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
-            t.dispatcherCommContext.chunkSize = v1.dispatcherCommContext.chunkSize;
-            t.dispatcherCommContext.processorCommVersion = v1.dispatcherCommContext.processorCommVersion;
-        }
-        if (v1.functions !=null) {
-            t.functions = new DispatcherCommParamsYaml.Functions();
-            t.functions.infos.addAll( v1.functions.infos
-                            .stream()
-                            .map(o->new DispatcherCommParamsYaml.Functions.Info (o.code, o.sourcing))
-                            .collect(Collectors.toList())
-                    );
-        }
         if (v1.assignedTask!=null) {
             t.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
             BeanUtils.copyProperties(v1.assignedTask, t.assignedTask);

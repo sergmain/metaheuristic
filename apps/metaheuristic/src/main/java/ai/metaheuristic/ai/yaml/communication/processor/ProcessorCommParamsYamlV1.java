@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,35 +44,19 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    // always report info about functions
-    public FunctionDownloadStatusV1 functionDownloadStatus = new FunctionDownloadStatusV1();
-    public ProcessorCommContextV1 processorCommContext;
-    public RequestProcessorIdV1 requestProcessorId;
-    public ReportProcessorTaskStatusV1 reportProcessorTaskStatus;
-    public RequestTaskV1 requestTask;
-    public ReportTaskProcessingResultV1 reportTaskProcessingResult;
+    public @Nullable ProcessorCommContextV1 processorCommContext;
+    public @Nullable RequestProcessorIdV1 requestProcessorId;
+    public @Nullable RequestTaskV1 requestTask;
+    public @Nullable ReportTaskProcessingResultV1 reportTaskProcessingResult;
     public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
-    public ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
-
-    @Data
-    public static class FunctionDownloadStatusV1 {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class Status {
-            public Enums.FunctionState functionState;
-            public String functionCode;
-        }
-
-        public List<Status> statuses = new ArrayList<>();
-    }
+    public @Nullable ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorCommContextV1 {
-        public String processorId;
-        public String sessionId;
+        @Nullable public String processorId;
+        @Nullable public String sessionId;
     }
 
     @Data
@@ -107,38 +90,13 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
-        public static class MachineLearningTaskResult {
-            public String metrics;
-            public String predicted;
-            public EnumsApi.Fitting fitting;
-        }
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
         public static class SimpleTaskExecResult {
             public long taskId;
+            // string form of FunctionApiData.FunctionExec
             public String result;
-            public MachineLearningTaskResult ml;
         }
 
         public List<SimpleTaskExecResult> results = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ReportProcessorTaskStatusV1 {
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public long taskId;
-        }
-
-        @Nullable
-        public List<SimpleStatus> statuses;
     }
 
     @Data
@@ -150,7 +108,7 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long taskId;
+            public Long taskId;
             public Long variableId;
             public Enums.ResendTaskOutputResourceStatus status;
         }

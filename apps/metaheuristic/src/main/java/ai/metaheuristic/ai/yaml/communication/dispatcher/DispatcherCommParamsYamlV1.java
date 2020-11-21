@@ -43,30 +43,12 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    public DispatcherCommContextV1 dispatcherCommContext;
-
-    // always send info about functions
-    public FunctionsV1 functions = new FunctionsV1();
     public @Nullable AssignedTaskV1 assignedTask;
     public @Nullable AssignedProcessorIdV1 assignedProcessorId;
     public @Nullable ReAssignProcessorIdV1 reAssignedProcessorId;
     public @Nullable ReportResultDeliveringV1 reportResultDelivering;
     public @Nullable ResendTaskOutputsV1 resendTaskOutputs;
     public @Nullable RequestLogFileV1 requestLogFile;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class FunctionsV1 {
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Info {
-            public String code;
-            public EnumsApi.FunctionSourcing sourcing;
-        }
-        public List<Info> infos = new ArrayList<>();
-    }
 
     @Data
     @AllArgsConstructor
@@ -117,15 +99,6 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class ResendTaskOutputsV1 {
         public final List<ResendTaskOutputV1> resends = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DispatcherCommContextV1 {
-        public Long chunkSize;
-        // Processor's version for communicating with dispatcher
-        public Integer processorCommVersion;
     }
 
     @Data

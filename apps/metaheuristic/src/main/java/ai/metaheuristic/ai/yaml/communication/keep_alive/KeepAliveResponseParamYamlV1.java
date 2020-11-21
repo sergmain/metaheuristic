@@ -16,13 +16,14 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,6 +39,32 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         return true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReAssignProcessorId {
+        public String reAssignedProcessorId;
+        public String sessionId;
+
+        public ReAssignProcessorId(Long processorId, String sessionId) {
+            this(Long.toString(processorId), sessionId);
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FunctionsV1 {
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class Info {
+            public String code;
+            public EnumsApi.FunctionSourcing sourcing;
+        }
+        public List<Info> infos = new ArrayList<>();
     }
 
     @Data
@@ -74,8 +101,19 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
         public Integer processorCommVersion;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestLogFileV1 {
+        public long requestedOn;
+    }
+
+    public final FunctionsV1 functions = new FunctionsV1();
     public ExecContextStatusV1 execContextStatus;
     public DispatcherInfoV1 dispatcherInfo;
+
+    @Nullable
+    public RequestLogFileV1 requestLogFile;
 
     public boolean success = true;
     public String msg;

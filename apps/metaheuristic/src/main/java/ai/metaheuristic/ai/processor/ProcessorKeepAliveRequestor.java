@@ -56,7 +56,6 @@ public class ProcessorKeepAliveRequestor {
     private final ProcessorTaskService processorTaskService;
     private final ProcessorService processorService;
     private final MetadataService metadataService;
-    private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
@@ -69,7 +68,7 @@ public class ProcessorKeepAliveRequestor {
 
     public ProcessorKeepAliveRequestor(
             String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
-            ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState,
+            ProcessorService processorService, MetadataService metadataService,
             DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
             DispatcherRequestorHolderService dispatcherRequestorHolderService) {
         this.dispatcherUrl = dispatcherUrl;
@@ -77,7 +76,6 @@ public class ProcessorKeepAliveRequestor {
         this.processorTaskService = processorTaskService;
         this.processorService = processorService;
         this.metadataService = metadataService;
-        this.currentExecState = currentExecState;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.processorKeepAliveProcessor = processorKeepAliveProcessor;
         this.dispatcherRequestorHolderService = dispatcherRequestorHolderService;
@@ -94,7 +92,7 @@ public class ProcessorKeepAliveRequestor {
     private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
         storeDispatcherContext(dispatcherUrl, responseParamYaml);
-        processorKeepAliveProcessor.processDispatcherCommParamsYaml(karpy, dispatcherUrl, responseParamYaml);
+        processorKeepAliveProcessor.processKeepAliveResponseParamYaml(karpy, dispatcherUrl, responseParamYaml);
     }
 
     private void storeDispatcherContext(String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {

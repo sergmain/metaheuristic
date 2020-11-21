@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
+import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -43,7 +43,6 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +61,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -263,8 +261,10 @@ public class SouthbridgeService {
         processorTopLevelService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy);
     }
 
+/*
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {
         return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
     }
+*/
 
 }

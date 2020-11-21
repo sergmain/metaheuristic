@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
@@ -311,7 +313,7 @@ public class MetadataService {
         }
     }
 
-    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String dispatcherUrl, List<DispatcherCommParamsYaml.Functions.Info> infos) {
+    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String dispatcherUrl, List<KeepAliveResponseParamYaml.Functions.Info> infos) {
         if (S.b(dispatcherUrl)) {
             throw new IllegalStateException("#815.200 dispatcherUrl is null");
         }
@@ -319,7 +321,7 @@ public class MetadataService {
         synchronized (syncObj) {
             functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
             boolean isChanged = false;
-            for (DispatcherCommParamsYaml.Functions.Info info : infos) {
+            for (KeepAliveResponseParamYaml.Functions.Info info : infos) {
                 FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream()
                         .filter(o->o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
@@ -431,11 +433,11 @@ public class MetadataService {
         }
     }
 
-    public List<ProcessorCommParamsYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String dispatcherUrl) {
+    public List<KeepAliveRequestParamYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String dispatcherUrl) {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()
                     .filter(o->o.dispatcherUrl.equals(dispatcherUrl))
-                    .map(o->new ProcessorCommParamsYaml.FunctionDownloadStatus.Status(o.functionState, o.code))
+                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatus.Status(o.functionState, o.code))
                     .collect(Collectors.toList());
         }
     }

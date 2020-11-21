@@ -89,7 +89,7 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
             public String functionCode;
         }
 
-        public List<ProcessorCommParamsYaml.FunctionDownloadStatus.Status> statuses = new ArrayList<>();
+        public List<Status> statuses = new ArrayList<>();
     }
 
     @Data

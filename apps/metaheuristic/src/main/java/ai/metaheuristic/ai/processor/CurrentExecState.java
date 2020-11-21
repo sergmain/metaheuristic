@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,7 @@ public class CurrentExecState {
         }
     }
 
-    public void register(String dispatcherUrl, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any execContext

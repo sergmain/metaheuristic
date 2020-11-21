@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -52,15 +51,7 @@ public class ProcessorCommandProcessor {
         processAssignedTask(dispatcherUrl, dispatcherYaml);
         storeProcessorId(dispatcherUrl, dispatcherYaml);
         reAssignProcessorId(dispatcherUrl, dispatcherYaml);
-        registerFunctions(pcpy.functionDownloadStatus, dispatcherUrl, dispatcherYaml);
 //        processRequestLogFile(pcpy)
-    }
-
-    private void registerFunctions(ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
-        for (FunctionDownloadStatusYaml.Status status : statuses) {
-            functionDownloadStatus.statuses.add(new ProcessorCommParamsYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
-        }
     }
 
     // processing at processor side

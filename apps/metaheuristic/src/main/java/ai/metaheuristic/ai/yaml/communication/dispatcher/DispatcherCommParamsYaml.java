@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -44,31 +43,12 @@ public class DispatcherCommParamsYaml implements BaseParams {
         return true;
     }
 
-    public DispatcherCommContext dispatcherCommContext;
-
-    // always send info about functions
-    public Functions functions = new Functions();
     public @Nullable AssignedTask assignedTask;
     public @Nullable AssignedProcessorId assignedProcessorId;
     public @Nullable ReAssignProcessorId reAssignedProcessorId;
     public @Nullable ReportResultDelivering reportResultDelivering;
-    public ExecContextStatus execContextStatus;
     public @Nullable ResendTaskOutputs resendTaskOutputs;
     public @Nullable RequestLogFile requestLogFile;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Functions {
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Info {
-            public String code;
-            public EnumsApi.FunctionSourcing sourcing;
-        }
-        public List<Info> infos = new ArrayList<>();
-    }
 
     @Data
     @AllArgsConstructor
@@ -119,15 +99,6 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class ResendTaskOutputs {
         public final List<ResendTaskOutput> resends = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DispatcherCommContext {
-        public Long chunkSize;
-        // Processor's version for communicating with Dispatcher
-        public Integer processorCommVersion;
     }
 
     @Data

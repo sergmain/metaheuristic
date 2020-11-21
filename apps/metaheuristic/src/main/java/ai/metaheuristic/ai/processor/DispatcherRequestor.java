@@ -62,7 +62,6 @@ public class DispatcherRequestor {
     private final ProcessorService processorService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorCommandProcessor processorCommandProcessor;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
@@ -78,12 +77,11 @@ public class DispatcherRequestor {
         this.processorService = processorService;
         this.metadataService = metadataService;
         this.currentExecState = currentExecState;
-        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.processorCommandProcessor = processorCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
             throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
@@ -121,10 +119,6 @@ public class DispatcherRequestor {
         withSync(() -> { scpy.processorCommContext = processorCommContext; return null; });
     }
 
-    private void setReportProcessorTaskStatus(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportProcessorTaskStatus produceProcessorTaskStatus) {
-        withSync(() -> { scpy.reportProcessorTaskStatus = produceProcessorTaskStatus; return null; });
-    }
-
     private void setRequestTask(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.RequestTask requestTask) {
         withSync(() -> { scpy.requestTask = requestTask; return null; });
     }
@@ -144,33 +138,9 @@ public class DispatcherRequestor {
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
-            storeDispatcherContext(dispatcherUrl, dispatcherYaml);
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
             return null;
         });
-    }
-
-    private void storeDispatcherContext(String dispatcherUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
-        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
-            return;
-        }
-        DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-
-        if (dispatcher==null) {
-            return;
-        }
-        storeDispatcherContext(dispatcherCommParamsYaml, dispatcher);
-    }
-
-    private void storeDispatcherContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
-        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
-            return;
-        }
-        dispatcher.context.chunkSize = dispatcherCommParamsYaml.dispatcherCommContext.chunkSize;
-        dispatcher.context.maxVersionOfProcessor = dispatcherCommParamsYaml.dispatcherCommContext.processorCommVersion !=null
-            ? dispatcherCommParamsYaml.dispatcherCommContext.processorCommVersion
-            : 3;
     }
 
     private ProcessorCommParamsYaml swap() {
@@ -200,9 +170,6 @@ public class DispatcherRequestor {
             }
             else {
                 setProcessorCommContext(scpy, new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId));
-
-                // always report about current active tasks, if we have actual processorId
-                setReportProcessorTaskStatus(scpy, processorTaskService.produceProcessorTaskStatus(dispatcherUrl));
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
@@ -238,8 +205,6 @@ public class DispatcherRequestor {
                 }
 
                 setReportTaskProcessingResult(scpy, processorTaskService.reportTaskProcessingResult(dispatcherUrl));
-
-                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
