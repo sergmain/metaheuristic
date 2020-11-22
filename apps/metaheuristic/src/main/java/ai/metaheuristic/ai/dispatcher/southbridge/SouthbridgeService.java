@@ -194,15 +194,36 @@ public class SouthbridgeService {
 
     public String keepAlive(String data, String remoteAddr) {
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
-        KeepAliveResponseParamYaml response = processKeepAlive(karpy);
+        KeepAliveResponseParamYaml response = processKeepAliveInternal(karpy);
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
         return yaml;
     }
 
-    private KeepAliveResponseParamYaml processKeepAlive(KeepAliveRequestParamYaml karpy) {
-        KeepAliveResponseParamYaml response = new KeepAliveResponseParamYaml();
+    private KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml scpy) {
+        KeepAliveResponseParamYaml lcpy = new KeepAliveResponseParamYaml();
+        try {
+            if (scpy.processorCommContext ==null) {
+                lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
+                return lcpy;
+            }
+            checkProcessorId(scpy.processorCommContext.getProcessorId(), scpy.processorCommContext.getSessionId(), remoteAddress, lcpy);
+            if (return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;isProcessorContextNeedToBeChanged(lcpy)) {
+                log.debug("isProcessorContextNeedToBeChanged is true, {}", lcpy);
+                return lcpy;
+            }
 
-        return response;
+            lcpy.execContextStatus = execContextStatusService.getExecContextStatuses();
+
+            log.debug("Start processing commands");
+            dispatcherCommandProcessor.process(scpy, lcpy);
+            setDispatcherCommContext(lcpy);
+        } catch (Throwable th) {
+            log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
+            log.error("#444.230 Error", th);
+            lcpy.success = false;
+            lcpy.msg = th.getMessage();
+        }
+        return lcpy;
     }
 
     public String processRequest(String data, String remoteAddress) {

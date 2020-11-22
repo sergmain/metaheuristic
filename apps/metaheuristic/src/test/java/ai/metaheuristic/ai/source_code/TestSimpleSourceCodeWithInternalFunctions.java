@@ -92,7 +92,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        final DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        final DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(processor.getId(), false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

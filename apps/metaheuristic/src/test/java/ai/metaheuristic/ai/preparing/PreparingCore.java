@@ -143,7 +143,7 @@ public abstract class PreparingCore {
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
-                    TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
+                    TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
             final String description = "Test processor. Must be deleted automatically";
 
             mills = System.currentTimeMillis();

@@ -27,7 +27,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -78,44 +79,42 @@ public class ProcessorTopLevelService {
     }
 
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
-//        return processorTransactionService.updateDescription(processorId, desc);
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
     }
 
     public OperationStatusRest deleteProcessorById(Long processorId) {
-//        return processorTransactionService.deleteProcessorById(processorId);
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
     public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Long processorId, ProcessorStatusYaml ss) {
-//        return processorTransactionService.assignNewSessionId(processor, ss);
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.assignNewSessionIdWithTx(processorId, ss));
     }
 
     public void processProcessorStatuses(
-            final Long processorId, @Nullable ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus,
-            DispatcherCommParamsYaml lcpy) {
+            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus,
+            KeepAliveResponseParamYaml lcpy) {
 
-//        processorTransactionService.processProcessorStatuses(processorId, status, functionDownloadStatus);
         processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus, lcpy));
     }
 
-    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, @Nullable List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<Long> taskIds) {
         if (S.b(processorIdAsStr)) {
             return;
         }
-        final long processorId = Long.parseLong(processorIdAsStr);
-//        reconcileProcessorTasks(processorId, statuses);
-        processorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, statuses));
+        final Long processorId = Long.valueOf(processorIdAsStr);
+        processorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
     }
 
     public void checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
-//        processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy);
         processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy));
     }
 
     public OperationStatusRest requestLogFile(final Long processorId) {
         return processorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
+    }
+
+    public void setTaskIds(Long processorId, @Nullable String taskIds) {
+        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setTaskIds(processorId, taskIds));
     }
 
     public void setLogFileReceived(final long processorId) {
@@ -164,7 +163,7 @@ public class ProcessorTopLevelService {
         return null;
     }
 
-    private Void reconcileProcessorTasks(final Long processorId, @Nullable List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+    private Void reconcileProcessorTasks(final Long processorId, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
@@ -177,14 +176,14 @@ public class ProcessorTopLevelService {
                 log.error("#808.190 Processor #{} has a task with assignedOn is null", processorId);
             }
 
-            boolean isFound = statuses!=null && statuses.stream().anyMatch(status -> status.taskId == taskId);
+            boolean isFound = taskIds.contains(taskId);
             boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
 
             // if Processor haven't reported back about this task in 90 seconds,
             // this task will be de-assigned from this Processor
             if (!isFound && isExpired) {
                 log.info("#808.200 De-assign task #{} from processor #{}", taskId, processorId);
-                log.info("\tstatuses: {}", statuses!=null ? statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()) : null);
+                log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
                 OperationStatusRest result = execContextTopLevelService.resetTask(taskId);

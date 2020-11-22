@@ -64,7 +64,8 @@ public class Processor implements Serializable {
     public String description;
 
     /**
-     *  contains data in yaml format
+     * contains data in yaml format
+     * @see ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml
      */
     @Column(name = "STATUS")
     public String status;

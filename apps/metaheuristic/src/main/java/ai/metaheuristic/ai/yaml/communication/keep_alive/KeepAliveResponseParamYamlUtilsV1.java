@@ -74,6 +74,14 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
         if (v1.requestLogFile!=null) {
             t.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(v1.requestLogFile.requestedOn);
         }
+        if (v1.assignedProcessorId !=null) {
+            t.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
+                    v1.assignedProcessorId.assignedProcessorId, v1.assignedProcessorId.assignedSessionId);
+        }
+        if (v1.reAssignedProcessorId !=null) {
+            t.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
+                    v1.reAssignedProcessorId.reAssignedProcessorId, v1.reAssignedProcessorId.sessionId);
+        }
 
         BeanUtils.copyProperties(v1, t);
         return t;

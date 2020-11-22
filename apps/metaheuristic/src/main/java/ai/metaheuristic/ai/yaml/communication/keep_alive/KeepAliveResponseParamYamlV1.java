@@ -44,13 +44,9 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignProcessorId {
+    public static class ReAssignedProcessorIdV1 {
         public String reAssignedProcessorId;
         public String sessionId;
-
-        public ReAssignProcessorId(Long processorId, String sessionId) {
-            this(Long.toString(processorId), sessionId);
-        }
     }
 
     @Data
@@ -108,9 +104,23 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
         public long requestedOn;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AssignedProcessorIdV1 {
+        public String assignedProcessorId;
+        public String assignedSessionId;
+    }
+
     public final FunctionsV1 functions = new FunctionsV1();
     public ExecContextStatusV1 execContextStatus;
     public DispatcherInfoV1 dispatcherInfo;
+
+    @Nullable
+    public ReAssignedProcessorIdV1 reAssignedProcessorId;
+
+    @Nullable
+    public AssignedProcessorIdV1 assignedProcessorId;
 
     @Nullable
     public RequestLogFileV1 requestLogFile;

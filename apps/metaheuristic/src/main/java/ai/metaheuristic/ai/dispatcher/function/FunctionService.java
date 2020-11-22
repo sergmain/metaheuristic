@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -66,10 +67,10 @@ public class FunctionService {
     }
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
-    private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
+    private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = new ArrayList<>();
     private long mills = System.currentTimeMillis();
 
-    public synchronized List<DispatcherCommParamsYaml.Functions.Info> getFunctionInfos() {
+    public synchronized List<KeepAliveResponseParamYaml.Functions.Info> getFunctionInfos() {
         if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
             mills = System.currentTimeMillis();
             final List<Long> allIds = functionRepository.findAllIds();
@@ -78,7 +79,7 @@ public class FunctionService {
                     .filter(Objects::nonNull)
                     .map(s->{
                         FunctionConfigYaml fcy = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(s.params);
-                        return new DispatcherCommParamsYaml.Functions.Info(s.code, fcy.sourcing);
+                        return new KeepAliveResponseParamYaml.Functions.Info(s.code, fcy.sourcing);
                     })
                     .collect(Collectors.toList());
         }

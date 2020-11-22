@@ -36,6 +36,9 @@ import java.util.List;
 @ToString
 public class ProcessorStatusYamlV1 implements BaseParams {
 
+
+    public final int version = 1;
+
     @Override
     public boolean checkIntegrity() {
         return true;
@@ -86,5 +89,6 @@ public class ProcessorStatusYamlV1 implements BaseParams {
     @Nullable
     public LogV1 log;
 
-    public final int version = 1;
+    @Nullable
+    public String taskIds;
 }

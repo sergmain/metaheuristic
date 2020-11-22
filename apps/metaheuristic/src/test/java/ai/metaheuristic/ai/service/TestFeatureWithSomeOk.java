@@ -64,15 +64,13 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         getTaskAndAssignToProcessor_mustBeNewTask();
 
         // this processor already got task, so don't provide any new
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(
-                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
         // task is empty cos we still didn't finish those task
         assertNull(task);
 
         storeConsoleResultAsError();
 
-        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderService.findTask(
-                new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderService.findTask(processor.getId(), false);
 
         assertNull(task1);
     }

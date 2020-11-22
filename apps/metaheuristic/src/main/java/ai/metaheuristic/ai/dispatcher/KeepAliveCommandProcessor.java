@@ -16,17 +16,27 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -34,69 +44,42 @@ import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
- * Date: 8/29/2019
- * Time: 8:03 PM
+ * Date: 11/22/2020
+ * Time: 12:24 AM
  */
 @Slf4j
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class DispatcherCommandProcessor {
+public class KeepAliveCommandProcessor  {
 
     private final TaskService taskService;
     private final ProcessorTopLevelService processorTopLevelService;
+    private final FunctionService functionService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ProcessorTransactionService processorService;
     private final TaskProviderService taskProviderService;
+    private final ProcessorCache processorCache;
 
-    public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
-        lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
-        processResendTaskOutputResourceResult(scpy);
-        lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
-        processReportProcessorStatus(scpy, lcpy);
-        lcpy.assignedTask = processRequestTask(scpy);
-        lcpy.assignedProcessorId = getNewProcessorId(scpy.requestProcessorId);
+    public void process(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
+        processProcessorTaskStatus(request);
+        response.assignedProcessorId = getNewProcessorId(request.requestProcessorId);
+        response.functions.infos.addAll( functionService.getFunctionInfos() );
     }
 
     // processing at dispatcher side
-    @Nullable
-    private DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml request) {
-        if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
-            return null;
-        }
-        final long processorId = Long.parseLong(request.processorCommContext.processorId);
-        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.variableReceivingChecker(processorId);
-        return outputs;
-    }
-
-    // processing at dispatcher side
-    private void processResendTaskOutputResourceResult(ProcessorCommParamsYaml request) {
-        if (request.resendTaskOutputResourceResult==null) {
-            return;
-        }
+    private void processProcessorTaskStatus(KeepAliveRequestParamYaml request) {
         if (request.processorCommContext==null) {
-            log.warn("#997.010 (request.processorCommContext==null)");
+            log.warn("#997.020 (request.processorCommContext==null)");
             return;
         }
-        for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            execContextTopLevelService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
-        }
+        if (true) throw new NotImplementedException("need to decide what to do with reconcileProcessorTasks() below");
+        processorTopLevelService.setTaskIds(request.processorCommContext.processorId, request.taskIds);
+//        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
     }
 
     // processing at dispatcher side
-    @Nullable
-    private DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
-        if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
-            return null;
-        }
-        final DispatcherCommParamsYaml.ReportResultDelivering cmd1 = new DispatcherCommParamsYaml.ReportResultDelivering(
-                execContextTopLevelService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
-        );
-        return cmd1;
-    }
-
-    // processing at dispatcher side
-    private void processReportProcessorStatus(ProcessorCommParamsYaml request, DispatcherCommParamsYaml lcpy) {
+    private void processReportProcessorStatus(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
 /*
         if (request.reportProcessorStatus==null) {
             return;
@@ -108,12 +91,12 @@ public class DispatcherCommandProcessor {
 */
         checkProcessorId(request);
         // IDEA has become too lazy
-        if (S.b(request.processorCommContext.processorId)) {
+        if (request.processorCommContext.processorId==null) {
             log.warn("#997.030 (request.processorCommContext==null)");
             return;
         }
         final Long processorId = Long.valueOf(request.processorCommContext.processorId);
-        processorTopLevelService.processProcessorStatuses(processorId, request.reportProcessorStatus, request.functionDownloadStatus, lcpy);
+        processorTopLevelService.processProcessorStatuses(processorId, request.processor, request.functions, response);
     }
 
     // processing at dispatcher side
@@ -145,8 +128,8 @@ public class DispatcherCommandProcessor {
         return assignedTask;
     }
 
-    private void checkProcessorId(ProcessorCommParamsYaml request) {
-        if (request.processorCommContext ==null  || S.b(request.processorCommContext.processorId)) {
+    private void checkProcessorId(KeepAliveRequestParamYaml request) {
+        if (request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");
         }
@@ -154,13 +137,12 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     @Nullable
-    public DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(@Nullable ProcessorCommParamsYaml.RequestProcessorId request) {
+    public KeepAliveResponseParamYaml.AssignedProcessorId getNewProcessorId(@Nullable KeepAliveRequestParamYaml.RequestProcessorId request) {
         if (request==null) {
             return null;
         }
         ProcessorData.ProcessorWithSessionId processorWithSessionId = processorService.getNewProcessorId();
-
-        // TODO 2019.05.19 why do we send processorId as a String?
-        return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(processorWithSessionId.processor.id), processorWithSessionId.sessionId);
+        return new KeepAliveResponseParamYaml.AssignedProcessorId(processorWithSessionId.processor.id, processorWithSessionId.sessionId);
     }
 }
+

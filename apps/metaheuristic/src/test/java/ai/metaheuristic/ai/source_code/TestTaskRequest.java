@@ -102,7 +102,7 @@ public class TestTaskRequest extends FeatureMethods {
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         // get a task for processing
-        DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(processor.getId(), false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

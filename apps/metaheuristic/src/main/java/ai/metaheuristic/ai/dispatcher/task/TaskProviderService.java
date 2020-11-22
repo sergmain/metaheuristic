@@ -29,22 +29,26 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -120,7 +124,7 @@ public class TaskProviderService {
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Long processorId, boolean isAcceptOnlySigned) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
         if (taskProviderTransactionalService.isQueueEmpty()) {
             return null;
@@ -136,8 +140,7 @@ public class TaskProviderService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(
-                reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned);
+        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned);
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -165,11 +168,10 @@ public class TaskProviderService {
     }
 
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
 
-        final TaskImpl task = getTaskAndAssignToProcessorInternal(reportProcessorTaskStatus, processor, psy, isAcceptOnlySigned);
+        final TaskImpl task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned);
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -192,7 +194,7 @@ public class TaskProviderService {
                 return null;
             }
 
-            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId());
+            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.toState(task.execState));
         } catch (Throwable th) {
             String es = "#393.140 Something wrong";
             log.error(es, th);
@@ -201,18 +203,21 @@ public class TaskProviderService {
     }
 
     @Nullable
-    private TaskImpl getTaskAndAssignToProcessorInternal(
-            ProcessorCommParamsYaml.ReportProcessorTaskStatus reportProcessorTaskStatus, Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
 
-        DispatcherCommParamsYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
+        KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
+
+        List<Long> taskIds = S.b(psy.taskIds) ?
+                List.of() :
+                Arrays.stream(StringUtils.split(psy.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
 
         List<TaskImpl> tasks = taskRepository.findForProcessorId(processor.id);
         for (TaskImpl task : tasks) {
             if (!statuses.isStarted(task.execContextId)) {
                 continue;
             }
-            if (reportProcessorTaskStatus.statuses==null || reportProcessorTaskStatus.statuses.stream().noneMatch(a->a.taskId==task.id)) {
+            if (!taskIds.contains(task.id)) {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));

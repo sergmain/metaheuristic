@@ -72,10 +72,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
         assertNull(task);
 
-        task = taskProviderService.findTask(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId() + 1, false);
+        task = taskProviderService.findTask(processor.getId() + 1, false);
         assertNull(task);
     }
 

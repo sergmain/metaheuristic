@@ -90,6 +90,9 @@ public class ProcessorStatusYaml implements BaseParams {
     @Nullable
     public Log log;
 
+    @Nullable
+    public String taskIds;
+
     public void addError(String error) {
         if (errors==null) {
             errors = new ArrayList<>();

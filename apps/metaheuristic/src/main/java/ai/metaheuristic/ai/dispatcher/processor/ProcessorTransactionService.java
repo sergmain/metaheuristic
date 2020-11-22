@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -104,6 +104,22 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
+    public Void setTaskIds(Long processorId, @Nullable String taskIds) {
+        processorSyncService.checkWriteLockPresent(processorId);
+
+        Processor processor = processorCache.findById(processorId);
+        if (processor==null) {
+            log.warn("#807.045 Can't find Processor #{}", processorId);
+            return null;
+        }
+        ProcessorStatusYaml psy = S.b(processor.status) ? new ProcessorStatusYaml() : ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        psy.taskIds = taskIds;
+        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+        processorCache.save(processor);
+        return null;
+    }
+
+    @Transactional
     public Void setLogFileReceived(Long processorId) {
         processorSyncService.checkWriteLockPresent(processorId);
 
@@ -155,7 +171,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
+                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
 
         final Processor p = createProcessor(null, null, psy);
         return new ProcessorData.ProcessorWithSessionId(p, sessionId);
@@ -202,7 +218,7 @@ public class ProcessorTransactionService {
     @Transactional
     public Void storeProcessorStatuses(
             Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
-            KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, DispatcherCommParamsYaml dcpy) {
+            KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, KeepAliveResponseParamYaml dcpy) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -266,7 +282,7 @@ public class ProcessorTransactionService {
             }
             // we will send request for a log file constantly until it'll be received.
             // Double requests will be handled at the Processor side.
-            dcpy.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(psy.log.requestedOn);
+            dcpy.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(psy.log.requestedOn);
         }
         return null;
     }
@@ -305,7 +321,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
+                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
