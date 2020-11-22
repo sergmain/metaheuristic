@@ -53,31 +53,8 @@ public class ProcessorCommParamsYamlUtilsV1
             t.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext();
             BeanUtils.copyProperties(v1.processorCommContext, t.processorCommContext);
         }
-        if (v1.functionDownloadStatus !=null) {
-            t.functionDownloadStatus = new ProcessorCommParamsYaml.FunctionDownloadStatus();
-            t.functionDownloadStatus.statuses = v1.functionDownloadStatus.statuses
-                    .stream()
-                    .map(o->{
-                        ProcessorCommParamsYaml.FunctionDownloadStatus.Status s = new ProcessorCommParamsYaml.FunctionDownloadStatus.Status();
-                        s.functionCode = o.functionCode;
-                        s.functionState = o.functionState;
-                        return s;
-                    })
-                    .collect(Collectors.toList());
-
-        }
         if (v1.requestProcessorId !=null) {
             t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
-        }
-        if (v1.reportProcessorTaskStatus !=null) {
-            t.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
-            t.reportProcessorTaskStatus.statuses =
-                    v1.reportProcessorTaskStatus.statuses!=null
-                            ? v1.reportProcessorTaskStatus.statuses
-                            .stream()
-                            .map(o->new ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus(o.taskId))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
         }
         if (v1.requestTask!=null) {
             t.requestTask = new ProcessorCommParamsYaml.RequestTask(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);

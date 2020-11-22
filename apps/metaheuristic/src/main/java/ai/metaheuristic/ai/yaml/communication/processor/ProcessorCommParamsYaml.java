@@ -56,13 +56,14 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class ProcessorCommContext {
         @Nullable public String processorId;
-        @Nullable String sessionId;
+        @Nullable public String sessionId;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestProcessorId {
+        // TODO 2020-11-22 what is this field about?
         public boolean keep = true;
     }
 

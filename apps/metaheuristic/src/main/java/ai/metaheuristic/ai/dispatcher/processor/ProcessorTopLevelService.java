@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -86,9 +85,11 @@ public class ProcessorTopLevelService {
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
+/*
     public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Long processorId, ProcessorStatusYaml ss) {
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.assignNewSessionIdWithTx(processorId, ss));
     }
+*/
 
     public void processProcessorStatuses(
             final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus,
@@ -105,8 +106,11 @@ public class ProcessorTopLevelService {
         processorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
     }
 
-    public void checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
-        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress, lcpy));
+    @Nullable
+    public ProcessorData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
+        ProcessorData.ProcessorSessionId processorSessionId = processorSyncService.getWithSyncNullable( processorId,
+                ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress));
+        return processorSessionId;
     }
 
     public OperationStatusRest requestLogFile(final Long processorId) {

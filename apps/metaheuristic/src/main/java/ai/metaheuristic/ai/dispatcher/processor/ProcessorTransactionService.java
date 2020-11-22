@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -141,7 +140,7 @@ public class ProcessorTransactionService {
 
     @Nullable
     @Transactional
-    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
+    public ProcessorData.ProcessorSessionId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
         processorSyncService.checkWriteLockPresent(processorId);
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
@@ -152,7 +151,7 @@ public class ProcessorTransactionService {
 
     }
 
-    private DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+    private ProcessorData.ProcessorSessionId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
         TxUtils.checkTxExists();
         processorSyncService.checkWriteLockPresent(processor.id);
 
@@ -161,12 +160,13 @@ public class ProcessorTransactionService {
         processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         processor.updatedOn = ss.sessionCreatedOn;
         processorCache.save(processor);
+
         // the same processorId but new sessionId
-        return new DispatcherCommParamsYaml.ReAssignProcessorId(processor.getId(), ss.sessionId);
+        return new ProcessorData.ProcessorSessionId(processor.getId(), ss.sessionId);
     }
 
     @Transactional
-    public ProcessorData.ProcessorWithSessionId getNewProcessorId() {
+    public ProcessorData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
@@ -174,7 +174,7 @@ public class ProcessorTransactionService {
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
 
         final Processor p = createProcessor(null, null, psy);
-        return new ProcessorData.ProcessorWithSessionId(p, sessionId);
+        return new ProcessorData.ProcessorSessionId (p.id, sessionId);
     }
 
     @Transactional
@@ -316,7 +316,7 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public DispatcherCommParamsYaml.ReAssignProcessorId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
+    public ProcessorData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTransactionService.createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
@@ -324,7 +324,7 @@ public class ProcessorTransactionService {
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
-        return new DispatcherCommParamsYaml.ReAssignProcessorId(p.getId(), sessionId);
+        return new ProcessorData.ProcessorSessionId(p.getId(), sessionId);
     }
 
     /**
@@ -355,15 +355,15 @@ public class ProcessorTransactionService {
         }
     }
 
+    @Nullable
     @Transactional
-    public Void checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+    public ProcessorData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.warn("#807.220 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-            lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-            return null;
+            return reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
         }
         ProcessorStatusYaml ss;
         try {
@@ -378,8 +378,7 @@ public class ProcessorTransactionService {
             log.debug("#807.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
             // the same processor but with different and expired sessionId
             // so we can continue to use this processorId with new sessionId
-            lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
-            return null;
+            return assignNewSessionId(processor, ss);
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
@@ -387,20 +386,18 @@ public class ProcessorTransactionService {
                 // the same processor but with different and expired sessionId
                 // so we can continue to use this processorId with new sessionId
                 // we won't use processor's sessionIf to be sure that sessionId has valid format
-                lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
-                return null;
+                return assignNewSessionId(processor, ss);
             } else {
                 log.debug("#807.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
                 // different processors with the same processorId
                 // there is other active processor with valid sessionId
-                lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-                return null;
+                return reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
             }
         } else {
             // see logs in method
             updateSession(processor, ss);
+            return null;
         }
-        return null;
     }
 
 

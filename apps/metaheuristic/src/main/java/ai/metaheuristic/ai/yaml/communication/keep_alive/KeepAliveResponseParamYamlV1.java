@@ -108,7 +108,7 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AssignedProcessorIdV1 {
-        public String assignedProcessorId;
+        public Long assignedProcessorId;
         public String assignedSessionId;
     }
 

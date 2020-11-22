@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -44,18 +43,18 @@ import org.springframework.stereotype.Service;
 public class DispatcherCommandProcessor {
 
     private final TaskService taskService;
-    private final ProcessorTopLevelService processorTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ProcessorTransactionService processorService;
     private final TaskProviderService taskProviderService;
 
     public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
+        if (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId)) {
+            throw new IllegalStateException("(scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
+        }
         lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
         processResendTaskOutputResourceResult(scpy);
         lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
-        processReportProcessorStatus(scpy, lcpy);
         lcpy.assignedTask = processRequestTask(scpy);
-        lcpy.assignedProcessorId = getNewProcessorId(scpy.requestProcessorId);
     }
 
     // processing at dispatcher side
@@ -96,27 +95,6 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    private void processReportProcessorStatus(ProcessorCommParamsYaml request, DispatcherCommParamsYaml lcpy) {
-/*
-        if (request.reportProcessorStatus==null) {
-            return;
-        }
-        if (request.processorCommContext==null) {
-            log.warn("#997.030 (request.processorCommContext==null)");
-            return;
-        }
-*/
-        checkProcessorId(request);
-        // IDEA has become too lazy
-        if (S.b(request.processorCommContext.processorId)) {
-            log.warn("#997.030 (request.processorCommContext==null)");
-            return;
-        }
-        final Long processorId = Long.valueOf(request.processorCommContext.processorId);
-        processorTopLevelService.processProcessorStatuses(processorId, request.reportProcessorStatus, request.functionDownloadStatus, lcpy);
-    }
-
-    // processing at dispatcher side
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
         if (request.requestTask==null || Boolean.FALSE.equals(request.requestTask.newTask) ||
@@ -153,14 +131,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(@Nullable ProcessorCommParamsYaml.RequestProcessorId request) {
-        if (request==null) {
-            return null;
-        }
-        ProcessorData.ProcessorWithSessionId processorWithSessionId = processorService.getNewProcessorId();
-
-        // TODO 2019.05.19 why do we send processorId as a String?
-        return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(processorWithSessionId.processor.id), processorWithSessionId.sessionId);
+    public ProcessorData.ProcessorSessionId getNewProcessorId() {
+        ProcessorData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
+        return processorSessionId;
     }
 }

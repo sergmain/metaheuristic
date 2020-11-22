@@ -40,18 +40,14 @@ import java.util.List;
 public class ProcessorCommandProcessor {
     private final ProcessorService processorService;
     private final MetadataService metadataService;
-    private final CurrentExecState currentExecState;
 
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
-        // !!! processExecContextStatus() must be processed before calling processAssignedTask()
-        processExecContextStatus(dispatcherUrl, dispatcherYaml.execContextStatus);
         processReportResultDelivering(dispatcherUrl, dispatcherYaml);
         processAssignedTask(dispatcherUrl, dispatcherYaml);
         storeProcessorId(dispatcherUrl, dispatcherYaml);
         reAssignProcessorId(dispatcherUrl, dispatcherYaml);
-//        processRequestLogFile(pcpy)
     }
 
     // processing at processor side
@@ -66,13 +62,6 @@ public class ProcessorCommandProcessor {
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
-    }
-
-    private void processExecContextStatus(String dispatcherUrl, DispatcherCommParamsYaml.ExecContextStatus execContextStatus) {
-        if (execContextStatus ==null) {
-            return;
-        }
-        currentExecState.register(dispatcherUrl, execContextStatus.statuses);
     }
 
     // processing at processor side

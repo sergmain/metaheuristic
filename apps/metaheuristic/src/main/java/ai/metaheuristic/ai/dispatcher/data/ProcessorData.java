@@ -28,6 +28,21 @@ import org.springframework.lang.NonNull;
 public class ProcessorData {
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RequestProcessorId {
+        public boolean keep = true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessorSessionId {
+        public Long processorId;
+        public String sessionId;
+    }
+
+    @Data
     @AllArgsConstructor
     public static class ProcessorWithSessionId {
         public Processor processor;

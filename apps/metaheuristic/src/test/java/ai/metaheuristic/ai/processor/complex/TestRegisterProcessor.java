@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
@@ -127,20 +128,6 @@ public class TestRegisterProcessor {
         processorComm = new ProcessorCommParamsYaml();
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-
-//        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
-
-        final ProcessorCommParamsYaml.ReportProcessorStatus ss = new ProcessorCommParamsYaml.ReportProcessorStatus(
-                new EnvYaml(),
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
-                "0:00 - 23:59",
-                sessionId,
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, true,
-                1, EnumsApi.OS.unknown, SystemUtils.getUserHome().getAbsolutePath());
-
-        processorComm.reportProcessorStatus = ss;
-
         processorComm.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
         processorComm.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
@@ -153,6 +140,15 @@ public class TestRegisterProcessor {
 
         Processor s = processorRepository.findById(processorId).orElse(null);
         assertNotNull(s);
+
+        final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
+                new EnvYaml(),
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
+                "0:00 - 23:59",
+                sessionId,
+                System.currentTimeMillis(),
+                "[unknown]", "[unknown]", null, true,
+                1, EnumsApi.OS.unknown, SystemUtils.getUserHome().getAbsolutePath());
 
         ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(ss1, ss));

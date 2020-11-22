@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
@@ -109,7 +110,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         sessionCreatedOn = psy.sessionCreatedOn;
         s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
 
-        DispatcherCommParamsYaml.ReAssignProcessorId s1 = processorTransactionService.reassignProcessorId(null, null);
+        ProcessorData.ProcessorSessionId s1 = processorTransactionService.reassignProcessorId(null, null);
 
     }
 
