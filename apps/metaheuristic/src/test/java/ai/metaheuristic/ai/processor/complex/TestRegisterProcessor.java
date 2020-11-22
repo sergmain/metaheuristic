@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
@@ -151,7 +152,7 @@ public class TestRegisterProcessor {
                 1, EnumsApi.OS.unknown, SystemUtils.getUserHome().getAbsolutePath());
 
         ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
-        assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(ss1, ss));
+        assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(ss1, ss), S.f("ss1:\n%s\n\nss:\n%s", ss1, ss));
 
         //noinspection unused
         int i=0;
