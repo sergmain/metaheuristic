@@ -44,6 +44,13 @@ public class CurrentExecState {
         }
     }
 
+    public void registerDelta(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
+        synchronized(execContextState) {
+            isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
+            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.id, status.state));
+        }
+    }
+
     public void register(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
