@@ -38,6 +38,12 @@ public class CurrentExecState {
         }
     }
 
+    public Map<Long, EnumsApi.ExecContextState> getExecContexts(String dispatcherUrl) {
+        synchronized(execContextState) {
+            return Collections.unmodifiableMap(execContextState.getOrDefault(dispatcherUrl, Map.of()));
+        }
+    }
+
     public void register(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
@@ -68,7 +74,10 @@ public class CurrentExecState {
             if (!isInited(host)) {
                 return EnumsApi.ExecContextState.UNKNOWN;
             }
-            return execContextState.getOrDefault(host, Collections.emptyMap()).getOrDefault(execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
+            if (execContextState.get(host)==null) {
+                return EnumsApi.ExecContextState.UNKNOWN;
+            }
+            return execContextState.get(host).getOrDefault(execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
         }
     }
 

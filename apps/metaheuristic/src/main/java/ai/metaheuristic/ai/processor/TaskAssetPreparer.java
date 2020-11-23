@@ -62,8 +62,10 @@ public class TaskAssetPreparer {
         // delete all orphan tasks
         processorTaskService.findAll().forEach(task -> {
             if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.dispatcherUrl, task.execContextId)) {
-                processorTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("#951.010 Deleted orphan task #{}", task.taskId);
+//                processorTaskService.delete(task.dispatcherUrl, task.taskId);
+
+                log.info("#951.010 Deleted orphan task #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
+                log.info("#951.010  registered execContext: {}", currentExecState.getExecContexts(task.dispatcherUrl));
             }
         });
 
