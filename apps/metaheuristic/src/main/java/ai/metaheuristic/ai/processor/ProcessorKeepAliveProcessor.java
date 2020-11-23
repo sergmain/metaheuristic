@@ -48,10 +48,10 @@ public class ProcessorKeepAliveProcessor {
 //        processRequestLogFile(pcpy)
     }
 
-    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
+    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, String dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
         List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (FunctionDownloadStatusYaml.Status status : statuses) {
-            functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
+            functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(status.functionState, status.code));
         }
     }
 

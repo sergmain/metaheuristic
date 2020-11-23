@@ -92,7 +92,7 @@ public class ProcessorTopLevelService {
 */
 
     public void processProcessorStatuses(
-            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus,
+            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
             KeepAliveResponseParamYaml lcpy) {
 
         processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus, lcpy));

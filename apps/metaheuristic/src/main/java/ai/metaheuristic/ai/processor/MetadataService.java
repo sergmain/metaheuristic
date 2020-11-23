@@ -22,10 +22,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
@@ -433,11 +431,11 @@ public class MetadataService {
         }
     }
 
-    public List<KeepAliveRequestParamYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String dispatcherUrl) {
+    public List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> getAsFunctionDownloadStatuses(final String dispatcherUrl) {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()
                     .filter(o->o.dispatcherUrl.equals(dispatcherUrl))
-                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatus.Status(o.functionState, o.code))
+                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.functionState, o.code))
                     .collect(Collectors.toList());
         }
     }

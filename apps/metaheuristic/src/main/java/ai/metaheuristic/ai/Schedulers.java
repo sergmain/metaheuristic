@@ -26,15 +26,18 @@ import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -163,11 +166,12 @@ public class Schedulers {
     }
 
     // Processor schedulers
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({"FieldCanBeLocal", "DuplicatedCode"})
     @Service
     @EnableScheduling
     @Slf4j
     @Profile("processor")
+    @RequiredArgsConstructor
     public static class ProcessorSchedulers {
 
         private final Globals globals;
@@ -179,32 +183,20 @@ public class Schedulers {
         private final ArtifactCleanerAtProcessor artifactCleaner;
         private final EnvService envService;
         private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
-        private final RoundRobinForDispatcher roundRobin;
+        private final ApplicationEventPublisher eventPublisher;
+        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
-        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor,
-                                   DownloadFunctionService downloadFunctionActor, DownloadVariableService downloadResourceActor,
-                                   UploadVariableService uploadVariableService, ArtifactCleanerAtProcessor artifactCleaner,
-                                   DispatcherLookupExtendedService dispatcherLookupExtendedService,
-                                   EnvService envService,
-                                   DispatcherRequestorHolderService dispatcherRequestorHolderService
-                                   ) {
-            this.globals = globals;
-            this.taskAssetPreparer = taskAssetPreparer;
-            this.taskProcessor = taskProcessor;
-            this.downloadFunctionActor = downloadFunctionActor;
-            this.downloadResourceActor = downloadResourceActor;
-            this.uploadResourceActor = uploadVariableService;
-            this.artifactCleaner = artifactCleaner;
-            this.envService = envService;
-            this.dispatcherRequestorHolderService = dispatcherRequestorHolderService;
+        private RoundRobinForDispatcher roundRobin;
 
+        @PostConstruct
+        public void post() {
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
             this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
+        @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)
         public void keepAlive() {
             if (globals.isUnitTesting) {
                 return;
@@ -212,8 +204,8 @@ public class Schedulers {
             if (!globals.processorEnabled) {
                 return;
             }
-            log.info("Run envHotDeployService.monitorHotDeployDir()");
-            envService.monitorHotDeployDir();
+            log.info("Send keepAliveEvent");
+            eventPublisher.publishEvent(new KeepAliveEvent());
         }
 
         @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
@@ -253,7 +245,7 @@ public class Schedulers {
             for (String dispatcher : dispatchers) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
-                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
+                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
                 }

@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
  * Time: 16:25
  */
 
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 public class ProcessorKeepAliveRequestor {
 
@@ -123,19 +124,17 @@ public class ProcessorKeepAliveRequestor {
             final String processorId = metadataService.getProcessorId(dispatcherUrl);
             final String sessionId = metadataService.getSessionId(dispatcherUrl);
 
-            if (processorId == null || sessionId==null) {
-                dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcherUrl).setNextRequestProcessorId();
-                return;
-            }
-
             KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
-
-            karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-
-            // always report about current active tasks, if we have actual processorId
-            karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o->o.taskId.toString()).collect(Collectors.joining(","));
-            karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
-            karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
+            if (processorId == null || sessionId==null) {
+                karpy.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId();
+            }
+            else {
+                karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
+                // always report about current active tasks, if we have actual processorId
+                karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
+                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
+            }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
             try {
@@ -167,7 +166,8 @@ public class ProcessorKeepAliveRequestor {
                     return;
                 }
                 processDispatcherCommParamsYaml(karpy, dispatcherUrl, responseParamYaml);
-            } catch (HttpClientErrorException e) {
+            }
+            catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {
                     case UNAUTHORIZED:
                     case FORBIDDEN:
@@ -177,7 +177,8 @@ public class ProcessorKeepAliveRequestor {
                     default:
                         throw e;
                 }
-            } catch (ResourceAccessException e) {
+            }
+            catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
                     log.error("#775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
@@ -197,7 +198,8 @@ public class ProcessorKeepAliveRequestor {
                 else {
                     log.error("#775.100 Error, url: " + url, e);
                 }
-            } catch (RestClientException e) {
+            }
+            catch (RestClientException e) {
                 if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
                     int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
                     if (errorCode==503) {

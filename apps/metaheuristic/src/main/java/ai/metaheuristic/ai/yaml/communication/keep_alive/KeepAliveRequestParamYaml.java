@@ -79,7 +79,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     }
 
     @Data
-    public static class FunctionDownloadStatus {
+    public static class FunctionDownloadStatuses {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -95,6 +95,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestProcessorId {
+        // TODO 2020-11-22 do we actually need this field?
         public boolean keep = true;
     }
 
@@ -112,7 +113,9 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     }
 
     public ReportProcessor processor;
-    public FunctionDownloadStatus functions;
+    public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
+
+    @Nullable
     public RequestProcessorId requestProcessorId;
     public ProcessorCommContext processorCommContext;
 

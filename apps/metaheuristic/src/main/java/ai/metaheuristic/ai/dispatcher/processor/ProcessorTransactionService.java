@@ -218,7 +218,7 @@ public class ProcessorTransactionService {
     @Transactional
     public Void storeProcessorStatuses(
             Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
-            KeepAliveRequestParamYaml.FunctionDownloadStatus functionDownloadStatus, KeepAliveResponseParamYaml dcpy) {
+            KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, KeepAliveResponseParamYaml dcpy) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -287,12 +287,12 @@ public class ProcessorTransactionService {
         return null;
     }
 
-    private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatus status) {
+    private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
         }
         for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
-            for (KeepAliveRequestParamYaml.FunctionDownloadStatus.Status sds : status.statuses) {
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
                 if (downloadStatus.functionCode.equals(sds.functionCode) && !downloadStatus.functionState.equals(sds.functionState)) {
                     return true;
                 }

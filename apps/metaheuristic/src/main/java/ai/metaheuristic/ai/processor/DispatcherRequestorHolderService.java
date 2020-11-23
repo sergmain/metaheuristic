@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -37,24 +38,39 @@ import java.util.Map;
 @Profile("processor")
 public class DispatcherRequestorHolderService {
 
-    public final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
+    @Data
+    @RequiredArgsConstructor
+    public static class Requesters {
+        public final DispatcherRequestor dispatcherRequestor;
+        public final ProcessorKeepAliveRequestor processorKeepAliveRequestor;
+    }
+    public final Map<String, Requesters> dispatcherRequestorMap = new HashMap<>();
 
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final CurrentExecState currentExecState;
+    private final Globals globals;
+    private final ProcessorService processorService;
+    private final ProcessorTaskService processorTaskService;
     private final ProcessorCommandProcessor processorCommandProcessor;
+    private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
 
     public DispatcherRequestorHolderService(Globals globals,
             ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
                                             CurrentExecState currentExecState,
                                             DispatcherLookupExtendedService dispatcherLookupExtendedService,
-                                            ProcessorCommandProcessor processorCommandProcessor
+                                            ProcessorCommandProcessor processorCommandProcessor,
+                                            ProcessorKeepAliveProcessor processorKeepAliveProcessor
     ) {
+        this.globals = globals;
+        this.processorService = processorService;
+        this.processorTaskService = processorTaskService;
 
         this.processorCommandProcessor = processorCommandProcessor;
         this.metadataService = metadataService;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.currentExecState = currentExecState;
+        this.processorKeepAliveProcessor = processorKeepAliveProcessor;
 
 
         for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
@@ -63,7 +79,19 @@ public class DispatcherRequestorHolderService {
                     processorTaskService, processorService, this.metadataService, this.currentExecState,
                     this.dispatcherLookupExtendedService, this.processorCommandProcessor);
 
-            dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, requestor);
+/*
+    public ProcessorKeepAliveRequestor(
+            String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
+            ProcessorService processorService, MetadataService metadataService,
+            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+            DispatcherRequestorHolderService dispatcherRequestorHolderService) {
+*/
+            final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
+                    dispatcher.dispatcherLookup.url, globals,
+                    processorTaskService, processorService, this.metadataService, dispatcherLookupExtendedService,
+                    processorKeepAliveProcessor, this);
+
+            dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, new Requesters(requestor, keepAliveRequestor));
         }
     }
 

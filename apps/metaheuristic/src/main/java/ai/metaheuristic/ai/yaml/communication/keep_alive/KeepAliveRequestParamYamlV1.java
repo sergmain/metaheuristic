@@ -110,12 +110,14 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorCommContextV1 {
-        @Nullable public String processorId;
-        @Nullable String sessionId;
+        @Nullable public Long processorId;
+        @Nullable public String sessionId;
     }
 
     public ReportProcessorV1 processor;
-    public FunctionDownloadStatusV1 functions;
+    public final FunctionDownloadStatusV1 functions = new FunctionDownloadStatusV1();
+
+    @Nullable
     public RequestProcessorIdV1 requestProcessorId;
     public ProcessorCommContextV1 processorCommContext;
 
