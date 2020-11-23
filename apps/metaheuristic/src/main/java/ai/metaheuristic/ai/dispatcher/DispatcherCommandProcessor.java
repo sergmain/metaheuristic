@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -131,8 +131,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public ProcessorData.ProcessorSessionId getNewProcessorId() {
-        ProcessorData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
+    public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
+        DispatcherApiData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
         return processorSessionId;
     }
 }

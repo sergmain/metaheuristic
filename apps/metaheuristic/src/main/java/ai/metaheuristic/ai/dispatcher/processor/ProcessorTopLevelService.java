@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -71,7 +72,7 @@ public class ProcessorTopLevelService {
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor==null) {
-            return new ProcessorData.ProcessorResult("#807.040 Processor wasn't found for id #"+ id);
+            return new ProcessorData.ProcessorResult("#808.040 Processor wasn't found for id #"+ id);
         }
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
         return r;
@@ -107,8 +108,8 @@ public class ProcessorTopLevelService {
     }
 
     @Nullable
-    public ProcessorData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        ProcessorData.ProcessorSessionId processorSessionId = processorSyncService.getWithSyncNullable( processorId,
+    public DispatcherApiData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
+        DispatcherApiData.ProcessorSessionId processorSessionId = processorSyncService.getWithSyncNullable( processorId,
                 ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress));
         return processorSessionId;
     }
@@ -117,7 +118,11 @@ public class ProcessorTopLevelService {
         return processorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
     }
 
-    public void setTaskIds(Long processorId, @Nullable String taskIds) {
+    public void setTaskIds(@Nullable Long processorId, @Nullable String taskIds) {
+        if (processorId==null) {
+            log.warn("#808.060 setTaskIds() was called with processorId==null");
+            return;
+        }
         processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setTaskIds(processorId, taskIds));
     }
 
@@ -162,7 +167,7 @@ public class ProcessorTopLevelService {
     @Nullable
     private String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "#807.380 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
+            return "#808.080 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }

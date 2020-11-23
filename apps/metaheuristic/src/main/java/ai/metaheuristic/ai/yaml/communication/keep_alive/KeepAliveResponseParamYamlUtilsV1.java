@@ -67,7 +67,7 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
                     v1.execContextStatus.statuses!=null
                             ? v1.execContextStatus.statuses
                             .stream()
-                            .map(o->new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.execContextId, o.state))
+                            .map(o->new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }

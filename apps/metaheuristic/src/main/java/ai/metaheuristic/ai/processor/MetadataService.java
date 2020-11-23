@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
@@ -294,6 +295,13 @@ public class MetadataService {
         }
     }
 
+    public DispatcherApiData.ProcessorSessionId getProcessorSessionId(final String dispatcherUrl) {
+        synchronized (syncObj) {
+            Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            return new DispatcherApiData.ProcessorSessionId(Long.valueOf(dispatcherInfo.processorId), dispatcherInfo.sessionId);
+        }
+    }
+
     public void setProcessorIdAndSessionId(final String dispatcherUrl, String processorId, String sessionId) {
         if (StringUtils.isBlank(dispatcherUrl)) {
             throw new IllegalStateException("#815.160 dispatcherUrl is null");
@@ -435,7 +443,7 @@ public class MetadataService {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()
                     .filter(o->o.dispatcherUrl.equals(dispatcherUrl))
-                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.functionState, o.code))
+                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.functionState))
                     .collect(Collectors.toList());
         }
     }

@@ -85,8 +85,8 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class Status {
-            public Enums.FunctionState functionState;
-            public String functionCode;
+            public String code;
+            public Enums.FunctionState state;
         }
 
         public List<Status> statuses = new ArrayList<>();

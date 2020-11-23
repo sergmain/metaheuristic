@@ -151,10 +151,10 @@ public class ProcessorKeepAliveRequestor {
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
 
                 log.debug("Start to request a dispatcher at {}", url);
-                log.debug("ExchangeData:\n{}", yaml);
+                log.debug("KeepAlive ExchangeData from processor:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 String result = response.getBody();
-                log.debug("ExchangeData from dispatcher:\n{}", result);
+                log.debug("#776.045 KeepAlive ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
                     log.warn("#776.050 Dispatcher returned null as a result");
                     return;

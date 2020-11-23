@@ -186,6 +186,7 @@ public class Globals {
     public File processorResourcesDir;
     public File processorTaskDir;
     public File processorEnvHotDeployDir;
+//    public File processorTempDir;
 
     public PublicKey dispatcherPublicKey = null;
 

@@ -301,8 +301,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                         dispatcherLookupExtendedService.lookupExtendedMap.get(o.dispatcherUrl);
 
-                if (dispatcher==null || dispatcher.context.chunkSize==null) {
-                    log.info("#811.195 (dispatcher==null || dispatcher.config.chunkSize==null), dispatcherUrl: {}", o.dispatcherUrl);
+                if (dispatcher==null) {
+                    log.info("#811.190 dispatcher wasn't found, dispatcherUrl: {}", o.dispatcherUrl);
+                    return;
+                }
+
+                if (dispatcher.dispatcherLookup.disabled) {
+                    return;
+                }
+
+                if (dispatcher.context.chunkSize==null) {
+                    log.info("#811.195 (dispatcher.config.chunkSize==null), dispatcherUrl: {}", o.dispatcherUrl);
                     return;
                 }
 

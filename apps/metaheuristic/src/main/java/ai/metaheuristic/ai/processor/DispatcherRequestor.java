@@ -86,13 +86,10 @@ public class DispatcherRequestor {
             throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
         serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
-        nextRequest = new ProcessorCommParamsYaml();
     }
 
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
-
-    private ProcessorCommParamsYaml nextRequest;
 
     private static final Object syncObj = new Object();
     private static <T> T getWithSync(Supplier<T> function) {
@@ -107,47 +104,11 @@ public class DispatcherRequestor {
         }
     }
 
-    public void setNextRequestProcessorId() {
-        withSync(() -> { nextRequest.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(); return null; });
-    }
-
-    public void setRequestProcessorId(ProcessorCommParamsYaml scpy, final ProcessorCommParamsYaml.RequestProcessorId requestProcessorId) {
-        withSync(() -> { scpy.requestProcessorId = requestProcessorId; return null; });
-    }
-
-    private void setProcessorCommContext(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ProcessorCommContext processorCommContext) {
-        withSync(() -> { scpy.processorCommContext = processorCommContext; return null; });
-    }
-
-    private void setRequestTask(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.RequestTask requestTask) {
-        withSync(() -> { scpy.requestTask = requestTask; return null; });
-    }
-
-    private void setResendTaskOutputResourceResult(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResourceResult) {
-        withSync(() -> { scpy.resendTaskOutputResourceResult = resendTaskOutputResourceResult; return null; });
-    }
-
-    private void setCheckForMissingOutputResources(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.CheckForMissingOutputResources checkForMissingOutputResources) {
-        withSync(() -> { scpy.checkForMissingOutputResources = checkForMissingOutputResources; return null; });
-    }
-
-    private void setReportTaskProcessingResult(ProcessorCommParamsYaml scpy, @Nullable ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult) {
-        withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
-    }
-
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
             return null;
-        });
-    }
-
-    private ProcessorCommParamsYaml swap() {
-        return getWithSync(() -> {
-            ProcessorCommParamsYaml temp = nextRequest;
-            nextRequest = new ProcessorCommParamsYaml();
-            return temp;
         });
     }
 
@@ -160,22 +121,22 @@ public class DispatcherRequestor {
         }
 
         try {
-            ProcessorCommParamsYaml scpy = swap();
+            ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
 
             final String processorId = metadataService.getProcessorId(dispatcherUrl);
             final String sessionId = metadataService.getSessionId(dispatcherUrl);
 
             if (processorId == null || sessionId==null) {
-                setRequestProcessorId(scpy, new ProcessorCommParamsYaml.RequestProcessorId());
+                pcpy.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
             }
             else {
-                setProcessorCommContext(scpy, new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId));
+                pcpy.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
                     final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired));
+                        pcpy.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired);
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
@@ -194,17 +155,21 @@ public class DispatcherRequestor {
                                 }
                             }
 
-                            setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
+                            pcpy.resendTaskOutputResourceResult = new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
                             lastCheckForResendTaskOutputResource = System.currentTimeMillis();
                         }
                     }
                 }
-                if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
-                    setCheckForMissingOutputResources(scpy, new ProcessorCommParamsYaml.CheckForMissingOutputResources());
+                if (System.currentTimeMillis() - lastRequestForMissingResources > 30_000) {
+                    pcpy.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
+                pcpy.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(dispatcherUrl);
+            }
 
-                setReportTaskProcessingResult(scpy, processorTaskService.reportTaskProcessingResult(dispatcherUrl));
+            if (noNewRequest(pcpy)) {
+                log.info("#775.045 no new requests");
+                return;
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
@@ -218,7 +183,7 @@ public class DispatcherRequestor {
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set(HttpHeaders.AUTHORIZATION, authHeader);
 
-                String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
+                String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
 
                 log.debug("Start to request a dispatcher at {}", url);
@@ -236,7 +201,7 @@ public class DispatcherRequestor {
                     log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
-                processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
+                processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
             } catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {
                     case UNAUTHORIZED:
@@ -285,6 +250,12 @@ public class DispatcherRequestor {
         } catch (Throwable e) {
             log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
+    }
+
+    private boolean noNewRequest(ProcessorCommParamsYaml pcpy) {
+        return pcpy.requestProcessorId==null && pcpy.requestTask==null &&
+                pcpy.reportTaskProcessingResult==null && pcpy.checkForMissingOutputResources==null &&
+                pcpy.resendTaskOutputResourceResult==null;
     }
 
 }

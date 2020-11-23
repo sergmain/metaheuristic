@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -140,7 +141,7 @@ public class ProcessorTransactionService {
 
     @Nullable
     @Transactional
-    public ProcessorData.ProcessorSessionId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
+    public DispatcherApiData.ProcessorSessionId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
         processorSyncService.checkWriteLockPresent(processorId);
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
@@ -151,7 +152,7 @@ public class ProcessorTransactionService {
 
     }
 
-    private ProcessorData.ProcessorSessionId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+    private DispatcherApiData.ProcessorSessionId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
         TxUtils.checkTxExists();
         processorSyncService.checkWriteLockPresent(processor.id);
 
@@ -162,11 +163,11 @@ public class ProcessorTransactionService {
         processorCache.save(processor);
 
         // the same processorId but new sessionId
-        return new ProcessorData.ProcessorSessionId(processor.getId(), ss.sessionId);
+        return new DispatcherApiData.ProcessorSessionId(processor.getId(), ss.sessionId);
     }
 
     @Transactional
-    public ProcessorData.ProcessorSessionId getNewProcessorId() {
+    public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
@@ -174,7 +175,7 @@ public class ProcessorTransactionService {
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
 
         final Processor p = createProcessor(null, null, psy);
-        return new ProcessorData.ProcessorSessionId (p.id, sessionId);
+        return new DispatcherApiData.ProcessorSessionId(p.id, sessionId);
     }
 
     @Transactional
@@ -255,7 +256,7 @@ public class ProcessorTransactionService {
             }
             if (isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus)) {
                 psy.downloadStatuses = functionDownloadStatus.statuses.stream()
-                        .map(o -> new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
+                        .map(o -> new ProcessorStatusYaml.DownloadStatus(o.state, o.code))
                         .collect(Collectors.toList());
                 processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
                 processor.updatedOn = System.currentTimeMillis();
@@ -293,7 +294,7 @@ public class ProcessorTransactionService {
         }
         for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (downloadStatus.functionCode.equals(sds.functionCode) && !downloadStatus.functionState.equals(sds.functionState)) {
+                if (downloadStatus.functionCode.equals(sds.code) && !downloadStatus.functionState.equals(sds.state)) {
                     return true;
                 }
             }
@@ -316,7 +317,7 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public ProcessorData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
+    public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTransactionService.createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
@@ -324,7 +325,7 @@ public class ProcessorTransactionService {
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
-        return new ProcessorData.ProcessorSessionId(p.getId(), sessionId);
+        return new DispatcherApiData.ProcessorSessionId(p.getId(), sessionId);
     }
 
     /**
@@ -357,7 +358,7 @@ public class ProcessorTransactionService {
 
     @Nullable
     @Transactional
-    public ProcessorData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
+    public DispatcherApiData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);

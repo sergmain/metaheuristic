@@ -64,7 +64,7 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
             t.processor = new KeepAliveRequestParamYaml.ReportProcessor();
             BeanUtils.copyProperties(v1.processor, t.processor);
         }
-        v1.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.functionState, o.functionCode))
+        v1.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
                 .collect(Collectors.toCollection(()->t.functions.statuses));
         if (v1.requestProcessorId!=null) {
             t.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId(v1.requestProcessorId.keep);

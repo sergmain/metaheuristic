@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -68,7 +67,7 @@ public class FunctionService {
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
     private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = new ArrayList<>();
-    private long mills = System.currentTimeMillis();
+    private long mills = 0L;
 
     public synchronized List<KeepAliveResponseParamYaml.Functions.Info> getFunctionInfos() {
         if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {

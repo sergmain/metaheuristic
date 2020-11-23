@@ -51,7 +51,7 @@ public class ProcessorKeepAliveProcessor {
     private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, String dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
         List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (FunctionDownloadStatusYaml.Status status : statuses) {
-            functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(status.functionState, status.code));
+            functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(status.code, status.functionState));
         }
     }
 

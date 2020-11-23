@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -45,6 +44,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -210,11 +210,11 @@ public class SouthbridgeService {
             }
             if (req.processorCommContext.processorId==null) {
                 log.warn("#444.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
-                ProcessorData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+                DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
                 resp.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
             }
             else {
-                ProcessorData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(req.processorCommContext.processorId, req.processorCommContext.sessionId, remoteAddress);
+                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(req.processorCommContext.processorId, req.processorCommContext.sessionId, remoteAddress);
                 if (processorSessionId != null) {
                     resp.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                 }
@@ -249,11 +249,11 @@ public class SouthbridgeService {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
             if (scpy.processorCommContext ==null || S.b(scpy.processorCommContext.processorId)) {
-                ProcessorData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+                DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
                 lcpy.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                 return lcpy;
             }
-            ProcessorData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(Long.parseLong(scpy.processorCommContext.processorId), scpy.processorCommContext.sessionId, remoteAddress);
+            DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(Long.parseLong(scpy.processorCommContext.processorId), scpy.processorCommContext.sessionId, remoteAddress);
             if (processorSessionId!=null) {
                 lcpy.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                 return lcpy;
@@ -275,8 +275,8 @@ public class SouthbridgeService {
     }
 
     @Nullable
-    private ProcessorData.ProcessorSessionId checkForReAssigningProcessorSessionId(Long processorId, @Nullable String sessionId, String remoteAddress) {
-        ProcessorData.ProcessorSessionId processorSessionId = processorTopLevelService.checkProcessorId(processorId, sessionId, remoteAddress);
+    private DispatcherApiData.ProcessorSessionId checkForReAssigningProcessorSessionId(Long processorId, @Nullable String sessionId, String remoteAddress) {
+        DispatcherApiData.ProcessorSessionId processorSessionId = processorTopLevelService.checkProcessorId(processorId, sessionId, remoteAddress);
         return processorSessionId;
     }
 }

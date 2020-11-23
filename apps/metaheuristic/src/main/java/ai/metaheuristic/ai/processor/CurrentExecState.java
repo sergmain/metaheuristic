@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
@@ -47,14 +46,14 @@ public class CurrentExecState {
                 execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.execContextId, status.state));
+            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.id, status.state));
             execContextState.forEach((k, v) -> {
                 if (!k.equals(dispatcherUrl)) {
                     return;
                 }
                 List<Long> ids = new ArrayList<>();
                 v.forEach((key, value) -> {
-                    boolean isFound = statuses.stream().anyMatch(status -> status.execContextId.equals(key));
+                    boolean isFound = statuses.stream().anyMatch(status -> status.id.equals(key));
                     if (!isFound) {
                         ids.add(key);
                     }

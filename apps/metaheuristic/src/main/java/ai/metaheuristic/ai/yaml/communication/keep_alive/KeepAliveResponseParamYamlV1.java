@@ -72,7 +72,7 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public Long execContextId;
+            public Long id;
             public EnumsApi.ExecContextState state;
         }
 
@@ -80,7 +80,7 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
 
         public boolean isStarted(Long execContextId) {
             for (SimpleStatus status : statuses) {
-                if (status.execContextId.equals(execContextId)) {
+                if (status.id.equals(execContextId)) {
                     return status.state== EnumsApi.ExecContextState.STARTED;
                 }
             }

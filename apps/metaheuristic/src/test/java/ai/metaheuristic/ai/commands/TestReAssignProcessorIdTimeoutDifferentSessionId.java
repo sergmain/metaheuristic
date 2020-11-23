@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -30,6 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +105,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
-        ProcessorData.ProcessorSessionId s1 = processorTransactionService.reassignProcessorId(null, null);
+        DispatcherApiData.ProcessorSessionId s1 = processorTransactionService.reassignProcessorId(null, null);
         assertNotEquals(sessionIdBefore, s1.sessionId);
 
     }

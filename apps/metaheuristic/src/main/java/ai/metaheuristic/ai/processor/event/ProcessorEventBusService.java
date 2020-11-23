@@ -73,13 +73,12 @@ public class ProcessorEventBusService {
         }
         for (String dispatcher : dispatchers) {
             executor.submit(() -> {
-                log.info("Run processorKeepAliveRequestor.proceedWithRequest() for url {}", dispatcher);
+                log.info("processorKeepAliveRequestor.proceedWithRequest(), url: {}", dispatcher);
                 try {
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
                 }
-                log.info("End processorKeepAliveRequestor.proceedWithRequest() for url {}", dispatcher);
             });
 
         }

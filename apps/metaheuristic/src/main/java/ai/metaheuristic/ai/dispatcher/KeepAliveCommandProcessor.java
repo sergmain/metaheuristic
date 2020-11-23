@@ -16,19 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.api.data.DispatcherApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -44,16 +39,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KeepAliveCommandProcessor  {
 
-    private final TaskService taskService;
     private final ProcessorTopLevelService processorTopLevelService;
     private final FunctionService functionService;
-    private final ExecContextTopLevelService execContextTopLevelService;
     private final ProcessorTransactionService processorService;
-    private final TaskProviderService taskProviderService;
-    private final ProcessorCache processorCache;
 
     public void process(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
         processProcessorTaskStatus(request);
+        processReportProcessorStatus(request, response);
         response.assignedProcessorId = getNewProcessorId(request.requestProcessorId);
         response.functions.infos.addAll( functionService.getFunctionInfos() );
     }
@@ -64,22 +56,14 @@ public class KeepAliveCommandProcessor  {
             log.warn("#997.020 (request.processorCommContext==null)");
             return;
         }
-        if (true) throw new NotImplementedException("need to decide what to do with reconcileProcessorTasks() below");
         processorTopLevelService.setTaskIds(request.processorCommContext.processorId, request.taskIds);
+
+        // TODO 2020-11-22 need to decide what to do with reconcileProcessorTasks() below
 //        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
     }
 
     // processing at dispatcher side
     private void processReportProcessorStatus(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
-/*
-        if (request.reportProcessorStatus==null) {
-            return;
-        }
-        if (request.processorCommContext==null) {
-            log.warn("#997.030 (request.processorCommContext==null)");
-            return;
-        }
-*/
         checkProcessorId(request);
         // IDEA has become too lazy
         if (request.processorCommContext.processorId==null) {
@@ -102,7 +86,7 @@ public class KeepAliveCommandProcessor  {
         if (request==null) {
             return null;
         }
-        ProcessorData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
+        DispatcherApiData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
         return new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
     }
 }
