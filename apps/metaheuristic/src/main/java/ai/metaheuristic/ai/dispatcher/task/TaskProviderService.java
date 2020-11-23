@@ -186,7 +186,7 @@ public class TaskProviderService {
                     params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 }
             } catch (DowngradeNotSupportedException e) {
-                // TODO 2020-09-267 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
+                // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
                 log.warn("#393.120 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
@@ -194,7 +194,9 @@ public class TaskProviderService {
                 return null;
             }
 
-            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.toState(task.execState));
+            // because we're already providing ith task that means that execCOntext was started
+            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.STARTED);
+
         } catch (Throwable th) {
             String es = "#393.140 Something wrong";
             log.error(es, th);

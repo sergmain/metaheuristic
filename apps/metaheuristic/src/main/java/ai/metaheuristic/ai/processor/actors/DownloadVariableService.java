@@ -97,7 +97,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 continue;
             }
             EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcher.url, processorTask.execContextId);
-            if (state!= EnumsApi.ExecContextState.STARTED) {
+            if (state!= EnumsApi.ExecContextState.STARTED && state!= EnumsApi.ExecContextState.PRODUCING) {
                 log.info("ExecContext #{} is stopped, delete task #{}", processorTask.execContextId, task.taskId);
                 processorTaskService.delete(task.dispatcher.url, task.taskId);
                 continue;
