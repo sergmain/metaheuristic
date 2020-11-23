@@ -218,12 +218,13 @@ public class SouthbridgeService {
                 if (processorSessionId != null) {
                     resp.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                 }
+                else {
+                    log.debug("Start processing commands");
+                    keepAliveCommandProcessor.process(req, resp);
+                }
             }
 
             resp.execContextStatus = execContextStatusService.getExecContextStatuses();
-
-            log.debug("Start processing commands");
-            keepAliveCommandProcessor.process(req, resp);
 
             KeepAliveResponseParamYaml.DispatcherInfo  lcc = new KeepAliveResponseParamYaml.DispatcherInfo ();
             lcc.chunkSize = globals.chunkSize;
