@@ -53,7 +53,8 @@ public class ExecContextTaskResettingService {
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
         }
-        return resetTask(execContext, taskId);
+        return taskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
+//        return resetTask(execContext, taskId);
     }
 
     public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
@@ -61,7 +62,7 @@ public class ExecContextTaskResettingService {
         execContextSyncService.checkWriteLockPresent(execContext.id);
         taskSyncService.checkWriteLockPresent(taskId);
 
-        TaskImpl t = taskSyncService.getWithSync(taskId, ()-> taskExecStateService.resetTask(taskId));
+        TaskImpl t = taskExecStateService.resetTask(taskId);
         if (t == null) {
             String es = S.f("#320.020 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);
