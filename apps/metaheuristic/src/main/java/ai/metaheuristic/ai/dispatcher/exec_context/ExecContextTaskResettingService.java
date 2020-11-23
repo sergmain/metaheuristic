@@ -61,7 +61,7 @@ public class ExecContextTaskResettingService {
         execContextSyncService.checkWriteLockPresent(execContext.id);
         taskSyncService.checkWriteLockPresent(taskId);
 
-        TaskImpl t = taskExecStateService.resetTask(taskId);
+        TaskImpl t = taskSyncService.getWithSync(taskId, ()-> taskExecStateService.resetTask(taskId));
         if (t == null) {
             String es = S.f("#320.020 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);

@@ -203,8 +203,12 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
+                if (psy.env==null) {
+                    log.error("#317.070 Processor {} has empty env.yaml", processor.id);
+                }
+
                 // check of tags
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env.tags)) {
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env==null ? null : psy.env.tags)) {
                     continue;
                 }
 
