@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
@@ -68,14 +67,12 @@ public class TaskCheckCachingService {
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
     private final ExecContextTaskStateService execContextTaskStateService;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final VariableService variableService;
     private final CacheService cacheService;
     private final CacheVariableService cacheVariableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ExecContextVariableService execContextVariableService;
-    private final TaskSyncService taskSyncService;
 
     @Data
     @AllArgsConstructor
@@ -107,14 +104,17 @@ public class TaskCheckCachingService {
     @Transactional
     public Void checkCaching(Long execContextId, Long taskId, DataHolder holder) {
 
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return null;
+        }
+        if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
+            log.info("#609.010 task #{} was already checked for cached variables", taskId);
+        }
+
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
-            return null;
-        }
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
             return null;
         }
 

@@ -112,7 +112,7 @@ public class TaskWithInternalContextService {
 
             try {
                 if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.error("#707.080 Task #"+task.id+" already in progress. mustn't happened. it's, actually, illegal state");
+                    log.error("#707.080 Task #"+task.id+" already in progress.");
                     return;
                 }
                 if (task.execState!= EnumsApi.TaskExecState.NONE.value) {

@@ -502,8 +502,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 throw new IllegalStateException("(task==null)");
             }
 
-            final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
-            finished = execState==EnumsApi.TaskExecState.OK || execState==EnumsApi.TaskExecState.ERROR;
+            finished = EnumsApi.TaskExecState.isFinishedState(task.execState);
             if (finished) {
                 break;
             }

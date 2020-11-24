@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
@@ -101,40 +100,46 @@ public class TaskProviderTransactionalService {
         }
     }
 
-    public void registerTask(RegisterTaskForProcessingEvent event) {
-        for (RegisterTaskForProcessingEvent.ExecContextWithTaskIds eventTask : event.tasks) {
-            ExecContextImpl ec =  execContextService.findById(eventTask.execContextId);
-            if (ec==null) {
-                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", eventTask.taskId, eventTask.execContextId);
-                continue;
-            }
-            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+    private boolean alreadyRegistered(Long taskId) {
+        return tasks.stream().anyMatch(o->o.taskId.equals(taskId));
+    }
 
-            TaskImpl task = taskRepository.findById(eventTask.taskId).orElse(null);
-            if (task == null) {
-                log.warn("#317.015 Can't register task #{}, task doesn't exist", eventTask.taskId);
-                continue;
-            }
-            final TaskParamsYaml taskParamYaml;
-            try {
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            } catch (YAMLException e) {
-                String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
-                log.error(es, e.getMessage());
-                execContextTaskFinishingService.finishWithErrorWithTx(task.id, es);
-                continue;
-            }
+    public void registerTask(Long execContextId, Long taskId) {
+        if (alreadyRegistered(taskId)) {
+            return;
+        }
 
-            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
-            if (p==null) {
-                log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", eventTask.taskId, taskParamYaml.task.processCode, eventTask.execContextId);
-                continue;
-            }
+        ExecContextImpl ec =  execContextService.findById(execContextId);
+        if (ec==null) {
+            log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
+            return;
+        }
+        final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
 
-            final QueuedTask queuedTask = new QueuedTask(task.execContextId, eventTask.taskId, task, taskParamYaml, p.tags, p.priority);
-            if (!tasks.contains(queuedTask)) {
-                tasks.add(queuedTask);
-            }
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            log.warn("#317.015 Can't register task #{}, task doesn't exist", taskId);
+            return;
+        }
+        final TaskParamsYaml taskParamYaml;
+        try {
+            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        } catch (YAMLException e) {
+            String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+            log.error(es, e.getMessage());
+            execContextTaskFinishingService.finishWithErrorWithTx(task.id, es);
+            return;
+        }
+
+        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+        if (p==null) {
+            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
+            return;
+        }
+
+        final QueuedTask queuedTask = new QueuedTask(task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
+        if (!tasks.contains(queuedTask)) {
+            tasks.add(queuedTask);
         }
         tasks.sort((o1, o2)->{
             if(o1.priority!=o2.priority) {

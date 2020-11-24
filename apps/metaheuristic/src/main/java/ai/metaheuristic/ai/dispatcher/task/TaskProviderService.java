@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
@@ -73,11 +72,9 @@ public class TaskProviderService {
 
     private static final Object syncObj = new Object();
 
-    @Async
-    @EventListener
-    public void registerTask(RegisterTaskForProcessingEvent event) {
+    public void registerTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
-            taskProviderTransactionalService.registerTask(event);
+            taskProviderTransactionalService.registerTask(execContextId, taskId);
         }
     }
 
@@ -94,6 +91,12 @@ public class TaskProviderService {
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
+        }
+    }
+
+    public void deregisterTask(Long taskId) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.deRegisterTask(taskId);
         }
     }
 
@@ -223,6 +226,7 @@ public class TaskProviderService {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
+                    deregisterTask(task.id);
                     return task;
                 }
             }

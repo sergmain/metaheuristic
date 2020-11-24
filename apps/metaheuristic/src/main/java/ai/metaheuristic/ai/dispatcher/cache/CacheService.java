@@ -83,7 +83,6 @@ public class CacheService {
             cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
             cacheProcess = cacheProcessRepository.save(cacheProcess);
 
-
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 final File tempFile;
 
@@ -95,9 +94,6 @@ public class CacheService {
                     cacheVariableService.createAsNull(cacheProcess.id, output.name);
                 }
                 else {
-/*
-                try {
-*/
                     tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
                     holder.files.add(tempFile);
                     variableService.storeToFile(output.id, tempFile);
@@ -105,13 +101,6 @@ public class CacheService {
                     InputStream is = new FileInputStream(tempFile);
                     holder.inputStreams.add(is);
                     cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
-
-/*
-                } catch (IOException e) {
-                    log.warn("#609.160 error", e);
-                    throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
-                }
-*/
                 }
             }
         }

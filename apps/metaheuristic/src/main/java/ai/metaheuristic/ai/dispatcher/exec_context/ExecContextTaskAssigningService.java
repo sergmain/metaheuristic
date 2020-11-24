@@ -76,7 +76,6 @@ public class ExecContextTaskAssigningService {
 
         int page = 0;
         List<Long> taskIds;
-        RegisterTaskForProcessingEvent event = new RegisterTaskForProcessingEvent();
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -103,7 +102,7 @@ public class ExecContextTaskAssigningService {
                         eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
                     }
                     else {
-                        event.tasks.add(new RegisterTaskForProcessingEvent.ExecContextWithTaskIds(execContextId, taskId));
+                        taskProviderService.registerTask(execContextId, taskId);
                     }
                 }
                 else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
@@ -115,7 +114,6 @@ public class ExecContextTaskAssigningService {
                 }
             }
         }
-        taskProviderService.registerTask(event);
         return null;
     }
 

@@ -114,7 +114,7 @@ public class Schedulers {
             batchService.updateBatchStatuses();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 10_000)
         public void processInternalTasks() {
             if (globals.isUnitTesting) {
                 return;

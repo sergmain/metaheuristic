@@ -26,9 +26,11 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -63,6 +65,9 @@ public class AggregateFunction implements InternalFunction {
     private final VariableRepository variableRepository;
     private final VariableService variableService;
 
+    public static final String META_ERROR_CONTROL = "error-control-policy";
+    public enum ErrorControlPolicy { fail, ignore }
+
     @Override
     public String getCode() {
         return Consts.MH_AGGREGATE_FUNCTION;
@@ -80,7 +85,7 @@ public class AggregateFunction implements InternalFunction {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
-                    "There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
+                    "#992.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
         }
 
         Variable variable;
@@ -88,29 +93,32 @@ public class AggregateFunction implements InternalFunction {
         if (outputVariable.context==EnumsApi.VariableContext.local) {
             variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
-                throw new IllegalStateException("Variable not found for code " + outputVariable);
+                throw new IllegalStateException("#992.040 Variable not found for code " + outputVariable);
             }
         }
         else {
-            throw new IllegalStateException("GlobalVariable not found for code " + outputVariable);
+            throw new IllegalStateException("#992.060 GlobalVariable not found for code " + outputVariable);
         }
 
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
         if (names==null || names.length==0) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
+                    "#992.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
+        String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
+        ErrorControlPolicy policy = S.b(policyMeta) ? ErrorControlPolicy.ignore : ErrorControlPolicy.valueOf(policyMeta);
+
         List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(execContext.id, names);
 
         File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
         if (tempDir==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+                    "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
         }
         File outputDir = new File(tempDir, outputVariable.name);
         if (!outputDir.mkdirs()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "Can't create output directory  "+ outputDir.getAbsolutePath());
+                    "#992.120 Can't create output directory  "+ outputDir.getAbsolutePath());
         }
 
         list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
@@ -120,8 +128,18 @@ public class AggregateFunction implements InternalFunction {
                     taskContextDir.mkdirs();
                     list.stream().filter(t-> contextId.equals(t.taskContextId))
                             .forEach( v->{
-                                File varFile = new File(taskContextDir, v.variable);
-                                variableService.storeToFile(v.id, varFile);
+                                try {
+                                    File varFile = new File(taskContextDir, v.variable);
+                                    variableService.storeToFile(v.id, varFile);
+                                } catch (VariableDataNotFoundException e) {
+                                    if (v.nullified) {
+                                        return;
+                                    }
+                                    log.error("#992.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
+                                    if (policy==ErrorControlPolicy.fail) {
+                                        throw e;
+                                    }
+                                }
                             });
                 });
 

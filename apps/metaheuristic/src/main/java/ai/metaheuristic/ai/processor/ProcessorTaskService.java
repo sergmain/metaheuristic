@@ -170,10 +170,10 @@ public class ProcessorTaskService {
 
     public void setReportedOn(String dispatcherUrl, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("setReportedOn({}, {})", dispatcherUrl, taskId);
+            log.info("#713.065 setReportedOn({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
-                log.error("#713.070 ProcessorRestTask wasn't found for Id " + taskId);
+                log.error("#713.070 ProcessorTask wasn't found for Id " + taskId);
                 return;
             }
             task.setReported(true);
@@ -184,10 +184,10 @@ public class ProcessorTaskService {
 
     public void setInputAsEmpty(String dispatcherUrl, long taskId, String variableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("setReportedOn({}, {})", dispatcherUrl, taskId);
+            log.info("#713.075 setInputAsEmpty({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
-                log.error("#713.070 ProcessorRestTask wasn't found for Id " + taskId);
+                log.error("#713.077 ProcessorTask wasn't found for Id " + taskId);
                 return;
             }
             final ProcessorTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findAny().orElse(null);
@@ -206,17 +206,17 @@ public class ProcessorTaskService {
 
     public void setDelivered(String dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("setDelivered({}, {})", dispatcherUrl, taskId);
+            log.info("#713.080 setDelivered({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
-                log.error("#713.080 ProcessorTask wasn't found for Id {}", taskId);
-                return;
-            }
-            if (task.delivered) {
+                log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
                 return;
             }
             if (!task.isReported() ) {
-                log.warn("#713.090 This state need to be investigated, task wasn't reported to dispatcher");
+                log.warn("#713.095 This state need to be investigated, task wasn't reported to dispatcher");
+            }
+            if (task.delivered) {
+                return;
             }
 
             task.setDelivered(true);
@@ -290,6 +290,7 @@ public class ProcessorTaskService {
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
             //  2020-09-26 until #713.105 (task.isDelivered() && !task.isReported() ) will be fixed, this check is correct
+            //  2020-11-23 looks like #713.105 can occur in case when a task was finished with status ERROR
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }

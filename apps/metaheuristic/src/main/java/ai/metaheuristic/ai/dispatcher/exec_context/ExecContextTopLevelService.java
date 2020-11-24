@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
@@ -100,8 +101,10 @@ public class ExecContextTopLevelService {
     public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
         List<Long> ids = new ArrayList<>();
         for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
-            ids.add(result.taskId);
-            storeExecResult(result);
+            Long taskId = storeExecResult(result);
+            if (taskId!=null) {
+                ids.add(taskId);
+            }
         }
         return ids;
     }
@@ -124,9 +127,6 @@ public class ExecContextTopLevelService {
     }
 
     public void findUnassignedTasksAndRegisterInQueue() {
-        if (!taskProviderService.isQueueEmpty()) {
-            return;
-        }
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         execContextIds.sort((Comparator.naturalOrder()));
         for (Long execContextId : execContextIds) {
@@ -169,11 +169,20 @@ public class ExecContextTopLevelService {
         return execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
     }
 
-    private void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    @Nullable
+    private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         Long execContextId = taskRepository.getExecContextId(result.taskId);
         if (execContextId==null) {
             log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
-            return;
+            return null;
+        }
+        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+        if (task==null) {
+            log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
+            return null;
+        }
+        if (task.execState== EnumsApi.TaskExecState.ERROR .value|| task.execState== EnumsApi.TaskExecState.OK.value ){
+            return task.id;
         }
         try {
             storeExecResultInternal(result);
@@ -182,6 +191,7 @@ public class ExecContextTopLevelService {
             log.warn("#210.105 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
             storeExecResultInternal(result);
         }
+        return task.id;
     }
 
     private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
