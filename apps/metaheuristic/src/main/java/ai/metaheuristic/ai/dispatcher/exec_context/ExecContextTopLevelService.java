@@ -89,8 +89,7 @@ public class ExecContextTopLevelService {
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
         boolean managerRole = authentication.getAuthorities().stream().anyMatch(o->isManagerRole(o.getAuthority()));
 
-        ExecContextApiData.RawExecContextStateResult raw = execContextSyncService.getWithSync(execContextId,
-                ()-> execContextService.getRawExecContextState(sourceCodeId, execContextId, context));
+        ExecContextApiData.RawExecContextStateResult raw = execContextService.getRawExecContextState(sourceCodeId, execContextId, context);
         if (raw.isErrorMessages()) {
             return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
         }
@@ -110,8 +109,7 @@ public class ExecContextTopLevelService {
     }
 
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        SourceCodeApiData.ExecContextResult result = execContextSyncService.getWithSync(execContextId,
-                ()-> execContextService.getExecContextExtended(execContextId));
+        SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
 
         if (result.isErrorMessages()) {
             return result;
