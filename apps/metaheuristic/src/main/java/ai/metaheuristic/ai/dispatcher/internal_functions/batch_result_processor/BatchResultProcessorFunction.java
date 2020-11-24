@@ -67,6 +67,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.ByteArrayInputStream;
@@ -383,11 +384,42 @@ public class BatchResultProcessorFunction implements InternalFunction {
             }
         }
 
+        fixPathInMapping(bimy);
+
         File resultDir = new File(zipDir, bimy.targetDir);
         resultDir.mkdir();
 
         storeVariableToFile(bimy, resultDir, item.items);
         storeVariableToFile(bimy, resultDir, List.of(item.status));
+    }
+
+    public static void fixPathInMapping(BatchItemMappingYaml bimy) {
+        if (bimy.targetDir!=null) {
+            if (File.separatorChar=='/') {
+                bimy.targetDir = bimy.targetDir.replace('\\', '/');
+            }
+            else {
+                bimy.targetDir = bimy.targetDir.replace('/', '\\');
+            }
+        }
+        if (CollectionUtils.isEmpty(bimy.filenames)) {
+            return;
+        }
+        Map<String, String> newMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : bimy.filenames.entrySet()) {
+            if (entry.getValue()==null) {
+                continue;
+            }
+            String value;
+            if (File.separatorChar=='/') {
+                value = entry.getValue().replace('\\', '/');
+            }
+            else {
+                value = entry.getValue().replace('/', '\\');
+            }
+            newMap.put(entry.getKey(), value);
+        }
+        bimy.filenames = newMap;
     }
 
     private void storeVariableToFile(BatchItemMappingYaml bimy, File resultDir, List<SimpleVariable> simpleVariables) {
