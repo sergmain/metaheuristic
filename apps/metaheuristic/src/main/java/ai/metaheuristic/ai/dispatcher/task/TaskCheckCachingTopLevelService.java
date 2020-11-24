@@ -26,8 +26,12 @@ import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -48,33 +52,56 @@ public class TaskCheckCachingTopLevelService {
     private final EventSenderService eventSenderService;
     private final TaskSyncService taskSyncService;
 
-//    private static final int N_THREADS = Math.max(2, Runtime.getRuntime().availableProcessors() - 2);
-    private static final int N_THREADS = 2;
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(N_THREADS);
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
-    public void checkCaching(final RegisterTaskForCheckCachingEvent event) {
-        executor.submit(() -> {
-            ExecContextImpl execContext = execContextService.findById(event.execContextId);
-            if (execContext == null) {
-                log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
+    private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
+
+    public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
+        synchronized (queue) {
+            if (queue.contains(event)) {
                 return;
             }
-            try {
-                try (DataHolder holder = new DataHolder()) {
-                    execContextSyncService.getWithSyncNullable(execContext.id,
-                            () -> taskSyncService.getWithSyncNullable(event.taskId,
-                                    () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, holder)));
-                    eventSenderService.sendEvents(holder);
-                }
-            } catch (InvalidateCacheProcessException e) {
-                try {
-                    execContextSyncService.getWithSyncNullable(execContext.id,
-                            () -> taskSyncService.getWithSyncNullable(e.taskId,
-                                    () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
-                } catch (Throwable th) {
-                    log.error("#610.020 error while invalidating task #"+e.taskId, th);
-                }
+            queue.add(event);
+        }
+    }
+
+    @Nullable
+    private RegisterTaskForCheckCachingEvent pullFromQueue() {
+        synchronized (queue) {
+            return queue.pollFirst();
+        }
+    }
+
+    public void checkCaching() {
+        executor.submit(() -> {
+            RegisterTaskForCheckCachingEvent event;
+            while ((event = pullFromQueue())!=null) {
+                checkCachingInternal(event);
             }
         });
+    }
+
+    private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
+        ExecContextImpl execContext = execContextService.findById(event.execContextId);
+        if (execContext == null) {
+            log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
+            return;
+        }
+        try {
+            try (DataHolder holder = new DataHolder()) {
+                execContextSyncService.getWithSyncNullable(execContext.id,
+                        () -> taskSyncService.getWithSyncNullable(event.taskId,
+                                () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, holder)));
+                eventSenderService.sendEvents(holder);
+            }
+        } catch (InvalidateCacheProcessException e) {
+            try {
+                execContextSyncService.getWithSyncNullable(execContext.id,
+                        () -> taskSyncService.getWithSyncNullable(e.taskId,
+                                () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
+            } catch (Throwable th) {
+                log.error("#610.020 error while invalidating task #"+e.taskId, th);
+            }
+        }
     }
 }

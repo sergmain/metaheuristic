@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -58,6 +59,7 @@ public class ExecContextTaskAssigningService {
     private final TaskRepository taskRepository;
     private final TaskProviderService taskProviderService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
     @Nullable
     @Transactional
@@ -106,7 +108,9 @@ public class ExecContextTaskAssigningService {
                     }
                 }
                 else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    eventPublisher.publishEvent(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
+                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
+                    taskCheckCachingTopLevelService.putToQueue(event);
+                    eventPublisher.publishEvent(event);
                 }
                 else {
                     log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",

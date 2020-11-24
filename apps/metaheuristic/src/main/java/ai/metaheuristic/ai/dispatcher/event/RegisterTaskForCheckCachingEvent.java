@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.List;
  * Time: 6:47 PM
  */
 @Data
+@EqualsAndHashCode(of = "taskId")
 @AllArgsConstructor
 public class RegisterTaskForCheckCachingEvent {
     public Long execContextId;

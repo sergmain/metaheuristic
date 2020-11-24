@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
  * Date: 10/30/2020
  * Time: 7:14 PM
  */
+@SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -68,7 +69,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void registerTask(RegisterTaskForCheckCachingEvent event) {
-        taskCheckCachingService.checkCaching(event);
+        taskCheckCachingService.checkCaching();
     }
 
     @Async
