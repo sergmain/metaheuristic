@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -64,7 +63,6 @@ public class ExecContextTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
-    private final TaskProviderService taskProviderService;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final EventSenderService eventSenderService;
