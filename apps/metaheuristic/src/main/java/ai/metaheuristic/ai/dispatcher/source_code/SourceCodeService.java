@@ -100,19 +100,25 @@ public class SourceCodeService {
 
     @Transactional
     public OperationStatusRest deleteSourceCodeById(@Nullable Long sourceCodeId) {
+        return deleteSourceCodeById(sourceCodeId, true);
+    }
+
+    @Transactional
+    public OperationStatusRest deleteSourceCodeById(@Nullable Long sourceCodeId, boolean checkReplicationMode) {
         if (sourceCodeId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (checkReplicationMode && globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#565.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.OK,
                     "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         sourceCodeCache.deleteById(sourceCodeId);
+        dispatcherParamsService.unregisterSourceCode(sourceCode.uid);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

@@ -59,8 +59,7 @@ public class TestController {
             ASSET_STATE_RESPONSE.companies.add(new ReplicationData.CompanyShortAsset(1001L, 101L));
             ASSET_STATE_RESPONSE.companies.add(new ReplicationData.CompanyShortAsset(1002L, 102L));
             ASSET_STATE_RESPONSE.functions.addAll(FUNCTIONS);
-            ASSET_STATE_RESPONSE.sourceCodes.add(new ReplicationData.SourceCodeShortAsset("source-code-1", 201L));
-            ASSET_STATE_RESPONSE.sourceCodes.add(new ReplicationData.SourceCodeShortAsset("source-code-2", 202L));
+            ASSET_STATE_RESPONSE.sourceCodeUids.addAll(List.of("source-code-1", "source-code-2"));
             ASSET_STATE_RESPONSE.usernames.add(new ReplicationData.AccountShortAsset("user-1", 301L));
             ASSET_STATE_RESPONSE.usernames.add(new ReplicationData.AccountShortAsset("user-2", 302L));
 

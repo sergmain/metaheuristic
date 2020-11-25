@@ -37,10 +37,10 @@ public class ReplicationService {
 
     public final Globals globals;
     public final ReplicationCoreService replicationCoreService;
-    public final ReplicationCompanyService replicationCompanyService;
-    public final ReplicationAccountService replicationAccountService;
-    public final ReplicationFunctionService replicationFunctionService;
-    public final ReplicationSourceCodeService replicationSourceCodeService;
+    public final ReplicationCompanyTopLevelService replicationCompanyTopLevelService;
+    public final ReplicationAccountTopLevelService replicationAccountTopLevelService;
+    public final ReplicationFunctionTopLevelService replicationFunctionTopLevelService;
+    public final ReplicationSourceCodeTopLevelService replicationSourceCodeTopLevelService;
 
     public void sync() {
         if (globals.assetMode!= EnumsApi.DispatcherAssetMode.replicated) {
@@ -51,10 +51,10 @@ public class ReplicationService {
             log.error("#308.010 Error while getting actual assets: " + assetStateResponse.getErrorMessagesAsStr());
             return;
         }
-        replicationFunctionService.syncFunctions(assetStateResponse.functions);
-        replicationSourceCodeService.syncSourceCodes(assetStateResponse.sourceCodes);
-        replicationCompanyService.syncCompanies(assetStateResponse.companies);
-        replicationAccountService.syncAccounts(assetStateResponse.usernames);
+        replicationFunctionTopLevelService.syncFunctions(assetStateResponse.functions);
+        replicationSourceCodeTopLevelService.syncSourceCodes(assetStateResponse.sourceCodeUids);
+        replicationCompanyTopLevelService.syncCompanies(assetStateResponse.companies);
+        replicationAccountTopLevelService.syncAccounts(assetStateResponse.usernames);
     }
 
 }

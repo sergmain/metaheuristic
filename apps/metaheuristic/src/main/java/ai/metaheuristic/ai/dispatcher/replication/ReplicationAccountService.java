@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static ai.metaheuristic.ai.dispatcher.replication.ReplicationAccountTopLevelService.*;
+
 /**
  * @author Serge
  * Date: 1/13/2020
@@ -51,52 +53,8 @@ public class ReplicationAccountService {
     public final AccountRepository accountRepository;
     public final AccountCache accountCache;
 
-    @Data
-    @AllArgsConstructor
-    private static class AccountLoopEntry {
-        public ReplicationData.AccountShortAsset accountShort;
-        public Account account;
-    }
-
     @Transactional
-    public void syncAccounts(List<ReplicationData.AccountShortAsset> actualAccounts) {
-        List<AccountLoopEntry> forUpdating = new ArrayList<>(actualAccounts.size());
-        LinkedList<ReplicationData.AccountShortAsset> forCreating = new LinkedList<>(actualAccounts);
-
-        List<String> usernames = accountRepository.findAllUsernames();
-        for (String username : usernames) {
-            Account a = accountCache.findByUsername(username);
-            if (a==null) {
-                continue;
-            }
-
-            boolean isDeleted = true;
-            for (ReplicationData.AccountShortAsset actualAccount : actualAccounts) {
-                if (actualAccount.username.equals(a.username)) {
-                    isDeleted = false;
-                    if (actualAccount.updateOn != a.updatedOn) {
-                        AccountLoopEntry accountLoopEntry = new AccountLoopEntry(actualAccount, a);
-                        forUpdating.add(accountLoopEntry);
-                    }
-                    break;
-                }
-            }
-
-            if (isDeleted) {
-                log.warn("!!! Strange situation - account wasn't found, username: {}", username);
-            }
-            forCreating.removeIf(accountShortAsset -> accountShortAsset.username.equals(a.username));
-        }
-
-        forUpdating.forEach(this::updateAccount);
-        forCreating.forEach(this::createAccount);
-    }
-
-    private void updateAccount(AccountLoopEntry accountLoopEntry) {
-        ReplicationData.AccountAsset accountAsset = getAccountAsset(accountLoopEntry.account.username);
-        if (accountAsset == null) {
-            return;
-        }
+    public void updateAccount(AccountLoopEntry accountLoopEntry, ReplicationData.AccountAsset accountAsset) {
 
         accountLoopEntry.account.companyId = accountAsset.account.companyId;
         accountLoopEntry.account.username = accountAsset.account.username;
@@ -117,13 +75,9 @@ public class ReplicationAccountService {
         accountCache.save(accountLoopEntry.account);
     }
 
-    private void createAccount(ReplicationData.AccountShortAsset accountShortAsset) {
-        ReplicationData.AccountAsset accountAsset = getAccountAsset(accountShortAsset.username);
-        if (accountAsset == null) {
-            return;
-        }
-
-        Account a = accountRepository.findByUsername(accountShortAsset.username);
+    @Transactional
+    public void createAccount(ReplicationData.AccountAsset accountAsset) {
+        Account a = accountRepository.findByUsername(accountAsset.account.username);
         if (a!=null) {
             return;
         }
@@ -134,30 +88,4 @@ public class ReplicationAccountService {
         accountAsset.account.version=null;
         accountCache.save(accountAsset.account);
     }
-
-    @Nullable
-    private ReplicationData.AccountAsset getAccountAsset(String username) {
-        ReplicationData.AccountAsset accountAsset = requestAccountAsset(username);
-        if (accountAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting account for username "+ username +", error: " + accountAsset.getErrorMessagesAsStr());
-            return null;
-        }
-        return accountAsset;
-    }
-
-    private ReplicationData.AccountAsset requestAccountAsset(String username) {
-        Object data = replicationCoreService.getData(
-                "/rest/v1/replication/account", ReplicationData.AccountAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("username", username).build(), StandardCharsets.UTF_8)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
-        );
-        if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.AccountAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
-        }
-        ReplicationData.AccountAsset response = (ReplicationData.AccountAsset) data;
-        return response;
-    }
-
 }
