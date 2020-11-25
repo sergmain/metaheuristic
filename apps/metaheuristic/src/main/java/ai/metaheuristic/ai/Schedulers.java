@@ -110,6 +110,9 @@ public class Schedulers {
             if (!globals.dispatcherEnabled) {
                 return;
             }
+            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
+                return;
+            }
             log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
@@ -120,6 +123,9 @@ public class Schedulers {
                 return;
             }
             if (!globals.dispatcherEnabled) {
+                return;
+            }
+            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");

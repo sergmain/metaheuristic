@@ -118,7 +118,6 @@ public class SourceCodeService {
                     "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         sourceCodeCache.deleteById(sourceCodeId);
-        dispatcherParamsService.unregisterSourceCode(sourceCode.uid);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
