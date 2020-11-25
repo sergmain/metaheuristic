@@ -17,14 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -90,19 +87,7 @@ public class AssetController {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return Map.of();
         }
-        return getFunctionChecksum(response, code);
-    }
-
-    private Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
-        Function function = functionTopLevelService.findByCode(functionCode);
-        if (function ==null) {
-            log.warn("#442.100 Function {} wasn't found", functionCode);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return Map.of();
-        }
-        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
-        log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
-        return sc.checksumMap==null ? Map.of() : sc.checksumMap;
+        return functionTopLevelService.getFunctionChecksum(response, code);
     }
 
     @PostMapping("/function-config/{random-part}")
@@ -117,18 +102,6 @@ public class AssetController {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return "";
         }
-        return getFunctionConfig(response, code);
-    }
-
-    private String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
-        Function function = functionTopLevelService.findByCode(functionCode);
-        if (function ==null) {
-            log.warn("#442.140 Function {} wasn't found", functionCode);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return "";
-        }
-        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
-        log.info("Send config of function {}", sc.getCode());
-        return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+        return functionTopLevelService.getFunctionConfig(response, code);
     }
 }

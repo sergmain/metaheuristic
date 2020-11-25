@@ -20,21 +20,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
-import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import static ai.metaheuristic.ai.dispatcher.replication.ReplicationCompanyTopLevelService.CompanyLoopEntry;
 
 /**
  * @author Serge
@@ -51,98 +43,25 @@ public class ReplicationCompanyService {
     public final CompanyRepository companyRepository;
     public final CompanyCache companyCache;
 
-    @Data
-    @AllArgsConstructor
-    private static class CompanyLoopEntry {
-        public ReplicationData.CompanyShortAsset companyShort;
-        public Company company;
-    }
-
     @Transactional
-    public void syncCompanies(List<ReplicationData.CompanyShortAsset> actualCompanies) {
-        List<CompanyLoopEntry> forUpdating = new ArrayList<>(actualCompanies.size());
-        LinkedList<ReplicationData.CompanyShortAsset> forCreating = new LinkedList<>(actualCompanies);
-
-        List<Long> ids = companyRepository.findAllUniqueIds();
-        for (Long id : ids) {
-            Company c = companyCache.findByUniqueId(id);
-            if (c==null) {
-                continue;
-            }
-
-            boolean isDeleted = true;
-            for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
-                if (actualCompany.uniqueId.equals(c.uniqueId)) {
-                    isDeleted = false;
-                    if (actualCompany.updateOn != c.getCompanyParamsYaml().updatedOn) {
-                        CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
-                        forUpdating.add(companyLoopEntry);
-                    }
-                    break;
-                }
-            }
-
-            if (isDeleted) {
-                log.warn("!!! Strange situation - company wasn't found, uniqueId: {}", id);
-            }
-            forCreating.removeIf(companyShortAsset -> companyShortAsset.uniqueId.equals(c.uniqueId));
-        }
-
-        forUpdating.forEach(this::updateCompany);
-        forCreating.forEach(this::createCompany);
-    }
-
-    private void createCompany(ReplicationData.CompanyShortAsset companyShortAsset) {
-        ReplicationData.CompanyAsset companyAsset = getCompanyAsset(companyShortAsset.uniqueId);
-        if (companyAsset == null) {
-            return;
-        }
-
-        Company c = companyCache.findByUniqueId(companyShortAsset.uniqueId);
+    public void createCompany(ReplicationData.CompanyAsset companyAsset) {
+        Company c = companyCache.findByUniqueId(companyAsset.company.uniqueId);
         if (c!=null) {
             return;
         }
 
+        //noinspection ConstantConditions
         companyAsset.company.id=null;
+        //noinspection ConstantConditions
         companyAsset.company.version=null;
         companyCache.save(companyAsset.company);
     }
 
-    private void updateCompany(CompanyLoopEntry companyLoopEntry) {
-        ReplicationData.CompanyAsset companyAsset = getCompanyAsset(companyLoopEntry.company.uniqueId);
-        if (companyAsset == null) {
-            return;
-        }
-
+    @Transactional
+    public void updateCompany(CompanyLoopEntry companyLoopEntry, ReplicationData.CompanyAsset companyAsset) {
         companyLoopEntry.company.name = companyAsset.company.name;
         companyLoopEntry.company.setParams( companyAsset.company.getParams() );
 
         companyCache.save(companyLoopEntry.company);
-
-    }
-
-    @Nullable
-    private ReplicationData.CompanyAsset getCompanyAsset(Long uniqueId) {
-        ReplicationData.CompanyAsset companyAsset = requestCompanyAsset(uniqueId);
-        if (companyAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + companyAsset.getErrorMessagesAsStr());
-            return null;
-        }
-        return companyAsset;
-    }
-
-    private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {
-        Object data = replicationCoreService.getData(
-                "/rest/v1/replication/company", ReplicationData.CompanyAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("uniqueId", uniqueId.toString()).build(), StandardCharsets.UTF_8)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
-        );
-        if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
-        }
-        ReplicationData.CompanyAsset response = (ReplicationData.CompanyAsset) data;
-        return response;
     }
 }

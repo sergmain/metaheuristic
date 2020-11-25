@@ -46,6 +46,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -100,8 +101,12 @@ public class FunctionTopLevelService {
     }
 
     public OperationStatusRest deleteFunctionById(Long id) {
+        return deleteFunctionById(id, true);
+    }
+
+    public OperationStatusRest deleteFunctionById(Long id, boolean checkReplicationMode) {
         log.info("Start deleting function with id: {}", id );
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (checkReplicationMode  && globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.005 Can't delete function while 'replicated' mode of asset is active");
         }
@@ -367,5 +372,28 @@ public class FunctionTopLevelService {
         return functionCache.findById(id);
     }
 
+    public String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
+        Function function = findByCode(functionCode);
+        if (function ==null) {
+            log.warn("#442.140 Function {} wasn't found", functionCode);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return "";
+        }
+        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
+        log.info("Send config of function {}", sc.getCode());
+        return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+    }
+
+    public Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
+        Function function = findByCode(functionCode);
+        if (function ==null) {
+            log.warn("#442.100 Function {} wasn't found", functionCode);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return Map.of();
+        }
+        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
+        log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
+        return sc.checksumMap==null ? Map.of() : sc.checksumMap;
+    }
 
 }

@@ -151,12 +151,12 @@ public class TestRestReplicationJson {
 
         assertNotNull(assets.functions);
         assertNotNull(assets.companies);
-        assertNotNull(assets.sourceCodes);
+        assertNotNull(assets.sourceCodeUids);
         assertNotNull(assets.usernames);
 
         assertEquals(2, assets.functions.size());
         assertEquals(2, assets.companies.size());
-        assertEquals(2, assets.sourceCodes.size());
+        assertEquals(2, assets.sourceCodeUids.size());
         assertEquals(2, assets.usernames.size());
 
 

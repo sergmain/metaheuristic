@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +58,34 @@ public class ReplicationSourceHelperService {
     public final AccountCache accountCache;
     public final CompanyCache companyCache;
 
+    private ReplicationData.AssetStateResponse currentAssets = null;
+    private long mills = 0L;
+
     public ReplicationData.AssetStateResponse currentAssets() {
+        if (currentAssets==null) {
+            synchronized (this) {
+                if (currentAssets==null) {
+                    currentAssets = currentAssetsInternal();
+                    mills = System.currentTimeMillis();
+                    return currentAssets;
+                }
+            }
+        }
+
+        long currMills = System.currentTimeMillis();
+        if (currMills-mills > 10_000) {
+            synchronized (this) {
+                if (currMills-mills > 10_000) {
+                    currentAssets = currentAssetsInternal();
+                    mills = System.currentTimeMillis();
+                    return currentAssets;
+                }
+            }
+        }
+        return currentAssets;
+    }
+
+    private ReplicationData.AssetStateResponse currentAssetsInternal() {
         ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
         res.companies.addAll(companyRepository.findAllUniqueIds().stream()
                 .map(id->{
@@ -85,17 +111,18 @@ public class ReplicationSourceHelperService {
                 .collect(Collectors.toList()));
 
         res.functions.addAll(functionRepository.findAllFunctionCodes());
-        res.sourceCodes.addAll(sourceCodeRepository.findAllAsIds().stream()
+        res.sourceCodeUids.addAll(sourceCodeRepository.findAllAsIds().stream()
                 .map(id->{
                     SourceCodeImpl sourceCode = sourceCodeCache.findById(id);
-                    if (sourceCode==null) {
+                    if (sourceCode==null || !sourceCode.valid) {
                         return null;
                     }
                     SourceCodeStoredParamsYaml params = sourceCode.getSourceCodeStoredParamsYaml();
+                    // don't send an archived SourceCode
                     if (params.internalParams.archived) {
                         return null;
                     }
-                    return new ReplicationData.SourceCodeShortAsset(sourceCode.uid, params.internalParams.updatedOn);
+                    return sourceCode.uid;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));

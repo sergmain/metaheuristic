@@ -18,19 +18,13 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
-import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Serge
@@ -48,46 +42,16 @@ public class ReplicationFunctionService {
     public final FunctionCache functionCache;
 
     @Transactional
-    public void syncFunctions(List<String> actualFunctions) {
-        functionRepository.findAllFunctionCodes().stream()
-                .filter(s->!actualFunctions.contains(s))
-                .map(functionRepository::findByCode)
-                .filter(Objects::nonNull)
-                .forEach(s-> functionRepository.deleteById(s.id));
-
-        List<String> currFunctions = functionRepository.findAllFunctionCodes();
-        actualFunctions.stream()
-                .filter(s->!currFunctions.contains(s))
-                .forEach(this::createFunction);
-    }
-
-    private void createFunction(String functionCode) {
-        ReplicationData.FunctionAsset functionAsset = requestFunctionAsset(functionCode);
-        if (functionAsset.isErrorMessages()) {
-            log.error("#308.010 Error while getting function "+ functionCode +", error: " + functionAsset.getErrorMessagesAsStr());
-            return;
-        }
-        Function sn = functionRepository.findByCode(functionCode);
+    public void createFunction(ReplicationData.FunctionAsset functionAsset) {
+        Function sn = functionRepository.findByCode(functionAsset.function.code);
         if (sn!=null) {
+            log.warn("#240,020 Function {} already registered in db", functionAsset.function.code);
             return;
         }
+        //noinspection ConstantConditions
         functionAsset.function.id=null;
+        //noinspection ConstantConditions
+        functionAsset.function.version=null;
         functionCache.save(functionAsset.function);
     }
-
-    public ReplicationData.FunctionAsset requestFunctionAsset(String functionCode) {
-        ReplicationData.ReplicationAsset data = replicationCoreService.getData(
-                "/rest/v1/replication/function", ReplicationData.FunctionAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("functionCode", functionCode).build(), StandardCharsets.UTF_8)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
-        );
-        if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.FunctionAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
-        }
-        ReplicationData.FunctionAsset response = (ReplicationData.FunctionAsset) data;
-        return response;
-    }
-
 }

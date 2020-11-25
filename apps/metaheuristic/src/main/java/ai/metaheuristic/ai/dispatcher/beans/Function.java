@@ -36,7 +36,7 @@ public class Function implements Serializable {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "FUNCTION_CODE")
     public String code;
