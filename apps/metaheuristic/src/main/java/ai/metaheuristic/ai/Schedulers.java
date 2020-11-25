@@ -297,7 +297,7 @@ public class Schedulers {
             downloadFunctionActor.downloadFunctions();
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.prepare-function-for-downloading'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.prepare-function-for-downloading'), 20, 60, 30)*1000 }")
         public void prepareFunctionForDownloading() {
             if (globals.isUnitTesting) {
                 return;
