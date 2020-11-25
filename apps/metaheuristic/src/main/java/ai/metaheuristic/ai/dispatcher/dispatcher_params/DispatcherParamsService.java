@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheCheckingEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -43,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author Serge
@@ -55,9 +58,10 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class DispatcherParamsService {
 
-    private final ApplicationEventPublisher eventPublisher;
-
-    private final DispatcherParamsRepository dispatcherParamsRepository;
+    public final ApplicationEventPublisher eventPublisher;
+    public final DispatcherParamsRepository dispatcherParamsRepository;
+    public final SourceCodeRepository sourceCodeRepository;
+    public final SourceCodeCache sourceCodeCache;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -74,6 +78,14 @@ public class DispatcherParamsService {
             entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
             dispatcherParamsRepository.save(entity);
         }
+        List<Long> sourceCodeIds = sourceCodeRepository.findAllAsIds();
+        for (Long sourceCodeId : sourceCodeIds) {
+            SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
+            if (sc==null) {
+                continue;
+            }
+            registerSourceCode(sc);
+        }
     }
 
     @Async
@@ -82,10 +94,22 @@ public class DispatcherParamsService {
         unregisterSourceCode(event.sourceCodeUid);
     }
 
+    @Transactional
+    public void registerSourceCodes(List<SourceCodeImpl> sourceCodes) {
+        try {
+            writeLock.lock();
+            for (SourceCodeImpl sourceCode : sourceCodes) {
+                registerSourceCode(sourceCode);
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Transactional
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         try {
             writeLock.lock();
-            unregisterSourceCode(sourceCode.uid);
 
             SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
             SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
@@ -150,9 +174,10 @@ public class DispatcherParamsService {
     private void registerExperiment(String uid) {
         updateParams((dpy) -> {
             if (dpy.experiments.contains(uid)) {
-                return;
+                return Boolean.FALSE;
             }
             dpy.experiments.add(uid);
+            return Boolean.TRUE;
         });
     }
 
@@ -181,13 +206,14 @@ public class DispatcherParamsService {
     private void registerBatch(String uid) {
         updateParams((dpy) -> {
             if (dpy.batches.contains(uid)) {
-                return;
+                return Boolean.FALSE;
             }
             dpy.batches.add(uid);
+            return Boolean.TRUE;
         });
     }
 
-    private void updateParams(Consumer<DispatcherParamsYaml> consumer) {
+    private void updateParams(Function<DispatcherParamsYaml, Boolean> consumer) {
         try {
             writeLock.lock();
             Dispatcher d = find();
@@ -195,9 +221,10 @@ public class DispatcherParamsService {
                 throw new IllegalStateException("Dispatcher cache must be initialized at this point");
             }
             DispatcherParamsYaml dpy = d.getDispatcherParamsYaml();
-            consumer.accept(dpy);
-            d.updateParams(dpy);
-            save(d);
+            if (consumer.apply(dpy)) {
+                d.updateParams(dpy);
+                save(d);
+            }
         } finally {
             writeLock.unlock();
         }
