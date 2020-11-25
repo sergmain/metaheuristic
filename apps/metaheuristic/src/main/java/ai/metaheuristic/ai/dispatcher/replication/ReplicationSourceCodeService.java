@@ -53,11 +53,12 @@ public class ReplicationSourceCodeService {
     public final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsService dispatcherParamsService;
 
+    @Nullable
     @Transactional
-    public void createSourceCode(ReplicationData.SourceCodeAsset sourceCodeAsset) {
+    public SourceCodeImpl createSourceCode(ReplicationData.SourceCodeAsset sourceCodeAsset) {
         SourceCodeImpl p = sourceCodeRepository.findByUid(sourceCodeAsset.sourceCode.uid);
         if (p!=null) {
-            return;
+            return null;
         }
 
         //noinspection ConstantConditions
@@ -66,6 +67,6 @@ public class ReplicationSourceCodeService {
         sourceCodeAsset.sourceCode.version=null;
 
         SourceCodeImpl sc = sourceCodeCache.save(sourceCodeAsset.sourceCode);
-        dispatcherParamsService.registerSourceCode(sc);
+        return sc;
     }
 }
