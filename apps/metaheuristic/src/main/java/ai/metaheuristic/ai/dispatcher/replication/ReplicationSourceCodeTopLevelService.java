@@ -78,7 +78,12 @@ public class ReplicationSourceCodeTopLevelService {
                 .filter(s->!currFunctions.contains(s))
                 .map(this::getSourceCodeAsset)
                 .filter(Objects::nonNull)
-                .forEach(replicationSourceCodeService::createSourceCode);
+                .forEach(sourceCodeAsset -> {
+                    SourceCodeImpl sc = replicationSourceCodeService.createSourceCode(sourceCodeAsset);
+                    if (sc!=null) {
+                        dispatcherParamsService.registerSourceCode(sc);
+                    }
+                });
     }
 
 

@@ -18,24 +18,14 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
-import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import static ai.metaheuristic.ai.dispatcher.replication.ReplicationSourceCodeTopLevelService.SourceCodeLoopEntry;
 
 /**
  * @author Serge
@@ -51,13 +41,13 @@ public class ReplicationSourceCodeService {
     public final ReplicationCoreService replicationCoreService;
     public final SourceCodeRepository sourceCodeRepository;
     public final SourceCodeCache sourceCodeCache;
-    private final DispatcherParamsService dispatcherParamsService;
 
+    @Nullable
     @Transactional
-    public void createSourceCode(ReplicationData.SourceCodeAsset sourceCodeAsset) {
+    public SourceCodeImpl createSourceCode(ReplicationData.SourceCodeAsset sourceCodeAsset) {
         SourceCodeImpl p = sourceCodeRepository.findByUid(sourceCodeAsset.sourceCode.uid);
         if (p!=null) {
-            return;
+            return null;
         }
 
         //noinspection ConstantConditions
@@ -66,6 +56,6 @@ public class ReplicationSourceCodeService {
         sourceCodeAsset.sourceCode.version=null;
 
         SourceCodeImpl sc = sourceCodeCache.save(sourceCodeAsset.sourceCode);
-        dispatcherParamsService.registerSourceCode(sc);
+        return sc;
     }
 }
