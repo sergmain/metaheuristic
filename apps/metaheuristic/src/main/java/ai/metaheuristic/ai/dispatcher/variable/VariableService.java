@@ -302,8 +302,9 @@ public class VariableService {
         }
     }
 
+    @Nullable
     @Transactional(readOnly = true)
-    public void storeToFile(Long variableId, File trgFile) {
+    public Void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -321,6 +322,7 @@ public class VariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
+        return null;
     }
 
     @Transactional(readOnly = true)

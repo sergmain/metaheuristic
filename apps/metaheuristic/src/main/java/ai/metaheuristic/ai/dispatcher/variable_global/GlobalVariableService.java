@@ -82,8 +82,9 @@ public class GlobalVariableService {
         }
     }
 
+    @Nullable
     @Transactional(readOnly = true)
-    public void storeToFile(Long variableId, File trgFile) {
+    public Void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -100,6 +101,7 @@ public class GlobalVariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
+        return null;
     }
 
     @Transactional

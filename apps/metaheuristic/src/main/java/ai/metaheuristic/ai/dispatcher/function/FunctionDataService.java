@@ -31,6 +31,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,8 +56,9 @@ public class FunctionDataService {
     private final EntityManager em;
     private final FunctionDataRepository functionDataRepository;
 
+    @Nullable
     @Transactional(readOnly = true)
-    public void storeToFile(String code, File trgFile) {
+    public Void storeToFile(String code, File trgFile) {
         try {
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
@@ -73,6 +75,7 @@ public class FunctionDataService {
             log.error(es, th);
             throw new FunctionDataErrorException(code, es);
         }
+        return null;
     }
 
     public void deleteById(Long id) {

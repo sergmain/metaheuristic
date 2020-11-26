@@ -63,7 +63,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 @Service
@@ -117,7 +117,7 @@ public class SouthbridgeService {
     public CleanerInfo deliverData(final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
 
         AssetFile assetFile;
-        BiConsumer<String, File> dataSaver;
+        BiFunction<String, File, Void> dataSaver;
         switch (binaryType) {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
@@ -152,7 +152,7 @@ public class SouthbridgeService {
 
         if (!assetFile.isContent) {
             try {
-                dataSaver.accept(dataId, assetFile.file);
+                getWithSync(binaryType, dataId, () -> dataSaver.apply(dataId, assetFile.file));
             } catch (CommonErrorWithDataException e) {
                 log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;

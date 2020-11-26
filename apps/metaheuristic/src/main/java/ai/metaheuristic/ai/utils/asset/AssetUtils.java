@@ -74,9 +74,10 @@ public class AssetUtils {
 
     public static AssetFile prepareAssetFile(File assetDir, @Nullable String dataId, @Nullable String filename) {
         final AssetFile assetFile = new AssetFile();
-        if (!assetDir.exists() && !assetDir.mkdirs()) {
+        assetDir.mkdirs();
+        if (!assetDir.exists()) {
             assetFile.isError = true;
-            log.error("#025.040 Can't create resource dir for task: {}", assetDir.getAbsolutePath());
+            log.error("#025.040 Can't create a variable dir for task: {}", assetDir.getAbsolutePath());
             return assetFile;
         }
         if (StringUtils.isNotBlank(filename)) {
@@ -108,16 +109,20 @@ public class AssetUtils {
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(baseDir, EnumsApi.DataType.function.toString());
-        if (!trgDir.exists() && !trgDir.mkdirs()) {
+/*
+        trgDir.mkdirs();
+        if (!trgDir.exists()) {
             assetFile.isError = true;
-            log.error("#025.060 Can't create function dir: {}", trgDir.getAbsolutePath());
+            log.error("#025.060 Can't create a function dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
+*/
         final String resId = functionCode.replace(':', '_');
         final File resDir = new File(trgDir, resId);
-        if (!resDir.exists() && !resDir.mkdirs()) {
+        resDir.mkdirs();
+        if (!resDir.exists()) {
             assetFile.isError = true;
-            log.error("#025.080 Can't create resource dir: {}", resDir.getAbsolutePath());
+            log.error("#025.080 Can't create a concrete function dir: {}", resDir.getAbsolutePath());
             return assetFile;
         }
         assetFile.file = !S.b(resourceFilename) ? new File(resDir, resourceFilename) : new File(resDir, resId);
