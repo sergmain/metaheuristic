@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +89,14 @@ public class AssetController {
             return Map.of();
         }
         return functionTopLevelService.getFunctionChecksum(response, code);
+    }
+
+    @GetMapping("/function-configs/{processorId}/{random-part}")
+    public ReplicationApiData.FunctionConfigsReplication functionConfigs(
+            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) {
+        return functionTopLevelService.getFunctionConfigs();
     }
 
     @PostMapping("/function-config/{random-part}")
