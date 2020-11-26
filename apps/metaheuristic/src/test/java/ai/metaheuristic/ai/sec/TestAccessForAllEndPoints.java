@@ -126,6 +126,7 @@ public class TestAccessForAllEndPoints {
             new AccessUrl("/rest/v1/payload/resource/variable/1/1", AccessMethod.GET),
             new AccessUrl("/rest/v1/upload/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/function-config/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/payload/function-configs/1/2", AccessMethod.GET),
             new AccessUrl("/rest/v1/test", AccessMethod.GET),
     };
 
