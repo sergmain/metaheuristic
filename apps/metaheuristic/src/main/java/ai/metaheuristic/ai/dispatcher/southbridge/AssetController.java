@@ -100,12 +100,26 @@ public class AssetController {
     }
 
     @PostMapping("/function-config/{random-part}")
-    public String functionConfig(
+    public String functionConfigPost(
             HttpServletResponse response,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
             @Nullable String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) throws IOException {
+        if (S.b(code)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
+        return functionTopLevelService.getFunctionConfig(response, code);
+    }
+
+    @GetMapping("/function-config/{processorId}/{random-part}")
+    public String functionConfigGet(
+            HttpServletResponse response,
+            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @Nullable String code
     ) throws IOException {
         if (S.b(code)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);

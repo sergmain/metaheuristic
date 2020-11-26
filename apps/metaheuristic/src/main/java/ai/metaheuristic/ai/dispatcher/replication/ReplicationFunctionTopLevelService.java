@@ -22,13 +22,12 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -76,9 +75,9 @@ public class ReplicationFunctionTopLevelService {
 
     private ReplicationData.FunctionAsset requestFunctionAsset(String functionCode) {
         ReplicationData.ReplicationAsset data = replicationCoreService.getData(
-                "/rest/v1/replication/function", ReplicationData.FunctionAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("functionCode", functionCode).build(), StandardCharsets.UTF_8)
+                "/rest/v1/replication/function", ReplicationData.FunctionAsset.class, List.of(new BasicNameValuePair("functionCode", functionCode)),
+                (uri) -> Request.Get(uri)
+//                        .bodyForm(Form.form().add("functionCode", functionCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

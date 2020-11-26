@@ -37,6 +37,8 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +53,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
@@ -341,9 +344,10 @@ public class FunctionTopLevelService {
                     boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
                     if (paramsAsFile) {
                         // TODO 2019-10-09 need to handle a case when field 'params'
-                        //  contains actual code (mh.function-params-as-file==true)
+                        //  contains the actual code (mh.function-params-as-file==true)
                         //  2020-09-12 need to add a new field 'content' which will hold the content of file
                         // functionConfig.params = produceFinalCommandLineParams(null, functionDef.getParams());
+
                         if (!S.b(functionDef.getParams())) {
                             log.error("#295.035 defining parameters in SourceCode " +
                                     "and using FUnction.params as a holder for a code isn't supported right now. " +
@@ -361,13 +365,43 @@ public class FunctionTopLevelService {
         return functionConfig;
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class FunctionSimpleCache {
+        @Nullable
+        public Long id;
+        public long mills;
+    }
+
+    private final Map<String, FunctionSimpleCache> mappingCodeToId = new HashMap<>();
+    private static final long FUNCTION_SIMPLE_CACHE_TTL = TimeUnit.MINUTES.toMillis(15);
+
     @Nullable
-    public Function findByCode(String functionCode) {
-        Long id = functionRepository.findIdByCode(functionCode);
-        if (id==null) {
+    public synchronized Function findByCode(String functionCode) {
+        FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
+        if (cache!=null) {
+            if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
+                cache.id = functionRepository.findIdByCode(functionCode);
+                cache.mills = System.currentTimeMillis();
+            }
+        }
+        else {
+            cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
+            mappingCodeToId.put(functionCode, cache);
+        }
+        if (mappingCodeToId.size()>1000) {
+            mappingCodeToId.clear();
+        }
+
+        if (cache.id==null) {
             return null;
         }
-        return functionCache.findById(id);
+        Function function = functionCache.findById(cache.id);
+        if (function == null) {
+            cache.id = null;
+            cache.mills = System.currentTimeMillis();
+        }
+        return function;
     }
 
     public ReplicationApiData.FunctionConfigsReplication getFunctionConfigs() {

@@ -24,13 +24,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -113,9 +112,9 @@ public class ReplicationAccountTopLevelService {
 
     private ReplicationData.AccountAsset requestAccountAsset(String username) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/account", ReplicationData.AccountAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("username", username).build(), StandardCharsets.UTF_8)
+                "/rest/v1/replication/account", ReplicationData.AccountAsset.class, List.of(new BasicNameValuePair("username", username)),
+                (uri) -> Request.Get(uri)
+//                        .bodyForm(Form.form().add("username", username).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

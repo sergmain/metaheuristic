@@ -29,15 +29,16 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -46,6 +47,7 @@ import java.util.UUID;
  * Date: 10/6/2019
  * Time: 4:45 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Service
 @Profile("processor")
@@ -69,18 +71,26 @@ public class ProcessorFunctionService {
             String dispatcherUrl,
             DispatcherLookupConfig.Asset asset, String functionCode, String processorId) {
 
-        final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config";
-        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + processorId;
+        final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/" + processorId;
+        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
         final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
+            final URI uri = new URIBuilder(functionChecksumUrl + randomPartUri)
+                    .setCharset(StandardCharsets.UTF_8)
+                    .addParameter("code", functionCode).build();
+
+            final Request request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
+
+/*
             final Request request = Request.Post(functionChecksumUrl + randomPartUri)
                     .bodyForm(Form.form()
                             .add("code", functionCode)
                             .build(), StandardCharsets.UTF_8)
                     .connectTimeout(5000)
                     .socketTimeout(20000);
+*/
 
             RestUtils.addHeaders(request);
 
@@ -122,7 +132,7 @@ public class ProcessorFunctionService {
             String dispatcherUrl,
             DispatcherLookupConfig.Asset asset, String processorId) {
 
-        final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs" + '/' + processorId;
+        final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs/" + processorId;
         final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);
 
         final DownloadedFunctionConfigsStatus functionConfigStatus = new DownloadedFunctionConfigsStatus();
@@ -135,7 +145,6 @@ public class ProcessorFunctionService {
             Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
-//            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.BASE_YAML_UTILS.to(yaml));
             functionConfigStatus.functionConfigs = JsonUtils.getMapper().readValue(yaml, ReplicationApiData.FunctionConfigsReplication.class);
             functionConfigStatus.status = ConfigStatus.ok;
         }

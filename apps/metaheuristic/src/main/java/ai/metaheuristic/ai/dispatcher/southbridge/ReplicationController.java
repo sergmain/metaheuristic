@@ -46,25 +46,25 @@ public class ReplicationController {
     }
 
     @ResponseBody
-    @PostMapping(value="/function")
+    @GetMapping(value="/function")
     public ReplicationData.FunctionAsset getFunction(@RequestParam String functionCode) {
         return replicationSourceService.getFunction(functionCode);
     }
 
     @ResponseBody
-    @PostMapping(value="/source-code")
+    @GetMapping(value="/source-code")
     public ReplicationData.SourceCodeAsset getSourceCode(@RequestParam String uid) {
         return replicationSourceService.getSourceCode(uid);
     }
 
     @ResponseBody
-    @PostMapping(value="/company")
+    @GetMapping(value="/company")
     public ReplicationData.CompanyAsset getCompany(@RequestParam long uniqueId) {
         return replicationSourceService.getCompany(uniqueId);
     }
 
     @ResponseBody
-    @PostMapping(value="/account")
+    @GetMapping(value="/account")
     public ReplicationData.AccountAsset getAccount(@RequestParam String username) {
         return replicationSourceService.getAccount(username);
     }

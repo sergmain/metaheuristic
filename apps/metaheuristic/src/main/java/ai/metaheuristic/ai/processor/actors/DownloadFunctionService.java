@@ -180,14 +180,22 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 do {
                     final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + task.processorId;
                     try {
+
+                        String chunkSize;
+                        if (task.chunkSize != null) {
+                            chunkSize = task.chunkSize.toString();
+                        }
+                        else {
+                            log.warn("task.chunkSize is null, 500k will be used as value");
+                            chunkSize = "500000";
+                        }
+
                         final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
                                 .addParameter("code", task.functionCode)
-                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                                .addParameter("chunkSize", chunkSize)
                                 .addParameter("chunkNum", Integer.toString(idx));
 
-                        final Request request = Request.Get(builder.build())
-                                .connectTimeout(5000)
-                                .socketTimeout(20000);
+                        final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
 
                         RestUtils.addHeaders(request);
 
@@ -242,6 +250,9 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             break;
                         }
                     }
+                    // work around for handling a burst access to asset server
+                    //noinspection BusyWait
+                    Thread.sleep(200);
                     idx++;
                 } while (idx<1000);
                 if (resourceState == Enums.FunctionState.none) {
