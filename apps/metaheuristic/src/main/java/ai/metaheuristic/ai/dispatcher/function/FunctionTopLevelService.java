@@ -26,6 +26,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
+import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
@@ -49,10 +50,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
@@ -370,6 +368,18 @@ public class FunctionTopLevelService {
             return null;
         }
         return functionCache.findById(id);
+    }
+
+    public ReplicationApiData.FunctionConfigsReplication getFunctionConfigs() {
+        List<Long> ids = functionRepository.findAllIds();
+
+        ReplicationApiData.FunctionConfigsReplication configs = new ReplicationApiData.FunctionConfigsReplication();
+        ids.stream().map(functionCache::findById)
+                .filter(Objects::nonNull).map(FunctionUtils::to)
+                .collect(Collectors.toCollection(() -> configs.configs));
+
+        log.info("Send all configs of functions");
+        return configs;
     }
 
     public String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
