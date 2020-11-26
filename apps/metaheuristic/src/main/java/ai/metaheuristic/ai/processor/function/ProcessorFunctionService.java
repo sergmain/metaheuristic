@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.processor.function;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
@@ -54,6 +56,12 @@ public class ProcessorFunctionService {
     @Data
     public static class DownloadedFunctionConfigStatus {
         public TaskParamsYaml.FunctionConfig functionConfig;
+        public ConfigStatus status;
+    }
+
+    @Data
+    public static class DownloadedFunctionConfigsStatus {
+        public ReplicationApiData.FunctionConfigsReplication functionConfigs;
         public ConfigStatus status;
     }
 
@@ -106,6 +114,58 @@ public class ProcessorFunctionService {
             log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl), e);
         } catch (Throwable th) {
             log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl, asset.url), th);
+        }
+        return functionConfigStatus;
+    }
+
+    public DownloadedFunctionConfigsStatus downloadFunctionConfigs(
+            String dispatcherUrl,
+            DispatcherLookupConfig.Asset asset, String processorId) {
+
+        final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs" + '/' + processorId;
+        final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);
+
+        final DownloadedFunctionConfigsStatus functionConfigStatus = new DownloadedFunctionConfigsStatus();
+        functionConfigStatus.status = ConfigStatus.error;
+        try {
+            final Request request = Request.Get(functionConfigsUrl + randomPartUri).connectTimeout(5000).socketTimeout(20000);
+
+            RestUtils.addHeaders(request);
+
+            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
+            String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
+
+//            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.BASE_YAML_UTILS.to(yaml));
+            functionConfigStatus.functionConfigs = JsonUtils.getMapper().readValue(yaml, ReplicationApiData.FunctionConfigsReplication.class);
+            functionConfigStatus.status = ConfigStatus.ok;
+        }
+        catch (HttpResponseException e) {
+            if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
+                log.warn("#813.200 Access denied to url {}", functionConfigsUrl);
+            }
+            else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
+                functionConfigStatus.status = ConfigStatus.not_found;
+                log.warn("#813.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
+            }
+            else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+                functionConfigStatus.status = ConfigStatus.not_found;
+                log.warn("#813.205 Functions wasn't found");
+            }
+            else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+                log.warn("#813.210 Functions are broken and need to be recreated");
+            }
+            else {
+                log.error("#813.220 HttpResponseException", e);
+            }
+        }
+        catch (SocketTimeoutException e) {
+            log.error("#813.170 SocketTimeoutException: {}, dispatcher: {}, assetUrl: {}", e.toString(), dispatcherUrl, asset.url);
+        }
+        catch (IOException e) {
+            log.error(S.f("#813.180 IOException, dispatcher: %s, assetUrl: %s", dispatcherUrl), e);
+        }
+        catch (Throwable th) {
+            log.error(S.f("#813.190 Throwable, dispatcher: %s, assetUrl: %s", dispatcherUrl, asset.url), th);
         }
         return functionConfigStatus;
     }
