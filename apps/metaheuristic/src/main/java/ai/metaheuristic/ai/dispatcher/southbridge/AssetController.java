@@ -17,10 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AssetController {
 
+    private final Globals globals;
     private final SouthbridgeService serverService;
     private final FunctionTopLevelService functionTopLevelService;
 
@@ -59,6 +62,10 @@ public class AssetController {
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+            log.error("#105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         log.debug("deliverFunction(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (S.b(code) || S.b(chunkSize) || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
@@ -90,13 +97,35 @@ public class AssetController {
         return functionTopLevelService.getFunctionChecksum(response, code);
     }
 
+    @GetMapping("/function-configs/{processorId}/{random-part}")
+    public ReplicationApiData.FunctionConfigsReplication functionConfigs(
+            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) {
+        return functionTopLevelService.getFunctionConfigs();
+    }
+
     @PostMapping("/function-config/{random-part}")
-    public String functionConfig(
+    public String functionConfigPost(
             HttpServletResponse response,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
             @Nullable String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) throws IOException {
+        if (S.b(code)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
+        return functionTopLevelService.getFunctionConfig(response, code);
+    }
+
+    @GetMapping("/function-config/{processorId}/{random-part}")
+    public String functionConfigGet(
+            HttpServletResponse response,
+            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @Nullable String code
     ) throws IOException {
         if (S.b(code)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);

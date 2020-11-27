@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -301,8 +302,9 @@ public class VariableService {
         }
     }
 
+    @Nullable
     @Transactional(readOnly = true)
-    public void storeToFile(Long variableId, File trgFile) {
+    public Void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -320,6 +322,7 @@ public class VariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
+        return null;
     }
 
     @Transactional(readOnly = true)

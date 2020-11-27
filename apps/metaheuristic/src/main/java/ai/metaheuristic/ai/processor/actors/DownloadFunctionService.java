@@ -44,6 +44,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -148,6 +149,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 case not_supported_os:
                 case asset_error:
                 case download_error:
+                case io_error:
+                case dispatcher_config_error:
                     log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, dispatcher.url, functionDownloadStatus.functionState);
                     continue;
                 case function_config_error:
@@ -180,14 +183,22 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 do {
                     final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + task.processorId;
                     try {
+
+                        String chunkSize;
+                        if (task.chunkSize != null) {
+                            chunkSize = task.chunkSize.toString();
+                        }
+                        else {
+                            log.warn("#811.043 task.chunkSize is null, 500k will be used as value");
+                            chunkSize = "500000";
+                        }
+
                         final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
                                 .addParameter("code", task.functionCode)
-                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                                .addParameter("chunkSize", chunkSize)
                                 .addParameter("chunkNum", Integer.toString(idx));
 
-                        final Request request = Request.Get(builder.build())
-                                .connectTimeout(5000)
-                                .socketTimeout(20000);
+                        final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
 
                         RestUtils.addHeaders(request);
 
@@ -195,13 +206,28 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         File partFile = new File(dir, String.format(mask, idx));
 
                         final HttpResponse httpResponse = response.returnResponse();
+                        if (httpResponse.getStatusLine().getStatusCode()==HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                            final String es = S.f("#811.047 Function %s can't be downloaded, dispatcher %s was mis-configured.", task.functionCode, dispatcher.url);
+                            log.error(es);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.dispatcher_config_error);
+                            resourceState = Enums.FunctionState.dispatcher_config_error;
+                            break;
+                        }
+                        else if (httpResponse.getStatusLine().getStatusCode()!=HttpStatus.OK.value()) {
+                            final String es = S.f("#811.050 Function %s can't be downloaded from dispatcher %s", task.functionCode, dispatcher.url);
+                            log.error(es);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
+                            resourceState = Enums.FunctionState.download_error;
+                            break;
+                        }
+
                         try (final FileOutputStream out = new FileOutputStream(partFile)) {
                             final HttpEntity entity = httpResponse.getEntity();
                             if (entity != null) {
                                 entity.writeTo(out);
                             }
                             else {
-                                log.warn("#811.050 http entity is null");
+                                log.warn("#811.055 http entity is null");
                             }
                         }
                         final Header[] headers = httpResponse.getAllHeaders();
@@ -220,6 +246,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             break;
                         }
                     } catch (HttpResponseException e) {
+                        if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                            final String es = S.f("#811.065 Function %s can't be downloaded, dispatcher %s was mis-configured.", task.functionCode, dispatcher.url);
+                            log.warn(es);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.dispatcher_config_error);
+                            resourceState = Enums.FunctionState.dispatcher_config_error;
+                            break;
+                        }
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
                             final String es = S.f("#811.070 Function %s wasn't found on dispatcher %s.", task.functionCode, dispatcher.url);
                             log.warn(es);
@@ -242,14 +275,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             break;
                         }
                     }
+                    // work around for handling a burst access to asset server
+                    //noinspection BusyWait
+                    Thread.sleep(200);
                     idx++;
                 } while (idx<1000);
                 if (resourceState == Enums.FunctionState.none) {
                     log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
-                else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found) {
-                    log.warn("#811.110 function {} can't be acquired, state: {}", functionCode, resourceState);
+                else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found || resourceState == Enums.FunctionState.dispatcher_config_error) {
+                    log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, resourceState);
                     continue;
                 }
 

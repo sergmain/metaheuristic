@@ -24,13 +24,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -115,9 +114,9 @@ public class ReplicationCompanyTopLevelService {
 
     private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/company", ReplicationData.CompanyAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("uniqueId", uniqueId.toString()).build(), StandardCharsets.UTF_8)
+                "/rest/v1/replication/company", ReplicationData.CompanyAsset.class, List.of(new BasicNameValuePair("uniqueId", uniqueId.toString())),
+                (uri) -> Request.Get(uri)
+//                        .bodyForm(Form.form().add("uniqueId", uniqueId.toString()).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

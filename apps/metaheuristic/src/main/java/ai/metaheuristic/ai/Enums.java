@@ -35,7 +35,7 @@ public final class Enums {
     public enum FunctionState {
         none, ok, ready, not_found,
         signature_wrong, signature_not_found, checksum_wrong, not_supported_os,
-        asset_error, download_error, function_config_error, io_error }
+        asset_error, download_error, function_config_error, io_error, dispatcher_config_error }
 
     public enum GitStatus {unknown, installed, not_found, error }
 

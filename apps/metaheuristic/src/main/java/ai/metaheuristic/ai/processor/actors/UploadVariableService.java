@@ -141,16 +141,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
                 if (!task.nullified) {
                     if (task.file==null) {
-                        throw new IllegalStateException("IDEA is Ok but you're not");
+                        // TODO 2020-11-26 in case that ai.metaheuristic.ai.processor.tasks.UploadVariableTask.file is @Nullable
+                        //  what is the problem with this state? Should wwe handle this state in more sophisticated way?
+                        throw new IllegalStateException("(task.file==null)");
                     }
                     builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
                 }
                 HttpEntity entity = builder.build();
 
-                Request request = Request.Post(uri)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
-                        .body(entity);
+                Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000).body(entity);
 
                 log.info("Start uploading variable to rest-server, {}", randonPart);
                 Response response = HttpClientExecutor.getExecutor(task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);

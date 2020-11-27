@@ -27,6 +27,7 @@ public class AssetFile {
     public boolean isContent;
     public boolean isExist;
     public boolean provided = false;
+    public String error;
 
     @Override
     public String toString() {
@@ -37,6 +38,7 @@ public class AssetFile {
                 ", isContent=" + isContent +
                 ", isExist=" + isExist +
                 ", isProvided=" + provided +
+                ", error=" + error +
                 '}';
     }
 }

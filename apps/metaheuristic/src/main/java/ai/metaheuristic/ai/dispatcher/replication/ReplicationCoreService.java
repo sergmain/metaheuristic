@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
@@ -33,6 +34,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.conn.HttpHostConnectException;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -41,6 +43,7 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -58,7 +61,7 @@ public class ReplicationCoreService {
 
     public ReplicationData.AssetStateResponse getAssetStates() {
         ReplicationData.ReplicationAsset data = getData(
-                "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class,
+                "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class, null,
                 (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
@@ -80,7 +83,7 @@ public class ReplicationCoreService {
                 .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
     }
 
-    public ReplicationData.ReplicationAsset getData(String uri, Class clazz, Function<URI, Request> requestFunc) {
+    public ReplicationData.ReplicationAsset getData(String uri, Class clazz, @Nullable List<NameValuePair> nvps, Function<URI, Request> requestFunc) {
         if (S.b(globals.assetSourceUrl) || S.b(globals.assetUsername) || S.b(globals.assetPassword) ) {
             return new ReplicationData.AssetAcquiringError(
                     S.f("Error in configuration of asset server, some parameter(s) is blank, assetSourceUrl: %s, assetUsername: %s, assetPassword is blank: %s",
@@ -90,7 +93,9 @@ public class ReplicationCoreService {
             final String url = globals.assetSourceUrl + uri;
 
             final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
-
+            if (nvps!=null) {
+                builder.addParameters(nvps);
+            }
             final URI build = builder.build();
             final Request request = requestFunc.apply(build);
 

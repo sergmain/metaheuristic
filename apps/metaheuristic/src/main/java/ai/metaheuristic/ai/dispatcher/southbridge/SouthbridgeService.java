@@ -63,7 +63,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 @Service
@@ -87,13 +87,26 @@ public class SouthbridgeService {
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
-    private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
+    private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         final String key = "--" + binaryType + "--" + code;
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
         try {
             lock.lock();
-            return function.get();
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Nullable
+    public <T> T getWithSyncNullable(final EnumsApi.DataType binaryType, final String code, Supplier<T> supplier) {
+        TxUtils.checkTxNotExists();
+        final String key = "--" + binaryType + "--" + code;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
+        try {
+            lock.lock();
+            return supplier.get();
         } finally {
             lock.unlock();
         }
@@ -101,15 +114,10 @@ public class SouthbridgeService {
 
     // return a requested data to a processor
     // data can be Function or Variable
-    public CleanerInfo deliverData(final EnumsApi.DataType binaryType, final String dataId, final String chunkSize, final int chunkNum) {
-        return getWithSync(binaryType, dataId,
-                () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
-    }
-
-    private CleanerInfo getAbstractDataResponseEntity(@Nullable String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
+    public CleanerInfo deliverData(final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
 
         AssetFile assetFile;
-        BiConsumer<String, File> dataSaver;
+        BiFunction<String, File, Void> dataSaver;
         switch (binaryType) {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
@@ -144,7 +152,7 @@ public class SouthbridgeService {
 
         if (!assetFile.isContent) {
             try {
-                dataSaver.accept(dataId, assetFile.file);
+                getWithSync(binaryType, dataId, () -> dataSaver.apply(dataId, assetFile.file));
             } catch (CommonErrorWithDataException e) {
                 log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;

@@ -26,13 +26,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -104,9 +103,9 @@ public class ReplicationSourceCodeTopLevelService {
 
     private ReplicationData.SourceCodeAsset requestSourceCodeAsset(String uid) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/source-code", ReplicationData.SourceCodeAsset.class,
-                (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("uid", uid).build(), StandardCharsets.UTF_8)
+                "/rest/v1/replication/source-code", ReplicationData.SourceCodeAsset.class, List.of(new BasicNameValuePair("uid", uid)),
+                (uri) -> Request.Get(uri)
+//                        .bodyForm(Form.form().add("uid", uid).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );
