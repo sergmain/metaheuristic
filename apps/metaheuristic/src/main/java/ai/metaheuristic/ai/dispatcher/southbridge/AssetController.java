@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -52,6 +53,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AssetController {
 
+    private final Globals globals;
     private final SouthbridgeService serverService;
     private final FunctionTopLevelService functionTopLevelService;
 
@@ -60,6 +62,10 @@ public class AssetController {
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+            log.error("#105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         log.debug("deliverFunction(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (S.b(code) || S.b(chunkSize) || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);

@@ -78,5 +78,12 @@ public class DispatcherLookupConfig {
         public PublicKey createPublicKey() {
             return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(this.publicKey));
         }
+
+        public Asset getAsset() {
+            final DispatcherLookupConfig.Asset a = asset!=null
+                    ? asset
+                    : new DispatcherLookupConfig.Asset(url, restUsername, restPassword);
+            return a;
+        }
     }
 }

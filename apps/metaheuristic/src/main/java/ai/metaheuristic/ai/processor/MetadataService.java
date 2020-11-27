@@ -256,7 +256,7 @@ public class MetadataService {
                 setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.140 dispatcher.signatureRequired is {} but function {} has the broken signature", dispatcher.signatureRequired, functionCode);
+                log.warn("#815.140 dispatcher.signatureRequired is {} but function {} has the wrong checksum", dispatcher.signatureRequired, functionCode);
                 setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.checksum_wrong);
             }
         }

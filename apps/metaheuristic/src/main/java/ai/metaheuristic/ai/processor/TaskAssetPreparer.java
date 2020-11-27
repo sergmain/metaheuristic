@@ -19,15 +19,15 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -116,16 +116,16 @@ public class TaskAssetPreparer {
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
-            if ( !checkFunctionPreparedness(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
+            if ( !checkFunctionPreparedness(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
                 isAllReady.set(false);
             }
             taskParamYaml.task.preFunctions.forEach(sc-> {
-                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
+                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
                     isAllReady.set(false);
                 }
             });
             taskParamYaml.task.postFunctions.forEach(sc-> {
-                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
+                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
                     isAllReady.set(false);
                 }
             });
@@ -139,7 +139,8 @@ public class TaskAssetPreparer {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean checkFunctionPreparedness(TaskParamsYaml.FunctionConfig functionConfig, String dispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, String processorId) {
+    private boolean checkFunctionPreparedness(TaskParamsYaml.FunctionConfig functionConfig, String dispatcherUrl,
+                                              DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, String processorId, Long taskId) {
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
             final FunctionDownloadStatusYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(dispatcherUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
@@ -147,15 +148,32 @@ public class TaskAssetPreparer {
             }
             final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
             if (functionState == Enums.FunctionState.none) {
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, functionConfig.getCode(), functionConfig);
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, functionConfig.code, functionConfig);
                 functionTask.dispatcher = dispatcher.dispatcherLookup;
                 functionTask.processorId = processorId;
                 downloadFunctionActor.add(functionTask);
-                return true;
+                return false;
             }
             else {
+                if (functionState==Enums.FunctionState.checksum_wrong || functionState==Enums.FunctionState.function_config_error) {
+                    log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
+
+                    metadataService.setFunctionState(dispatcher.dispatcherLookup.getAsset().url, functionConfig.code, Enums.FunctionState.none);
+
+                    DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, functionConfig.code, functionConfig);
+                    functionTask.dispatcher = dispatcher.dispatcherLookup;
+                    functionTask.processorId = processorId;
+                    downloadFunctionActor.add(functionTask);
+                    return true;
+                }
+                else if (functionState==Enums.FunctionState.dispatcher_config_error) {
+                    processorTaskService.markAsFinishedWithError(dispatcherUrl,
+                            taskId,
+                            S.f("Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
+                            taskId, dispatcherUrl, functionConfig.code));
+                }
                 if (functionState!= Enums.FunctionState.ready) {
-                    log.warn("#951.140 Function {} has broken state as {}", functionConfig.code, functionState);
+                    log.warn("#951.180 Function {} has broken state as {}", functionConfig.code, functionState);
                 }
                 return functionState == Enums.FunctionState.ready;
             }

@@ -66,7 +66,7 @@ public class ChecksumWithSignatureUtils {
             status.checksum = CheckSumAndSignatureStatus.Status.correct;
             log.info("{}, checksum is correct", infoPrefix);
         } else {
-            log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
+            log.error("{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
             status.checksum = CheckSumAndSignatureStatus.Status.wrong;
         }
 

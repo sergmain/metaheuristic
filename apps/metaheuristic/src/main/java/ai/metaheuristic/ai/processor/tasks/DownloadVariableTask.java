@@ -30,8 +30,6 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final long taskId;
     public final File targetDir;
     public final Long chunkSize;
-    public final DispatcherLookupConfig.DispatcherLookup dispatcher;
-    public final String processorId;
     public final boolean nullable;
 
     public DownloadVariableTask(
