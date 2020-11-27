@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -168,6 +169,17 @@ public class Schedulers {
             }
             log.debug("Invoking replicationService.sync()");
             replicationService.sync();
+        }
+
+        @Scheduled(initialDelay = 10_000, fixedDelay = 1_000 )
+        public void deadlockDetector() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            DeadLockDetector.findDeadLocks();
         }
     }
 
