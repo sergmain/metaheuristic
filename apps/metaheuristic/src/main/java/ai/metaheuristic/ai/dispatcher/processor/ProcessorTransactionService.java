@@ -338,7 +338,7 @@ public class ProcessorTransactionService {
             log.debug("#807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
                             "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                             "'    processor.status:\n{},\n" +
-                            "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
+                            "'    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.",
                     processor.version, millis, ss.sessionCreatedOn, diff, Consts.SESSION_UPDATE_TIMEOUT, processor.status);
             // the same processor, with the same sessionId
             // so we just need to refresh sessionId timestamp

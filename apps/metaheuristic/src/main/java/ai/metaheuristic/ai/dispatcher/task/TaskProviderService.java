@@ -70,7 +70,9 @@ public class TaskProviderService {
     private final ExecContextStatusService execContextStatusService;
     private final TaskSyncService taskSyncService;
 
-    private static final Object syncObj = new Object();
+    private static class TaskProviderServiceSync {}
+
+    private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
     public void registerTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
@@ -107,23 +109,26 @@ public class TaskProviderService {
     @Nullable
     private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
+
+        if (taskProviderTransactionalService.isQueueEmpty()) {
+            return null;
+        }
+
+        TaskImpl task;
         synchronized (syncObj) {
+            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
+        }
+        if (task!=null) {
+            execContextSyncService.getWithSyncNullable(task.execContextId,
+                    () -> taskSyncService.getWithSyncNullable(task.id,
+                            ()-> execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null)));
 
-            if (taskProviderTransactionalService.isQueueEmpty()) {
-                return null;
-            }
-
-            TaskImpl task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
-            if (task!=null) {
-                execContextSyncService.getWithSyncNullable(task.execContextId,
-                        () -> taskSyncService.getWithSyncNullable(task.id,
-                                ()-> execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null)));
-
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
+            synchronized (syncObj) {
                 taskProviderTransactionalService.deRegisterTask(task.id);
             }
-            return task;
         }
+        return task;
     }
 
     @Nullable

@@ -171,7 +171,7 @@ public class Schedulers {
             replicationService.sync();
         }
 
-        @Scheduled(initialDelay = 10_000, fixedDelay = 1_000 )
+        @Scheduled(initialDelay = 10_000, fixedDelay = 5_000 )
         public void deadlockDetector() {
             if (globals.isUnitTesting) {
                 return;

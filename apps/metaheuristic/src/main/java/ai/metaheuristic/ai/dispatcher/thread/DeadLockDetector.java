@@ -35,13 +35,16 @@ public class DeadLockDetector {
         long[] ids = tmx.findDeadlockedThreads();
         if (ids != null) {
             ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
-            log.error("!!! Following Threads are deadlocked");
+            log.error("!!! Following Threads are deadlocked, total: {}", infos.length);
+            int idx=1;
             for (ThreadInfo info : infos) {
-                log.error("!!! " + info);
+                log.error("!!! {}/{} {}", idx++, infos.length, info);
             }
         }
+/*
         else {
             log.info("There isn't any dead lock");
         }
+*/
     }
 }

@@ -31,7 +31,6 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -91,7 +90,9 @@ public class DispatcherRequestor {
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
 
-    private static final Object syncObj = new Object();
+    private static class DispatcherRequestorSync {}
+    private static final DispatcherRequestorSync syncObj = new DispatcherRequestorSync();
+
     private static <T> T getWithSync(Supplier<T> function) {
         synchronized (syncObj) {
             return function.get();
