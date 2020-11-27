@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -66,6 +67,8 @@ public class DispatcherLookupConfig {
 
         public String restPassword;
         public String restUsername;
+
+        @Nullable
         public Asset asset;
 
         // must be deleted when DispatcherLookup will be based on ParamsYaml versioning
