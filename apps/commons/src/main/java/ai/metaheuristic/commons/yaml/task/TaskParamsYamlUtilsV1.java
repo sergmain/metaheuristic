@@ -72,34 +72,14 @@ public class TaskParamsYamlUtilsV1
     }
 
     private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
-        TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable();
-        v.id = v1.id;
-        v.name = v1.name;
-        v.context = v1.context;
-        v.sourcing = v1.sourcing;
-        v.disk = v1.disk;
-        v.git = v1.git;
-        v.filename = v1.filename;
-        v.type = v1.type;
-        v.empty = v1.empty;
-        v.setNullable(v1.getNullable());
+        TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable(
+                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type,  v1.empty, v1.getNullable());
         return v;
     }
 
     private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
-        TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable();
-        v.id = v1.id;
-        v.name = v1.name;
-        v.context = v1.context;
-        v.sourcing = v1.sourcing;
-        v.disk = v1.disk;
-        v.git = v1.git;
-        v.filename = v1.filename;
-        v.uploaded = v1.uploaded;
-        v.type = v1.type;
-        v.empty = v1.empty;
-        v.setNullable(v1.getNullable());
-        v.ext = null;
+        TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable(
+                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.uploaded, v1.type, v1.empty, v1.getNullable(), v1.ext);
         return v;
     }
 
@@ -110,17 +90,10 @@ public class TaskParamsYamlUtilsV1
     }
 
     private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
-        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
-        trg.checksumMap = src.checksumMap;
-        trg.code = src.code;
-        trg.env = src.env;
-        trg.file = src.file;
-        trg.git = src.git;
+        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig(
+                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, src.skipParams);
+
         trg.metas.addAll(src.metas);
-        trg.params = src.params;
-        trg.skipParams = src.skipParams;
-        trg.sourcing = src.sourcing;
-        trg.type = src.type;
         return trg;
     }
 

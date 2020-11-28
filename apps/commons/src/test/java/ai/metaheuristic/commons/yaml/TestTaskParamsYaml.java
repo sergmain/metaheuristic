@@ -52,7 +52,7 @@ public class TestTaskParamsYaml {
         ty.inputs.add(input);
 
         TaskParamsYamlV1.OutputVariableV1 output = new TaskParamsYamlV1.OutputVariableV1(
-                43L, EnumsApi.VariableContext.local, "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null, null, true, null, false, false);
+                43L, EnumsApi.VariableContext.local, "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null, null, true, null, false, false, null);
         ty.outputs.add(output);
 
         ty.clean = true;
