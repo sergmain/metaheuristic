@@ -14,6 +14,7 @@ source:
         - variable-for-splitting: input-data
         - output-is-dynamic: true
         - output-variable: var-batch-item
+        - mh.result-file-extension: .zip
       subProcesses:
         logic: sequential
         processes:
@@ -42,6 +43,8 @@ source:
                 type: processing-status-type
               - name: var-item-mapping
                 type: mapping-type
+            metas:
+              - mh.result-file-extension: .zip
           - code: mh.nop-2
             name: nop 2
             function:
@@ -66,4 +69,5 @@ source:
         - batch-type-processed-file: processed-file-type-1, processed-file-type-2
         - batch-type-processing-status: processing-status-type
         - batch-type-mapping: mapping-type
+        - mh.result-file-extension: .zip
 version: 1

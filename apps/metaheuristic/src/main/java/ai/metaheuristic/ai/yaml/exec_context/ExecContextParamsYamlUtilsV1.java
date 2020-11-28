@@ -87,7 +87,7 @@ public class ExecContextParamsYamlUtilsV1
     }
 
     private static ExecContextParamsYamlV2.VariableV2 toVariable(ExecContextParamsYamlV1.VariableV1 v1) {
-        return new ExecContextParamsYamlV2.VariableV2(v1.name, v1.context, v1.sourcing, v1.git, v1.disk, v1.parentContext, v1.type, v1.getNullable());
+        return new ExecContextParamsYamlV2.VariableV2(v1.name, v1.context, v1.sourcing, v1.git, v1.disk, v1.parentContext, v1.type, v1.getNullable(), null);
     }
 
     @NonNull
