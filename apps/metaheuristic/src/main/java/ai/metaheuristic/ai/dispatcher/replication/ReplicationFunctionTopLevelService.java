@@ -77,7 +77,6 @@ public class ReplicationFunctionTopLevelService {
         ReplicationData.ReplicationAsset data = replicationCoreService.getData(
                 "/rest/v1/replication/function", ReplicationData.FunctionAsset.class, List.of(new BasicNameValuePair("functionCode", functionCode)),
                 (uri) -> Request.Get(uri)
-//                        .bodyForm(Form.form().add("functionCode", functionCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

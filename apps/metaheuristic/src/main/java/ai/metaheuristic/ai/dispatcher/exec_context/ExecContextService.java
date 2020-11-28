@@ -286,7 +286,7 @@ public class ExecContextService {
             return resultWithError;
         }
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
-        ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksVariablesInfo(ecpy.tasksVariablesInfo);
+        ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
@@ -411,7 +411,16 @@ public class ExecContextService {
                 return resource;
             }
 
-            String filename = S.f("variable-%s-%s.bin", variableId, variable.variable);
+            ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
+            String ext = info.tasks.stream()
+                    .filter(o->o.outputs!=null)
+                    .flatMap(o->o.outputs.stream())
+                    .filter(o->o.id.equals(variableId) && !S.b(o.ext))
+                    .findFirst().map(o->o.ext)
+                    .orElse(".bin") ;
+
+            String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
 
             File varFile = new File(resultDir, "variable-"+variableId+".bin");
             variableService.storeToFile(variable.id, varFile);

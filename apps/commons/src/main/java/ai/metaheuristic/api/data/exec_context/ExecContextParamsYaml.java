@@ -118,7 +118,7 @@ public class ExecContextParamsYaml implements BaseParams {
      * !!!!!!!
      * after adding new field,
      * add new mapping in
-     * ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
+     * @see ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
      *
      */
     @Data
@@ -180,7 +180,11 @@ public class ExecContextParamsYaml implements BaseParams {
     // key - processCode, value - Process
     private HashMap<String, Process> processMap = null;
 
-    // json format, string form of ai.metaheuristic.ai.dispatcher.data.ExecContextData.ExecContextTasksVariablesInfo
+    /**
+     * json format, string form of ExecContextApiData.ExecContextTasksStatesInfo
+     * @see ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextTasksStatesInfo
+     */
+    // TODO 2020-11-28 this field need to be renamed to tasksStatesInfo when there will be a new version of ExecContextParamsYaml
     @Nullable
     public String tasksVariablesInfo;
 

@@ -99,6 +99,7 @@ public class TaskParamsYamlUtilsV1
         v.type = v1.type;
         v.empty = v1.empty;
         v.setNullable(v1.getNullable());
+        v.ext = null;
         return v;
     }
 

@@ -105,7 +105,6 @@ public class ReplicationSourceCodeTopLevelService {
         Object data = replicationCoreService.getData(
                 "/rest/v1/replication/source-code", ReplicationData.SourceCodeAsset.class, List.of(new BasicNameValuePair("uid", uid)),
                 (uri) -> Request.Get(uri)
-//                        .bodyForm(Form.form().add("uid", uid).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

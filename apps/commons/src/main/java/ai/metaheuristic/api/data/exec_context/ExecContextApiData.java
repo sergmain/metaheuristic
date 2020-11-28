@@ -56,10 +56,15 @@ public class ExecContextApiData {
         @JsonProperty("n")
         public boolean nullified;
 
-        public VariableInfo(Long id, String name, EnumsApi.VariableContext context) {
+        @Nullable
+        @JsonProperty("e")
+        public String ext;
+
+        public VariableInfo(Long id, String name, EnumsApi.VariableContext context, @Nullable String ext) {
             this.id = id;
             this.name = name;
             this.context = context;
+            this.ext = ext;
         }
     }
 

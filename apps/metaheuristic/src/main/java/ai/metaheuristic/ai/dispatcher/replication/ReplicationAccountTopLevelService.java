@@ -114,7 +114,6 @@ public class ReplicationAccountTopLevelService {
         Object data = replicationCoreService.getData(
                 "/rest/v1/replication/account", ReplicationData.AccountAsset.class, List.of(new BasicNameValuePair("username", username)),
                 (uri) -> Request.Get(uri)
-//                        .bodyForm(Form.form().add("username", username).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

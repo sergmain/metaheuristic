@@ -38,8 +38,8 @@ public class TestExecContextJson {
     public void test() {
         ExecContextApiData.TaskStateInfo info;
         info = new ExecContextApiData.TaskStateInfo(1L, 2L, "1,2###1", "process-1", "function-1",
-                List.of(new ExecContextApiData.VariableInfo(3L, "var-name-3", EnumsApi.VariableContext.local)),
-                List.of(new ExecContextApiData.VariableInfo(4L, "var-name-4", EnumsApi.VariableContext.global)) );
+                List.of(new ExecContextApiData.VariableInfo(3L, "var-name-3", EnumsApi.VariableContext.local, null)),
+                List.of(new ExecContextApiData.VariableInfo(4L, "var-name-4", EnumsApi.VariableContext.global, ".zip")) );
 
         String s = JsonUtils.getMapper().writeValueAsString(info);
 

@@ -82,7 +82,7 @@ public class ExecContextStatusService {
     @Transactional
     public Void registerVariableState(VariableUploadedEvent event) {
         register(event.execContextId, (ecpy)-> {
-            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksVariablesInfo(ecpy.tasksVariablesInfo);
+            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
 
             for (ExecContextApiData.TaskStateInfo task : info.tasks) {
                 if (task.taskId.equals(event.taskId)) {
@@ -112,7 +112,7 @@ public class ExecContextStatusService {
     @Transactional
     public Void registerCreatedTask(TaskCreatedEvent event) {
         register(event.taskVariablesInfo.execContextId, (ecpy)-> {
-            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksVariablesInfo(ecpy.tasksVariablesInfo);
+            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
 
 /*
             log.debug("#211.020 registerCreatedTask(), task: {}", event.taskVariablesInfo);

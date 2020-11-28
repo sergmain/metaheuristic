@@ -32,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -377,7 +376,7 @@ public class VariableService {
                 taskParamsYaml.task.outputs.add(
                         new TaskParamsYaml.OutputVariable(
                                 v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                                null, false, variable.type, true, variable.getNullable()
+                                null, false, variable.type, true, variable.getNullable(), variable.ext
                         ));
             }
         }
@@ -388,9 +387,8 @@ public class VariableService {
                 new ExecContextApiData.TaskStateInfo(task.id, execContextId,
                         taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
                         null,
-                        taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context)).collect(Collectors.toList())));
+                        taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));
         holder.events.add(event);
-//        eventPublisher.publishEvent(event);
 
         return task;
     }

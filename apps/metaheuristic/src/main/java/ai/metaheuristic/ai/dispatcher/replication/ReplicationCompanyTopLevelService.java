@@ -116,7 +116,6 @@ public class ReplicationCompanyTopLevelService {
         Object data = replicationCoreService.getData(
                 "/rest/v1/replication/company", ReplicationData.CompanyAsset.class, List.of(new BasicNameValuePair("uniqueId", uniqueId.toString())),
                 (uri) -> Request.Get(uri)
-//                        .bodyForm(Form.form().add("uniqueId", uniqueId.toString()).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

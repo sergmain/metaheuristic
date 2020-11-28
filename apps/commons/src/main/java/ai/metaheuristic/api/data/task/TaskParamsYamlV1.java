@@ -97,6 +97,10 @@ public class TaskParamsYamlV1 implements BaseParams {
         public boolean empty = false;
         private Boolean nullable;
 
+        // This field is used for creating a download link as extension
+        @Nullable
+        public String ext;
+
         public Boolean getNullable() {
             return nullable==null ? false : nullable;
         }
