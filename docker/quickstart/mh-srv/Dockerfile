@@ -19,8 +19,6 @@ RUN npm set progress=false && npm install
 # Copy project files into the docker image
 COPY mh/environment.production.ts  /app/metaheuristic-angular/src/environments
 RUN node --max_old_space_size=2048 /usr/local/bin/ng build --aot --prod=true
-RUN mkdir -p /app/metaheuristic-angular/dist/metaheuristic-app/docs
-COPY /mh/docs /app/metaheuristic-angular/dist/metaheuristic-app/docs/
 
 # STEP 2 build a small nginx image with static website
 FROM nginx:alpine

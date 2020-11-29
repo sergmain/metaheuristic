@@ -13,7 +13,7 @@ git checkout origin/release
 
 docker run -it --rm --name %project% -v "%pr-path%\%project%":/usr/src/%project% -w /usr/src/%project% --volume "%pr-path%\.m2":/root/.m2 maven:latest mvn -Dmaven.repo.local=/root/.m2 clean install -Dmaven.test.skip=true
 
-copy %pr-path%\%project%\apps\metaheuristic\target\metaheuristic.jar %pr-path%\launchpad\
+copy %pr-path%\%project%\apps\metaheuristic\target\metaheuristic.jar %pr-path%\dispatcher\
 copy %pr-path%\%project%\apps\metaheuristic\target\metaheuristic.jar %pr-path%\processor\
 
 cd %pr-path%

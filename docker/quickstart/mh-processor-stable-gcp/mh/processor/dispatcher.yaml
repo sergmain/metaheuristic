@@ -1,7 +1,6 @@
-launchpads:
+dispatchers:
   - signatureRequired: true
-    securityEnabled: true
-    url: https://example.com
+    url: https://localhost:8888
     lookupType: direct
     authType: basic
     restPassword: 
@@ -16,9 +15,4 @@ launchpads:
         sat: 0:00-23:59
         sun: 0:00-23:59
     publicKey: 
-    acceptOnlySignedSnippets: true
     disabled: false
-    asset:
-      url: https://srv5.stp-baikal.ru
-      username: 
-      password: 

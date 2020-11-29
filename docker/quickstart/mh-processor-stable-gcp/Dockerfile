@@ -1,5 +1,4 @@
 FROM alpine:latest
-MAINTAINER egorov@cons411.ru
 
 RUN apk add --update openjdk11-jre imagemagick tzdata && rm -rf /var/cache/apk/*
 

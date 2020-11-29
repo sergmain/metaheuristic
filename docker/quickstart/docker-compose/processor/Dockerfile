@@ -25,4 +25,4 @@ RUN mkdir -p /logs
 COPY metaheuristic.jar .
 COPY config ./config
 COPY processor ./processor
-ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /aiai/metaheuristic.jar"]
+ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]

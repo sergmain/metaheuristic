@@ -1,10 +1,10 @@
-launchpads:
+dispatchers:
   - signatureRequired: true
-    url: http://localhost:8888
+    url: https://localhost:8888
     lookupType: direct
     authType: basic
-    restPassword: aiai
-    restUsername: rest_user
+    restPassword: 
+    restUsername: 
     taskProcessingTime: |
       week:
         mon: 0:00-23:59

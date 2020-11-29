@@ -1,5 +1,4 @@
 # Docker Compose file Reference (https://docs.docker.com/compose/compose-file/)
-# Ссылка на описание версий Docker Compose (https://docs.docker.com/compose/compose-file/)
 version: '3.7'
 
 # Define services
@@ -8,7 +7,7 @@ services:
   app-server:
     # Configuration for building the docker image for the backend service
     build:
-      context: launchpad # Use an image built from the specified dockerfile in the `launchpad` directory.
+      context: dispatcher # Use an image built from the specified dockerfile in the `dispatcher` directory.
       dockerfile: Dockerfile
     ports:
       - "8888:8888" # Forward the exposed port 8888 on the container to port 8888 on the host machine

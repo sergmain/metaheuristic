@@ -1,5 +1,4 @@
 FROM alpine:latest
-MAINTAINER egorov@cons411.ru
 
 RUN apk add --update \
     python3 \
@@ -38,10 +37,10 @@ ENV LANG=en_EN.UTF-8 \
 # Add ImageMagick-latest
 RUN apk add --no-cache imagemagick
 
-RUN mkdir -p /aiai
-WORKDIR /aiai
+RUN mkdir -p /metaheuristic
+WORKDIR /metaheuristic
 RUN mkdir -p /logs
-COPY /mh/metaheuristic.jar .
-COPY /mh/config ./config
-COPY /mh/processor ./processor
+COPY /metaheuristic/metaheuristic.jar .
+COPY /metaheuristic/config ./config
+COPY /metaheuristic/processor ./processor
 ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]

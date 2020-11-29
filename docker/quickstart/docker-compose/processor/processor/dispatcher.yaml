@@ -1,11 +1,10 @@
-launchpads:
+dispatchers:
   - signatureRequired: true
-    securityEnabled: true
-    url: https://localhost:8888
+    url: http://localhost:8888
     lookupType: direct
     authType: basic
-    restPassword: 
-    restUsername: 
+    restPassword: aiai
+    restUsername: rest_user
     taskProcessingTime: |
       week:
         mon: 0:00-23:59
@@ -17,7 +16,3 @@ launchpads:
         sun: 0:00-23:59
     publicKey: 
     disabled: false
-    asset:
-      url: https://localhosy://7777
-      username: 
-      password: 
