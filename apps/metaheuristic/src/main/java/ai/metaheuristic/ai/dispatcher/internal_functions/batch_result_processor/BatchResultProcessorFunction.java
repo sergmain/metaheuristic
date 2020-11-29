@@ -387,13 +387,18 @@ public class BatchResultProcessorFunction implements InternalFunction {
         fixPathInMapping(bimy);
 
         File resultDir = new File(zipDir, bimy.targetDir);
+        if (!resultDir.getAbsolutePath().startsWith(zipDir.getAbsolutePath())) {
+            throw new IllegalStateException(
+                    S.f("#993.213 Attempt to create a file outside of zip tree structure, zipDir: %s, resultDir: %s",
+                            zipDir.getAbsolutePath(), resultDir.getAbsolutePath()));
+        }
         resultDir.mkdir();
 
         storeVariableToFile(bimy, resultDir, item.items);
         storeVariableToFile(bimy, resultDir, List.of(item.status));
     }
 
-    public static void fixPathInMapping(BatchItemMappingYaml bimy) {
+    private static void fixPathInMapping(BatchItemMappingYaml bimy) {
         if (bimy.targetDir!=null) {
             if (File.separatorChar=='/') {
                 bimy.targetDir = bimy.targetDir.replace('\\', '/');
@@ -479,6 +484,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return bs;
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     private void storeStatusOfTask(BatchStatusProcessor bs, ExecContextImpl ec, Long taskId) {
         final TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -548,6 +554,11 @@ public class BatchResultProcessorFunction implements InternalFunction {
                         ,'\n');
                 bs.ok = true;
                 return;
+            case NOT_USED_ANYMORE:
+                break;
+            case CHECK_CACHE:
+                // TODO 2020-11-29 should we do something with this state?
+                break;
         }
 
         bs.getOkStatus().add(

@@ -1,0 +1,1 @@
+docker run --mount type=bind,source=%CD%\files,target=/usr/share/nginx/html,readonly -p 4200:80 -d nginx
