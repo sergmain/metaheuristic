@@ -1,5 +1,5 @@
 @echo off
-chcp 1251>nul
+chcp 65001>nul
 
 set project-web=metaheuristic-angular
 set project=metaheuristic
@@ -35,4 +35,4 @@ call %pr-path%\mk-dcr-web.cmd
 
 echo d|xcopy /e /y "%pr-path%\%project-web%\dist\metaheuristic-app" "%pr-path%\web-client\files" >nul
 
-#echo f|xcopy /r /y "%pr-path%\%project%\sql\*.sql" "%pr-path%\mysql-dump\"
+#echo f|xcopy /r /y "%pr-path%\%project%\sql\schema-postgresql.sql" "%pr-path%\..\db-script\"
