@@ -78,11 +78,11 @@ create table mh_account
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    not null,
-    USERNAME varchar(30) not null,
-    PASSWORD varchar(100) not null,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
+    USERNAME varchar(30) NOT NULL,
+    PASSWORD varchar(100) NOT NULL,
     ROLES varchar(100),
-    PUBLIC_NAME varchar(100) not null,
+    PUBLIC_NAME varchar(100) NOT NULL,
 
     is_acc_not_expired BOOLEAN not null default true,
     is_not_locked BOOLEAN not null default false,
@@ -246,8 +246,8 @@ CREATE TABLE mh_exec_context
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    SOURCE_CODE_ID  INT UNSIGNED    not null,
-    COMPANY_ID      INT UNSIGNED    not null,
+    SOURCE_CODE_ID  INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
     CREATED_ON      bigint NOT NULL,
     COMPLETED_ON    bigint,
     PARAMS          LONGTEXT NOT NULL,
@@ -262,7 +262,7 @@ CREATE TABLE mh_experiment_result
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    not null,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
     NAME          VARCHAR(50)   NOT NULL,
     DESCRIPTION   VARCHAR(250)  NOT NULL,
     CODE          VARCHAR(50)   NOT NULL,
@@ -289,7 +289,7 @@ create table mh_batch
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    not null,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
     ACCOUNT_ID      INT UNSIGNED    NOT NULL,
     SOURCE_CODE_ID         NUMERIC(10, 0) NOT NULL,
     EXEC_CONTEXT_ID     NUMERIC(10, 0),

@@ -58,6 +58,12 @@ public class Globals {
     @Value("${spring.profiles.active}")
     private String activeProfiles;
 
+    @Value("${spring.host:#{null}}")
+    public String serverHost;
+
+    @Value("${server.port}")
+    public int serverPort;
+
     // Globals' globals
 
     @Value("${mh.thread-number:#{null}}")
@@ -376,6 +382,7 @@ public class Globals {
         }
         initOperationSystem();
 
+        logSpring();
         logGlobals();
         logSystemEnvs();
         logDepricated();
@@ -514,6 +521,11 @@ public class Globals {
 
     private void logSystemEnvs() {
         System.getProperties().forEach( (o, o2) -> log.info("{}: {}", o, o2));
+    }
+
+    private void logSpring() {
+        log.warn("Spring properties:");
+        log.warn("\nserver host:port: {}:{}", serverHost, serverPort);
     }
 
     private void logGlobals() {

@@ -36,6 +36,6 @@ COPY /apps/metaheuristic/src/main/resources/application-quickstart.properties /m
 WORKDIR /metaheuristic
 EXPOSE 8083
 
-ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2 -Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
 #ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
 
