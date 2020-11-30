@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -50,6 +52,7 @@ public class Globals {
 
     private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
 
+    private final ApplicationContext appCtx;
     private final Environment env;
 
     @Value("${spring.profiles.active}")
@@ -422,7 +425,7 @@ public class Globals {
         if (!profiles.isEmpty()) {
             log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
                     "Allowed profiles are: " + POSSIBLE_PROFILES);
-            System.exit(-1);
+            System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
     }
 

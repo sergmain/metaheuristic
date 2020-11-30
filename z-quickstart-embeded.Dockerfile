@@ -28,5 +28,5 @@ RUN mkdir -p /metaheuristic/logs
 COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
 COPY /docker/quickstart/processor /metaheuristic/processor
 
-ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
+ENTRYPOINT ["sh", "-c", "/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
 
