@@ -11,7 +11,7 @@ RUN apk update && \
 # Create app directory
 RUN mkdir -p /app
 RUN cd /app && \
-    git clone -b release-v4.x --recursive https://github.com/sergmain/metaheuristic-angular.git
+    git clone -b release --recursive https://github.com/sergmain/metaheuristic-angular.git
 
 # Install app dependencies
 WORKDIR /app/metaheuristic-angular
@@ -27,5 +27,8 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 ## From 'builder' copy website to default nginx public folder
 COPY --from=builder /app/metaheuristic-angular/dist/metaheuristic-app /usr/share/nginx/html
-EXPOSE 80
+
+RUN rm -rf /app/metaheuristic-angular/*
+
+EXPOSE 8085
 CMD ["nginx", "-g", "daemon off;"]

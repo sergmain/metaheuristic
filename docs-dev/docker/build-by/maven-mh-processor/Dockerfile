@@ -14,6 +14,7 @@ ARG SHA=LATEST
 RUN cd /app && \
     git clone -b release-v4.x --recursive https://github.com/sergmain/metaheuristic.git
 
+
 RUN cd /app/metaheuristic && \
     mvn -Dmaven.repo.local=/M2/repo clean install -f pom.xml -Dmaven.test.skip=true
 

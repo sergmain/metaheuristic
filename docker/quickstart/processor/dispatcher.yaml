@@ -1,0 +1,17 @@
+dispatchers:
+  - signatureRequired: false
+    url: http://localhost:8083
+    lookupType: direct
+    authType: basic
+    restPassword: 123
+    restUsername: rest_user
+    taskProcessingTime: |
+      week:
+        mon: 0:00-23:59
+        tue: 0:00-23:59
+        wed: 0:00-23:59
+        thu: 0:00-23:59
+        fri: 0:00-23:59
+        sat: 0:00-23:59
+        sun: 0:00-23:59
+    disabled: false
