@@ -20,7 +20,7 @@ services:
       - db # This service depends on mysql. Start that first.
     networks:
       testing_net:
-        ipv4_address: 172.28.1.3
+        ipv4_address: localhost
 #    networks: # Networks to join (Services on the same network can communicate with each other using their name)
 #      - backend
 #      - frontend
@@ -35,7 +35,7 @@ services:
     restart: always
     networks:
       testing_net:
-        ipv4_address: 172.28.1.4
+        ipv4_address: localhost
 #    networks:
 #      - frontend  
 
@@ -55,7 +55,7 @@ services:
       - /d/_Work/Docker-Compose/mysql-dump:/docker-entrypoint-initdb.d
     networks:
       testing_net:
-        ipv4_address: 172.28.1.2
+        ipv4_address: localhost
 #    networks:
 #      - backend  
   

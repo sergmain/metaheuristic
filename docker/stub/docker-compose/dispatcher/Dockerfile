@@ -1,5 +1,7 @@
 FROM alpine:latest
 
+RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic
+
 RUN apk add --update git openjdk11-jre imagemagick tzdata && rm -rf /var/cache/apk/*
 
 # Set language
@@ -22,7 +24,7 @@ ENV LANG=en_EN.UTF-8 \
 RUN mkdir -p /metaheuristic
 WORKDIR /metaheuristic
 RUN mkdir -p /logs
-COPY metaheuristic.jar .
+COPY /apps/metaheuristic/target/metaheuristic.jar .
 COPY config ./config
 COPY processor ./processor
 ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
