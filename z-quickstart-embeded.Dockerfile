@@ -25,8 +25,17 @@ ENV LANG=en_EN.UTF-8 \
 
 RUN mkdir -p /metaheuristic
 RUN mkdir -p /metaheuristic/logs
-COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
-COPY /docker/quickstart/processor /metaheuristic/processor
+RUN mkdir -p /metaheuristic/config
+RUN mkdir -p /metaheuristic/mh-processor
+RUN mkdir -p /metaheuristic/mh-dispatcher
 
-ENTRYPOINT ["sh", "-c", "/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
+COPY /docker/quickstart/processor/* /metaheuristic/mh-processor/
+COPY /apps/metaheuristic/src/main/resources/application-quickstart.properties /metaheuristic/config/application.properties
+
+WORKDIR /metaheuristic
+EXPOSE 8083
+
+ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2 -Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+#ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
 
