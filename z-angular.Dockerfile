@@ -1,20 +1,11 @@
 # STEP 1 build static website
-FROM node:alpine3.11 as builder
+FROM node:10.23-alpine as builder
 
 RUN echo "=== Prepare apk"
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache git g++ make curl&& \
-    apk update && \
-    npm install -g npm && \
-    npm i && \
-    npm install -g @angular/cli && \
-    apk update
+RUN apk add git
 
 RUN echo "=== Prepare npm"
-RUN npm install -g npm && \
-    npm i && \
-    npm install -g @angular/cli
+RUN npm install -g npm@6
 
 RUN echo "=== Clone metaheuristic-angular"
 # Create app directory
@@ -24,8 +15,11 @@ RUN cd /app && \
 
 # Install app dependencies
 WORKDIR /app/metaheuristic-angular
-#RUN npm set progress=true && npm install -g npm
-#RUN npm set progress=true && npm install
+RUN npm set progress=true && npm i
+
+RUN npm install -g @angular/cli@7.3.9
+
+ENV PATH /home/node/app/node_modules/.bin:$PATH
 
 RUN echo "=== Compile metaheuristic-angular"
 # Copy project files into the docker image
@@ -39,9 +33,11 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 ## From 'builder' copy website to default nginx public folder
 COPY --from=builder /app/metaheuristic-angular/dist/metaheuristic-app /usr/share/nginx/html
-COPY /docker/quickstart/processor/nginx.conf /etc/nginx/nginx.conf
 
-RUN rm -rf /app/metaheuristic-angular/*
+#RUN rm -f /etc/nginx/nginx.conf
+#COPY /docker/quickstart/angular/nginx.conf /etc/nginx/nginx.conf
+#
+#RUN rm -rf /app/metaheuristic-angular/*
 
-EXPOSE 8085
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
