@@ -9,7 +9,7 @@ RUN apk add --update git openjdk11-jre tzdata
 # Set language
 #ENV MUSL_LOCPATH=/usr/local/share/i18n/locales/musl
 ##RUN apk --update add cmake make musl-dev gcc gettext-dev libintl && \
-#RUN apk git clone https://github.com/rilian-la-te/musl-locales.git && \
+#RUN apk git clone -b 76fcf3c822b77a987657f0832c873c465b842438 https://github.com/rilian-la-te/musl-locales.git && \
 #    cd musl-locales && \
 #    cmake . && \
 #    make && \
@@ -38,6 +38,6 @@ COPY /apps/metaheuristic/src/main/resources/application-quickstart.properties /m
 WORKDIR /metaheuristic
 EXPOSE 8083
 
-ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
 #ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
 
