@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestTx extends PreparingSourceCode {
 
@@ -140,37 +140,6 @@ public class TestTx extends PreparingSourceCode {
         assertEquals(t4, task4);
 
         ////
-
-/*
-        s = txTestingService.updateWithSyncSingle(execContextForTest.id, task.id);
-        assertEquals("AAA", s);
-
-        TaskImpl task5 = txTestingService.update(task.id, "BBB");
-
-        assertNotNull(task5.id);
-        assertNotNull(task5.version);
-        assertEquals("BBB", task5.params);
-        assertTrue((int)task5.version>task4.version);
-        TaskImpl t5 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        assertEquals(t5, task5);
-
-        ////
-
-        s = txTestingService.updateWithSyncDouble(execContextForTest.id, task.id);
-        assertEquals("AAAAAA", s);
-
-        TaskImpl task6 = txTestingService.update(task.id, "BBB");
-
-        assertNotNull(task6.id);
-        assertNotNull(task6.version);
-        assertEquals("BBB", task6.params);
-        assertTrue((int)task6.version>task5.version);
-        TaskImpl t6 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        assertEquals(t6, task6);
-*/
-
-
-
     }
 
 
@@ -257,21 +226,6 @@ public class TestTx extends PreparingSourceCode {
         s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, taskId);
         assertEquals("AAAAAA", s);
 
-        // == txTestingService
-
-        ////
-
-/*
-        s = txTestingService.updateWithSyncSingle(execContextForTest.id, taskId);
-        assertEquals("AAA", s);
-
-        ////
-
-        s = txTestingService.updateWithSyncDouble(execContextForTest.id, taskId);
-        assertEquals("AAAAAA", s);
-*/
-
-
     }
 
     @Test
@@ -347,20 +301,6 @@ public class TestTx extends PreparingSourceCode {
     }
 
     private void testService(Long taskId) {
-        // == txTestingTopLevelService
-
-/*
-        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, taskId);
-        assertEquals("AAA", s);
-
-        ////
-
-        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, taskId);
-        assertEquals("AAAAAA", s);
-*/
-
-        // == txTestingService
-
         ////
 
         String s = txTestingService.updateWithSyncSingle(execContextForTest.id, taskId);

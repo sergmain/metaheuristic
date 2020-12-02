@@ -47,6 +47,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("WeakerAccess")
 @Slf4j
 public abstract class FeatureMethods extends PreparingExperiment {
 
@@ -99,18 +100,11 @@ public abstract class FeatureMethods extends PreparingExperiment {
     public void toStarted() {
         execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
-/*
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            txSupportForTestingService.toStarted(execContextForTest.id);
-            return null;
-        });
-*/
     }
 
     public String initSessionId() {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-//        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus();
 
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);

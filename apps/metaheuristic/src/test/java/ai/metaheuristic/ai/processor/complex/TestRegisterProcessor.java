@@ -27,13 +27,12 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -142,16 +141,22 @@ public class TestRegisterProcessor {
         Processor s = processorRepository.findById(processorId).orElse(null);
         assertNotNull(s);
 
+        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+
         final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
                 new EnvYaml(),
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
                 sessionId,
                 System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, true,
-                1, EnumsApi.OS.unknown, SystemUtils.getUserHome().getAbsolutePath());
+                "[unknown]", "[unknown]", null, false,
+                1, EnumsApi.OS.unknown, null);
 
-        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ss.currDir = ss1.currDir;
+        ss1.schedule = ss.schedule;
+        ss1.ip = ss.ip;
+        ss1.host = ss.host;
+
         assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(ss1, ss), S.f("ss1:\n%s\n\nss:\n%s", ss1, ss));
 
         //noinspection unused

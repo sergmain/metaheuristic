@@ -24,10 +24,7 @@ import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -83,6 +80,7 @@ public class GitSourcingService {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(of={"status", "version", "error"})
     public static class GitStatusInfo {
         public Enums.GitStatus status;
         public String version;

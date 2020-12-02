@@ -91,38 +91,26 @@ public class TestRest {
                 .build();
     }
 
-    @Disabled
     @Test
-    public void testRestMessages_01() {
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:8080/test/simple?text="+MSG_TEXT, String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        String s = response.getBody();
+    public void testRestMessages_01() throws Exception {
+        MvcResult result = mockMvc.perform(
+                get("http://localhost:8080/test/simple?text="+MSG_TEXT))
+                .andExpect(status().isOk()).andReturn();
+
+        String s = result.getResponse().getContentAsString();
         assertNotNull(s);
         System.out.println("s = " + s);
         assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);
         assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
     }
 
-    // todo 2020-03-12 it doesn't work and right now don't have much time to investigate why
-    @Disabled
     @Test
-//    @WithUserDetails("data_rest")
-    public void testRestMessages_02() {
-        RestTemplate restTemplate = new RestTemplate(DispatcherUtils.getHttpRequestFactory());
-        // RestTemplate must be working without this
-//        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+    public void testRestMessages_02() throws Exception {
+        MvcResult result = mockMvc.perform(
+                get("http://localhost:8080/test/simple?text="+MSG_TEXT))
+                .andExpect(status().isOk()).andReturn();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> request = new HttpEntity<>(MSG_TEXT, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange("http://localhost:8080/test/rest", HttpMethod.POST, request, String.class);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        String s = response.getBody();
+        String s = result.getResponse().getContentAsString();
         assertNotNull(s);
         System.out.println("s = " + s);
         assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);

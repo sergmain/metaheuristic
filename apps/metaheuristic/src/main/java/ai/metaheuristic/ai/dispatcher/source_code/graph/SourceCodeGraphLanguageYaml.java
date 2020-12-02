@@ -82,7 +82,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
             // tasks for sub-processes of internal function will be produced at runtime phase
-            if (subProcesses!=null && CollectionUtils.isNotEmpty(subProcesses.processes)) {
+            if (subProcesses!=null && subProcesses.processes != null && !((Collection<?>) subProcesses.processes).isEmpty()) {
                 // todo 2020-04-02 replace with recursion for supporting cases then there are more than 2 levels of inclusion
 
                 List<ExecContextData.ProcessVertex> prevProcesses = new ArrayList<>();
@@ -93,7 +93,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 }
                 List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
                 for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
-                    if (subP.subProcesses!=null && CollectionUtils.isNotEmpty(subP.subProcesses.processes)) {
+                    if (subP.subProcesses!=null && subP.subProcesses.processes != null && !((Collection<?>) subP.subProcesses.processes).isEmpty()) {
                         throw new IllegalStateException("SubProcesses with level of recursion more that 1 isn't supported right now.");
                     }
                     checkProcessCode(processCodes, subP);

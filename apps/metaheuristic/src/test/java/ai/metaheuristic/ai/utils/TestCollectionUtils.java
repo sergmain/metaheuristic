@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +61,34 @@ public class TestCollectionUtils {
         assertFalse(CollectionUtils.checkTagAllowed("ddd", "aaa"));
         assertFalse(CollectionUtils.checkTagAllowed("ddd", "aaa,"));
         assertFalse(CollectionUtils.checkTagAllowed("ddd", " aaa, "));
+
+
+    }
+
+    @Test
+    public void testListEquals() {
+        assertTrue(CollectionUtils.isEquals(null, null));
+        assertTrue(CollectionUtils.isEquals(null, List.of()));
+        assertTrue(CollectionUtils.isEquals(List.of(), null));
+
+        assertFalse(CollectionUtils.isEquals(null, List.of("aaa")));
+        assertFalse(CollectionUtils.isEquals(List.of("aaa"), null));
+
+        assertFalse(CollectionUtils.isEquals(List.of(), List.of("aaa")));
+        assertFalse(CollectionUtils.isEquals(List.of("aaa"), List.of()));
+
+        assertTrue(CollectionUtils.isEquals(List.of("aaa"), List.of("aaa")));
+        assertTrue(CollectionUtils.isEquals(List.of("aaa"), List.of("aaa")));
+
+        assertFalse(CollectionUtils.isEquals(List.of("aaa"), List.of("aaa", "bbb")));
+        assertFalse(CollectionUtils.isEquals(List.of("aaa"), List.of("aaa", "bbb")));
+
+        assertTrue(CollectionUtils.isEquals(List.of("aaa", "bbb"), List.of("aaa", "bbb")));
+        assertTrue(CollectionUtils.isEquals(List.of("aaa", "bbb"), List.of("aaa", "bbb")));
+
+        assertTrue(CollectionUtils.isEquals(List.of("bbb", "aaa"), List.of("aaa", "bbb")));
+        assertTrue(CollectionUtils.isEquals(List.of("bbb", "aaa"), List.of("aaa", "bbb")));
+
 
 
     }

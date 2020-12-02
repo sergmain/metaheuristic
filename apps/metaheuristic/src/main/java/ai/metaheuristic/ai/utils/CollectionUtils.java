@@ -51,7 +51,11 @@ public class CollectionUtils {
     }
 
     public static boolean isEmpty(@Nullable Collection<?> collection) {
-        return !isNotEmpty(collection);
+        return collection == null || collection.isEmpty();
+    }
+
+    public static boolean isEmpty(@Nullable Map<?,?> map) {
+        return org.springframework.util.CollectionUtils.isEmpty(map);
     }
 
     public static List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
@@ -60,7 +64,19 @@ public class CollectionUtils {
         return codes;
     }
 
-    public static boolean isEquals(List<String> l1, List<String> l2) {
+    public static boolean isEquals(@Nullable List<String> l1, @Nullable List<String> l2) {
+        if (isEmpty(l1) && isEmpty(l2)) {
+            return true;
+        }
+        if (isEmpty(l1) && isNotEmpty(l2)) {
+            return false;
+        }
+        if (isNotEmpty(l1) && isEmpty(l2)) {
+            return false;
+        }
+
+        // ###IDEA###, why?
+        //noinspection ConstantConditions
         if (l1.size()!=l2.size()) {
             return false;
         }

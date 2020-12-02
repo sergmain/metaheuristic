@@ -54,12 +54,8 @@ public class TransferExperimentResult {
     @Autowired
     public ExecContextCache execContextCache;
 
-    /**
-     * this method is't test actually and is used for transfer an actual result of experiment
-     * that's why it is disabled
-     */
     @Test
-    @Disabled
+    @Disabled("This method is't test actually and is used for transfer an actual result of experiment, that's why it is disabled")
     public void test() {
 
 

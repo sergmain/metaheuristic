@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -31,6 +32,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -302,18 +304,28 @@ public class ProcessorTransactionService {
         return false;
     }
 
+    private static boolean isEnvEmpty(@Nullable EnvYaml env) {
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
+    }
+
     public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
-        return
-                !Objects.equals(ss.env, status.env) ||
-                        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
-                        !Objects.equals(ss.schedule, status.schedule) ||
-                        !Objects.equals(ss.ip, status.ip) ||
-                        !Objects.equals(ss.host, status.host) ||
-                        !Objects.equals(ss.errors, status.errors) ||
-                        ss.logDownloadable!=status.logDownloadable ||
-                        ss.taskParamsVersion!=status.taskParamsVersion||
-                        ss.os!=status.os ||
-                        !Objects.equals(ss.currDir, status.currDir);
+
+        if (isEnvEmpty(ss.env) && !isEnvEmpty(status.env)) {
+            return true;
+        }
+        if (!isEnvEmpty(ss.env) && isEnvEmpty(status.env)) {
+            return true;
+        }
+
+        return !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
+                !Objects.equals(ss.schedule, status.schedule) ||
+                !Objects.equals(ss.ip, status.ip) ||
+                !Objects.equals(ss.host, status.host) ||
+                !CollectionUtils.isEquals(ss.errors, status.errors) ||
+                ss.logDownloadable!=status.logDownloadable ||
+                ss.taskParamsVersion!=status.taskParamsVersion||
+                ss.os!=status.os ||
+                !Objects.equals(ss.currDir, status.currDir);
     }
 
     @Transactional

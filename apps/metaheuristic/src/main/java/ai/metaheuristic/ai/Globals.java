@@ -61,8 +61,8 @@ public class Globals {
     @Value("${spring.host:#{null}}")
     public String serverHost;
 
-    @Value("${server.port}")
-    public int serverPort;
+    @Value("${server.port:#{-1}}")
+    public Integer serverPort;
 
     // Globals' globals
 
@@ -525,7 +525,7 @@ public class Globals {
 
     private void logSpring() {
         log.warn("Spring properties:");
-        log.warn("\nserver host:port: {}:{}", serverHost, serverPort);
+        log.warn("'\tserver host:port: {}:{}", serverHost, serverPort);
     }
 
     private void logGlobals() {

@@ -254,11 +254,7 @@ public class SourceCodeValidationService {
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
-        if (!checkRequiredVersion(sourceCodeYamlAsStr, snDef)) {
-            return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR, "#177.3600 Version of function is too low error");
-        }
-        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+        return checkRequiredVersion(sourceCodeYamlAsStr, snDef);
     }
 
     private SourceCodeApiData.SourceCodeValidationResult checkFunctions(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
@@ -313,21 +309,21 @@ public class SourceCodeValidationService {
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 
-    // todo 2020-02-27 current version isn't good
-    //  because there is duplication of code with ai.metaheuristic.ai.dispatcher.function.FunctionService.isFunctionVersionOk
-    private boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
+    private SourceCodeApiData.SourceCodeValidationResult checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode fnDef) {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVersionOfTaskParamsYaml(sourceCodeParamsVersion);
-        boolean ok = isFunctionVersionOk(taskParamsYamlVersion, snDef);
-        if (!ok) {
-            log.error("#175.460 Version of function {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
-            return false;
+        TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(fnDef);
+        if (sc==null) {
+            String es = S.f("#175.440 Function %s wasn't found",  fnDef.code);
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
-        return true;
-    }
-
-    private boolean isFunctionVersionOk(int requiredVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(snDef);
-        return sc != null && (sc.skipParams || requiredVersion <= FunctionCoreUtils.getTaskParamsVersion(sc.metas));
+        if (!sc.skipParams && taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(sc.metas)) {
+            String es = S.f("#175.460 Version of function %s is too low, required version: %s", fnDef.code, taskParamsYamlVersion);
+            log.error(es);
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR, es);
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 
 

@@ -17,13 +17,13 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ControllerUtils {
@@ -46,7 +46,8 @@ public class ControllerUtils {
 
     @SuppressWarnings("unchecked")
     public static void addMessagesToModel(Model model, BaseDataClass baseData) {
-        if (CollectionUtils.isNotEmpty(baseData.getErrorMessagesAsList())) {
+        Collection<?> collection1 = baseData.getErrorMessagesAsList();
+        if (collection1 != null && !collection1.isEmpty()) {
             List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
             if (errorMessages==null) {
                 errorMessages = new ArrayList();
@@ -54,7 +55,8 @@ public class ControllerUtils {
             }
             errorMessages.addAll(baseData.getErrorMessagesAsList());
         }
-        if (CollectionUtils.isNotEmpty(baseData.getInfoMessagesAsList())) {
+        Collection<?> collection = baseData.getInfoMessagesAsList();
+        if (collection != null && !collection.isEmpty()) {
             List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));
             if (infoMessages==null) {
                 infoMessages = new ArrayList();
