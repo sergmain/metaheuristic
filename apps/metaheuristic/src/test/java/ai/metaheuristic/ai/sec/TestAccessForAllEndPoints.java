@@ -183,11 +183,10 @@ public class TestAccessForAllEndPoints {
     @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
         final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
-        //noinspection ConstantConditions
-        assertTrue(url.endsWith(".bin"));
 
+        // id=0 is a special case because the record with id==0 mustn't exist
         mockMvc.perform(
-                get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")
+                get(url + "?processorId=15&id=0&chunkSize=10000000&chunkNum=0")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isGone());
@@ -197,11 +196,10 @@ public class TestAccessForAllEndPoints {
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
         final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
-        //noinspection ConstantConditions
-        assertTrue(url.endsWith(".bin"));
 
+        // id=0 is a special case because the record with id==0 mustn't exist
         mockMvc.perform(
-                get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")
+                get(url + "?processorId=15&id=0&chunkSize=10000000&chunkNum=0")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isForbidden());
