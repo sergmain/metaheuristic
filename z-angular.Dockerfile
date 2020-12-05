@@ -34,10 +34,10 @@ RUN rm -rf /usr/share/nginx/html/*
 ## From 'builder' copy website to default nginx public folder
 COPY --from=builder /app/metaheuristic-angular/dist/metaheuristic-app /usr/share/nginx/html
 
-#RUN rm -f /etc/nginx/nginx.conf
-#COPY /docker/quickstart/angular/nginx.conf /etc/nginx/nginx.conf
+RUN rm -f /etc/nginx/nginx.conf
+COPY /docker/quickstart/angular/nginx.conf /etc/nginx/nginx.conf
 #
-#RUN rm -rf /app/metaheuristic-angular/*
+RUN rm -rf /app/metaheuristic-angular/*
 
-EXPOSE 80
+EXPOSE 8085
 CMD ["nginx", "-g", "daemon off;"]
