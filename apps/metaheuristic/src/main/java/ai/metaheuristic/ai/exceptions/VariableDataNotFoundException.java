@@ -23,13 +23,13 @@ import ai.metaheuristic.api.EnumsApi;
  * Date: 4/11/2020
  * Time: 5:14 PM
  */
-public class VariableDataNotFoundException extends CommonErrorWithDataException {
+public class VariableDataNotFoundException extends VariableCommonException {
 
     public Long variableId;
     public EnumsApi.VariableContext context;
 
     public VariableDataNotFoundException(Long variableId, EnumsApi.VariableContext context, String message) {
-        super(message);
+        super(message, variableId);
         this.variableId = variableId;
         this.context = context;
     }

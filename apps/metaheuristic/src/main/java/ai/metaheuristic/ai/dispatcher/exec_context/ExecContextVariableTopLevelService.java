@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -90,7 +91,7 @@ public class ExecContextVariableTopLevelService {
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
-        catch (VariableSavingException th) {
+        catch (VariableCommonException th) {
             final String es = "#440.140 can't store the result, unrecoverable error with data. Error: " + th.toString();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);

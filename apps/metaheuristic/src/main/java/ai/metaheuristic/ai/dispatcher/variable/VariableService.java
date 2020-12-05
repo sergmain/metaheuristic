@@ -48,6 +48,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -471,10 +472,10 @@ public class VariableService {
             }
         } catch (CommonErrorWithDataException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             String es = "#171.340 Error while storing data to file";
             log.error(es, e);
-            throw new IllegalStateException(es, e);
+            throw new VariableCommonException(es, variableId);
         }
     }
 }

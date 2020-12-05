@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -120,7 +121,13 @@ public class TaskCheckCachingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        CacheData.Key fullKey = cacheService.getKey(tpy);
+        CacheData.Key fullKey;
+        try {
+            fullKey = cacheService.getKey(tpy);
+        } catch (VariableCommonException e) {
+            log.info("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
+            return null;
+        }
 
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
