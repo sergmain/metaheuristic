@@ -46,7 +46,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -131,18 +134,26 @@ public class TaskProviderService {
         return task;
     }
 
+    private static Map<Long, AtomicLong> processorCheckedOn = new HashMap<>();
+
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
-        if (taskProviderTransactionalService.isQueueEmpty()) {
-            return null;
-        }
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             log.error("#393.020 Processor with id #{} wasn't found", processorId);
             return null;
         }
+
+        if (taskProviderTransactionalService.isQueueEmpty()) {
+            AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
+            if (System.currentTimeMillis()-mills.get() < 60_000 ) {
+                return null;
+            }
+            mills.set(System.currentTimeMillis());
+        }
+
         ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
         if (psy==null) {
             return null;

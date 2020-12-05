@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.commons.yaml.env;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -26,10 +27,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @NoArgsConstructor
 @ToString
+@AllArgsConstructor
 public class EnvYaml {
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
     public final List<DiskStorage> disk = new ArrayList<>();
+
+    public EnvYaml(Map<String, String> mirrors, Map<String, String> envs, List<DiskStorage> disk, @Nullable String tags) {
+        this.tags = tags;
+        this.mirrors.putAll(mirrors);
+        this.envs.putAll(envs);
+        this.disk.addAll(disk);
+    }
 
     @Nullable
     public String tags;

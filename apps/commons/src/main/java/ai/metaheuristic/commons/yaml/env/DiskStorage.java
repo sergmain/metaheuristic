@@ -18,11 +18,13 @@ package ai.metaheuristic.commons.yaml.env;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode( of={"code","path"})
 public class DiskStorage {
     public String code;
     public String path;

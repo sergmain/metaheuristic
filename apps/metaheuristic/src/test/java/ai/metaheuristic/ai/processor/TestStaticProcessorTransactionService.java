@@ -21,14 +21,14 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.env.DiskStorage;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -79,6 +79,56 @@ public class TestStaticProcessorTransactionService {
         psy.gitStatusInfo=new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null);
         assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(psy, ss), S.f("ss1:\n%s\n\nss:\n%s", psy, ss));
 
+
+        assertFalse(ProcessorTransactionService.envNotEquals(null, null));
+        assertFalse(ProcessorTransactionService.envNotEquals(null, new EnvYaml()));
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml(), null));
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml(), new EnvYaml()));
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml(""), new EnvYaml()));
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml(), new EnvYaml("")));
+
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml(""), new EnvYaml("")));
+        assertFalse(ProcessorTransactionService.envNotEquals(new EnvYaml("aaa"), new EnvYaml("aaa")));
+        assertFalse(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa")));
+
+        assertFalse(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of(), Map.of(), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of(), Map.of(), List.of(new DiskStorage("c", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "bbb")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "bbb")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","11"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa")));
+
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","11"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "22"), List.of(new DiskStorage("c", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "22"), List.of(new DiskStorage("c", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c1", "p")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c2", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p1")), "aaa"),
+                new EnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new DiskStorage("c", "p2")), "aaa")));
 
 
     }

@@ -130,29 +130,36 @@ public class CacheService {
     }
 
     public CacheData.Key getKey(TaskParamsYaml tpy) {
+        return getKey(tpy, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+    }
+
+    public static CacheData.Key getKey(
+            TaskParamsYaml tpy,
+            Function<Long, String> variableAsString, Function<Long, Blob> variableAsStream, Function<Long, Blob> globalVariableAsStream) {
         CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code);
         if (tpy.task.inline!=null) {
             fullKey.inline.putAll(tpy.task.inline);
         }
         for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
             if (input.context== EnumsApi.VariableContext.array) {
-                String data = variableService.getVariableDataAsString(input.id);
+                String data = variableAsString.apply(input.id);
                 VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
                 for (VariableArrayParamsYaml.Variable variable : vapy.array) {
                     if (variable.dataType== EnumsApi.DataType.variable) {
-                        fullKey.inputs.add(getSha256Length(Long.parseLong(variable.id), variableRepository::getDataAsStreamById));
+                        long variableId = Long.parseLong(variable.id);
+                        fullKey.inputs.add(getSha256Length(variableId, variableAsStream));
                     }
                     else {
-                        fullKey.inputs.add(getSha256Length(input.id, globalVariableRepository::getDataAsStreamById));
+                        fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
                     }
                 }
             }
             else {
                 if (input.context== EnumsApi.VariableContext.local) {
-                    fullKey.inputs.add(getSha256Length(input.id, variableRepository::getDataAsStreamById));
+                    fullKey.inputs.add(getSha256Length(input.id, variableAsStream));
                 }
                 else {
-                    fullKey.inputs.add(getSha256Length(input.id, globalVariableRepository::getDataAsStreamById));
+                    fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
                 }
             }
         }
@@ -160,7 +167,7 @@ public class CacheService {
         return fullKey;
     }
 
-    private CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, Blob> function) {
+    private static CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, Blob> function) {
         try {
             Blob blob = function.apply(variableId);
             if (blob==null) {

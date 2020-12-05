@@ -32,6 +32,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.env.DiskStorage;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -308,12 +309,43 @@ public class ProcessorTransactionService {
         return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
     }
 
-    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
-
-        if (isEnvEmpty(ss.env) && !isEnvEmpty(status.env)) {
+    public static boolean envNotEquals(@Nullable EnvYaml env1, @Nullable EnvYaml env2) {
+        if (isEnvEmpty(env1) && !isEnvEmpty(env2)) {
             return true;
         }
-        if (!isEnvEmpty(ss.env) && isEnvEmpty(status.env)) {
+        if (!isEnvEmpty(env1) && isEnvEmpty(env2)) {
+            return true;
+        }
+
+        if (isEnvEmpty(env1) && isEnvEmpty(env2)) {
+            return false;
+        }
+
+        // ###IDEA###, why?
+        if (!CollectionUtils.isMapEquals(env1.envs, env2.envs)) {
+            return true;
+        }
+        if (!CollectionUtils.isMapEquals(env1.mirrors, env2.mirrors)) {
+            return true;
+
+        }
+        if (CollectionUtils.isNotEmpty(env1.envs) && CollectionUtils.isEmpty(env2.envs)) {
+            return true;
+        }
+        if (env1.disk.size()!=env2.disk.size()) {
+            return true;
+        }
+        for (DiskStorage diskStorage : env1.disk) {
+            if (!env2.disk.contains(diskStorage)) {
+                return true;
+            }
+        }
+        return StringUtils.compare(env1.tags, env2.tags)!=0;
+    }
+
+    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
+
+        if (envNotEquals(ss.env, status.env)) {
             return true;
         }
 

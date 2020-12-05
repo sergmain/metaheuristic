@@ -58,13 +58,39 @@ public class CollectionUtils {
         return org.springframework.util.CollectionUtils.isEmpty(map);
     }
 
+    public static boolean isNotEmpty(@Nullable Map<?,?> map) {
+        return !org.springframework.util.CollectionUtils.isEmpty(map);
+    }
+
     public static List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
         final List<String> codes = new ArrayList<>();
         inputResourceCodes.forEach(codes::addAll);
         return codes;
     }
 
-    public static boolean isEquals(@Nullable List<String> l1, @Nullable List<String> l2) {
+    public static boolean isMapEquals( Map<String, String> map1, Map<String, String> map2) {
+        if (isEmpty(map1) && isEmpty(map2)) {
+            return true;
+        }
+        if (isNotEmpty(map1) && isEmpty(map2)) {
+            return false;
+        }
+
+        if (isEmpty(map1) && isNotEmpty(map2)) {
+            return false;
+        }
+        if (!isEquals(map1.keySet(), map2.keySet())) {
+            return false;
+        }
+        for (String key : map1.keySet()) {
+            if (!Objects.equals(map1.get(key), map2.get(key))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isEquals(@Nullable Collection<String> l1, @Nullable Collection<String> l2) {
         if (isEmpty(l1) && isEmpty(l2)) {
             return true;
         }
