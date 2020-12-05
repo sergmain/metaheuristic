@@ -48,7 +48,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -457,25 +456,4 @@ public class VariableService {
         return null;
     }
 
-    public CacheData.Sha256PlusLength getSha256Length(Long variableId) {
-        try {
-            Blob blob = variableRepository.getDataAsStreamById(variableId);
-            if (blob==null) {
-                String es = S.f("#171.320 Data for variableId #%d wasn't found", variableId);
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-            }
-            try (InputStream is = blob.getBinaryStream(); CountingInputStream cis = new CountingInputStream(is)) {
-                String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
-                long length = cis.getBytesRead();
-                return new CacheData.Sha256PlusLength(sha256, length);
-            }
-        } catch (CommonErrorWithDataException e) {
-            throw e;
-        } catch (Throwable e) {
-            String es = "#171.340 Error while storing data to file";
-            log.error(es, e);
-            throw new VariableCommonException(es, variableId);
-        }
-    }
 }

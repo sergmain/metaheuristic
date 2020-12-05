@@ -21,22 +21,29 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.sql.Blob;
+import java.util.function.Function;
 
 /**
  * @author Serge
@@ -55,6 +62,7 @@ public class CacheService {
     private final CacheVariableService cacheVariableService;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
+    private final GlobalVariableRepository globalVariableRepository;
 
     public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
 
@@ -131,15 +139,46 @@ public class CacheService {
                 String data = variableService.getVariableDataAsString(input.id);
                 VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
                 for (VariableArrayParamsYaml.Variable variable : vapy.array) {
-                    fullKey.inputs.add(variableService.getSha256Length(Long.parseLong(variable.id)));
+                    if (variable.dataType== EnumsApi.DataType.variable) {
+                        fullKey.inputs.add(getSha256Length(Long.parseLong(variable.id), variableRepository::getDataAsStreamById));
+                    }
+                    else {
+                        fullKey.inputs.add(getSha256Length(input.id, globalVariableRepository::getDataAsStreamById));
+                    }
                 }
             }
             else {
-                fullKey.inputs.add(variableService.getSha256Length(input.id));
+                if (input.context== EnumsApi.VariableContext.local) {
+                    fullKey.inputs.add(getSha256Length(input.id, variableRepository::getDataAsStreamById));
+                }
+                else {
+                    fullKey.inputs.add(getSha256Length(input.id, globalVariableRepository::getDataAsStreamById));
+                }
             }
         }
         fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
         return fullKey;
     }
 
+    private CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, Blob> function) {
+        try {
+            Blob blob = function.apply(variableId);
+            if (blob==null) {
+                String es = S.f("#171.320 Data for variableId #%d wasn't found", variableId);
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+            }
+            try (InputStream is = blob.getBinaryStream(); CountingInputStream cis = new CountingInputStream(is)) {
+                String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
+                long length = cis.getBytesRead();
+                return new CacheData.Sha256PlusLength(sha256, length);
+            }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Throwable e) {
+            String es = "#171.340 Error while storing data to file";
+            log.error(es, e);
+            throw new VariableCommonException(es, variableId);
+        }
+    }
 }
