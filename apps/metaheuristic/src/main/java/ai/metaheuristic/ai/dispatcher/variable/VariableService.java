@@ -307,7 +307,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = S.f("#171.220 Data for variableId #%d wasn't found", variableId);
+                String es = S.f("#171.220 Variable #%d wasn't found", variableId);
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
@@ -460,7 +460,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = S.f("#171.220 Data for variableId #%d wasn't found", variableId);
+                String es = S.f("#171.320 Data for variableId #%d wasn't found", variableId);
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
@@ -472,7 +472,7 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#171.240 Error while storing data to file";
+            String es = "#171.340 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }

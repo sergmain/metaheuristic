@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="delete from TaskImpl t where t.id=:id")
     void deleteById(Long id);
 
+    @Nullable
     @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     @Query(value="select t.execContextId from TaskImpl t where t.id=:taskId")
     Long getExecContextId(Long taskId);
