@@ -3,6 +3,7 @@
 /aiai-processor-h2
 /aiai-replication
 /config
+/docker
 /doc-dev
 /infra
 /logs
