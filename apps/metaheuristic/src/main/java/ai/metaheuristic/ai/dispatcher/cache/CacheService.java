@@ -31,7 +31,6 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -57,7 +56,6 @@ public class CacheService {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
 
-    @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
 
         CacheData.Key fullKey = getKey(tpy);
@@ -88,17 +86,30 @@ public class CacheService {
 
                 SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
                 if (simple==null) {
-                    throw new VariableCommonException("ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
+                    throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
                 }
                 if (simple.nullified) {
                     cacheVariableService.createAsNull(cacheProcess.id, output.name);
                 }
                 else {
-                    tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
+                    try {
+                        tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
+                    } catch (IOException e) {
+                        String es = "#611.060 Error: " + e.getMessage();
+                        log.error(es, e);
+                        throw new VariableCommonException(es, output.id);
+                    }
                     holder.files.add(tempFile);
                     variableService.storeToFile(output.id, tempFile);
 
-                    InputStream is = new FileInputStream(tempFile);
+                    InputStream is;
+                    try {
+                        is = new FileInputStream(tempFile);
+                    } catch (IOException e) {
+                        String es = "#611.080 Error: " + e.getMessage();
+                        log.error(es, e);
+                        throw new VariableCommonException(es, output.id);
+                    }
                     holder.inputStreams.add(is);
                     cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
                 }
