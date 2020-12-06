@@ -99,7 +99,7 @@ public class TaskParamsYaml implements BaseParams {
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {
@@ -129,12 +129,12 @@ public class TaskParamsYaml implements BaseParams {
         public boolean empty = false;
         private Boolean nullable;
 
-        // This field is used for creating a download link as extension
+        // This field is used as extension for creating a download link
         @Nullable
         public String ext;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {

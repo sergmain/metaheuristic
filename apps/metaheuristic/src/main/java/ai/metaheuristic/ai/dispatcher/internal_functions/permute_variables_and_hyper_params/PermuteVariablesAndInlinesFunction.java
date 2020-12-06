@@ -147,7 +147,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             return result;
         }
 
-        final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
@@ -163,6 +162,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
 
+        final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,

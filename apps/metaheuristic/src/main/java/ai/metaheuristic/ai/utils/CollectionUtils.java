@@ -102,7 +102,6 @@ public class CollectionUtils {
         }
 
         // ###IDEA###, why?
-        //noinspection ConstantConditions
         if (l1.size()!=l2.size()) {
             return false;
         }

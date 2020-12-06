@@ -306,7 +306,12 @@
                 function(key) {
                     let buttonState = buttonAxisStateMap[key];
                     if (buttonState.state==='show') {
-                        suffix += ( buttonState.key + ',');
+                        if (suffix==='') {
+                            suffix = buttonState.key;
+                        }
+                        else {
+                            suffix += (',' + buttonState.key);
+                        }
                     }
                 }
             );
@@ -325,6 +330,7 @@
                     }
                 }
             );
+            // we return ',' for empty result because we need a separator between two '/' in an url
             return suffix === '' ? ',' : suffix;
         }
 

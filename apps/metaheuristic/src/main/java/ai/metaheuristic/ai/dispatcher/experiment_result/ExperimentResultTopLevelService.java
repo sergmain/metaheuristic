@@ -483,13 +483,13 @@ public class ExperimentResultTopLevelService {
         if (apywc.experimentResult.features.isEmpty() ) {
             return EMPTY_PLOT_DATA;
         }
-        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
+        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc.experimentResult, feature, params);
         return collectDataForPlotting(apywc, selected, paramsAxis);
     }
 
     private List<ExperimentResultTaskParamsYaml> getTasksForFeatureIdAndParams(
-            Long experimentResultId, ExperimentResultParamsYamlWithCache estb1, ExperimentFeature feature, String[] params) {
-        final Map<Long, Integer> taskToTaskType = estb1.experimentResult.taskFeatures
+            Long experimentResultId, ExperimentResultParamsYaml experimentResult, ExperimentFeature feature, String[] params) {
+        final Map<Long, Integer> taskToTaskType = experimentResult.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
@@ -507,7 +507,7 @@ public class ExperimentResultTopLevelService {
                 .collect(Collectors.toList());
 
         if (!isEmpty(params)) {
-            selected = filterTasks(estb1.experimentResult, params, selected);
+            selected = filterTasks(experimentResult, params, selected);
         }
         return selected;
     }
@@ -806,7 +806,7 @@ public class ExperimentResultTopLevelService {
         if (feature == null) {
             return Page.empty();
         }
-        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, estb, feature, params);
+        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, estb.experimentResult, feature, params);
         List<ExperimentResultTaskParamsYaml> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
 
         for (ExperimentResultTaskParamsYaml atpy : subList) {

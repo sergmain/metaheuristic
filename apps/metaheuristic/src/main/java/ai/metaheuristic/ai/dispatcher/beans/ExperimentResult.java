@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -27,6 +28,8 @@ import java.io.Serializable;
 @Table(name = "MH_EXPERIMENT_RESULT")
 @Data
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 public class ExperimentResult implements Serializable {
     private static final long serialVersionUID = -1225513309547283331L;
 
