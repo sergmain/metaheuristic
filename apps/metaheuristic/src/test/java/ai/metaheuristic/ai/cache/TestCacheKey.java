@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class TestCacheKey {
 
-    private static final CacheData.Key KEY = new CacheData.Key("function-01");
+    private static final CacheData.Key KEY = new CacheData.Key("function-01", "");
     static {
         KEY.inline.put("top-inline",Map.of("key-1","value-1"));
         KEY.inputs.addAll(List.of(
@@ -39,7 +39,7 @@ public class TestCacheKey {
                 new CacheData.Sha256PlusLength("sha256-2",11L)));
     }
 
-    private static final String KEY_AS_STRING = "{\"functionCode\":\"function-01\",\"inline\":{\"top-inline\":{\"key-1\":\"value-1\"}},\"inputs\":[{\"sha256\":\"sha256-1\",\"length\":42},{\"sha256\":\"sha256-2\",\"length\":11}]}";
+    private static final String KEY_AS_STRING = "{\"functionCode\":\"function-01\",\"funcParams\":\"\",\"inline\":{\"top-inline\":{\"key-1\":\"value-1\"}},\"inputs\":[{\"sha256\":\"sha256-1\",\"length\":42},{\"sha256\":\"sha256-2\",\"length\":11}]}";
 
     @Test
     public void test() {

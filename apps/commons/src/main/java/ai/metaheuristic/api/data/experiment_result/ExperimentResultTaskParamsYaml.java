@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -55,11 +57,23 @@ public class ExperimentResultTaskParamsYaml implements BaseParams {
         public final LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TaskParams {
+        public final Map<String, String> allInline = new HashMap<>();
+        public final Map<String, String> inline = new HashMap<>();
+
+        public TaskParams(final Map<String, String> allInline, final Map<String, String> inline) {
+            this.allInline.putAll(allInline);
+            this.allInline.putAll(inline);
+        }
+    }
+
     public final Metrics metrics = new Metrics();
     public EnumsApi.Fitting fitting;
 
     public Long taskId;
-    public String taskParams;
+    public TaskParams taskParams;
     public int execState;
 
     public Long completedOn;

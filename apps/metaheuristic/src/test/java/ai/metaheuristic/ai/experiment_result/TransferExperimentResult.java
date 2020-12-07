@@ -77,6 +77,9 @@ public class TransferExperimentResult {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         assertNotNull(execContext);
 
+        if (true) {
+            throw new IllegalStateException("experimentResultService.storeExperimentToExperimentResult must be in transaction");
+        }
         OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext, taskParamsYaml);
         System.out.println("status: " + status);
 

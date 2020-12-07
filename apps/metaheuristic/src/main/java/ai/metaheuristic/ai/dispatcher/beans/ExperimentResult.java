@@ -29,7 +29,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @Cacheable
-@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExperimentResult implements Serializable {
     private static final long serialVersionUID = -1225513309547283331L;
 

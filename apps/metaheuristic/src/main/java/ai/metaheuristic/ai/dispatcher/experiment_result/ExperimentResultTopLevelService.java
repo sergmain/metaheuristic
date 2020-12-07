@@ -34,18 +34,15 @@ import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtil
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -558,13 +555,11 @@ public class ExperimentResultTopLevelService {
                 }
             }
 
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            int idxX = 0;
-            int idxY = 0;
-            if (taskParamYaml.task.inline!=null) {
-                idxX = mapX.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
-                idxY = mapY.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
-            }
+            Integer idxX1 = mapX.get(task.taskParams.inline.get(paramCleared.get(0)));
+            int idxX = idxX1 != null ? idxX1 : 0;
+            Integer idxY1 = mapY.get(task.taskParams.inline.get(paramCleared.get(1)));
+            int idxY = idxY1!=null ? idxY1 : 0;
+
             data.z[idxY][idxX] = data.z[idxY][idxX].add(task.metrics.values.get(metricKey));
         }
 
@@ -586,13 +581,12 @@ public class ExperimentResultTopLevelService {
 
         List<ExperimentResultTaskParamsYaml> selected = new ArrayList<>();
         for (ExperimentResultTaskParamsYaml task : tasks) {
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            if (taskParamYaml.task.inline==null) {
+            if (task.taskParams.inline.isEmpty()) {
                 continue;
             }
-            boolean[] isOk = new boolean[taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
+            boolean[] isOk = new boolean[task.taskParams.inline.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
+            for (Map.Entry<String, String> entry : task.taskParams.inline.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;

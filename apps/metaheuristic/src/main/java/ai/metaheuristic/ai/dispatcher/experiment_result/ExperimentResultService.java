@@ -46,19 +46,20 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYam
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.math.BigDecimal;
@@ -96,6 +97,17 @@ public class ExperimentResultService {
         }
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class VariableWithStatus {
+        public SimpleVariable variable;
+        public OperationStatusRest status;
+
+        public VariableWithStatus(OperationStatusRest status) {
+            this.status = status;
+        }
+    }
+
     public ExperimentResultData.ExperimentResultSimpleList getExperimentResultExperiments(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.experimentResultRowsLimit, pageable);
         ExperimentResultData.ExperimentResultSimpleList result = new ExperimentResultData.ExperimentResultSimpleList();
@@ -125,29 +137,42 @@ public class ExperimentResultService {
 
         String metricsVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "metrics");
         if (S.b(metricsVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.120 Meta 'metrics' must be defined and can't be empty");
         }
         String featureVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "feature-item");
         if (S.b(featureVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'feature-item' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.140 Meta 'feature-item' must be defined and can't be empty");
+        }
+        String fittingVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "fitting");
+        if (S.b(fittingVariableName)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.145 Meta 'fitting' must be defined and can't be empty");
+        }
+        String inlineVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "inline-permutation");
+        if (S.b(inlineVariableName)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.147 Meta 'inline-permutation' must be defined and can't be empty");
         }
 
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         ExecContextParamsYaml.VariableDeclaration variableDeclaration = execContextParamsYaml.variables;
 
-        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
-        if (S.b(item.inlineKey)) {
+        InlineVariableData.InlineVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
+        if (S.b(inlineVariableItem.inlineKey)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "Meta 'inline-key' wasn't found or empty.");
+                    "#604.160 Meta 'inline-key' wasn't found or empty.");
         }
-        if (item.inlines == null || item.inlines.isEmpty()) {
+        if (inlineVariableItem.inlines == null || inlineVariableItem.inlines.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
+                    "#604.180 Inline variable '" + inlineVariableItem.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
         List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContext.id, metricsVariableName);
         List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
+        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(execContext.id, fittingVariableName);
+        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(execContext.id, inlineVariableName);
         Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
+        featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+        fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+        inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
 
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 
@@ -159,7 +184,7 @@ public class ExperimentResultService {
             a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#604.140 General error while storing experiment, " + e.toString());
+                    "#604.200 General error while storing experiment, " + e.toString());
         }
 
         a.name = erpy.name;
@@ -193,30 +218,30 @@ public class ExperimentResultService {
                 log.info(S.f("Skip task %s with taskContextId #%s", t.id, taskContextId));
                 continue;
             }
+            if (CollectionUtils.isEmpty(tpy.task.inline)) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#604.210 Task inline wasn't found or empty.");
+            }
+            VariableWithStatus metricsVar = getVariableWithStatus(metricsVariables, execContext.id, taskContextId, metricsVariableName);
+            if (metricsVar.status.status!= EnumsApi.OperationStatus.OK) {
+                return metricsVar.status;
+            }
+            VariableWithStatus featureVar = getVariableWithStatus(featureVariables, execContext.id, taskContextId, featureVariableName);
+            if (featureVar.status.status!= EnumsApi.OperationStatus.OK) {
+                return metricsVar.status;
+            }
+            VariableWithStatus fittingVar = getVariableWithStatus(fittingVariables, execContext.id, taskContextId, fittingVariableName);
+            if (fittingVar.status.status!= EnumsApi.OperationStatus.OK) {
+                return metricsVar.status;
+            }
+            VariableWithStatus inlineVar = getVariableWithStatus(inlineVariables, execContext.id, taskContextId, inlineVariableName);
+            if (inlineVar.status.status!= EnumsApi.OperationStatus.OK) {
+                return metricsVar.status;
+            }
 
-            List<SimpleVariable> metricsVs = metricsVariables.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
-            if (metricsVs.isEmpty()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", metricsVariableName, taskContextId, execContext.id));
-            }
-            if (metricsVs.size()>1) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
-                                metricsVariableName, taskContextId, execContext.id, metricsVs.size()));
-            }
-            List<SimpleVariable> featureVs = featureVariables.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
-            if (featureVs.isEmpty()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", featureVariableName, taskContextId, execContext.id));
-            }
-            if (featureVs.size()>1) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        S.f("Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
-                                featureVariableName, taskContextId, execContext.id, featureVs.size()));
-            }
-            VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(variableService.getVariableDataAsString(featureVs.get(0).id));
+            VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(variableService.getVariableDataAsString(featureVar.variable.id));
 
-            String metrics = variableService.getVariableDataAsString(metricsVs.get(0).id);
+            String metrics = variableService.getVariableDataAsString(metricsVar.variable.id);
             MetricValues mvs = MetricsUtils.getMetricValues(metrics);
 
             ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy);
@@ -232,7 +257,11 @@ public class ExperimentResultService {
             ertpy.execState = t.getExecState();
             ertpy.taskId = t.getId();
 
-            ertpy.taskParams = t.getParams();
+            String inlineAsStr = variableService.getVariableDataAsString(inlineVar.variable.id);
+            Yaml yampUtil = YamlUtils.init(Map.class);
+            Map<String, String> currInline = yampUtil.load(inlineAsStr);
+            ertpy.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(inlineVariableItem.inlines, currInline);
+
             // typeAsString will have been initialized when ExperimentResultTaskParamsYaml will be requested
             // see method ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.findTasks
             ertpy.typeAsString = null;
@@ -240,9 +269,9 @@ public class ExperimentResultService {
             ertpy.metrics.values.putAll(mvs.values);
             ertpy.metrics.status = EnumsApi.MetricsStatus.Ok;
 
-            // 2020-04-27 add a support of under/over-fitting checker
-            ertpy.fitting = EnumsApi.Fitting.NORMAL;
-
+            String fitting = variableService.getVariableDataAsString(fittingVar.variable.id);
+            FittingYaml fittingYaml = FittingYamlUtils.BASE_YAML_UTILS.to(fitting);
+            ertpy.fitting = fittingYaml.fitting;
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
@@ -251,8 +280,24 @@ public class ExperimentResultService {
             experimentTaskRepository.save(at);
         }
 
-        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, item, features, taskFeatures);
+        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, inlineVariableItem, features, taskFeatures);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private static VariableWithStatus getVariableWithStatus(List<SimpleVariable> allVars, Long execContextId, String taskContextId, String varName) {
+        List<SimpleVariable> variables = allVars.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
+        if (variables.isEmpty()) {
+
+            return new VariableWithStatus(new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    S.f("#604.220 Variable '%s' with taskContext '%s' wasn't found in execContext #%d", varName, taskContextId, execContextId)));
+        }
+
+        if (variables.size()>1) {
+            return new VariableWithStatus( new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    S.f("#604.240 Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
+                            varName, taskContextId, execContextId, variables.size())));
+        }
+        return new VariableWithStatus(variables.get(0), OperationStatusRest.OPERATION_STATUS_OK);
     }
 
     public static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy) {

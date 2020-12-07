@@ -55,6 +55,8 @@ public class ExperimentResultTaskParamsYamlUtilsV1
         trg.metrics.status = src.metrics.status;
         trg.metrics.values.putAll(src.metrics.values);
 
+        trg.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(src.taskParams.allInline, src.taskParams.inline);
+
         trg.checkIntegrity();
         return trg;
     }

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.utils.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
-import lombok.ToString;
 
 import java.util.*;
 
@@ -47,11 +46,13 @@ public class CacheData {
     @Data
     public static class Key {
         public String functionCode;
+        public String funcParams;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
         public final List<Sha256PlusLength> inputs = new ArrayList<>();
 
-        public Key(String functionCode) {
+        public Key(String functionCode, String funcParams) {
             this.functionCode = functionCode;
+            this.funcParams = funcParams;
         }
 
         @SneakyThrows

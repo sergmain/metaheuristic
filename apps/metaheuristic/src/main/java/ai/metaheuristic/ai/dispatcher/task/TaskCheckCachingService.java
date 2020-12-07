@@ -50,6 +50,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -151,9 +152,19 @@ public class TaskCheckCachingService {
                 throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
             }
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElse(null);
+                Object[] obj = vars.stream().filter(o-> o[1].equals(output.name)).findFirst().orElse(null);
                 if (obj==null) {
-                    log.warn("#609.100 cashProcess #{} is broken. Number of stored variable is {} but expected {}. CacheProcess will be invalidated", cacheProcess.id, vars.size(), tpy.task.outputs.size());
+                    log.warn("#609.100 cashProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.\n" +
+                                    "vars[0]: {}\nvars[1]: {}\nvars[2]: {}\n",
+                            cacheProcess.id, output.name,
+                            vars.get(0)[0]!=null?vars.get(0)[0].getClass().getName():null,
+                            vars.get(0)[1]!=null?vars.get(0)[1].getClass().getName():null,
+                            vars.get(0)[2]!=null?vars.get(0)[2].getClass().getName():null
+                    );
+                    log.warn("tpy.task.outputs:");
+                    tpy.task.outputs.forEach(o->log.warn("'\t{}", o.toString()));
+                    log.warn("vars:");
+                    vars.forEach(o->log.warn("'\t{}", Arrays.toString(o)));
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }

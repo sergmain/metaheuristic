@@ -1,6 +1,6 @@
 // helper functions
 
-let /*{boolean}*/ isDebug = false;
+let /*{boolean}*/ isDebug = true;
 
 /**
  * @param {string} s
