@@ -64,7 +64,7 @@ public class ExperimentResultTaskParamsYamlV1 implements BaseParams {
 
         public TaskParamsV1(final Map<String, String> allInline, final Map<String, String> inline) {
             this.allInline.putAll(allInline);
-            this.allInline.putAll(inline);
+            this.inline.putAll(inline);
         }
     }
 
