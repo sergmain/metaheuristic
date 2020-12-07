@@ -140,7 +140,7 @@ public class CacheService {
             Function<Long, String> variableAsString, Function<Long, Blob> variableAsStream, Function<Long, Blob> globalVariableAsStream) {
         boolean paramsAsContent = MetaUtils.isTrue(tpy.task.function.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
 
-        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, paramsAsContent ? "" : tpy.task.function.params);
+        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, paramsAsContent || S.b(tpy.task.function.params)? "" : tpy.task.function.params);
         if (tpy.task.inline!=null) {
             fullKey.inline.putAll(tpy.task.inline);
         }
