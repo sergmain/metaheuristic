@@ -58,7 +58,18 @@ public abstract class BaseDataClass {
     }
 
     @JsonIgnore
-    public @NonNull String getErrorMessagesAsStr() {
+    public String getInfoMessagesAsStr() {
+        if (!isNotEmpty(infoMessages)) {
+            return "";
+        }
+        if (infoMessages.size()==1) {
+            return Objects.requireNonNull(infoMessages.get(0));
+        }
+        return Objects.requireNonNull(infoMessages.toString());
+    }
+
+    @JsonIgnore
+    public String getErrorMessagesAsStr() {
         if (!isNotEmpty(errorMessages)) {
             return "";
         }
@@ -69,12 +80,12 @@ public abstract class BaseDataClass {
     }
 
     @JsonIgnore
-    public @NonNull List<String> getErrorMessagesAsList() {
+    public List<String> getErrorMessagesAsList() {
         return isNotEmpty(errorMessages) ? errorMessages : List.of();
     }
 
     @JsonIgnore
-    public @NonNull List<String> getInfoMessagesAsList() {
+    public List<String> getInfoMessagesAsList() {
         return isNotEmpty(infoMessages) ? infoMessages : List.of();
     }
 

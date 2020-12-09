@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import org.springframework.context.annotation.Profile;
@@ -74,9 +73,7 @@ public interface BatchRepository extends CrudRepository<Batch, Long> {
     List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
 //    @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, b.execContextId, b.execState, w.state) " +
-            "from Batch b, ExecContextImpl w " +
-            "where b.execContextId=w.id and b.execState=3")
-    List<BatchAndExecContextStates> findAllUnfinished();
+    @Query(value="select b.id from Batch b where b.execState=3")
+    List<Long> findAllUnfinishedAsId();
 
 }

@@ -14,26 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch.data;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package ai.metaheuristic.ai.some;
 
 /**
- * !! this class is the top-level class
- * !! because it's using in spring's repository implementation
- *
  * @author Serge
- * Date: 12/10/2019
- * Time: 3:56 PM
+ * Date: 12/7/2020
+ * Time: 10:52 AM
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class BatchAndExecContextStates {
-    public Long batchId;
-    public Long execContextId;
-    public int batchState;
-    public int execContextState;
+public class NullableParams {
+
+    public static void main(String[] args) {
+        System.out.println(null + ":" + "aaa");
+    }
 }

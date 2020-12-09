@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -138,26 +137,30 @@ public class BatchService {
 
     @Transactional
     public void updateBatchStatuses() {
-        List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
-        for (BatchAndExecContextStates status : statuses) {
-            if (status.execContextState != EnumsApi.ExecContextState.ERROR.code && status.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
+        List<Long> batchIds = batchRepository.findAllUnfinishedAsId();
+        for (Long batchId : batchIds) {
+            Batch b = batchCache.findById(batchId);
+            if (b==null) {
+                log.warn("#990.050 batch wasn't found {}", batchId);
                 continue;
             }
-            Batch b = batchCache.findById(status.batchId);
-            if (b == null) {
-                log.warn("#990.050 batch wasn't found {}", status.batchId);
+            ExecContextImpl ec = execContextCache.findById(b.execContextId);
+            if (ec==null) {
+                continue;
+            }
+            if (ec.state != EnumsApi.ExecContextState.ERROR.code && ec.state != EnumsApi.ExecContextState.FINISHED.code) {
                 continue;
             }
             if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
-                throw new IllegalStateException("#990.060 Can't change state to Finished, " +
-                        "current state: " + Enums.BatchExecState.toState(b.execState));
+                log.warn("#990.060 Can't change state to Finished, current state: {}", Enums.BatchExecState.toState(b.execState));
+                continue;
             }
             if (b.execState == Enums.BatchExecState.Finished.code) {
                 continue;
             }
             b.execState = Enums.BatchExecState.Finished.code;
             batchCache.save(b);
-            dispatcherEventService.publishEventBatchFinished(status.batchId);
+            dispatcherEventService.publishEventBatchFinished(batchId);
         }
     }
 
