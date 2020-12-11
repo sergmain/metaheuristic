@@ -72,7 +72,7 @@ insert into mh_company
 VALUES
 (0, 2, 'Company #1', '');
 
--- !!! this insert must be executed after creating 'master company' immediately
+-- !!! this insert must be executed after creating 'master company' immediately;
 
 insert into mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
