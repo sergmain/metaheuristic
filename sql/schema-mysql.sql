@@ -1,4 +1,4 @@
--- names of tables must be in lower case!
+-- names of tables must be in lower case!;
 
 create table mh_ids
 (
@@ -69,7 +69,8 @@ insert into mh_company
 VALUES
 (1, 0, 1, 'master company', '');
 
-# !!! this insert must be executed after creating 'master company' immediately
+-- !!! this insert must be executed after creating 'master company' immediately;
+
 insert mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 select 'mh_ids', max(UNIQUE_ID) from mh_company;
@@ -149,7 +150,8 @@ CREATE INDEX mh_variable_name_idx
 CREATE UNIQUE INDEX mh_variable_name_all_context_ids_unq_idx
     ON mh_variable (NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID);
 
-# its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
+-- its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme;
+
 CREATE TABLE mh_variable_global
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
