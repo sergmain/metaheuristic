@@ -1,3 +1,7 @@
+# ========================================================================
+# !!! DO NOT FORGET TO REBUILD WITH MAVEN BEFORE BUILDING DOCKER IMAGE !!!
+# ========================================================================
+
 FROM alpine:latest
 
 RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic

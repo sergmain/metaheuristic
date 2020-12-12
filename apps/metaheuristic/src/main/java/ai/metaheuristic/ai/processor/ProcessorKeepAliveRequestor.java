@@ -83,7 +83,7 @@ public class ProcessorKeepAliveRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (this.dispatcher == null) {
-            throw new IllegalStateException("#776.010 Can'r find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("#776.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
         this.serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
@@ -170,7 +170,7 @@ public class ProcessorKeepAliveRequestor {
                     case UNAUTHORIZED:
                     case FORBIDDEN:
                     case NOT_FOUND:
-                        log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+                        log.error("#776.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
                         break;
                     default:
                         throw e;
@@ -179,41 +179,41 @@ public class ProcessorKeepAliveRequestor {
             catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
-                    log.error("#775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
+                    log.error("#776.090 Connection error: url: {}, err: {}", url, cause.getMessage());
                 }
                 else if (cause instanceof UnknownHostException) {
-                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof ConnectTimeoutException) {
-                    log.error("#775.093 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SocketTimeoutException) {
-                    log.error("#775.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
-                    log.error("#775.093 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
-                    log.error("#775.100 Error, url: " + url, e);
+                    log.error("#776.100 Error, url: " + url, e);
                 }
             }
             catch (RestClientException e) {
                 if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
                     int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
                     if (errorCode==503) {
-                        log.error("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                        log.error("#776.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
                     else {
-                        log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
+                        log.error("#776.110 Error accessing url: {}, error: {}", url, e.getMessage());
                     }
                 }
                 else {
-                    log.error("#775.120 Error accessing url: {}", url);
-                    log.error("#775.125 Stacktrace", e);
+                    log.error("#776.120 Error accessing url: {}", url);
+                    log.error("#776.125 Stacktrace", e);
                 }
             }
         } catch (Throwable e) {
-            log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
+            log.error("#776.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
     }
 }

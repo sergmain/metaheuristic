@@ -82,7 +82,7 @@ public class DispatcherRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
-            throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("#775.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
         serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
     }
