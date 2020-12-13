@@ -50,7 +50,7 @@ public class DispatcherLookupExtendedService {
                     "authType", "restPassword", "restUsername", "asset", "acceptOnlySignedFunctions"
             ),
             List.of("acceptOnlySignedFunctions"),
-            SEE_MORE_INFO, List.of("1", "2"),
+            SEE_MORE_INFO, List.of("1"),
             "the config file dispatcher.yaml",
             (es)-> {System.exit(-1); return null;}
     );

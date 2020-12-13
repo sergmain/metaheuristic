@@ -66,9 +66,9 @@ public class FunctionTopLevelService {
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
     public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
             "functions",
-            List.of("code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap"),
+            List.of("code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap", "content"),
             List.of(),
-            SEE_MORE_INFO, List.of("1"),
+            SEE_MORE_INFO, List.of("1", "2"),
             "the config file functions.yaml",
             (es)-> es
     );
