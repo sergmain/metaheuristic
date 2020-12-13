@@ -85,8 +85,14 @@ public class FunctionCoreUtils {
         return FUNCTION_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumWhenGitSourcing(FunctionConfigListYaml.FunctionConfig functionConfig) {
-        return "" + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params;
+    public static String getDataForChecksumForConfigOnly(FunctionConfigListYaml.FunctionConfig functionConfig) {
+        // old version
+//        return "" + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params;
+
+        return functionConfig.code + " " + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params +
+                (S.b(functionConfig.content) ? "" : " " + functionConfig.content) +
+                (functionConfig.git!=null ? " " + functionConfig.git.branch+":"+functionConfig.git.commit : "") +
+                (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher ? "" : " " + functionConfig.sourcing );
     }
 
 

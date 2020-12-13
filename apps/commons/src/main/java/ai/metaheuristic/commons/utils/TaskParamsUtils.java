@@ -27,7 +27,7 @@ import org.springframework.lang.NonNull;
  */
 public class TaskParamsUtils {
 
-    public static TaskParamsYaml.FunctionConfig toFunctionConfig(@NonNull FunctionConfigYaml src) {
+    public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -41,6 +41,7 @@ public class TaskParamsUtils {
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;
         trg.type = src.type;
+        trg.content = src.content;
         return trg;
     }
 }

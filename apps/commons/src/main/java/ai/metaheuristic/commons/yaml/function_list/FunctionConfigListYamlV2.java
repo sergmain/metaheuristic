@@ -81,6 +81,7 @@ public class FunctionConfigListYamlV2 implements BaseParams {
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.HashAlgo, String> checksumMap;
+        @Nullable
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();

@@ -28,12 +28,11 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -66,9 +66,9 @@ public class CacheService {
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
 
-    public void storeVariables(TaskParamsYaml tpy, DataHolder holder) {
+    public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function, DataHolder holder) {
 
-        CacheData.Key fullKey = getKey(tpy);
+        CacheData.Key fullKey = getKey(tpy, function);
 
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
@@ -131,16 +131,20 @@ public class CacheService {
 
     }
 
-    public CacheData.Key getKey(TaskParamsYaml tpy) {
-        return getKey(tpy, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+    public CacheData.Key getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+        return getKey(tpy, function, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }
 
     public static CacheData.Key getKey(
             TaskParamsYaml tpy,
+            ExecContextParamsYaml.FunctionDefinition function,
             Function<Long, String> variableAsString, Function<Long, Blob> variableAsStream, Function<Long, Blob> globalVariableAsStream) {
-        boolean paramsAsContent = MetaUtils.isTrue(tpy.task.function.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
 
-        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, paramsAsContent || S.b(tpy.task.function.params)? "" : tpy.task.function.params);
+        String params = S.b(tpy.task.function.params) ? "" : tpy.task.function.params;
+        if (!S.b(function.params)) {
+            params = params + " " + function.params;
+        }
+        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, params);
         if (tpy.task.inline!=null) {
             fullKey.inline.putAll(tpy.task.inline);
         }

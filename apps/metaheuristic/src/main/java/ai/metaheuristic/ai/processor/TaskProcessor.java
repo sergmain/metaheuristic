@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
@@ -481,6 +480,7 @@ public class TaskProcessor {
         }
         else {
             // function.file is executable file
+            // TODO 2020.12.12 what does this mean?
             cmd = new ArrayList<>();
         }
 
@@ -501,29 +501,29 @@ public class TaskProcessor {
                         //noinspection UseBulkOperation
                         Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
                     }
+                    else if (!S.b(functionPrepareResult.function.content)) {
+                        final String metaExt = MetaUtils.getValue(functionPrepareResult.function.metas,
+                                ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
+                        String ext = S.b(metaExt) ? ".txt" : metaExt;
+                        if (ext.indexOf('.')==-1) {
+                            ext = "." + ext;
+                        }
+
+                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
+                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.params, StandardCharsets.UTF_8 );
+
+                        cmd.add(execFile.getAbsolutePath());
+                    }
+                    else {
+                        log.warn("#100.325 How?");
+                    }
                     break;
                 default:
                     throw new IllegalStateException("#100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }
 
-            if (!functionPrepareResult.function.skipParams) {
-                if (StringUtils.isNoneBlank(functionPrepareResult.function.params)) {
-                    final Meta meta = MetaUtils.getMeta(functionPrepareResult.function.metas,
-                            ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                    if (MetaUtils.isTrue(meta)) {
-                        final Meta metaExt = MetaUtils.getMeta(functionPrepareResult.function.metas,
-                                ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
-                        String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
-                                ? metaExt.value : ".txt";
-
-                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
-                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.params, StandardCharsets.UTF_8 );
-                        cmd.add( execFile.getAbsolutePath() );
-                    }
-                    else {
-                        cmd.addAll(Arrays.asList(StringUtils.split(functionPrepareResult.function.params)));
-                    }
-                }
+            if (!functionPrepareResult.function.skipParams && !S.b(functionPrepareResult.function.params)) {
+                cmd.addAll(Arrays.asList(StringUtils.split(functionPrepareResult.function.params)));
                 cmd.add(paramFile.getAbsolutePath());
             }
 

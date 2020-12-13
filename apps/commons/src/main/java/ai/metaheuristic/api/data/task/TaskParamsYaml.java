@@ -127,6 +127,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable String type;
 
         public boolean empty = false;
+        @Nullable
         private Boolean nullable;
 
         // This field is used as extension for creating a download link
@@ -163,6 +164,7 @@ public class TaskParamsYaml implements BaseParams {
          * code of function, i.e. simple-app:1.0
          */
         public String code;
+        @Nullable
         public String type;
 
         // Nullable for internal context, NonNull for external
@@ -173,6 +175,7 @@ public class TaskParamsYaml implements BaseParams {
          * <p>
          * this isn't a holder for yaml-based config
          */
+        @Nullable
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
@@ -186,6 +189,8 @@ public class TaskParamsYaml implements BaseParams {
          */
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
+        @Nullable
+        public String content;
     }
 
     @Data

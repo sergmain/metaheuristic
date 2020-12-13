@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -266,20 +265,26 @@ public class FunctionTopLevelService {
 
                     switch(functionConfig.sourcing) {
                         case dispatcher:
-                            file = new File(srcDir, functionConfig.file);
-                            if (!file.exists()) {
-                                final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
-                                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
-                                log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
-                                continue;
+                            if (S.b(functionConfig.file)) {
+                                String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
+                                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
                             }
-                            try (InputStream inputStream = new FileInputStream(file)) {
-                                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, inputStream);
+                            else {
+                                file = new File(srcDir, functionConfig.file);
+                                if (!file.exists()) {
+                                    final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
+                                    statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                                    log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
+                                    continue;
+                                }
+                                try (InputStream inputStream = new FileInputStream(file)) {
+                                    sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, inputStream);
+                                }
                             }
                             break;
                         case processor:
                         case git:
-                            String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
+                            String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
                             sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }
@@ -341,22 +346,7 @@ public class FunctionTopLevelService {
                 FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
                 if (!functionConfig.skipParams) {
-                    boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                    if (paramsAsFile) {
-                        // TODO 2019-10-09 need to handle a case when field 'params'
-                        //  contains the actual code (mh.function-params-as-file==true)
-                        //  2020-09-12 need to add a new field 'content' which will hold the content of file
-                        // functionConfig.params = produceFinalCommandLineParams(null, functionDef.getParams());
-
-                        if (!S.b(functionDef.getParams())) {
-                            log.error("#295.035 defining parameters in SourceCode " +
-                                    "and using FUnction.params as a holder for a code isn't supported right now. " +
-                                    "Will be executed without a parameter from SourceCode");
-                        }
-                    }
-                    else {
-                        functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
-                    }
+                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
                 }
             } else {
                 log.warn("#295.040 Can't find function for code {}", functionDef.getCode());

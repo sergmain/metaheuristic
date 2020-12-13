@@ -39,6 +39,7 @@ import java.util.Map;
  * Date: 6/17/2019
  * Time: 9:10 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Data
 @EqualsAndHashCode
 public class TaskParamsYamlV1 implements BaseParams {
@@ -130,6 +131,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public @Nullable String type;
 
         public boolean empty = false;
+        @Nullable
         private Boolean nullable;
 
         // This field is used for creating a download link as extension
@@ -137,7 +139,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String ext;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {
@@ -166,6 +168,7 @@ public class TaskParamsYamlV1 implements BaseParams {
          * code of function, i.e. simple-app:1.0
          */
         public String code;
+        @Nullable
         public String type;
 
         // Nullable for internal context, NonNull for external
@@ -176,6 +179,7 @@ public class TaskParamsYamlV1 implements BaseParams {
          * <p>
          * this isn't a holder for yaml-based config
          */
+        @Nullable
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
@@ -189,6 +193,8 @@ public class TaskParamsYamlV1 implements BaseParams {
          */
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
+        @Nullable
+        public String content;
     }
 
     @Data

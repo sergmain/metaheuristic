@@ -75,6 +75,7 @@ public class TestFunctionConfig {
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.params = "content-of-file";
+        config.sourcing= EnumsApi.FunctionSourcing.processor;
         config.metas.add(Map.of(ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META, "true"));
         config.metas.add(Map.of("some-meta", "111"));
 

@@ -17,6 +17,7 @@ package ai.metaheuristic.apps.package_function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
@@ -37,6 +38,7 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @SpringBootApplication
@@ -104,6 +106,10 @@ public class PackageFunction implements CommandLineRunner {
                 isError=true;
             }
             if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+                if (S.b(function.file)) {
+                    System.out.println("function " + function.code + " has an empty 'file' field.");
+                    isError = true;
+                }
                 File sn = new File(functionYamlFile.getParent(), function.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
@@ -131,11 +137,12 @@ public class PackageFunction implements CommandLineRunner {
             String sum;
             if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
                     functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
-                String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
+                String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
                 sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final File functionFile = new File(targetDir, functionConfig.file);
+                // ###IDEA### why?
+                final File functionFile = new File(targetDir, Objects.requireNonNull(functionConfig.file));
                 FileUtils.copyFile(new File(functionConfig.file), functionFile);
                 try (FileInputStream fis = new FileInputStream(functionFile)) {
                     sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);

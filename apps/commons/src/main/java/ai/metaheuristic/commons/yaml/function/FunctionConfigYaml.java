@@ -66,19 +66,26 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
      * code of function, i.e. simple-app:1.0
      */
     public String code;
+    @Nullable
     public String type;
+    @Nullable
     public String file;
     /**
      * params for command line for invoking function
      * <p>
      * this isn't a holder for yaml-based config
      */
+    @Nullable
     public String params;
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
-    public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
-    public @Nullable GitInfo git;
+    @Nullable
+    public Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
+    @Nullable
+    public GitInfo git;
     public boolean skipParams = false;
     public @Nullable List<Map<String, String>> metas = new ArrayList<>();
+    @Nullable
+    public String content;
 
 }

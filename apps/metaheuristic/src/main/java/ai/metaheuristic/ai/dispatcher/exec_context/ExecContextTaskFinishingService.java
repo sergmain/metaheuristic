@@ -26,9 +26,11 @@ import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -86,7 +88,13 @@ public class ExecContextTaskFinishingService {
                 execContext, task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
 
         if (checkCaching && tpy.task.cache!=null && tpy.task.cache.enabled) {
-            cacheService.storeVariables(tpy, holder);
+            ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+            ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+            if (p==null) {
+                log.warn("#318.093 Process {} wasn't found", tpy.task.processCode);
+                return null;
+            }
+            cacheService.storeVariables(tpy, p.function, holder);
         }
         return null;
     }

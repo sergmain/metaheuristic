@@ -35,9 +35,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -122,9 +124,16 @@ public class TaskCheckCachingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+        if (p==null) {
+            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
+            return null;
+        }
+
         CacheData.Key fullKey;
         try {
-            fullKey = cacheService.getKey(tpy);
+            fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
             log.info("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
             return null;

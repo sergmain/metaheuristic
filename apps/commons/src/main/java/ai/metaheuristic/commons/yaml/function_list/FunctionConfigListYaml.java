@@ -44,9 +44,19 @@ public class FunctionConfigListYaml implements BaseParams {
         }
         List<String> errors = new ArrayList<>();
         for (FunctionConfig function : functions) {
-            if (!S.b(function.file) && !S.b(function.content)) {
-                errors.add(S.f("function %s has both - file and content", function.code));
+            if (!S.b(function.content) && !S.b(function.file)) {
+                errors.add(S.f("function %s has both - content and file", function.code));
             }
+            if (!S.b(function.content) && function.git!=null) {
+                errors.add(S.f("function %s has both - content and git definitions", function.code));
+            }
+            if (!S.b(function.content) && function.sourcing!= EnumsApi.FunctionSourcing.processor) {
+                errors.add(S.f("function %s has content but sourcing is %s, must be FunctionSourcing.processor", function.code, function.sourcing));
+            }
+            if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.content) && S.b(function.file)) {
+                errors.add(S.f("function %s has a sourcing as %s but content and file are empty", function.code));
+            }
+
         }
         if (!errors.isEmpty()) {
             throw new CheckIntegrityFailedException(errors.toString());
@@ -96,6 +106,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.HashAlgo, String> checksumMap;
+        @Nullable
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();

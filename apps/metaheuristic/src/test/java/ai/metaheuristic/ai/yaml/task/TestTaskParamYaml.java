@@ -101,7 +101,8 @@ public class TestTaskParamYaml {
                 Map.of(),
                 null,
                 false,
-                List.of()
+                List.of(),
+                null
         )));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
