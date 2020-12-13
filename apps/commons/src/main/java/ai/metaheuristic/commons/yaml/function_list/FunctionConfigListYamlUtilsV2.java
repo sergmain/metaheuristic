@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.commons.yaml.function_list;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -30,39 +32,45 @@ import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:10 AM
+ * Date: 12/12/2020
+ * Time: 5:28 PM
  */
-public class FunctionConfigListYamlUtilsV1
-        extends AbstractParamsYamlUtils<FunctionConfigListYamlV1, FunctionConfigListYamlV2, FunctionConfigListYamlUtilsV2, Void, Void, Void> {
+public class FunctionConfigListYamlUtilsV2
+        extends AbstractParamsYamlUtils<FunctionConfigListYamlV2, FunctionConfigListYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionConfigListYamlV1.class);
+        return YamlUtils.init(FunctionConfigListYamlV2.class);
     }
 
     @NonNull
     @Override
-    public FunctionConfigListYamlV2 upgradeTo(@NonNull FunctionConfigListYamlV1 src, Long ... vars) {
+    public FunctionConfigListYaml upgradeTo(@NonNull FunctionConfigListYamlV2 src, Long ... vars) {
         src.checkIntegrity();
-        FunctionConfigListYamlV2 trg = new FunctionConfigListYamlV2();
-        trg.functions = src.functions.stream().map(snSrc-> {
-            FunctionConfigListYamlV2.FunctionConfigV2 snTrg = new FunctionConfigListYamlV2.FunctionConfigV2();
-            BeanUtils.copyProperties(snSrc, snTrg);
+        FunctionConfigListYaml trg = new FunctionConfigListYaml();
+        trg.functions = src.functions.stream().map(fnCfgSrc-> {
+            FunctionConfigListYaml.FunctionConfig fnCfgTrg = new FunctionConfigListYaml.FunctionConfig();
+            BeanUtils.copyProperties(fnCfgSrc, fnCfgTrg);
 
-            if (snSrc.checksumMap!=null) {
-                snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
+            if (fnCfgSrc.checksumMap!=null) {
+                fnCfgTrg.checksumMap = new HashMap<>(fnCfgSrc.checksumMap);
             }
-            if (snSrc.metas!=null) {
-                snTrg.metas = new ArrayList<>(snSrc.metas);
+            if (fnCfgSrc.metas!=null) {
+                fnCfgTrg.metas = new ArrayList<>(fnCfgSrc.metas);
             }
-            return  snTrg;
+            boolean paramsAsFile = MetaUtils.isTrue(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+            if (paramsAsFile) {
+                fnCfgTrg.content = fnCfgSrc.params;
+                fnCfgTrg.params = null;
+                fnCfgTrg.metas = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+            }
+            return  fnCfgTrg;
         }).collect(Collectors.toList());
         trg.checkIntegrity();
         return trg;
@@ -75,8 +83,8 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public FunctionConfigListYamlUtilsV2 nextUtil() {
-        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -85,17 +93,17 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull FunctionConfigListYamlV1 yaml) {
+    public String toString(@NonNull FunctionConfigListYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public FunctionConfigListYamlV1 to(@NonNull String yaml) {
+    public FunctionConfigListYamlV2 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final FunctionConfigListYamlV1 p = getYaml().load(yaml);
+        final FunctionConfigListYamlV2 p = getYaml().load(yaml);
         return p;
     }
 

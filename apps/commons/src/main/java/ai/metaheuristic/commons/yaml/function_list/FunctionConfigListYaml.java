@@ -18,7 +18,11 @@ package ai.metaheuristic.commons.yaml.function_list;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,14 +30,27 @@ import java.util.List;
 import java.util.Map;
 
 @Data
+@Slf4j
 public class FunctionConfigListYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
-    public List<FunctionConfig> functions;
+    public List<FunctionConfig> functions = new ArrayList<>();
 
     @Override
     public boolean checkIntegrity() {
+        if (functions.isEmpty()) {
+            log.warn("list of functions is empty");
+        }
+        List<String> errors = new ArrayList<>();
+        for (FunctionConfig function : functions) {
+            if (!S.b(function.file) && !S.b(function.content)) {
+                errors.add(S.f("function %s has both - file and content", function.code));
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new CheckIntegrityFailedException(errors.toString());
+        }
         return true;
     }
 
@@ -65,13 +82,16 @@ public class FunctionConfigListYaml implements BaseParams {
          * code of function, i.e. simple-app:1.0
          */
         public String code;
+        @Nullable
         public String type;
+        @Nullable
         public String file;
         /**
          * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
+        @Nullable
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
@@ -79,6 +99,8 @@ public class FunctionConfigListYaml implements BaseParams {
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();
+        @Nullable
+        public String content;
     }
 
 }

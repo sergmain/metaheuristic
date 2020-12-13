@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +57,26 @@ public class MetaUtils {
     public static @Nullable Long getLong(@Nullable List<Map<String, String>> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? Long.valueOf(m.getValue()) : null;
+    }
+
+    public static List<Map<String, String>> remove(List<Map<String, String>> metas, @NonNull String... keys) {
+        if (keys.length==0) {
+            return metas;
+        }
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Map<String, String> meta : metas) {
+            boolean found = false;
+            for (String key : keys) {
+                if (meta.containsKey(key)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                result.add(meta);
+            }
+        }
+        return result;
     }
 
     public static @Nullable Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
