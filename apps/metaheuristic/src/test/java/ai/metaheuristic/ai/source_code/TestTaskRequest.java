@@ -119,8 +119,10 @@ public class TestTaskRequest extends FeatureMethods {
         // get a task for processing one more time
         DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
         assertNotNull(d1);
-        // there isn't any new task for processing
-        assertNull(d1.getAssignedTask());
+        // there isn't a new task for processing
+        // we will get the same task
+        assertNotNull(d1.getAssignedTask());
+        assertEquals(t.taskId, d1.getAssignedTask().taskId);
 
         storeConsoleResultAsOk();
         final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);

@@ -61,12 +61,14 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         });
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
-        getTaskAndAssignToProcessor_mustBeNewTask();
+        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask();
 
         // this processor already got task, so don't provide any new
         DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
-        // task is empty cos we still didn't finish those task
-        assertNull(task);
+        // we still didn't finish task
+        // so we will get the same task
+        assertNotNull(task);
+        assertEquals(assignedTask.taskId, task.taskId);
 
         storeConsoleResultAsError();
 

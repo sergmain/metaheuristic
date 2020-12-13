@@ -48,7 +48,7 @@ public class TestFunctionConfigSchemeValidation {
     public void testError() {
 
         String yaml = createYaml();
-        final int endIndex = yaml.lastIndexOf("version: 1");
+        final int endIndex = yaml.lastIndexOf("version: 2");
         assertNotEquals(-1, endIndex);
         yaml = yaml.substring(0, endIndex)+ "  aaa: 2\n";
         String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);

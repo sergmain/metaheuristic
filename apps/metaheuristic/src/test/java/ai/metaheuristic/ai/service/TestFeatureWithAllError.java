@@ -55,7 +55,11 @@ public class TestFeatureWithAllError extends FeatureMethods {
         DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
         log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
-        noNewTask();
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
+        // there isn't a new task for processing
+        // we will get the same task
+        assertNotNull(task);
+        assertEquals(simpleTask.taskId, task.taskId);
 
         mills = System.currentTimeMillis();
         log.info("Start storeConsoleResultAsError()");
@@ -65,18 +69,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
 
-        noNewTask();
+        task = taskProviderService.findTask(processor.getId(), false);
+        assertNull(task);
 
         log.info("noNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
     }
-
-    public void noNewTask() {
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
-        assertNull(task);
-
-        task = taskProviderService.findTask(processor.getId() + 1, false);
-        assertNull(task);
-    }
-
 }
