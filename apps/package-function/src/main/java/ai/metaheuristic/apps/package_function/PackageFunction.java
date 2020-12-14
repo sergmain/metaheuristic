@@ -38,7 +38,6 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @SpringBootApplication
@@ -127,6 +126,10 @@ public class PackageFunction implements CommandLineRunner {
                     isError = true;
                 }
             }
+            else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
+                // we don't need any checks here because all checks
+                // have been made in ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml.checkIntegrity
+            }
         }
         if (isError) {
             return;
@@ -141,8 +144,7 @@ public class PackageFunction implements CommandLineRunner {
                 sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                // ###IDEA### why?
-                final File functionFile = new File(targetDir, Objects.requireNonNull(functionConfig.file));
+                final File functionFile = new File(targetDir, functionConfig.file);
                 FileUtils.copyFile(new File(functionConfig.file), functionFile);
                 try (FileInputStream fis = new FileInputStream(functionFile)) {
                     sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
