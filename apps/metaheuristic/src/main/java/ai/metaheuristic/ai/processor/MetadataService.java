@@ -550,7 +550,7 @@ public class MetadataService {
 
     }
 
-    private Metadata.DispatcherInfo asCode(String dispatcherUrl) {
+    private static Metadata.DispatcherInfo asCode(String dispatcherUrl) {
         String s = dispatcherUrl.toLowerCase();
         if (dispatcherUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
