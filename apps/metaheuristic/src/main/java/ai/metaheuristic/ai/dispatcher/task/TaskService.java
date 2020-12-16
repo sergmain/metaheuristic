@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -43,7 +42,6 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
-    private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
 
     @Transactional(readOnly = true)

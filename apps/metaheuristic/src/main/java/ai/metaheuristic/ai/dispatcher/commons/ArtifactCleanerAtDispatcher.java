@@ -40,6 +40,7 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextRepository execContextRepository;
 
     public void fixedDelay() {
+        // !!! DO NOT CHANGE THE ORDER OF CALLING !!!
         deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();

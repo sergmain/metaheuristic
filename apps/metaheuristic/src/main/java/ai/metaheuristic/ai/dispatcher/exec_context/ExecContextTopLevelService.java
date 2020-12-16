@@ -202,6 +202,7 @@ public class ExecContextTopLevelService {
             case SEND_SCHEDULED:
                 log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
                 break;
+            case TASK_NOT_FOUND:
             case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
@@ -241,8 +242,9 @@ public class ExecContextTopLevelService {
     public void deleteOrphanExecContexts(List<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
             log.info("Found orphan execContext #{}", execContextId);
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+
             eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
 
     }

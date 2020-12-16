@@ -16,7 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -36,13 +41,29 @@ import java.util.List;
 public class VariableTopLevelService {
 
     private final VariableService variableService;
+    private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextCache execContextCache;
 
     public void deleteOrphanVariables(List<Long> orphanExecContextIds) {
+        TxUtils.checkTxNotExists();
         for (Long execContextId : orphanExecContextIds) {
-//            execContextSyncService.getWithSyncNullable(execContextId, ()->
-                variableService.deleteOrphanVariables(execContextId);
-//            );
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
+                for (List<Long> page : pages) {
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> {
+                        log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
+                        variableService.deleteOrphanVariables(page);
+                        return null;
+                    });
+                }
+            }
         }
     }
 

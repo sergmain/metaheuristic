@@ -17,13 +17,41 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.S;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
 
+@Slf4j
 public class CollectionUtils {
+
+    public static <T> List<List<T>> parseAsPages(List<T> ids, int pageSize) {
+        if (ids.isEmpty() || pageSize==0) {
+            return List.of();
+        }
+        List<List<T>> result = new ArrayList<>();
+        if (pageSize==1) {
+            for (T id : ids) {
+                result.add(List.of(id));
+            }
+            return result;
+        }
+
+        int pageNums = (ids.size() / pageSize) + (ids.size() == pageSize ? 0 : 1);
+        log.debug("pageNums: {}", pageNums);
+        for (int i = 0; i < pageNums; i++) {
+            int fromIndex = i * pageSize;
+            int toIndex = Math.min(ids.size(), (i + 1) * pageSize);
+            log.debug("fromIndex: {}", fromIndex);
+            log.debug("toIndex: {}", toIndex);
+            final List<T> subList = ids.subList(fromIndex, toIndex);
+            log.debug("subList: {}", subList);
+            result.add(subList);
+        }
+        return result;
+    }
 
     public static boolean checkTagAllowed(@Nullable String taskTag, @Nullable String processorTag) {
         boolean taskTagEmpty = S.b(taskTag);

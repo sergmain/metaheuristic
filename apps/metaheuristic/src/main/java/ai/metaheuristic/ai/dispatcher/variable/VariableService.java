@@ -447,11 +447,7 @@ public class VariableService {
     }
 
     @Transactional
-    public Void deleteOrphanVariables(Long execContextId) {
-        List<Long> ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId) ;
-        if (ids.isEmpty()) {
-            return null;
-        }
+    public Void deleteOrphanVariables(List<Long> ids) {
         variableRepository.deleteAllByIdIn(ids);
         return null;
     }

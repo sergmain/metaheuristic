@@ -20,8 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -61,8 +60,6 @@ public class TestCollectionUtils {
         assertFalse(CollectionUtils.checkTagAllowed("ddd", "aaa"));
         assertFalse(CollectionUtils.checkTagAllowed("ddd", "aaa,"));
         assertFalse(CollectionUtils.checkTagAllowed("ddd", " aaa, "));
-
-
     }
 
     @Test
@@ -88,8 +85,36 @@ public class TestCollectionUtils {
 
         assertTrue(CollectionUtils.isEquals(List.of("bbb", "aaa"), List.of("aaa", "bbb")));
         assertTrue(CollectionUtils.isEquals(List.of("bbb", "aaa"), List.of("aaa", "bbb")));
-
-
-
     }
+
+    public static final List<String> list = List.of("1", "2", "3", "4", "5");
+
+    @Test
+    public void testPaging() {
+        List<List<String>> pages;
+
+        pages = CollectionUtils.parseAsPages(list, 0);
+        assertEquals(0, pages.size());
+
+        pages = CollectionUtils.parseAsPages(List.of(), 0);
+        assertEquals(0, pages.size());
+
+        pages = CollectionUtils.parseAsPages(list, 1);
+        assertEquals(5, pages.size());
+        assertEquals(List.of("1"), pages.get(0));
+        assertEquals(List.of("2"), pages.get(1));
+        assertEquals(List.of("3"), pages.get(2));
+        assertEquals(List.of("4"), pages.get(3));
+        assertEquals(List.of("5"), pages.get(4));
+
+        pages = CollectionUtils.parseAsPages(list, 4);
+        assertEquals(2, pages.size());
+        assertEquals(List.of("1", "2", "3", "4"), pages.get(0));
+        assertEquals(List.of("5"), pages.get(1));
+
+        pages = CollectionUtils.parseAsPages(list, 6);
+        assertEquals(1, pages.size());
+        assertEquals(List.of("1", "2", "3", "4", "5"), pages.get(0));
+    }
+
 }

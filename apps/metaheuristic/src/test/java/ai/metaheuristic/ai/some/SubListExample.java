@@ -14,34 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.task;
+package ai.metaheuristic.ai.some;
 
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 
 import java.util.List;
 
 /**
  * @author Serge
- * Date: 9/23/2020
- * Time: 11:39 AM
+ * Date: 12/15/2020
+ * Time: 7:03 PM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
-public class TaskTransactionalService {
+public class SubListExample {
 
-    private final TaskRepository taskRepository;
+    public static final List<String> list = List.of("1", "2", "3", "4", "5", "6", "7");
+    private static final int PAGE = 6;
 
-    @Transactional
-    public void deleteOrphanTasks(List<Long> ids) {
-        taskRepository.deleteByIds(ids);
+    public static void main(String[] args) {
+        List<List<String>> pages = CollectionUtils.parseAsPages(list, PAGE);
+        for (List<String> page : pages) {
+            System.out.println(page);
+        }
     }
-
-
 }

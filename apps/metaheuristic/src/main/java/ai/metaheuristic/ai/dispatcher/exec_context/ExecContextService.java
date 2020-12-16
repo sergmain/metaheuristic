@@ -343,9 +343,8 @@ public class ExecContextService {
     @Transactional
     public Void deleteExecContext(Long execContextId) {
         eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
-        variableRepository.deleteByExecContextId(execContextId);
         execContextCache.deleteById(execContextId);
-        // tasks will be deleted in another thread launched by Scheduler
+        // tasks and variables will be deleted in another thread launched by Scheduler
         return null;
     }
 

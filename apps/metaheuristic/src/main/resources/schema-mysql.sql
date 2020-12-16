@@ -260,22 +260,6 @@ CREATE TABLE mh_exec_context
 CREATE INDEX mh_exec_context_state_idx
     ON mh_exec_context (STATE);
 
-CREATE TABLE mh_exec_context_shard
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
-    TASK_1_ID           INT UNSIGNED    NOT NULL,
-    TASK_2_ID           INT UNSIGNED    NOT NULL,
-    TASK_3_ID           INT UNSIGNED    NOT NULL,
-    TASK_4_ID           INT UNSIGNED    NOT NULL,
-    TASK_5_ID           INT UNSIGNED    NOT NULL,
-    EXEC_STATE          tinyint(1) not null default 0
-);
-
-CREATE INDEX mh_exec_context_shard_exec_context_id_idx
-    ON mh_exec_context_shard (EXEC_CONTEXT_ID);
-
 CREATE TABLE mh_experiment_result
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

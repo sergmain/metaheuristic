@@ -16,8 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,13 +43,33 @@ import java.util.List;
 public class TaskTopLevelService {
 
     private final ExecContextSyncService execContextSyncService;
-    private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextCache execContextCache;
+    private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final TaskTransactionalService taskTransactionalService;
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
+        TxUtils.checkTxNotExists();
         for (Long execContextId : orphanExecContextIds) {
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> taskTransactionalService.deleteOrphanTasks(execContextId));
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
             eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+
+            List<Long> ids;
+            while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
+                for (List<Long> page : pages) {
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> {
+                        log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
+                        taskTransactionalService.deleteOrphanTasks(page);
+                        return null;
+                    });
+                }
+            }
         }
     }
+
+
 }
