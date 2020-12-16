@@ -47,13 +47,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * @author Serge
@@ -84,24 +83,181 @@ public class TaskProviderTransactionalService {
         public int priority;
     }
 
-    private final CopyOnWriteArrayList<QueuedTask> tasks = new CopyOnWriteArrayList<>();
+    public static class AllocatedTask {
+        public final QueuedTask queuedTask;
+        public boolean assigned;
 
+        public AllocatedTask(QueuedTask queuedTask) {
+            this.queuedTask = queuedTask;
+        }
+    }
+
+    private static final int GROUP_SIZE = 5;
+    private static final int MIN_QUEUE_SIZE = 25;
+
+    public static class TaskGroup {
+        @Nullable
+        public Long execContextId;
+
+        public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
+        public int allocated = 0;
+
+        public TaskGroup(Long execContextId) {
+            this.execContextId = execContextId;
+        }
+
+        public boolean alreadyRegistered(Long taskId) {
+            if (execContextId==null) {
+                return false;
+            }
+            for (AllocatedTask task : tasks) {
+                if (task!=null && task.queuedTask.taskId.equals(taskId)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean deRegisterTask(Long taskId) {
+            for (int i = 0; i < tasks.length; i++) {
+                if (tasks[i]!=null && tasks[i].queuedTask.taskId.equals(taskId)) {
+                    tasks[i] = null;
+                    --allocated;
+                    if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
+                        execContextId = null;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean isNewTask() {
+            if (execContextId==null) {
+                return false;
+            }
+            for (AllocatedTask task : tasks) {
+                if (task != null && !task.assigned) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void addTask(QueuedTask task) {
+            if (allocated==GROUP_SIZE) {
+                throw new IllegalStateException("already allocated");
+            }
+            ++allocated;
+            for (int i = 0; i < tasks.length; i++) {
+                if (tasks[i]==null) {
+                    tasks[i] = new AllocatedTask(task);
+                }
+            }
+        }
+
+        public void reset() {
+            allocated = 0;
+            execContextId = null;
+            Arrays.fill(tasks, null);
+        }
+    }
+
+    private final AtomicInteger queuePtr = new AtomicInteger();
+    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
+
+    private void addNewTask(QueuedTask task) {
+        List<TaskGroup> temp = new ArrayList<>(taskGroups);
+        temp.sort(Comparator.comparingInt(o -> o.allocated));
+        TaskGroup taskGroup = null;
+        for (TaskGroup group : temp) {
+            if (task.execContextId.equals(group.execContextId)) {
+                if (group.allocated<GROUP_SIZE) {
+                    taskGroup = group;
+                }
+            }
+        }
+        if (taskGroup==null) {
+            taskGroup = new TaskGroup(task.execContextId);
+            taskGroups.add(taskGroup);
+        }
+        taskGroup.addTask(task);
+    }
+
+    private static class GroupIterator implements Iterator<QueuedTask> {
+
+        private int step = 0;
+        private int level = 0;
+        private final CopyOnWriteArrayList<TaskGroup> taskGroups;
+        private final AtomicInteger queuePtr;
+
+        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, AtomicInteger queuePtr) {
+            this.taskGroups = taskGroups;
+            this.queuePtr = queuePtr;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (step>=taskGroups.size()) {
+                if (level<GROUP_SIZE) {
+                    level;
+                    step = 0;
+                }
+                return false;
+            }
+            ++step;
+            return taskGroups.get((step+queuePtr.get())%taskGroups.size()).ha;
+        }
+
+        @Override
+        public QueuedTask next() {
+            return null;
+        }
+
+    }
+
+    private Iterator iterator() {
+        return new Iterator() {
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+
+            @Override
+            public Object next() {
+                return null;
+            }
+        };
+    }
+
+    /**
+     * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
+     * if there is any problem with such Processor. After cool-down period of time this processor can be used in processing.
+     *
+     * key - processorId
+     * value - milliseconds when a processor was banned;
+     */
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
-        List<QueuedTask> forRemoving = new ArrayList<>();
-        for (QueuedTask task : tasks) {
-            if (task.execContextId.equals(event.execContextId)) {
-                forRemoving.add(task);
+        List<TaskGroup> forRemoving = new ArrayList<>();
+        for (TaskGroup taskGroup : taskGroups) {
+            if (event.execContextId.equals(taskGroup.execContextId)) {
+                if (taskGroups.size()-forRemoving.size()>MIN_QUEUE_SIZE) {
+                    forRemoving.add(taskGroup);
+                }
+                else {
+                    taskGroup.reset();
+                }
             }
         }
         if (!forRemoving.isEmpty()) {
-            tasks.removeAll(forRemoving);
+            taskGroups.removeAll(forRemoving);
         }
     }
 
     private boolean alreadyRegistered(Long taskId) {
-        return tasks.stream().anyMatch(o->o.taskId.equals(taskId));
+        return taskGroups.stream().anyMatch(o->o.alreadyRegistered(taskId));
     }
 
     public void registerTask(Long execContextId, Long taskId) {
@@ -138,9 +294,8 @@ public class TaskProviderTransactionalService {
         }
 
         final QueuedTask queuedTask = new QueuedTask(task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
-        if (!tasks.contains(queuedTask)) {
-            tasks.add(queuedTask);
-        }
+        addNewTask(queuedTask);
+/*
         tasks.sort((o1, o2)->{
             if(o1.priority!=o2.priority) {
                 // sort in descendant order;
@@ -148,21 +303,28 @@ public class TaskProviderTransactionalService {
             }
             return Long.compare(o1.taskId, o2.taskId);
         });
+*/
     }
 
-    public void deRegisterTask(Long taskId) {
-        tasks.removeIf(o->o.taskId.equals(taskId));
+    public void deRegisterTask(Long execContextId, Long taskId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId)) {
+                if (taskGroup.deRegisterTask(taskId)) {
+                    return;
+                }
+            }
+        }
     }
 
     public boolean isQueueEmpty() {
-        return tasks.isEmpty();
+        return taskGroups.stream().noneMatch(TaskGroup::isNewTask);
     }
 
     @Nullable
     @Transactional
     public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
 
-        if (tasks.isEmpty()) {
+        if (isQueueEmpty()) {
             return null;
         }
 

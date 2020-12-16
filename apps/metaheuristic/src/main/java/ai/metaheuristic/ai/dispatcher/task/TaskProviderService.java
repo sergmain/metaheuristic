@@ -75,6 +75,7 @@ public class TaskProviderService {
 
     private static class TaskProviderServiceSync {}
 
+    // this sync is here because of the presence of @Transactional in TaskProviderTransactionalService
     private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
     public void registerTask(Long execContextId, Long taskId) {
@@ -99,26 +100,27 @@ public class TaskProviderService {
         }
     }
 
-    public void deregisterTask(Long taskId) {
+    public void deregisterTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
-            taskProviderTransactionalService.deRegisterTask(taskId);
+            taskProviderTransactionalService.deRegisterTask(execContextId, taskId);
         }
     }
 
     public boolean isQueueEmpty() {
-        return taskProviderTransactionalService.isQueueEmpty();
+        synchronized (syncObj) {
+            return taskProviderTransactionalService.isQueueEmpty();
+        }
     }
 
     @Nullable
     private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
 
-        if (taskProviderTransactionalService.isQueueEmpty()) {
-            return null;
-        }
-
         TaskImpl task;
         synchronized (syncObj) {
+            if (taskProviderTransactionalService.isQueueEmpty()) {
+                return null;
+            }
             task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
         }
         if (task!=null) {
@@ -128,13 +130,13 @@ public class TaskProviderService {
 
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
             synchronized (syncObj) {
-                taskProviderTransactionalService.deRegisterTask(task.id);
+                taskProviderTransactionalService.deRegisterTask(task.execContextId, task.id);
             }
         }
         return task;
     }
 
-    private static Map<Long, AtomicLong> processorCheckedOn = new HashMap<>();
+    private static final Map<Long, AtomicLong> processorCheckedOn = new HashMap<>();
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
