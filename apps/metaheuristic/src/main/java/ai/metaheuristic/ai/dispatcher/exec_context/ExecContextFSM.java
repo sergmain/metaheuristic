@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
@@ -27,9 +26,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,8 +51,6 @@ public class ExecContextFSM {
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
-    private final ExecContextVariableService execContextVariableService;
     private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
 

@@ -61,11 +61,8 @@ public class TaskTopLevelService {
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    execContextSyncService.getWithSyncNullable(execContextId, () -> {
-                        log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
-                        taskTransactionalService.deleteOrphanTasks(page);
-                        return null;
-                    });
+                    log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
                 }
             }
         }

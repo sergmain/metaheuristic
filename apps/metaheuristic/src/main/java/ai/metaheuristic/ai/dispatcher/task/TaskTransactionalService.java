@@ -39,9 +39,9 @@ public class TaskTransactionalService {
     private final TaskRepository taskRepository;
 
     @Transactional
-    public void deleteOrphanTasks(List<Long> ids) {
+    public Void deleteOrphanTasks(List<Long> ids) {
         taskRepository.deleteByIds(ids);
+        return null;
     }
-
 
 }
