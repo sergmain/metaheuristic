@@ -244,7 +244,7 @@ public class TaskProviderService {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
-                    deregisterTask(task.id);
+                    deregisterTask(task.execContextId, task.id);
                     return task;
                 }
             }

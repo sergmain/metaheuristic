@@ -36,9 +36,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -48,11 +45,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
+
+import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
 
 /**
  * @author Serge
@@ -71,164 +67,7 @@ public class TaskProviderTransactionalService {
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
 
-    @Data
-    @AllArgsConstructor
-    @EqualsAndHashCode(of = {"taskId"})
-    public static class QueuedTask {
-        public Long execContextId;
-        public Long taskId;
-        public TaskImpl task;
-        public TaskParamsYaml taskParamYaml;
-        public String tags;
-        public int priority;
-    }
-
-    public static class AllocatedTask {
-        public final QueuedTask queuedTask;
-        public boolean assigned;
-
-        public AllocatedTask(QueuedTask queuedTask) {
-            this.queuedTask = queuedTask;
-        }
-    }
-
-    private static final int GROUP_SIZE = 5;
-    private static final int MIN_QUEUE_SIZE = 25;
-
-    public static class TaskGroup {
-        @Nullable
-        public Long execContextId;
-
-        public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
-        public int allocated = 0;
-
-        public TaskGroup(Long execContextId) {
-            this.execContextId = execContextId;
-        }
-
-        public boolean alreadyRegistered(Long taskId) {
-            if (execContextId==null) {
-                return false;
-            }
-            for (AllocatedTask task : tasks) {
-                if (task!=null && task.queuedTask.taskId.equals(taskId)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public boolean deRegisterTask(Long taskId) {
-            for (int i = 0; i < tasks.length; i++) {
-                if (tasks[i]!=null && tasks[i].queuedTask.taskId.equals(taskId)) {
-                    tasks[i] = null;
-                    --allocated;
-                    if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
-                        execContextId = null;
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public boolean isNewTask() {
-            if (execContextId==null) {
-                return false;
-            }
-            for (AllocatedTask task : tasks) {
-                if (task != null && !task.assigned) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public void addTask(QueuedTask task) {
-            if (allocated==GROUP_SIZE) {
-                throw new IllegalStateException("already allocated");
-            }
-            ++allocated;
-            for (int i = 0; i < tasks.length; i++) {
-                if (tasks[i]==null) {
-                    tasks[i] = new AllocatedTask(task);
-                }
-            }
-        }
-
-        public void reset() {
-            allocated = 0;
-            execContextId = null;
-            Arrays.fill(tasks, null);
-        }
-    }
-
-    private final AtomicInteger queuePtr = new AtomicInteger();
-    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
-
-    private void addNewTask(QueuedTask task) {
-        List<TaskGroup> temp = new ArrayList<>(taskGroups);
-        temp.sort(Comparator.comparingInt(o -> o.allocated));
-        TaskGroup taskGroup = null;
-        for (TaskGroup group : temp) {
-            if (task.execContextId.equals(group.execContextId)) {
-                if (group.allocated<GROUP_SIZE) {
-                    taskGroup = group;
-                }
-            }
-        }
-        if (taskGroup==null) {
-            taskGroup = new TaskGroup(task.execContextId);
-            taskGroups.add(taskGroup);
-        }
-        taskGroup.addTask(task);
-    }
-
-    private static class GroupIterator implements Iterator<QueuedTask> {
-
-        private int step = 0;
-        private int level = 0;
-        private final CopyOnWriteArrayList<TaskGroup> taskGroups;
-        private final AtomicInteger queuePtr;
-
-        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, AtomicInteger queuePtr) {
-            this.taskGroups = taskGroups;
-            this.queuePtr = queuePtr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (step>=taskGroups.size()) {
-                if (level<GROUP_SIZE) {
-                    level;
-                    step = 0;
-                }
-                return false;
-            }
-            ++step;
-            return taskGroups.get((step+queuePtr.get())%taskGroups.size()).ha;
-        }
-
-        @Override
-        public QueuedTask next() {
-            return null;
-        }
-
-    }
-
-    private Iterator iterator() {
-        return new Iterator() {
-            @Override
-            public boolean hasNext() {
-                return false;
-            }
-
-            @Override
-            public Object next() {
-                return null;
-            }
-        };
-    }
+    private final TaskQueue taskQueue = new TaskQueue();
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -240,28 +79,11 @@ public class TaskProviderTransactionalService {
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
-        List<TaskGroup> forRemoving = new ArrayList<>();
-        for (TaskGroup taskGroup : taskGroups) {
-            if (event.execContextId.equals(taskGroup.execContextId)) {
-                if (taskGroups.size()-forRemoving.size()>MIN_QUEUE_SIZE) {
-                    forRemoving.add(taskGroup);
-                }
-                else {
-                    taskGroup.reset();
-                }
-            }
-        }
-        if (!forRemoving.isEmpty()) {
-            taskGroups.removeAll(forRemoving);
-        }
-    }
-
-    private boolean alreadyRegistered(Long taskId) {
-        return taskGroups.stream().anyMatch(o->o.alreadyRegistered(taskId));
+        taskQueue.deleteByExecContextId(event.execContextId);
     }
 
     public void registerTask(Long execContextId, Long taskId) {
-        if (alreadyRegistered(taskId)) {
+        if (taskQueue.alreadyRegistered(taskId)) {
             return;
         }
 
@@ -294,7 +116,7 @@ public class TaskProviderTransactionalService {
         }
 
         final QueuedTask queuedTask = new QueuedTask(task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
-        addNewTask(queuedTask);
+        taskQueue.addNewTask(queuedTask);
 /*
         tasks.sort((o1, o2)->{
             if(o1.priority!=o2.priority) {
@@ -307,17 +129,11 @@ public class TaskProviderTransactionalService {
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {
-        for (TaskGroup taskGroup : taskGroups) {
-            if (execContextId.equals(taskGroup.execContextId)) {
-                if (taskGroup.deRegisterTask(taskId)) {
-                    return;
-                }
-            }
-        }
+        taskQueue.deRegisterTask(execContextId, taskId);
     }
 
     public boolean isQueueEmpty() {
-        return taskGroups.stream().noneMatch(TaskGroup::isNewTask);
+        return taskQueue.isQueueEmpty();
     }
 
     @Nullable
@@ -333,12 +149,16 @@ public class TaskProviderTransactionalService {
             return null;
         }
 
-        TaskImpl resultTask = null;
+        AllocatedTask resultTask = null;
         List<QueuedTask> forRemoving = new ArrayList<>();
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
         try {
-            for (QueuedTask queuedTask : tasks) {
+            GroupIterator iter = taskQueue.iterator();
+            while (iter.hasNext()) {
+                AllocatedTask allocatedTask = iter.next();
+                QueuedTask queuedTask = allocatedTask.queuedTask;
+
                 if (!statuses.isStarted(queuedTask.execContextId)) {
                     continue;
                 }
@@ -407,7 +227,7 @@ public class TaskProviderTransactionalService {
                     }
                 }
 
-                resultTask = queuedTask.task;
+                resultTask = allocatedTask;
                 // check that downgrading is supporting
                 try {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
@@ -415,7 +235,7 @@ public class TaskProviderTransactionalService {
                     String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#317.140 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), processor.id, psy.taskParamsVersion);
+                            queuedTask.task.id, processor.id, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
                 }
@@ -426,16 +246,16 @@ public class TaskProviderTransactionalService {
             }
         }
         finally {
-            tasks.removeAll(forRemoving);
+            taskQueue.removeAll(forRemoving);
         }
 
         if (resultTask == null) {
             return null;
         }
 
-        TaskImpl t = taskRepository.findById(resultTask.id).orElse(null);
+        TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
-            log.warn("#317.015 Can't assign task #{}, task doesn't exist", resultTask.id);
+            log.warn("#317.015 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
             return null;
         }
         // normal way of operation for this Processor
@@ -446,16 +266,11 @@ public class TaskProviderTransactionalService {
         t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         t.setResultResourceScheduledOn(0);
 
+        resultTask.assigned = true;
         return t;
     }
 
     public void deregisterTasksByExecContextId(Long execContextId) {
-        List<QueuedTask> forRemoving = new ArrayList<>();
-        for (QueuedTask queuedTask : tasks) {
-            if (queuedTask.execContextId.equals(execContextId)) {
-                forRemoving.add(queuedTask);
-            }
-        }
-        tasks.removeAll(forRemoving);
+        taskQueue.deleteByExecContextId(execContextId);
     }
 }
