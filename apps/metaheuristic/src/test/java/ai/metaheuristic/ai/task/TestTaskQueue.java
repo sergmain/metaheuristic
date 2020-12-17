@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,6 +117,28 @@ public class TestTaskQueue {
 
         assertThrows(IllegalStateException.class, ()-> taskGroup.addTask(task_1_6));
 
+        taskGroup.reset();
+
+        assertFalse(taskGroup.isNewTask());
+        assertTrue(taskGroup.noneTasks());
+        assertTrue(taskGroup.isEmpty());
+
+        taskGroup.addTask(task_1_1);
+        taskGroup.addTask(task_1_2);
+        taskGroup.addTask(task_1_3);
+        taskGroup.addTask(task_1_4);
+        taskGroup.addTask(task_1_5);
+
+        assertTrue(taskGroup.isNewTask());
+
+        taskGroup.assignTask(task_1_1.taskId);
+        taskGroup.assignTask(task_1_2.taskId);
+        taskGroup.assignTask(task_1_3.taskId);
+        taskGroup.assignTask(task_1_4.taskId);
+        taskGroup.assignTask(task_1_5.taskId);
+
+        assertFalse(taskGroup.isNewTask());
+
     }
 
     @Test
@@ -180,5 +202,65 @@ public class TestTaskQueue {
         taskQueue.shrink();
 
         assertEquals(2, taskQueue.groupCount());
+
+        TaskQueue.AllocatedTask allocatedTask;
+        TaskQueue.GroupIterator iter;
+
+        iter = taskQueue.getIterator();
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_2.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_3.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_4.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_5.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_6.taskId, allocatedTask.queuedTask.taskId);
+
+        assertFalse(iter.hasNext());
+
+        taskQueue.deRegisterTask(task_1_2.execContextId, task_1_2.taskId);
+        taskQueue.deRegisterTask(task_1_4.execContextId, task_1_4.taskId);
+        taskQueue.deRegisterTask(task_1_5.execContextId, task_1_5.taskId);
+
+        iter = taskQueue.getIterator();
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_3.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_6.taskId, allocatedTask.queuedTask.taskId);
+
+        final TaskQueue.GroupIterator iterTemp = iter;
+        assertFalse(iter.hasNext());
+        assertThrows(NoSuchElementException.class, iterTemp::next);
     }
 }

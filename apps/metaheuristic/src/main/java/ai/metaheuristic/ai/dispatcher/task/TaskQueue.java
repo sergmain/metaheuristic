@@ -26,7 +26,6 @@ import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +128,15 @@ public class TaskQueue {
             }
         }
 
+        public void assignTask(Long taskId) {
+            for (AllocatedTask task : tasks) {
+                if (task != null && task.queuedTask.taskId.equals(taskId)) {
+                    task.assigned = true;
+                    break;
+                }
+            }
+        }
+
         public void reset() {
             allocated = 0;
             execContextId = null;
@@ -138,7 +146,7 @@ public class TaskQueue {
         public boolean isEmpty() {
             boolean noneTasks = noneTasks();
             if (!noneTasks && execContextId==null) {
-                log.warn("There is a task but execContextId is null");
+                log.warn("There is a task but execContextId is null. Shouldn't happened.");
             }
             return execContextId==null || noneTasks;
         }
@@ -150,37 +158,56 @@ public class TaskQueue {
 
     public static class GroupIterator implements Iterator<AllocatedTask> {
 
-        private int step = 0;
-        private int level = 0;
+        private int groupPtr = 0;
+        private int taskPtr = 0;
         private final CopyOnWriteArrayList<TaskGroup> taskGroups;
-        private final AtomicInteger queuePtr;
 
-        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, AtomicInteger queuePtr) {
+        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups) {
             this.taskGroups = taskGroups;
-            this.queuePtr = queuePtr;
         }
 
         @Override
         public boolean hasNext() {
-            return true;
-//            return taskGroups.get((step+queuePtr.get())%taskGroups.size()).allocated==;
+            int idx = taskPtr;
+            for (int i = groupPtr; i < taskGroups.size(); i++) {
+                TaskGroup taskGroup = taskGroups.get(i);
+                for (int j = idx; j < GROUP_SIZE; j++) {
+                    AllocatedTask task = taskGroup.tasks[j];
+                    if (task!=null && !task.assigned) {
+                        return true;
+                    }
+                }
+                idx = 0;
+            }
+            return false;
         }
 
         @Override
         public AllocatedTask next() {
-            if (step>=taskGroups.size()) {
-                if (level<GROUP_SIZE) {
-                    step = 0;
+            for (; groupPtr < taskGroups.size(); groupPtr++) {
+                TaskGroup taskGroup = taskGroups.get(groupPtr);
+                for (; taskPtr < GROUP_SIZE; taskPtr++) {
+                    AllocatedTask task = taskGroup.tasks[taskPtr];
+                    if (task!=null && !task.assigned) {
+                        ++taskPtr;
+                        if (taskPtr==GROUP_SIZE) {
+                            taskPtr = 0;
+                            ++groupPtr;
+                        }
+                        return task;
+                    }
                 }
-                throw new NoSuchElementException();
+                taskPtr = 0;
             }
-            ++step;
             throw new NoSuchElementException();
         }
 
     }
 
-    private final AtomicInteger queuePtr = new AtomicInteger();
+    public GroupIterator getIterator() {
+        return new GroupIterator(taskGroups);
+    }
+
     private final int minQueueSize;
     private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
 
@@ -228,10 +255,6 @@ public class TaskQueue {
             taskGroups.add(taskGroup);
         }
         taskGroup.addTask(task);
-    }
-
-    public GroupIterator iterator() {
-        return new GroupIterator(taskGroups, queuePtr);
     }
 
     public void shrink() {

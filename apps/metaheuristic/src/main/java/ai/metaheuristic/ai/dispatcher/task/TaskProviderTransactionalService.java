@@ -154,7 +154,7 @@ public class TaskProviderTransactionalService {
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
         try {
-            GroupIterator iter = taskQueue.iterator();
+            GroupIterator iter = taskQueue.getIterator();
             while (iter.hasNext()) {
                 AllocatedTask allocatedTask = iter.next();
                 QueuedTask queuedTask = allocatedTask.queuedTask;
