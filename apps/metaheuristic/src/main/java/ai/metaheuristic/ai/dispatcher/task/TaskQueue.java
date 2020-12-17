@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -66,9 +67,11 @@ public class TaskQueue {
 
         public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
         public int allocated = 0;
+        public int priority;
 
-        public TaskGroup(Long execContextId) {
+        public TaskGroup(Long execContextId, int priority) {
             this.execContextId = execContextId;
+            this.priority = priority;
         }
 
         public boolean alreadyRegistered(Long taskId) {
@@ -90,6 +93,7 @@ public class TaskQueue {
                     --allocated;
                     if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
                         execContextId = null;
+                        priority = 0;
                     }
                     return true;
                 }
@@ -110,6 +114,14 @@ public class TaskQueue {
         }
 
         public void addTask(QueuedTask task) {
+            if (noneTasks()) {
+                priority = task.priority;
+            }
+            if (priority!= task.priority) {
+                throw new IllegalStateException(
+                        S.f("Different priority, group priority: %d, task priority %d",
+                                priority, task.priority));
+            }
             if (execContextId!=null && !execContextId.equals(task.execContextId)) {
                 throw new IllegalStateException("wrong execContextId");
             }
@@ -240,18 +252,28 @@ public class TaskQueue {
         List<TaskGroup> temp = new ArrayList<>(taskGroups);
         temp.sort(Comparator.comparingInt(o -> o.allocated));
         TaskGroup taskGroup = null;
-        for (TaskGroup group : temp) {
-            if (task.execContextId.equals(group.execContextId)) {
+        for (int i = 0; i < taskGroups.size(); i++) {
+            TaskGroup group = taskGroups.get(i);
+            if (group.priority < task.priority) {
+                taskGroup = new TaskGroup(task.execContextId, task.priority);
+                taskGroups.add(i, taskGroup);
+                break;
+            }
+
+            if (task.execContextId.equals(group.execContextId) && task.priority==group.priority) {
                 if (group.allocated<GROUP_SIZE) {
                     taskGroup = group;
                 }
             }
             else if (group.execContextId==null) {
                 taskGroup = group;
+                taskGroup.priority = task.priority;
             }
+
         }
+
         if (taskGroup==null) {
-            taskGroup = new TaskGroup(task.execContextId);
+            taskGroup = new TaskGroup(task.execContextId, task.priority);
             taskGroups.add(taskGroup);
         }
         taskGroup.addTask(task);

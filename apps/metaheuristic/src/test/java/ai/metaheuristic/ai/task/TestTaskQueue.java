@@ -49,7 +49,7 @@ public class TestTaskQueue {
     @Test
     public void test_1() {
 
-        final TaskQueue.TaskGroup taskGroup = new TaskQueue.TaskGroup(1L);
+        final TaskQueue.TaskGroup taskGroup = new TaskQueue.TaskGroup(1L, 0);
 
         assertFalse(taskGroup.alreadyRegistered(15L));
         assertFalse(taskGroup.deRegisterTask(15L));
@@ -102,7 +102,7 @@ public class TestTaskQueue {
 
         TaskQueue.QueuedTask task_2_1 = createTask(2L, 16L, 0);
 
-        assertThrows(IllegalStateException.class, ()-> taskGroup.addTask(task_2_1));
+        assertThrows(IllegalStateException.class, () -> taskGroup.addTask(task_2_1));
 
         TaskQueue.QueuedTask task_1_2 = createTask(1L, 22L, 0);
         TaskQueue.QueuedTask task_1_3 = createTask(1L, 23L, 0);
@@ -115,7 +115,7 @@ public class TestTaskQueue {
         taskGroup.addTask(task_1_4);
         taskGroup.addTask(task_1_5);
 
-        assertThrows(IllegalStateException.class, ()-> taskGroup.addTask(task_1_6));
+        assertThrows(IllegalStateException.class, () -> taskGroup.addTask(task_1_6));
 
         taskGroup.reset();
 
@@ -262,5 +262,52 @@ public class TestTaskQueue {
         final TaskQueue.GroupIterator iterTemp = iter;
         assertFalse(iter.hasNext());
         assertThrows(NoSuchElementException.class, iterTemp::next);
+    }
+
+    @Test
+    public void test_2_1() {
+        final TaskQueue taskQueue = new TaskQueue(1);
+
+        assertTrue(taskQueue.isQueueEmpty());
+        taskQueue.shrink();
+        assertTrue(taskQueue.isQueueEmpty());
+        taskQueue.removeAll(List.of());
+        assertTrue(taskQueue.isQueueEmpty());
+
+
+        TaskQueue.QueuedTask task_1_1 = createTask(1L, 21L, 0);
+        TaskQueue.QueuedTask task_1_2 = createTask(1L, 22L, 0);
+        TaskQueue.QueuedTask task_1_3 = createTask(1L, 23L, 0);
+        TaskQueue.QueuedTask task_1_4 = createTask(1L, 24L, 0);
+        TaskQueue.QueuedTask task_1_5 = createTask(1L, 25L, 0);
+        TaskQueue.QueuedTask task_1_6 = createTask(1L, 26L, 0);
+
+        taskQueue.addNewTask(task_1_1);
+        taskQueue.addNewTask(task_1_2);
+        taskQueue.addNewTask(task_1_3);
+        taskQueue.addNewTask(task_1_4);
+        taskQueue.addNewTask(task_1_5);
+        taskQueue.addNewTask(task_1_6);
+
+        assertEquals(2, taskQueue.groupCount());
+
+        TaskQueue.QueuedTask task_1_7_1 = createTask(1L, 27L, 1);
+
+        taskQueue.addNewTask(task_1_7_1);
+
+        assertEquals(3, taskQueue.groupCount());
+
+        TaskQueue.GroupIterator iter;
+
+        iter = taskQueue.getIterator();
+        assertTrue(iter.hasNext());
+        TaskQueue.AllocatedTask allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
     }
 }
