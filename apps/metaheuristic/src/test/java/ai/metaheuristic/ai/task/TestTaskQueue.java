@@ -1,0 +1,184 @@
+/*
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package ai.metaheuristic.ai.task;
+
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.utils.EnvProperty;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * @author Serge
+ * Date: 12/16/2020
+ * Time: 3:09 PM
+ */
+public class TestTaskQueue {
+
+    private static TaskQueue.QueuedTask createTask(Long execContextId, Long taskId, int priority) {
+
+        TaskImpl task = new TaskImpl();
+        task.execContextId = execContextId;
+        task.id = taskId;
+        TaskParamsYaml taskParamYaml = new TaskParamsYaml();
+
+        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(
+                execContextId, taskId, task, taskParamYaml, null, priority);
+
+        return queuedTask;
+    }
+
+    @Test
+    public void test_1() {
+
+        final TaskQueue.TaskGroup taskGroup = new TaskQueue.TaskGroup(1L);
+
+        assertFalse(taskGroup.alreadyRegistered(15L));
+        assertFalse(taskGroup.deRegisterTask(15L));
+        assertFalse(taskGroup.isNewTask());
+        assertTrue(taskGroup.noneTasks());
+        assertTrue(taskGroup.isEmpty());
+
+        taskGroup.reset();
+
+        assertFalse(taskGroup.alreadyRegistered(15L));
+        assertFalse(taskGroup.deRegisterTask(15L));
+        assertFalse(taskGroup.isNewTask());
+        assertTrue(taskGroup.noneTasks());
+        assertTrue(taskGroup.isEmpty());
+
+        TaskQueue.QueuedTask task_1_1 = createTask(1L, 15L, 0);
+        taskGroup.addTask(task_1_1);
+
+        assertEquals(1L, taskGroup.execContextId);
+        assertTrue(taskGroup.alreadyRegistered(15L));
+        assertTrue(taskGroup.isNewTask());
+        assertFalse(taskGroup.noneTasks());
+        assertFalse(taskGroup.isEmpty());
+
+        taskGroup.reset();
+
+        assertFalse(taskGroup.alreadyRegistered(15L));
+        assertFalse(taskGroup.deRegisterTask(15L));
+        assertFalse(taskGroup.isNewTask());
+        assertTrue(taskGroup.noneTasks());
+        assertTrue(taskGroup.isEmpty());
+
+        taskGroup.addTask(task_1_1);
+
+        assertEquals(1L, taskGroup.execContextId);
+        assertTrue(taskGroup.alreadyRegistered(15L));
+        assertTrue(taskGroup.isNewTask());
+        assertFalse(taskGroup.noneTasks());
+        assertFalse(taskGroup.isEmpty());
+
+        taskGroup.deRegisterTask(15L);
+
+        assertFalse(taskGroup.alreadyRegistered(15L));
+        assertFalse(taskGroup.deRegisterTask(15L));
+        assertFalse(taskGroup.isNewTask());
+        assertTrue(taskGroup.noneTasks());
+        assertTrue(taskGroup.isEmpty());
+
+        taskGroup.addTask(task_1_1);
+
+        TaskQueue.QueuedTask task_2_1 = createTask(2L, 16L, 0);
+
+        assertThrows(IllegalStateException.class, ()-> taskGroup.addTask(task_2_1));
+
+        TaskQueue.QueuedTask task_1_2 = createTask(1L, 22L, 0);
+        TaskQueue.QueuedTask task_1_3 = createTask(1L, 23L, 0);
+        TaskQueue.QueuedTask task_1_4 = createTask(1L, 24L, 0);
+        TaskQueue.QueuedTask task_1_5 = createTask(1L, 25L, 0);
+        TaskQueue.QueuedTask task_1_6 = createTask(1L, 26L, 0);
+
+        taskGroup.addTask(task_1_2);
+        taskGroup.addTask(task_1_3);
+        taskGroup.addTask(task_1_4);
+        taskGroup.addTask(task_1_5);
+
+        assertThrows(IllegalStateException.class, ()-> taskGroup.addTask(task_1_6));
+
+    }
+
+    @Test
+    public void test_2() {
+        final TaskQueue taskQueue = new TaskQueue(1);
+
+        assertTrue(taskQueue.isQueueEmpty());
+        taskQueue.shrink();
+        assertTrue(taskQueue.isQueueEmpty());
+        taskQueue.removeAll(List.of());
+        assertTrue(taskQueue.isQueueEmpty());
+
+
+        TaskQueue.QueuedTask task_1_1 = createTask(1L, 21L, 0);
+        TaskQueue.QueuedTask task_1_2 = createTask(1L, 22L, 0);
+        TaskQueue.QueuedTask task_1_3 = createTask(1L, 23L, 0);
+        TaskQueue.QueuedTask task_1_4 = createTask(1L, 24L, 0);
+        TaskQueue.QueuedTask task_1_5 = createTask(1L, 25L, 0);
+        TaskQueue.QueuedTask task_1_6 = createTask(1L, 26L, 0);
+
+        taskQueue.addNewTask(task_1_1);
+        taskQueue.addNewTask(task_1_2);
+        taskQueue.addNewTask(task_1_3);
+        taskQueue.addNewTask(task_1_4);
+        taskQueue.addNewTask(task_1_5);
+
+        assertEquals(1, taskQueue.groupCount());
+
+        taskQueue.addNewTask(task_1_6);
+
+        assertEquals(2, taskQueue.groupCount());
+
+        taskQueue.removeAll(List.of(task_1_6));
+
+        assertEquals(1, taskQueue.groupCount());
+
+        taskQueue.addNewTask(task_1_6);
+
+        taskQueue.deRegisterTask(task_1_6.execContextId, task_1_6.taskId);
+
+        assertEquals(2, taskQueue.groupCount());
+
+        taskQueue.addNewTask(task_1_6);
+        assertEquals(2, taskQueue.groupCount());
+
+        taskQueue.deleteByExecContextId(1L);
+        assertEquals(1, taskQueue.groupCount());
+        assertTrue(taskQueue.isQueueEmpty());
+
+        taskQueue.addNewTask(task_1_1);
+        taskQueue.addNewTask(task_1_2);
+        taskQueue.addNewTask(task_1_3);
+        taskQueue.addNewTask(task_1_4);
+        taskQueue.addNewTask(task_1_5);
+        taskQueue.addNewTask(task_1_6);
+
+        assertTrue(taskQueue.alreadyRegistered(task_1_1.taskId));
+        assertTrue(taskQueue.alreadyRegistered(task_1_6.taskId));
+
+        taskQueue.deRegisterTask(-1L, -1L);
+        taskQueue.shrink();
+
+        assertEquals(2, taskQueue.groupCount());
+    }
+}

@@ -17,16 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -57,8 +58,9 @@ public class TaskQueue {
     }
 
     private static final int GROUP_SIZE = 5;
-    private static final int MIN_QUEUE_SIZE = 25;
+    private static final int MIN_QUEUE_SIZE_DEFAULT = 25;
 
+    @Slf4j
     public static class TaskGroup {
         @Nullable
         public Long execContextId;
@@ -109,13 +111,20 @@ public class TaskQueue {
         }
 
         public void addTask(QueuedTask task) {
+            if (execContextId!=null && !execContextId.equals(task.execContextId)) {
+                throw new IllegalStateException("wrong execContextId");
+            }
             if (allocated==GROUP_SIZE) {
                 throw new IllegalStateException("already allocated");
+            }
+            if (execContextId==null) {
+                execContextId = task.execContextId;
             }
             ++allocated;
             for (int i = 0; i < tasks.length; i++) {
                 if (tasks[i]==null) {
                     tasks[i] = new AllocatedTask(task);
+                    break;
                 }
             }
         }
@@ -125,32 +134,18 @@ public class TaskQueue {
             execContextId = null;
             Arrays.fill(tasks, null);
         }
-    }
 
-    private final AtomicInteger queuePtr = new AtomicInteger();
-    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
-
-
-    public void removeAll(List<QueuedTask> forRemoving) {
-
-    }
-
-    public void addNewTask(QueuedTask task) {
-        List<TaskGroup> temp = new ArrayList<>(taskGroups);
-        temp.sort(Comparator.comparingInt(o -> o.allocated));
-        TaskGroup taskGroup = null;
-        for (TaskGroup group : temp) {
-            if (task.execContextId.equals(group.execContextId)) {
-                if (group.allocated<GROUP_SIZE) {
-                    taskGroup = group;
-                }
+        public boolean isEmpty() {
+            boolean noneTasks = noneTasks();
+            if (!noneTasks && execContextId==null) {
+                log.warn("There is a task but execContextId is null");
             }
+            return execContextId==null || noneTasks;
         }
-        if (taskGroup==null) {
-            taskGroup = new TaskGroup(task.execContextId);
-            taskGroups.add(taskGroup);
+
+        public boolean noneTasks() {
+            return Arrays.stream(tasks).noneMatch(Objects::nonNull);
         }
-        taskGroup.addTask(task);
     }
 
     public static class GroupIterator implements Iterator<AllocatedTask> {
@@ -185,25 +180,84 @@ public class TaskQueue {
 
     }
 
+    private final AtomicInteger queuePtr = new AtomicInteger();
+    private final int minQueueSize;
+    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
+
+    public TaskQueue() {
+        this(MIN_QUEUE_SIZE_DEFAULT);
+    }
+
+    public TaskQueue(int minQueueSize) {
+        this.minQueueSize = minQueueSize;
+    }
+
+    public void removeAll(List<QueuedTask> forRemoving) {
+        if (forRemoving.isEmpty()) {
+            return;
+        }
+        List<Long> execContextIds = forRemoving.stream().map(o->o.execContextId).collect(Collectors.toList());
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextIds.contains(taskGroup.execContextId)) {
+                for (QueuedTask queuedTask : forRemoving) {
+                    if (queuedTask.execContextId.equals(taskGroup.execContextId)) {
+                        taskGroup.deRegisterTask(queuedTask.taskId);
+                    }
+                }
+            }
+        }
+        shrink();
+    }
+
+    public void addNewTask(QueuedTask task) {
+        List<TaskGroup> temp = new ArrayList<>(taskGroups);
+        temp.sort(Comparator.comparingInt(o -> o.allocated));
+        TaskGroup taskGroup = null;
+        for (TaskGroup group : temp) {
+            if (task.execContextId.equals(group.execContextId)) {
+                if (group.allocated<GROUP_SIZE) {
+                    taskGroup = group;
+                }
+            }
+            else if (group.execContextId==null) {
+                taskGroup = group;
+            }
+        }
+        if (taskGroup==null) {
+            taskGroup = new TaskGroup(task.execContextId);
+            taskGroups.add(taskGroup);
+        }
+        taskGroup.addTask(task);
+    }
+
     public GroupIterator iterator() {
         return new GroupIterator(taskGroups, queuePtr);
     }
 
-    public void deleteByExecContextId(Long execContextId) {
-        List<TaskGroup> forRemoving = new ArrayList<>();
-        for (TaskGroup taskGroup : taskGroups) {
-            if (execContextId.equals(taskGroup.execContextId)) {
-                if (taskGroups.size()-forRemoving.size()>MIN_QUEUE_SIZE) {
-                    forRemoving.add(taskGroup);
+    public void shrink() {
+
+        if (taskGroups.size()>minQueueSize) {
+            int size = taskGroups.size();
+            for (int i = 0; i < size; i++) {
+                if (size==minQueueSize) {
+                    break;
                 }
-                else {
-                    taskGroup.reset();
+                if (taskGroups.get(i).noneTasks()) {
+                    taskGroups.remove(i);
+                    --size;
+                    --i;
                 }
             }
         }
-        if (!forRemoving.isEmpty()) {
-            taskGroups.removeAll(forRemoving);
+    }
+
+    public void deleteByExecContextId(Long execContextId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId)) {
+                taskGroup.reset();
+            }
         }
+        shrink();
     }
 
     public boolean alreadyRegistered(Long taskId) {
@@ -224,4 +278,7 @@ public class TaskQueue {
         return taskGroups.stream().noneMatch(TaskGroup::isNewTask);
     }
 
+    public int groupCount() {
+        return taskGroups.size();
+    }
 }
