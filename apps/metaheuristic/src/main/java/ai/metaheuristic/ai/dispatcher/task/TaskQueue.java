@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,7 @@ public class TaskQueue {
 
     public static class AllocatedTask {
         public final QueuedTask queuedTask;
+        public EnumsApi.TaskExecState state;
         public boolean assigned;
 
         public AllocatedTask(QueuedTask queuedTask) {
