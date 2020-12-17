@@ -68,6 +68,7 @@ public class TaskQueue {
         public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
         public int allocated = 0;
         public int priority;
+        public long updatedOn;
 
         public TaskGroup(Long execContextId, int priority) {
             this.execContextId = execContextId;
@@ -135,6 +136,7 @@ public class TaskQueue {
             for (int i = 0; i < tasks.length; i++) {
                 if (tasks[i]==null) {
                     tasks[i] = new AllocatedTask(task);
+                    updatedOn = System.currentTimeMillis();
                     break;
                 }
             }
@@ -144,6 +146,7 @@ public class TaskQueue {
             for (AllocatedTask task : tasks) {
                 if (task != null && task.queuedTask.taskId.equals(taskId)) {
                     task.assigned = true;
+                    updatedOn = System.currentTimeMillis();
                     break;
                 }
             }
