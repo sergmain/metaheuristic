@@ -273,6 +273,7 @@ public class TestTaskQueue {
         assertTrue(taskQueue.isQueueEmpty());
         taskQueue.removeAll(List.of());
         assertTrue(taskQueue.isQueueEmpty());
+        assertTrue(taskQueue.isQueueEmpty());
 
 
         TaskQueue.QueuedTask task_1_1 = createTask(1L, 21L, 0);
@@ -303,11 +304,17 @@ public class TestTaskQueue {
         assertTrue(iter.hasNext());
         TaskQueue.AllocatedTask allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
-        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
+        assertEquals( task_1_7_1.taskId, allocatedTask.queuedTask.taskId );
 
         assertTrue(iter.hasNext());
         allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
         assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
+
+        taskQueue.deRegisterTask(task_1_7_1.execContextId, task_1_7_1.taskId);
+        taskQueue.shrink();
+
+        assertEquals(2, taskQueue.groupCount() );
+
     }
 }
