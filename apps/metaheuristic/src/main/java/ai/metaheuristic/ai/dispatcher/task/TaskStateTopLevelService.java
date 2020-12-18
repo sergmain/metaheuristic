@@ -16,36 +16,34 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * @author Serge
- * Date: 12/17/2020
- * Time: 7:56 PM
+ * Date: 12/18/2020
+ * Time: 12:58 PM
  */
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class TaskFinishingService {
+public class TaskStateTopLevelService {
 
+    private final TaskStateService taskStateService;
+    private final TaskSyncService taskSyncService;
+
+    @Async
+    @EventListener
+    public void finishWithErrorWithTx(TaskFinishWithErrorEvent event) {
+        taskSyncService.getWithSyncNullable(event.taskId,
+                () -> taskStateService.finishWithErrorWithTx(event.taskId, event.error));
+
+        //        taskStateService.finishWithErrorWithTx(event.taskId, event.error);
+    }
 }

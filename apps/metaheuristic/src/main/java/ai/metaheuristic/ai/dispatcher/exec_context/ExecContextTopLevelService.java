@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
@@ -26,10 +25,6 @@ import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -70,10 +65,6 @@ public class ExecContextTopLevelService {
     private final EventSenderService eventSenderService;
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskFinishingService taskFinishingService;
-    private final ExecContextVariableService execContextVariableService;
-    private final TaskVariableService taskVariableService;
-    private final TaskSyncService taskSyncService;
 
     private static boolean isManagerRole(String role) {
         switch (role) {

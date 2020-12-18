@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -69,7 +69,7 @@ public class TxSupportForTestingService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final TaskVariableService taskVariableService;
     private final FunctionCache functionCache;
@@ -229,7 +229,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             throw new IllegalStateException("Reporting about non-existed task #" + taskId);
         }
-        return taskFinishingService.finishWithError(task, console, taskContextId);
+        return taskStateService.finishWithError(task, console, taskContextId);
     }
 
     @Transactional

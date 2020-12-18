@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -50,7 +50,7 @@ public class ExecContextTaskFinishingTopLevelService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
 
@@ -92,7 +92,7 @@ public class ExecContextTaskFinishingTopLevelService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskFinishingService.finishWithErrorWithTx(
+                        () -> taskStateService.finishWithErrorWithTx(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
@@ -113,7 +113,7 @@ public class ExecContextTaskFinishingTopLevelService {
 
             try (DataHolder holder = new DataHolder()) {
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskFinishingService.finishAndStoreVariable(
+                        () -> taskStateService.finishAndStoreVariable(
                                 taskId, checkCaching, holder, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
             }
         }

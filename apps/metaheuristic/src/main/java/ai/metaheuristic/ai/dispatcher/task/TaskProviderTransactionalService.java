@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -37,6 +38,7 @@ import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -62,9 +64,9 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
 public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final TaskQueue taskQueue = new TaskQueue();
 
@@ -104,7 +106,8 @@ public class TaskProviderTransactionalService {
         } catch (YAMLException e) {
             String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
             log.error(es, e.getMessage());
-            taskFinishingService.finishWithErrorWithTx(task.id, es);
+            applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+//            taskStateService.finishWithErrorWithTx(task.id, es);
             return;
         }
 

@@ -22,10 +22,12 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -62,7 +64,6 @@ public class TaskWithInternalContextService {
     private final TaskService taskService;
     private final TaskStateService taskStateService;
     private final ExecContextVariableService execContextVariableService;
-    private final TaskFinishingService taskFinishingService;
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -150,7 +151,7 @@ public class TaskWithInternalContextService {
                             result.processing, result.error, execContext.sourceCodeId, execContext.id);
                     final String console = "#707.180 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
                     final String taskContextId = taskParamsYaml.task.taskContextId;
-                    taskFinishingService.finishWithError(task, console, taskContextId);
+                    taskStateService.finishWithError(task, console, taskContextId);
                     return;
                 }
                 execContextVariableService.setResultReceivedForInternalFunction(task.id);
@@ -165,16 +166,16 @@ public class TaskWithInternalContextService {
 
             } catch (CommonErrorWithDataException th) {
                 String es = "#707.200 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
-                taskFinishingService.finishWithError(task, es, null, -10002);
+                taskStateService.finishWithError(task, es, null, -10002);
                 log.error(es);
             } catch (Throwable th) {
                 String es = "#707.220 Task #" + task.id + " was processed with error: " + th.getMessage();
-                taskFinishingService.finishWithError(task, es, null, -10003);
+                taskStateService.finishWithError(task, es, null, -10003);
                 log.error(es, th);
             }
         } catch (Throwable th) {
             String es = "#707.240 Task #" + task.id + " was processed with error: " + th.getMessage();
-            taskFinishingService.finishWithError(task, es, null, -10004);
+            taskStateService.finishWithError(task, es, null, -10004);
             log.error(es, th);
         }
         finally {

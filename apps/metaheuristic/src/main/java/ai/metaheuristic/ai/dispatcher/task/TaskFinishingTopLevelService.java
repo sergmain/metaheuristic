@@ -51,10 +51,9 @@ public class TaskFinishingTopLevelService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
-    private final TaskProviderService taskProviderService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void checkTaskCanBeFinished(Long taskId, boolean checkCaching) {
@@ -95,7 +94,7 @@ public class TaskFinishingTopLevelService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskFinishingService.finishWithErrorWithTx(
+                        () -> taskStateService.finishWithErrorWithTx(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
@@ -117,7 +116,7 @@ public class TaskFinishingTopLevelService {
 
             try (DataHolder holder = new DataHolder()) {
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskFinishingService.finishAndStoreVariable(
+                        () -> taskStateService.finishAndStoreVariable(
                                 taskId, checkCaching, holder, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
             }
         }

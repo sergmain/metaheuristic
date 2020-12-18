@@ -95,21 +95,21 @@ public class TaskExecStateService {
                     log.info("#305.045 Task #{} already has execState as OK", task.id);
                 }
                 else {
-                    task.setExecState(EnumsApi.TaskExecState.OK.value);
+                    task.execState = EnumsApi.TaskExecState.OK.value;
                 }
                 break;
             case IN_PROGRESS:
             case SKIPPED:
             case NONE:
                 if (task.execState!=state.value) {
-                    task.setExecState(state.value);
+                    task.execState = state.value;
                 }
                 break;
             default:
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
 
-        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
+        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState));
         return task;
     }
 

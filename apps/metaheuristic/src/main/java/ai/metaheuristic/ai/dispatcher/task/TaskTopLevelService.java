@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -50,10 +51,9 @@ public class TaskTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskTransactionalService taskTransactionalService;
     private final EventSenderService eventSenderService;
-    private final TaskFinishingService taskFinishingService;
     private final TaskVariableService taskVariableService;
     private final TaskSyncService taskSyncService;
 
@@ -64,7 +64,7 @@ public class TaskTopLevelService {
                 log.warn("execContextId #{} wasn't deleted, actually", execContextId);
                 continue;
             }
-            eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+            applicationEventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
 
             List<Long> ids;
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
@@ -87,8 +87,9 @@ public class TaskTopLevelService {
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
 
-                taskSyncService.getWithSyncNullable(taskId,
-                        () -> taskFinishingService.finishWithErrorWithTx(taskId, "#303.390 Task was finished while resending variable with status " + status));
+                applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId, "#303.390 Task was finished while resending variable with status " + status));
+//                taskSyncService.getWithSyncNullable(taskId,
+//                        () -> taskStateService.finishWithErrorWithTx(taskId, "#303.390 Task was finished while resending variable with status " + status));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
