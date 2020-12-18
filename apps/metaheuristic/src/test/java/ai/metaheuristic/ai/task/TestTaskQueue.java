@@ -207,6 +207,10 @@ public class TestTaskQueue {
         TaskQueue.GroupIterator iter;
 
         iter = taskQueue.getIterator();
+        assertFalse(iter.hasNext());
+
+        taskQueue.lock(1L);
+
         assertTrue(iter.hasNext());
         allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
@@ -301,6 +305,10 @@ public class TestTaskQueue {
         TaskQueue.GroupIterator iter;
 
         iter = taskQueue.getIterator();
+        assertFalse(iter.hasNext());
+
+        taskQueue.lock(1L);
+
         assertTrue(iter.hasNext());
         TaskQueue.AllocatedTask allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);

@@ -76,7 +76,7 @@ public class TaskCheckCachingService {
     private final CacheVariableService cacheVariableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
-    private final ExecContextVariableService execContextVariableService;
+    private final TaskVariableService taskVariableService;
 
     @Data
     @AllArgsConstructor
@@ -186,7 +186,7 @@ public class TaskCheckCachingService {
                 try {
                     StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        execContextVariableService.setVariableAsNull(taskId, output.id, holder);
+                        taskVariableService.setVariableAsNull(taskId, output.id, holder);
                     }
                     else {
                         final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
@@ -198,7 +198,7 @@ public class TaskCheckCachingService {
                         holder.inputStreams.add(is);
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
-                    Enums.UploadVariableStatus status = execContextVariableService.setVariableReceived(task, output.id);
+                    Enums.UploadVariableStatus status = taskVariableService.setVariableReceived(task, output.id);
                     if (status!= Enums.UploadVariableStatus.OK) {
                         log.error("#609.155 error while setting variable was received, status: {}", status);
                         throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);

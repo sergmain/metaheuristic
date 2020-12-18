@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -67,9 +69,9 @@ public class TxSupportForTestingService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskFinishingService taskFinishingService;
     private final TaskRepository taskRepository;
-    private final ExecContextVariableService execContextVariableService;
+    private final TaskVariableService taskVariableService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
@@ -215,7 +217,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             return Enums.UploadVariableStatus.TASK_NOT_FOUND;
         }
-        return execContextVariableService.setVariableReceived(task, variableId);
+        return taskVariableService.setVariableReceived(task, variableId);
     }
 
     @Transactional
@@ -227,7 +229,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             throw new IllegalStateException("Reporting about non-existed task #" + taskId);
         }
-        return execContextTaskFinishingService.finishWithError(task, console, taskContextId);
+        return taskFinishingService.finishWithError(task, console, taskContextId);
     }
 
     @Transactional

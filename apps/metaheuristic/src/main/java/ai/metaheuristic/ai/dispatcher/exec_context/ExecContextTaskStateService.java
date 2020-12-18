@@ -50,30 +50,45 @@ public class ExecContextTaskStateService {
     private final TaskSyncService taskSyncService;
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public Void updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
 
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             final String es = "#309.020 execContext #" + execContextId+ " wasn't found";
             log.warn(es);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+//            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            return null;
         }
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#309.040 task #" + taskId+ " wasn't found";
             log.warn(es);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+//            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            return null;
         }
 
-        return updateTaskExecStates(execContext, task, execState, taskContextId);
+        updateTaskExecStates(execContext, task, execState, taskContextId);
+
+        return null;
     }
 
-    public OperationStatusRest updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-        return updateTaskExecStates(execContext, task, execState, taskContextId, false);
+    public void updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        updateTaskExecStates(task, execState, taskContextId, false);
     }
 
-    public OperationStatusRest updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
+        TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(task.id);
+        TaskImpl t = taskExecStateService.changeTaskState(task, execState);
+        if (markAsCompleted) {
+            t.setCompleted(true);
+            t.setCompletedOn(System.currentTimeMillis());
+        }
+//        return status.status;
+    }
+
+    public OperationStatusRest updateTaskExecStates1(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         taskSyncService.checkWriteLockPresent(task.id);
         execContextSyncService.checkWriteLockPresent(execContext.id);

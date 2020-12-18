@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
@@ -101,7 +102,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     public EventSenderService eventSenderService;
 
     @Autowired
-    public ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+    public TaskFinishingTopLevelService taskFinishingTopLevelService;
 
     @Autowired
     private TaskSyncService taskSyncService;
@@ -316,7 +317,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(task32.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id, false);
     }
 
     private void step_FitAndPredict() {
@@ -366,7 +367,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     () -> txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId, false);
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
@@ -393,7 +394,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(task3.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(task3.id, false);
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -469,7 +470,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
 
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
     }
 
     @SneakyThrows

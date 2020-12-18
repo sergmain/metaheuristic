@@ -27,7 +27,9 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -68,8 +70,9 @@ public class ExecContextTopLevelService {
     private final EventSenderService eventSenderService;
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher eventPublisher;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskFinishingService taskFinishingService;
     private final ExecContextVariableService execContextVariableService;
+    private final TaskVariableService taskVariableService;
     private final TaskSyncService taskSyncService;
 
     private static boolean isManagerRole(String role) {
@@ -194,38 +197,6 @@ public class ExecContextTopLevelService {
         try (DataHolder holder = new DataHolder()) {
             execContextFSM.storeExecResultWithTx(result, holder);
             eventSenderService.sendEvents(holder);
-        }
-    }
-
-    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
-        switch (status) {
-            case SEND_SCHEDULED:
-                log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
-                break;
-            case TASK_NOT_FOUND:
-            case VARIABLE_NOT_FOUND:
-            case TASK_IS_BROKEN:
-            case TASK_PARAM_FILE_NOT_FOUND:
-
-                execContextSyncService.getWithSyncNullable(taskId,
-                        ()-> taskSyncService.getWithSyncNullable(taskId,
-                                () -> execContextTaskFinishingService.finishWithErrorWithTx(taskId, "#303.390 Task was finished while resending variable with status " + status)));
-
-                break;
-            case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-                taskSyncService.getWithSyncNullable(taskId, ()-> {
-                    try (DataHolder holder = new DataHolder()) {
-                        UploadResult statusResult = execContextVariableService.updateStatusOfVariable(taskId, variableId, holder);
-                        if (statusResult.status == Enums.UploadVariableStatus.OK) {
-                            log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
-                        } else {
-                            log.info("#303.420 can't update isCompleted field for task #{}", taskId);
-                        }
-                        eventSenderService.sendEvents(holder);
-                    }
-                    return null;
-                });
-                break;
         }
     }
 

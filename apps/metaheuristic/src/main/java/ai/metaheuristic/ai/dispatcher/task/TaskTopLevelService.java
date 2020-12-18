@@ -17,16 +17,21 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,6 +52,10 @@ public class TaskTopLevelService {
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskTransactionalService taskTransactionalService;
+    private final EventSenderService eventSenderService;
+    private final TaskFinishingService taskFinishingService;
+    private final TaskVariableService taskVariableService;
+    private final TaskSyncService taskSyncService;
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
         TxUtils.checkTxNotExists();
@@ -65,6 +74,37 @@ public class TaskTopLevelService {
                     execContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
                 }
             }
+        }
+    }
+
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
+        switch (status) {
+            case SEND_SCHEDULED:
+                log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
+                break;
+            case TASK_NOT_FOUND:
+            case VARIABLE_NOT_FOUND:
+            case TASK_IS_BROKEN:
+            case TASK_PARAM_FILE_NOT_FOUND:
+
+                taskSyncService.getWithSyncNullable(taskId,
+                        () -> taskFinishingService.finishWithErrorWithTx(taskId, "#303.390 Task was finished while resending variable with status " + status));
+
+                break;
+            case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
+                taskSyncService.getWithSyncNullable(taskId, ()-> {
+                    try (DataHolder holder = new DataHolder()) {
+                        UploadResult statusResult = taskVariableService.updateStatusOfVariable(taskId, variableId, holder);
+                        if (statusResult.status == Enums.UploadVariableStatus.OK) {
+                            log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
+                        } else {
+                            log.info("#303.420 can't update isCompleted field for task #{}", taskId);
+                        }
+                        eventSenderService.sendEvents(holder);
+                    }
+                    return null;
+                });
+                break;
         }
     }
 

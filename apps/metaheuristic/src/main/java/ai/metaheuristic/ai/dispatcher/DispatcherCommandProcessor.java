@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.data.DispatcherApiData;
@@ -44,6 +45,7 @@ public class DispatcherCommandProcessor {
 
     private final TaskService taskService;
     private final ExecContextTopLevelService execContextTopLevelService;
+    private final TaskTopLevelService taskTopLevelService;
     private final ProcessorTransactionService processorService;
     private final TaskProviderService taskProviderService;
 
@@ -78,7 +80,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            execContextTopLevelService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
+            taskTopLevelService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
         }
     }
 

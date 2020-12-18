@@ -64,6 +64,7 @@ public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskFinishingService taskFinishingService;
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
 
@@ -105,7 +106,7 @@ public class TaskProviderTransactionalService {
         } catch (YAMLException e) {
             String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
             log.error(es, e.getMessage());
-            execContextTaskFinishingService.finishWithErrorWithTx(task.id, es);
+            taskFinishingService.finishWithErrorWithTx(task.id, es);
             return;
         }
 
@@ -156,7 +157,13 @@ public class TaskProviderTransactionalService {
         try {
             GroupIterator iter = taskQueue.getIterator();
             while (iter.hasNext()) {
-                AllocatedTask allocatedTask = iter.next();
+                AllocatedTask allocatedTask;
+                try {
+                    allocatedTask = iter.next();
+                } catch (NoSuchElementException e) {
+                    log.error("#317.035 TaskGroup was modified, this situation shouldn't be happened.");
+                    break;
+                }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
 
                 if (!statuses.isStarted(queuedTask.execContextId)) {
@@ -164,21 +171,24 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // may be happened because of multi-threaded processing of internal function
-                    forRemoving.add(queuedTask);
+                    // this situation shouldn't be happened because
+                    // this method is synchronized over ai.metaheuristic.ai.dispatcher.task.TaskProviderService.syncObj
+                    log.error("#317.037 this situation shouldn't be happened.");
+//                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#317.040 Task #{} with function '{}' was already processed with status {}",
+                    log.error("#317.040 Task #{} with function '{}' was already processed with status {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
-                    forRemoving.add(queuedTask);
+//                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 // all tasks with internal function will be processed by scheduler
                 if (queuedTask.taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
-                    forRemoving.add(queuedTask);
+                    log.error("#317.055 this situation shouldn't be happened.");
+//                    forRemoving.add(queuedTask);
                     continue;
                 }
 
@@ -267,10 +277,15 @@ public class TaskProviderTransactionalService {
         t.setResultResourceScheduledOn(0);
 
         resultTask.assigned = true;
+        resultTask.state = EnumsApi.TaskExecState.IN_PROGRESS;
         return t;
     }
 
     public void deregisterTasksByExecContextId(Long execContextId) {
         taskQueue.deleteByExecContextId(execContextId);
+    }
+
+    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        taskQueue.setTaskExecState(execContextId, taskId, state);
     }
 }

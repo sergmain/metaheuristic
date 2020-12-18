@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,7 +42,7 @@ public class EventBusService {
 
     public final TaskCheckCachingTopLevelService taskCheckCachingService;
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
-    public final ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+    public final TaskFinishingTopLevelService taskFinishingTopLevelService;
     public final ExecContextSyncService execContextSyncService;
     public final EventSenderService eventSenderService;
     public final DispatcherParamsService dispatcherParamsService;
@@ -63,7 +63,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void checkTaskCanBeFinished(CheckTaskCanBeFinishedEvent event) {
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId, event.checkCaching);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId, event.checkCaching);
     }
 
     @Async

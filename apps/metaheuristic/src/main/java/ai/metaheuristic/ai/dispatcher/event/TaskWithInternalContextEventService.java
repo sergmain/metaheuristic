@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class TaskWithInternalContextEventService {
     private final TaskRepository taskRepository;
     private final EventSenderService eventSenderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
+    private final TaskFinishingService taskFinishingService;
     private final TaskSyncService taskSyncService;
 
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
@@ -66,7 +68,7 @@ public class TaskWithInternalContextEventService {
             log.error(es, th);
             execContextSyncService.getWithSyncNullable(event.execContextId,
                     () -> taskSyncService.getWithSyncNullable(event.taskId,
-                            () -> execContextTaskFinishingService.finishWithErrorWithTx(event.taskId, es)));
+                            () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }
     }
 }

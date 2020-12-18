@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -52,6 +54,8 @@ public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
     private final ExecContextVariableService execContextVariableService;
+    private final TaskVariableService taskVariableService;
+    private final VariableService variableService;
     private final EventSenderService eventSenderService;
     private final TaskSyncService taskSyncService;
 
@@ -73,7 +77,7 @@ public class ExecContextVariableTopLevelService {
 
         try (DataHolder holder = new DataHolder()) {
             final UploadResult uploadResult = taskSyncService.getWithSync(taskId,
-                    () -> execContextVariableService.setVariableAsNull(taskId, variableId, holder));
+                    () -> taskVariableService.setVariableAsNull(taskId, variableId, holder));
             eventSenderService.sendEvents(holder);
             return uploadResult;
         }
@@ -141,18 +145,18 @@ public class ExecContextVariableTopLevelService {
             }
             UploadResult uploadResult;
             try (InputStream is = new FileInputStream(variableFile)) {
-                uploadResult = execContextVariableService.storeVariable(is, variableFile.length(), execContextId, taskId, variableId);
+                uploadResult = variableService.storeVariable(is, variableFile.length(), execContextId, taskId, variableId);
             }
             if (uploadResult.status!= Enums.UploadVariableStatus.OK) {
                 return uploadResult;
             }
             try (DataHolder holder = new DataHolder()) {
                 try {
-                    uploadResult = taskSyncService.getWithSync(taskId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 catch (ObjectOptimisticLockingFailureException th) {
                     log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
-                    uploadResult = taskSyncService.getWithSync(taskId, () -> execContextVariableService.updateStatusOfVariable(taskId, variableId, holder));
+                    uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
                 eventSenderService.sendEvents(holder);
             }

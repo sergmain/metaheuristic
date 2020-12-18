@@ -76,7 +76,8 @@ public class TaskProviderService {
     private static class TaskProviderServiceSync {}
 
     // this sync is here because of the presence of @Transactional in TaskProviderTransactionalService
-    private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
+    // so we don't want to have an opened TX with holding sync within it
+    public static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
     public void registerTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
@@ -112,6 +113,12 @@ public class TaskProviderService {
         }
     }
 
+    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
+        }
+    }
+
     @Nullable
     private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
         TxUtils.checkTxNotExists();
@@ -124,14 +131,18 @@ public class TaskProviderService {
             task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
         }
         if (task!=null) {
+/*
             execContextSyncService.getWithSyncNullable(task.execContextId,
                     () -> taskSyncService.getWithSyncNullable(task.id,
                             ()-> execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null)));
+*/
 
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
+/*
             synchronized (syncObj) {
                 taskProviderTransactionalService.deRegisterTask(task.execContextId, task.id);
             }
+*/
         }
         return task;
     }
@@ -244,7 +255,7 @@ public class TaskProviderService {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
-                    deregisterTask(task.execContextId, task.id);
+//                    deregisterTask(task.execContextId, task.id);
                     return task;
                 }
             }

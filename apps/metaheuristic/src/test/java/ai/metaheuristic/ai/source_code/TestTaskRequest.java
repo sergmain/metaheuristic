@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
@@ -63,7 +63,7 @@ public class TestTaskRequest extends FeatureMethods {
     public ExecContextSchedulerService execContextSchedulerService;
 
     @Autowired
-    public ExecContextTaskFinishingTopLevelService execContextTaskFinishingTopLevelService;
+    public TaskFinishingTopLevelService taskFinishingTopLevelService;
 
     @Autowired
     private TaskSyncService taskSyncService;
@@ -136,7 +136,7 @@ public class TestTaskRequest extends FeatureMethods {
             }
             return null;
         });
-        execContextTaskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);

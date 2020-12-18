@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -28,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.ContextUtils;
@@ -84,11 +86,30 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @RequiredArgsConstructor
 public class VariableService {
 
+    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
+
     private final EntityManager em;
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
+    public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
+        Variable variable = variableRepository.findById(variableId).orElse(null);
+        if (variable ==null) {
+            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.040 Variable #"+variableId+" wasn't found" );
+        }
+        if (!execContextId.equals(variable.execContextId)) {
+            final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
+                    "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
+            log.warn(es);
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
+        }
+
+        update(variableIS, length, variable);
+        return OK_UPLOAD_RESULT;
+    }
 
     @SneakyThrows
     public void createInputVariablesForSubProcess(

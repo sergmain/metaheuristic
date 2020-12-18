@@ -129,6 +129,7 @@ public class Schedulers {
             if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
+            MetaheuristicThreadLocal.setSchedule();
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
         }

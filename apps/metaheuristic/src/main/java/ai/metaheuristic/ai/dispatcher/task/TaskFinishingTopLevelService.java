@@ -14,15 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -39,14 +38,14 @@ import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
- * Date: 11/14/2020
- * Time: 1:15 AM
+ * Date: 12/17/2020
+ * Time: 8:00 PM
  */
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextTaskFinishingTopLevelService {
+public class TaskFinishingTopLevelService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
@@ -118,6 +117,7 @@ public class ExecContextTaskFinishingTopLevelService {
             }
         }
     }
+
 
 
 }

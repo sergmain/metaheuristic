@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
  * Date: 12/16/2020
  * Time: 3:09 AM
  */
+@Slf4j
 public class TaskQueue {
 
     @Data
@@ -64,13 +65,14 @@ public class TaskQueue {
 
     @Slf4j
     public static class TaskGroup {
+
         @Nullable
         public Long execContextId;
 
         public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
         public int allocated = 0;
         public int priority;
-        public long updatedOn;
+        public boolean locked;
 
         public TaskGroup(Long execContextId, int priority) {
             this.execContextId = execContextId;
@@ -105,7 +107,10 @@ public class TaskQueue {
         }
 
         public boolean isNewTask() {
-            if (execContextId==null) {
+            if (execContextId == null) {
+                return false;
+            }
+            if (!locked) {
                 return false;
             }
             for (AllocatedTask task : tasks) {
@@ -138,7 +143,6 @@ public class TaskQueue {
             for (int i = 0; i < tasks.length; i++) {
                 if (tasks[i]==null) {
                     tasks[i] = new AllocatedTask(task);
-                    updatedOn = System.currentTimeMillis();
                     break;
                 }
             }
@@ -148,7 +152,6 @@ public class TaskQueue {
             for (AllocatedTask task : tasks) {
                 if (task != null && task.queuedTask.taskId.equals(taskId)) {
                     task.assigned = true;
-                    updatedOn = System.currentTimeMillis();
                     break;
                 }
             }
@@ -171,6 +174,10 @@ public class TaskQueue {
         public boolean noneTasks() {
             return Arrays.stream(tasks).noneMatch(Objects::nonNull);
         }
+
+        public void lock() {
+            locked = true;
+        }
     }
 
     public static class GroupIterator implements Iterator<AllocatedTask> {
@@ -188,6 +195,9 @@ public class TaskQueue {
             int idx = taskPtr;
             for (int i = groupPtr; i < taskGroups.size(); i++) {
                 TaskGroup taskGroup = taskGroups.get(i);
+                if (!taskGroup.locked) {
+                    continue;
+                }
                 for (int j = idx; j < GROUP_SIZE; j++) {
                     AllocatedTask task = taskGroup.tasks[j];
                     if (task!=null && !task.assigned) {
@@ -203,6 +213,9 @@ public class TaskQueue {
         public AllocatedTask next() {
             for (; groupPtr < taskGroups.size(); groupPtr++) {
                 TaskGroup taskGroup = taskGroups.get(groupPtr);
+                if (!taskGroup.locked) {
+                    continue;
+                }
                 for (; taskPtr < GROUP_SIZE; taskPtr++) {
                     AllocatedTask task = taskGroup.tasks[taskPtr];
                     if (task!=null && !task.assigned) {
@@ -236,6 +249,28 @@ public class TaskQueue {
         this.minQueueSize = minQueueSize;
     }
 
+    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (!execContextId.equals(taskGroup.execContextId)) {
+                continue;
+            }
+            for (AllocatedTask task : taskGroup.tasks) {
+                if (!task.queuedTask.taskId.equals(taskId)) {
+                    continue;
+                }
+                if (!task.assigned) {
+                    log.warn("task wasn't assigned!!!");
+                }
+                task.state = state;
+                return;
+            }
+        }
+    }
+
+    public void lock(Long execContextId) {
+        taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).forEach(TaskGroup::lock);
+    }
+
     public void removeAll(List<QueuedTask> forRemoving) {
         if (forRemoving.isEmpty()) {
             return;
@@ -259,6 +294,9 @@ public class TaskQueue {
         TaskGroup taskGroup = null;
         for (int i = 0; i < taskGroups.size(); i++) {
             TaskGroup group = taskGroups.get(i);
+            if (group.locked) {
+                continue;
+            }
             if (group.priority < task.priority) {
                 taskGroup = new TaskGroup(task.execContextId, task.priority);
                 taskGroups.add(i, taskGroup);
