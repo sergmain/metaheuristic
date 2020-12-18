@@ -17,12 +17,9 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
@@ -69,11 +66,6 @@ public class TestGraph extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
-    private void updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
-        execContextSyncService.getWithSync(execContext.id,
-                () -> txSupportForTestingService.finishWithErrorWithTx(taskId, "to finish", null));
-    }
-
     @Test
     public void test() {
 
@@ -109,20 +101,12 @@ public class TestGraph extends PreparingSourceCode {
 
             assertEquals(1, leafs.size());
             assertTrue(leafs.contains(new TaskVertex(4L, "4L", EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID)));
-//            assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###2")));
-
-//            txSupportForTestingService.finishWithErrorWithTx(1L, "An error", null);
 
             txSupportForTestingService.updateTaskExecState(execContextForTest.id, 1L, EnumsApi.TaskExecState.ERROR, null);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             checkState(1L, EnumsApi.TaskExecState.ERROR);
             checkState(2L, EnumsApi.TaskExecState.SKIPPED);
             checkState(3L, EnumsApi.TaskExecState.SKIPPED);
-
-//            execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 2L, EnumsApi.TaskExecState.NONE, "123###1");
-//            execContextTaskStateService.updateTaskExecStatesWithTx(execContextForTest.id, 3L, EnumsApi.TaskExecState.NONE, "123###1");
-
-//        updateGraphWithSettingAllChildrenTasksAsError( Objects.requireNonNull(execContextService.findById(execContextForTest.id)), 1L);
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 

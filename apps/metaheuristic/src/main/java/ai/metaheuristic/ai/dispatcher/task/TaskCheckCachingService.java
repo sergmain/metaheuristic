@@ -27,8 +27,6 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -70,7 +68,7 @@ public class TaskCheckCachingService {
     private final Globals globals;
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskStateService taskStateService;
     private final VariableService variableService;
     private final CacheService cacheService;
     private final CacheVariableService cacheVariableService;
@@ -100,7 +98,7 @@ public class TaskCheckCachingService {
 
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
-        execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
+        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, null);
 
         return null;
     }
@@ -220,7 +218,7 @@ public class TaskCheckCachingService {
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
-            execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.NONE, null);
+            taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, null);
         }
         return null;
     }

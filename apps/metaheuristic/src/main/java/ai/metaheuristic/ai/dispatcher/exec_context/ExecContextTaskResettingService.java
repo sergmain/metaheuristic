@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -44,7 +45,7 @@ public class ExecContextTaskResettingService {
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
 
     @Transactional
@@ -54,7 +55,6 @@ public class ExecContextTaskResettingService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
         }
         return taskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
-//        return resetTask(execContext, taskId);
     }
 
     public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
@@ -73,7 +73,7 @@ public class ExecContextTaskResettingService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        execContextTaskStateService.updateTaskExecStates(execContext, t, EnumsApi.TaskExecState.NONE, null);
+        taskStateService.updateTaskExecStates(t, EnumsApi.TaskExecState.NONE, null);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -63,7 +62,6 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
 public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskFinishingService taskFinishingService;
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
@@ -118,15 +116,6 @@ public class TaskProviderTransactionalService {
 
         final QueuedTask queuedTask = new QueuedTask(task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
         taskQueue.addNewTask(queuedTask);
-/*
-        tasks.sort((o1, o2)->{
-            if(o1.priority!=o2.priority) {
-                // sort in descendant order;
-                return Integer.compare(o2.priority, o1.priority);
-            }
-            return Long.compare(o1.taskId, o2.taskId);
-        });
-*/
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {

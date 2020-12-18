@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -40,9 +39,23 @@ import org.springframework.stereotype.Service;
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
     private final TaskSyncService taskSyncService;
+    private final TaskProviderService taskProviderService;
+
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
+        updateTaskExecStates(task, execState, false);
+    }
+
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
+        TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(task.id);
+        TaskImpl t = changeTaskState(task, execState);
+        if (markAsCompleted) {
+            t.setCompleted(true);
+            t.setCompletedOn(System.currentTimeMillis());
+        }
+    }
 
     @Nullable
     public TaskImpl resetTask(final Long taskId) {
@@ -95,6 +108,8 @@ public class TaskExecStateService {
             default:
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
+
+        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
         return task;
     }
 

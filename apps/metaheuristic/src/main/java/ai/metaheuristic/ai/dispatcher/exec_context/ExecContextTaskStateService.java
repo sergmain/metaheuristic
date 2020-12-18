@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,6 +49,7 @@ public class ExecContextTaskStateService {
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
+    private final TaskStateService taskStateService;
 
     @Transactional
     public Void updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
@@ -68,24 +70,9 @@ public class ExecContextTaskStateService {
             return null;
         }
 
-        updateTaskExecStates(execContext, task, execState, taskContextId);
+        taskStateService.updateTaskExecStates(task, execState, taskContextId);
 
         return null;
-    }
-
-    public void updateTaskExecStates(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-        updateTaskExecStates(task, execState, taskContextId, false);
-    }
-
-    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
-        TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
-        TaskImpl t = taskExecStateService.changeTaskState(task, execState);
-        if (markAsCompleted) {
-            t.setCompleted(true);
-            t.setCompletedOn(System.currentTimeMillis());
-        }
-//        return status.status;
     }
 
     public OperationStatusRest updateTaskExecStates1(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {

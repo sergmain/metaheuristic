@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -51,7 +52,7 @@ public class ExecContextReconciliationService {
     private final ExecContextService execContextService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskStateService taskStateService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final TaskSyncService taskSyncService;
@@ -164,7 +165,7 @@ public class ExecContextReconciliationService {
                     return null;
                 }
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                execContextTaskStateService.updateTaskExecStates(execContext, task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);
+                taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);
                 return null;
             });
         };

@@ -14,15 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -31,36 +32,32 @@ import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
- * Date: 10/3/2020
- * Time: 10:17 PM
+ * Date: 12/18/2020
+ * Time: 4:18 AM
  */
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextTaskFinishingService {
+public class TaskStateService {
 
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
-    private final DispatcherEventService dispatcherEventService;
     private final TaskSyncService taskSyncService;
 
-    public Void finishWithError1(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
-        taskSyncService.checkWriteLockPresent(task.id);
-
-//        finishTaskAsError(task, exitCode, console);
-
-        final ExecContextImpl execContext = execContextCache.findById(task.execContextId);
-        if (execContext!=null) {
-            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContext, task.id, EnumsApi.TaskExecState.ERROR, taskContextId);
-            taskExecStateService.updateTasksStateInDb(status);
-        }
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
-        return null;
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        updateTaskExecStates(task, execState, taskContextId, false);
     }
+
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
+        TxUtils.checkTxExists();
+        taskSyncService.checkWriteLockPresent(task.id);
+        TaskImpl t = taskExecStateService.changeTaskState(task, execState);
+        if (markAsCompleted) {
+            t.setCompleted(true);
+            t.setCompletedOn(System.currentTimeMillis());
+        }
+    }
+
 }

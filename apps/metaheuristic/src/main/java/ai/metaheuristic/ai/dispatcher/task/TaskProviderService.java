@@ -21,9 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -66,12 +65,9 @@ public class TaskProviderService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
     private final DispatcherEventService dispatcherEventService;
-    private final ExecContextSyncService execContextSyncService;
-    private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final ExecContextStatusService execContextStatusService;
-    private final TaskSyncService taskSyncService;
 
     private static class TaskProviderServiceSync {}
 
@@ -113,6 +109,12 @@ public class TaskProviderService {
         }
     }
 
+    @Async
+    @EventListener
+    public void setTaskExecState(SetTaskExecStateEvent event) {
+        setTaskExecState(event.execContextId, event.taskId, event.state);
+    }
+
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         synchronized (syncObj) {
             taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
@@ -131,18 +133,7 @@ public class TaskProviderService {
             task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
         }
         if (task!=null) {
-/*
-            execContextSyncService.getWithSyncNullable(task.execContextId,
-                    () -> taskSyncService.getWithSyncNullable(task.id,
-                            ()-> execContextTaskStateService.updateTaskExecStatesWithTx(task.execContextId, task.id, EnumsApi.TaskExecState.IN_PROGRESS, null)));
-*/
-
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
-/*
-            synchronized (syncObj) {
-                taskProviderTransactionalService.deRegisterTask(task.execContextId, task.id);
-            }
-*/
         }
         return task;
     }

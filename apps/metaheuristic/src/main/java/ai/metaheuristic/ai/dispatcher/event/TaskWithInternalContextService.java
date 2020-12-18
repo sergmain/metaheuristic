@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcess
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -59,7 +60,7 @@ public class TaskWithInternalContextService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final TaskService taskService;
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskStateService taskStateService;
     private final ExecContextVariableService execContextVariableService;
     private final TaskFinishingService taskFinishingService;
     private final VariableService variableService;
@@ -122,8 +123,8 @@ public class TaskWithInternalContextService {
                     log.error("#707.120 Task #"+task.id+" already was finished");
                     return;
                 }
-                execContextTaskStateService.updateTaskExecStates(
-                        execContext, task, EnumsApi.TaskExecState.IN_PROGRESS, null);
+                taskStateService.updateTaskExecStates(
+                        task, EnumsApi.TaskExecState.IN_PROGRESS, null);
 
                 TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                 ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -50,11 +49,12 @@ import org.yaml.snakeyaml.error.YAMLException;
 public class TaskFinishingService {
 
     private final DispatcherEventService dispatcherEventService;
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final TaskStateService taskStateService;
     private final TaskService taskService;
     private final CacheService cacheService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
+    private final TaskProviderService taskProviderService;
 
     @Transactional
     public Void finishAndStoreVariable(Long taskId, boolean checkCaching, DataHolder holder, ExecContextParamsYaml ecpy) {
@@ -68,7 +68,7 @@ public class TaskFinishingService {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-        execContextTaskStateService.updateTaskExecStates(
+        taskStateService.updateTaskExecStates(
                 task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
 
         if (checkCaching && tpy.task.cache!=null && tpy.task.cache.enabled) {
@@ -140,6 +140,8 @@ public class TaskFinishingService {
         task.setResultReceived(true);
 
         task = taskService.save(task);
+
+        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
     }
 
 
