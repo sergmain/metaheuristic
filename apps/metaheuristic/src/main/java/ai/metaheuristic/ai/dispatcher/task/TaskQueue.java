@@ -256,12 +256,15 @@ public class TaskQueue {
         this.minQueueSize = minQueueSize;
     }
 
-    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+    public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         for (TaskGroup taskGroup : taskGroups) {
             if (!execContextId.equals(taskGroup.execContextId)) {
                 continue;
             }
             for (AllocatedTask task : taskGroup.tasks) {
+                if (task==null) {
+                    continue;
+                }
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
@@ -269,9 +272,26 @@ public class TaskQueue {
                     log.warn("task wasn't assigned!!!");
                 }
                 task.state = state;
-                return;
+                break;
+            }
+            return groupFinished(taskGroup);
+        }
+        return false;
+    }
+
+    public static boolean groupFinished(TaskGroup taskGroup) {
+        for (AllocatedTask task : taskGroup.tasks) {
+            if (task==null) {
+                continue;
+            }
+            if (!task.assigned) {
+                return false;
+            }
+            if (!EnumsApi.TaskExecState.isFinishedState(task.state)) {
+                return false;
             }
         }
+        return true;
     }
 
     public void lock(Long execContextId) {

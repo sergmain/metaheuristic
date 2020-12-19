@@ -293,7 +293,7 @@ public class TaskProviderTransactionalService {
         taskQueue.deleteByExecContextId(execContextId);
     }
 
-    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
-        taskQueue.setTaskExecState(execContextId, taskId, state);
+    public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        return taskQueue.setTaskExecState(execContextId, taskId, state);
     }
 }
