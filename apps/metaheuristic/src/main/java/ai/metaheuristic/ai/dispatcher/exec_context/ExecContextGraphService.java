@@ -189,7 +189,7 @@ public class ExecContextGraphService {
                     setStateForAllChildrenTasksInternal(graph, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                 }
                 else if (tv.execState==EnumsApi.TaskExecState.NONE || tv.execState==EnumsApi.TaskExecState.OK) {
-                    // setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
+                    // do nothing
                 }
                 else if (tv.execState == EnumsApi.TaskExecState.SKIPPED) {
                     log.info("#915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);

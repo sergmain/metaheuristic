@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -44,9 +45,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -86,11 +85,11 @@ public class BatchLineSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_LINE_SPLITTER_FUNCTION;
     }
 
-    @Transactional
     public InternalFunctionProcessingResult process(
-            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+        TxUtils.checkTxExists();
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");

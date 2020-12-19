@@ -55,7 +55,6 @@ public class ExecContextTaskAssigningService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final TaskProviderService taskProviderService;

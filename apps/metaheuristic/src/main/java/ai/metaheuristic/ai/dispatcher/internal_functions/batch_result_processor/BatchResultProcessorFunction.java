@@ -141,10 +141,11 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
-            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
-
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            TaskParamsYaml taskParamsYaml, DataHolder holder) {
         TxUtils.checkTxExists();
+
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);

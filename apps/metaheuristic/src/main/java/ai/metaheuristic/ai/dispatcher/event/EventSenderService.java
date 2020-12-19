@@ -50,6 +50,9 @@ public class EventSenderService {
             else if (event instanceof TaskCreatedEvent) {
                 eventPublisher.publishEvent((TaskCreatedEvent)event);
             }
+            else if (event instanceof UpdateTaskExecStatesInGraphEvent) {
+                eventPublisher.publishEvent((UpdateTaskExecStatesInGraphEvent)event);
+            }
             else {
                 throw new IllegalStateException("Not supported event: " +  event.getClass().getName());
             }

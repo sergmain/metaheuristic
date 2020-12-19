@@ -42,6 +42,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,7 @@ public class TaskWithInternalContextService {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Nullable
     private static Long lastTaskId=null;
@@ -152,8 +154,13 @@ public class TaskWithInternalContextService {
                     final String console = "#707.180 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
                     final String taskContextId = taskParamsYaml.task.taskContextId;
                     taskStateService.finishWithError(task, console, taskContextId);
+                    // don't move this 'add' upper and don't combine it with the following one
+                    holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
+
                     return;
                 }
+                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
+
                 execContextVariableService.setResultReceivedForInternalFunction(task.id);
 
                 ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();

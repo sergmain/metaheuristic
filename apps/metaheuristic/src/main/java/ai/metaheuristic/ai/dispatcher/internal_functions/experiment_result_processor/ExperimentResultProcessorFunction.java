@@ -33,7 +33,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 /**
@@ -62,9 +61,9 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
 
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
-            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
-
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            TaskParamsYaml taskParamsYaml, DataHolder holder) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 

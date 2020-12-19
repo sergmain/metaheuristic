@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ExecContextTaskStateService {
 
+    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextService execContextService;
@@ -73,6 +74,17 @@ public class ExecContextTaskStateService {
         taskStateService.updateTaskExecStates(task, execState, taskContextId);
 
         return null;
+    }
+
+    @Transactional
+    public OperationStatusRest updateTaskExecStatesInGraph( Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+        taskSyncService.checkWriteLockPresent(taskId);
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
+        taskExecStateService.updateTasksStateInDb(status);
+        return status.status;
     }
 
     public OperationStatusRest updateTaskExecStates1(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {

@@ -25,13 +25,13 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
@@ -64,8 +64,10 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId, @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+        TxUtils.checkTxExists();
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {

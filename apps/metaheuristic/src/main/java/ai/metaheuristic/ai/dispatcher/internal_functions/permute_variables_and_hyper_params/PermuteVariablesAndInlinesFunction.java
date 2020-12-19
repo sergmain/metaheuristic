@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -47,9 +48,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,11 +85,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     }
 
     @Override
-    @Transactional
     public InternalFunctionProcessingResult process(
-            @NonNull ExecContextImpl execContext, @NonNull TaskImpl task, @NonNull String taskContextId,
-            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            @NonNull TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            ExecContextImpl execContext, TaskImpl task, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+        TxUtils.checkTxExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
