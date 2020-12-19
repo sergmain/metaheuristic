@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -117,7 +118,7 @@ public class TaskProviderTransactionalService {
             return;
         }
 
-        final QueuedTask queuedTask = new QueuedTask(task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
+        final QueuedTask queuedTask = new QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
         taskQueue.addNewTask(queuedTask);
     }
 
@@ -127,6 +128,11 @@ public class TaskProviderTransactionalService {
 
     public boolean isQueueEmpty() {
         return taskQueue.isQueueEmpty();
+    }
+
+    public void registerInternalTask(Long execContextId, Long taskId) {
+        taskQueue.addNewInternalTask(execContextId, taskId);
+        applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
     }
 
     @Nullable
@@ -157,6 +163,10 @@ public class TaskProviderTransactionalService {
                     break;
                 }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
+                if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
+                    log.error("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened");
+                    continue;
+                }
 
                 if (!statuses.isStarted(queuedTask.execContextId)) {
                     continue;
@@ -177,10 +187,10 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
-                // all tasks with internal function will be processed by scheduler
-                if (queuedTask.taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
+                // all tasks with internal function should be already called.
+                // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService.registerInternalTask
+                if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
                     log.error("#317.055 this situation shouldn't be happened.");
-//                    forRemoving.add(queuedTask);
                     continue;
                 }
 
@@ -255,11 +265,17 @@ public class TaskProviderTransactionalService {
             return null;
         }
 
-        TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
-        if (t==null) {
-            log.warn("#317.015 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
+        if (resultTask.queuedTask.task == null) {
+            log.error("#317.160 (resultTask.queuedTask.task == null). shouldn't happened");
             return null;
         }
+
+        TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
+        if (t==null) {
+            log.warn("#317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
+            return null;
+        }
+
         // normal way of operation for this Processor
         longHolder.set(0);
 

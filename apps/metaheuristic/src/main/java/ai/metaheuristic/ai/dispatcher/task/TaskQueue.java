@@ -38,15 +38,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TaskQueue {
 
+    private static final int MAX_PRIORITY = 2_000_000;
+
     @Data
     @AllArgsConstructor
     @EqualsAndHashCode(of = {"taskId"})
     public static class QueuedTask {
-        public Long execContextId;
-        public Long taskId;
-        public TaskImpl task;
-        public TaskParamsYaml taskParamYaml;
-        public String tags;
+        public final EnumsApi.FunctionExecContext execContext;
+        public final Long execContextId;
+        public final Long taskId;
+        @Nullable
+        public final TaskImpl task;
+        @Nullable
+        public final TaskParamsYaml taskParamYaml;
+        @Nullable
+        public final String tags;
         public int priority;
     }
 
@@ -148,13 +154,14 @@ public class TaskQueue {
             }
         }
 
-        public void assignTask(Long taskId) {
+        public boolean assignTask(Long taskId) {
             for (AllocatedTask task : tasks) {
                 if (task != null && task.queuedTask.taskId.equals(taskId)) {
                     task.assigned = true;
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
 
         public void reset() {
@@ -289,6 +296,13 @@ public class TaskQueue {
     }
 
     public void addNewTask(QueuedTask task) {
+        addNewTask(task, true);
+    }
+
+    private void addNewTask(QueuedTask task, boolean fixPriority) {
+        if (fixPriority && task.priority>MAX_PRIORITY) {
+            task.priority = MAX_PRIORITY;
+        }
         List<TaskGroup> temp = new ArrayList<>(taskGroups);
         temp.sort(Comparator.comparingInt(o -> o.allocated));
         TaskGroup taskGroup = null;
@@ -320,6 +334,21 @@ public class TaskQueue {
             taskGroups.add(taskGroup);
         }
         taskGroup.addTask(task);
+    }
+
+    public void addNewInternalTask(Long execContextId, Long taskId) {
+        QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, null, null, 2_000_001);
+        addNewTask(task, false);
+        lock(execContextId);
+
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId)) {
+                if (taskGroup.assignTask(taskId)) {
+                    taskGroup.lock();
+                    return;
+                }
+            }
+        }
     }
 
     public void shrink() {

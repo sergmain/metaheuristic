@@ -109,6 +109,12 @@ public class TaskProviderService {
         }
     }
 
+    public void registerInternalTask(Long execContextId, Long taskId) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.registerInternalTask(execContextId, taskId);
+        }
+    }
+
     @Async
     @EventListener
     public void setTaskExecState(SetTaskExecStateEvent event) {
