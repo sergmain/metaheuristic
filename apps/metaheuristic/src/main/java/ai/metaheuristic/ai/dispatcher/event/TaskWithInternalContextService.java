@@ -148,18 +148,16 @@ public class TaskWithInternalContextService {
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext, task, p.internalContextId, taskParamsYaml, holder);
 
+                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
+
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
                     log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                             result.processing, result.error, execContext.sourceCodeId, execContext.id);
                     final String console = "#707.180 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
                     final String taskContextId = taskParamsYaml.task.taskContextId;
                     taskStateService.finishWithError(task, console, taskContextId);
-                    // don't move this 'add' upper and don't combine it with the following one
-                    holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
-
                     return;
                 }
-                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
 
                 execContextVariableService.setResultReceivedForInternalFunction(task.id);
 

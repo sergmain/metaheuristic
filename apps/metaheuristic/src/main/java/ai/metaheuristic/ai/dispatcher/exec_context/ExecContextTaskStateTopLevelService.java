@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -43,7 +44,7 @@ public class ExecContextTaskStateTopLevelService {
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
-
+    private final TaskSyncService taskSyncService;
 
     @Async
     @EventListener
@@ -63,6 +64,7 @@ public class ExecContextTaskStateTopLevelService {
         }
 
         execContextSyncService.getWithSyncNullable(execContextId,
-                () -> execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId) );
+                () -> taskSyncService.getWithSyncNullable(taskId,
+                        () -> execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
     }
 }
