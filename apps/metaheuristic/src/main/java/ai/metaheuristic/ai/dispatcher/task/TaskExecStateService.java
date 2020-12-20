@@ -41,7 +41,7 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final TaskSyncService taskSyncService;
-    private final TaskProviderService taskProviderService;
+    private final TaskProviderTopLevelService taskProviderService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
         updateTaskExecStates(task, execState, false);
@@ -117,9 +117,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
 
         status.childrenTasks.forEach(
-                // TODO 2020-11-20 need to watch this code for a possible dead lock. In general, the dead-lock won't be occurred
                 t -> taskSyncService.getWithSyncNullable(t.taskId, () -> {
-
                     TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                     if (task != null) {
                         changeTaskState(task, t.execState);

@@ -126,12 +126,16 @@ public class TaskProviderTransactionalService {
         taskQueue.deRegisterTask(execContextId, taskId);
     }
 
+    public void lock(Long execContextId) {
+        taskQueue.lock(execContextId);
+    }
+
     public boolean isQueueEmpty() {
         return taskQueue.isQueueEmpty();
     }
 
-    public void registerInternalTask(Long execContextId, Long taskId) {
-        taskQueue.addNewInternalTask(execContextId, taskId);
+    public void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        taskQueue.addNewInternalTask(execContextId, taskId, taskParamYaml);
         applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
     }
 
@@ -295,5 +299,10 @@ public class TaskProviderTransactionalService {
 
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         return taskQueue.setTaskExecState(execContextId, taskId, state);
+    }
+
+    @Nullable
+    public TaskGroup getFinishedTaskGroup(Long execContextId) {
+        return taskQueue.getFinishedTaskGroup(execContextId);
     }
 }

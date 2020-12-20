@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.task;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.api.EnumsApi;
@@ -40,6 +41,7 @@ public class TestTaskQueue {
         task.execContextId = execContextId;
         task.id = taskId;
         TaskParamsYaml taskParamYaml = new TaskParamsYaml();
+        taskParamYaml.task.taskContextId = Consts.TOP_LEVEL_CONTEXT_ID;
 
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(
                 EnumsApi.FunctionExecContext.external, execContextId, taskId, task, taskParamYaml, null, priority);

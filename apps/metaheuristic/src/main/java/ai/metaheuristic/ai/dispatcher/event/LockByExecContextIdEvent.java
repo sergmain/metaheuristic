@@ -17,16 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 /**
  * @author Serge
- * Date: 3/15/2020
- * Time: 10:55 PM
+ * Date: 12/19/2020
+ * Time: 7:33 PM
  */
-@Data
 @AllArgsConstructor
-public class TaskWithInternalContextEvent {
+public class LockByExecContextIdEvent {
     public final Long execContextId;
-    public final Long taskId;
 }

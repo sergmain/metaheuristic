@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -47,7 +47,7 @@ public class DispatcherCommandProcessor {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final TaskTopLevelService taskTopLevelService;
     private final ProcessorTransactionService processorService;
-    private final TaskProviderService taskProviderService;
+    private final TaskProviderTopLevelService taskProviderService;
 
     public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
         if (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId)) {

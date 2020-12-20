@@ -54,7 +54,7 @@ public class TaskStateService {
     private final CacheService cacheService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
-    private final TaskProviderService taskProviderService;
+    private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final TaskExecStateService taskExecStateService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
@@ -156,7 +156,7 @@ public class TaskStateService {
 
         task = taskService.save(task);
 
-        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
+        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
     }
 
 

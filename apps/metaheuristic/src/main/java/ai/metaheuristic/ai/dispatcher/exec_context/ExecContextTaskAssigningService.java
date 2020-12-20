@@ -21,10 +21,9 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -57,7 +56,7 @@ public class ExecContextTaskAssigningService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
-    private final TaskProviderService taskProviderService;
+    private final TaskProviderTopLevelService taskProviderService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
@@ -101,7 +100,7 @@ public class ExecContextTaskAssigningService {
                     // all tasks with internal function will be processed in a different thread
                     if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
                         log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                        taskProviderService.registerInternalTask(execContextId, taskId);
+                        taskProviderService.registerInternalTask(execContextId, taskId, taskParamYaml);
 //                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
                     }
                     else {

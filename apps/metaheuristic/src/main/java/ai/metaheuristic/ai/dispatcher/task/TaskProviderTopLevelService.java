@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class TaskProviderService {
+public class TaskProviderTopLevelService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
     private final DispatcherEventService dispatcherEventService;
@@ -96,9 +96,24 @@ public class TaskProviderService {
         }
     }
 
+    @Async
+    @EventListener
+    public void lock(LockByExecContextIdEvent event) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
+        }
+    }
+
     public void deregisterTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
             taskProviderTransactionalService.deRegisterTask(execContextId, taskId);
+        }
+    }
+
+    @Nullable
+    public TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
+        synchronized (syncObj) {
+            return taskProviderTransactionalService.getFinishedTaskGroup(execContextId);
         }
     }
 
@@ -108,9 +123,15 @@ public class TaskProviderService {
         }
     }
 
-    public void registerInternalTask(Long execContextId, Long taskId) {
+    public void lock(Long execContextId) {
         synchronized (syncObj) {
-            taskProviderTransactionalService.registerInternalTask(execContextId, taskId);
+            taskProviderTransactionalService.lock(execContextId);
+        }
+    }
+
+    public void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.registerInternalTask(execContextId, taskId, taskParamYaml);
         }
     }
 

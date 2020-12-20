@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,7 @@ public class TaskWithInternalContextEventService {
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
@@ -62,6 +64,7 @@ public class TaskWithInternalContextEventService {
                         () -> taskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder)));
                 eventSenderService.sendEvents(holder);
+                applicationEventPublisher.publishEvent(new LockByExecContextIdEvent(event.execContextId));
             }
         } catch (Throwable th) {
             String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";

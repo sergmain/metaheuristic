@@ -19,9 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -51,6 +49,7 @@ public class ExecContextTaskStateService {
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
     private final TaskStateService taskStateService;
+    private final TaskProviderTopLevelService taskProviderTopLevelService;
 
     @Transactional
     public Void updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
@@ -102,4 +101,33 @@ public class ExecContextTaskStateService {
     }
 
 
+    @Nullable
+    @Transactional
+    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
+        TaskQueue.TaskGroup taskGroup = taskProviderTopLevelService.getFinishedTaskGroup(execContextId);
+        if (taskGroup==null) {
+            return null;
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return null;
+        }
+        boolean found = false;
+        for (TaskQueue.AllocatedTask task : taskGroup.tasks) {
+            if (task==null) {
+                continue;
+            }
+
+            if (task.queuedTask.taskParamYaml==null) {
+                throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
+            }
+            String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
+            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, task.queuedTask.taskId, task.state, taskContextId);
+            taskExecStateService.updateTasksStateInDb(status);
+            found = true;
+        }
+        return found ? taskGroup : null;
+    }
 }

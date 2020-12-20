@@ -49,7 +49,6 @@ public class TaskQueue {
         public final Long taskId;
         @Nullable
         public final TaskImpl task;
-        @Nullable
         public final TaskParamsYaml taskParamYaml;
         @Nullable
         public final String tags;
@@ -256,6 +255,16 @@ public class TaskQueue {
         this.minQueueSize = minQueueSize;
     }
 
+    @Nullable
+    public TaskGroup getFinishedTaskGroup(Long execContextId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId) && groupFinished(taskGroup)) {
+                return taskGroup;
+            }
+        }
+        return null;
+    }
+
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         for (TaskGroup taskGroup : taskGroups) {
             if (!execContextId.equals(taskGroup.execContextId)) {
@@ -356,8 +365,8 @@ public class TaskQueue {
         taskGroup.addTask(task);
     }
 
-    public void addNewInternalTask(Long execContextId, Long taskId) {
-        QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, null, null, 2_000_001);
+    public void addNewInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, 2_000_001);
         addNewTask(task, false);
         lock(execContextId);
 

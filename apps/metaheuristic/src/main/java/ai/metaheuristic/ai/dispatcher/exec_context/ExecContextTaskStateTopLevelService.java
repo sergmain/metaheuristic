@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -50,6 +52,25 @@ public class ExecContextTaskStateTopLevelService {
     @EventListener
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
         updateTaskExecStatesInGraph(event.execContextId, event.taskId);
+    }
+
+    @Async
+    @EventListener
+    public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
+        transferStateFromTaskQueueToExecContext(event.execContextId);
+    }
+
+
+    public void transferStateFromTaskQueueToExecContext(Long execContextId) {
+        for (int i = 0; i < 100; i++) {
+            TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextId,
+                    () -> execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId));
+
+            if (taskGroup==null){
+                return;
+            }
+            taskGroup.reset();
+        }
     }
 
     public void updateTaskExecStatesInGraph(Long execContextId, Long taskId) {

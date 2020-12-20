@@ -68,7 +68,6 @@ public class TaskWithInternalContextService {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Nullable
     private static Long lastTaskId=null;
