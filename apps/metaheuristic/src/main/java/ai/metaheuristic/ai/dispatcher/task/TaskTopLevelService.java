@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -65,6 +66,7 @@ public class TaskTopLevelService {
                 continue;
             }
             applicationEventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+            applicationEventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
 
             List<Long> ids;
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {

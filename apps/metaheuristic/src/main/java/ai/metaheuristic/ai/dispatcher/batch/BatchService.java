@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -232,7 +233,7 @@ public class BatchService {
     }
 
     @Transactional
-    public OperationStatusRest deleteBatchVirtually(Long execContextId, Long companyUniqueId, Long batchId) {
+    public OperationStatusRest deleteBatchVirtually(Long execContextId, Long companyUniqueId, Long batchId, DataHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
         Batch batch = batchCache.findById(batchId);
@@ -251,14 +252,15 @@ public class BatchService {
             b.deleted = true;
             batchCache.save(b);
         }
+        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
 
     @Transactional
-    public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId) {
+    public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId, DataHolder holder) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        execContextService.deleteExecContext(execContextId, companyUniqueId);
+        execContextService.deleteExecContext(execContextId, companyUniqueId, holder);
         batchCache.deleteById(batchId);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }

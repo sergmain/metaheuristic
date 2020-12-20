@@ -21,9 +21,14 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -41,11 +46,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -66,24 +69,17 @@ public class ExperimentTopLevelService {
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
-    private final ExecContextService execContextService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventSenderService eventSenderService;
 
     @Async
     @EventListener
-    public void handleAsync(DispatcherInternalEvent.DeleteExperimentEvent event) {
-        experimentService.deleteExperiment(event.experimentId);
-    }
-
-    @Async
-    @EventListener
-    public void handleAsync(DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent event) {
+    public void deleteExperimentByExecContextId(ProcessDeletedExecContextEvent event) {
         experimentService.deleteExperimentByExecContextId(event.execContextId);
     }
-
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -256,26 +252,11 @@ public class ExperimentTopLevelService {
 
 
     public OperationStatusRest experimentDeleteCommit(Long id, DispatcherContext context) {
-        try {
-            Experiment experiment = experimentCache.findById(id);
-            if (experiment == null) {
-                return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.260 experiment wasn't found, experimentId: " + id);
-            }
-            ExecContext ex = execContextCache.findById(experiment.execContextId);
-            if (ex != null) {
-                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
-                if (operationStatusRest.isErrorMessages()) {
-                    return operationStatusRest;
-                }
-            }
-            experimentService.deleteExperiment(id);
-        } catch (EmptyResultDataAccessException e) {
-            // it's ok
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error {}", e.toString());
+        try (DataHolder holder = new DataHolder())  {
+            OperationStatusRest operationStatusRest = experimentService.deleteExperiment(id, context, holder);
+            eventSenderService.sendEvents(holder);
+            return operationStatusRest;
         }
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public OperationStatusRest experimentCloneCommit(Long id, DispatcherContext context) {

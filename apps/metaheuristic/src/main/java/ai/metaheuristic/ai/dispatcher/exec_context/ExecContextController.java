@@ -165,7 +165,7 @@ public class ExecContextController {
     public String execContextDeleteCommit(Long sourceCodeId, Long execContextId,
                                        final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(execContextId, context);
+        OperationStatusRest operationStatusRest = execContextTopLevelService.deleteExecContextById(execContextId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;

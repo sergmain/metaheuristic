@@ -167,6 +167,7 @@ public class TaskQueue {
             allocated = 0;
             execContextId = null;
             Arrays.fill(tasks, null);
+            locked = false;
         }
 
         public boolean isEmpty() {
@@ -305,6 +306,7 @@ public class TaskQueue {
 
     public void lock(Long execContextId) {
         taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).forEach(TaskGroup::lock);
+        int i=0;
     }
 
     public void removeAll(List<QueuedTask> forRemoving) {
@@ -332,15 +334,13 @@ public class TaskQueue {
         if (fixPriority && task.priority>MAX_PRIORITY) {
             task.priority = MAX_PRIORITY;
         }
-        List<TaskGroup> temp = new ArrayList<>(taskGroups);
-        temp.sort(Comparator.comparingInt(o -> o.allocated));
         TaskGroup taskGroup = null;
         for (int i = 0; i < taskGroups.size(); i++) {
             TaskGroup group = taskGroups.get(i);
             if (group.locked) {
                 continue;
             }
-            if (group.priority < task.priority) {
+            if (group.allocated>0 && group.priority < task.priority) {
                 taskGroup = new TaskGroup(task.execContextId, task.priority);
                 taskGroups.add(i, taskGroup);
                 break;

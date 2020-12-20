@@ -53,6 +53,12 @@ public class EventSenderService {
             else if (event instanceof UpdateTaskExecStatesInGraphEvent) {
                 eventPublisher.publishEvent((UpdateTaskExecStatesInGraphEvent)event);
             }
+            else if (event instanceof ProcessDeletedExecContextEvent) {
+                eventPublisher.publishEvent((ProcessDeletedExecContextEvent)event);
+            }
+            else if (event instanceof TaskQueueCleanByExecContextIdEvent) {
+                eventPublisher.publishEvent((TaskQueueCleanByExecContextIdEvent)event);
+            }
             else {
                 throw new IllegalStateException("Not supported event: " +  event.getClass().getName());
             }

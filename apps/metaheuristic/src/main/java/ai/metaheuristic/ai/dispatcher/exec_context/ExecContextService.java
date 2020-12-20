@@ -21,9 +21,11 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -49,7 +51,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
@@ -78,7 +79,6 @@ public class ExecContextService {
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
-    private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
@@ -336,13 +336,14 @@ public class ExecContextService {
     }
 
     @Transactional
-    public void deleteExecContext(Long execContextId, Long companyUniqueId) {
-        deleteExecContext(execContextId);
+    public void deleteExecContext(Long execContextId, Long companyUniqueId, DataHolder holder) {
+        deleteExecContext(execContextId, holder);
     }
 
     @Transactional
-    public Void deleteExecContext(Long execContextId) {
-        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
+    public Void deleteExecContext(Long execContextId, DataHolder holder) {
+        holder.events.add(new ProcessDeletedExecContextEvent(execContextId));
+        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
         execContextCache.deleteById(execContextId);
         // tasks and variables will be deleted in another thread launched by Scheduler
         return null;
@@ -360,13 +361,12 @@ public class ExecContextService {
     }
 
     @Transactional
-    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
+    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context, DataHolder holder) {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
         }
-        eventPublisher.publishEvent( new DispatcherInternalEvent.ExecContextDeletionEvent(this, execContextId) );
-        deleteExecContext(execContextId, context.getCompanyId());
+        deleteExecContext(execContextId, context.getCompanyId(), holder);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

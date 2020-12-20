@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -80,7 +80,7 @@ public class TaskProviderTransactionalService {
      */
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
-    public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
+    public void processDeletedExecContext(TaskQueueCleanByExecContextIdEvent event) {
         taskQueue.deleteByExecContextId(event.execContextId);
     }
 

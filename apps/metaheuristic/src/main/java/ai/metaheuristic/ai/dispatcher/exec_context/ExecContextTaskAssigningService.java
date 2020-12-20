@@ -118,6 +118,7 @@ public class ExecContextTaskAssigningService {
                 }
             }
         }
+        taskProviderService.lock(execContextId);
         return null;
     }
 

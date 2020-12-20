@@ -115,7 +115,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return execContextService.deleteExecContextById(execContextId, context);
+        return execContextTopLevelService.deleteExecContextById(execContextId, context);
     }
 
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")

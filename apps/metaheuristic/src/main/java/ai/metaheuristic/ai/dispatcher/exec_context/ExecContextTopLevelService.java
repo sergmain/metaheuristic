@@ -205,9 +205,24 @@ public class ExecContextTopLevelService {
         for (Long execContextId : execContextIds) {
             log.info("Found orphan execContext #{}", execContextId);
 
-            eventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> {
+                try (DataHolder holder = new DataHolder()) {
+                    execContextService.deleteExecContext(execContextId, holder);
+                    eventSenderService.sendEvents(holder);
+                }
+                return null;
+            });
         }
 
+    }
+
+    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
+        return execContextSyncService.getWithSync(execContextId, ()-> {
+            try (DataHolder holder = new DataHolder()) {
+                OperationStatusRest result = execContextService.deleteExecContextById(execContextId, context, holder);
+                eventSenderService.sendEvents(holder);
+                return result;
+            }
+        });
     }
 }

@@ -82,7 +82,7 @@ public class TaskProviderTopLevelService {
 
     @Async
     @EventListener
-    public void processDeletedExecContext(ProcessDeletedExecContextEvent event) {
+    public void processDeletedExecContext(TaskQueueCleanByExecContextIdEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.processDeletedExecContext(event);
         }
@@ -91,14 +91,6 @@ public class TaskProviderTopLevelService {
     @Async
     @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
-        }
-    }
-
-    @Async
-    @EventListener
-    public void lock(LockByExecContextIdEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
         }
@@ -121,6 +113,12 @@ public class TaskProviderTopLevelService {
         synchronized (syncObj) {
             return taskProviderTransactionalService.isQueueEmpty();
         }
+    }
+
+    @Async
+    @EventListener
+    public void lock(LockByExecContextIdEvent event) {
+        lock(event.execContextId);
     }
 
     public void lock(Long execContextId) {

@@ -49,33 +49,8 @@ public class DispatcherInternalEvent {
         public Long experimentId;
     }
 
-    public static class ExecContextDeletionEvent extends ApplicationEvent {
-        public Long execContextId;
-
-        /**
-         * Create a new ApplicationEvent.
-         *
-         * @param source the object on which the event initially occurred (never {@code null})
-         */
-        public ExecContextDeletionEvent(Object source, Long execContextId) {
-            super(source);
-            this.execContextId = execContextId;
-        }
-    }
-
-    @EqualsAndHashCode(of = "execContextId")
-    public static class ExecContextDeletionListener implements ApplicationListener<ExecContextDeletionEvent> {
-        private final long execContextId;
-        private final Consumer<Long> consumer;
-
-        public ExecContextDeletionListener(long execContextId, Consumer<Long> consumer) {
-            this.execContextId = execContextId;
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void onApplicationEvent( ExecContextDeletionEvent event) {
-            consumer.accept(event.execContextId);
-        }
+    @AllArgsConstructor
+    public static class ExecContextDeletionEvent {
+        public final Long execContextId;
     }
 }

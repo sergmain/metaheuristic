@@ -15,21 +15,28 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +52,7 @@ public class ExperimentService {
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
+    private final ExecContextService execContextService;
 
     @Transactional
     public OperationStatusRest addExperimentCommit(Long execContextId, String name, String code, String description) {
@@ -112,6 +120,30 @@ public class ExperimentService {
         ed.sourceCodeId = ec.sourceCodeId;
 
         return ed;
+    }
+
+    @Transactional
+    public OperationStatusRest deleteExperiment(Long id, DispatcherContext context, DataHolder holder) {
+        try {
+            Experiment experiment = experimentCache.findById(id);
+            if (experiment == null) {
+                return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#285.260 experiment wasn't found, experimentId: " + id);
+            }
+            ExecContext ex = execContextCache.findById(experiment.execContextId);
+            if (ex != null) {
+                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context, holder);
+                if (operationStatusRest.isErrorMessages()) {
+                    return operationStatusRest;
+                }
+            }
+            deleteExperiment(id);
+        } catch (EmptyResultDataAccessException e) {
+            // it's ok
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Error {}", e.toString());
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Transactional

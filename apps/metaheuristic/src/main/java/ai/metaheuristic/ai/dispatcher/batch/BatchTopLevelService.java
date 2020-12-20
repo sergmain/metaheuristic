@@ -312,10 +312,22 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return execContextSyncService.getWithSync(execContextId, () -> {
+                try(DataHolder holder = new DataHolder()) {
+                    OperationStatusRest result = batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId, holder);
+                    eventSenderService.sendEvents(holder);
+                    return result;
+                }
+            });
         }
         else {
-            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return execContextSyncService.getWithSync(execContextId, () -> {
+                try(DataHolder holder = new DataHolder()) {
+                    OperationStatusRest result = batchService.deleteBatch(execContextId, companyUniqueId, batchId, holder);
+                    eventSenderService.sendEvents(holder);
+                    return result;
+                }
+            });
         }
     }
 
