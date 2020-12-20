@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +50,7 @@ public class ExecContextTaskStateService {
     private final TaskStateService taskStateService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
 
+/*
     @Transactional
     public Void updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
 
@@ -74,6 +74,7 @@ public class ExecContextTaskStateService {
 
         return null;
     }
+*/
 
     @Transactional
     public OperationStatusRest updateTaskExecStatesInGraph( Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
@@ -85,21 +86,6 @@ public class ExecContextTaskStateService {
         taskExecStateService.updateTasksStateInDb(status);
         return status.status;
     }
-
-    public OperationStatusRest updateTaskExecStates1(ExecContextImpl execContext, TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
-        TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
-        execContextSyncService.checkWriteLockPresent(execContext.id);
-        TaskImpl t = taskExecStateService.changeTaskState(task, execState);
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, t.id, execState, taskContextId);
-        taskExecStateService.updateTasksStateInDb(status);
-        if (markAsCompleted) {
-            t.setCompleted(true);
-            t.setCompletedOn(System.currentTimeMillis());
-        }
-        return status.status;
-    }
-
 
     @Nullable
     @Transactional

@@ -59,6 +59,9 @@ public class EventSenderService {
             else if (event instanceof TaskQueueCleanByExecContextIdEvent) {
                 eventPublisher.publishEvent((TaskQueueCleanByExecContextIdEvent)event);
             }
+            else if (event instanceof SetTaskExecStateEvent) {
+                eventPublisher.publishEvent((SetTaskExecStateEvent)event);
+            }
             else {
                 throw new IllegalStateException("Not supported event: " +  event.getClass().getName());
             }

@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextTaskFinishingService {
 
+/*
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
@@ -58,9 +59,10 @@ public class ExecContextTaskFinishingService {
         if (execContext!=null) {
             final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
                     execContext, task.id, EnumsApi.TaskExecState.ERROR, taskContextId);
-            taskExecStateService.updateTasksStateInDb(status);
+            taskExecStateService.updateTasksStateInDb(status, null);
         }
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
         return null;
     }
+*/
 }

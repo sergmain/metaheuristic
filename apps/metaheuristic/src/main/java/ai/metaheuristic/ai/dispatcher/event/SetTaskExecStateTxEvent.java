@@ -16,15 +16,21 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 
 /**
  * @author Serge
  * Date: 12/18/2020
- * Time: 6:48 PM
+ * Time: 4:03 AM
  */
 @AllArgsConstructor
-public class UpdateTaskExecStatesInGraphEvent implements CommonEvent {
+public class SetTaskExecStateTxEvent {
     public final Long execContextId;
     public final Long taskId;
+    public final EnumsApi.TaskExecState state;
+
+    public SetTaskExecStateEvent to() {
+        return new SetTaskExecStateEvent(execContextId, taskId, state);
+    }
 }

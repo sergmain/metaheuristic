@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
  * Time: 4:03 AM
  */
 @AllArgsConstructor
-public class SetTaskExecStateEvent {
+public class SetTaskExecStateEvent implements CommonEvent {
     public final Long execContextId;
     public final Long taskId;
     public final EnumsApi.TaskExecState state;
