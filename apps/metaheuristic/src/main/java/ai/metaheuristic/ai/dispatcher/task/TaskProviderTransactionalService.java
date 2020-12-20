@@ -20,9 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -67,7 +65,7 @@ public class TaskProviderTransactionalService {
     private final TaskRepository taskRepository;
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final TaskQueue taskQueue = new TaskQueue();
 
@@ -107,7 +105,7 @@ public class TaskProviderTransactionalService {
         } catch (YAMLException e) {
             String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
             log.error(es, e.getMessage());
-            applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+            eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
 //            taskStateService.finishWithErrorWithTx(task.id, es);
             return;
         }
@@ -134,9 +132,13 @@ public class TaskProviderTransactionalService {
         return taskQueue.isQueueEmpty();
     }
 
+    public void startTaskProcessing(StartTaskProcessingEvent event) {
+        taskQueue.startTaskProcessing(event.execContextId, event.taskId);
+    }
+
     public void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         taskQueue.addNewInternalTask(execContextId, taskId, taskParamYaml);
-        applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
+        eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
     }
 
     @Nullable
@@ -177,10 +179,8 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // this situation shouldn't be happened because
-                    // this method is synchronized over ai.metaheuristic.ai.dispatcher.task.TaskProviderService.syncObj
-                    log.error("#317.037 this situation shouldn't be happened.");
-//                    forRemoving.add(queuedTask);
+                    // this can happend because of async call of StartTaskProcessingTxEvent
+                    log.info("#317.037 task #{} already assigned for processing", queuedTask.taskId);
                     continue;
                 }
 
@@ -288,8 +288,16 @@ public class TaskProviderTransactionalService {
         t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         t.setResultResourceScheduledOn(0);
 
-        resultTask.assigned = true;
-        resultTask.state = EnumsApi.TaskExecState.IN_PROGRESS;
+//        taskQueue.startTaskProcessing(t.execContextId, t.id);
+
+        eventPublisher.publishEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
+
+//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(t.execContextId, t.id, EnumsApi.TaskExecState.IN_PROGRESS));
+//        setTaskExecState(t.execContextId, t.id, EnumsApi.TaskExecState.IN_PROGRESS);
+
+//        resultTask.assigned = true;
+        //        resultTask.state = EnumsApi.TaskExecState.IN_PROGRESS;
+
         return t;
     }
 

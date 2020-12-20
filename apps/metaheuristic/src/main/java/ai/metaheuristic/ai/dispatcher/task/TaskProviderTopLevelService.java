@@ -90,6 +90,14 @@ public class TaskProviderTopLevelService {
 
     @Async
     @EventListener
+    public void processDeletedExecContext(StartTaskProcessingEvent event) {
+        synchronized (syncObj) {
+            taskProviderTransactionalService.startTaskProcessing(event);
+        }
+    }
+
+    @Async
+    @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
         synchronized (syncObj) {
             taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
@@ -140,8 +148,11 @@ public class TaskProviderTopLevelService {
     }
 
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        log.info("#393.020 set task #{} as {}", taskId, state);
         synchronized (syncObj) {
-            if (taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state)) {
+            boolean b = taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
+            log.info("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
+            if (b) {
                 applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId));
             }
         }

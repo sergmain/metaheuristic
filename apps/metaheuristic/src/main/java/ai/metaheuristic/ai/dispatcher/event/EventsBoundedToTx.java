@@ -67,5 +67,10 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(event.to());
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleStartTaskProcessingTxEvent(StartTaskProcessingTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
 
 }

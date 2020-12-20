@@ -153,14 +153,15 @@ public class TaskQueue {
             }
         }
 
-        public boolean assignTask(Long taskId) {
+        @Nullable
+        public AllocatedTask assignTask(Long taskId) {
             for (AllocatedTask task : tasks) {
                 if (task != null && task.queuedTask.taskId.equals(taskId)) {
                     task.assigned = true;
-                    return true;
+                    return task;
                 }
             }
-            return false;
+            return null;
         }
 
         public void reset() {
@@ -267,6 +268,10 @@ public class TaskQueue {
     }
 
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+        if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
+            log.info("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
+        }
+        boolean ok = false;
         for (TaskGroup taskGroup : taskGroups) {
             if (!execContextId.equals(taskGroup.execContextId)) {
                 continue;
@@ -282,10 +287,15 @@ public class TaskQueue {
                     log.warn("task wasn't assigned!!!");
                 }
                 task.state = state;
+                ok = true;
                 break;
             }
-            return groupFinished(taskGroup);
+            log.info("#029.025 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
+            if (ok) {
+                return groupFinished(taskGroup);
+            }
         }
+        log.info("#029.027 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
         return false;
     }
 
@@ -372,8 +382,20 @@ public class TaskQueue {
 
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextId.equals(taskGroup.execContextId)) {
-                if (taskGroup.assignTask(taskId)) {
+                if (taskGroup.assignTask(taskId)!=null) {
                     taskGroup.lock();
+                    return;
+                }
+            }
+        }
+    }
+
+    public void startTaskProcessing(Long execContextId, Long taskId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId)) {
+                AllocatedTask allocatedTask = taskGroup.assignTask(taskId);
+                if (allocatedTask!=null) {
+                    allocatedTask.state = EnumsApi.TaskExecState.IN_PROGRESS;
                     return;
                 }
             }
