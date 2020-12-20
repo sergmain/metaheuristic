@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
@@ -44,7 +43,6 @@ public class ExecContextCreatorTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSyncService sourceCodeSyncService;
-    private final EventSenderService eventSenderService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         return createExecContextAndStart(sourceCodeId, context.getCompanyId(), false);
@@ -69,7 +67,6 @@ public class ExecContextCreatorTopLevelService {
                 () -> {
                     try (DataHolder holder = new DataHolder()) {
                         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId, holder, isStart);
-                        eventSenderService.sendEvents(holder);
                         return result;
                     }
                     catch (ExecContextTooManyInstancesException e) {

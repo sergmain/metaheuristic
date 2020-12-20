@@ -28,8 +28,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * @author Serge
@@ -45,7 +43,6 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final TaskSyncService taskSyncService;
-    private final TaskProviderTopLevelService taskProviderService;
     private final ApplicationEventPublisher eventPublisher;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
@@ -115,13 +112,7 @@ public class TaskExecStateService {
         }
 
         eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
-//        taskProviderService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState));
         return task;
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
-        eventPublisher.publishEvent(event.to());
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {

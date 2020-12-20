@@ -24,8 +24,7 @@ import lombok.Data;
  * Date: 11/15/2020
  * Time: 11:40 PM
  */
-@Data
 @AllArgsConstructor
-public class ProcessDeletedExecContextEvent implements CommonEvent{
-    public Long execContextId;
+public class ProcessDeletedExecContextEvent {
+    public final Long execContextId;
 }

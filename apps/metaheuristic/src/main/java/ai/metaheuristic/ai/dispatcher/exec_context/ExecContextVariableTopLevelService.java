@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -53,10 +52,8 @@ import java.io.*;
 public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
-    private final ExecContextVariableService execContextVariableService;
     private final TaskVariableService taskVariableService;
     private final VariableService variableService;
-    private final EventSenderService eventSenderService;
     private final TaskSyncService taskSyncService;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
@@ -78,7 +75,6 @@ public class ExecContextVariableTopLevelService {
         try (DataHolder holder = new DataHolder()) {
             final UploadResult uploadResult = taskSyncService.getWithSync(taskId,
                     () -> taskVariableService.setVariableAsNull(taskId, variableId, holder));
-            eventSenderService.sendEvents(holder);
             return uploadResult;
         }
         catch (ObjectOptimisticLockingFailureException th) {
@@ -158,7 +154,6 @@ public class ExecContextVariableTopLevelService {
                     log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
                     uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableService.updateStatusOfVariable(taskId, variableId, holder));
                 }
-                eventSenderService.sendEvents(holder);
             }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findById(taskId).orElse(null);

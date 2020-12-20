@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -51,6 +51,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
@@ -85,6 +86,7 @@ public class ExecContextService {
     private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
     private final VariableService variableService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -336,14 +338,18 @@ public class ExecContextService {
     }
 
     @Transactional
-    public void deleteExecContext(Long execContextId, Long companyUniqueId, DataHolder holder) {
-        deleteExecContext(execContextId, holder);
+    public void deleteExecContext(Long execContextId, Long companyUniqueId) {
+        deleteExecContext(execContextId);
     }
 
     @Transactional
-    public Void deleteExecContext(Long execContextId, DataHolder holder) {
-        holder.events.add(new ProcessDeletedExecContextEvent(execContextId));
-        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
+    public Void deleteExecContext(Long execContextId) {
+        eventPublisher.publishEvent(new ProcessDeletedExecContextTxEvent(execContextId));
+//        holder.events.add(new ProcessDeletedExecContextEvent(execContextId));
+
+        eventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
+//        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
+
         execContextCache.deleteById(execContextId);
         // tasks and variables will be deleted in another thread launched by Scheduler
         return null;
@@ -361,12 +367,12 @@ public class ExecContextService {
     }
 
     @Transactional
-    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context, DataHolder holder) {
+    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
         }
-        deleteExecContext(execContextId, context.getCompanyId(), holder);
+        deleteExecContext(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

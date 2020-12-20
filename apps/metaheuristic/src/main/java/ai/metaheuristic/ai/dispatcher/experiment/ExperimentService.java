@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -123,7 +122,7 @@ public class ExperimentService {
     }
 
     @Transactional
-    public OperationStatusRest deleteExperiment(Long id, DispatcherContext context, DataHolder holder) {
+    public OperationStatusRest deleteExperiment(Long id, DispatcherContext context) {
         try {
             Experiment experiment = experimentCache.findById(id);
             if (experiment == null) {
@@ -132,7 +131,7 @@ public class ExperimentService {
             }
             ExecContext ex = execContextCache.findById(experiment.execContextId);
             if (ex != null) {
-                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context, holder);
+                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     return operationStatusRest;
                 }

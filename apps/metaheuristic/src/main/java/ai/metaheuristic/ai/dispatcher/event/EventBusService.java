@@ -44,7 +44,6 @@ public class EventBusService {
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
     public final TaskFinishingTopLevelService taskFinishingTopLevelService;
     public final ExecContextSyncService execContextSyncService;
-    public final EventSenderService eventSenderService;
     public final DispatcherParamsService dispatcherParamsService;
     public final ExecContextTopLevelService execContextTopLevelService;
 

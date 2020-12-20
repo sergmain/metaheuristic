@@ -146,7 +146,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
             try (DataHolder holder = new DataHolder()) {
                 txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
-                eventSenderService.sendEvents(holder);
             }
 
             log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");

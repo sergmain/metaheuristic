@@ -24,10 +24,9 @@ import lombok.Data;
  * Date: 11/2/2020
  * Time: 3:40 PM
  */
-@Data
 @AllArgsConstructor
-public class CheckTaskCanBeFinishedEvent implements CommonEvent{
-    public Long execContextId;
-    public Long taskId;
-    public boolean checkCaching;
+public class CheckTaskCanBeFinishedEvent {
+    public final Long execContextId;
+    public final Long taskId;
+    public final boolean checkCaching;
 }

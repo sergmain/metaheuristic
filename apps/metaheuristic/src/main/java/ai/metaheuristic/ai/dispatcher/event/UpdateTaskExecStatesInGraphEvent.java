@@ -24,7 +24,7 @@ import lombok.AllArgsConstructor;
  * Time: 6:48 PM
  */
 @AllArgsConstructor
-public class UpdateTaskExecStatesInGraphEvent implements CommonEvent {
+public class UpdateTaskExecStatesInGraphEvent {
     public final Long execContextId;
     public final Long taskId;
 }

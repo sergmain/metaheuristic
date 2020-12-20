@@ -22,9 +22,11 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
@@ -97,9 +99,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
-
-    @Autowired
-    public EventSenderService eventSenderService;
 
     @Autowired
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
@@ -539,7 +538,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         try (DataHolder holder = new DataHolder()) {
             execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r, holder));
-            eventSenderService.sendEvents(holder);
         }
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);

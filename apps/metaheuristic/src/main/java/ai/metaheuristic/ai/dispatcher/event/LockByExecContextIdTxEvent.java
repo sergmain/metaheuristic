@@ -20,10 +20,14 @@ import lombok.AllArgsConstructor;
 
 /**
  * @author Serge
- * Date: 12/19/2020
- * Time: 9:06 PM
+ * Date: 12/20/2020
+ * Time: 2:36 AM
  */
 @AllArgsConstructor
-public class TaskQueueCleanByExecContextIdEvent {
+public class LockByExecContextIdTxEvent {
     public final Long execContextId;
+
+    public LockByExecContextIdEvent to() {
+        return new LockByExecContextIdEvent(execContextId);
+    }
 }

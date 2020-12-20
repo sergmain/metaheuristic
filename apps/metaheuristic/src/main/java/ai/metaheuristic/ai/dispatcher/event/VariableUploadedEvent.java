@@ -25,12 +25,10 @@ import lombok.NoArgsConstructor;
  * Date: 11/14/2020
  * Time: 10:08 PM
  */
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class VariableUploadedEvent implements CommonEvent {
-    public Long execContextId;
-    public Long taskId;
-    public Long variableId;
-    public boolean nullified;
+public class VariableUploadedEvent {
+    public final Long execContextId;
+    public final Long taskId;
+    public final Long variableId;
+    public final boolean nullified;
 }

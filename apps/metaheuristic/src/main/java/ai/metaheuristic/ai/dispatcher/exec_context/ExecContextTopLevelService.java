@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -32,7 +30,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -62,9 +59,7 @@ public class ExecContextTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final EventSenderService eventSenderService;
     private final ExecContextStatusService execContextStatusService;
-    private final ApplicationEventPublisher eventPublisher;
 
     private static boolean isManagerRole(String role) {
         switch (role) {
@@ -187,7 +182,6 @@ public class ExecContextTopLevelService {
     private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         try (DataHolder holder = new DataHolder()) {
             execContextFSM.storeExecResultWithTx(result, holder);
-            eventSenderService.sendEvents(holder);
         }
     }
 
@@ -205,24 +199,12 @@ public class ExecContextTopLevelService {
         for (Long execContextId : execContextIds) {
             log.info("Found orphan execContext #{}", execContextId);
 
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> {
-                try (DataHolder holder = new DataHolder()) {
-                    execContextService.deleteExecContext(execContextId, holder);
-                    eventSenderService.sendEvents(holder);
-                }
-                return null;
-            });
+            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
 
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
-        return execContextSyncService.getWithSync(execContextId, ()-> {
-            try (DataHolder holder = new DataHolder()) {
-                OperationStatusRest result = execContextService.deleteExecContextById(execContextId, context, holder);
-                eventSenderService.sendEvents(holder);
-                return result;
-            }
-        });
+        return execContextSyncService.getWithSync(execContextId, ()-> execContextService.deleteExecContextById(execContextId, context));
     }
 }

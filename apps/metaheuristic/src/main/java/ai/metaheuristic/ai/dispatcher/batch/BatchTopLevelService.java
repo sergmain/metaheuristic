@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -98,7 +97,6 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
-    private final EventSenderService eventSenderService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -263,7 +261,6 @@ public class BatchTopLevelService {
                             try (DataHolder holder = new DataHolder()) {
                                 BatchData.UploadingStatus status = batchService.createBatchForFile(
                                         is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext, holder);
-                                eventSenderService.sendEvents(holder);
                                 return status;
                             }
                         });
@@ -315,19 +312,12 @@ public class BatchTopLevelService {
             return execContextSyncService.getWithSync(execContextId, () -> {
                 try(DataHolder holder = new DataHolder()) {
                     OperationStatusRest result = batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId, holder);
-                    eventSenderService.sendEvents(holder);
                     return result;
                 }
             });
         }
         else {
-            return execContextSyncService.getWithSync(execContextId, () -> {
-                try(DataHolder holder = new DataHolder()) {
-                    OperationStatusRest result = batchService.deleteBatch(execContextId, companyUniqueId, batchId, holder);
-                    eventSenderService.sendEvents(holder);
-                    return result;
-                }
-            });
+            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 

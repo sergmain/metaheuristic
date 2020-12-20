@@ -21,9 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -73,7 +71,6 @@ public class ExperimentTopLevelService {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final EventSenderService eventSenderService;
 
     @Async
     @EventListener
@@ -252,11 +249,7 @@ public class ExperimentTopLevelService {
 
 
     public OperationStatusRest experimentDeleteCommit(Long id, DispatcherContext context) {
-        try (DataHolder holder = new DataHolder())  {
-            OperationStatusRest operationStatusRest = experimentService.deleteExperiment(id, context, holder);
-            eventSenderService.sendEvents(holder);
-            return operationStatusRest;
-        }
+        return experimentService.deleteExperiment(id, context);
     }
 
     public OperationStatusRest experimentCloneCommit(Long id, DispatcherContext context) {

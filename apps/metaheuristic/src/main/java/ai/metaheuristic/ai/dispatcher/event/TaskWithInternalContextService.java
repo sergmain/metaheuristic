@@ -68,6 +68,7 @@ public class TaskWithInternalContextService {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Nullable
     private static Long lastTaskId=null;
@@ -103,6 +104,9 @@ public class TaskWithInternalContextService {
             return null;
         }
         processInternalFunction(execContext, task, holder);
+
+        eventPublisher.publishEvent(new LockByExecContextIdTxEvent(execContextId));
+
         return null;
     }
 
@@ -147,7 +151,8 @@ public class TaskWithInternalContextService {
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext, task, p.internalContextId, taskParamsYaml, holder);
 
-                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
+                eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+//                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
                     log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",

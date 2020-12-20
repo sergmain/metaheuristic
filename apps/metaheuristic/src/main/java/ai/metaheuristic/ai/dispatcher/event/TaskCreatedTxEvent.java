@@ -16,14 +16,19 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.AllArgsConstructor;
 
 /**
  * @author Serge
- * Date: 12/19/2020
- * Time: 9:06 PM
+ * Date: 12/20/2020
+ * Time: 2:14 AM
  */
 @AllArgsConstructor
-public class TaskQueueCleanByExecContextIdEvent {
-    public final Long execContextId;
+public class TaskCreatedTxEvent {
+    public final ExecContextApiData.TaskStateInfo taskVariablesInfo;
+
+    public TaskCreatedEvent to() {
+        return new TaskCreatedEvent(taskVariablesInfo);
+    }
 }

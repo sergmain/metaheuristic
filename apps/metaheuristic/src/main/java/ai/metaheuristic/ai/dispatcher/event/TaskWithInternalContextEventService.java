@@ -48,7 +48,6 @@ public class TaskWithInternalContextEventService {
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
-    private final EventSenderService eventSenderService;
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
@@ -63,8 +62,6 @@ public class TaskWithInternalContextEventService {
                 execContextSyncService.getWithSyncNullable(event.execContextId,
                         () -> taskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder)));
-                eventSenderService.sendEvents(holder);
-                applicationEventPublisher.publishEvent(new LockByExecContextIdEvent(event.execContextId));
             }
         } catch (Throwable th) {
             String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";

@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
-import ai.metaheuristic.ai.dispatcher.event.EventSenderService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
@@ -54,7 +53,6 @@ public class TaskTopLevelService {
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskTransactionalService taskTransactionalService;
-    private final EventSenderService eventSenderService;
     private final TaskVariableService taskVariableService;
     private final TaskSyncService taskSyncService;
 
@@ -103,7 +101,6 @@ public class TaskTopLevelService {
                         } else {
                             log.info("#303.420 can't update isCompleted field for task #{}", taskId);
                         }
-                        eventSenderService.sendEvents(holder);
                     }
                     return null;
                 });

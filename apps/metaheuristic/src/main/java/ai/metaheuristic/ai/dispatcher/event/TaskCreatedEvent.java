@@ -26,9 +26,7 @@ import lombok.NoArgsConstructor;
  * Date: 11/14/2020
  * Time: 5:55 AM
  */
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class TaskCreatedEvent implements CommonEvent{
-    public ExecContextApiData.TaskStateInfo taskVariablesInfo;
+public class TaskCreatedEvent {
+    public final ExecContextApiData.TaskStateInfo taskVariablesInfo;
 }

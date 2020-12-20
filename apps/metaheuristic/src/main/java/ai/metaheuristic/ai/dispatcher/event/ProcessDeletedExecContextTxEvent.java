@@ -20,10 +20,14 @@ import lombok.AllArgsConstructor;
 
 /**
  * @author Serge
- * Date: 12/19/2020
- * Time: 9:06 PM
+ * Date: 12/20/2020
+ * Time: 2:23 AM
  */
 @AllArgsConstructor
-public class TaskQueueCleanByExecContextIdEvent {
+public class ProcessDeletedExecContextTxEvent {
     public final Long execContextId;
+
+    public ProcessDeletedExecContextEvent to() {
+        return new ProcessDeletedExecContextEvent(execContextId);
+    }
 }

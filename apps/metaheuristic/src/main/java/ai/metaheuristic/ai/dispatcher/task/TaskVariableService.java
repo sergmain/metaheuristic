@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
-import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedEvent;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
+import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -31,6 +31,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +53,7 @@ public class TaskVariableService {
     private final TaskService taskService;
     private final VariableRepository variableRepository;
     private final TaskSyncService taskSyncService;
-
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public UploadResult updateStatusOfVariable(Long taskId, Long variableId, DataHolder holder) {
@@ -66,8 +67,11 @@ public class TaskVariableService {
         }
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
-            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variableId, false));
+            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
+//            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
+
+            eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, false));
+//            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variableId, false));
 
             return OK_UPLOAD_RESULT;
         }
@@ -104,8 +108,12 @@ public class TaskVariableService {
 
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
-            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variable.getId(), true));
+            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
+//            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
+
+            eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, true));
+//            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variable.getId(), true));
+
             return OK_UPLOAD_RESULT;
         }
         else {

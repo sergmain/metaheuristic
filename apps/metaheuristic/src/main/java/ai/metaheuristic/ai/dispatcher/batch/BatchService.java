@@ -59,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -99,6 +100,7 @@ public class BatchService {
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextSyncService execContextSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
@@ -252,15 +254,17 @@ public class BatchService {
             b.deleted = true;
             batchCache.save(b);
         }
-        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
+        eventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
+//        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
+
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
 
     @Transactional
-    public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId, DataHolder holder) {
+    public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        execContextService.deleteExecContext(execContextId, companyUniqueId, holder);
+        execContextService.deleteExecContext(execContextId, companyUniqueId);
         batchCache.deleteById(batchId);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
