@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -120,10 +119,8 @@ public class ExecContextTopLevelService {
     }
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
-        try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSyncNullable(execContextId,
-                    ()->execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId, holder));
-        }
+        execContextSyncService.getWithSyncNullable(execContextId,
+                ()->execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId));
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
@@ -180,9 +177,7 @@ public class ExecContextTopLevelService {
     }
 
     private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        try (DataHolder holder = new DataHolder()) {
-            execContextFSM.storeExecResultWithTx(result, holder);
-        }
+        execContextFSM.storeExecResultWithTx(result);
     }
 
     public void registerCreatedTask(TaskCreatedEvent event) {

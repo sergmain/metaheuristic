@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -56,7 +55,7 @@ public class TaskVariableService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public UploadResult updateStatusOfVariable(Long taskId, Long variableId, DataHolder holder) {
+    public UploadResult updateStatusOfVariable(Long taskId, Long variableId) {
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -68,10 +67,7 @@ public class TaskVariableService {
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
         if (status==Enums.UploadVariableStatus.OK) {
             eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
-//            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-
             eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, false));
-//            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variableId, false));
 
             return OK_UPLOAD_RESULT;
         }
@@ -81,7 +77,7 @@ public class TaskVariableService {
     }
 
     @Transactional
-    public UploadResult setVariableAsNull(Long taskId, Long variableId, DataHolder holder) {
+    public UploadResult setVariableAsNull(Long taskId, Long variableId) {
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -109,10 +105,7 @@ public class TaskVariableService {
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
             eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
-//            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, true));
-
             eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, true));
-//            holder.events.add(new VariableUploadedEvent(task.execContextId, task.id, variable.getId(), true));
 
             return OK_UPLOAD_RESULT;
         }

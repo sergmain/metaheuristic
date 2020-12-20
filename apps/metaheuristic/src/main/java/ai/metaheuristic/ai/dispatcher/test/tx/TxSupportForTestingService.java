@@ -257,7 +257,7 @@ public class TxSupportForTestingService {
         if (execContext==null) {
             throw new IllegalStateException("Need better solution for this state");
         }
-        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml, holder);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
     }
 
     /**

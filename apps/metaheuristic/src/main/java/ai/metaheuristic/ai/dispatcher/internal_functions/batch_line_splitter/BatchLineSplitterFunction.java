@@ -183,7 +183,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
                         variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                 taskProducingService.createTasksForSubProcesses(
-                        execContext, executionContextData, currTaskNumber, taskId, lastIds, holder);
+                        execContext, executionContextData, currTaskNumber, taskId, lastIds);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

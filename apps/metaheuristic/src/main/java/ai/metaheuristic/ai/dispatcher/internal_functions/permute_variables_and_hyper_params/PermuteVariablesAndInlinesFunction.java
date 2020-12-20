@@ -180,7 +180,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                             variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                                     taskProducingService.createTasksForSubProcesses(
-                                            execContext, executionContextData, currTaskNumber, task.id, lastIds, holder);
+                                            execContext, executionContextData, currTaskNumber, task.id, lastIds);
                                 }
                             }
                             else {
@@ -193,7 +193,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                         variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                                 taskProducingService.createTasksForSubProcesses(
-                                        execContext, executionContextData, currTaskNumber, task.id, lastIds, holder);
+                                        execContext, executionContextData, currTaskNumber, task.id, lastIds);
                             }
                             return true;
                         }

@@ -176,7 +176,7 @@ public class VariableService {
     }
 
     @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, DataHolder holder) {
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(task.execContextId);
 
@@ -193,7 +193,7 @@ public class VariableService {
                 .map(v -> toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        return initOutputVariables(execContextId, task, p, taskParams, holder);
+        return initOutputVariables(execContextId, task, p, taskParams);
     }
 
     private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
@@ -366,13 +366,12 @@ public class VariableService {
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-//            log.info("Start to create an initialized variable {}, execContextId: {}, taskContextId: {}", variable, execContextId, taskContextId);
         variableRepository.save(data);
 
         return data;
     }
 
-    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml, DataHolder holder) {
+    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 

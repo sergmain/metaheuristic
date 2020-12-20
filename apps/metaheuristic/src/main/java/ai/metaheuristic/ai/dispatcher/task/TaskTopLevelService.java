@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
@@ -94,13 +93,11 @@ public class TaskTopLevelService {
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 taskSyncService.getWithSyncNullable(taskId, ()-> {
-                    try (DataHolder holder = new DataHolder()) {
-                        UploadResult statusResult = taskVariableService.updateStatusOfVariable(taskId, variableId, holder);
-                        if (statusResult.status == Enums.UploadVariableStatus.OK) {
-                            log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
-                        } else {
-                            log.info("#303.420 can't update isCompleted field for task #{}", taskId);
-                        }
+                    UploadResult statusResult = taskVariableService.updateStatusOfVariable(taskId, variableId);
+                    if (statusResult.status == Enums.UploadVariableStatus.OK) {
+                        log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
+                    } else {
+                        log.info("#303.420 can't update isCompleted field for task #{}", taskId);
                     }
                     return null;
                 });

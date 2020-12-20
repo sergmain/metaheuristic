@@ -49,7 +49,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -217,7 +216,7 @@ public class BatchSplitterFunction implements InternalFunction {
                                 variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
 
                         taskProducingService.createTasksForSubProcesses(
-                                execContext, executionContextData, currTaskNumber, taskId, lastIds, holder);
+                                execContext, executionContextData, currTaskNumber, taskId, lastIds);
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {

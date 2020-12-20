@@ -537,7 +537,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setResult(getOKExecResult());
 
         try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r, holder));
+            execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
         }
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);

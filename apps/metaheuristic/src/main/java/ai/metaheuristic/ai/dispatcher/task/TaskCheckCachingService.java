@@ -186,7 +186,7 @@ public class TaskCheckCachingService {
                 try {
                     StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        taskVariableService.setVariableAsNull(taskId, output.id, holder);
+                        taskVariableService.setVariableAsNull(taskId, output.id);
                     }
                     else {
                         final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);

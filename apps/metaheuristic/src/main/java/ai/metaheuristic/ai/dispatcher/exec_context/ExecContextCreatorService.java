@@ -93,7 +93,7 @@ public class ExecContextCreatorService {
     }
 
     @Transactional
-    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId, DataHolder holder, boolean isStart) {
+    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId, boolean isStart) {
         sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
@@ -114,7 +114,7 @@ public class ExecContextCreatorService {
         execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
             final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
             SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
-                    sourceCode, creationResult.execContext, execContextParamsYaml, holder);
+                    sourceCode, creationResult.execContext, execContextParamsYaml);
             if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
                 creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
             }

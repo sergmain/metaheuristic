@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.commons;
 
-import ai.metaheuristic.ai.dispatcher.event.CommonEvent;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +41,6 @@ public class DataHolder implements AutoCloseable {
 
     public final List<InputStream> inputStreams = new ArrayList<>();
     public final List<File> files = new ArrayList<>();
-    public final List<CommonEvent> events = new ArrayList<>();
 
     @Override
     public void close() {

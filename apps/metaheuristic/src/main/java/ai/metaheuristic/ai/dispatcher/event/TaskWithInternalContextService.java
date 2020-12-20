@@ -146,13 +146,12 @@ public class TaskWithInternalContextService {
                     }
                 }
 
-                variableService.initOutputVariables(execContext.id, task, p, taskParamsYaml, holder);
+                variableService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                         execContext, task, p.internalContextId, taskParamsYaml, holder);
 
                 eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
-//                holder.events.add(new UpdateTaskExecStatesInGraphEvent(task.execContextId, task.id));
 
                 if (result.processing != Enums.InternalFunctionProcessing.ok) {
                     log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
@@ -171,7 +170,7 @@ public class TaskWithInternalContextService {
                 functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
                 r.result = FunctionExecUtils.toString(functionExec);
 
-                execContextFSM.storeExecResult(task, r, holder);
+                execContextFSM.storeExecResult(task, r);
 
             } catch (CommonErrorWithDataException th) {
                 String es = "#707.200 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
