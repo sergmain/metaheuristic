@@ -97,7 +97,6 @@ public class TestCountOfTasks extends PreparingExperiment {
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
             try (DataHolder holder = new DataHolder()) {
                 txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
-                eventSenderService.sendEvents(holder);
             }
             return null;
         });
