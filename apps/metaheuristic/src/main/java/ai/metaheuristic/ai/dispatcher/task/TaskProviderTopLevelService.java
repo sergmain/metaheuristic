@@ -148,10 +148,10 @@ public class TaskProviderTopLevelService {
     }
 
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
-        log.info("#393.020 set task #{} as {}", taskId, state);
+        log.debug("#393.020 set task #{} as {}", taskId, state);
         synchronized (syncObj) {
             boolean b = taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
-            log.info("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
+            log.debug("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
                 applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId));
             }
@@ -183,7 +183,7 @@ public class TaskProviderTopLevelService {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.error("#393.020 Processor with id #{} wasn't found", processorId);
+            log.error("#393.030 Processor with id #{} wasn't found", processorId);
             return null;
         }
 
