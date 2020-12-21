@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,8 +66,9 @@ public class CacheService {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function, DataHolder holder) {
+    public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
 
         CacheData.Key fullKey = getKey(tpy, function);
 
@@ -108,7 +111,6 @@ public class CacheService {
                         log.error(es, e);
                         throw new VariableCommonException(es, output.id);
                     }
-                    holder.files.add(tempFile);
                     variableService.storeToFile(output.id, tempFile);
 
                     InputStream is;
@@ -117,9 +119,10 @@ public class CacheService {
                     } catch (IOException e) {
                         String es = "#611.080 Error: " + e.getMessage();
                         log.error(es, e);
+                        eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
                         throw new VariableCommonException(es, output.id);
                     }
-                    holder.inputStreams.add(is);
+                    eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
                     cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
                 }
             }

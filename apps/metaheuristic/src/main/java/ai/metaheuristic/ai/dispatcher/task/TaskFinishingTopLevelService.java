@@ -117,7 +117,7 @@ public class TaskFinishingTopLevelService {
             try (DataHolder holder = new DataHolder()) {
                 taskSyncService.getWithSyncNullable(task.id,
                         () -> taskStateService.finishAndStoreVariable(
-                                taskId, checkCaching, holder, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
+                                taskId, checkCaching, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
             }
         }
     }

@@ -28,6 +28,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+
 /**
  * @author Serge
  * Date: 10/30/2020
@@ -85,4 +89,25 @@ public class EventBusService {
     }
 
 
+    @Async
+    @EventListener
+    public void resourceCloseEvent(ResourceCloseEvent event) {
+        // !!! DO NOT CHANGE THE ORDER OF CLOSING: InputStream - FIRST, File - SECOND
+        for (InputStream inputStream : event.inputStreams) {
+            try {
+                inputStream.close();
+            }
+            catch(Throwable th)  {
+                log.warn("#448.020 Error while closing stream", th);
+            }
+        }
+        for (File file : event.files) {
+            try {
+                Files.delete(file.toPath());
+            }
+            catch(Throwable th)  {
+                log.warn("#448.040 Error while deleting file "+ file.getAbsolutePath(), th);
+            }
+        }
+    }
 }

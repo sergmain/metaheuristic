@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -92,6 +93,8 @@ public class VariableService {
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
+        eventPublisher.publishEvent(new ResourceCloseTxEvent(variableIS));
+
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
             return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.040 Variable #"+variableId+" wasn't found" );
@@ -434,6 +437,7 @@ public class VariableService {
         data.setData(blob);
         data.inited = true;
         data.nullified = false;
+        variableRepository.save(data);
     }
 
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {

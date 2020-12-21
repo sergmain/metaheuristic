@@ -37,6 +37,8 @@ public class EventsBoundedToTx {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    // TransactionPhase.AFTER_COMMIT
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
         eventPublisher.publishEvent(event.to());
@@ -69,6 +71,13 @@ public class EventsBoundedToTx {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStartTaskProcessingTxEvent(StartTaskProcessingTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
+    // TransactionPhase.AFTER_COMPLETION
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    public void handleResourceCloseTxEvent(ResourceCloseTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 

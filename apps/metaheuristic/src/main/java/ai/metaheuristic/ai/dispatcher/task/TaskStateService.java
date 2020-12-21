@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -72,7 +71,7 @@ public class TaskStateService {
     }
 
     @Transactional
-    public Void finishAndStoreVariable(Long taskId, boolean checkCaching, DataHolder holder, ExecContextParamsYaml ecpy) {
+    public Void finishAndStoreVariable(Long taskId, boolean checkCaching, ExecContextParamsYaml ecpy) {
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -92,7 +91,7 @@ public class TaskStateService {
                 log.warn("#318.093 Process {} wasn't found", tpy.task.processCode);
                 return null;
             }
-            cacheService.storeVariables(tpy, p.function, holder);
+            cacheService.storeVariables(tpy, p.function);
         }
         return null;
     }

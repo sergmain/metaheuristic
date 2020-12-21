@@ -269,7 +269,7 @@ public class TaskQueue {
 
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
-            log.info("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
+            log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
         boolean ok = false;
         for (TaskGroup taskGroup : taskGroups) {
@@ -290,12 +290,12 @@ public class TaskQueue {
                 ok = true;
                 break;
             }
-            log.info("#029.025 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
+            log.debug("#029.025 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
             if (ok) {
                 return groupFinished(taskGroup);
             }
         }
-        log.info("#029.027 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
+        log.debug("#029.027 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
         return false;
     }
 

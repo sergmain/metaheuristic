@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
@@ -111,11 +110,9 @@ public class ExecContextTaskFinishingTopLevelService {
                 return;
             }
 
-            try (DataHolder holder = new DataHolder()) {
-                taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskStateService.finishAndStoreVariable(
-                                taskId, checkCaching, holder, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
-            }
+            taskSyncService.getWithSyncNullable(task.id,
+                    () -> taskStateService.finishAndStoreVariable(
+                            taskId, checkCaching, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
         }
     }
 

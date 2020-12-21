@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -257,13 +256,8 @@ public class BatchTopLevelService {
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = file.getInputStream()) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> {
-                            try (DataHolder holder = new DataHolder()) {
-                                BatchData.UploadingStatus status = batchService.createBatchForFile(
-                                        is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext);
-                                return status;
-                            }
-                        });
+                        () -> batchService.createBatchForFile(
+                                is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
             }
             return uploadingStatus;
         }

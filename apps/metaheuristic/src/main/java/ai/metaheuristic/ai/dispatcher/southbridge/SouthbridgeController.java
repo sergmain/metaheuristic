@@ -106,7 +106,7 @@ public class SouthbridgeController {
     }
 
     @PostMapping("/upload/{random-part}")
-    public UploadResult uploadResourceAuth(
+    public UploadResult uploadVariable(
             @Nullable MultipartFile file,
             @SuppressWarnings("unused") @Nullable String processorId,
             @Nullable Long taskId,

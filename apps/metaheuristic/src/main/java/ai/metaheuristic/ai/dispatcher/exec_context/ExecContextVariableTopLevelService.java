@@ -138,10 +138,8 @@ public class ExecContextVariableTopLevelService {
             try(OutputStream os = new FileOutputStream(variableFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            UploadResult uploadResult;
-            try (InputStream is = new FileInputStream(variableFile)) {
-                uploadResult = variableService.storeVariable(is, variableFile.length(), execContextId, taskId, variableId);
-            }
+            // FileInputStream will be closed by event ResourceCloseTxEvent
+            UploadResult uploadResult = variableService.storeVariable(new FileInputStream(variableFile), variableFile.length(), execContextId, taskId, variableId);
             if (uploadResult.status!= Enums.UploadVariableStatus.OK) {
                 return uploadResult;
             }
