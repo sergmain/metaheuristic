@@ -36,8 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
+import java.sql.SQLException;
 
 /**
  * @author Serge
@@ -55,23 +57,15 @@ public class CacheVariableService {
     private final VariableRepository variableRepository;
 
     @Transactional(readOnly = true)
-    public void storeToFile(Long variableId, File trgFile) {
-        try {
-            Blob blob = cacheVariableRepository.getDataAsStreamById(variableId);
-            if (blob==null) {
-                String es = S.f("#173.020 Data for variableId #%d wasn't found", variableId);
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-            }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
-            }
-        } catch (CommonErrorWithDataException e) {
-            throw e;
-        } catch (Exception e) {
-            String es = "#173.040 Error while storing data to file";
-            log.error(es, e);
-            throw new IllegalStateException(es, e);
+    public void storeToFile(Long variableId, File trgFile) throws IOException, SQLException {
+        Blob blob = cacheVariableRepository.getDataAsStreamById(variableId);
+        if (blob==null) {
+            String es = S.f("#173.020 Data for variableId #%d wasn't found", variableId);
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        try (InputStream is = blob.getBinaryStream()) {
+            FileUtils.copyInputStreamToFile(is, trgFile);
         }
     }
 

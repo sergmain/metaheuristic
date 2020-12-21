@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -362,9 +361,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-            try (DataHolder holder = new DataHolder()) {
-                txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
-            }
+            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
 
             return null;
         });

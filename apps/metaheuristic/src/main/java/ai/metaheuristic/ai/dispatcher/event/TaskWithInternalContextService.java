@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -84,7 +83,7 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public Void processInternalFunctionWithTx(Long execContextId, Long taskId, DataHolder holder) {
+    public Void processInternalFunctionWithTx(Long execContextId, Long taskId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         lastTaskId = null;
 
@@ -103,14 +102,14 @@ public class TaskWithInternalContextService {
                     taskId, execContextId, task.execContextId);
             return null;
         }
-        processInternalFunction(execContext, task, holder);
+        processInternalFunction(execContext, task);
 
         eventPublisher.publishEvent(new LockByExecContextIdTxEvent(execContextId));
 
         return null;
     }
 
-    private void processInternalFunction(ExecContextImpl execContext, TaskImpl task, DataHolder holder) {
+    private void processInternalFunction(ExecContextImpl execContext, TaskImpl task) {
         try {
             task.setAssignedOn(System.currentTimeMillis());
             task.setResultResourceScheduledOn(0);
@@ -149,7 +148,7 @@ public class TaskWithInternalContextService {
                 variableService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                        execContext, task, p.internalContextId, taskParamsYaml, holder);
+                        execContext, task, p.internalContextId, taskParamsYaml);
 
                 eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
 

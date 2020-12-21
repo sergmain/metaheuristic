@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
@@ -88,7 +87,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         // variable-for-splitting
@@ -125,7 +124,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             else {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time");
             }
-            return createTasks(execContext.sourceCodeId, execContext, content, taskParamsYaml, task.id, numberOfLines, holder);
+            return createTasks(execContext.sourceCodeId, execContext, content, taskParamsYaml, task.id, numberOfLines);
         }
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
@@ -145,7 +144,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     private InternalFunctionProcessingResult createTasks(
-            Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines, DataHolder holder) throws IOException {
+            Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
@@ -180,7 +179,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
                 VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
                 variableService.createInputVariablesForSubProcess(
-                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
+                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
 
                 taskProducingService.createTasksForSubProcesses(
                         execContext, executionContextData, currTaskNumber, taskId, lastIds);

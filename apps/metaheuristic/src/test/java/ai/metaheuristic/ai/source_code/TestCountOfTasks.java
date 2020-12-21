@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -95,9 +94,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-            try (DataHolder holder = new DataHolder()) {
-                txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
-            }
+            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
             return null;
         });
 

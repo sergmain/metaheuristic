@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -536,9 +535,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        try (DataHolder holder = new DataHolder()) {
-            execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
-        }
+        execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);

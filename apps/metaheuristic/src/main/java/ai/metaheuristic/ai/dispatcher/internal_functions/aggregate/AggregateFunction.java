@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class AggregateFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
     private final VariableService variableService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public static final String META_ERROR_CONTROL = "error-control-policy";
     public enum ErrorControlPolicy { fail, ignore }
@@ -82,7 +84,7 @@ public class AggregateFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         if (taskParamsYaml.task.outputs.size()!=1) {
@@ -150,7 +152,7 @@ public class AggregateFunction implements InternalFunction {
         ZipUtils.createZip(outputDir, zipFile);
         try {
             InputStream is = new FileInputStream(zipFile);
-            holder.inputStreams.add(is);
+            eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
             variableService.update(is, zipFile.length(), variable);
         } catch (FileNotFoundException e) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,

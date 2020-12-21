@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
@@ -99,7 +98,7 @@ public class BatchSplitterFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
@@ -147,11 +146,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id, holder);
+                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id);
             }
             else {
                 log.debug("Start loading file data to db");
-                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id, holder);
+                return loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id);
             }
         }
         catch(UnzipArchiveException e) {
@@ -182,7 +181,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
     private InternalFunctionProcessingResult loadFilesFromDirAfterZip(
             Long sourceCodeId, ExecContextImpl execContext, File srcDir,
-            final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId, DataHolder holder) throws IOException {
+            final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
@@ -213,7 +212,7 @@ public class BatchSplitterFunction implements InternalFunction {
                             return;
                         }
                         variableService.createInputVariablesForSubProcess(
-                                variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
+                                variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
 
                         taskProducingService.createTasksForSubProcesses(
                                 execContext, executionContextData, currTaskNumber, taskId, lastIds);

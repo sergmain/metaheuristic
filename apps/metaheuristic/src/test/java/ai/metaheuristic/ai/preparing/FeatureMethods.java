@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -144,9 +143,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
-            try (DataHolder holder = new DataHolder()) {
-                txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml, holder);
-            }
+            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
 
             log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 

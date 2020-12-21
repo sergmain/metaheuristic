@@ -106,7 +106,6 @@ public class TaskProviderTransactionalService {
             String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
             log.error(es, e.getMessage());
             eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
-//            taskStateService.finishWithErrorWithTx(task.id, es);
             return;
         }
 
@@ -170,7 +169,12 @@ public class TaskProviderTransactionalService {
                 }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
-                    log.error("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened");
+                    log.error("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
+                            "assigned: {}, state: {}\n" +
+                            "taskId: {}, queuedTask.execContext: {}\n" +
+                            "queuedTask.task: {}\n" +
+                            "queuedTask.taskParamYaml: {}",
+                            allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task, queuedTask.taskParamYaml);
                     continue;
                 }
 
@@ -179,8 +183,8 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // this can happend because of async call of StartTaskProcessingTxEvent
-                    log.info("#317.037 task #{} already assigned for processing", queuedTask.taskId);
+                    // this can happened because of async call of StartTaskProcessingTxEvent
+                    log.info("#317.039 task #{} already assigned for processing", queuedTask.taskId);
                     continue;
                 }
 
@@ -288,15 +292,7 @@ public class TaskProviderTransactionalService {
         t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         t.setResultResourceScheduledOn(0);
 
-//        taskQueue.startTaskProcessing(t.execContextId, t.id);
-
         eventPublisher.publishEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
-
-//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(t.execContextId, t.id, EnumsApi.TaskExecState.IN_PROGRESS));
-//        setTaskExecState(t.execContextId, t.id, EnumsApi.TaskExecState.IN_PROGRESS);
-
-//        resultTask.assigned = true;
-        //        resultTask.state = EnumsApi.TaskExecState.IN_PROGRESS;
 
         return t;
     }

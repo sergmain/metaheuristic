@@ -23,14 +23,15 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -106,7 +107,7 @@ public class TaskCheckCachingService {
     }
 
     @Transactional
-    public Void checkCaching(Long execContextId, Long taskId, DataHolder holder) {
+    public Void checkCaching(Long execContextId, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -190,12 +191,21 @@ public class TaskCheckCachingService {
                     }
                     else {
                         final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
-                        holder.files.add(tempFile);
-
-                        cacheVariableService.storeToFile(storedVariable.id, tempFile);
+                        try {
+                            cacheVariableService.storeToFile(storedVariable.id, tempFile);
+                        } catch (CommonErrorWithDataException e) {
+                            eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
+                            throw e;
+                        } catch (Exception e) {
+                            eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
+                            String es = "#173.040 Error while storing data to file";
+                            log.error(es, e);
+                            throw new IllegalStateException(es, e);
+                        }
 
                         InputStream is = new FileInputStream(tempFile);
-                        holder.inputStreams.add(is);
+                        eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
+
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
                     Enums.UploadVariableStatus status = taskVariableService.setVariableReceived(task, output.id);
@@ -217,7 +227,6 @@ public class TaskCheckCachingService {
             task.setResultReceived(true);
 
             eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, false));
-//            holder.events.add(new CheckTaskCanBeFinishedEvent(task.execContextId, task.id, false));
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

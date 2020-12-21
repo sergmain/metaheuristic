@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -58,11 +57,9 @@ public class TaskWithInternalContextEventService {
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
         try {
-            try (DataHolder holder = new DataHolder()) {
-                execContextSyncService.getWithSyncNullable(event.execContextId,
-                        () -> taskSyncService.getWithSyncNullable(event.taskId,
-                                () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId, holder)));
-            }
+            execContextSyncService.getWithSyncNullable(event.execContextId,
+                    () -> taskSyncService.getWithSyncNullable(event.taskId,
+                            () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId)));
         } catch (Throwable th) {
             String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function";
             log.error(es, th);

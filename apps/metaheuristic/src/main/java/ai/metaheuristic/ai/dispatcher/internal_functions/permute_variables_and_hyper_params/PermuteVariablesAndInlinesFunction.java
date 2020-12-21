@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -88,7 +87,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
@@ -177,7 +176,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                             new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
 
                                     variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
+                                            variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
 
                                     taskProducingService.createTasksForSubProcesses(
                                             execContext, executionContextData, currTaskNumber, task.id, lastIds);
@@ -190,7 +189,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                         new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of()));
 
                                 variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId, holder);
+                                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
 
                                 taskProducingService.createTasksForSubProcesses(
                                         execContext, executionContextData, currTaskNumber, task.id, lastIds);

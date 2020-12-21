@@ -26,9 +26,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.commons.DataHolder;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -63,8 +63,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -110,6 +110,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
     private final ExecContextSyncService execContextSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public String getCode() {
@@ -143,7 +144,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     public InternalFunctionData.InternalFunctionProcessingResult process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml, DataHolder holder) {
+            TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         execContextSyncService.checkWriteLockPresent(execContext.id);
@@ -187,7 +188,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir, holder);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir);
         if (ifprForStatus != null) {
             return ifprForStatus;
         }
@@ -204,7 +205,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(execContext.sourceCodeId, execContext, taskContextId, taskParamsYaml, zipFile, holder);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(execContext.sourceCodeId, execContext, taskContextId, taskParamsYaml, zipFile);
         if (ifprForResult != null) {
             return ifprForResult;
         }
@@ -216,7 +217,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(
             Long sourceCodeId, ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml,
-            File zipFile, DataHolder holder) {
+            File zipFile) {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
@@ -241,7 +242,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         // this stream will be closed outside of this transaction
         FileInputStream fis = new FileInputStream(zipFile);
-        holder.inputStreams.add(fis);
+        eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
 
         variableService.storeData(fis, zipFile.length(), batchResultVar.id, originBatchFilename);
         return null;
@@ -250,7 +251,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @SneakyThrows
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
-            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir, DataHolder holder) {
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir) {
         BatchStatusProcessor status = prepareStatus(execContext);
 
         File statusFile = new File(zipDir, "status.txt");
@@ -270,7 +271,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
         byte[] bytes = status.getStatus().getBytes();
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-        holder.inputStreams.add(inputStream);
+        // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
+        eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
         variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null);
         return null;
