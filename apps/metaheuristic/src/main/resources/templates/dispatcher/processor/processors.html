@@ -72,7 +72,7 @@
         </thead>
         <tbody>
         <tr th:each="r : ${result.items}">
-            <td th:text="${r.processor.id}">Processor's Id</td>
+            <td th:text="${'#' + r.processor.id}">Processor's Id</td>
             <td><div th:text="${r.ip}" class="no-wrap">IP</div><div th:text="${r.host}" class="no-wrap">Host name</div></td>
             <td th:text="${r.processor.description}">Sample Description</td>
             <td><pre style="display: none;" id="processor-status" th:if="${r.processor.status}!=null" th:text="${r.processor.status}">Status of processor </pre></td>
