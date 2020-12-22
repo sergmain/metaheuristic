@@ -510,7 +510,7 @@ public class TaskProcessor {
                         }
 
                         File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
-                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.params, StandardCharsets.UTF_8 );
+                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
 
                         cmd.add(execFile.getAbsolutePath());
                     }
