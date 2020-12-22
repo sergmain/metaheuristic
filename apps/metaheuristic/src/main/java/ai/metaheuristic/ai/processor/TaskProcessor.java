@@ -522,8 +522,10 @@ public class TaskProcessor {
                     throw new IllegalStateException("#100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }
 
-            if (!functionPrepareResult.function.skipParams && !S.b(functionPrepareResult.function.params)) {
-                cmd.addAll(Arrays.asList(StringUtils.split(functionPrepareResult.function.params)));
+            if (!functionPrepareResult.function.skipParams) {
+                if (!S.b(functionPrepareResult.function.params)) {
+                    cmd.addAll(Arrays.asList(StringUtils.split(functionPrepareResult.function.params)));
+                }
                 cmd.add(paramFile.getAbsolutePath());
             }
 

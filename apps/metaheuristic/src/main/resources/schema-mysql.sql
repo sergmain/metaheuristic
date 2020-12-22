@@ -263,6 +263,9 @@ CREATE TABLE mh_exec_context
 CREATE INDEX mh_exec_context_state_idx
     ON mh_exec_context (STATE);
 
+CREATE INDEX mh_exec_context_id_source_code_id_idx
+    ON mh_exec_context (ID, SOURCE_CODE_ID);
+
 CREATE TABLE mh_experiment_result
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
