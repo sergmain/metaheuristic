@@ -42,11 +42,6 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="delete from ExecContextImpl t where t.id=:id")
     void deleteById(Long id);
 
-    @Query(nativeQuery = true, value =
-            "select distinct d.ID from mh_exec_context d where d.SOURCE_CODE_ID not in (select z.id from mh_source_code z)")
-    List<Long> findAllIdsForOrphanExecContexts();
-
-
     @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
 ////    @Transactional(readOnly = true)
@@ -55,6 +50,9 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select w.id, w.state from ExecContextImpl w ")
 //    @Transactional(readOnly = true)
     List<Object[]> findAllExecStates();
+
+    @Query(value="select w.id, w.sourceCodeId from ExecContextImpl w ")
+    List<Object[]> findAllExecContextIdWithSourceCodeId();
 
     @Query(value="select w.id from ExecContextImpl w")
 //    @Transactional(readOnly = true)

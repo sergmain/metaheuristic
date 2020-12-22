@@ -305,6 +305,9 @@ create table mh_batch
 CREATE INDEX mh_batch_exec_context_id_idx
     ON mh_batch (EXEC_CONTEXT_ID);
 
+CREATE INDEX mh_batch_company_id_idx
+    ON mh_batch (COMPANY_ID);
+
 CREATE INDEX mh_batch_exec_state_idx
     ON mh_batch (EXEC_STATE);
 

@@ -38,6 +38,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -205,7 +206,7 @@ public class ExecContextTopLevelService {
         return execContextStatusService.registerVariableState(event);
     }
 
-    public void deleteOrphanExecContexts(List<Long> execContextIds) {
+    public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
             log.info("Found orphan execContext #{}", execContextId);
 

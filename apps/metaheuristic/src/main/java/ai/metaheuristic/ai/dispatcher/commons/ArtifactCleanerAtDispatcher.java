@@ -19,12 +19,17 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -38,6 +43,7 @@ public class ArtifactCleanerAtDispatcher {
     private final VariableTopLevelService variableTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
+    private final SourceCodeCache sourceCodeCache;
 
     public void fixedDelay() {
         // !!! DO NOT CHANGE THE ORDER OF CALLING !!!
@@ -47,7 +53,16 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanExecContexts() {
-        execContextTopLevelService.deleteOrphanExecContexts(execContextRepository.findAllIdsForOrphanExecContexts());
+        Set<Long> forDeletion = new HashSet<>();
+        List<Object[]> objs = execContextRepository.findAllExecContextIdWithSourceCodeId();
+        for (Object[] obj : objs) {
+            long sourceCodeId = ((Number)obj[1]).longValue();
+            if (sourceCodeCache.findById(sourceCodeId)==null) {
+                long execContextId = ((Number)obj[0]).longValue();
+                forDeletion.add(execContextId);
+            }
+        }
+        execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
     }
 
     private void deleteOrphanTasks() {
