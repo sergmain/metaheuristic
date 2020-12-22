@@ -17,11 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -55,10 +57,12 @@ public class ExecContextTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final ExecContextStatusService execContextStatusService;
+    private final TaskSyncService taskSyncService;
 
     private static boolean isManagerRole(String role) {
         switch (role) {
@@ -120,7 +124,11 @@ public class ExecContextTopLevelService {
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
         execContextSyncService.getWithSyncNullable(execContextId,
-                () -> execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId));
+                () -> findUnassignedTasksAndRegisterInQueueInternal(execContextId));
+    }
+
+    private Void findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
+        return execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId);
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
@@ -153,30 +161,34 @@ public class ExecContextTopLevelService {
 
     @Nullable
     private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        Long execContextId = taskRepository.getExecContextId(result.taskId);
-        if (execContextId == null) {
-            log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
-            return null;
-        }
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task == null) {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
+            return null;
+        }
+
+        ExecContextImpl execContext = execContextCache.findById(task.execContextId);
+        if (execContext == null) {
+            log.warn("#210.110 Reporting about non-existed execContext #{}", task.execContextId);
             return null;
         }
         if (task.execState == EnumsApi.TaskExecState.ERROR.value || task.execState == EnumsApi.TaskExecState.OK.value) {
             return task.id;
         }
         try {
-            storeExecResultInternal(result);
+            taskSyncService.getWithSyncNullable(task.id,
+                    () -> storeExecResultInternal(result));
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("#210.105 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
-            storeExecResultInternal(result);
+            log.warn("#210.115 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
+            taskSyncService.getWithSyncNullable(task.id,
+                    () -> storeExecResultInternal(result));
         }
         return task.id;
     }
 
-    private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    private Void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         execContextFSM.storeExecResultWithTx(result);
+        return null;
     }
 
     public void registerCreatedTask(TaskCreatedEvent event) {

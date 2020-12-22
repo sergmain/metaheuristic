@@ -34,7 +34,9 @@ import org.springframework.lang.Nullable;
 @AllArgsConstructor
 public class DataStorageParams {
 
-    // it's a name of asset. Asset can be Variable or Function
+    // it's a name of asset. Asset can be Variable, GlobalVariable or Function
+    // for Variable and GlobalVariable it's a 'name' field
+    // for Function it's a 'code' field
     public String name;
 
     public EnumsApi.DataSourcing sourcing;

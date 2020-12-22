@@ -80,4 +80,6 @@ public class Variable implements Serializable {
     @Column(name = "PARAMS")
     public String params;
 
+    // TODO 2020-12-21 need to add a way to check length of variable with length of stored on disk variable
+    //  maybe even with checksum
 }
