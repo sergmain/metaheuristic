@@ -479,8 +479,9 @@ public class TaskProcessor {
             cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
         }
         else {
-            // function.file is executable file
-            // TODO 2020.12.12 what does this mean?
+            // function.file is executable file which will be present in any environment,
+            // so we dont need to add environment specific command-line param
+            // i.e. 'curl'
             cmd = new ArrayList<>();
         }
 
