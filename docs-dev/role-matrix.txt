@@ -14,6 +14,12 @@ sub-menu:
     'Accounts' - 'ADMIN'
 
     'Company'
+        on 'Companies' page:
+        edit - 'MASTER_ADMIN'
+        button 'Accounts' - 'MASTER_ADMIN'
+    'Company'->'Accounts' - 'MASTER_ADMIN'
+
+
     'Company'->'Batches' - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
         on 'Batches' page:
         view index page - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
@@ -24,3 +30,4 @@ sub-menu:
         group deletion of batches - 'MASTER_OPERATOR'
         delete concrete batch - 'MASTER_OPERATOR'
         upload files and start processing - 'MASTER_OPERATOR'
+
