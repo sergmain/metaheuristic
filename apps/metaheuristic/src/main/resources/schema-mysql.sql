@@ -241,6 +241,9 @@ CREATE TABLE mh_source_code
     IS_VALID        BOOLEAN not null default false
 );
 
+CREATE INDEX mh_source_company_id_idx
+    ON mh_source_code (COMPANY_ID);
+
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
     ON mh_source_code (UID);
 
