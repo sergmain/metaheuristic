@@ -46,6 +46,7 @@ public class EventsBoundedToTx {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCheckTaskCanBeFinishedTxEvent(CheckTaskCanBeFinishedTxEvent event) {
+        log.debug("call EventsBoundedToTx.handleCheckTaskCanBeFinishedTxEvent({},{}, {})", event.execContextId, event.taskId, event.checkCaching);
         eventPublisher.publishEvent(event.to());
     }
 
@@ -71,6 +72,11 @@ public class EventsBoundedToTx {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStartTaskProcessingTxEvent(StartTaskProcessingTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleSetVariableReceivedTxEvent(SetVariableReceivedTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 

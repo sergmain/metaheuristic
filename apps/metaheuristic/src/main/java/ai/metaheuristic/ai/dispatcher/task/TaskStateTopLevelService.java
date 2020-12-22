@@ -43,7 +43,5 @@ public class TaskStateTopLevelService {
     public void finishWithErrorWithTx(TaskFinishWithErrorEvent event) {
         taskSyncService.getWithSyncNullable(event.taskId,
                 () -> taskStateService.finishWithErrorWithTx(event.taskId, event.error));
-
-        //        taskStateService.finishWithErrorWithTx(event.taskId, event.error);
     }
 }

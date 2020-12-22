@@ -73,7 +73,7 @@ public class ExecContextTopLevelService {
     }
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
-        boolean managerRole = authentication.getAuthorities().stream().anyMatch(o->isManagerRole(o.getAuthority()));
+        boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
 
         ExecContextApiData.RawExecContextStateResult raw = execContextService.getRawExecContextState(sourceCodeId, execContextId, context);
         if (raw.isErrorMessages()) {
@@ -87,7 +87,7 @@ public class ExecContextTopLevelService {
         List<Long> ids = new ArrayList<>();
         for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             Long taskId = storeExecResult(result);
-            if (taskId!=null) {
+            if (taskId != null) {
                 ids.add(taskId);
             }
         }
@@ -103,7 +103,7 @@ public class ExecContextTopLevelService {
 
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
             execContextSyncService.getWithSyncNullable(execContextId,
-                    ()-> execContextService.changeValidStatus(execContextId, false));
+                    () -> execContextService.changeValidStatus(execContextId, false));
             return new SourceCodeApiData.ExecContextResult("#210.020 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
@@ -120,21 +120,21 @@ public class ExecContextTopLevelService {
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
         execContextSyncService.getWithSyncNullable(execContextId,
-                ()->execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId));
+                () -> execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId));
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
-        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
+        if (execState == EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
         }
         return execContextSyncService.getWithSync(execContextId,
-                ()-> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
+                () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
     }
 
     public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         return execContextSyncService.getWithSync(execContextId,
-                ()-> execContextFSM.changeExecContextStateWithTx(execState, execContextId, companyUniqueId));
+                () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, companyUniqueId));
     }
 
     public void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
@@ -143,9 +143,9 @@ public class ExecContextTopLevelService {
 
     public OperationStatusRest resetTask(Long taskId) {
         Long execContextId = taskRepository.getExecContextId(taskId);
-        if (execContextId==null) {
+        if (execContextId == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#210.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
+                    "#210.080 Can't re-run task " + taskId + ", task with such taskId wasn't found");
         }
 
         return execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
@@ -154,22 +154,21 @@ public class ExecContextTopLevelService {
     @Nullable
     private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         Long execContextId = taskRepository.getExecContextId(result.taskId);
-        if (execContextId==null) {
+        if (execContextId == null) {
             log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-        if (task==null) {
+        if (task == null) {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
-        if (task.execState== EnumsApi.TaskExecState.ERROR .value|| task.execState== EnumsApi.TaskExecState.OK.value ){
+        if (task.execState == EnumsApi.TaskExecState.ERROR.value || task.execState == EnumsApi.TaskExecState.OK.value) {
             return task.id;
         }
         try {
             storeExecResultInternal(result);
-        }
-        catch (ObjectOptimisticLockingFailureException e) {
+        } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("#210.105 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
             storeExecResultInternal(result);
         }
@@ -187,7 +186,11 @@ public class ExecContextTopLevelService {
 
     public void registerVariableState(VariableUploadedEvent event) {
         execContextSyncService.getWithSyncNullable(event.execContextId,
-                () -> execContextStatusService.registerVariableState(event));
+                () -> registerVariableStateInternal(event));
+    }
+
+    private Void registerVariableStateInternal(VariableUploadedEvent event) {
+        return execContextStatusService.registerVariableState(event);
     }
 
     public void deleteOrphanExecContexts(List<Long> execContextIds) {

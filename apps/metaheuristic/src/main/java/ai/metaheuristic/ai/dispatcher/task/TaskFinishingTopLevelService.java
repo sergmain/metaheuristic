@@ -58,14 +58,14 @@ public class TaskFinishingTopLevelService {
     public void checkTaskCanBeFinished(Long taskId, boolean checkCaching) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
+        if (task == null) {
             log.warn("#303.100 Reporting about non-existed task #{}", taskId);
             return;
         }
 
         EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
 
-        if (state!=EnumsApi.TaskExecState.IN_PROGRESS && state!=EnumsApi.TaskExecState.CHECK_CACHE) {
+        if (state != EnumsApi.TaskExecState.IN_PROGRESS && state != EnumsApi.TaskExecState.CHECK_CACHE) {
             log.info("#318.020 Task {} already isn't in IN_PROGRESS or CHECK_CACHE state, actual: {}", task.id, state);
             return;
         }
@@ -93,10 +93,10 @@ public class TaskFinishingTopLevelService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> taskStateService.finishWithErrorWithTx(
+                        () -> finishWithErrorWithTxInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
+                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, null, task.id, task.execContextId);
                 return;
             }
         }
@@ -117,6 +117,10 @@ public class TaskFinishingTopLevelService {
                     () -> taskStateService.finishAndStoreVariable(
                             taskId, checkCaching, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
         }
+    }
+
+    private Void finishWithErrorWithTxInternal(Long taskId, String console) {
+        return taskStateService.finishWithErrorWithTx(taskId, console);
     }
 
 

@@ -28,7 +28,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -70,12 +72,13 @@ public class TxSupportForTestingService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
-    private final TaskVariableService taskVariableService;
+    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSyncService sourceCodeSyncService;
+    private final TaskSyncService taskSyncService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -207,16 +210,11 @@ public class TxSupportForTestingService {
         return null;
     }
 
-    @Transactional
     public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            return Enums.UploadVariableStatus.TASK_NOT_FOUND;
-        }
-        return taskVariableService.setVariableReceived(task, variableId);
+        return taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId)).status;
     }
 
     @Transactional

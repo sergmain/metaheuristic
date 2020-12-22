@@ -12,4 +12,15 @@ sub-menu:
     'Functions' - 'ADMIN', 'DATA'
     'Processors' - 'ADMIN', 'DATA'
     'Accounts' - 'ADMIN'
-    'Company' - 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+
+    'Company'
+    'Company'->'Batches' - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+        on 'Batches' page:
+        view index page - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+        status - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+        download original file - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+        download result file - 'MASTER_OPERATOR', 'MASTER_SUPPORT'
+
+        group deletion of batches - 'MASTER_OPERATOR'
+        delete concrete batch - 'MASTER_OPERATOR'
+        upload files and start processing - 'MASTER_OPERATOR'

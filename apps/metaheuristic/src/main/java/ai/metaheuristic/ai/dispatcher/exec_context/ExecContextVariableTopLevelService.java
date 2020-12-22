@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -52,6 +53,7 @@ public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
     private final TaskVariableService taskVariableService;
+    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final VariableService variableService;
     private final TaskSyncService taskSyncService;
 
@@ -86,8 +88,8 @@ public class ExecContextVariableTopLevelService {
                     log.debug("#440.100 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                 }
             }
-            final String es = "#440.120 can't store the result, need to try again. Error: " + th.toString();
-            log.error(es, th);
+            final String es = "#440.120 can't store the result, need to try again. Error: " + th.getMessage();
+            log.error(es);
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableCommonException th) {
@@ -144,11 +146,11 @@ public class ExecContextVariableTopLevelService {
                 return uploadResult;
             }
             try {
-                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableService.updateStatusOfVariable(taskId, variableId));
+                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             catch (ObjectOptimisticLockingFailureException th) {
                 log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
-                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableService.updateStatusOfVariable(taskId, variableId));
+                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findById(taskId).orElse(null);

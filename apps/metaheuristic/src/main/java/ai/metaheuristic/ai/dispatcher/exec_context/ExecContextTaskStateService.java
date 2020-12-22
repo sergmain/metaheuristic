@@ -17,9 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.*;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -43,38 +44,9 @@ public class ExecContextTaskStateService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final ExecContextService execContextService;
     private final TaskExecStateService taskExecStateService;
-    private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
-    private final TaskStateService taskStateService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
-
-/*
-    @Transactional
-    public Void updateTaskExecStatesWithTx(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            final String es = "#309.020 execContext #" + execContextId+ " wasn't found";
-            log.warn(es);
-//            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-            return null;
-        }
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            final String es = "#309.040 task #" + taskId+ " wasn't found";
-            log.warn(es);
-//            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-            return null;
-        }
-
-        taskStateService.updateTaskExecStates(task, execState, taskContextId);
-
-        return null;
-    }
-*/
 
     @Transactional
     public OperationStatusRest updateTaskExecStatesInGraph( Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {

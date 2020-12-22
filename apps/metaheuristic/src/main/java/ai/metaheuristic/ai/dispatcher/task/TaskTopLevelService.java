@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +52,6 @@ public class TaskTopLevelService {
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskTransactionalService taskTransactionalService;
-    private final TaskVariableService taskVariableService;
-    private final TaskSyncService taskSyncService;
 
     public void deleteOrphanTasks(List<Long> orphanExecContextIds) {
         TxUtils.checkTxNotExists();
@@ -87,13 +85,16 @@ public class TaskTopLevelService {
             case TASK_PARAM_FILE_NOT_FOUND:
 
                 applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId, "#303.390 Task was finished while resending variable with status " + status));
-//                taskSyncService.getWithSyncNullable(taskId,
-//                        () -> taskStateService.finishWithErrorWithTx(taskId, "#303.390 Task was finished while resending variable with status " + status));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
+
+                applicationEventPublisher.publishEvent(new SetVariableReceivedTxEvent(taskId, variableId, false));
+
+/*
+
                 taskSyncService.getWithSyncNullable(taskId, ()-> {
-                    UploadResult statusResult = taskVariableService.updateStatusOfVariable(taskId, variableId);
+                    UploadResult statusResult = taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId);
                     if (statusResult.status == Enums.UploadVariableStatus.OK) {
                         log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
                     } else {
@@ -101,6 +102,7 @@ public class TaskTopLevelService {
                     }
                     return null;
                 });
+*/
                 break;
         }
     }

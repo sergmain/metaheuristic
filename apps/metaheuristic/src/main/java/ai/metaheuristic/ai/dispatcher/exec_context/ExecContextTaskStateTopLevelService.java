@@ -23,12 +23,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -51,28 +53,48 @@ public class ExecContextTaskStateTopLevelService {
     @Async
     @EventListener
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
-        updateTaskExecStatesInGraph(event.execContextId, event.taskId);
+        log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
+        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+        if (task==null) {
+            return;
+        }
+        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        if (!event.execContextId.equals(task.execContextId)) {
+            log.error("(!execContextId.equals(task.execContextId))");
+        }
+
+        execContextSyncService.getWithSyncNullable(event.execContextId,
+                () -> taskSyncService.getWithSyncNullable(event.taskId,
+                        () -> updateTaskExecStatesInGraph(event.execContextId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
     }
 
     @Async
     @EventListener
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
-        transferStateFromTaskQueueToExecContext(event.execContextId);
-    }
-
-
-    public void transferStateFromTaskQueueToExecContext(Long execContextId) {
+        log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
         for (int i = 0; i < 100; i++) {
-            TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextId,
-                    () -> execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId));
+            TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(event.execContextId,
+                    () -> transferStateFromTaskQueueToExecContext(event.execContextId));
 
             if (taskGroup==null){
                 return;
             }
             taskGroup.reset();
         }
+
+        transferStateFromTaskQueueToExecContext(event.execContextId);
     }
 
+    @Nullable
+    private TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
+        return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId);
+    }
+
+    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextId, Long taskId, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
+        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, state, taskContextId);
+    }
+
+/*
     public void updateTaskExecStatesInGraph(Long execContextId, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -88,4 +110,5 @@ public class ExecContextTaskStateTopLevelService {
                 () -> taskSyncService.getWithSyncNullable(taskId,
                         () -> execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
     }
+*/
 }

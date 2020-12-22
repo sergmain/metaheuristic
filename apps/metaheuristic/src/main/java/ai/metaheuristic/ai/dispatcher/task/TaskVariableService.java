@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -54,26 +54,34 @@ public class TaskVariableService {
     private final TaskSyncService taskSyncService;
     private final ApplicationEventPublisher eventPublisher;
 
+    public static class UpdateStatusOfVariableException extends RuntimeException {
+        public final UploadResult uploadResult;
+
+        public UpdateStatusOfVariableException(UploadResult uploadResult) {
+            this.uploadResult = uploadResult;
+        }
+    }
+
     @Transactional
-    public UploadResult updateStatusOfVariable(Long taskId, Long variableId) {
+    public Void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             final String es = "#441.020 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
-            return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
+            throw new UpdateStatusOfVariableException(new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es));
         }
-        Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
-        if (status==Enums.UploadVariableStatus.OK) {
-            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
-            eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, false));
 
-            return OK_UPLOAD_RESULT;
+        eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, nullified));
+
+        Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
+
+        if (status != Enums.UploadVariableStatus.OK) {
+            throw new UpdateStatusOfVariableException(
+                    new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId));
         }
-        else {
-            return new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId);
-        }
+        return null;
     }
 
     @Transactional
@@ -102,6 +110,11 @@ public class TaskVariableService {
         variable.nullified = true;
         variable.setData(null);
 
+        eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, variableId, true));
+
+        variableRepository.save(variable);
+
+/*
         Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
         if (status==Enums.UploadVariableStatus.OK) {
             eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
@@ -112,9 +125,13 @@ public class TaskVariableService {
         else {
             return new UploadResult(status, "#441.160 can't update resultReceived field for task #"+ taskId+", variable #" +variable.getId());
         }
+
+*/
+        return OK_UPLOAD_RESULT;
+
     }
 
-    public Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
+    private Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
         TxUtils.checkTxExists();
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {

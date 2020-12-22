@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -208,11 +209,15 @@ public class TaskCheckCachingService {
 
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
+
+                    eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, output.id, false));
+/*
                     Enums.UploadVariableStatus status = taskVariableService.setVariableReceived(task, output.id);
                     if (status!= Enums.UploadVariableStatus.OK) {
                         log.error("#609.155 error while setting variable was received, status: {}", status);
                         throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                     }
+*/
 
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
