@@ -154,7 +154,7 @@ public class BatchTopLevelService {
     }
 
     @Nullable
-    public BatchData.BatchExecInfo getBatchExecInfo(DispatcherContext context, Long batchId) {
+    public BatchData.BatchExecInfo getBatchExecInfoForDeleting(DispatcherContext context, Long batchId) {
         List<BatchData.BatchExecInfo> items = getBatchExecInfos(List.of(batchId));
         if (items.isEmpty()) {
             return null;
@@ -162,6 +162,10 @@ public class BatchTopLevelService {
         BatchData.BatchExecInfo batchExecInfo = items.get(0);
 
         Batch b = batchExecInfo.batch;
+        if (context.account.getAccountRoles().hasRole("ROLE_ADMIN")) {
+            return b.companyId.equals(context.getCompanyId()) && !b.deleted ? batchExecInfo : null;
+        }
+
         return b.companyId.equals(context.getCompanyId()) && b.accountId.equals(context.account.id) && !b.deleted ? batchExecInfo : null;
     }
 
@@ -174,35 +178,36 @@ public class BatchTopLevelService {
         List<BatchData.BatchExecInfo> items = new ArrayList<>();
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
-            String uid = SOURCE_CODE_NOT_FOUND;
-            if (batch!=null) {
-                SourceCodeImpl sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
-                boolean ok = true;
-                if (sourceCode != null) {
-                    uid = sourceCode.getUid();
-                } else {
-                    if (batch.execState != Enums.BatchExecState.Preparing.code) {
-                        ok = false;
-                    }
-                }
-                String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
-
-                String filename;
-                boolean execContextDeleted = false;
-                ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
-                if (execContext==null) {
-                    filename = "<ExecContext was deleted>";
-                    execContextDeleted = true;
-                }
-                else {
-                    filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
-                }
-
-                BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
-                items.add(new BatchData.BatchExecInfo(
-                        batch, uid, execStateStr, batch.execState, ok, filename,
-                        S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username, execContextDeleted ));
+            if (batch == null) {
+                continue;
             }
+            SourceCodeImpl sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
+            boolean ok = true;
+            String uid = SOURCE_CODE_NOT_FOUND;
+            if (sourceCode != null) {
+                uid = sourceCode.getUid();
+            } else {
+                if (batch.execState != Enums.BatchExecState.Preparing.code) {
+                    ok = false;
+                }
+            }
+            String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
+
+            String filename;
+            boolean execContextDeleted = false;
+            ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+            if (execContext==null) {
+                filename = "<ExecContext was deleted>";
+                execContextDeleted = true;
+            }
+            else {
+                filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
+            }
+
+            BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
+            items.add(new BatchData.BatchExecInfo(
+                    batch, uid, execStateStr, batch.execState, ok, filename,
+                    S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username, execContextDeleted ));
         }
         return items;
     }
