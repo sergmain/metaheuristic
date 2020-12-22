@@ -524,7 +524,8 @@ public class TaskProcessor {
 
             if (!functionPrepareResult.function.skipParams) {
                 if (!S.b(functionPrepareResult.function.params)) {
-                    cmd.addAll(Arrays.asList(StringUtils.split(functionPrepareResult.function.params)));
+                    List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
+                    cmd.addAll(list);
                 }
                 cmd.add(paramFile.getAbsolutePath());
             }
