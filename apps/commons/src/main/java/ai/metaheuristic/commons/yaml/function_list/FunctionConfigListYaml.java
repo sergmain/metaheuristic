@@ -53,11 +53,11 @@ public class FunctionConfigListYaml implements BaseParams {
             if (!S.b(function.content) && function.sourcing!= EnumsApi.FunctionSourcing.processor) {
                 errors.add(S.f("function %s has content but sourcing is %s, must be FunctionSourcing.processor", function.code, function.sourcing));
             }
-            if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.content) && S.b(function.file)) {
-                errors.add(S.f("function %s has a sourcing as %s but content and file are empty", function.code));
+            if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.content) && S.b(function.file) && S.b(function.env)) {
+                errors.add(S.f("function %s has a sourcing as %s but content, file, and env are empty", function.code, function.sourcing));
             }
             if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
-                errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code));
+                errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
             }
         }
         if (!errors.isEmpty()) {
