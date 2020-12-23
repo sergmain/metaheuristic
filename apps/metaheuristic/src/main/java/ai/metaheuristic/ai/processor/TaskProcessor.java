@@ -448,7 +448,7 @@ public class TaskProcessor {
         return v;
     }
 
-    private int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
+    private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
         int count = 0;
         count += taskYaml.preFunctions.size();
         count += taskYaml.postFunctions.size();
