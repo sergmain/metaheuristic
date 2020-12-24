@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService.*;
 
@@ -242,7 +241,7 @@ public class CompanyController {
             return "redirect:/dispatcher/company/company-accounts/"+companyUniqueId;
         }
         model.addAttribute("account", accountResult.account);
-        model.addAttribute("roles", Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES);
+        model.addAttribute("roles", Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_POSSIBLE_ROLES : SecConsts.POSSIBLE_ROLES);
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "dispatcher/company/company-account-edit-roles";
     }

@@ -41,7 +41,7 @@ public class FunctionController {
     private final FunctionTopLevelService functionTopLevelService;
 
     @GetMapping("/functions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
     public String init(Model model,
                        @ModelAttribute("errorMessage") final String errorMessage,
                        @ModelAttribute("infoMessages") final String infoMessages) {
@@ -52,7 +52,7 @@ public class FunctionController {
     }
 
     @GetMapping("/function-delete/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public HttpEntity<String> deleteCommit(@PathVariable Long id) {
         OperationStatusRest operationStatusRest = functionTopLevelService.deleteFunctionById(id);
         if (operationStatusRest.isErrorMessages()) {
@@ -62,7 +62,7 @@ public class FunctionController {
     }
 
     @PostMapping(value = "/function-upload-from-file")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String uploadFunction(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = functionTopLevelService.uploadFunction(file);
         ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);

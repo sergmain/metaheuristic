@@ -15,7 +15,7 @@
             th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/batch/batches" th:href="@{/dispatcher/batch/batches}">Batch</a>
         </li>
-        <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER')"
+        <li sec:authorize="hasAnyRole('MASTER_ASSET_MANAGER', 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER')"
             th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
             th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/') && !#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/batch/') && !#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/ai/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/index.html" th:href="@{/dispatcher/index}">Control panel</a>

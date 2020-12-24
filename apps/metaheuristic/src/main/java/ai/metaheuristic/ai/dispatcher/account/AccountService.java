@@ -185,9 +185,16 @@ public class AccountService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.120 account wasn't found, accountId: " + accountId);
         }
 
-        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
+        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_POSSIBLE_ROLES : SecConsts.POSSIBLE_ROLES;
         if (!possibleRoles.contains(role)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.130 account wasn't found, accountId: " + accountId);
+        }
+
+        List<String> currRoles = account.accountRoles.getRolesAsList();
+        for (String currRole : currRoles) {
+            if (!possibleRoles.contains(currRole)) {
+                account.accountRoles.removeRole(currRole);
+            }
         }
 
         boolean isAccountContainsRole = account.accountRoles.hasRole(role);

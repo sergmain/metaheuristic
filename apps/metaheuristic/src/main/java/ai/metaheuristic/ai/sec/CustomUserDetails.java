@@ -115,6 +115,7 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
+        // TODO 2020-12-24 implement a common way to check roles over ai.metaheuristic.ai.sec.SecConsts.COMPANY_1_POSSIBLE_ROLES.
         // fix role, the role ROLE_SERVER_REST_ACCESS can't be assigned to any user whose company isn't the master company with id==1
         if (!Consts.ID_1.equals(account.getCompanyId()) && account.accountRoles.hasRole(SecConsts.ROLE_SERVER_REST_ACCESS)) {
             account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);

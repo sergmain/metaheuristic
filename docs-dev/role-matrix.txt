@@ -5,11 +5,11 @@ all sub-menu - the same roles
 'Batch' = 'ADMIN', 'DATA', 'MANAGER', 'OPERATOR'
 all sub-menu - the same roles
 
-'Control panel' - 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER'
+'Control panel' - 'MASTER_ASSET_MANAGER', 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER'
 sub-menu:
-    'Source codes' - 'ADMIN', 'DATA', 'MANAGER'
+    'Source codes' - 'MASTER_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER'
     'Variables' - 'ADMIN', 'DATA'
-    'Functions' - 'ADMIN', 'DATA'
+    'Functions' - 'MASTER_ASSET_MANAGER', 'ADMIN', 'DATA'
     'Processors' - 'ADMIN', 'DATA'
     'Accounts' - 'ADMIN'
 

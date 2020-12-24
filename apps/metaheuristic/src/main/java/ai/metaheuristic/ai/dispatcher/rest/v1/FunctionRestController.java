@@ -35,19 +35,19 @@ public class FunctionRestController {
     private final FunctionTopLevelService functionTopLevelService;
 
     @GetMapping("/functions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
     public FunctionData.FunctionsResult getFunctions() {
         return functionTopLevelService.getFunctions();
     }
 
     @GetMapping("/function-delete/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(@PathVariable Long id) {
         return functionTopLevelService.deleteFunctionById(id);
     }
 
     @PostMapping(value = "/function-upload-from-file")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest uploadFunction(final MultipartFile file) {
         return functionTopLevelService.uploadFunction(file);
     }

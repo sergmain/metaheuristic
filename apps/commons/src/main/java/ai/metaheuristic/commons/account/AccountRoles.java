@@ -18,10 +18,8 @@ package ai.metaheuristic.commons.account;
 
 import ai.metaheuristic.commons.S;
 import lombok.Data;
-import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.function.Consumer;
@@ -88,7 +86,7 @@ public class AccountRoles {
 
     public List<String> getRolesAsList() {
         initRoles();
-        return Collections.unmodifiableList(initedRoles.roles);
+        return new ArrayList<>(initedRoles.roles);
     }
 
     public void addRole(String role) {
@@ -101,7 +99,7 @@ public class AccountRoles {
         }
     }
 
-    public void removeRole(@NonNull String role) {
+    public void removeRole(String role) {
         synchronized (this) {
             initedRoles.removeRole(role);
             this.roleSetter.accept(initedRoles.asString());

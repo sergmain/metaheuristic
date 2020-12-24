@@ -54,7 +54,7 @@ public class CompanyAccountTopLevelService {
         AccountData.AccountResult account = accountService.getAccount(id, companyUniqueId);
         return new AccountData.AccountWithRoleResult(
                 account.account,
-                Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES, account.getErrorMessages());
+                Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_POSSIBLE_ROLES : SecConsts.POSSIBLE_ROLES, account.getErrorMessages());
     }
 
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {

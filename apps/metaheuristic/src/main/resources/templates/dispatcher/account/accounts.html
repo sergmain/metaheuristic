@@ -45,6 +45,7 @@
             <th>Login</th>
             <th>Public name</th>
             <th>Created on</th>
+            <th>Roles</th>
             <th colspan="2" th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">&nbsp;</th>
         </tr>
         </thead>
@@ -56,6 +57,7 @@
             <td th:text="${r.username}">Login</td>
             <td th:text="${r.publicName}">publicName</td>
             <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
+            <td th:text="${r.roles}">Roles</td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
                 <a class="pure-button pure-button-primary" th:href="${'/dispatcher/account/account-edit/' + r.id}">Edit</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
