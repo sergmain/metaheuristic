@@ -67,6 +67,7 @@ public class ProcessorTopLevelService {
     // Attention, this value must be greater than
     // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
     // at least for 20 seconds
+    // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
     public ProcessorData.ProcessorResult getProcessor(Long id) {
@@ -202,6 +203,17 @@ public class ProcessorTopLevelService {
             }
         }
         return null;
+    }
+
+    public ProcessorData.BulkOperations processProcessorBulkDeleteCommit(String processorIdsStr) {
+        ProcessorData.BulkOperations bulkOperations = new ProcessorData.BulkOperations();
+        String[] processorIds = StringUtils.split(processorIdsStr, ", ");
+        for (String processorIdStr : processorIds) {
+            Long processorId = Long.parseLong(processorIdStr);
+            OperationStatusRest statusRest = processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
+            bulkOperations.operations.add(new ProcessorData.BulkOperation(processorId, statusRest));
+        }
+        return bulkOperations;
     }
 
 

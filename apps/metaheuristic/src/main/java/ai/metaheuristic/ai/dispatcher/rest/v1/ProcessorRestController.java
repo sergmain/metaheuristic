@@ -57,4 +57,17 @@ public class ProcessorRestController {
     public OperationStatusRest deleteProcessorCommit(Long id) {
         return processorTopLevelService.deleteProcessorById(id);
     }
+
+    /**
+     *
+     * @param processorIds comma-separated list of processorId for deleting
+     * @return
+     */
+    @PostMapping("/processor-bulk-delete-commit")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    public ProcessorData.BulkOperations  processProcessorBulkDeleteCommit(String processorIds) {
+        ProcessorData.BulkOperations  r = processorTopLevelService.processProcessorBulkDeleteCommit(processorIds);
+        return r;
+    }
+
 }

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,7 +26,23 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.lang.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ProcessorData {
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BulkOperation {
+        public Long processorId;
+        public OperationStatusRest status;
+    }
+
+    @Data
+    public static class BulkOperations {
+        public List<BulkOperation> operations = new ArrayList<>();
+    }
 
     @Data
     @NoArgsConstructor
