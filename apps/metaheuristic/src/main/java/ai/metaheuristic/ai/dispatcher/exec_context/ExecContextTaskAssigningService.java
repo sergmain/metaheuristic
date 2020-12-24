@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -112,8 +113,11 @@ public class ExecContextTaskAssigningService {
                     eventPublisher.publishEvent(event);
                 }
                 else {
+                    EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
                     log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
-                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
+                            task.getId(), taskParamYaml.task.function.code, state);
+
+                    eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
                 }
             }
         }

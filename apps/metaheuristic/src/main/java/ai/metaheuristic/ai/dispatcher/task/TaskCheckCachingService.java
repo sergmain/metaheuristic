@@ -154,7 +154,7 @@ public class TaskCheckCachingService {
         }
 
         if (cacheProcess!=null) {
-            log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as FINISHED", taskId);
+            log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
             // finish task with cached data
 
             List<Object[]> vars = cacheVariableRepository.getIdsByCacheProcessId(cacheProcess.id);
