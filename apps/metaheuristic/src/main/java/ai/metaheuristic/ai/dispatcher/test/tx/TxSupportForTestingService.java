@@ -214,7 +214,7 @@ public class TxSupportForTestingService {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        return taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId)).status;
+        return taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId).status;
     }
 
     @Transactional
