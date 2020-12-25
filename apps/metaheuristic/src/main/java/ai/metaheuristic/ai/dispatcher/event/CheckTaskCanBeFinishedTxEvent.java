@@ -27,9 +27,8 @@ import lombok.AllArgsConstructor;
 public class CheckTaskCanBeFinishedTxEvent {
     public final Long execContextId;
     public final Long taskId;
-    public final boolean checkCaching;
 
     public CheckTaskCanBeFinishedEvent to() {
-        return new CheckTaskCanBeFinishedEvent(execContextId, taskId, checkCaching);
+        return new CheckTaskCanBeFinishedEvent(execContextId, taskId);
     }
 }

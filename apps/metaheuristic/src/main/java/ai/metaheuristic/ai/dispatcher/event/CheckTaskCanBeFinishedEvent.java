@@ -28,5 +28,4 @@ import lombok.Data;
 public class CheckTaskCanBeFinishedEvent {
     public final Long execContextId;
     public final Long taskId;
-    public final boolean checkCaching;
 }

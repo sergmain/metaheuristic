@@ -97,11 +97,10 @@ public class ExecContextTaskAssigningService {
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
-                    // all tasks with internal function will be processed in a different thread
+                    // all tasks with internal function will be processed in a different thread after registering in TaskQueue
                     if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
                         log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                         taskProviderService.registerInternalTask(execContextId, taskId, taskParamYaml);
-//                        eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
                     }
                     else {
                         taskProviderService.registerTask(execContextId, taskId);

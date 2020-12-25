@@ -54,7 +54,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void registerVariableState(VariableUploadedEvent event) {
-        log.debug("call EventBusService.registerVariableState({},{}, {})", event.variableId, event.variableId, event.nullified);
+        log.debug("call EventBusService.registerVariableState(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
         execContextTopLevelService.registerVariableState(event);
     }
 
@@ -67,8 +67,15 @@ public class EventBusService {
     @Async
     @EventListener
     public void checkTaskCanBeFinished(CheckTaskCanBeFinishedEvent event) {
-        log.debug("call EventBusService.checkTaskCanBeFinished({},{}, {})", event.execContextId, event.taskId, event.checkCaching);
-        taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId, event.checkCaching);
+        log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
+        taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId);
+    }
+
+    @Async
+    @EventListener
+    public void checkTaskCanBeFinishedAfterCache(CheckTaskCanBeFinishedAfterCacheEvent event) {
+        log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(event.taskId);
     }
 
     @Async

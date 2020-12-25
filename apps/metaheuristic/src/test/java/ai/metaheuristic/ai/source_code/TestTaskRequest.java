@@ -136,7 +136,7 @@ public class TestTaskRequest extends FeatureMethods {
             }
             return null;
         });
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(task.id);
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);

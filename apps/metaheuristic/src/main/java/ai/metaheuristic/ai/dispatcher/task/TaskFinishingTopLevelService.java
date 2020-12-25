@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -36,6 +37,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.function.BiFunction;
 
 /**
  * @author Serge
@@ -55,11 +58,19 @@ public class TaskFinishingTopLevelService {
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void checkTaskCanBeFinished(Long taskId, boolean checkCaching) {
+    public void checkTaskCanBeFinished(Long taskId) {
+        checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
+    }
+
+    public void checkTaskCanBeFinishedAfterCache(Long taskId) {
+        checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableAfterCacheInternal );
+    }
+
+    private void checkTaskCanBeFinishedInternal(Long taskId, BiFunction<Long, ExecContextParamsYaml, Void> finishWithErrorWithFunction) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
-            log.warn("#303.100 Reporting about non-existed task #{}", taskId);
+            log.warn("#318.010 Reporting about non-existed task #{}", taskId);
             return;
         }
 
@@ -93,7 +104,7 @@ public class TaskFinishingTopLevelService {
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
                 taskSyncService.getWithSyncNullable(task.id,
-                        () -> finishWithErrorWithTxInternal(
+                        () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
                 dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, null, task.id, task.execContextId);
@@ -114,12 +125,19 @@ public class TaskFinishingTopLevelService {
             }
 
             taskSyncService.getWithSyncNullable(task.id,
-                    () -> taskStateService.finishAndStoreVariable(
-                            taskId, checkCaching, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
+                    () -> finishWithErrorWithFunction.apply(taskId, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
         }
     }
 
-    private Void finishWithErrorWithTxInternal(Long taskId, String console) {
+    private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
+        return taskStateService.finishAndStoreVariable(taskId, ecpy);
+    }
+
+    private Void finishAndStoreVariableAfterCacheInternal(Long taskId, ExecContextParamsYaml ecpy) {
+        return taskStateService.finishAndStoreVariableAfterCache(taskId, ecpy);
+    }
+
+    private Void finishWithErrorWithInternal(Long taskId, String console) {
         return taskStateService.finishWithErrorWithTx(taskId, console);
     }
 

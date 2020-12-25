@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -35,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -210,20 +210,17 @@ public class TaskCheckCachingService {
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
 
+                    output.uploaded = true;
+
                     eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, output.id, false));
-/*
-                    Enums.UploadVariableStatus status = taskVariableService.setVariableReceived(task, output.id);
-                    if (status!= Enums.UploadVariableStatus.OK) {
-                        log.error("#609.155 error while setting variable was received, status: {}", status);
-                        throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
-                    }
-*/
 
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
+            task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, true, 0,
                     "Process was finished with cached data, cacheProcessId: "+ cacheProcess.id);
@@ -231,7 +228,7 @@ public class TaskCheckCachingService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             task.setResultReceived(true);
 
-            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, false));
+//            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, false));
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

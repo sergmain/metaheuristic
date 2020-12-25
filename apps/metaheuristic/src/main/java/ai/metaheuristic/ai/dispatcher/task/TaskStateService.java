@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -30,6 +31,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -55,6 +57,7 @@ public class TaskStateService {
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final TaskExecStateService taskExecStateService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         updateTaskExecStates(task, execState, taskContextId, false);
@@ -71,12 +74,12 @@ public class TaskStateService {
     }
 
     @Transactional
-    public Void finishAndStoreVariable(Long taskId, boolean checkCaching, ExecContextParamsYaml ecpy) {
+    public Void finishAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#303.100 Reporting about non-existed task #{}", taskId);
+            log.warn("#319.100 Reporting about non-existed task #{}", taskId);
             return null;
         }
 
@@ -85,10 +88,10 @@ public class TaskStateService {
         updateTaskExecStates(
                 task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
 
-        if (checkCaching && tpy.task.cache!=null && tpy.task.cache.enabled) {
+        if (tpy.task.cache!=null && tpy.task.cache.enabled) {
             ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
             if (p==null) {
-                log.warn("#318.093 Process {} wasn't found", tpy.task.processCode);
+                log.warn("#319.120 Process {} wasn't found", tpy.task.processCode);
                 return null;
             }
             cacheService.storeVariables(tpy, p.function);
@@ -97,11 +100,32 @@ public class TaskStateService {
     }
 
     @Transactional
+    public Void finishAndStoreVariableAfterCache(Long taskId, ExecContextParamsYaml ecpy) {
+        taskSyncService.checkWriteLockPresent(taskId);
+
+//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#319.100 Reporting about non-existed task #{}", taskId);
+            return null;
+        }
+
+        task.execState = EnumsApi.TaskExecState.OK.value;
+        taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
+
+        task.setCompleted(true);
+        task.setCompletedOn(System.currentTimeMillis());
+
+        return null;
+    }
+
+    @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console) {
         taskSyncService.checkWriteLockPresent(taskId);
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#318.095 task #{} wasn't found", taskId);
+            log.warn("#319.140 task #{} wasn't found", taskId);
             return null;
         }
         String taskContextId = null;
@@ -110,7 +134,7 @@ public class TaskStateService {
             taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             taskContextId = taskParamYaml.task.taskContextId;
         } catch (YAMLException e) {
-            String es = S.f("#318.097 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+            String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
             log.error(es, e.getMessage());
         }
 
@@ -118,7 +142,7 @@ public class TaskStateService {
     }
 
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
-        finishWithError(task, "#318.100 Task was finished with an unknown error, can't process it", taskContextId);
+        finishWithError(task, "#319.180 Task was finished with an unknown error, can't process it", taskContextId);
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {
@@ -138,7 +162,7 @@ public class TaskStateService {
 
     private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#318.120 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
+            log.info("#319.200 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
         task.setExecState(EnumsApi.TaskExecState.ERROR.value);

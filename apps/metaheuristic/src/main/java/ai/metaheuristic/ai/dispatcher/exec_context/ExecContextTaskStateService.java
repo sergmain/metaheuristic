@@ -88,4 +88,34 @@ public class ExecContextTaskStateService {
         }
         return found ? taskGroup : null;
     }
+
+    @Nullable
+    @Transactional
+    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContextAfterCache(Long execContextId) {
+        execContextSyncService.checkWriteLockPresent(execContextId);
+
+        TaskQueue.TaskGroup taskGroup = taskProviderTopLevelService.getFinishedTaskGroup(execContextId);
+        if (taskGroup==null) {
+            return null;
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return null;
+        }
+        boolean found = false;
+        for (TaskQueue.AllocatedTask task : taskGroup.tasks) {
+            if (task==null) {
+                continue;
+            }
+
+            if (task.queuedTask.taskParamYaml==null) {
+                throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
+            }
+            String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
+            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, task.queuedTask.taskId, task.state, taskContextId);
+            taskExecStateService.updateTasksStateInDb(status);
+            found = true;
+        }
+        return found ? taskGroup : null;
+    }
 }

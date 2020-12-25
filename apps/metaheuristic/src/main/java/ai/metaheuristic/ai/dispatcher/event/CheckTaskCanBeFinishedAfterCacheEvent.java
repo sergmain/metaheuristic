@@ -14,21 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.event;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import lombok.AllArgsConstructor;
 
 /**
  * @author Serge
- * Date: 11/14/2020
- * Time: 1:15 AM
+ * Date: 12/24/2020
+ * Time: 11:47 PM
  */
-@Service
-@Profile("dispatcher")
-@Slf4j
-@RequiredArgsConstructor
-public class ExecContextTaskFinishingTopLevelService {
+@AllArgsConstructor
+public class CheckTaskCanBeFinishedAfterCacheEvent {
+    public final Long execContextId;
+    public final Long taskId;
 }

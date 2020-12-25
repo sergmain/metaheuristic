@@ -315,7 +315,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(task32.id);
     }
 
     private void step_FitAndPredict() {
@@ -365,7 +365,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     () -> txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
-        taskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(simpleTask32.taskId);
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
@@ -392,7 +392,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task3.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(task3.id);
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -468,7 +468,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
 
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task.id, false);
+        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(task.id);
     }
 
     @SneakyThrows

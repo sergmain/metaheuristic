@@ -84,52 +84,50 @@ public class CacheService {
             log.error("#611.020 Error while preparing a cache key, task will be processed without cached data", e);
         }
 
-        if (cacheProcess==null) {
+        if (cacheProcess != null) {
+            log.info("#611.200 process {} was already cached", tpy.task.processCode);
+            return;
+        }
 
-            cacheProcess = new CacheProcess();
-            cacheProcess.createdOn = System.currentTimeMillis();
-            cacheProcess.keySha256Length = key;
-            cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
-            cacheProcess = cacheProcessRepository.save(cacheProcess);
+        cacheProcess = new CacheProcess();
+        cacheProcess.createdOn = System.currentTimeMillis();
+        cacheProcess.keySha256Length = key;
+        cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
+        cacheProcess = cacheProcessRepository.save(cacheProcess);
 
-            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                final File tempFile;
+        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+            final File tempFile;
 
-                SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
-                if (simple==null) {
-                    throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
+            SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
+            if (simple==null) {
+                throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
+            }
+            if (simple.nullified) {
+                cacheVariableService.createAsNull(cacheProcess.id, output.name);
+            }
+            else {
+                try {
+                    tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
+                } catch (IOException e) {
+                    String es = "#611.060 Error: " + e.getMessage();
+                    log.error(es, e);
+                    throw new VariableCommonException(es, output.id);
                 }
-                if (simple.nullified) {
-                    cacheVariableService.createAsNull(cacheProcess.id, output.name);
-                }
-                else {
-                    try {
-                        tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
-                    } catch (IOException e) {
-                        String es = "#611.060 Error: " + e.getMessage();
-                        log.error(es, e);
-                        throw new VariableCommonException(es, output.id);
-                    }
-                    variableService.storeToFile(output.id, tempFile);
+                variableService.storeToFile(output.id, tempFile);
 
-                    InputStream is;
-                    try {
-                        is = new FileInputStream(tempFile);
-                    } catch (IOException e) {
-                        String es = "#611.080 Error: " + e.getMessage();
-                        log.error(es, e);
-                        eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
-                        throw new VariableCommonException(es, output.id);
-                    }
-                    eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-                    cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
+                InputStream is;
+                try {
+                    is = new FileInputStream(tempFile);
+                } catch (IOException e) {
+                    String es = "#611.080 Error: " + e.getMessage();
+                    log.error(es, e);
+                    eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
+                    throw new VariableCommonException(es, output.id);
                 }
+                eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
+                cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
             }
         }
-        else {
-            log.info("#611.200 process {} was already cached", tpy.task.processCode);
-        }
-
     }
 
     public CacheData.Key getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
