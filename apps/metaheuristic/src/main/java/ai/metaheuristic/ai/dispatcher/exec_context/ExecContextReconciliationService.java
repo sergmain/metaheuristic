@@ -103,8 +103,14 @@ public class ExecContextReconciliationService {
                     }
                 }
                 else if (!allocatedTask.assigned) {
-                    log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
-                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                    if (taskState.execState==EnumsApi.TaskExecState.NONE.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
+                        // #307.080 Found different states for task #37978, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
+                        // normal situation, will occur after restarting dispatcher
+                    }
+                    else {
+                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                    }
                 }
                 else if ((taskState.execState==EnumsApi.TaskExecState.OK.value || taskState.execState==EnumsApi.TaskExecState.ERROR.value || taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
                     && taskState.execState==allocatedTask.state.value) {
