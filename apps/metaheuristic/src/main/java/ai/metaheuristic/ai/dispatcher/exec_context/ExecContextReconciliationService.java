@@ -118,9 +118,9 @@ public class ExecContextReconciliationService {
                 }
                 else if ((taskState.execState==EnumsApi.TaskExecState.OK.value || taskState.execState==EnumsApi.TaskExecState.ERROR.value || taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
                     && taskState.execState==allocatedTask.state.value) {
-                    log.warn("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                    log.info("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
-                    log.warn("#307.120 task #{} will be removed from queue and state of task will be changed in execContext",
+                    log.info("#307.120 task #{} will be removed from queue and state of task will be changed in execContext",
                             tv.taskId);
 
                     taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
