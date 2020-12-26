@@ -96,6 +96,10 @@ public class ExecContextReconciliationService {
                                 tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
                         status.taskForResettingIds.add(tv.taskId);
                     }
+                    else if (taskState.execState==EnumsApi.TaskExecState.NONE.value && tv.execState== EnumsApi.TaskExecState.CHECK_CACHE) {
+                        // #307.060 Found different states for task #37978, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
+                        // normal situation, will occur after restarting dispatcher
+                    }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
                                 tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
@@ -126,8 +130,12 @@ public class ExecContextReconciliationService {
                     // Found different states for task #37131, db: IN_PROGRESS, graph: CHECK_CACHE, assigned: false, state in queue: IN_PROGRESS
                     // normal situation
                 }
+                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                    // #307.140 Found different states for task #37709, db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
+                    // normal situation
+                }
                 else {
-                    log.warn("#307.140 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                    log.warn("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
             }
