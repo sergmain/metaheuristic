@@ -155,7 +155,8 @@ public class TaskAssetPreparer {
                 return false;
             }
             else {
-                if (functionState==Enums.FunctionState.checksum_wrong || functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
+//                if (functionState==Enums.FunctionState.checksum_wrong || functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
+                if (functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
                     metadataService.setFunctionState(dispatcher.dispatcherLookup.getAsset().url, functionConfig.code, Enums.FunctionState.none);

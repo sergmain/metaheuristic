@@ -206,15 +206,16 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         File partFile = new File(dir, String.format(mask, idx));
 
                         final HttpResponse httpResponse = response.returnResponse();
-                        if (httpResponse.getStatusLine().getStatusCode()==HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                            final String es = S.f("#811.047 Function %s can't be downloaded, dispatcher %s was mis-configured.", task.functionCode, dispatcher.url);
+                        int statusCode = httpResponse.getStatusLine().getStatusCode();
+                        if (statusCode ==HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                            final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.error(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.dispatcher_config_error);
                             resourceState = Enums.FunctionState.dispatcher_config_error;
                             break;
                         }
-                        else if (httpResponse.getStatusLine().getStatusCode()!=HttpStatus.OK.value()) {
-                            final String es = S.f("#811.050 Function %s can't be downloaded from dispatcher %s", task.functionCode, dispatcher.url);
+                        else if (statusCode !=HttpStatus.OK.value()) {
+                            final String es = S.f("#811.050 Function %s can't be downloaded from asset srv %s, dispatcher %s, status code: %d", task.functionCode, asset.url, dispatcher.url, statusCode);
                             log.error(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
@@ -247,28 +248,28 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                            final String es = S.f("#811.065 Function %s can't be downloaded, dispatcher %s was mis-configured.", task.functionCode, dispatcher.url);
+                            final String es = S.f("#811.065 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.dispatcher_config_error);
                             resourceState = Enums.FunctionState.dispatcher_config_error;
                             break;
                         }
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = S.f("#811.070 Function %s wasn't found on dispatcher %s.", task.functionCode, dispatcher.url);
+                            final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.not_found);
                             resourceState = Enums.FunctionState.not_found;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = S.f("#811.080 Unknown error with a function %s from dispatcher %s.", task.functionCode, dispatcher.url);
+                            final String es = S.f("#811.080 Unknown error with a function %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = S.f("#811.090 Unknown error with a resource %s from dispatcher %s.", task.functionCode, dispatcher.url);
+                            final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
