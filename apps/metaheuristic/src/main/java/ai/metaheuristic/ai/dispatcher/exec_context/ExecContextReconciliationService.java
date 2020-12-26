@@ -63,6 +63,7 @@ public class ExecContextReconciliationService {
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
 
@@ -114,6 +115,10 @@ public class ExecContextReconciliationService {
 
                     taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                    // Found different states for task #37131, db: IN_PROGRESS, graph: CHECK_CACHE, assigned: false, state in queue: IN_PROGRESS
+                    // normal situation
                 }
                 else {
                     log.warn("#307.140 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
