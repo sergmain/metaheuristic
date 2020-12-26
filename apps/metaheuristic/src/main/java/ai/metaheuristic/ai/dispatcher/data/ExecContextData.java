@@ -18,13 +18,12 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.Task;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -100,7 +99,7 @@ public class ExecContextData {
     public static class ReconciliationStatus {
         public final Long execContextId;
         public final AtomicBoolean isNullState = new AtomicBoolean(false);
-        public final List<Long> taskForResettingIds = new ArrayList<>();
+        public final Set<Long> taskForResettingIds = new HashSet<>();
         public final List<Long> taskIsOkIds = new ArrayList<>();
     }
 }

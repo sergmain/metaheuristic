@@ -91,9 +91,16 @@ public class ExecContextReconciliationService {
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
                 TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
                 if (allocatedTask==null) {
-                    log.warn("#307.020 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found",
-                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
-                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(execContext.id, tv.taskId));
+                    if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value && tv.execState== EnumsApi.TaskExecState.NONE) {
+                        log.warn("#307.010 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
+                        status.taskForResettingIds.add(tv.taskId);
+                    }
+                    else {
+                        log.warn("#307.020 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(execContext.id, tv.taskId));
+                    }
                 }
                 else if (!allocatedTask.assigned) {
                     log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
@@ -185,7 +192,7 @@ public class ExecContextReconciliationService {
                 taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);
                 return null;
             });
-        };
+        }
         return null;
     }
 
