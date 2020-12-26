@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -92,39 +91,39 @@ public class ExecContextReconciliationService {
                 TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
                 if (allocatedTask==null) {
                     if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value && tv.execState== EnumsApi.TaskExecState.NONE) {
-                        log.warn("#307.010 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
+                        log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
                                 tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
                         status.taskForResettingIds.add(tv.taskId);
                     }
                     else {
-                        log.warn("#307.020 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
+                        log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
                                 tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
-                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(execContext.id, tv.taskId));
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                 }
                 else if (!allocatedTask.assigned) {
-                    log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                    log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
                 else if ((taskState.execState==EnumsApi.TaskExecState.OK.value || taskState.execState==EnumsApi.TaskExecState.ERROR.value || taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
                     && taskState.execState==allocatedTask.state.value) {
-                    log.warn("#307.045 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                    log.warn("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
-                    log.warn("#307.046 task #{} will be removed from queue and state of task will be changed in execContext",
+                    log.warn("#307.120 task #{} will be removed from queue and state of task will be changed in execContext",
                             tv.taskId);
 
                     taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else {
-                    log.warn("#307.050 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                    log.warn("#307.140 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
             }
         }
 
         if (status.isNullState.get()) {
-            log.info("#307.060 Found non-created task, graph consistency is failed");
+            log.info("#307.160 Found non-created task, graph consistency is failed");
             return status;
         }
 
@@ -172,7 +171,7 @@ public class ExecContextReconciliationService {
             return null;
         }
         if (status.isNullState.get()) {
-            log.info("#307.100 Found non-created task, graph consistency is failed");
+            log.info("#307.180 Found non-created task, graph consistency is failed");
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return null;
@@ -185,7 +184,7 @@ public class ExecContextReconciliationService {
             taskSyncService.getWithSyncNullable(taskIsOkId, ()-> {
                 TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);
                 if (task==null) {
-                    log.error("#307.120 task is null");
+                    log.error("#307.200 task is null");
                     return null;
                 }
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
