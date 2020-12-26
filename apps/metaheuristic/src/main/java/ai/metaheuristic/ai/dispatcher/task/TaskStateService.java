@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -103,8 +104,6 @@ public class TaskStateService {
     public Void finishAndStoreVariableAfterCache(Long taskId, ExecContextParamsYaml ecpy) {
         taskSyncService.checkWriteLockPresent(taskId);
 
-//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
-
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#319.100 Reporting about non-existed task #{}", taskId);
@@ -112,7 +111,11 @@ public class TaskStateService {
         }
 
         task.execState = EnumsApi.TaskExecState.OK.value;
-        taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
+
+        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+
+//        taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
+//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
 
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());

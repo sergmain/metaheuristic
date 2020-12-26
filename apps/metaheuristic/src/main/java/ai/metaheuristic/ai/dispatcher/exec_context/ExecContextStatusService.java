@@ -130,12 +130,6 @@ public class ExecContextStatusService {
     public Void registerCreatedTask(TaskCreatedEvent event) {
         register(event.taskVariablesInfo.execContextId, (ecpy)-> {
             ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
-
-/*
-            log.debug("#211.020 registerCreatedTask(), task: {}", event.taskVariablesInfo);
-            log.debug("#211.040 registerCreatedTask(), tasksVariablesInfo: {}", ecpy.tasksVariablesInfo);
-            log.debug("#211.060 registerCreatedTask(), info: {}", info);
-*/
             boolean isNew = true;
             for (ExecContextApiData.TaskStateInfo task : info.tasks) {
                 if (task.taskId.equals(event.taskVariablesInfo.taskId)) {

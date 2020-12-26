@@ -93,22 +93,4 @@ public class ExecContextTaskStateTopLevelService {
     private OperationStatusRest updateTaskExecStatesInGraph(Long execContextId, Long taskId, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
         return execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, state, taskContextId);
     }
-
-/*
-    public void updateTaskExecStatesInGraph(Long execContextId, Long taskId) {
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            return;
-        }
-        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        if (!execContextId.equals(task.execContextId)) {
-            log.error("(!execContextId.equals(task.execContextId))");
-        }
-
-        execContextSyncService.getWithSyncNullable(execContextId,
-                () -> taskSyncService.getWithSyncNullable(taskId,
-                        () -> execContextTaskStateService.updateTaskExecStatesInGraph(execContextId, taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
-    }
-*/
 }

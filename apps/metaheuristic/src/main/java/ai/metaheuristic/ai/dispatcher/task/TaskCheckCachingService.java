@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -24,8 +23,9 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
+import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedAfterCacheTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -211,8 +210,7 @@ public class TaskCheckCachingService {
                     }
 
                     output.uploaded = true;
-
-                    eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, output.id, false));
+//                    eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, output.id, false));
 
                 } catch (IOException e) {
                     log.warn("#609.160 error", e);
@@ -228,7 +226,14 @@ public class TaskCheckCachingService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             task.setResultReceived(true);
 
-//            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, false));
+            task.execState = EnumsApi.TaskExecState.OK.value;
+
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+
+            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+
+//            eventPublisher.publishEvent(new CheckTaskCanBeFinishedAfterCacheTxEvent(task.execContextId, task.id));
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
