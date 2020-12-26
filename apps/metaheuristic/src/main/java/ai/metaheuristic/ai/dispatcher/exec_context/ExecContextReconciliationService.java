@@ -72,7 +72,7 @@ public class ExecContextReconciliationService {
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
         if (rootVertices.size()>1) {
-            log.error("#307.020 Too many root vertices, count: " + rootVertices.size());
+            log.error("#307.020 Too many root vertices, ill be used only first vertex, actual number: " + rootVertices.size());
         }
 
         if (rootVertices.isEmpty()) {
@@ -113,16 +113,6 @@ public class ExecContextReconciliationService {
                     log.warn("#307.050 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
-/*
-                // TODO 2020.11.14 need to decide what to do with different states. if nothing, then delete the following commented code
-                if (taskState.execState== EnumsApi.TaskExecState.ERROR.value) {
-                    finishWithErrorWithTx(tv.taskId, null, null);
-                }
-                else {
-                    updateTaskExecStates(execContext, tv.taskId, taskState.execState, null);
-                }
-                break;
-*/
             }
         }
 
