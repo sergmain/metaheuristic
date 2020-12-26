@@ -19,7 +19,11 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -29,6 +33,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +61,8 @@ public class ExecContextReconciliationService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final TaskSyncService taskSyncService;
+    private final TaskProviderTopLevelService taskProviderTopLevelService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
@@ -82,10 +89,30 @@ public class ExecContextReconciliationService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
-                log.warn("#307.040 Found different states for task #"+tv.taskId+", " +
-                        "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
-                        "graph: "+tv.execState);
+                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
+                if (allocatedTask==null) {
+                    log.warn("#307.020 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found",
+                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(execContext.id, tv.taskId));
+                }
+                else if (!allocatedTask.assigned) {
+                    log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                }
+                else if ((taskState.execState==EnumsApi.TaskExecState.OK.value || taskState.execState==EnumsApi.TaskExecState.ERROR.value || taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
+                    && taskState.execState==allocatedTask.state.value) {
+                    log.warn("#307.045 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                    log.warn("#307.046 task #{} will be removed from queue and state of task will be changed in execContext",
+                            tv.taskId);
 
+                    taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else {
+                    log.warn("#307.050 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                }
 /*
                 // TODO 2020.11.14 need to decide what to do with different states. if nothing, then delete the following commented code
                 if (taskState.execState== EnumsApi.TaskExecState.ERROR.value) {

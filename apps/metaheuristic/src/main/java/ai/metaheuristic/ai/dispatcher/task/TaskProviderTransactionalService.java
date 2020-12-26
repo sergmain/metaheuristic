@@ -309,4 +309,9 @@ public class TaskProviderTransactionalService {
     public TaskGroup getFinishedTaskGroup(Long execContextId) {
         return taskQueue.getFinishedTaskGroup(execContextId);
     }
+
+    @Nullable
+    public AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
+        return taskQueue.getTaskExecState(execContextId, taskId);
+    }
 }

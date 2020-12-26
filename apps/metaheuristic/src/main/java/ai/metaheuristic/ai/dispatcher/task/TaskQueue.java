@@ -267,6 +267,24 @@ public class TaskQueue {
         return null;
     }
 
+    @Nullable
+    public AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (!execContextId.equals(taskGroup.execContextId)) {
+                continue;
+            }
+            for (AllocatedTask task : taskGroup.tasks) {
+                if (task==null) {
+                    continue;
+                }
+                if (task.queuedTask.taskId.equals(taskId)) {
+                    return task;
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
             log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);

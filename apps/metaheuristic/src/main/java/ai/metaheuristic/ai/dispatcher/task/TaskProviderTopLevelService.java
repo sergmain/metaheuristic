@@ -123,6 +123,13 @@ public class TaskProviderTopLevelService {
         }
     }
 
+    @Nullable
+    public TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
+        synchronized (syncObj) {
+            return taskProviderTransactionalService.getTaskExecState(execContextId, taskId);
+        }
+    }
+
     @Async
     @EventListener
     public void lock(LockByExecContextIdEvent event) {

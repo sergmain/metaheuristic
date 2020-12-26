@@ -101,29 +101,6 @@ public class TaskStateService {
     }
 
     @Transactional
-    public Void finishAndStoreVariableAfterCache(Long taskId, ExecContextParamsYaml ecpy) {
-        taskSyncService.checkWriteLockPresent(taskId);
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#319.100 Reporting about non-existed task #{}", taskId);
-            return null;
-        }
-
-        task.execState = EnumsApi.TaskExecState.OK.value;
-
-        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
-
-//        taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
-//        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
-
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
-
-        return null;
-    }
-
-    @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console) {
         taskSyncService.checkWriteLockPresent(taskId);
         TaskImpl task = taskRepository.findById(taskId).orElse(null);

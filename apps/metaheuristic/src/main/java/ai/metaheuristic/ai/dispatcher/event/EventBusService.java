@@ -73,13 +73,6 @@ public class EventBusService {
 
     @Async
     @EventListener
-    public void checkTaskCanBeFinishedAfterCache(CheckTaskCanBeFinishedAfterCacheEvent event) {
-        log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
-        taskFinishingTopLevelService.checkTaskCanBeFinishedAfterCache(event.taskId);
-    }
-
-    @Async
-    @EventListener
     public void registerTask(RegisterTaskForCheckCachingEvent event) {
         taskCheckCachingService.checkCaching();
     }

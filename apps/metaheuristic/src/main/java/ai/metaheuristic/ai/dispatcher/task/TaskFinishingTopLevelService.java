@@ -62,10 +62,6 @@ public class TaskFinishingTopLevelService {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
     }
 
-    public void checkTaskCanBeFinishedAfterCache(Long taskId) {
-        checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableAfterCacheInternal );
-    }
-
     private void checkTaskCanBeFinishedInternal(Long taskId, BiFunction<Long, ExecContextParamsYaml, Void> finishAndStoreVariableFunction) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -131,10 +127,6 @@ public class TaskFinishingTopLevelService {
 
     private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
         return taskStateService.finishAndStoreVariable(taskId, ecpy);
-    }
-
-    private Void finishAndStoreVariableAfterCacheInternal(Long taskId, ExecContextParamsYaml ecpy) {
-        return taskStateService.finishAndStoreVariableAfterCache(taskId, ecpy);
     }
 
     private Void finishWithErrorWithInternal(Long taskId, String console) {
