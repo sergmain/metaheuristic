@@ -106,6 +106,7 @@ public class FunctionTopLevelService {
     }
 
 /*
+    // TODO 2020-12-25 delete this code after 2021-01-01 if everything is ok
     public FunctionData.FunctionsResult getFunctions() {
         FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
         result.functions = functionRepository.findAll();
