@@ -94,11 +94,26 @@ public class FunctionTopLevelService {
 
     public FunctionData.FunctionsResult getFunctions() {
         FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
+
+        List<Long> ids = functionRepository.findAllIds();
+        result.functions = new ArrayList<>();
+
+        ids.forEach(id -> result.functions.add(functionCache.findById(id)));
+
+        result.functions.sort((o1, o2)->o2.getId().compareTo(o1.getId()));
+        result.assetMode = globals.assetMode;
+        return result;
+    }
+
+/*
+    public FunctionData.FunctionsResult getFunctions() {
+        FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
         result.functions = functionRepository.findAll();
         result.functions.sort((o1, o2)->o2.getId().compareTo(o1.getId()));
         result.assetMode = globals.assetMode;
         return result;
     }
+*/
 
     public OperationStatusRest deleteFunctionById(Long id) {
         return deleteFunctionById(id, true);
