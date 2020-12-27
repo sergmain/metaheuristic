@@ -126,7 +126,7 @@ public class TaskStateService {
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {
-        return finishWithError(task, console, taskContextId, -10001);
+        return finishWithError(task, console, taskContextId, -10002);
     }
 
     public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {

@@ -204,6 +204,12 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             resourceState = setVariableWasntFound(task);
                             break;
                         }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY ) {
+                            es = String.format("#810.035 BAD_GATEWAY error while downloading a variable #%s. will try later again", task.variableId);
+                            log.warn(es);
+                            // do nothing and try later again
+                            return;
+                        }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
                             es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
@@ -213,6 +219,13 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
+                            log.warn(es);
+                            processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
+                            resourceState = Enums.VariableState.unknown_error;
+                            break;
+                        }
+                        else {
+                            es = String.format("#810.037 An unknown error while downloading a variable #%s. Task #%s is finished with an error.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.VariableState.unknown_error;

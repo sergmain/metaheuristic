@@ -254,7 +254,14 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             resourceState = Enums.FunctionState.dispatcher_config_error;
                             break;
                         }
-                        if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
+                        else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY ) {
+                            final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
+                                    "a function #%s on asset srv %s, dispatcher %s. will try later again", task.functionCode, asset.url, dispatcher.url);
+                            log.warn(es);
+                            // do nothing and try later again
+                            return;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
                             final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.not_found);
@@ -270,6 +277,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
+                            log.warn(es);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
+                            resourceState = Enums.FunctionState.download_error;
+                            break;
+                        }
+                        else {
+                            final String es = S.f("#811.091 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcher.url);
                             log.warn(es);
                             metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
