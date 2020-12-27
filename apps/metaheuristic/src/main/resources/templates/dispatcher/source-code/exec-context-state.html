@@ -30,10 +30,17 @@
                 <td th:if="${c.empty}" th:text="${''}">Empty cell</td>
                 <td th:if="${!c.empty}">
                     <div th:text="${c.taskId +', ' + c.state}" class="no-wrap">State</div>
-                    <div th:if="${c.outs!=null}" th:remove="tag" th:each="o : ${c.outs}">
+
+                    <div th:if="${c.outs!=null && c.state!=T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag" th:each="o : ${c.outs}">
                         <div class="no-wrap">
                             <a href="#" th:href="${'/dispatcher/source-code/exec-context/'+result.execContextId+'/download-variable/' + o.id}"
                                th:text="${o.id+', ' + o.name}">Download var</a>
+                        </div>
+                    </div>
+                    <div th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag">
+                        <div class="no-wrap">
+                            <a href="#" th:href="${'/dispatcher/source-code/exec-context-task-exec-info/'+result.sourceCodeId+'/'+result.execContextId+'/' +c.taskId}"
+                               th:text="${'Task exec info'}">Task exec inf</a>
                         </div>
                     </div>
                 </td>

@@ -29,6 +29,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -78,12 +79,11 @@ public class ExecContextTopLevelService {
     }
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
-        boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
-
         ExecContextApiData.RawExecContextStateResult raw = execContextService.getRawExecContextState(sourceCodeId, execContextId, context);
         if (raw.isErrorMessages()) {
             return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
         }
+        boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
         ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(execContextId, raw, managerRole);
         return r;
     }
@@ -164,7 +164,7 @@ public class ExecContextTopLevelService {
     private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task == null) {
-            log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
+            log.warn("#210.100 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
 
@@ -208,7 +208,7 @@ public class ExecContextTopLevelService {
 
     public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
-            log.info("Found orphan execContext #{}", execContextId);
+            log.info("210.140 Found orphan execContext #{}", execContextId);
 
             execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
@@ -217,5 +217,26 @@ public class ExecContextTopLevelService {
 
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId, ()-> execContextService.deleteExecContextById(execContextId, context));
+    }
+
+    public ExecContextApiData.TaskExecInfo getTaskExecInfo(Long sourceCodeId, Long execContextId, Long taskId) {
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            log.warn("#210.155 Reporting about non-existed execContext #{}", execContextId);
+            return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("ExecContext #%s wasn't found", execContextId));
+        }
+
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            log.warn("#210.160 Reporting about non-existed task #{}", taskId);
+            return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s wasn't found", taskId));
+        }
+        if (!execContextId.equals(task.execContextId)) {
+            log.warn("#210.160 Reporting about non-existed task #{}", taskId);
+            return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s doesn't belong to execContext #%s", taskId, execContextId));
+        }
+        return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.from(task.execState),
+                S.b(task.functionExecResults) ? S.f("Task #%s doesn't have functionExecResults", taskId) : task.functionExecResults);
     }
 }

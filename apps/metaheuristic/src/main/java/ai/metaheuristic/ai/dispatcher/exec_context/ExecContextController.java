@@ -186,5 +186,13 @@ public class ExecContextController {
         return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;
     }
 
+    @GetMapping("/exec-context-task-exec-info/{sourceCodeId}/{execContextId}/{taskId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
+    public String taskExecInfo(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId, @PathVariable Long taskId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ExecContextApiData.TaskExecInfo taskExecInfo = execContextTopLevelService.getTaskExecInfo(sourceCodeId, execContextId, taskId);
+        model.addAttribute("result", taskExecInfo);
+        return "dispatcher/source-code/exec-context-task-exec-info";
+    }
 
 }

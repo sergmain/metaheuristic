@@ -1,0 +1,17 @@
+<div xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:fragment="content"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+>
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.exec_context.ExecContextApiData$TaskExecInfo"*/-->
+    <h1 class="widget-header">Task exec info</h1>
+
+    <p th:text="${'TaskId: ' + result.taskId}"></p>
+    <p th:text="${'Tas execState: ' + result.execState}"></p>
+
+    <div>
+        <pre id="source-code" th:text="${result.console}">Console</pre>
+    </div>
+
+    <a class="pure-button pure-button-primary" href="exec-contexts.html" th:href="${'/dispatcher/source-code/exec-context-state/' + result.sourceCodeId+'/'+result.execContextId}">To exec context</a>
+
+</div>

@@ -135,5 +135,13 @@ public class ExecContextRestController {
         return execContextState;
     }
 
+    @GetMapping("/exec-context-task-exec-info/{sourceCodeId}/{execContextId}/{taskId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
+    public ExecContextApiData.TaskExecInfo taskExecInfo(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, @PathVariable Long taskId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ExecContextApiData.TaskExecInfo execContextState = execContextTopLevelService.getTaskExecInfo(sourceCodeId, execContextId, taskId);
+        return execContextState;
+    }
+
 
 }

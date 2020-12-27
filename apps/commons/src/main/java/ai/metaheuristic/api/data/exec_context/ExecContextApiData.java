@@ -41,6 +41,17 @@ public class ExecContextApiData {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskExecInfo {
+        public Long sourceCodeId;
+        public Long ExecContextId;
+        public Long taskId;
+        public EnumsApi.TaskExecState execState;
+        public String console;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class VariableInfo {
         public Long id;
 
