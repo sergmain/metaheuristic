@@ -16,13 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.commons.S;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
@@ -38,7 +33,6 @@ import java.io.Serializable;
 @Table(name = "MH_COMPANY")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"cpy"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Company implements Serializable {
@@ -54,46 +48,13 @@ public class Company implements Serializable {
     @Column(name = "UNIQUE_ID")
     public Long uniqueId;
 
-    @Column(name = "PARAMS")
     @Nullable
-    private String params;
+    @Column(name = "PARAMS")
+    public String params;
 
     public String name;
 
     public Company(String companyName) {
         this.name = companyName;
-    }
-
-    public void setParams(@Nullable String params) {
-        synchronized (this) {
-            this.params = params;
-            this.cpy=null;
-        }
-    }
-
-    @Nullable
-    public String getParams() {
-        return params;
-    }
-
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private CompanyParamsYaml cpy = null;
-
-    @JsonIgnore
-    public CompanyParamsYaml getCompanyParamsYaml() {
-        if (cpy==null) {
-            synchronized (this) {
-                if (cpy ==null) {
-                    // to create a corrected structure of params
-                    String p = S.b(params) ? CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(new CompanyParamsYaml()) : params;
-                    //noinspection UnnecessaryLocalVariable
-                    CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(p);
-                    cpy = temp;
-                }
-            }
-        }
-        return cpy;
     }
 }

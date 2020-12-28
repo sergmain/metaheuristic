@@ -120,12 +120,14 @@ public class SourceCodeSelectorService {
 
         Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company!=null && !S.b(company.getParams())) {
-            final Set<String> groups = new HashSet<>();
+            final Set<String> groups;
             try {
                 CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
                 if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
-                    String[] arr = StringUtils.split(cpy.ac.groups, ',');
-                    Stream.of(arr).forEach(s-> groups.add(s.strip()));
+                    groups = getGroups(cpy.ac.groups);
+                }
+                else {
+                    groups = Set.of();
                 }
             } catch (YAMLException e) {
                 final String es = "#984.100 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
@@ -168,6 +170,13 @@ public class SourceCodeSelectorService {
         sourceCodesForCompany.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
 
         return sourceCodesForCompany;
+    }
+
+    public static Set<String> getGroups(String groups) {
+        Set<String> set = new HashSet<>();
+        String[] arr = StringUtils.split(groups, ',');
+        Stream.of(arr).filter(o->!S.b(o)).forEach(s-> set.add(s.strip()));
+        return set;
     }
 
 }

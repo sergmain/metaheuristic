@@ -29,7 +29,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -93,8 +95,9 @@ public class ReplicationSourceHelperService {
                     if (company==null) {
                         return null;
                     }
-                    CompanyParamsYaml params = company.getCompanyParamsYaml();
-                    return new ReplicationData.CompanyShortAsset(company.uniqueId, params.updatedOn);
+//                    CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+                    CompanyParamsYaml cpy = S.b(company.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+                    return new ReplicationData.CompanyShortAsset(company.uniqueId, cpy.updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));

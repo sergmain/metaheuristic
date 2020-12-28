@@ -112,14 +112,16 @@ public class CompanyTopLevelService {
         return newUniqueId;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CompanyData.SimpleCompanyResult getSimpleCompany(Long companyUniqueId){
         Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company == null) {
             return new CompanyData.SimpleCompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
-        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+//        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+        CompanyParamsYaml cpy = S.b(company.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+
         if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
             groups = cpy.ac.groups;
         }
@@ -175,7 +177,7 @@ public class CompanyTopLevelService {
     }
 
     @Nullable
-    @Transactional
+    @Transactional(readOnly = true)
     public Company getCompanyByUniqueId(Long uniqueId) {
         return companyCache.findByUniqueId(uniqueId);
     }

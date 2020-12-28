@@ -20,6 +20,9 @@ import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +76,8 @@ public class ReplicationCompanyTopLevelService {
             for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
                 if (actualCompany.uniqueId.equals(c.uniqueId)) {
                     isDeleted = false;
-                    if (actualCompany.updateOn != c.getCompanyParamsYaml().updatedOn) {
+                    CompanyParamsYaml cpy = S.b(c.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(c.params);
+                    if (actualCompany.updateOn != cpy.updatedOn) {
                         CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
                         forUpdating.add(companyLoopEntry);
                     }
