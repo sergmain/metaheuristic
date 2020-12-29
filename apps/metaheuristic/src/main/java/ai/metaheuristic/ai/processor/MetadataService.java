@@ -89,7 +89,7 @@ public class MetadataService {
     private static class SimpleCache {
         public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
         public final DispatcherLookupConfig.Asset asset;
-        public final MetadataParamsYaml.DispatcherInfo dispatcherInfo;
+        public final MetadataParamsYaml.ProcessorState processorState;
         public final File baseResourceDir;
     }
 
@@ -188,17 +188,17 @@ public class MetadataService {
             return;
         }
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(dispatcherUrl, o -> {
-            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = dispatcherUrlAsCode(dispatcherUrl);
+            final MetadataParamsYaml.ProcessorState processorState = dispatcherUrlAsCode(dispatcherUrl);
             return new SimpleCache(
                     dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl),
                     asset,
-                    dispatcherInfo,
-                    dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo)
+                    processorState,
+                    dispatcherLookupExtendedService.prepareBaseResourceDir(processorState)
             );
         });
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                processorFunctionService.downloadFunctionConfig(dispatcherUrl, simpleCache.asset, functionCode, simpleCache.dispatcherInfo.processorId);
+                processorFunctionService.downloadFunctionConfig(dispatcherUrl, simpleCache.asset, functionCode, simpleCache.processorState.processorId);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
             setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.function_config_error);
@@ -264,8 +264,8 @@ public class MetadataService {
     @Nullable
     public String findHostByCode(String code) {
         synchronized (syncObj) {
-            for (Map.Entry<String, MetadataParamsYaml.DispatcherInfo> entry : metadata.dispatcher.entrySet()) {
-                if (code.equals(entry.getValue().code)) {
+            for (Map.Entry<String, MetadataParamsYaml.ProcessorState> entry : metadata.processorStates.entrySet()) {
+                if (code.equals(entry.getValue().dispatcherCode)) {
                     return entry.getKey();
                 }
             }
@@ -275,12 +275,12 @@ public class MetadataService {
 
     private static final Object syncObj = new Object();
 
-    public MetadataParamsYaml.DispatcherInfo dispatcherUrlAsCode(String dispatcherUrl) {
+    public MetadataParamsYaml.ProcessorState dispatcherUrlAsCode(String dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            MetadataParamsYaml.ProcessorState dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             // fix for wrong metadata.yaml data
-            if (dispatcherInfo.code == null) {
-                dispatcherInfo.code = asCode(dispatcherUrl).code;
+            if (dispatcherInfo.dispatcherCode == null) {
+                dispatcherInfo.dispatcherCode = asCode(dispatcherUrl).dispatcherCode;
                 updateMetadataFile();
             }
             return dispatcherInfo;
@@ -295,8 +295,8 @@ public class MetadataService {
 
     public DispatcherApiData.ProcessorSessionId getProcessorSessionId(final String dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
-            return new DispatcherApiData.ProcessorSessionId(Long.valueOf(dispatcherInfo.processorId), dispatcherInfo.sessionId);
+            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(dispatcherUrl);
+            return new DispatcherApiData.ProcessorSessionId(Long.valueOf(processorState.processorId), processorState.sessionId);
         }
     }
 
@@ -308,10 +308,10 @@ public class MetadataService {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
-            if (!Objects.equals(dispatcherInfo.processorId, processorId) || !Objects.equals(dispatcherInfo.sessionId, sessionId)) {
-                dispatcherInfo.processorId = processorId;
-                dispatcherInfo.sessionId = sessionId;
+            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(dispatcherUrl);
+            if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
+                processorState.processorId = processorId;
+                processorState.sessionId = sessionId;
                 updateMetadataFile();
             }
         }
@@ -502,9 +502,9 @@ public class MetadataService {
         }
     }
 
-    private MetadataParamsYaml.DispatcherInfo getDispatcherInfo(String dispatcherUrl) {
+    private MetadataParamsYaml.ProcessorState getDispatcherInfo(String dispatcherUrl) {
         synchronized (syncObj) {
-            return metadata.dispatcher.computeIfAbsent(dispatcherUrl, m -> asCode(dispatcherUrl));
+            return metadata.processorStates.computeIfAbsent(dispatcherUrl, m -> asCode(dispatcherUrl));
         }
     }
 
@@ -548,7 +548,7 @@ public class MetadataService {
 
     }
 
-    private static MetadataParamsYaml.DispatcherInfo asCode(String dispatcherUrl) {
+    private static MetadataParamsYaml.ProcessorState asCode(String dispatcherUrl) {
         String s = dispatcherUrl.toLowerCase();
         if (dispatcherUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
@@ -557,9 +557,9 @@ public class MetadataService {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        MetadataParamsYaml.DispatcherInfo dispatcherInfo = new MetadataParamsYaml.DispatcherInfo();
-        dispatcherInfo.code = s;
-        return dispatcherInfo;
+        MetadataParamsYaml.ProcessorState processorState = new MetadataParamsYaml.ProcessorState();
+        processorState.dispatcherCode = s;
+        return processorState;
     }
 
 }

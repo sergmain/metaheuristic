@@ -35,19 +35,24 @@ public class MetadataParamsYaml implements BaseParams {
 
     public final int version=2;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
+    @Data
+    @NoArgsConstructor
+    @ToString
+    @AllArgsConstructor
+    public static class Core {
+        public String coreId;
+        public String sessionId;
     }
 
     @Data
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class DispatcherInfo {
-        public String code;
+    public static class ProcessorState {
+        public String dispatcherCode;
         public String processorId;
         public String sessionId;
+        public final List<Core> cores = new ArrayList<>();
     }
 
     @Data
@@ -61,8 +66,7 @@ public class MetadataParamsYaml implements BaseParams {
         public boolean verified;
     }
 
-    public final LinkedHashMap<String, DispatcherInfo> dispatcher = new LinkedHashMap<>();
+    public final LinkedHashMap<String, ProcessorState> processorStates = new LinkedHashMap<>();
     public final List<Status> statuses = new ArrayList<>();
-    @Nullable
-    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

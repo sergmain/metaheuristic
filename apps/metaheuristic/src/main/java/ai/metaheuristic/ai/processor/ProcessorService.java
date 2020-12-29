@@ -163,13 +163,13 @@ public class ProcessorService {
             processorTaskService.setCompleted(dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
-        final MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
         UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id);
         uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
-        uploadResourceTask.processorId = dispatcherCode.processorId;
+        uploadResourceTask.processorId = processorState.processorId;
         uploadResourceActor.add(uploadResourceTask);
 
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
@@ -182,7 +182,7 @@ public class ProcessorService {
         public boolean isError = false;
     }
 
-    public ProcessorService.ResultOfChecking checkForPreparingOVariables(ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public ProcessorService.ResultOfChecking checkForPreparingOVariables(ProcessorTask task, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
             taskParamYaml.task.inputs.forEach(input -> {
@@ -193,7 +193,7 @@ public class ProcessorService {
                     // variable was initialized and is empty so we don't need to download it again
                     return;
                 }
-                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
+                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, processorState, input);
                 for (AssetFile assetFile : assetFiles) {
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {

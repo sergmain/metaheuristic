@@ -60,7 +60,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
@@ -110,7 +110,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);

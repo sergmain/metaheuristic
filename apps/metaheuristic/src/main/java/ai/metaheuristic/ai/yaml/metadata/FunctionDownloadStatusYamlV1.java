@@ -50,9 +50,4 @@ public class FunctionDownloadStatusYamlV1 implements BaseParams {
     }
 
     public List<StatusV1> statuses = new ArrayList<>();
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
 }

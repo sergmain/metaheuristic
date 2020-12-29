@@ -447,7 +447,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).code);
+            File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).dispatcherCode);
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
@@ -552,12 +552,12 @@ public class ProcessorTaskService {
     }
 
     public void delete(String dispatcherUrl, final long taskId) {
-        MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             final String path = getTaskPath(taskId);
 
-            final File dispatcherDir = new File(globals.processorTaskDir, dispatcherCode.code);
+            final File dispatcherDir = new File(globals.processorTaskDir, processorState.dispatcherCode);
             final File taskDir = new File(dispatcherDir, path);
             try {
                 if (taskDir.exists()) {
@@ -579,12 +579,12 @@ public class ProcessorTaskService {
     }
 
     File prepareTaskDir(String dispatcherUrl, Long taskId) {
-        MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
-        return prepareTaskDir(dispatcherCode, taskId);
+        MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        return prepareTaskDir(processorState, taskId);
     }
 
-    File prepareTaskDir(MetadataParamsYaml.DispatcherInfo dispatcherCode, Long taskId) {
-        final File dispatcherDir = new File(globals.processorTaskDir, dispatcherCode.code);
+    File prepareTaskDir(MetadataParamsYaml.ProcessorState processorState, Long taskId) {
+        final File dispatcherDir = new File(globals.processorTaskDir, processorState.dispatcherCode);
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));
         if (taskDir.exists()) {
             return taskDir;

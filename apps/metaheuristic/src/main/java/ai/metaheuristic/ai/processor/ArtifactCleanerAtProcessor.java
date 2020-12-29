@@ -46,8 +46,8 @@ public class ArtifactCleanerAtProcessor {
                 continue;
             }
 
-            MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
-            final File dispatcherDir = new File(globals.processorTaskDir, dispatcherCode.code);
+            MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+            final File dispatcherDir = new File(globals.processorTaskDir, processorState.dispatcherCode);
             if (!dispatcherDir.exists()) {
                 dispatcherDir.mkdir();
             }
@@ -64,36 +64,6 @@ public class ArtifactCleanerAtProcessor {
                     processorTaskService.delete(dispatcherUrl, task.getTaskId());
                 }
             }
-
-/*
-            synchronized (ProcessorSyncHolder.processorGlobalSync) {
-                try {
-                    final AtomicBoolean isEmpty = new AtomicBoolean(true);
-                    Files.list(dispatcherDir.toPath()).forEach(s -> {
-                        isEmpty.set(true);
-                        try {
-                            Files.list(s).forEach(t -> {
-                                isEmpty.set(false);
-                                try {
-                                    File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
-                                    if (!taskYaml.exists()) {
-                                        ProcessorTaskService.deleteDir(t.toFile(), "delete in ArtifactCleanerAtProcessor.fixedDelay()");
-                                    }
-                                } catch (IOException e) {
-                                    log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
-                                }
-                            });
-                        } catch (AccessDeniedException e) {
-                            // ok, may be later
-                        } catch (IOException e) {
-                            log.error("#090.07 Error while cleaning up broken tasks", e);
-                        }
-                    });
-                } catch (IOException e) {
-                    log.error("#090.07 Error while cleaning up broken tasks", e);
-                }
-            }
-*/
         }
     }
 }

@@ -24,7 +24,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -53,13 +52,16 @@ public class MetadataParamsYamlUtilsV1
         src.checkIntegrity();
         MetadataParamsYamlV2 trg = new MetadataParamsYamlV2();
         if (src.dispatcher!=null) {
-            src.dispatcher.forEach((key, diV1) -> trg.dispatcher.put(key,
-                    new MetadataParamsYamlV2.DispatcherInfoV2(diV1.code, diV1.processorId, diV1.sessionId)));
+            src.dispatcher.forEach((key, diV1) -> trg.processorStates.put(key,
+                    new MetadataParamsYamlV2.ProcessorStateV2(diV1.code, diV1.processorId, diV1.sessionId)));
         }
 
         if (src.metadata!=null) {
-            trg.metadata = src.metadata.entrySet().stream().filter(o-> !Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            for (Map.Entry<String, String> o : src.metadata.entrySet()) {
+                if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
+                    trg.metadata.putIfAbsent(o.getKey(), o.getValue());
+                }
+            }
 
             String statusYaml = src.metadata.get(Consts.META_FUNCTION_DOWNLOAD_STATUS);
             if (!S.b(statusYaml)) {

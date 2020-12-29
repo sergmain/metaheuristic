@@ -38,11 +38,6 @@ public class FunctionDownloadStatusYaml implements BaseParams {
 
     public final int version=1;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

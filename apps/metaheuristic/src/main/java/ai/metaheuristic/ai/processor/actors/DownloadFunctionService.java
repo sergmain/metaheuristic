@@ -128,7 +128,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
+            final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
             final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
@@ -368,11 +368,11 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunck size: {}",
                         o.code, o.dispatcherUrl, dispatcher.context.chunkSize);
-                MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.dispatcherUrl);
+                MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(o.dispatcherUrl);
 
                 DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, o.code, null);
                 functionTask.dispatcher = dispatcher.dispatcherLookup;
-                functionTask.processorId = dispatcherInfo.processorId;
+                functionTask.processorId = processorState.processorId;
                 add(functionTask);
             }
         });

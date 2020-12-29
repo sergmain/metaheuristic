@@ -102,9 +102,9 @@ public class TaskProcessor {
                 continue;
             }
 
-            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
-            if (dispatcherInfo ==null) {
-                final String es = "#100.010 dispatcherInfo is null for "+task.dispatcherUrl+". task #" + task.taskId;
+            final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
+            if (processorState ==null) {
+                final String es = "#100.010 processorState is null for "+task.dispatcherUrl+". task #" + task.taskId;
                 log.warn(es);
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
@@ -152,7 +152,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, processorState, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -188,7 +188,7 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, preFunctionConfig);
+                result = prepareFunction(task.dispatcherUrl, processorState, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                     isNotReady = true;
@@ -204,7 +204,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(task.dispatcherUrl, dispatcherInfo, taskParamYaml.task.getFunction());
+            result = prepareFunction(task.dispatcherUrl, processorState, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                 continue;
@@ -215,7 +215,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, postFunctionConfig);
+                result = prepareFunction(task.dispatcherUrl, processorState, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                     isNotReady = true;
@@ -252,7 +252,7 @@ public class TaskProcessor {
                 continue;
             }
             try {
-                execAllFunctions(task, dispatcherInfo, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
                 processorTaskService.resetTask(task.dispatcherUrl, task.taskId);
@@ -273,7 +273,7 @@ public class TaskProcessor {
     }
 
     private void execAllFunctions(
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherInfo,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
@@ -339,7 +339,7 @@ public class TaskProcessor {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
                                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processOutputVariable(
-                                        taskDir, dispatcher, task, dispatcherInfo, outputVariable, mainFunctionConfig);
+                                        taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {
@@ -562,12 +562,12 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(String dispatcherUrl, MetadataParamsYaml.DispatcherInfo dispatcherCode, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(String dispatcherUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
+            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(processorState);
             functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
@@ -587,7 +587,7 @@ public class TaskProcessor {
                 functionPrepareResult.isError = true;
                 return functionPrepareResult;
             }
-            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
+            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(processorState);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

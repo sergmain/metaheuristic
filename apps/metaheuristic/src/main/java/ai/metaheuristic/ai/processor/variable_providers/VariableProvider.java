@@ -31,13 +31,13 @@ import java.util.List;
 public interface VariableProvider {
     List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable);
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable,
             TaskParamsYaml.FunctionConfig functionConfig
     );

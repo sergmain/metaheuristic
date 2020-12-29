@@ -83,7 +83,7 @@ public class TaskAssetPreparer {
                 log.error("#951.060 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
+            MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
 
             if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.dispatcherUrl, task.execContextId)) {
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
@@ -107,8 +107,8 @@ public class TaskAssetPreparer {
             }
 
             // Start preparing data for function
-            File taskDir = processorTaskService.prepareTaskDir(dispatcherInfo, task.taskId);
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
+            File taskDir = processorTaskService.prepareTaskDir(processorState, task.taskId);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, processorState, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -116,16 +116,16 @@ public class TaskAssetPreparer {
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
-            if ( !checkFunctionPreparedness(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
+            if ( !checkFunctionPreparedness(functionConfig, task.dispatcherUrl, dispatcher, processorState.processorId, task.taskId) ) {
                 isAllReady.set(false);
             }
             taskParamYaml.task.preFunctions.forEach(sc-> {
-                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
+                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, processorState.processorId, task.taskId) ) {
                     isAllReady.set(false);
                 }
             });
             taskParamYaml.task.postFunctions.forEach(sc-> {
-                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId, task.taskId) ) {
+                if ( !checkFunctionPreparedness(sc, task.dispatcherUrl, dispatcher, processorState.processorId, task.taskId) ) {
                     isAllReady.set(false);
                 }
             });

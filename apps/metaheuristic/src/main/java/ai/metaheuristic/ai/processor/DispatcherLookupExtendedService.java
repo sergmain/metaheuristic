@@ -120,8 +120,8 @@ public class DispatcherLookupExtendedService {
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
-    public File prepareBaseResourceDir(MetadataParamsYaml.DispatcherInfo dispatcherCode) {
-        final File dispatcherDir = new File(globals.processorResourcesDir, dispatcherCode.code);
+    public File prepareBaseResourceDir(MetadataParamsYaml.ProcessorState processorState) {
+        final File dispatcherDir = new File(globals.processorResourcesDir, processorState.dispatcherCode);
         if (dispatcherDir.exists()) {
             return dispatcherDir;
         }

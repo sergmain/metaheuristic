@@ -66,7 +66,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable) {
 
         try {
@@ -75,12 +75,12 @@ public class DispatcherVariableProvider implements VariableProvider {
             if (dispatcher.context.chunkSize != null) {
                 if (variable.context==EnumsApi.VariableContext.array) {
                     createDownloadTasksForArray(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, dispatcherCode.processorId, variable.getNullable());
+                            dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
                 }
                 else {
                     DownloadVariableTask variableTask = new DownloadVariableTask(
                             variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, dispatcherCode.processorId, variable.getNullable());
+                            dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
                     downloadVariableService.add(variableTask);
                 }
             }
@@ -148,14 +148,14 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id);
             uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
-            uploadVariableTask.processorId = dispatcherCode.processorId;
+            uploadVariableTask.processorId = processorState.processorId;
             uploadVariableService.add(uploadVariableTask);
             return null;
         }
@@ -163,7 +163,7 @@ public class DispatcherVariableProvider implements VariableProvider {
             log.info("Register an upload task for setting a variable #{} as null", outputVariable.id);
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariable.id, true);
             uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
-            uploadVariableTask.processorId = dispatcherCode.processorId;
+            uploadVariableTask.processorId = processorState.processorId;
             uploadVariableService.add(uploadVariableTask);
             return null;
         }

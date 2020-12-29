@@ -23,5 +23,8 @@ package ai.metaheuristic.api.data;
  */
 public interface BaseParams {
     int getVersion();
-    boolean checkIntegrity();
+
+    default boolean checkIntegrity() {
+        return true;
+    }
 }
