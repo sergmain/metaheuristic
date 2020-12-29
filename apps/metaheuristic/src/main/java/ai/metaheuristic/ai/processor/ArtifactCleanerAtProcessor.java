@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class ArtifactCleanerAtProcessor {
                 continue;
             }
 
-            Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+            MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
             final File dispatcherDir = new File(globals.processorTaskDir, dispatcherCode.code);
             if (!dispatcherDir.exists()) {
                 dispatcherDir.mkdir();

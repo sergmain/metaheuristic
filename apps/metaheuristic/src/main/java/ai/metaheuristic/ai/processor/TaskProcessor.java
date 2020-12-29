@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -102,7 +102,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
+            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
             if (dispatcherInfo ==null) {
                 final String es = "#100.010 dispatcherInfo is null for "+task.dispatcherUrl+". task #" + task.taskId;
                 log.warn(es);
@@ -273,7 +273,7 @@ public class TaskProcessor {
     }
 
     private void execAllFunctions(
-            ProcessorTask task, Metadata.DispatcherInfo dispatcherInfo,
+            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherInfo,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
@@ -562,7 +562,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(String dispatcherUrl, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(String dispatcherUrl, MetadataParamsYaml.DispatcherInfo dispatcherCode, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 

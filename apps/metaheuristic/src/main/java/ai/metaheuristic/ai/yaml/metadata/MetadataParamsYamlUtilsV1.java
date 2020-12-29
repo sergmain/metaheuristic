@@ -1,0 +1,101 @@
+/*
+ * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package ai.metaheuristic.ai.yaml.metadata;
+
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.yaml.snakeyaml.Yaml;
+
+import java.util.stream.Collectors;
+
+/**
+ * @author Serge
+ * Date: 12/29/2020
+ * Time: 1:28 AM
+ */
+public class MetadataParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<MetadataParamsYamlV1, MetadataParamsYamlV2, MetadataParamsYamlUtilsV2, Void, Void, Void> {
+
+    @Override
+    public int getVersion() {
+        return 1;
+    }
+
+    @NonNull
+    @Override
+    public Yaml getYaml() {
+        return YamlUtils.init(MetadataParamsYamlV1.class);
+    }
+
+    @NonNull
+    @Override
+    public MetadataParamsYamlV2 upgradeTo(@NonNull MetadataParamsYamlV1 src, @Nullable Long ... vars) {
+        src.checkIntegrity();
+        MetadataParamsYamlV2 trg = new MetadataParamsYamlV2();
+        src.dispatcher.forEach((key, diV1) -> trg.dispatcher.put(key,
+                new MetadataParamsYamlV2.DispatcherInfoV2(diV1.code, diV1.processorId, diV1.sessionId)));
+
+        if (src.metadata!=null) {
+            trg.metadata.putAll(src.metadata);
+
+            String statusYaml = src.metadata.get(Consts.META_FUNCTION_DOWNLOAD_STATUS);
+            FunctionDownloadStatusYaml fdsy = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.to(statusYaml);
+
+            fdsy.statuses.stream().map(MetadataParamsYamlUtilsV1::toStatus).collect(Collectors.toCollection(()->trg.statuses));
+        }
+        trg.checkIntegrity();
+        return trg;
+
+    }
+
+    private static MetadataParamsYamlV2.StatusV2 toStatus(FunctionDownloadStatusYaml.Status st) {
+        return new MetadataParamsYamlV2.StatusV2(st.functionState, st.code, st.dispatcherUrl, st.sourcing, st.verified);
+    }
+
+    @NonNull
+    @Override
+    public Void downgradeTo(@NonNull Void yaml) {
+        return null;
+    }
+
+    @Override
+    public MetadataParamsYamlUtilsV2 nextUtil() {
+        return (MetadataParamsYamlUtilsV2) MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    }
+
+    @Override
+    public Void prevUtil() {
+        return null;
+    }
+
+    @Override
+    public String toString(@NonNull MetadataParamsYamlV1 yaml) {
+        return getYaml().dump(yaml);
+    }
+
+    @NonNull
+    @Override
+    public MetadataParamsYamlV1 to(@NonNull String s) {
+        final MetadataParamsYamlV1 p = getYaml().load(s);
+        return p;
+    }
+
+
+}

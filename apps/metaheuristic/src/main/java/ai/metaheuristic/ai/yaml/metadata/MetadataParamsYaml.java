@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Enums;
@@ -22,25 +21,32 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
- */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class FunctionDownloadStatusYaml implements BaseParams {
+@AllArgsConstructor
+public class MetadataParamsYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
         return true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @ToString
+    @AllArgsConstructor
+    public static class DispatcherInfo {
+        public String code;
+        public String processorId;
+        public String sessionId;
     }
 
     @Data
@@ -49,13 +55,12 @@ public class FunctionDownloadStatusYaml implements BaseParams {
     public static class Status {
         public Enums.FunctionState functionState;
         public String code;
-
-        // actually this is assetUrl. left it as dispatcherUrl until there will be versioning of this config
-        public String dispatcherUrl;
+        public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
         public boolean verified;
     }
 
-    public List<Status> statuses = new ArrayList<>();
-
+    public final LinkedHashMap<String, DispatcherInfo> dispatcher = new LinkedHashMap<>();
+    public final List<Status> statuses = new ArrayList<>();
+    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

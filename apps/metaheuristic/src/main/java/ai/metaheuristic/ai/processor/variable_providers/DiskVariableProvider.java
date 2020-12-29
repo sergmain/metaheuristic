@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.commons.yaml.env.DiskStorage;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -60,7 +60,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
             TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
@@ -110,7 +110,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
+            ProcessorTask task, MetadataParamsYaml.DispatcherInfo dispatcherCode,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);

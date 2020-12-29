@@ -22,21 +22,23 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Date: 12/29/2020
+ * Time: 1:33 AM
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class FunctionDownloadStatusYaml implements BaseParams {
+@AllArgsConstructor
+public class MetadataParamsYamlV2 implements BaseParams {
 
-    public final int version=1;
+    public final int version = 2;
 
     @Override
     public boolean checkIntegrity() {
@@ -44,18 +46,27 @@ public class FunctionDownloadStatusYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @ToString
+    @AllArgsConstructor
+    public static class DispatcherInfoV2 {
+        public String code;
+        public String processorId;
+        public String sessionId;
+    }
+
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Status {
+    public static class StatusV2 {
         public Enums.FunctionState functionState;
         public String code;
-
-        // actually this is assetUrl. left it as dispatcherUrl until there will be versioning of this config
-        public String dispatcherUrl;
+        public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
         public boolean verified;
     }
 
-    public List<Status> statuses = new ArrayList<>();
-
+    public final LinkedHashMap<String, DispatcherInfoV2> dispatcher = new LinkedHashMap<>();
+    public final List<StatusV2> statuses = new ArrayList<>();
+    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

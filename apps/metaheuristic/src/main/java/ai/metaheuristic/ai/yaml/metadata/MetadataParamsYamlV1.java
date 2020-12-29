@@ -13,21 +13,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package ai.metaheuristic.ai.yaml.metadata;
 
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.LinkedHashMap;
 
+/**
+ * @author Serge
+ * Date: 12/29/2020
+ * Time: 1:32 AM
+ */
 @Data
-public class Metadata {
+@NoArgsConstructor
+@AllArgsConstructor
+public class MetadataParamsYamlV1 implements BaseParams {
+
+    public final int version = 1;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
     @Data
     @NoArgsConstructor
     @ToString
-    public static class DispatcherInfo {
+    public static class DispatcherInfoV1 {
 
         // right now this field isn't used
         public String value;
@@ -37,5 +54,5 @@ public class Metadata {
     }
 
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public LinkedHashMap<String, DispatcherInfo> dispatcher = new LinkedHashMap<>();
+    public LinkedHashMap<String, DispatcherInfoV1> dispatcher = new LinkedHashMap<>();
 }

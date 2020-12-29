@@ -13,8 +13,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-@ParametersAreNonnullByDefault
 package ai.metaheuristic.ai.yaml.metadata;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
+
+@Slf4j
+public class MetadataParamsYamlUtils {
+
+    private static final MetadataParamsYamlUtilsV1 YAML_UTILS_V_1 = new MetadataParamsYamlUtilsV1();
+    private static final MetadataParamsYamlUtilsV2 YAML_UTILS_V_2 = new MetadataParamsYamlUtilsV2();
+    private static final MetadataParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+
+    public static final BaseYamlUtils<MetadataParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
+            ),
+            DEFAULT_UTILS
+    );
+
+}

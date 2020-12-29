@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +120,7 @@ public class DispatcherLookupExtendedService {
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
-    public File prepareBaseResourceDir(Metadata.DispatcherInfo dispatcherCode) {
+    public File prepareBaseResourceDir(MetadataParamsYaml.DispatcherInfo dispatcherCode) {
         final File dispatcherDir = new File(globals.processorResourcesDir, dispatcherCode.code);
         if (dispatcherDir.exists()) {
             return dispatcherDir;

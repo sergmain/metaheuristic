@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -128,7 +128,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
+            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
             final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
@@ -368,7 +368,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunck size: {}",
                         o.code, o.dispatcherUrl, dispatcher.context.chunkSize);
-                Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.dispatcherUrl);
+                MetadataParamsYaml.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.dispatcherUrl);
 
                 DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, o.code, null);
                 functionTask.dispatcher = dispatcher.dispatcherLookup;

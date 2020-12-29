@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -552,7 +552,7 @@ public class ProcessorTaskService {
     }
 
     public void delete(String dispatcherUrl, final long taskId) {
-        Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             final String path = getTaskPath(taskId);
@@ -579,11 +579,11 @@ public class ProcessorTaskService {
     }
 
     File prepareTaskDir(String dispatcherUrl, Long taskId) {
-        Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        MetadataParamsYaml.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
         return prepareTaskDir(dispatcherCode, taskId);
     }
 
-    File prepareTaskDir(Metadata.DispatcherInfo dispatcherCode, Long taskId) {
+    File prepareTaskDir(MetadataParamsYaml.DispatcherInfo dispatcherCode, Long taskId) {
         final File dispatcherDir = new File(globals.processorTaskDir, dispatcherCode.code);
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));
         if (taskDir.exists()) {

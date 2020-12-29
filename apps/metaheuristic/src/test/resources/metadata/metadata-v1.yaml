@@ -1,0 +1,38 @@
+dispatcher:
+  http://localhost:8080:
+    code: localhost-8080
+    processorId: '209'
+    sessionId: sessionId-11
+  https://localhost:8888:
+    code: localhost-8888
+    processorId: '42'
+    sessionId: sessionId-12
+metadata:
+  mh-function-download-status: |
+    statuses:
+    - code: test.function:1.0
+      dispatcherUrl: http://localhost:8080
+      functionState: signature_not_found
+      sourcing: dispatcher
+      verified: true
+    - code: test.function:1.0
+      dispatcherUrl: https://localhost:8888
+      functionState: signature_not_found
+      sourcing: dispatcher
+      verified: false
+    - code: function-01:1.1
+      dispatcherUrl: http://localhost:8080
+      functionState: not_found
+      sourcing: processor
+      verified: false
+    - code: function-02:1.1
+      dispatcherUrl: http://localhost:8080
+      functionState: not_found
+      sourcing: processor
+      verified: false
+    - code: fileless-function:1.0
+      dispatcherUrl: https://localhost:8888
+      functionState: not_found
+      sourcing: processor
+      verified: false
+    version: 1

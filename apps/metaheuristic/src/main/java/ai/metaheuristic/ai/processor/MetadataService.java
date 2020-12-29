@@ -27,8 +27,8 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -68,7 +68,7 @@ public class MetadataService {
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
 
-    private Metadata metadata = null;
+    private MetadataParamsYaml metadata = null;
 
     @Data
     @NoArgsConstructor
@@ -89,7 +89,7 @@ public class MetadataService {
     private static class SimpleCache {
         public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
         public final DispatcherLookupConfig.Asset asset;
-        public final Metadata.DispatcherInfo dispatcherInfo;
+        public final MetadataParamsYaml.DispatcherInfo dispatcherInfo;
         public final File baseResourceDir;
     }
 
@@ -102,19 +102,17 @@ public class MetadataService {
             String yaml = null;
             try {
                 yaml = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
-                metadata = MetadataUtils.to(yaml);
+                metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
             } catch (org.yaml.snakeyaml.reader.ReaderException e) {
                 log.error("#815.020 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
-//                throw new IllegalStateException("#815.015 Error while loading file: " + metadataFile.getPath(), e);
             } catch (Throwable e) {
                 log.error("#815.040 Error", e);
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
-//                throw new IllegalStateException("#815.060 Error while loading file: " + metadataFile.getPath(), e);
             }
         }
         if (metadata==null) {
-            metadata = new Metadata();
+            metadata = new MetadataParamsYaml();
         }
         for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             dispatcherUrlAsCode(entry.getKey());
@@ -190,7 +188,7 @@ public class MetadataService {
             return;
         }
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(dispatcherUrl, o -> {
-            final Metadata.DispatcherInfo dispatcherInfo = dispatcherUrlAsCode(dispatcherUrl);
+            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = dispatcherUrlAsCode(dispatcherUrl);
             return new SimpleCache(
                     dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl),
                     asset,
@@ -266,7 +264,7 @@ public class MetadataService {
     @Nullable
     public String findHostByCode(String code) {
         synchronized (syncObj) {
-            for (Map.Entry<String, Metadata.DispatcherInfo> entry : metadata.dispatcher.entrySet()) {
+            for (Map.Entry<String, MetadataParamsYaml.DispatcherInfo> entry : metadata.dispatcher.entrySet()) {
                 if (code.equals(entry.getValue().code)) {
                     return entry.getKey();
                 }
@@ -277,9 +275,9 @@ public class MetadataService {
 
     private static final Object syncObj = new Object();
 
-    public Metadata.DispatcherInfo dispatcherUrlAsCode(String dispatcherUrl) {
+    public MetadataParamsYaml.DispatcherInfo dispatcherUrlAsCode(String dispatcherUrl) {
         synchronized (syncObj) {
-            Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             // fix for wrong metadata.yaml data
             if (dispatcherInfo.code == null) {
                 dispatcherInfo.code = asCode(dispatcherUrl).code;
@@ -297,7 +295,7 @@ public class MetadataService {
 
     public DispatcherApiData.ProcessorSessionId getProcessorSessionId(final String dispatcherUrl) {
         synchronized (syncObj) {
-            Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             return new DispatcherApiData.ProcessorSessionId(Long.valueOf(dispatcherInfo.processorId), dispatcherInfo.sessionId);
         }
     }
@@ -310,7 +308,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            final MetadataParamsYaml.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             if (!Objects.equals(dispatcherInfo.processorId, processorId) || !Objects.equals(dispatcherInfo.sessionId, sessionId)) {
                 dispatcherInfo.processorId = processorId;
                 dispatcherInfo.sessionId = sessionId;
@@ -504,7 +502,7 @@ public class MetadataService {
         }
     }
 
-    private Metadata.DispatcherInfo getDispatcherInfo(String dispatcherUrl) {
+    private MetadataParamsYaml.DispatcherInfo getDispatcherInfo(String dispatcherUrl) {
         synchronized (syncObj) {
             return metadata.dispatcher.computeIfAbsent(dispatcherUrl, m -> asCode(dispatcherUrl));
         }
@@ -522,7 +520,7 @@ public class MetadataService {
         }
 
         try {
-            String data = MetadataUtils.toString(metadata);
+            String data = MetadataParamsYamlUtils.BASE_YAML_UTILS.toString(metadata);
             FileUtils.writeStringToFile(metadataFile, data, StandardCharsets.UTF_8, false);
             String check = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
@@ -550,7 +548,7 @@ public class MetadataService {
 
     }
 
-    private static Metadata.DispatcherInfo asCode(String dispatcherUrl) {
+    private static MetadataParamsYaml.DispatcherInfo asCode(String dispatcherUrl) {
         String s = dispatcherUrl.toLowerCase();
         if (dispatcherUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
@@ -559,7 +557,7 @@ public class MetadataService {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        Metadata.DispatcherInfo dispatcherInfo = new Metadata.DispatcherInfo();
+        MetadataParamsYaml.DispatcherInfo dispatcherInfo = new MetadataParamsYaml.DispatcherInfo();
         dispatcherInfo.code = s;
         return dispatcherInfo;
     }
