@@ -1,5 +1,6 @@
 dispatcher:
   http://localhost:8080:
+    code: localhost-8080
     value: localhost-8080
     processorId: 15
   http://host:

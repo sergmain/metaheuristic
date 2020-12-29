@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -49,16 +52,20 @@ public class MetadataParamsYamlUtilsV1
     public MetadataParamsYamlV2 upgradeTo(@NonNull MetadataParamsYamlV1 src, @Nullable Long ... vars) {
         src.checkIntegrity();
         MetadataParamsYamlV2 trg = new MetadataParamsYamlV2();
-        src.dispatcher.forEach((key, diV1) -> trg.dispatcher.put(key,
-                new MetadataParamsYamlV2.DispatcherInfoV2(diV1.code, diV1.processorId, diV1.sessionId)));
+        if (src.dispatcher!=null) {
+            src.dispatcher.forEach((key, diV1) -> trg.dispatcher.put(key,
+                    new MetadataParamsYamlV2.DispatcherInfoV2(diV1.code, diV1.processorId, diV1.sessionId)));
+        }
 
         if (src.metadata!=null) {
-            trg.metadata.putAll(src.metadata);
+            trg.metadata = src.metadata.entrySet().stream().filter(o-> !Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
 
             String statusYaml = src.metadata.get(Consts.META_FUNCTION_DOWNLOAD_STATUS);
-            FunctionDownloadStatusYaml fdsy = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.to(statusYaml);
-
-            fdsy.statuses.stream().map(MetadataParamsYamlUtilsV1::toStatus).collect(Collectors.toCollection(()->trg.statuses));
+            if (!S.b(statusYaml)) {
+                FunctionDownloadStatusYaml fdsy = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.to(statusYaml);
+                fdsy.statuses.stream().map(MetadataParamsYamlUtilsV1::toStatus).collect(Collectors.toCollection(() -> trg.statuses));
+            }
         }
         trg.checkIntegrity();
         return trg;
@@ -93,6 +100,9 @@ public class MetadataParamsYamlUtilsV1
     @NonNull
     @Override
     public MetadataParamsYamlV1 to(@NonNull String s) {
+        if (S.b(s)) {
+            return new MetadataParamsYamlV1();
+        }
         final MetadataParamsYamlV1 p = getYaml().load(s);
         return p;
     }

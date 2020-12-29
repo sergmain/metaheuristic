@@ -32,7 +32,8 @@ public class TestMetadataYaml {
 
     @Test
     public void testParsingFile() throws IOException {
-        String yaml = IOUtils.resourceToString("/yaml/metadata/metadata.yaml", StandardCharsets.UTF_8);
+        String yaml = IOUtils.resourceToString("/metadata/metadata.yaml", StandardCharsets.UTF_8);
+        assertNotNull(yaml);
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.getMetadata());
@@ -55,24 +56,26 @@ public class TestMetadataYaml {
 
     @Test
     public void testParsingEmptyFile() throws IOException {
-        String yaml = IOUtils.resourceToString("/yaml/metadata/metadata-empty.yaml", StandardCharsets.UTF_8);
+        String yaml = IOUtils.resourceToString("/metadata/metadata-empty.yaml", StandardCharsets.UTF_8);
+        assertNotNull(yaml);
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
         assertNotNull(m.dispatcher);
-        assertEquals(0, m.getMetadata().size());
-        assertEquals(0, m.getDispatcher().size());
+        assertEquals(0, m.metadata.size());
+        assertEquals(0, m.dispatcher.size());
     }
 
     @Test
     public void testParsingZeroFile() throws IOException {
-        String yaml = IOUtils.resourceToString("/yaml/metadata/metadata-zero.yaml", StandardCharsets.UTF_8);
+        String yaml = IOUtils.resourceToString("/metadata/metadata-zero.yaml", StandardCharsets.UTF_8);
+        assertNotNull(yaml);
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
         assertNotNull(m.dispatcher);
-        assertEquals(0, m.getMetadata().size());
-        assertEquals(0, m.getDispatcher().size());
+        assertEquals(0, m.metadata.size());
+        assertEquals(0, m.dispatcher.size());
     }
 
 

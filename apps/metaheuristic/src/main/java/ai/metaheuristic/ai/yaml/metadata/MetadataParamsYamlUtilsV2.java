@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
@@ -91,6 +92,9 @@ public class MetadataParamsYamlUtilsV2
     @NonNull
     @Override
     public MetadataParamsYamlV2 to(@NonNull String s) {
+        if (S.b(s)) {
+            return new MetadataParamsYamlV2();
+        }
         final MetadataParamsYamlV2 p = getYaml().load(s);
         return p;
     }

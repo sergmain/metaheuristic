@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -62,5 +63,6 @@ public class MetadataParamsYaml implements BaseParams {
 
     public final LinkedHashMap<String, DispatcherInfo> dispatcher = new LinkedHashMap<>();
     public final List<Status> statuses = new ArrayList<>();
+    @Nullable
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }
