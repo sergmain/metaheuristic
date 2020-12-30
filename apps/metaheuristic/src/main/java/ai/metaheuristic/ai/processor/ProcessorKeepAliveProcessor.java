@@ -18,13 +18,15 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 
 /**
  * @author Serge
@@ -40,7 +42,7 @@ public class ProcessorKeepAliveProcessor {
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
 
-    public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+    public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
         storeProcessorId(dispatcherUrl, responseParamYaml);
         reAssignProcessorId(dispatcherUrl, responseParamYaml);
@@ -48,19 +50,20 @@ public class ProcessorKeepAliveProcessor {
 //        processRequestLogFile(pcpy)
     }
 
-    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, String dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
-        List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
-        for (FunctionDownloadStatusYaml.Status status : statuses) {
+    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
+
+        List<MetadataParamsYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
+        for (MetadataParamsYaml.Status status : statuses) {
             functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(status.code, status.functionState));
         }
     }
 
-    private void processExecContextStatus(String dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
+    private void processExecContextStatus(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
         currentExecState.register(dispatcherUrl, execContextStatus.statuses);
     }
 
     // processing at processor side
-    private void storeProcessorId(String dispatcherUrl, KeepAliveResponseParamYaml request) {
+    private void storeProcessorId(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
@@ -70,7 +73,7 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(String dispatcherUrl, KeepAliveResponseParamYaml response) {
+    private void reAssignProcessorId(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml response) {
         if (response.reAssignedProcessorId ==null) {
             return;
         }

@@ -23,39 +23,41 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 @Component
 @Profile("processor")
 public class CurrentExecState {
 
     // this is a map for holding the current status of ExecContext, not of task
-    private final Map<String, Map<Long, EnumsApi.ExecContextState>> execContextState = new HashMap<>();
+    private final Map<DispatcherServerUrl, Map<Long, EnumsApi.ExecContextState>> execContextState = new HashMap<>();
 
-    private final Map<String, AtomicBoolean> isInit = new HashMap<>();
+    private final Map<DispatcherServerUrl, AtomicBoolean> isInit = new HashMap<>();
 
-    public boolean isInited(String dispatcherUrl) {
+    public boolean isInited(DispatcherServerUrl dispatcherUrl) {
         synchronized(execContextState) {
             return isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean(false)).get();
         }
     }
 
-    public Map<Long, EnumsApi.ExecContextState> getExecContexts(String dispatcherUrl) {
+    public Map<Long, EnumsApi.ExecContextState> getExecContexts(DispatcherServerUrl dispatcherUrl) {
         synchronized(execContextState) {
             return Collections.unmodifiableMap(execContextState.getOrDefault(dispatcherUrl, Map.of()));
         }
     }
 
-    public void registerDelta(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void registerDelta(DispatcherServerUrl dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
             statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.id, status.state));
         }
     }
 
-    public void register(String dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(DispatcherServerUrl dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
-            // statuses==null when there isn't any execContext
-            if (statuses==null) {
+            // there isn't any execContext
+            if (statuses.isEmpty()) {
                 execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).clear();
                 return;
             }
@@ -76,7 +78,7 @@ public class CurrentExecState {
         }
     }
 
-    public EnumsApi.ExecContextState getState(String host, Long execContextId) {
+    public EnumsApi.ExecContextState getState(DispatcherServerUrl host, Long execContextId) {
         synchronized(execContextState) {
             if (!isInited(host)) {
                 return EnumsApi.ExecContextState.UNKNOWN;
@@ -88,12 +90,12 @@ public class CurrentExecState {
         }
     }
 
-    boolean isState(String dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
+    boolean isState(DispatcherServerUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
         EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
         return currState==state;
     }
 
-    boolean isStarted(String dispatcherUrl, Long execContextId) {
+    boolean isStarted(DispatcherServerUrl dispatcherUrl, Long execContextId) {
         return isState(dispatcherUrl, execContextId, EnumsApi.ExecContextState.STARTED);
     }
 }

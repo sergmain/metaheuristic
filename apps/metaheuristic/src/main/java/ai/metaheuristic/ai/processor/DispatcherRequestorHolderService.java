@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 /**
  * @author Serge
  * Date: 11/21/2020
@@ -44,16 +46,7 @@ public class DispatcherRequestorHolderService {
         public final DispatcherRequestor dispatcherRequestor;
         public final ProcessorKeepAliveRequestor processorKeepAliveRequestor;
     }
-    public final Map<String, Requesters> dispatcherRequestorMap = new HashMap<>();
-
-    private final MetadataService metadataService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final CurrentExecState currentExecState;
-    private final Globals globals;
-    private final ProcessorService processorService;
-    private final ProcessorTaskService processorTaskService;
-    private final ProcessorCommandProcessor processorCommandProcessor;
-    private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
+    public final Map<DispatcherServerUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
     public DispatcherRequestorHolderService(Globals globals,
             ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
@@ -62,36 +55,20 @@ public class DispatcherRequestorHolderService {
                                             ProcessorCommandProcessor processorCommandProcessor,
                                             ProcessorKeepAliveProcessor processorKeepAliveProcessor
     ) {
-        this.globals = globals;
-        this.processorService = processorService;
-        this.processorTaskService = processorTaskService;
-
-        this.processorCommandProcessor = processorCommandProcessor;
-        this.metadataService = metadataService;
-        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
-        this.currentExecState = currentExecState;
-        this.processorKeepAliveProcessor = processorKeepAliveProcessor;
 
 
-        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
-            final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.url, globals,
-                    processorTaskService, processorService, this.metadataService, this.currentExecState,
-                    this.dispatcherLookupExtendedService, this.processorCommandProcessor);
+            final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.getDispatcherUrl(), globals,
+                    processorTaskService, processorService, metadataService, currentExecState,
+                    dispatcherLookupExtendedService, processorCommandProcessor);
 
-/*
-    public ProcessorKeepAliveRequestor(
-            String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
-            ProcessorService processorService, MetadataService metadataService,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-            DispatcherRequestorHolderService dispatcherRequestorHolderService) {
-*/
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
-                    dispatcher.dispatcherLookup.url, globals,
-                    processorTaskService, processorService, this.metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor, this);
+                    dispatcher.dispatcherLookup.getDispatcherUrl(), globals,
+                    processorTaskService, processorService, metadataService, dispatcherLookupExtendedService,
+                    processorKeepAliveProcessor);
 
-            dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, new Requesters(requestor, keepAliveRequestor));
+            dispatcherRequestorMap.put(dispatcher.dispatcherLookup.getDispatcherUrl(), new Requesters(requestor, keepAliveRequestor));
         }
     }
 

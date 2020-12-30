@@ -68,7 +68,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class ExecContextStatus {
 
         @Data
@@ -79,7 +78,7 @@ public class KeepAliveResponseParamYaml implements BaseParams {
             public EnumsApi.ExecContextState state;
         }
 
-        public List<SimpleStatus> statuses;
+        public final List<SimpleStatus> statuses = new ArrayList<>();
 
         public boolean isStarted(Long execContextId) {
             for (SimpleStatus status : statuses) {

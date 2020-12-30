@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 @Service
 @Slf4j
 @Profile("processor")
@@ -58,7 +60,7 @@ public class DispatcherLookupExtendedService {
     private final Globals globals;
 
     // Collections.unmodifiableMap
-    public Map<String, DispatcherLookupExtended> lookupExtendedMap = Map.of();
+    public Map<DispatcherServerUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
 
     @Data
     public static class DispatcherLookupExtended {
@@ -110,12 +112,12 @@ public class DispatcherLookupExtendedService {
                     File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
             throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
         }
-        final Map<String, DispatcherLookupExtended> map = new HashMap<>();
+        final Map<DispatcherServerUrl, DispatcherLookupExtended> map = new HashMap<>();
         for (DispatcherLookupConfig.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
             DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended();
             lookupExtended.dispatcherLookup = dispatcher;
             lookupExtended.schedule = new DispatcherSchedule(dispatcher.taskProcessingTime);
-            map.put(dispatcher.url, lookupExtended);
+            map.put(dispatcher.getDispatcherUrl(), lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }

@@ -36,7 +36,6 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class MetadataParamsYamlV2 implements BaseParams {
 
     public final int version = 2;
@@ -46,6 +45,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
     @ToString
     @AllArgsConstructor
     public static class Core {
+        public int logicId;
         public String coreId;
         public String sessionId;
     }

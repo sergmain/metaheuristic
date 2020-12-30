@@ -45,6 +45,8 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 /**
  * User: Serg
  * Date: 13.06.2017
@@ -54,7 +56,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DispatcherRequestor {
 
-    private final String dispatcherUrl;
+    private final DispatcherServerUrl dispatcherUrl;
     private final Globals globals;
 
     private final ProcessorTaskService processorTaskService;
@@ -69,7 +71,7 @@ public class DispatcherRequestor {
     private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
 
-    public DispatcherRequestor(String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public DispatcherRequestor(DispatcherServerUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -105,7 +107,7 @@ public class DispatcherRequestor {
         }
     }
 
-    private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+    private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
@@ -135,7 +137,7 @@ public class DispatcherRequestor {
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
-                    final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
+                    final boolean b = processorTaskService.isNeedNewTask();
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
                         pcpy.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired);
                     }

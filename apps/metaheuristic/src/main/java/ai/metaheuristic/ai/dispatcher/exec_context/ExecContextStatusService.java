@@ -70,11 +70,14 @@ public class ExecContextStatusService {
     }
 
     private void resetStatus() {
-        cachedStatus = new KeepAliveResponseParamYaml.ExecContextStatus(
-                execContextRepository.findAllExecStates()
-                        .stream()
-                        .map(o -> toSimpleStatus((Long)o[0], (Integer)o[1]))
-                        .collect(Collectors.toList()));
+
+        cachedStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
+
+        execContextRepository.findAllExecStates()
+                .stream()
+                .map(o -> toSimpleStatus((Long)o[0], (Integer)o[1]))
+                .collect(Collectors.toCollection(()->cachedStatus.statuses));
+
         updatedOn = System.currentTimeMillis();
     }
 

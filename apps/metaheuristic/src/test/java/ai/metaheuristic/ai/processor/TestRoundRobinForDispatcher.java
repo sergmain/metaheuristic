@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestRoundRobinForDispatcher {
@@ -29,33 +30,35 @@ public class TestRoundRobinForDispatcher {
     @Test
     public void test() {
 
-        LinkedHashMap<String, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
+        LinkedHashMap<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
         lle1.dispatcherLookup = new DispatcherLookupConfig.DispatcherLookup();
-        lle1.dispatcherLookup.url = "url1";
-        lookupExtendedMap.put( "url1", lle1);
+        DispatcherServerUrl url1 = new DispatcherServerUrl("url1");
+        lle1.dispatcherLookup.url = url1.url;
+        lookupExtendedMap.put( url1, lle1);
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
         lle2.dispatcherLookup = new DispatcherLookupConfig.DispatcherLookup();
-        lle2.dispatcherLookup.url = "url2";
-        lookupExtendedMap.put( "url2", lle2);
+        DispatcherServerUrl url2 = new DispatcherServerUrl("url2");
+        lle2.dispatcherLookup.url = url2.url;
+        lookupExtendedMap.put( url2, lle2);
 
         RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap);
 
-        String url = rr.next();
-        assertEquals("url1", url);
+        DispatcherServerUrl url = rr.next();
+        assertEquals(new DispatcherServerUrl("url1"), url);
 
         rr.reset();
 
         url = rr.next();
-        assertEquals("url1", url);
+        assertEquals(new DispatcherServerUrl("url1"), url);
 
         url = rr.next();
-        assertEquals("url2", url);
+        assertEquals(new DispatcherServerUrl("url2"), url);
 
         url = rr.next();
-        assertEquals("url1", url);
+        assertEquals(new DispatcherServerUrl("url1"), url);
 
 
     }

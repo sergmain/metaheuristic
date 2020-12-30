@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
 import org.junit.jupiter.api.Test;
@@ -34,13 +35,13 @@ public class TestDispatcherLookup {
 
             assertEquals(2, ssc.dispatchers.size());
 
-            assertEquals("http://localhost:8080", ssc.dispatchers.get(0).url);
+            assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("http://localhost:8080"), ssc.dispatchers.get(0).getDispatcherUrl());
             assertEquals(DispatcherLookupConfig.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
             assertNull(ssc.dispatchers.get(0).publicKey);
             assertFalse(ssc.dispatchers.get(0).signatureRequired);
             assertFalse(ssc.dispatchers.get(0).disabled);
 
-            assertEquals("https://host", ssc.dispatchers.get(1).url);
+            assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("https://host"), ssc.dispatchers.get(1).getDispatcherUrl());
             assertEquals(DispatcherLookupConfig.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
             assertEquals("some-public-key", ssc.dispatchers.get(1).publicKey);
             assertTrue(ssc.dispatchers.get(1).signatureRequired);
@@ -74,12 +75,12 @@ public class TestDispatcherLookup {
 
         assertEquals(ssc.dispatchers.size(), ssc1.dispatchers.size());
 
-        assertEquals(ssc.dispatchers.get(0).url, ssc1.dispatchers.get(0).url);
+        assertEquals(ssc.dispatchers.get(0).getDispatcherUrl(), ssc1.dispatchers.get(0).getDispatcherUrl());
         assertEquals(ssc.dispatchers.get(0).publicKey, ssc1.dispatchers.get(0).publicKey);
         assertEquals(ssc.dispatchers.get(0).signatureRequired, ssc1.dispatchers.get(0).signatureRequired);
         assertEquals(ssc.dispatchers.get(0).lookupType, ssc1.dispatchers.get(0).lookupType);
 
-        assertEquals(ssc.dispatchers.get(1).url, ssc1.dispatchers.get(1).url);
+        assertEquals(ssc.dispatchers.get(1).getDispatcherUrl(), ssc1.dispatchers.get(1).getDispatcherUrl());
         assertEquals(ssc.dispatchers.get(1).publicKey, ssc1.dispatchers.get(1).publicKey);
         assertEquals(ssc.dispatchers.get(1).signatureRequired, ssc1.dispatchers.get(1).signatureRequired);
         assertEquals(ssc.dispatchers.get(1).lookupType, ssc1.dispatchers.get(1).lookupType);

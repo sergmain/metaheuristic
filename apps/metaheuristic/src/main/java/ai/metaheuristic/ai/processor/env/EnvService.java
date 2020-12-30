@@ -20,27 +20,16 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.yaml.env.EnvYamlUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static ai.metaheuristic.ai.Consts.YAML_EXT;
-import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 @Service
 @Slf4j
@@ -107,6 +96,8 @@ public class EnvService {
         return envYaml;
     }
 
+    // TODO 2020-12-30 no need it any more. leave it here in case we need to restore hot deploy
+/*
     public void monitorHotDeployDir() {
         if (globals.isUnitTesting) {
             return;
@@ -185,5 +176,6 @@ public class EnvService {
             }
         }
     }
+*/
 
 }

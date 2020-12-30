@@ -24,12 +24,12 @@ import java.net.URL;
 
 public class HttpClientExecutor {
 
-    public static Executor getExecutor(String dispatcherUrl, String restUsername, String restPassword) {
+    public static Executor getExecutor(String serverUrl, String restUsername, String restPassword) {
         HttpHost dispatcherHttpHostWithAuth;
         try {
-            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(dispatcherUrl).toURI());
+            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(serverUrl).toURI());
         } catch (Throwable th) {
-            throw new IllegalArgumentException("Can't build HttpHost for "+dispatcherUrl, th);
+            throw new IllegalArgumentException("Can't build HttpHost for "+serverUrl, th);
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)

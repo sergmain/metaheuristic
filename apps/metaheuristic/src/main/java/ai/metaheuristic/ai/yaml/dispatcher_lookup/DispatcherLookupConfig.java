@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -82,10 +83,14 @@ public class DispatcherLookupConfig {
             return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(this.publicKey));
         }
 
+        public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
+            return new ProcessorAndCoreData.DispatcherServerUrl(url);
+        }
+
         public Asset getAsset() {
             final DispatcherLookupConfig.Asset a = asset!=null
                     ? asset
-                    : new DispatcherLookupConfig.Asset(url, restUsername, restPassword);
+                    : new DispatcherLookupConfig.Asset(getDispatcherUrl().url, restUsername, restPassword);
             return a;
         }
     }

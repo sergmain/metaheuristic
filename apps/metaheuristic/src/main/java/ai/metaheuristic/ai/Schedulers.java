@@ -227,9 +227,11 @@ public class Schedulers {
             eventPublisher.publishEvent(new KeepAliveEvent());
         }
 
+        // TODO 2020-11-20 need to decide to is a hot-deploy needed or not?
+        // TODO 2020-12-30 no need it any more. leave it here in case we need to restore hot deploy
+/*
         @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
         public void monitorHotDeployDir() {
-            // TODO 2020-11-20 need to decide to is a hot-deploy needed or not?
             if (true) {
                 return;
             }
@@ -242,6 +244,7 @@ public class Schedulers {
             log.info("Run envHotDeployService.monitorHotDeployDir()");
             envService.monitorHotDeployDir();
         }
+*/
 
         /**
          * this scheduler is being run at the processor side
@@ -255,13 +258,13 @@ public class Schedulers {
                 return;
             }
 
-            Set<String> dispatchers = roundRobin.getActiveDispatchers();
+            Set<ProcessorAndCoreData.DispatcherServerUrl> dispatchers = roundRobin.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");
                 return;
             }
 
-            for (String dispatcher : dispatchers) {
+            for (ProcessorAndCoreData.DispatcherServerUrl dispatcher : dispatchers) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();

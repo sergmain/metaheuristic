@@ -28,6 +28,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 /**
  * @author Serge
  * Date: 8/29/2019
@@ -42,7 +44,7 @@ public class ProcessorCommandProcessor {
     private final MetadataService metadataService;
 
     // this method is synchronized outside
-    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
         processReportResultDelivering(dispatcherUrl, dispatcherYaml);
         processAssignedTask(dispatcherUrl, dispatcherYaml);
@@ -52,7 +54,7 @@ public class ProcessorCommandProcessor {
 
     // processing at processor side
     @Nullable
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
             return null;
         }
@@ -65,14 +67,14 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void processReportResultDelivering(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
         processorService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processAssignedTask(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
@@ -80,7 +82,7 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void storeProcessorId(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void storeProcessorId(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
@@ -90,7 +92,7 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(String dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void reAssignProcessorId(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reAssignedProcessorId ==null) {
             return;
         }

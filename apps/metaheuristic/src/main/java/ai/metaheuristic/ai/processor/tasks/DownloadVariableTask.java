@@ -31,6 +31,7 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final File targetDir;
     public final Long chunkSize;
     public final boolean nullable;
+    public String processorId;
 
     public DownloadVariableTask(
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,

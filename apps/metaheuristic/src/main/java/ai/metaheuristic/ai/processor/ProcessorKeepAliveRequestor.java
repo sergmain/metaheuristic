@@ -41,6 +41,8 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 /**
  * User: Serg
  * Date: 13.06.2017
@@ -51,7 +53,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProcessorKeepAliveRequestor {
 
-    private final String dispatcherUrl;
+    private final DispatcherServerUrl dispatcherUrl;
     private final Globals globals;
 
     private final ProcessorTaskService processorTaskService;
@@ -67,10 +69,9 @@ public class ProcessorKeepAliveRequestor {
     private final String serverRestUrl;
 
     public ProcessorKeepAliveRequestor(
-            String dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
+            DispatcherServerUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
             ProcessorService processorService, MetadataService metadataService,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-            DispatcherRequestorHolderService dispatcherRequestorHolderService) {
+            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -88,13 +89,13 @@ public class ProcessorKeepAliveRequestor {
         this.serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
-    private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+    private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
         storeDispatcherContext(dispatcherUrl, responseParamYaml);
         processorKeepAliveProcessor.processKeepAliveResponseParamYaml(karpy, dispatcherUrl, responseParamYaml);
     }
 
-    private void storeDispatcherContext(String dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+    private void storeDispatcherContext(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         if (responseParamYaml.dispatcherInfo ==null) {
             return;
         }
@@ -127,11 +128,17 @@ public class ProcessorKeepAliveRequestor {
                 karpy.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId();
             }
             else {
+
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                        dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+
                 karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
                 // always report about current active tasks, if we have actual processorId
                 karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                 karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
-                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
+
+                AssetServerUrl assetUrl = new AssetServerUrl(dispatcher.dispatcherLookup.getAsset().url);
+                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;

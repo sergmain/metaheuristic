@@ -91,6 +91,7 @@ public class ProcessorTask {
     // need to clean a dir of task after processing this task?
     public boolean clean;
 
+    // TODO 2020-12-30 need to change it to DispatcherServerUrl when this class will be based on BaseClass
     public String dispatcherUrl;
 
     // when task was created

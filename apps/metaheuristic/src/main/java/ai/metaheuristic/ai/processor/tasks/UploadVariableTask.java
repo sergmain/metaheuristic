@@ -29,6 +29,7 @@ public class UploadVariableTask extends ProcessorRestTask {
     @Nullable public File file = null;
     public Long variableId;
     public boolean nullified = false;
+    public String processorId;
 
     public UploadVariableTask(long taskId, @Nullable File file, Long variableId) {
         this.taskId = taskId;

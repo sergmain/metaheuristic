@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor.function;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -41,6 +42,8 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 
 /**
  * @author Serge
@@ -68,10 +71,9 @@ public class ProcessorFunctionService {
     }
 
     public DownloadedFunctionConfigStatus downloadFunctionConfig(
-            String dispatcherUrl,
-            DispatcherLookupConfig.Asset asset, String functionCode, String processorId) {
+            DispatcherServerUrl dispatcherUrl, DispatcherLookupConfig.Asset asset, String functionCode) {
 
-        final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/" + processorId;
+        final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/999";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
         final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
@@ -82,15 +84,6 @@ public class ProcessorFunctionService {
                     .addParameter("code", functionCode).build();
 
             final Request request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
-
-/*
-            final Request request = Request.Post(functionChecksumUrl + randomPartUri)
-                    .bodyForm(Form.form()
-                            .add("code", functionCode)
-                            .build(), StandardCharsets.UTF_8)
-                    .connectTimeout(5000)
-                    .socketTimeout(20000);
-*/
 
             RestUtils.addHeaders(request);
 
@@ -119,11 +112,11 @@ public class ProcessorFunctionService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, function: {}, dispatcher: {}, assetUrl: {}", e.toString(), functionCode, dispatcherUrl, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, function: {}, dispatcher: {}, assetUrl: {}", e.toString(), functionCode, dispatcherUrl.url, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl), e);
+            log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl.url), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl, asset.url), th);
+            log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl.url, asset.url), th);
         }
         return functionConfigStatus;
     }

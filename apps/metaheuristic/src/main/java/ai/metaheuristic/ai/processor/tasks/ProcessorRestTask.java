@@ -21,5 +21,4 @@ import lombok.Data;
 @Data
 public abstract class ProcessorRestTask {
     public DispatcherLookupConfig.DispatcherLookup dispatcher;
-    public String processorId;
 }

@@ -40,7 +40,7 @@ public class ArtifactCleanerAtProcessor {
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void fixedDelay() {
-        for (String dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
+        for (ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
             if (!globals.processorEnabled || !currentExecState.isInited(dispatcherUrl)) {
                 // don't delete anything until the processor has received the list of actual ExecContexts
                 continue;

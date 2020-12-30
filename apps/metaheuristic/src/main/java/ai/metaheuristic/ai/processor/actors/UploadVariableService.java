@@ -87,9 +87,9 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         UploadVariableTask task;
         List<UploadVariableTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
-            ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
+            ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.getDispatcherUrl(), task.taskId);
             if (processorTask == null) {
-                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.dispatcher.url, task.taskId);
+                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.dispatcher.getDispatcherUrl(), task.taskId);
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
@@ -99,17 +99,17 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findAny().orElse(null);
             if (v==null) {
                 log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.dispatcher.url, task.taskId);
+                processorTaskService.delete(task.dispatcher.getDispatcherUrl(), task.taskId);
                 continue;
             }
             ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findAny().orElse(null);
             if (outputStatus==null) {
                 log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.dispatcher.url, task.taskId);
+                processorTaskService.delete(task.dispatcher.getDispatcherUrl(), task.taskId);
                 continue;
             }
             if (outputStatus.uploaded) {
-                log.info("#311.030 resource was already uploaded, {}, #{}", task.dispatcher.url, task.taskId);
+                log.info("#311.030 resource was already uploaded, {}, #{}", task.dispatcher.getDispatcherUrl(), task.taskId);
                 continue;
             }
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
@@ -127,7 +127,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             Enums.UploadVariableStatus status = null;
             try {
-                final String uploadRestUrl  = task.dispatcher.url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = task.dispatcher.getDispatcherUrl() + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
@@ -152,7 +152,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000).body(entity);
 
                 log.info("Start uploading variable to rest-server, {}", randonPart);
-                Response response = HttpClientExecutor.getExecutor(task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
+                Response response = HttpClientExecutor.getExecutor(task.dispatcher.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
@@ -184,15 +184,17 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             if (status!=null) {
                 switch(status) {
+                    case VARIABLE_NOT_FOUND:
+                        // right we will assume that it's ok to set as UploadedAndCompleted
                     case OK:
-                        log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.dispatcher.url, task.taskId);
-                        processorTaskService.setVariableUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.variableId);
+                        log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.dispatcher.getDispatcherUrl(), task.taskId);
+                        processorTaskService.setVariableUploadedAndCompleted(task.dispatcher.getDispatcherUrl(), task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
-                        processorTaskService.delete(task.dispatcher.url, task.taskId);
+                        processorTaskService.delete(task.dispatcher.getDispatcherUrl(), task.taskId);
                         log.error("#311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:

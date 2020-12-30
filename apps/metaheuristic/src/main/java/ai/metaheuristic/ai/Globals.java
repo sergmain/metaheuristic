@@ -187,6 +187,9 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
     public int taskConsoleOutputMaxLines;
 
+    @Value("${mh.processor.init-core-number:#{1}}")
+    public int initCoreNumber;
+
 
     // some fields
     public File dispatcherTempDir;
@@ -194,7 +197,6 @@ public class Globals {
 
     public File processorResourcesDir;
     public File processorTaskDir;
-    public File processorEnvHotDeployDir;
 //    public File processorTempDir;
 
     public PublicKey dispatcherPublicKey = null;
@@ -313,10 +315,6 @@ public class Globals {
             processorResourcesDir.mkdirs();
             processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             processorTaskDir.mkdirs();
-            if (processorEnvHotDeploySupported) {
-                processorEnvHotDeployDir = new File(processorDir, Consts.ENV_HOT_DEPLOY_DIR);
-                processorEnvHotDeployDir.mkdirs();
-            }
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
@@ -443,6 +441,9 @@ public class Globals {
         if (oldThreadNumber!=null) {
             log.warn("property 'mh.thread-number' is deprecated, use 'mh.thread-number.scheduler' instead of. Or env 'MH_THREAD_NUMBER_SCHEDULER' instead of 'MH_THREAD_NUMBER' ");
         }
+        if (processorEnvHotDeploySupported) {
+            log.warn("property 'mh.processor.env-hot-deploy-supported' not supported any more and must be deleted");
+        }
     }
 
     private static final Map<Character, Long> sizes = Map.of(
@@ -488,7 +489,7 @@ public class Globals {
             FileSystem fileSystem = path.getFileSystem();
             UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
 
-            log.info("Check ownership of {}", processorEnvHotDeployDir.getPath());
+            log.info("Check ownership of {}", file.getAbsolutePath());
             log.info("File: " + path);
             log.info("Exists: " + Files.exists(path));
             log.info("-- owner before --");

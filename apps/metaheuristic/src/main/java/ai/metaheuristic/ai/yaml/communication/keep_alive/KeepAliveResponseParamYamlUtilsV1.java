@@ -22,7 +22,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -63,13 +62,10 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
         }
         if (v1.execContextStatus !=null) {
             t.execContextStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
-            t.execContextStatus.statuses =
-                    v1.execContextStatus.statuses!=null
-                            ? v1.execContextStatus.statuses
-                            .stream()
-                            .map(o->new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
+            v1.execContextStatus.statuses
+                    .stream()
+                    .map(o -> new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
+                    .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
         }
         if (v1.requestLogFile!=null) {
             t.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(v1.requestLogFile.requestedOn);

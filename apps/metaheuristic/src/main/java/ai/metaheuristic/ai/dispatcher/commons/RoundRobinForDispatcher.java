@@ -24,32 +24,34 @@ import org.springframework.lang.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 @Slf4j
 public class RoundRobinForDispatcher {
 
-    private final Map<String, AtomicBoolean> urls;
+    private final Map<DispatcherServerUrl, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
-        Map<String, AtomicBoolean> map = new HashMap<>();
-        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet()) {
+    public RoundRobinForDispatcher(Map<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
+        Map<DispatcherServerUrl, AtomicBoolean> map = new LinkedHashMap<>();
+        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet()) {
             DispatcherLookupConfig.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
-                log.info("dispatcher {} is disabled", dispatcherLookup.url);
+                log.info("dispatcher {} is disabled", dispatcherLookup.getDispatcherUrl());
                 continue;
             }
-            log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
-            map.putIfAbsent(dispatcherLookup.url, new AtomicBoolean(true));
+            log.info("dispatcher {} was added to round-robin", dispatcherLookup.getDispatcherUrl());
+            map.putIfAbsent(dispatcherLookup.getDispatcherUrl(), new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);
     }
 
-    public Set<String> getActiveDispatchers() {
+    public Set<DispatcherServerUrl> getActiveDispatchers() {
         return urls.keySet();
     }
 
     @Nullable
-    public String next() {
-        String url = findNext();
+    public DispatcherServerUrl next() {
+        DispatcherServerUrl url = findNext();
         if (url != null) {
             return url;
         }
@@ -59,15 +61,15 @@ public class RoundRobinForDispatcher {
     }
 
     public void reset() {
-        for (Map.Entry<String, AtomicBoolean> entry : urls.entrySet()) {
+        for (Map.Entry<DispatcherServerUrl, AtomicBoolean> entry : urls.entrySet()) {
             entry.getValue().set(true);
         }
     }
 
     @Nullable
-    private String findNext() {
-        String url = null;
-        for (Map.Entry<String, AtomicBoolean> entry : urls.entrySet()) {
+    private DispatcherServerUrl findNext() {
+        DispatcherServerUrl url = null;
+        for (Map.Entry<DispatcherServerUrl, AtomicBoolean> entry : urls.entrySet()) {
             if (entry.getValue().get()) {
                 entry.getValue().set(false);
                 url = entry.getKey();

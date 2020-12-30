@@ -116,11 +116,11 @@ public class DiskVariableProvider implements VariableProvider {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
-            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.getDispatcherUrl(), task.taskId, outputVariable.id);
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
             log.info("The result variable #{} is nullable, no need to upload to dispatcher", outputVariable.id);
-            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.getDispatcherUrl(), task.taskId, outputVariable.id);
             return null;
         }
         else {

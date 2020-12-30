@@ -57,6 +57,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+
 @SuppressWarnings({"WeakerAccess", "DuplicatedCode"})
 @Service
 @Slf4j
@@ -69,7 +71,7 @@ public class ProcessorTaskService {
     private final MetadataService metadataService;
     private final EnvService envService;
 
-    private final Map<String, Map<Long, ProcessorTask>> map = new ConcurrentHashMap<>();
+    private final Map<DispatcherServerUrl, Map<Long, ProcessorTask>> map = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -82,7 +84,7 @@ public class ProcessorTaskService {
         try {
             Files.list(globals.processorTaskDir.toPath()).forEach(top -> {
                 try {
-                    String dispatcherUrl = metadataService.findHostByCode(top.toFile().getName());
+                    DispatcherServerUrl dispatcherUrl = metadataService.findHostByCode(top.toFile().getName());
                     if (dispatcherUrl==null) {
                         return;
                     }
@@ -168,7 +170,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setReportedOn(String dispatcherUrl, long taskId) {
+    public void setReportedOn(DispatcherServerUrl dispatcherUrl, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.065 setReportedOn({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -182,7 +184,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setInputAsEmpty(String dispatcherUrl, long taskId, String variableId) {
+    public void setInputAsEmpty(DispatcherServerUrl dispatcherUrl, long taskId, String variableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.075 setInputAsEmpty({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -204,7 +206,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setDelivered(String dispatcherUrl, Long taskId) {
+    public void setDelivered(DispatcherServerUrl dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.080 setDelivered({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -236,7 +238,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setVariableUploadedAndCompleted(String dispatcherUrl, Long taskId, Long outputVariableId) {
+    public void setVariableUploadedAndCompleted(DispatcherServerUrl dispatcherUrl, Long taskId, Long outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {}, {})", dispatcherUrl, taskId, outputVariableId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -251,7 +253,7 @@ public class ProcessorTaskService {
     }
 
     @SuppressWarnings("unused")
-    public void setCompleted(String dispatcherUrl, Long taskId) {
+    public void setCompleted(DispatcherServerUrl dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setCompleted({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -264,7 +266,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> getForReporting(String dispatcherUrl) {
+    public List<ProcessorTask> getForReporting(DispatcherServerUrl dispatcherUrl) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             Stream<ProcessorTask> stream = findAllByFinishedOnIsNotNull(dispatcherUrl);
             List<ProcessorTask> result = stream
@@ -277,7 +279,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String dispatcherUrl) {
+    public ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(DispatcherServerUrl dispatcherUrl) {
         final List<ProcessorTask> list = getForReporting(dispatcherUrl);
         if (list.isEmpty()) {
             return null;
@@ -302,7 +304,7 @@ public class ProcessorTaskService {
         return processingResult;
     }
 
-    public void markAsFinishedWithError(String dispatcherUrl, long taskId, String es) {
+    public void markAsFinishedWithError(DispatcherServerUrl dispatcherUrl, long taskId, String es) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             markAsFinished(dispatcherUrl, taskId,
                     new FunctionApiData.FunctionExec(
@@ -311,10 +313,10 @@ public class ProcessorTaskService {
         }
     }
 
-    void markAsFinished(String dispatcherUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
+    void markAsFinished(DispatcherServerUrl dispatcherUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("markAsFinished({}, {}, {})", dispatcherUrl, taskId, functionExec);
+            log.info("markAsFinished({}, {}, {})", dispatcherUrl.url, taskId, functionExec);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
@@ -346,7 +348,7 @@ public class ProcessorTaskService {
         }
     }
 
-    void markAsAssetPrepared(String dispatcherUrl, Long taskId, boolean status) {
+    void markAsAssetPrepared(DispatcherServerUrl dispatcherUrl, Long taskId, boolean status) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", dispatcherUrl, taskId, status);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -359,23 +361,26 @@ public class ProcessorTaskService {
         }
     }
 
-    boolean isNeedNewTask(String dispatcherUrl, String processorId) {
+    boolean isNeedNewTask() {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            // TODO 2019-10-24 need to optimize
-            List<ProcessorTask> tasks = findAllByCompletedIsFalse(dispatcherUrl);
-            for (ProcessorTask task : tasks) {
-                // we don't need new task because execContext for this task is active
-                // i.e. there is a non-completed task with active execContext
-                // if execContext wasn't active we would need a new task
-                if (currentExecState.isStarted(task.dispatcherUrl, task.execContextId)) {
-                    return false;
+            for (DispatcherServerUrl dispatcherUrl : map.keySet()) {
+
+                // TODO 2019-10-24 need to optimize
+                List<ProcessorTask> tasks = findAllByCompletedIsFalse(dispatcherUrl);
+                for (ProcessorTask task : tasks) {
+                    // we don't need new task because execContext for this task is active
+                    // i.e. there is a non-completed task with active execContext
+                    // if execContext wasn't active we would need a new task
+                    if (currentExecState.isStarted(new DispatcherServerUrl(task.dispatcherUrl), task.execContextId)) {
+                        return false;
+                    }
                 }
             }
             return true;
         }
     }
 
-    public List<ProcessorTask> findAllByCompletedIsFalse(String dispatcherUrl) {
+    public List<ProcessorTask> findAllByCompletedIsFalse(DispatcherServerUrl dispatcherUrl) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
             for (ProcessorTask task : getMapForDispatcherUrl(dispatcherUrl).values()) {
@@ -391,14 +396,14 @@ public class ProcessorTaskService {
         }
     }
 
-    private Map<Long, ProcessorTask> getMapForDispatcherUrl(String dispatcherUrl) {
+    private Map<Long, ProcessorTask> getMapForDispatcherUrl(DispatcherServerUrl dispatcherUrl) {
         return map.computeIfAbsent(dispatcherUrl, m -> new HashMap<>());
     }
 
     public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean assetsPreparedStatus) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
-            for (String dispatcherUrl : map.keySet()) {
+            for (DispatcherServerUrl dispatcherUrl : map.keySet()) {
                 Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
                 List<Long> forDelition = new ArrayList<>();
                 for (ProcessorTask task : mapForDispatcherUrl.values()) {
@@ -418,11 +423,11 @@ public class ProcessorTaskService {
         }
     }
 
-    private Stream<ProcessorTask> findAllByFinishedOnIsNotNull(String dispatcherUrl) {
+    private Stream<ProcessorTask> findAllByFinishedOnIsNotNull(DispatcherServerUrl dispatcherUrl) {
         return getMapForDispatcherUrl(dispatcherUrl).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(String dispatcherUrl, long taskId, Long execContextId, String params) {
+    public void createTask(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, long taskId, Long execContextId, String params) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.150 Prepare new task #{}", taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
@@ -434,7 +439,7 @@ public class ProcessorTaskService {
             task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
             task.clean = taskParamYaml.task.clean;
-            task.dispatcherUrl = dispatcherUrl;
+            task.dispatcherUrl = dispatcherUrl.url;
             task.createdOn = System.currentTimeMillis();
             task.assetsPrepared = false;
             task.launchedOn = null;
@@ -473,7 +478,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask resetTask(String dispatcherUrl, Long taskId) {
+    public ProcessorTask resetTask(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
@@ -485,7 +490,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask setLaunchOn(String dispatcherUrl, long taskId) {
+    public ProcessorTask setLaunchOn(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
@@ -497,7 +502,7 @@ public class ProcessorTaskService {
     }
 
     private ProcessorTask save(ProcessorTask task) {
-        File taskDir = prepareTaskDir(task.dispatcherUrl, task.taskId);
+        File taskDir = prepareTaskDir(new DispatcherServerUrl(task.dispatcherUrl), task.taskId);
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
 
         if (taskYaml.exists()) {
@@ -522,7 +527,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask findById(String dispatcherUrl, Long taskId) {
+    public ProcessorTask findById(DispatcherServerUrl dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             return getMapForDispatcherUrl(dispatcherUrl)
                     .entrySet()
@@ -534,7 +539,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> findAll(String dispatcherUrl) {
+    public List<ProcessorTask> findAll(DispatcherServerUrl dispatcherUrl) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             Collection<ProcessorTask> values = getMapForDispatcherUrl(dispatcherUrl).values();
             return List.copyOf(values);
@@ -544,14 +549,14 @@ public class ProcessorTaskService {
     public List<ProcessorTask> findAll() {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
-            for (String dispatcherUrl : map.keySet()) {
+            for (DispatcherServerUrl dispatcherUrl : map.keySet()) {
                 list.addAll( getMapForDispatcherUrl(dispatcherUrl).values());
             }
             return list;
         }
     }
 
-    public void delete(String dispatcherUrl, final long taskId) {
+    public void delete(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, final long taskId) {
         MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
@@ -578,7 +583,7 @@ public class ProcessorTaskService {
         return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
 
-    File prepareTaskDir(String dispatcherUrl, Long taskId) {
+    File prepareTaskDir(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, Long taskId) {
         MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
         return prepareTaskDir(processorState, taskId);
     }
