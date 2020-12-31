@@ -16,12 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -30,11 +33,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Serge
@@ -141,6 +151,25 @@ public class ExecContextRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextApiData.TaskExecInfo execContextState = execContextTopLevelService.getTaskExecInfo(sourceCodeId, execContextId, taskId);
         return execContextState;
+    }
+
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'OPERATOR', 'MANAGER')")
+    @GetMapping(value= "/exec-context/{execContextId}/download-variable//{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public HttpEntity<AbstractResource> downloadVariable(
+            HttpServletRequest request, @PathVariable("execContextId") Long execContextId, @PathVariable("variableId") Long variableId,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        try {
+            CleanerInfo resource = execContextService.downloadVariable(execContextId, variableId, context.getCompanyId());
+            if (resource==null) {
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            }
+            request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            return resource.entity == null ? new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE) : resource.entity;
+        } catch (CommonErrorWithDataException e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
     }
 
 
