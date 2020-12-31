@@ -28,9 +28,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ProcessorAndCoreData {
 
+    public interface CommonUrl {}
+
     @Data
     @EqualsAndHashCode(of="url")
-    public static class AssetServerUrl {
+    public static class AssetServerUrl implements CommonUrl {
         public final String url;
 
         public AssetServerUrl(String url) {
@@ -43,7 +45,7 @@ public class ProcessorAndCoreData {
 
     @Data
     @EqualsAndHashCode(of="url")
-    public static class DispatcherServerUrl {
+    public static class DispatcherServerUrl implements CommonUrl {
         public final String url;
 
         public DispatcherServerUrl(String url) {

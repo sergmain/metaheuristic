@@ -13,12 +13,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.processor.tasks;
 
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+package ai.metaheuristic.ai.processor;
+
 import lombok.Data;
 
+/**
+ * @author Serge
+ * Date: 5/29/2019
+ * Time: 12:45 AM
+ */
 @Data
-public abstract class ProcessorRestTask {
-    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+public class DispatcherContextInfo {
+
+    // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing
+    public Long chunkSize;
+
+    public Integer maxVersionOfProcessor;
+
+    public void update(DispatcherContextInfo context) {
+        this.chunkSize = context.chunkSize;
+        this.maxVersionOfProcessor = context.maxVersionOfProcessor;
+    }
 }

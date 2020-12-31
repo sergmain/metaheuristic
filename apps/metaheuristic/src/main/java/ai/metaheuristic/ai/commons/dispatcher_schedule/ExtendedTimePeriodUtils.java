@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.dispatcher_lookup;
+package ai.metaheuristic.ai.commons.dispatcher_schedule;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;

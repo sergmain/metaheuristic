@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +34,7 @@ public class TestAbstractTaskQueue {
     public void test() {
         SimpleClass actor = new SimpleClass();
 
-        DispatcherLookupConfig.DispatcherLookup dispatcherStub = new DispatcherLookupConfig.DispatcherLookup();
+        DispatcherLookupParamsYaml.DispatcherLookup dispatcherStub = new DispatcherLookupParamsYaml.DispatcherLookup();
 
         DownloadVariableTask task = new DownloadVariableTask(
                 4242L, EnumsApi.VariableContext.local, 10,

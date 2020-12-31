@@ -160,4 +160,12 @@ public final class Enums {
             this.typeNumber = typeNumber;
         }
     }
+
+    public enum DispatcherLookupType {
+        direct, registry
+    }
+
+    public enum AuthType {
+        basic, oauth
+    }
 }

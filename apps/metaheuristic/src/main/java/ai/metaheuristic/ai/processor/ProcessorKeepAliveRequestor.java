@@ -66,7 +66,7 @@ public class ProcessorKeepAliveRequestor {
 
     private final RestTemplate restTemplate;
     private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
-    private final String serverRestUrl;
+    private final String dispatcherRestUrl;
 
     public ProcessorKeepAliveRequestor(
             DispatcherServerUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
@@ -86,7 +86,7 @@ public class ProcessorKeepAliveRequestor {
         if (this.dispatcher == null) {
             throw new IllegalStateException("#776.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
-        this.serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
+        this.dispatcherRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
     private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
@@ -141,7 +141,7 @@ public class ProcessorKeepAliveRequestor {
                 karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetUrl));
             }
 
-            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
+            final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -177,7 +177,9 @@ public class ProcessorKeepAliveRequestor {
                     case UNAUTHORIZED:
                     case FORBIDDEN:
                     case NOT_FOUND:
-                        log.error("#776.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+                    case BAD_GATEWAY:
+                    case SERVICE_UNAVAILABLE:
+                        log.error("#776.070 Error {} accessing url {}", e.getStatusCode().value(), dispatcherRestUrl);
                         break;
                     default:
                         throw e;
@@ -189,16 +191,16 @@ public class ProcessorKeepAliveRequestor {
                     log.error("#776.090 Connection error: url: {}, err: {}", url, cause.getMessage());
                 }
                 else if (cause instanceof UnknownHostException) {
-                    log.error("#776.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Host unreachable, url: {}, error: {}", dispatcherRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof ConnectTimeoutException) {
-                    log.error("#776.093 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Connection timeout, url: {}, error: {}", dispatcherRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SocketTimeoutException) {
-                    log.error("#776.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 Socket timeout, url: {}, error: {}", dispatcherRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
-                    log.error("#776.093 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#776.093 SSL certificate mismatched, url: {}, error: {}", dispatcherRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#776.100 Error, url: " + url, e);
@@ -220,7 +222,7 @@ public class ProcessorKeepAliveRequestor {
                 }
             }
         } catch (Throwable e) {
-            log.error("#776.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
+            log.error("#776.130 Error in fixedDelay(), dispatcher url: "+ dispatcherRestUrl +", error: {}", e);
         }
     }
 }

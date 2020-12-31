@@ -20,11 +20,12 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
+import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -88,7 +89,7 @@ public class MetadataService {
     @AllArgsConstructor
     private static class SimpleCache {
         public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
-        public final DispatcherLookupConfig.Asset asset;
+        public final DispatcherLookupParamsYaml.Asset asset;
         public final MetadataParamsYaml.ProcessorState processorState;
         public final File baseResourceDir;
     }
@@ -170,7 +171,7 @@ public class MetadataService {
     }
 
     @Nullable
-    public MetadataParamsYaml.Status syncFunctionStatus(ServerUrls urls, DispatcherLookupConfig.Asset asset, final String functionCode) {
+    public MetadataParamsYaml.Status syncFunctionStatus(ServerUrls urls, DispatcherLookupParamsYaml.Asset asset, final String functionCode) {
         try {
             syncFunctionStatusInternal(urls, asset, functionCode);
         } catch (Throwable th) {
@@ -180,7 +181,7 @@ public class MetadataService {
         return getFunctionDownloadStatuses(urls.assetUrl, functionCode);
     }
 
-    private void syncFunctionStatusInternal(ServerUrls serverUrls, DispatcherLookupConfig.Asset asset, String functionCode) {
+    private void syncFunctionStatusInternal(ServerUrls serverUrls, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
         MetadataParamsYaml.Status status = getFunctionDownloadStatuses(serverUrls.assetUrl, functionCode);
 
         if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.verified) {
@@ -240,13 +241,13 @@ public class MetadataService {
     }
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            AssetServerUrl assetUrl,
-            String functionCode, DispatcherLookupConfig.DispatcherLookup dispatcher, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
+            AssetServerUrl assetUrl, DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset,
+            String functionCode, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
         if (checksumState.state!=Enums.ChecksumStateEnum.signature_not_required) {
             try (FileInputStream fis = new FileInputStream(functionTempFile)) {
                 status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                        "Dispatcher url: "+ dispatcher.getDispatcherUrl() +", function: "+functionCode, fis, dispatcher.createPublicKey(),
+                        "Dispatcher url: "+ dispatcherUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
                         checksumState.originChecksumWithSignature, checksumState.hashAlgo);
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {

@@ -13,12 +13,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.processor.tasks;
 
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+package ai.metaheuristic.ai.commons.dispatcher_schedule;
+
 import lombok.Data;
 
 @Data
-public abstract class ProcessorRestTask {
-    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+public class ExtendedTimePeriod {
+
+    public enum SchedulePolicy {
+        normal, strict
+    }
+
+    @Data
+    public static class WeekTimePeriod {
+        public String mon;
+        public String tue;
+        public String wed;
+        public String thu;
+        public String fri;
+        public String sat;
+        public String sun;
+    }
+
+    public String workingDay;
+    public String weekend;
+    public String dayMask;
+    public String holiday;
+    public String exceptionWorkingDay;
+    public WeekTimePeriod week;
+    public SchedulePolicy policy = SchedulePolicy.normal;
 }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.equals;
 
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
@@ -37,8 +37,8 @@ public class TestDownloadVariableTask {
 
 //        tring variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
 //                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable
-        DownloadVariableTask o1 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), 100L, new DispatcherLookupConfig.DispatcherLookup(), "42L", false);
-        DownloadVariableTask o2 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), 100L, new DispatcherLookupConfig.DispatcherLookup(), "24L", true);
+        DownloadVariableTask o1 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), 100L, new DispatcherLookupParamsYaml.DispatcherLookup(), "42L", false);
+        DownloadVariableTask o2 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), 100L, new DispatcherLookupParamsYaml.DispatcherLookup(), "24L", true);
 
         assertEquals(o1, o2);
     }

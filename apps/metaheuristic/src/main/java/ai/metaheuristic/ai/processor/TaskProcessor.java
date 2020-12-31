@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -115,7 +115,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl.url);
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
                 processorTaskService.markAsFinishedWithError(dispatcherUrl, task.taskId, es);

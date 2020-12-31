@@ -17,11 +17,10 @@
 package ai.metaheuristic.ai.processor.function;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -71,7 +70,7 @@ public class ProcessorFunctionService {
     }
 
     public DownloadedFunctionConfigStatus downloadFunctionConfig(
-            DispatcherServerUrl dispatcherUrl, DispatcherLookupConfig.Asset asset, String functionCode) {
+            DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
 
         final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/999";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
@@ -123,7 +122,7 @@ public class ProcessorFunctionService {
 
     public DownloadedFunctionConfigsStatus downloadFunctionConfigs(
             String dispatcherUrl,
-            DispatcherLookupConfig.Asset asset, String processorId) {
+            DispatcherLookupParamsYaml.Asset asset, String processorId) {
 
         final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs/" + processorId;
         final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);

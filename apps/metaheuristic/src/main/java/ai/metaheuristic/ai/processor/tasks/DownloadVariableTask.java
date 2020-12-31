@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.processor.tasks;
 
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,13 +35,13 @@ public class DownloadVariableTask extends ProcessorRestTask {
 
     public DownloadVariableTask(
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
-                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable) {
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
         this(variableId.toString(), context, taskId, targetDir, chunkSize, dispatcher, processorId, nullable);
     }
 
     public DownloadVariableTask(
             String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
-                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable) {
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
         this.variableId = variableId;
         this.context = context;
         this.taskId = taskId;

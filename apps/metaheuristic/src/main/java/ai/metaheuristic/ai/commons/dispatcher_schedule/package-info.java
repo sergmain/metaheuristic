@@ -14,20 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.commons.dispatcher_schedule;
 
-import lombok.Data;
-
-/**
- * @author Serge
- * Date: 5/29/2019
- * Time: 12:45 AM
- */
-@Data
-public class DispatcherContext {
-
-    // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing
-    public Long chunkSize;
-
-    public Integer maxVersionOfProcessor;
-}
+import javax.annotation.ParametersAreNonnullByDefault;

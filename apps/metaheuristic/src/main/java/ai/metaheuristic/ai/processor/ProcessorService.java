@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;

@@ -14,33 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.dispatcher_lookup;
+package ai.metaheuristic.ai.processor.utils;
 
-import lombok.Data;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.commons.utils.SecUtils;
 
-@Data
-public class ExtendedTimePeriod {
+import java.security.PublicKey;
+import java.util.HashMap;
+import java.util.Map;
 
-    public enum SchedulePolicy {
-        normal, strict
+/**
+ * @author Serge
+ * Date: 12/31/2020
+ * Time: 7:41 AM
+ */
+public class ProcessorUtils {
+
+    private static final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
+
+    public static PublicKey createPublicKey(DispatcherLookupParamsYaml.Asset asset) {
+        return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(asset.publicKey));
     }
-
-    @Data
-    public static class WeekTimePeriod {
-        public String mon;
-        public String tue;
-        public String wed;
-        public String thu;
-        public String fri;
-        public String sat;
-        public String sun;
-    }
-
-    public String workingDay;
-    public String weekend;
-    public String dayMask;
-    public String holiday;
-    public String exceptionWorkingDay;
-    public WeekTimePeriod week;
-    public SchedulePolicy policy = SchedulePolicy.normal;
 }

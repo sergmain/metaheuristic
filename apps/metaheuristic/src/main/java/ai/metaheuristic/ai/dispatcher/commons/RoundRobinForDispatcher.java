@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.commons;
 
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
@@ -33,14 +33,14 @@ public class RoundRobinForDispatcher {
 
     public RoundRobinForDispatcher(Map<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
         Map<DispatcherServerUrl, AtomicBoolean> map = new LinkedHashMap<>();
-        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet()) {
-            DispatcherLookupConfig.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
+        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
-                log.info("dispatcher {} is disabled", dispatcherLookup.getDispatcherUrl());
+                log.info("dispatcher {} is disabled", dispatcherLookup.getLookupType());
                 continue;
             }
-            log.info("dispatcher {} was added to round-robin", dispatcherLookup.getDispatcherUrl());
-            map.putIfAbsent(dispatcherLookup.getDispatcherUrl(), new AtomicBoolean(true));
+            log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
+            map.putIfAbsent(new DispatcherServerUrl(dispatcherLookup.url), new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);
     }

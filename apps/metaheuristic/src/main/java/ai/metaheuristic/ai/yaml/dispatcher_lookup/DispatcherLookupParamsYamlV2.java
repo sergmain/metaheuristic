@@ -16,46 +16,45 @@
 
 package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.commons.utils.SecUtils;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
-import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * @author Serge
+ * Date: 12/31/2020
+ * Time: 9:12 AM
+ */
 @Data
-public class DispatcherLookupConfig {
-    public List<DispatcherLookup> dispatchers = new ArrayList<>();
+@NoArgsConstructor
+public class DispatcherLookupParamsYamlV2 implements BaseParams {
 
-    public enum DispatcherLookupType {
-        direct, registry
-    }
-
-    public enum AuthType {
-        basic, oauth
-    }
+    public final int version=2;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Asset {
+    @EqualsAndHashCode(of="url")
+    public static class AssetV2 {
         public String url;
         public String username;
         public String password;
+        public String publicKey;
+        public boolean disabled;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DispatcherLookup {
+    public static class DispatcherLookupV2 {
         // fields, which are specific to concrete installation
-        // actually, it's a schedule
+        // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
         public String taskProcessingTime;
 
         // common fields
@@ -63,35 +62,27 @@ public class DispatcherLookupConfig {
         public String url;
         public boolean signatureRequired;
         public String publicKey;
-        public DispatcherLookupType lookupType;
-        public AuthType authType;
+        public Enums.DispatcherLookupType lookupType;
+        public Enums.AuthType authType;
 
-        public String restPassword;
         public String restUsername;
+        public String restPassword;
 
-        @Nullable
-        public Asset asset;
-
-        // must be deleted when DispatcherLookup will be based on ParamsYaml versioning
-        // this field is only for compatibility
-        @Deprecated
-        public boolean acceptOnlySignedFunctions = false;
-
-        private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
-
-        public PublicKey createPublicKey() {
-            return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(this.publicKey));
-        }
-
+/*
         public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
             return new ProcessorAndCoreData.DispatcherServerUrl(url);
         }
 
         public Asset getAsset() {
-            final DispatcherLookupConfig.Asset a = asset!=null
+            final DispatcherLookupParamsYaml.Asset a = asset!=null
                     ? asset
-                    : new DispatcherLookupConfig.Asset(getDispatcherUrl().url, restUsername, restPassword);
+                    : new DispatcherLookupParamsYaml.Asset(getDispatcherUrl().url, restUsername, restPassword, publicKey);
             return a;
         }
+*/
     }
+
+    public final List<DispatcherLookupV2> dispatchers = new ArrayList<>();
+    public final List<AssetV2> assets = new ArrayList<>();
+
 }

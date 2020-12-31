@@ -69,3 +69,8 @@ Angular lib for graph
 pure JavaScript
     http://js.cytoscape.org/#introduction/about
 
+=========================
+
+-Djps.track.ap.dependencies=false
+
+========================

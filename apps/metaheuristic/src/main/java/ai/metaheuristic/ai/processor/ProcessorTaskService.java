@@ -405,16 +405,16 @@ public class ProcessorTaskService {
             List<ProcessorTask> list = new ArrayList<>();
             for (DispatcherServerUrl dispatcherUrl : map.keySet()) {
                 Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
-                List<Long> forDelition = new ArrayList<>();
+                List<Long> forDeletion = new ArrayList<>();
                 for (ProcessorTask task : mapForDispatcherUrl.values()) {
                     if (S.b(task.dispatcherUrl)) {
-                        forDelition.add(task.taskId);
+                        forDeletion.add(task.taskId);
                     }
                     if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
                         list.add(task);
                     }
                 }
-                forDelition.forEach(id-> {
+                forDeletion.forEach(id-> {
                     log.warn("#713.147 task #{} from dispatcher {} was deleted from global map with tasks", id, dispatcherUrl);
                     mapForDispatcherUrl.remove(id);
                 });

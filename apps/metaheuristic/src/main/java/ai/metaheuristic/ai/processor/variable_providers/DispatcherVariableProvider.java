@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -103,7 +103,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     }
 
     private void createDownloadTasksForArray(
-            Long variableId, Long taskId, File taskDir, Long chunkSize, DispatcherLookupConfig.DispatcherLookup dispatcherLookup,
+            Long variableId, Long taskId, File taskDir, Long chunkSize, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
             String processorId, boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
                 variableId, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId, nullable);

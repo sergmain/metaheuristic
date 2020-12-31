@@ -15,10 +15,10 @@
  */
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriodUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.TimePeriods;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.ExtendedTimePeriod;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.ExtendedTimePeriodUtils;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;

@@ -15,16 +15,39 @@
  */
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(of = "functionCode", callSuper = false)
 public class DownloadFunctionTask extends ProcessorRestTask {
-    public Long chunkSize;
-    public String functionCode;
-    public TaskParamsYaml.FunctionConfig functionConfig;
+    public final Long chunkSize;
+    public final String functionCode;
+    public final TaskParamsYaml.FunctionConfig functionConfig;
+
+    public final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl;
+    public final ProcessorAndCoreData.AssetServerUrl assetUrl;
+
+    private final Map<Integer, DispatcherLookupParamsYaml.Asset> assetMap = new HashMap<>();
+
+    public DispatcherLookupParamsYaml.Asset getAsset() {
+        return assetMap.computeIfAbsent(1, o-> initAsset());
+    }
+
+    private DispatcherLookupParamsYaml.Asset initAsset() {
+
+        final DispatcherLookupParamsYaml.Asset asset = dispatcher.asset!=null
+                ? dispatcher.asset
+                : new DispatcherLookupParamsYaml.Asset(dispatcher.getDispatcherUrl().url, dispatcher.restUsername, dispatcher.restPassword);
+        return asset;
+    }
+
 }

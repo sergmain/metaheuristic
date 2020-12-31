@@ -16,9 +16,10 @@
 
 package ai.metaheuristic.ai.yaml;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,18 +32,18 @@ public class TestDispatcherLookup {
     @Test
     public void testParsingYaml() throws IOException {
         try (InputStream is = TestDispatcherLookup.class.getResourceAsStream("/yaml/dispatchers.yaml")) {
-            DispatcherLookupConfig ssc = DispatcherLookupConfigUtils.to(is);
+            DispatcherLookupParamsYaml ssc = DispatcherLookupParamsYamlUtils.to(is);
 
             assertEquals(2, ssc.dispatchers.size());
 
             assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("http://localhost:8080"), ssc.dispatchers.get(0).getDispatcherUrl());
-            assertEquals(DispatcherLookupConfig.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
+            assertEquals(Enums.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
             assertNull(ssc.dispatchers.get(0).publicKey);
             assertFalse(ssc.dispatchers.get(0).signatureRequired);
             assertFalse(ssc.dispatchers.get(0).disabled);
 
             assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("https://host"), ssc.dispatchers.get(1).getDispatcherUrl());
-            assertEquals(DispatcherLookupConfig.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
+            assertEquals(Enums.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
             assertEquals("some-public-key", ssc.dispatchers.get(1).publicKey);
             assertTrue(ssc.dispatchers.get(1).signatureRequired);
             assertTrue(ssc.dispatchers.get(1).disabled);
@@ -51,27 +52,27 @@ public class TestDispatcherLookup {
 
     @Test
     public void test() {
-        DispatcherLookupConfig ssc = new DispatcherLookupConfig();
+        DispatcherLookupParamsYaml ssc = new DispatcherLookupParamsYaml();
 
-        DispatcherLookupConfig.DispatcherLookup config = new DispatcherLookupConfig.DispatcherLookup();
+        DispatcherLookupParamsYaml.DispatcherLookup config = new DispatcherLookupParamsYaml.DispatcherLookup();
         config.url = "http://localhost:8080";
         config.signatureRequired = false;
-        config.lookupType = DispatcherLookupConfig.DispatcherLookupType.direct;
+        config.lookupType = Enums.DispatcherLookupType.direct;
 
         ssc.dispatchers.add(config);
 
-        config = new DispatcherLookupConfig.DispatcherLookup();
+        config = new DispatcherLookupParamsYaml.DispatcherLookup();
         config.url = "https://host";
         config.signatureRequired = true;
         config.publicKey = "some-public-key";
-        config.lookupType = DispatcherLookupConfig.DispatcherLookupType.registry;
+        config.lookupType = Enums.DispatcherLookupType.registry;
 
         ssc.dispatchers.add(config);
 
-        String yaml = DispatcherLookupConfigUtils.toString(ssc);
+        String yaml = DispatcherLookupParamsYamlUtils.toString(ssc);
         System.out.println(yaml);
 
-        DispatcherLookupConfig ssc1 = DispatcherLookupConfigUtils.to(yaml);
+        DispatcherLookupParamsYaml ssc1 = DispatcherLookupParamsYamlUtils.to(yaml);
 
         assertEquals(ssc.dispatchers.size(), ssc1.dispatchers.size());
 

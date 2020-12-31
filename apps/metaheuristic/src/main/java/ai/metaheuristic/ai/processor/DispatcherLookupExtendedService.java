@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.Data;
@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherServerUrl;
 
 @Service
 @Slf4j
@@ -64,9 +64,8 @@ public class DispatcherLookupExtendedService {
 
     @Data
     public static class DispatcherLookupExtended {
-        public DispatcherLookupConfig.DispatcherLookup dispatcherLookup;
+        public DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
         public DispatcherSchedule schedule;
-        public final DispatcherContext context = new DispatcherContext();
     }
 
     public DispatcherLookupExtendedService(Globals globals) {
@@ -91,7 +90,7 @@ public class DispatcherLookupExtendedService {
         }
         if (!dispatcherFile.exists()) {
             throw new IllegalStateException(
-                    "File dispatcher.yaml wan't found. " +
+                    "File dispatcher.yaml wasn't found. " +
                     "It must be configured in directory "+globals.processorDir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
         }
 
@@ -104,7 +103,7 @@ public class DispatcherLookupExtendedService {
 
         YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
 
-        DispatcherLookupConfig dispatcherLookupConfig = DispatcherLookupConfigUtils.to(cfg);
+        DispatcherLookupParamsYaml dispatcherLookupConfig = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
 
         if (dispatcherLookupConfig == null) {
             log.error("{} wasn't found or empty. path: {}{}{}",
@@ -113,11 +112,11 @@ public class DispatcherLookupExtendedService {
             throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
         }
         final Map<DispatcherServerUrl, DispatcherLookupExtended> map = new HashMap<>();
-        for (DispatcherLookupConfig.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
+        for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
             DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended();
             lookupExtended.dispatcherLookup = dispatcher;
             lookupExtended.schedule = new DispatcherSchedule(dispatcher.taskProcessingTime);
-            map.put(dispatcher.getDispatcherUrl(), lookupExtended);
+            map.put(new DispatcherServerUrl(dispatcher.url), lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
