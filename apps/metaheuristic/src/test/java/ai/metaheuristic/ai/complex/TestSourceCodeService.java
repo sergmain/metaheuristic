@@ -520,7 +520,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(tasks.size(), taskVertices.size());
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findAny().orElse(null);
+            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findFirst().orElse(null);
             assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
             final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
             assertEquals(taskExecState, taskVertex.execState, "task has a different states in db and graph, " +

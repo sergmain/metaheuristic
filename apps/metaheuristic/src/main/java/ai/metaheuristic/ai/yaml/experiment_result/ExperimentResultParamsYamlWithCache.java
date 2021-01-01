@@ -40,7 +40,7 @@ public class ExperimentResultParamsYamlWithCache {
 
     @Nullable
     public ExperimentResultParamsYaml.ExperimentFeature getFeature(Long featureId) {
-        return experimentResult.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
+        return experimentResult.features.stream().filter(o -> Objects.equals(o.id, featureId)).findFirst().orElse(null);
     }
 
     @Nullable

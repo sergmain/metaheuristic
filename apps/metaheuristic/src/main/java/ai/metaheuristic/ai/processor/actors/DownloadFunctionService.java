@@ -79,7 +79,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         DownloadFunctionTask task;
         while((task = poll())!=null) {
             final String functionCode = task.functionCode;
-            final DispatcherLookupParamsYaml.DispatcherLookup dispatcher = task.dispatcher;
+            final DispatcherLookupParamsYaml.DispatcherLookup dispatcher1 = task.dispatcher;
             final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = task.dispatcherUrl;
             final DispatcherLookupParamsYaml.Asset asset = task.getAsset();
 
@@ -128,7 +128,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 functionConfig = downloadedFunctionConfigStatus.functionConfig;
             }
             MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, assetUrl, functionConfig);
-            if (state.state==Enums.ChecksumStateEnum.signature_not_valid) {
+            if (state.state== Enums.SignatureStates.signature_not_valid) {
                 continue;
             }
 
@@ -318,7 +318,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     }
                 }
 
-                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, dispatcher, state, functionTempFile);
+                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, state, functionTempFile);
                 if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     functionTempFile.renameTo(assetFile.file);
@@ -373,7 +373,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetUrl, contextInfo.chunkSize);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(contextInfo.chunkSize, o.code, assetServerUrl, null);
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(contextInfo.chunkSize, o.code, assetServerUrl, null, o.assetUrl);
                 functionTask.dispatcher = dispatcher.dispatcherLookup;
 
                 add(functionTask);

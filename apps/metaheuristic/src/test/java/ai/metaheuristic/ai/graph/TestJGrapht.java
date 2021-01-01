@@ -73,7 +73,7 @@ public class TestJGrapht {
         Item item = graph.vertexSet()
                 .stream()
                 .filter(o -> o.itemId.equals(1001L))
-                .findAny().orElse(null);
+                .findFirst().orElse(null);
         assertNotNull(item);
         assertEquals(v1001.id, item.id);
 
@@ -83,7 +83,7 @@ public class TestJGrapht {
         item = graph.vertexSet()
                 .stream()
                 .filter(o -> o.itemId.equals(1002L))
-                .findAny().orElse(null);
+                .findFirst().orElse(null);
         assertNotNull(item);
         assertEquals(v1002.id, item.id);
 

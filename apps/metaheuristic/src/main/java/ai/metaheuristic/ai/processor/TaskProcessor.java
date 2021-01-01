@@ -193,7 +193,7 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
 
-            ProcessorAndCoreData.AssetServerUrl assetUrl = new ProcessorAndCoreData.AssetServerUrl(dispatcher.dispatcherLookup.getAsset().url);
+            ProcessorAndCoreData.AssetServerUrl assetUrl = new ProcessorAndCoreData.AssetServerUrl(dispatcher.dispatcherLookup.assetUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
                 result = prepareFunction(assetUrl, processorState, preFunctionConfig);

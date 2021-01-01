@@ -36,6 +36,7 @@ public class DownloadFunctionTask extends ProcessorRestTask {
     public final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl;
     public final ProcessorAndCoreData.AssetServerUrl assetUrl;
 
+/*
     private final Map<Integer, DispatcherLookupParamsYaml.Asset> assetMap = new HashMap<>();
 
     public DispatcherLookupParamsYaml.Asset getAsset() {
@@ -49,5 +50,6 @@ public class DownloadFunctionTask extends ProcessorRestTask {
                 : new DispatcherLookupParamsYaml.Asset(dispatcher.getDispatcherUrl().url, dispatcher.restUsername, dispatcher.restPassword);
         return asset;
     }
+*/
 
 }

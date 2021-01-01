@@ -192,7 +192,7 @@ public class ProcessorTaskService {
                 log.error("#713.077 ProcessorTask wasn't found for Id " + taskId);
                 return;
             }
-            final ProcessorTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findAny().orElse(null);
+            final ProcessorTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findFirst().orElse(null);
             if (input==null) {
                 task.empty.empties.add(new ProcessorTask.EmptyStateOfInput(variableId, true));
             }
@@ -246,7 +246,7 @@ public class ProcessorTaskService {
                 log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
                 return;
             }
-            task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findAny().ifPresent(status -> status.uploaded = true);
+            task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findFirst().ifPresent(status -> status.uploaded = true);
             task.setCompleted( task.isDelivered() );
             save(task);
         }

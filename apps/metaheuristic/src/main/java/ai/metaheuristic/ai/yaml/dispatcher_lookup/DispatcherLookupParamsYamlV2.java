@@ -67,6 +67,7 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
 
         public String restUsername;
         public String restPassword;
+        public String assetUrl;
 
 /*
         public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {

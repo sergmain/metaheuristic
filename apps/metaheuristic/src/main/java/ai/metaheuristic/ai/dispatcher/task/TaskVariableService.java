@@ -139,7 +139,7 @@ public class TaskVariableService {
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findAny().orElse(null);
+        TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findFirst().orElse(null);
         if (output==null) {
             return Enums.UploadVariableStatus.UNRECOVERABLE_ERROR;
         }

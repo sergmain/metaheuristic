@@ -63,7 +63,7 @@ public class MetadataParamsYaml implements BaseParams {
         public String code;
         public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
-        public boolean verified;
+        public Enums.VerificationType verification = Enums.VerificationType.not_yet;
     }
 
     public final LinkedHashMap<String, ProcessorState> processorStates = new LinkedHashMap<>();

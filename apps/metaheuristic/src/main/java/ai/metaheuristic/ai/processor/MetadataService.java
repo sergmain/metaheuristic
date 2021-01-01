@@ -75,12 +75,12 @@ public class MetadataService {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ChecksumWithSignatureState {
-        public Enums.ChecksumStateEnum state = Enums.ChecksumStateEnum.unknown;
+        public Enums.SignatureStates state = Enums.SignatureStates.unknown;
         public ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature;
         public String originChecksumWithSignature;
         public EnumsApi.HashAlgo hashAlgo;
 
-        public ChecksumWithSignatureState(Enums.ChecksumStateEnum state) {
+        public ChecksumWithSignatureState(Enums.SignatureStates state) {
             this.state = state;
         }
     }
@@ -130,11 +130,12 @@ public class MetadataService {
 
     public ChecksumWithSignatureState prepareChecksumWithSignature(boolean signatureRequired, String functionCode, AssetServerUrl assetUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         if (!signatureRequired) {
-            return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_not_required);
+            return new ChecksumWithSignatureState(Enums.SignatureStates.signature_not_required);
         }
 
         // check requirements of signature
         if (functionConfig.checksumMap==null) {
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
             return setSignatureNotValid(functionCode, assetUrl);
         }
 
@@ -152,12 +153,19 @@ public class MetadataService {
             return setSignatureNotValid(functionCode, assetUrl);
         }
 
-        return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
+        return new ChecksumWithSignatureState(Enums.SignatureStates.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
     }
 
     private ChecksumWithSignatureState setSignatureNotValid(String functionCode, AssetServerUrl assetUrl) {
         setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
-        return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_not_valid);
+        // TODO 2021-01-01 check this state
+        return new ChecksumWithSignatureState(Enums.SignatureStates.not_signed);
+    }
+
+    private ChecksumWithSignatureState setSignatureNotFound(String functionCode, AssetServerUrl assetUrl) {
+        setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
+        // TODO 2021-01-01 check this state
+        return new ChecksumWithSignatureState(Enums.SignatureStates.not_signed);
     }
 
     private void markAllAsUnverified() {
@@ -165,7 +173,7 @@ public class MetadataService {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            status.verified = false;
+            status.verification = Enums.VerificationType.not_yet;
         }
         updateMetadataFile();
     }
@@ -184,10 +192,10 @@ public class MetadataService {
     private void syncFunctionStatusInternal(ServerUrls serverUrls, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
         MetadataParamsYaml.Status status = getFunctionDownloadStatuses(serverUrls.assetUrl, functionCode);
 
-        if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.verified) {
+        if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.verification.completed) {
             return;
         }
-        SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(serverUrls.dispatcherUrl.url, o -> {
+        SimpleCache simpleCache1 = simpleCacheMap.computeIfAbsent(serverUrls.dispatcherUrl.url, o -> {
             final MetadataParamsYaml.ProcessorState processorState = dispatcherUrlAsCode(serverUrls.dispatcherUrl);
             return new SimpleCache(
                     dispatcherLookupExtendedService.lookupExtendedMap.get(serverUrls.dispatcherUrl.url),
@@ -198,7 +206,7 @@ public class MetadataService {
         });
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                processorFunctionService.downloadFunctionConfig(serverUrls.dispatcherUrl, simpleCache.asset, functionCode);
+                processorFunctionService.downloadFunctionConfig(serverUrls.dispatcherUrl, asset, functionCode);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
             setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.function_config_error);
@@ -211,7 +219,7 @@ public class MetadataService {
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
 
         ChecksumWithSignatureState checksumState = prepareChecksumWithSignature(simpleCache.dispatcher.dispatcherLookup.signatureRequired, functionCode, serverUrls.assetUrl, functionConfig);
-        if (checksumState.state==Enums.ChecksumStateEnum.signature_not_valid) {
+        if (checksumState.state== Enums.SignatureStates.signature_not_valid) {
             return;
         }
 
@@ -242,20 +250,20 @@ public class MetadataService {
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             AssetServerUrl assetUrl, DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset,
-            String functionCode, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
+            String functionCode, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
-        if (checksumState.state!=Enums.ChecksumStateEnum.signature_not_required) {
+        if (checksumState.state!= Enums.SignatureStates.signature_not_required) {
             try (FileInputStream fis = new FileInputStream(functionTempFile)) {
                 status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
                         "Dispatcher url: "+ dispatcherUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
                         checksumState.originChecksumWithSignature, checksumState.hashAlgo);
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.120 dispatcher.signatureRequired is {} but function {} has the broken signature", dispatcher.signatureRequired, functionCode);
+                log.warn("#815.120 function {} has the broken signature", functionCode);
                 setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.140 dispatcher.signatureRequired is {} but function {} has the wrong checksum", dispatcher.signatureRequired, functionCode);
+                log.warn("#815.140 function {} has the wrong checksum", functionCode);
                 setFunctionState(assetUrl, functionCode, Enums.FunctionState.checksum_wrong);
             }
         }
@@ -324,7 +332,7 @@ public class MetadataService {
             for (KeepAliveResponseParamYaml.Functions.Info info : infos) {
                 MetadataParamsYaml.Status status = metadata.statuses.stream()
                         .filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(info.code))
-                        .findAny().orElse(null);
+                        .findFirst().orElse(null);
                 if (status==null || status.functionState == Enums.FunctionState.not_found) {
                     setFunctionDownloadStatusInternal(assetUrl, info.code, info.sourcing, Enums.FunctionState.none);
                     isChanged = true;
@@ -333,7 +341,7 @@ public class MetadataService {
 
             // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
             for (MetadataParamsYaml.Status status : metadata.statuses) {
-                if (status.assetUrl.equals(assetUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
+                if (status.assetUrl.equals(assetUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
                     setFunctionDownloadStatusInternal(assetUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
                     isChanged = true;
                 }
@@ -350,7 +358,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findAny().orElse(null);
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return false;
             }
@@ -392,7 +400,7 @@ public class MetadataService {
         synchronized (syncObj) {
             return metadata.statuses.stream()
                     .filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(functionCode))
-                    .findAny().orElse(null);
+                    .findFirst().orElse(null);
         }
     }
 
@@ -406,9 +414,9 @@ public class MetadataService {
     }
 
     private void setFunctionDownloadStatusInternal(AssetServerUrl assetUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
-        MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(code)).findAny().orElse(null);
+        MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, false);
+            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, Enums.VerificationType.not_yet);
             metadata.statuses.add(status);
         }
         status.functionState = functionState;

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -75,7 +76,7 @@ public class MetadataParamsYamlUtilsV1
     }
 
     private static MetadataParamsYamlV2.StatusV2 toStatus(FunctionDownloadStatusYaml.Status st) {
-        return new MetadataParamsYamlV2.StatusV2(st.functionState, st.code, st.dispatcherUrl, st.sourcing, st.verified);
+        return new MetadataParamsYamlV2.StatusV2(st.functionState, st.code, st.dispatcherUrl, st.sourcing, Enums.VerificationType.not_yet);
     }
 
     @NonNull

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,7 +37,7 @@ public class ProcessorAndCoreData {
         public final String url;
 
         public AssetServerUrl(String url) {
-            if (StringUtils.isBlank(url)) {
+            if (S.b(url)) {
                 throw new IllegalStateException("#819.020 assetUrl is null");
             }
             this.url = url;
@@ -49,7 +50,7 @@ public class ProcessorAndCoreData {
         public final String url;
 
         public DispatcherServerUrl(String url) {
-            if (StringUtils.isBlank(url)) {
+            if (S.b(url)) {
                 throw new IllegalStateException("#819.040 dispatcherUrl is null");
             }
             this.url = url;

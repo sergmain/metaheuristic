@@ -37,6 +37,15 @@ public final class Enums {
         signature_wrong, signature_not_found, checksum_wrong, not_supported_os,
         asset_error, download_error, function_config_error, io_error, dispatcher_config_error }
 
+    public enum VerificationType { not_yet(false), error(true), none(true), checksum(true), checksum_with_signature(true);
+
+        public boolean completed;
+
+        VerificationType(boolean completed) {
+            this.completed = completed;
+        }
+    }
+
     public enum GitStatus {unknown, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
@@ -149,7 +158,7 @@ public final class Enums {
         }
     }
 
-    public enum ChecksumStateEnum { unknown, signature_ok, signature_not_required, signature_not_valid }
+    public enum SignatureStates { unknown, signature_ok, signature_not_required, signature_not_valid, not_signed }
 
     public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
         PRODUCING(6), PROCESSOR_LOG(7);
