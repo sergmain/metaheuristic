@@ -29,7 +29,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ProcessorAndCoreData {
 
-    public interface CommonUrl {}
+    public interface CommonUrl {
+        String getUrl();
+    }
 
     @Data
     @EqualsAndHashCode(of="url")

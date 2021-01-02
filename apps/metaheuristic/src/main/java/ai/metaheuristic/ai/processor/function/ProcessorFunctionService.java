@@ -69,16 +69,16 @@ public class ProcessorFunctionService {
         public ConfigStatus status;
     }
 
-    public DownloadedFunctionConfigStatus downloadFunctionConfig(
-            DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
+    public DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.Asset asset, String functionCode) {
 
-        final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/999";
+        // 999 - fake processorId for backward compatibility
+        final String functionConfigUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/999";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
         final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
-            final URI uri = new URIBuilder(functionChecksumUrl + randomPartUri)
+            final URI uri = new URIBuilder(functionConfigUrl + randomPartUri)
                     .setCharset(StandardCharsets.UTF_8)
                     .addParameter("code", functionCode).build();
 
@@ -94,7 +94,7 @@ public class ProcessorFunctionService {
 
         } catch (HttpResponseException e) {
             if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                log.warn("#813.200 Access denied to url {}", functionChecksumUrl);
+                log.warn("#813.200 Access denied to url {}", functionConfigUrl);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
                 functionConfigStatus.status = ConfigStatus.not_found;
@@ -111,11 +111,11 @@ public class ProcessorFunctionService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, function: {}, dispatcher: {}, assetUrl: {}", e.toString(), functionCode, dispatcherUrl.url, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, function: {}, assetUrl: {}", e.toString(), functionCode, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl.url), e);
+            log.error(S.f("#813.180 IOException, function: %s, assetUrl: %s",functionCode, asset.url), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl.url, asset.url), th);
+            log.error(S.f("#813.190 Throwable, function: %s, assetUrl: %s",functionCode, asset.url), th);
         }
         return functionConfigStatus;
     }

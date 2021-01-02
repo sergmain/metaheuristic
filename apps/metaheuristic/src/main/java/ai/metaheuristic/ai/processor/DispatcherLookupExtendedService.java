@@ -123,13 +123,11 @@ public class DispatcherLookupExtendedService {
 
     public File prepareBaseResourceDir(MetadataParamsYaml.ProcessorState processorState) {
         final File dispatcherDir = new File(globals.processorResourcesDir, processorState.dispatcherCode);
-        if (dispatcherDir.exists()) {
-            return dispatcherDir;
+        if (!dispatcherDir.exists()) {
+            //noinspection unused
+            boolean status = dispatcherDir.mkdirs();
         }
-        //noinspection unused
-        boolean status = dispatcherDir.mkdirs();
         return dispatcherDir;
     }
-
 
 }

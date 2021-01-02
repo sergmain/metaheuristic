@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.event.ProcessChecksumAndSignatureEvent;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
-import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -33,7 +32,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -51,7 +49,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -91,13 +88,9 @@ public class MetadataService {
     @Data
     @AllArgsConstructor
     private static class SimpleCache {
-        public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
         public final DispatcherLookupParamsYaml.Asset asset;
-        public final MetadataParamsYaml.ProcessorState processorState;
-        public final File baseResourceDir;
+        public final File baseFunctionDir;
     }
-
-    private final Map<String, SimpleCache> simpleCacheMap = new HashMap<>();
 
     private static class MetadataSync {}
     private static final MetadataSync syncObj = new MetadataSync();
@@ -182,60 +175,66 @@ public class MetadataService {
     }
 
     @Nullable
-    public MetadataParamsYaml.Status syncFunctionStatus(ServerUrls urls, DispatcherLookupParamsYaml.Asset asset, final String functionCode) {
+    public MetadataParamsYaml.Status syncFunctionStatus(AssetServerUrl assetUrl, DispatcherLookupParamsYaml.Asset asset, final String functionCode) {
         try {
-            syncFunctionStatusInternal(urls, asset, functionCode);
+            syncFunctionStatusInternal(assetUrl, asset, functionCode);
         } catch (Throwable th) {
             log.error("#815.080 Error in syncFunctionStatus()", th);
-            setFunctionState(urls.assetUrl, functionCode, Enums.FunctionState.io_error);
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.io_error);
         }
-        return getFunctionDownloadStatuses(urls.assetUrl, functionCode);
+        return getFunctionDownloadStatuses(assetUrl, functionCode);
     }
 
-    private void syncFunctionStatusInternal(ServerUrls serverUrls, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
-        MetadataParamsYaml.Status status = getFunctionDownloadStatuses(serverUrls.assetUrl, functionCode);
+    private void syncFunctionStatusInternal(AssetServerUrl assetUrl, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
+        MetadataParamsYaml.Status status = getFunctionDownloadStatuses(assetUrl, functionCode);
 
         if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.functionState== Enums.FunctionState.ready) {
             return;
         }
-        SimpleCache simpleCache1 = simpleCacheMap.computeIfAbsent(serverUrls.dispatcherUrl.url, o -> {
-            final MetadataParamsYaml.ProcessorState processorState = dispatcherUrlAsCode(serverUrls.dispatcherUrl);
-            return new SimpleCache(
-                    dispatcherLookupExtendedService.lookupExtendedMap.get(serverUrls.dispatcherUrl),
-                    asset,
-                    processorState,
-                    dispatcherLookupExtendedService.prepareBaseResourceDir(processorState)
-            );
-        });
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                processorFunctionService.downloadFunctionConfig(serverUrls.dispatcherUrl, asset, functionCode);
+                processorFunctionService.downloadFunctionConfig(asset, functionCode);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
-            setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.function_config_error);
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error);
             return;
         }
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.not_found) {
-            removeFunction(serverUrls.assetUrl, functionCode);
+            removeFunction(assetUrl, functionCode);
             return;
         }
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
+        if (S.b(functionConfig.file) && S.b(functionConfig.content)) {
+            log.error("#815.100 name of file for function {} is blank and content of function is blank too", functionCode);
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error);
+            return;
+        }
 
+        if (!S.b(functionConfig.content)) {
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.ok);
+            return;
+        }
+
+/*
         ChecksumWithSignatureState checksumState = prepareChecksumWithSignature(simpleCache.dispatcher.dispatcherLookup.signatureRequired, functionCode, serverUrls.assetUrl, functionConfig);
         if (checksumState.state== Enums.SignatureStates.signature_not_valid) {
             return;
         }
+*/
 
-        final AssetFile assetFile = AssetUtils.prepareFunctionFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
+        File baseFunctionDir = prepareBaseFunctionDir(assetUrl);
+
+        final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.asset_error);
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error);
             return;
         }
         if (!assetFile.isContent) {
-            setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.none);
+            setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
             return;
         }
 
+/*
         try {
             CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(serverUrls.assetUrl,
                     functionCode, simpleCache.dispatcher.dispatcherLookup, checksumState, assetFile.file);
@@ -249,28 +248,7 @@ public class MetadataService {
             log.error(S.f("#815.100 Error verifying function %s from asset server %s, dispatcher %s", functionCode, serverUrls.assetUrl, serverUrls.dispatcherUrl), th);
             setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.io_error);
         }
-    }
-
-    public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            AssetServerUrl assetUrl, DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset,
-            String functionCode, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
-        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
-        if (checksumState.state!= Enums.SignatureStates.signature_not_required) {
-            try (FileInputStream fis = new FileInputStream(functionTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                        "Dispatcher url: "+ dispatcherUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
-                        checksumState.originChecksumWithSignature, checksumState.hashAlgo);
-            }
-            if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.120 function {} has the broken signature", functionCode);
-                setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_wrong);
-            }
-            else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.140 function {} has the wrong checksum", functionCode);
-                setFunctionState(assetUrl, functionCode, Enums.FunctionState.checksum_wrong);
-            }
-        }
-        return status;
+*/
     }
 
     @Nullable
@@ -497,17 +475,31 @@ public class MetadataService {
     }
 
     private static MetadataParamsYaml.ProcessorState asEmptyProcessorSate(DispatcherServerUrl dispatcherUrl) {
-        String s = dispatcherUrl.url.toLowerCase();
-        if (dispatcherUrl.url.startsWith(Consts.HTTP)) {
+        MetadataParamsYaml.ProcessorState processorState = new MetadataParamsYaml.ProcessorState();
+        processorState.dispatcherCode = asCode(dispatcherUrl);
+        return processorState;
+    }
+
+    private static String asCode(CommonUrl commonUrl) {
+        String s = commonUrl.getUrl().toLowerCase();
+        if (s.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
         }
-        else if (dispatcherUrl.url.startsWith(Consts.HTTPS)) {
+        else if (s.startsWith(Consts.HTTPS)) {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        MetadataParamsYaml.ProcessorState processorState = new MetadataParamsYaml.ProcessorState();
-        processorState.dispatcherCode = s;
-        return processorState;
+        return s;
     }
+
+    public File prepareBaseFunctionDir(AssetServerUrl assetUrl) {
+        final File dir = new File(globals.processorResourcesDir, asCode(assetUrl)+File.separatorChar+ EnumsApi.DataType.function);
+        if (!dir.exists()) {
+            //noinspection unused
+            boolean status = dir.mkdirs();
+        }
+        return dir;
+    }
+
 
 }

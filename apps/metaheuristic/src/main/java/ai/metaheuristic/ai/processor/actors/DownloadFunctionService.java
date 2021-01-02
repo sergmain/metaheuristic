@@ -116,7 +116,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             TaskParamsYaml.FunctionConfig functionConfig = task.functionConfig;
             if (functionConfig ==null) {
                 ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                        processorFunctionService.downloadFunctionConfig(serverUrls.dispatcherUrl, asset, functionCode);
+                        processorFunctionService.downloadFunctionConfig(asset, functionCode);
                 if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
                     metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error);
                     continue;

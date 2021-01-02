@@ -105,20 +105,12 @@ public class AssetUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, @Nullable String resourceFilename) {
+    public static AssetFile prepareFunctionFile(File baseFunctionDir, String functionCode, @Nullable String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(baseDir, EnumsApi.DataType.function.toString());
-/*
-        trgDir.mkdirs();
-        if (!trgDir.exists()) {
-            assetFile.isError = true;
-            log.error("#025.060 Can't create a function dir: {}", trgDir.getAbsolutePath());
-            return assetFile;
-        }
-*/
+
         final String resId = functionCode.replace(':', '_');
-        final File resDir = new File(trgDir, resId);
+        final File resDir = new File(baseFunctionDir, resId);
         resDir.mkdirs();
         if (!resDir.exists()) {
             assetFile.isError = true;
