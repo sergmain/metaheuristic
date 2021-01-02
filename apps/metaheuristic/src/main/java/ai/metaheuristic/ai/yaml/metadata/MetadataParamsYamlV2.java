@@ -24,9 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Serge
@@ -43,7 +41,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class Core {
+    public static class CoreV2 {
         public int logicId;
         public String coreId;
         public String sessionId;
@@ -57,7 +55,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public String dispatcherCode;
         public String processorId;
         public String sessionId;
-        public final List<MetadataParamsYaml.Core> cores = new ArrayList<>();
+        public final List<CoreV2> cores = new ArrayList<>();
     }
 
     @Data
@@ -68,7 +66,11 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public String code;
         public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
-//        public Enums.VerificationState verification = Enums.VerificationState.not_yet;
+
+        public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
+        public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
+
+        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
     public final LinkedHashMap<String, ProcessorStateV2> processorStates = new LinkedHashMap<>();

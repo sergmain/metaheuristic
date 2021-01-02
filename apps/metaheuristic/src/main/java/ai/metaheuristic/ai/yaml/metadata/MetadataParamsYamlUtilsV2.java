@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -66,7 +65,7 @@ public class MetadataParamsYamlUtilsV2
     }
 
     private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {
-        return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetUrl, sV2.sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
+        return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetUrl, sV2.sourcing, sV2.checksum, sV2.signature);
     }
 
     @NonNull

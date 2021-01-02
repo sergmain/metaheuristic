@@ -19,9 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.*;
-import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
-import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -29,6 +27,7 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
@@ -65,8 +64,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     private final Globals globals;
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final ProcessorFunctionService processorFunctionService;
-    private final DispatcherContextInfoHolder dispatcherContextService;
     private final ChecksumAndSignatureService checksumAndSignatureService;
 
     @SuppressWarnings("Duplicates")
