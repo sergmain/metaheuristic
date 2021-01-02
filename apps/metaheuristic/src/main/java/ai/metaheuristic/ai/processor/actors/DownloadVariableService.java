@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.CurrentExecState;
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
@@ -68,6 +69,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
         DownloadVariableTask task;
         while ((task = poll()) != null) {
+
             EnumsApi.DataType type;
             String es;
             switch(task.context) {
@@ -84,10 +86,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 default:
                     es = "#810.007 Unknown context: " + task.context+ ", variableId: " +  task.variableId;
                     log.error(es);
-                    processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.taskId, es);
+                    processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.taskId, es);
                     continue;
             }
-            ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.getDispatcherUrl(), task.taskId);
+            ProcessorTask processorTask = processorTaskService.findById(task.getDispatcherUrl(), task.taskId);
             if (processorTask==null) {
                 log.info("Task #{} wasn't found, skip it", task.taskId);
                 continue;
@@ -96,10 +98,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcher.getDispatcherUrl(), processorTask.execContextId);
+            EnumsApi.ExecContextState state = currentExecState.getState(task.getDispatcherUrl(), processorTask.execContextId);
             if (state!= EnumsApi.ExecContextState.STARTED && state!= EnumsApi.ExecContextState.PRODUCING) {
                 log.info("ExecContext #{} is stopped, delete task #{}", processorTask.execContextId, task.taskId);
-                processorTaskService.delete(task.dispatcher.getDispatcherUrl(), task.taskId);
+                processorTaskService.delete(task.getDispatcherUrl(), task.taskId);
                 continue;
             }
 
@@ -115,7 +117,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             log.info("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.dispatcher.getDispatcherUrl() + "/rest/v1/payload/resource/"+type;
+                final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/"+type;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' +
                         task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
 
@@ -123,7 +125,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 if (parentDir==null) {
                     es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
                     log.error(es);
-                    processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.taskId, es);
+                    processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.taskId, es);
                     continue;
                 }
                 File tempFile;
@@ -132,7 +134,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 } catch (IOException e) {
                     es = "#810.025 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
-                    processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.taskId, es);
+                    processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.taskId, es);
                     continue;
                 }
 
@@ -155,19 +157,19 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         RestUtils.addHeaders(request);
 
                         Response response = HttpClientExecutor.getExecutor(
-                                task.dispatcher.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
+                                task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                         File partFile = new File(dir, String.format(mask, idx));
                         final HttpResponse httpResponse = response.returnResponse();
                         if (httpResponse.getStatusLine().getStatusCode()==HttpServletResponse.SC_NO_CONTENT) {
                             if (task.nullable) {
-                                processorTaskService.setInputAsEmpty(task.dispatcher.getDispatcherUrl(), task.taskId, task.variableId);
+                                processorTaskService.setInputAsEmpty(task.getDispatcherUrl(), task.taskId, task.variableId);
                                 resourceState = Enums.VariableState.ok;
                             }
                             else {
                                 es = String.format("#810.027 Dispatcher reported that variable #%s is empty but configuration states nullable==false. " +
                                         "Task #%s is finished with error.", task.variableId, task.getTaskId());
                                 log.warn(es);
-                                processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.getTaskId(), es);
+                                processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.getTaskId(), es);
                                 resourceState = Enums.VariableState.variable_cant_be_null;
                             }
                             break;
@@ -213,21 +215,21 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
                             es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
-                            processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.getTaskId(), es);
+                            processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.getTaskId(), es);
                             resourceState = Enums.VariableState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
-                            processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.getTaskId(), es);
+                            processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.getTaskId(), es);
                             resourceState = Enums.VariableState.unknown_error;
                             break;
                         }
                         else {
                             es = String.format("#810.037 An unknown error while downloading a variable #%s. Task #%s is finished with an error.", task.variableId, task.getTaskId());
                             log.warn(es);
-                            processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.getTaskId(), es);
+                            processorTaskService.markAsFinishedWithError(task.getDispatcherUrl(), task.getTaskId(), es);
                             resourceState = Enums.VariableState.unknown_error;
                             break;
                         }
@@ -290,7 +292,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         String es;
         es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished' with error.", task.variableId, task.getTaskId());
         log.warn(es);
-        processorTaskService.markAsFinishedWithError(task.dispatcher.getDispatcherUrl(), task.getTaskId(), es);
+        processorTaskService.markAsFinishedWithError(new ProcessorAndCoreData.DispatcherServerUrl(task.dispatcher.url), task.getTaskId(), es);
         return Enums.VariableState.variable_doesnt_exist;
     }
 }

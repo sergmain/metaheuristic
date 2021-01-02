@@ -17,6 +17,7 @@
 package ai.metaheuristic.apps.package_function;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
@@ -64,7 +65,7 @@ public class VerifySignature {
 //        }
 
 
-        ChecksumWithSignatureUtils.ChecksumWithSignature cws = ChecksumWithSignatureUtils.parse(checksumAndSignature);
+        ChecksumAndSignatureData.ChecksumWithSignature cws = ChecksumWithSignatureUtils.parse(checksumAndSignature);
         System.out.println(checksum.equals(cws.checksum));
         System.out.println(signature.equals(cws.signature));
 
@@ -73,7 +74,7 @@ public class VerifySignature {
         cs.checksums.put(EnumsApi.HashAlgo.SHA256WithSignature, checksumAndSignature);
 //        checksum.checksums.put(EnumsApi.HashAlgo.SHA256WithSignature, checksum + SecUtils.SIGNATURE_DELIMITER + signature);
 
-        CheckSumAndSignatureStatus.Status status = ChecksumWithSignatureUtils.isValid(checksum.getBytes(), signature, publicKey);
+        EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(checksum.getBytes(), signature, publicKey);
         System.out.println(status);
 
         try (FileInputStream fis = new FileInputStream(new File(args[0]))) {

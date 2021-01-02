@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor.function;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -49,7 +50,7 @@ public class ChecksumAndSignatureService {
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             ProcessorAndCoreData.AssetServerUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
-            String functionCode, MetadataService.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
+            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
 
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.ok, EnumsApi.SignatureState.ok);
 

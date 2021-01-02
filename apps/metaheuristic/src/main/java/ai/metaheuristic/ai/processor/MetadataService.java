@@ -31,18 +31,15 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -51,10 +48,15 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignature;
+import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignatureInfo;
 
 @SuppressWarnings("UnusedReturnValue")
 @Service
@@ -69,21 +71,6 @@ public class MetadataService {
     private final ProcessorFunctionService processorFunctionService;
 
     private MetadataParamsYaml metadata = null;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ChecksumWithSignatureInfo {
-        public final CheckSumAndSignatureStatus checkSumAndSignatureStatus = new CheckSumAndSignatureStatus();
-//        public Enums.SignatureStates state = Enums.SignatureStates.unknown;
-        public ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature;
-        public String originChecksumWithSignature;
-        public EnumsApi.HashAlgo hashAlgo;
-
-//        public ChecksumWithSignatureInfo(Enums.SignatureStates state) {
-//            this.state = state;
-//        }
-    }
 
     @Data
     @AllArgsConstructor
@@ -149,41 +136,30 @@ public class MetadataService {
 
         // check requirements of signature
         if (functionConfig.checksumMap==null) {
-            checksumWithSignatureInfo.checkSumAndSignatureStatus.checksum = EnumsApi.ChecksumState.not_present;
-            checksumWithSignatureInfo.checkSumAndSignatureStatus.signature = EnumsApi.SignatureState.not_present;
             return checksumWithSignatureInfo;
         }
 
         // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing
-        String data = functionConfig.checksumMap.entrySet().stream()
+        Map.Entry<EnumsApi.HashAlgo, String> entry = functionConfig.checksumMap.entrySet().stream()
                 .filter(o -> o.getKey() == EnumsApi.HashAlgo.SHA256WithSignature)
                 .findFirst()
-                .map(Map.Entry::getValue).orElse(null);
+                .orElse(null);
 
-        if (S.b(data)) {
-            return setSignatureNotValid(functionCode, assetUrl);
-        }
-        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
-        if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
-            return setSignatureNotValid(functionCode, assetUrl);
+        if (entry==null || S.b(entry.getValue())) {
+            entry = functionConfig.checksumMap.entrySet().stream().findFirst().orElse(null);
+//            return setSignatureNotValid(functionCode, assetUrl);
         }
 
-        return new ChecksumWithSignatureInfo(Enums.SignatureStates.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
-        checksumWithSignatureInfo.checkSumAndSignatureStatus.checksum = EnumsApi.ChecksumState.not_present;
-        checksumWithSignatureInfo.checkSumAndSignatureStatus.signature = EnumsApi.SignatureState.not_present;
+        if (entry==null || S.b(entry.getValue())) {
+            // both checksum and signature are null
+            return checksumWithSignatureInfo;
+//            return setSignatureNotValid(functionCode, assetUrl);
+        }
+
+        ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(entry.getValue());
+        checksumWithSignatureInfo.set(checksumWithSignature, entry.getValue(), entry.getKey());
+
         return checksumWithSignatureInfo;
-    }
-
-    private ChecksumWithSignatureInfo setSignatureNotValid(String functionCode, AssetServerUrl assetUrl) {
-        setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
-        // TODO 2021-01-01 check this state
-        return new ChecksumWithSignatureInfo(Enums.SignatureStates.not_signed);
-    }
-
-    private ChecksumWithSignatureInfo setSignatureNotFound(String functionCode, AssetServerUrl assetUrl) {
-        setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
-        // TODO 2021-01-01 check this state
-        return new ChecksumWithSignatureInfo(Enums.SignatureStates.not_signed);
     }
 
     private void markAllAsUnverified() {

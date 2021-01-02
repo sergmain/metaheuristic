@@ -16,15 +16,14 @@
 package ai.metaheuristic.commons.utils.checksum;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
-import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -32,15 +31,10 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Map;
 
+import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.*;
+
 @Slf4j
 public class ChecksumWithSignatureUtils {
-
-    @AllArgsConstructor
-    public static class ChecksumWithSignature {
-        public String checksum;
-        @Nullable
-        public String signature;
-    }
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();

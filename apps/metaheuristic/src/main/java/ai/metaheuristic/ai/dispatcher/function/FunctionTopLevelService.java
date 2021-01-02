@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -29,7 +30,6 @@ import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
-import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -271,7 +271,7 @@ public class FunctionTopLevelService {
                         log.warn(es);
                         continue;
                     }
-                    ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
+                    ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
                     if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
                         String es = S.f("#295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
@@ -310,8 +310,8 @@ public class FunctionTopLevelService {
                         log.warn(es);
                         continue;
                     }
-                    CheckSumAndSignatureStatus.Status st = ChecksumWithSignatureUtils.isValid(sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
-                    if (st!= CheckSumAndSignatureStatus.Status.correct) {
+                    EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+                    if (st!= EnumsApi.SignatureState.ok) {
                         if (!checksumWithSignature.checksum.equals(sum)) {
                             String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);
                             statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));

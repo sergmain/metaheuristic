@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -43,5 +44,10 @@ public class UploadVariableTask extends ProcessorRestTask {
         this.taskId = taskId;
         this.variableId = variableId;
         this.nullified = nullified;
+    }
+
+    public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
+        ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherServerUrl(dispatcher.url);
+        return dispatcherUrl;
     }
 }

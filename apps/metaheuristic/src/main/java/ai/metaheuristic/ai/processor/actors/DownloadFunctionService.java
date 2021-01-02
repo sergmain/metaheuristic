@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
@@ -326,11 +327,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.error("#811.200 asset file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
-            MetadataService.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(assetUrl, functionCode, functionConfigAndStatus.functionConfig);
+            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(assetUrl, functionCode, functionConfigAndStatus.functionConfig);
 
-            CheckSumAndSignatureStatus status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, assetFile.getFile());
+            CheckSumAndSignatureStatus status;
+            try {
+                status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, asset, functionCode, state, assetFile.getFile());
+            } catch (IOException e) {
+                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.io_error);
+                continue;
+            }
 
-            if (status.checksum != EnumsApi.ChecksumState.error && status.signature == CheckSumAndSignatureStatus.Status.correct) {
+            if (status.checksum != EnumsApi.ChecksumState.error && status.signature != EnumsApi.SignatureState.error) {
                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
             } else {
                 assetFile.file.delete();

@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
@@ -60,5 +61,10 @@ public class DownloadVariableTask extends ProcessorRestTask {
                 "context='" + context + '\'' +
                 ", targetDir=" + targetDir.getPath() +
                 '}';
+    }
+
+    public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
+        ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherServerUrl(dispatcher.url);
+        return dispatcherUrl;
     }
 }
