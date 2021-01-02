@@ -34,7 +34,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Deprecated
 public class FunctionDownloadStatusYaml implements BaseParams {
 
     public final int version=1;

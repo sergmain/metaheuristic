@@ -51,6 +51,7 @@ import java.util.function.Function;
  * Date: 1/13/2020
  * Time: 7:13 PM
  */
+@SuppressWarnings("rawtypes")
 @Service
 @RequiredArgsConstructor
 @Slf4j
