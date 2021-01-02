@@ -142,10 +142,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumWithSignatureState prepareChecksumWithSignature(String functionCode, AssetServerUrl assetUrl, TaskParamsYaml.FunctionConfig functionConfig) {
-        if (!signatureRequired) {
-            return new ChecksumWithSignatureState(Enums.SignatureStates.signature_not_required);
-        }
+    public ChecksumWithSignatureState prepareChecksumWithSignature(AssetServerUrl assetUrl, String functionCode, TaskParamsYaml.FunctionConfig functionConfig) {
 
         // check requirements of signature
         if (functionConfig.checksumMap==null) {
@@ -214,7 +211,7 @@ public class MetadataService {
             return null;
         }
         if (status.functionState== Enums.FunctionState.ready) {
-            if (status.checksum!=Enums.ChecksumState.not_yet && status.signature!= Enums.SignatureState.not_yet) {
+            if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
                 return new FunctionConfigAndStatus(status);
             }
             setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
@@ -372,6 +369,10 @@ public class MetadataService {
                 return null;
             }
             status.functionState = functionState;
+            if (status.functionState== Enums.FunctionState.none||status.functionState== Enums.FunctionState.ok) {
+                status.checksum= EnumsApi.ChecksumState.not_yet;
+                status.signature= EnumsApi.SignatureState.not_yet;
+            }
             updateMetadataFile();
             return status;
         }
@@ -443,7 +444,7 @@ public class MetadataService {
     private void setFunctionDownloadStatusInternal(AssetServerUrl assetUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
         MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, Enums.ChecksumState.not_yet, Enums.SignatureState.not_yet);
+            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
             metadata.statuses.add(status);
         }
         status.functionState = functionState;

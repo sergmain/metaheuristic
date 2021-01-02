@@ -33,9 +33,22 @@ public final class Enums {
     public enum AssetType { company, account, function, source}
 
     public enum FunctionState {
-        none, ok(true), ready, not_found,
+        // state is unknown, task for downloading of function is just created
+        none,
+        // asset file for function exists and we need to check checksum and signature, if they are presented
+        ok(true),
+        // function is verified and ready for execution
+        ready,
+
+        not_found,
         not_supported_os,
-        asset_error, download_error, function_config_error, io_error, dispatcher_config_error;
+        asset_error,
+        download_error,
+        function_config_error,
+        io_error,
+        dispatcher_config_error,
+        signature_wrong,
+        checksum_wrong;
 
         public boolean needVerification = false;
         FunctionState() {
@@ -46,10 +59,7 @@ public final class Enums {
         }
     }
 
-    public enum ChecksumState { not_yet, none, ok, error }
-    public enum SignatureState { not_yet, none, ok, error }
-
-/*
+    /*
     public enum VerificationState { not_yet(false), error(true), ok(true);
 
         public boolean completed;
@@ -172,7 +182,7 @@ public final class Enums {
         }
     }
 
-    public enum SignatureStates { unknown, signature_ok, signature_not_required, signature_not_valid, not_signed }
+    public enum SignatureStates { unknown, signature_ok, signature_not_valid, not_signed }
 
     public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
         PRODUCING(6), PROCESSOR_LOG(7);

@@ -25,14 +25,12 @@ import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
-import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -120,12 +118,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (assetFile==null) {
                 throw new IllegalStateException("(assetFile==null)");
             }
+            TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
+            if (functionConfig == null) {
+                throw new IllegalStateException("(functionConfig == null)");
+            }
+
             if (functionDownloadStatus.functionState == Enums.FunctionState.none) {
 
-                TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
-                if (functionConfig == null) {
-                    throw new IllegalStateException("(functionConfig == null)");
-                }
 /*
                 MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, assetUrl, functionConfig);
                 if (state.state == Enums.SignatureStates.signature_not_valid) {
@@ -328,12 +327,14 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.error("#811.200 asset file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
-            CheckSumAndSignatureStatus status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, state, functionTempFile);
+            MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(assetUrl, functionCode, functionConfigAndStatus.functionConfig);
+
+            CheckSumAndSignatureStatus status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, assetFile.getFile());
 
             if (status.checksum == CheckSumAndSignatureStatus.Status.correct && status.signature == CheckSumAndSignatureStatus.Status.correct) {
                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
             } else {
-                functionTempFile.delete();
+                assetFile.delete();
             }
 
         }

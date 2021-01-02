@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
@@ -47,11 +48,13 @@ public class ChecksumAndSignatureService {
     private final MetadataService metadataService;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            ProcessorAndCoreData.AssetServerUrl assetUrl, ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset,
-            String functionCode, MetadataService.ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
-        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
+            ProcessorAndCoreData.AssetServerUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
+            String functionCode, MetadataService.ChecksumWithSignatureState checksumState, File functionFile) throws IOException {
+
+        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.ok, EnumsApi.SignatureState.ok);
+
         if (checksumState.state!= Enums.SignatureStates.signature_not_required) {
-            try (FileInputStream fis = new FileInputStream(functionTempFile)) {
+            try (FileInputStream fis = new FileInputStream(functionFile)) {
                 status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
                         "Dispatcher url: "+ dispatcherUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
                         checksumState.originChecksumWithSignature, checksumState.hashAlgo);

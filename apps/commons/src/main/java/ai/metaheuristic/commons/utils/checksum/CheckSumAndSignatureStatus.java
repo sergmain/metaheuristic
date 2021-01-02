@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.commons.utils.checksum;
 
+import ai.metaheuristic.api.EnumsApi;
 import lombok.*;
 
 @Data
@@ -23,9 +24,7 @@ import lombok.*;
 @NoArgsConstructor
 public class CheckSumAndSignatureStatus {
 
-    public enum Status {unknown, correct, wrong}
-
-    public Status checksum = Status.unknown;
-    public Status signature = Status.unknown;
+    public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
+    public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
 
 }

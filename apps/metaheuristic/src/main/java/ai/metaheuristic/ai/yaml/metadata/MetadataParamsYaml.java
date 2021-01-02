@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
 
 import java.util.*;
 
@@ -62,8 +61,8 @@ public class MetadataParamsYaml implements BaseParams {
         public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
 
-        public Enums.ChecksumState checksum = Enums.ChecksumState.not_yet;
-        public Enums.SignatureState signature = Enums.SignatureState.not_yet;
+        public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
+        public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
