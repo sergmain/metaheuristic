@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.lang.Nullable;
@@ -30,6 +31,7 @@ public class UploadVariableTask extends ProcessorRestTask {
     public Long variableId;
     public boolean nullified = false;
     public String processorId;
+    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
     public UploadVariableTask(long taskId, @Nullable File file, Long variableId) {
         this.taskId = taskId;

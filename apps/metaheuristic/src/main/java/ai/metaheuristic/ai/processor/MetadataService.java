@@ -185,7 +185,9 @@ public class MetadataService {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            status.verification = Enums.VerificationState.not_yet;
+            status.functionState = Enums.FunctionState.none;
+            status.checksum = EnumsApi.ChecksumState.not_yet;
+            status.signature = EnumsApi.SignatureState.not_yet;
         }
         updateMetadataFile();
     }

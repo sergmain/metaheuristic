@@ -20,5 +20,4 @@ import lombok.Data;
 
 @Data
 public abstract class ProcessorRestTask {
-    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 }

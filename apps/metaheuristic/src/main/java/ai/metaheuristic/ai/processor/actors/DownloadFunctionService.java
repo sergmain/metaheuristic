@@ -82,7 +82,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             final String functionCode = task.functionCode;
 
             final ProcessorAndCoreData.AssetServerUrl assetUrl = task.assetUrl;
-//            final DispatcherLookupParamsYaml.DispatcherLookup dispatcher1 = task.dispatcher;
             final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = task.dispatcherUrl;
             final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetUrl);
             if (asset==null) {
@@ -334,7 +333,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (status.checksum != EnumsApi.ChecksumState.error && status.signature == CheckSumAndSignatureStatus.Status.correct) {
                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
             } else {
-                assetFile.delete();
+                assetFile.file.delete();
             }
 
         }
@@ -342,11 +341,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
     public void prepareFunctionForDownloading() {
         metadataService.getStatuses().forEach(o -> {
-            if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && (o.functionState == Enums.FunctionState.none || !o.verified)) {
+            if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
                 ProcessorAndCoreData.AssetServerUrl assetServerUrl = new ProcessorAndCoreData.AssetServerUrl(o.assetUrl);
-
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(o.assetUrl);
 
                 DispatcherContextInfo contextInfo = dispatcherContextService.getCtx(assetServerUrl);
 
@@ -363,9 +359,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetUrl, contextInfo.chunkSize);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(contextInfo.chunkSize, o.code, assetServerUrl, null, o.assetUrl);
-                functionTask.dispatcher = dispatcher.dispatcherLookup;
-
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(contextInfo.chunkSize, o.code, null, assetServerUrl);
                 add(functionTask);
             }
         });

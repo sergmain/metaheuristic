@@ -34,7 +34,7 @@ public final class Enums {
 
     public enum FunctionState {
         // state is unknown, task for downloading of function is just created
-        none,
+        none(true),
         // asset file for function exists and we need to check checksum and signature, if they are presented
         ok(true),
         // function is verified and ready for execution

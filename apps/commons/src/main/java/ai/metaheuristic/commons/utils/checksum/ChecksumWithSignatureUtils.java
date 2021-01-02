@@ -16,6 +16,7 @@
 package ai.metaheuristic.commons.utils.checksum;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -36,6 +38,7 @@ public class ChecksumWithSignatureUtils {
     @AllArgsConstructor
     public static class ChecksumWithSignature {
         public String checksum;
+        @Nullable
         public String signature;
     }
 
@@ -43,34 +46,36 @@ public class ChecksumWithSignatureUtils {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
             status = verifyChecksumAndSignature(infoPrefix, fis, publicKey, entry.getValue(), entry.getKey());
-            if (status.checksum== CheckSumAndSignatureStatus.Status.correct && status.signature== CheckSumAndSignatureStatus.Status.correct) {
+            if (status.checksum== EnumsApi.ChecksumState.error && status.signature== EnumsApi.SignatureState.error) {
                 return status;
             }
-        }
-        if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
-            log.error("{}, Signature is not correct", infoPrefix);
         }
         return status;
     }
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
-        if (hashAlgo != EnumsApi.HashAlgo.SHA256WithSignature) {
-            status.signature = CheckSumAndSignatureStatus.Status.wrong;
-            return status;
-        }
-
         ChecksumWithSignature checksumWithSignature = parse(value);
-        String actualSum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
+        String actualSum = Checksum.getChecksum(hashAlgo, fis);
         if (actualSum.equals(checksumWithSignature.checksum)) {
-            status.checksum = CheckSumAndSignatureStatus.Status.correct;
+            status.checksum = EnumsApi.ChecksumState.ok;
             log.info("{}, checksum is correct", infoPrefix);
         } else {
             log.error("{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
-            status.checksum = CheckSumAndSignatureStatus.Status.wrong;
+            status.checksum = EnumsApi.ChecksumState.error;
         }
 
-        status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
+        if (!hashAlgo.isSigned) {
+            status.signature = EnumsApi.SignatureState.not_present;
+        }
+        else {
+            if (S.b(checksumWithSignature.signature)) {
+                status.signature = EnumsApi.SignatureState.not_present;
+            }
+            else {
+                status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
+            }
+        }
         log.info("{}, signature is {}", infoPrefix, status.signature);
 
         return status;
@@ -79,20 +84,20 @@ public class ChecksumWithSignatureUtils {
     public static ChecksumWithSignature parse(String data) {
         final int idx = data.indexOf(SecUtils.SIGNATURE_DELIMITER);
         if (idx == -1) {
-            throw new IllegalStateException("Wrong format of checksum with signature");
+            return new ChecksumWithSignature(data, null);
         }
         ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SecUtils.SIGNATURE_DELIMITER.length()));
         return checksumWithSignature;
     }
 
-    public static CheckSumAndSignatureStatus.Status isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
+    public static EnumsApi.SignatureState isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
             signature.update(data);
             final byte[] bytes = Base64.decodeBase64(StringUtils.getBytesUsAscii(signatureAsBase64));
             boolean status = signature.verify(bytes);
-            return status ? CheckSumAndSignatureStatus.Status.correct : CheckSumAndSignatureStatus.Status.wrong;
+            return status ? EnumsApi.SignatureState.ok : EnumsApi.SignatureState.error;
         }
         catch (GeneralSecurityException e) {
             log.error("Error checking signature", e);

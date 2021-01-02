@@ -32,6 +32,7 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final Long chunkSize;
     public final boolean nullable;
     public String processorId;
+    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
     public DownloadVariableTask(
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
