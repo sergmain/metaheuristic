@@ -61,7 +61,6 @@ public class ProcessorKeepAliveRequestor {
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
-    private final DispatcherContextInfoHolder dispatcherContextService;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
@@ -72,8 +71,7 @@ public class ProcessorKeepAliveRequestor {
     public ProcessorKeepAliveRequestor(
             DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
             ProcessorService processorService, MetadataService metadataService,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-            DispatcherContextInfoHolder dispatcherContextService) {
+            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -81,7 +79,6 @@ public class ProcessorKeepAliveRequestor {
         this.metadataService = metadataService;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.processorKeepAliveProcessor = processorKeepAliveProcessor;
-        this.dispatcherContextService = dispatcherContextService;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));

@@ -54,10 +54,8 @@ public class DispatcherRequestorHolderService {
             CurrentExecState currentExecState,
             DispatcherLookupExtendedService dispatcherLookupExtendedService,
             ProcessorCommandProcessor processorCommandProcessor,
-            ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-            DispatcherContextInfoHolder dispatcherContextService
+            ProcessorKeepAliveProcessor processorKeepAliveProcessor
     ) {
-
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
@@ -68,7 +66,7 @@ public class DispatcherRequestorHolderService {
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals,
                     processorTaskService, processorService, metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor, dispatcherContextService);
+                    processorKeepAliveProcessor);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
         }

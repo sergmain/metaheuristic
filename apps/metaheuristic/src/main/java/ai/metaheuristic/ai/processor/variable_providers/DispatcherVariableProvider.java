@@ -71,18 +71,15 @@ public class DispatcherVariableProvider implements VariableProvider {
 
         try {
 
-            // process it only if the dispatcher has already sent its config
-            if (dispatcher.context.chunkSize != null) {
-                if (variable.context==EnumsApi.VariableContext.array) {
-                    createDownloadTasksForArray(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
-                }
-                else {
-                    DownloadVariableTask variableTask = new DownloadVariableTask(
-                            variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
-                    downloadVariableService.add(variableTask);
-                }
+            if (variable.context==EnumsApi.VariableContext.array) {
+                createDownloadTasksForArray(variable.id, task.getTaskId(), taskDir,
+                        dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
+            }
+            else {
+                DownloadVariableTask variableTask = new DownloadVariableTask(
+                        variable.id, variable.context, task.getTaskId(), taskDir,
+                        dispatcher.dispatcherLookup, processorState.processorId, variable.getNullable());
+                downloadVariableService.add(variableTask);
             }
             String es;
             switch(variable.context) {
@@ -103,10 +100,10 @@ public class DispatcherVariableProvider implements VariableProvider {
     }
 
     private void createDownloadTasksForArray(
-            Long variableId, Long taskId, File taskDir, Long chunkSize, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
+            Long variableId, Long taskId, File taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
             String processorId, boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
-                variableId, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId, nullable);
+                variableId, EnumsApi.VariableContext.local, taskId, taskDir, dispatcherLookup, processorId, nullable);
         downloadVariableService.add(task);
 
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variableId.toString(), null, DataType.variable);
@@ -116,7 +113,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         for (VariableArrayParamsYaml.Variable v : variables) {
             // element of array of variables can't be nullable
             DownloadVariableTask task1 = new DownloadVariableTask(
-                    v.id, v.dataType==DataType.variable ? EnumsApi.VariableContext.local : EnumsApi.VariableContext.global, taskId, taskDir, chunkSize, dispatcherLookup, processorId, false);
+                    v.id, v.dataType==DataType.variable ? EnumsApi.VariableContext.local : EnumsApi.VariableContext.global, taskId, taskDir, dispatcherLookup, processorId, false);
             downloadVariableService.add(task1);
         }
     }

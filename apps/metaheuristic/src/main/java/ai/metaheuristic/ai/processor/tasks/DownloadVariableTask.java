@@ -30,25 +30,23 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final EnumsApi.VariableContext context;
     public final long taskId;
     public final File targetDir;
-    public final Long chunkSize;
     public final boolean nullable;
     public String processorId;
     public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
     public DownloadVariableTask(
-            Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
+            Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
-        this(variableId.toString(), context, taskId, targetDir, chunkSize, dispatcher, processorId, nullable);
+        this(variableId.toString(), context, taskId, targetDir, dispatcher, processorId, nullable);
     }
 
     public DownloadVariableTask(
-            String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
+            String variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
         this.variableId = variableId;
         this.context = context;
         this.taskId = taskId;
         this.targetDir = targetDir;
-        this.chunkSize = chunkSize;
         this.dispatcher = dispatcher;
         this.processorId = processorId;
         this.nullable = nullable;
