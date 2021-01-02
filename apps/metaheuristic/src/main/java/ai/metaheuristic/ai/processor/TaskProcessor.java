@@ -103,7 +103,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherServerUrl(task.dispatcherUrl);
+            ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
 
             processorTaskService.setLaunchOn(dispatcherUrl, task.taskId);
 
@@ -193,7 +193,7 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
 
-            ProcessorAndCoreData.AssetServerUrl assetUrl = new ProcessorAndCoreData.AssetServerUrl(dispatcher.dispatcherLookup.assetUrl);
+            ProcessorAndCoreData.AssetUrl assetUrl = new ProcessorAndCoreData.AssetUrl(dispatcher.dispatcherLookup.assetUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
                 result = prepareFunction(assetUrl, processorState, preFunctionConfig);
@@ -271,7 +271,7 @@ public class TaskProcessor {
         }
     }
 
-    private void markFunctionAsFinishedWithPermanentError(ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, Long taskId, FunctionPrepareResult result) {
+    private void markFunctionAsFinishedWithPermanentError(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
                 "#100.150 Function "+result.getFunction().code+" has a permanent error: " + result.getSystemExecResult().console);
@@ -361,7 +361,7 @@ public class TaskProcessor {
             }
         }
 
-        processorTaskService.markAsFinished(new ProcessorAndCoreData.DispatcherServerUrl(task.dispatcherUrl), task.getTaskId(),
+        processorTaskService.markAsFinished(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.getTaskId(),
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
@@ -570,7 +570,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetServerUrl assetUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetUrl assetUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 

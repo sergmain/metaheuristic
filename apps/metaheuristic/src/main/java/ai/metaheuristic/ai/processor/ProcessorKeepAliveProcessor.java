@@ -42,7 +42,7 @@ public class ProcessorKeepAliveProcessor {
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
 
-    public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+    public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
         storeProcessorId(dispatcherUrl, responseParamYaml);
         reAssignProcessorId(dispatcherUrl, responseParamYaml);
@@ -50,7 +50,7 @@ public class ProcessorKeepAliveProcessor {
 //        processRequestLogFile(pcpy)
     }
 
-    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
+    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
 
         List<MetadataParamsYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (MetadataParamsYaml.Status status : statuses) {
@@ -58,12 +58,12 @@ public class ProcessorKeepAliveProcessor {
         }
     }
 
-    private void processExecContextStatus(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
+    private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
         currentExecState.register(dispatcherUrl, execContextStatus.statuses);
     }
 
     // processing at processor side
-    private void storeProcessorId(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml request) {
+    private void storeProcessorId(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
@@ -73,7 +73,7 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(DispatcherServerUrl dispatcherUrl, KeepAliveResponseParamYaml response) {
+    private void reAssignProcessorId(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml response) {
         if (response.reAssignedProcessorId ==null) {
             return;
         }

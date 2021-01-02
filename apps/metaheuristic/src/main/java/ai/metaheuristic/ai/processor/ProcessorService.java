@@ -71,7 +71,7 @@ public class ProcessorService {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
     public File logFile;
 
-    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(DispatcherServerUrl dispatcherUrl, DispatcherSchedule schedule) {
+    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(DispatcherUrl dispatcherUrl, DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
@@ -106,20 +106,20 @@ public class ProcessorService {
      * @param dispatcherUrl String
      * @param ids List&lt;String> list if task ids
      */
-    public void markAsDelivered(DispatcherServerUrl dispatcherUrl, List<Long> ids) {
+    public void markAsDelivered(DispatcherUrl dispatcherUrl, List<Long> ids) {
         for (Long id : ids) {
             processorTaskService.setDelivered(dispatcherUrl, id);
         }
     }
 
-    public void assignTasks(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
+    public void assignTasks(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             currentExecState.registerDelta(dispatcherUrl, List.of(new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(task.execContextId, task.state)));
             processorTaskService.createTask(dispatcherUrl, task.taskId, task.execContextId, task.params);
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(DispatcherServerUrl dispatcherUrl, Long taskId, Long variableId) {
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(DispatcherUrl dispatcherUrl, Long taskId, Long variableId) {
         ProcessorTask task = processorTaskService.findById(dispatcherUrl, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
@@ -153,7 +153,7 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(DispatcherServerUrl dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(DispatcherUrl dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
@@ -186,7 +186,7 @@ public class ProcessorService {
 
     public ProcessorService.ResultOfChecking checkForPreparingOVariables(ProcessorTask task, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
-        DispatcherServerUrl dispatcherUrl = new DispatcherServerUrl(task.dispatcherUrl);
+        DispatcherUrl dispatcherUrl = new DispatcherUrl(task.dispatcherUrl);
         try {
             taskParamYaml.task.inputs.forEach(input -> {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
@@ -232,7 +232,7 @@ public class ProcessorService {
     }
 
     public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
-        DispatcherServerUrl dispatcherUrl = new DispatcherServerUrl(task.dispatcherUrl);
+        DispatcherUrl dispatcherUrl = new DispatcherUrl(task.dispatcherUrl);
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);

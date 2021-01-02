@@ -44,7 +44,7 @@ public class ProcessorCommandProcessor {
     private final MetadataService metadataService;
 
     // this method is synchronized outside
-    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+    public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
         processReportResultDelivering(dispatcherUrl, dispatcherYaml);
         processAssignedTask(dispatcherUrl, dispatcherYaml);
@@ -54,7 +54,7 @@ public class ProcessorCommandProcessor {
 
     // processing at processor side
     @Nullable
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
             return null;
         }
@@ -67,14 +67,14 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void processReportResultDelivering(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
         processorService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processAssignedTask(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
@@ -82,7 +82,7 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void storeProcessorId(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void storeProcessorId(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
@@ -92,7 +92,7 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(DispatcherServerUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void reAssignProcessorId(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reAssignedProcessorId ==null) {
             return;
         }

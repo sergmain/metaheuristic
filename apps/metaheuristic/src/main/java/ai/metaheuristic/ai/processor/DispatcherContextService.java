@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class DispatcherContextService {
 
     public static final Map<ProcessorAndCoreData.CommonUrl, DispatcherContextInfo> contexts = new HashMap<>();
 
+    @Nullable
     public DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
         return contexts.get(commonUrl);
     }

@@ -49,7 +49,7 @@ public class ChecksumAndSignatureService {
     private final MetadataService metadataService;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            ProcessorAndCoreData.AssetServerUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
+            ProcessorAndCoreData.AssetUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
 
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.ok, EnumsApi.SignatureState.ok);

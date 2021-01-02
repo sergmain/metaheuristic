@@ -30,35 +30,35 @@ public class TestRoundRobinForDispatcher {
     @Test
     public void test() {
 
-        LinkedHashMap<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
+        LinkedHashMap<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
         lle1.dispatcherLookup = new DispatcherLookupParamsYaml.DispatcherLookup();
-        DispatcherServerUrl url1 = new DispatcherServerUrl("url1");
+        DispatcherUrl url1 = new DispatcherUrl("url1");
         lle1.dispatcherLookup.url = url1.url;
         lookupExtendedMap.put( url1, lle1);
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
         lle2.dispatcherLookup = new DispatcherLookupParamsYaml.DispatcherLookup();
-        DispatcherServerUrl url2 = new DispatcherServerUrl("url2");
+        DispatcherUrl url2 = new DispatcherUrl("url2");
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 
         RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap);
 
-        DispatcherServerUrl url = rr.next();
-        assertEquals(new DispatcherServerUrl("url1"), url);
+        DispatcherUrl url = rr.next();
+        assertEquals(new DispatcherUrl("url1"), url);
 
         rr.reset();
 
         url = rr.next();
-        assertEquals(new DispatcherServerUrl("url1"), url);
+        assertEquals(new DispatcherUrl("url1"), url);
 
         url = rr.next();
-        assertEquals(new DispatcherServerUrl("url2"), url);
+        assertEquals(new DispatcherUrl("url2"), url);
 
         url = rr.next();
-        assertEquals(new DispatcherServerUrl("url1"), url);
+        assertEquals(new DispatcherUrl("url1"), url);
 
 
     }

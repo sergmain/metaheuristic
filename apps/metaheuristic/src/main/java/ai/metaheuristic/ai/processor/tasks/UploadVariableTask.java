@@ -46,8 +46,8 @@ public class UploadVariableTask extends ProcessorRestTask {
         this.nullified = nullified;
     }
 
-    public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
-        ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherServerUrl(dispatcher.url);
+    public ProcessorAndCoreData.DispatcherUrl getDispatcherUrl() {
+        ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(dispatcher.url);
         return dispatcherUrl;
     }
 }

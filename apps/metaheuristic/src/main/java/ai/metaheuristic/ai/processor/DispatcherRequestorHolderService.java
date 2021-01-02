@@ -46,7 +46,7 @@ public class DispatcherRequestorHolderService {
         public final DispatcherRequestor dispatcherRequestor;
         public final ProcessorKeepAliveRequestor processorKeepAliveRequestor;
     }
-    public final Map<DispatcherServerUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
+    public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
     public DispatcherRequestorHolderService(Globals globals,
             ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
@@ -57,9 +57,9 @@ public class DispatcherRequestorHolderService {
     ) {
 
 
-        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
-            final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.getDispatcherUrl(), globals,
+            final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
                     processorTaskService, processorService, metadataService, currentExecState,
                     dispatcherLookupExtendedService, processorCommandProcessor);
 

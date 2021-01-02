@@ -292,7 +292,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         String es;
         es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished' with error.", task.variableId, task.getTaskId());
         log.warn(es);
-        processorTaskService.markAsFinishedWithError(new ProcessorAndCoreData.DispatcherServerUrl(task.dispatcher.url), task.getTaskId(), es);
+        processorTaskService.markAsFinishedWithError(new ProcessorAndCoreData.DispatcherUrl(task.dispatcher.url), task.getTaskId(), es);
         return Enums.VariableState.variable_doesnt_exist;
     }
 }

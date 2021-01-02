@@ -24,12 +24,11 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"functionCode", "assetUrl"}, callSuper = false)
 public class DownloadFunctionTask extends ProcessorRestTask {
-    public final Long chunkSize;
     public final String functionCode;
 //    public final TaskParamsYaml.FunctionConfig functionConfig;
 
-    public final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl;
-    public final ProcessorAndCoreData.AssetServerUrl assetUrl;
+    public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
+    public final ProcessorAndCoreData.AssetUrl assetUrl;
 
 /*
     private final Map<Integer, DispatcherLookupParamsYaml.Asset> assetMap = new HashMap<>();

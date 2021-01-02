@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtil
 import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -38,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherServerUrl;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @Service
 @Slf4j
@@ -61,13 +62,15 @@ public class DispatcherLookupExtendedService {
     private final Globals globals;
 
     // Collections.unmodifiableMap
-    public Map<DispatcherServerUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
-    public final Map<ProcessorAndCoreData.AssetServerUrl, DispatcherLookupParamsYaml.Asset> assets = new HashMap<>();
+    public Map<DispatcherUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
+    public final Map<ProcessorAndCoreData.AssetUrl, DispatcherLookupParamsYaml.Asset> assets = new HashMap<>();
 
     @Data
+    @AllArgsConstructor
     public static class DispatcherLookupExtended {
-        public DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
-        public DispatcherSchedule schedule;
+        public final DispatcherUrl dispatcherUrl;
+        public final DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
+        public final DispatcherSchedule schedule;
     }
 
     public DispatcherLookupExtendedService(Globals globals) {
@@ -113,19 +116,18 @@ public class DispatcherLookupExtendedService {
                     File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
             throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
         }
-        final Map<DispatcherServerUrl, DispatcherLookupExtended> map = new HashMap<>();
+        final Map<DispatcherUrl, DispatcherLookupExtended> map = new HashMap<>();
         for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
-            DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended();
-            lookupExtended.dispatcherLookup = dispatcher;
-            lookupExtended.schedule = new DispatcherSchedule(dispatcher.taskProcessingTime);
-            map.put(new DispatcherServerUrl(dispatcher.url), lookupExtended);
+            DispatcherUrl dispatcherServerUrl = new DispatcherUrl(dispatcher.url);
+            DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended(dispatcherServerUrl, dispatcher, new DispatcherSchedule(dispatcher.taskProcessingTime));
+            map.put(dispatcherServerUrl, lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
-        dispatcherLookupConfig.assets.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetServerUrl(asset.url), asset));
+        dispatcherLookupConfig.assets.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetUrl(asset.url), asset));
     }
 
     @Nullable
-    public DispatcherLookupParamsYaml.Asset getAsset(ProcessorAndCoreData.AssetServerUrl assetServerUrl) {
+    public DispatcherLookupParamsYaml.Asset getAsset(ProcessorAndCoreData.AssetUrl assetServerUrl) {
         return assets.get(assetServerUrl);
     }
 

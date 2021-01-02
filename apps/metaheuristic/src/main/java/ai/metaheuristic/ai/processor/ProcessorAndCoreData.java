@@ -20,7 +20,6 @@ import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Serge
@@ -35,10 +34,10 @@ public class ProcessorAndCoreData {
 
     @Data
     @EqualsAndHashCode(of="url")
-    public static class AssetServerUrl implements CommonUrl {
+    public static class AssetUrl implements CommonUrl {
         public final String url;
 
-        public AssetServerUrl(String url) {
+        public AssetUrl(String url) {
             if (S.b(url)) {
                 throw new IllegalStateException("#819.020 assetUrl is null");
             }
@@ -48,10 +47,10 @@ public class ProcessorAndCoreData {
 
     @Data
     @EqualsAndHashCode(of="url")
-    public static class DispatcherServerUrl implements CommonUrl {
+    public static class DispatcherUrl implements CommonUrl {
         public final String url;
 
-        public DispatcherServerUrl(String url) {
+        public DispatcherUrl(String url) {
             if (S.b(url)) {
                 throw new IllegalStateException("#819.040 dispatcherUrl is null");
             }
@@ -62,8 +61,8 @@ public class ProcessorAndCoreData {
     @Data
     @AllArgsConstructor
     public static class ServerUrls {
-        public final DispatcherServerUrl dispatcherUrl;
-        public final AssetServerUrl assetUrl;
+        public final DispatcherUrl dispatcherUrl;
+        public final AssetUrl assetUrl;
     }
 
 }

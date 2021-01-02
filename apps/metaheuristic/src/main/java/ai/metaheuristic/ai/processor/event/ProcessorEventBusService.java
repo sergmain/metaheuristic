@@ -63,7 +63,7 @@ public class ProcessorEventBusService {
     public void keepAlive(KeepAliveEvent event) {
 
         // TODO 2020-11-22 do we need to convert Set to List and sort it?
-        Set<ProcessorAndCoreData.DispatcherServerUrl> dispatchers = roundRobin.getActiveDispatchers();
+        Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
         if (dispatchers.isEmpty()) {
             log.info("Can't find any enabled dispatcher");
             return;
@@ -72,7 +72,7 @@ public class ProcessorEventBusService {
         if (activeCount >0) {
             log.error("#047.020 executor has not finished tasks, count: {}", activeCount);
         }
-        for (ProcessorAndCoreData.DispatcherServerUrl dispatcher : dispatchers) {
+        for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
             executor.submit(() -> {
                 log.info("processorKeepAliveRequestor.proceedWithRequest(), url: {}", dispatcher);
                 try {

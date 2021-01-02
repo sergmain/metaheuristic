@@ -29,29 +29,29 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 @Slf4j
 public class RoundRobinForDispatcher {
 
-    private final Map<DispatcherServerUrl, AtomicBoolean> urls;
+    private final Map<DispatcherUrl, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
-        Map<DispatcherServerUrl, AtomicBoolean> map = new LinkedHashMap<>();
-        for (Map.Entry<DispatcherServerUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
+    public RoundRobinForDispatcher(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
+        Map<DispatcherUrl, AtomicBoolean> map = new LinkedHashMap<>();
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
             DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
                 log.info("dispatcher {} is disabled", dispatcherLookup.getLookupType());
                 continue;
             }
             log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
-            map.putIfAbsent(new DispatcherServerUrl(dispatcherLookup.url), new AtomicBoolean(true));
+            map.putIfAbsent(new DispatcherUrl(dispatcherLookup.url), new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);
     }
 
-    public Set<DispatcherServerUrl> getActiveDispatchers() {
+    public Set<DispatcherUrl> getActiveDispatchers() {
         return urls.keySet();
     }
 
     @Nullable
-    public DispatcherServerUrl next() {
-        DispatcherServerUrl url = findNext();
+    public DispatcherUrl next() {
+        DispatcherUrl url = findNext();
         if (url != null) {
             return url;
         }
@@ -61,15 +61,15 @@ public class RoundRobinForDispatcher {
     }
 
     public void reset() {
-        for (Map.Entry<DispatcherServerUrl, AtomicBoolean> entry : urls.entrySet()) {
+        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : urls.entrySet()) {
             entry.getValue().set(true);
         }
     }
 
     @Nullable
-    private DispatcherServerUrl findNext() {
-        DispatcherServerUrl url = null;
-        for (Map.Entry<DispatcherServerUrl, AtomicBoolean> entry : urls.entrySet()) {
+    private DispatcherUrl findNext() {
+        DispatcherUrl url = null;
+        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : urls.entrySet()) {
             if (entry.getValue().get()) {
                 entry.getValue().set(false);
                 url = entry.getKey();

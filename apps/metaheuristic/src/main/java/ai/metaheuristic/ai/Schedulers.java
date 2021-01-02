@@ -258,13 +258,13 @@ public class Schedulers {
                 return;
             }
 
-            Set<ProcessorAndCoreData.DispatcherServerUrl> dispatchers = roundRobin.getActiveDispatchers();
+            Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");
                 return;
             }
 
-            for (ProcessorAndCoreData.DispatcherServerUrl dispatcher : dispatchers) {
+            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();

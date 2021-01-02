@@ -36,13 +36,13 @@ public class TestDispatcherLookup {
 
             assertEquals(2, ssc.dispatchers.size());
 
-            assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("http://localhost:8080"), ssc.dispatchers.get(0).getDispatcherUrl());
+            assertEquals(new ProcessorAndCoreData.DispatcherUrl("http://localhost:8080"), ssc.dispatchers.get(0).getDispatcherUrl());
             assertEquals(Enums.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
             assertNull(ssc.dispatchers.get(0).publicKey);
             assertFalse(ssc.dispatchers.get(0).signatureRequired);
             assertFalse(ssc.dispatchers.get(0).disabled);
 
-            assertEquals(new ProcessorAndCoreData.DispatcherServerUrl("https://host"), ssc.dispatchers.get(1).getDispatcherUrl());
+            assertEquals(new ProcessorAndCoreData.DispatcherUrl("https://host"), ssc.dispatchers.get(1).getDispatcherUrl());
             assertEquals(Enums.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
             assertEquals("some-public-key", ssc.dispatchers.get(1).publicKey);
             assertTrue(ssc.dispatchers.get(1).signatureRequired);

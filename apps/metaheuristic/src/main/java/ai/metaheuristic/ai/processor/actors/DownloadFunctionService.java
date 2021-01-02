@@ -82,8 +82,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         while((task = poll())!=null) {
             final String functionCode = task.functionCode;
 
-            final ProcessorAndCoreData.AssetServerUrl assetUrl = task.assetUrl;
-            final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = task.dispatcherUrl;
+            final ProcessorAndCoreData.AssetUrl assetUrl = task.assetUrl;
+            final ProcessorAndCoreData.DispatcherUrl dispatcherUrl = task.dispatcherUrl;
             final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetUrl);
             if (asset==null) {
                 log.error("#811.007 asset server wasn't found for url {}", assetUrl.url);
@@ -93,10 +93,20 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 //            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
 //                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), assetUrl);
 
+            final DispatcherContextInfo contextInfo = dispatcherContextService.getCtx(assetUrl);
+
+            // process only if dispatcher has already sent its config
+            if (contextInfo==null || contextInfo.chunkSize==null) {
+                log.warn("#951.120 Dispatcher {} doesn't provide chunkSize", task.dispatcherUrl);
+                continue;
+            }
+
+/*
             if (task.chunkSize==null) {
                 log.error("#811.010 (task.chunkSize==null), dispatcher.url: {}, asset.url: {}", dispatcherUrl, asset.url);
                 continue;
             }
+*/
 
             MetadataService.FunctionConfigAndStatus functionConfigAndStatus = metadataService.syncFunctionStatus(assetUrl, asset, functionCode);
             if (functionConfigAndStatus==null) {
@@ -186,17 +196,18 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
                         try {
 
-                            String chunkSize;
+/*
                             if (task.chunkSize != null) {
                                 chunkSize = task.chunkSize.toString();
                             } else {
                                 log.warn("#811.043 task.chunkSize is null, 500k will be used as value");
                                 chunkSize = "500000";
                             }
+*/
 
                             final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
                                     .addParameter("code", task.functionCode)
-                                    .addParameter("chunkSize", chunkSize)
+                                    .addParameter("chunkSize", contextInfo.chunkSize.toString())
                                     .addParameter("chunkNum", Integer.toString(idx));
 
                             final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
@@ -290,7 +301,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         idx++;
                     } while (idx < 1000);
                     if (resourceState == Enums.FunctionState.none) {
-                        log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                        log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
                         continue;
                     } else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found || resourceState == Enums.FunctionState.dispatcher_config_error) {
                         log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, resourceState);
@@ -349,7 +360,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     public void prepareFunctionForDownloading() {
         metadataService.getStatuses().forEach(o -> {
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
-                ProcessorAndCoreData.AssetServerUrl assetServerUrl = new ProcessorAndCoreData.AssetServerUrl(o.assetUrl);
+                ProcessorAndCoreData.AssetUrl assetServerUrl = new ProcessorAndCoreData.AssetUrl(o.assetUrl);
 
                 DispatcherContextInfo contextInfo = dispatcherContextService.getCtx(assetServerUrl);
 
@@ -366,7 +377,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetUrl, contextInfo.chunkSize);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(contextInfo.chunkSize, o.code, null, assetServerUrl);
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, null, assetServerUrl);
                 add(functionTask);
             }
         });
