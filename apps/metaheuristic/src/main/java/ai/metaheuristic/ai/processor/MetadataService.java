@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.event.ProcessChecksumAndSignatureEvent;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -43,6 +44,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,7 @@ public class MetadataService {
     private final Globals globals;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private MetadataParamsYaml metadata = null;
 
@@ -128,7 +131,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumWithSignatureState prepareChecksumWithSignature(boolean signatureRequired, String functionCode, AssetServerUrl assetUrl, TaskParamsYaml.FunctionConfig functionConfig) {
+    public ChecksumWithSignatureState prepareChecksumWithSignature(String functionCode, AssetServerUrl assetUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         if (!signatureRequired) {
             return new ChecksumWithSignatureState(Enums.SignatureStates.signature_not_required);
         }
@@ -173,7 +176,7 @@ public class MetadataService {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            status.verification = Enums.VerificationType.not_yet;
+            status.verification = Enums.VerificationState.not_yet;
         }
         updateMetadataFile();
     }
@@ -192,13 +195,13 @@ public class MetadataService {
     private void syncFunctionStatusInternal(ServerUrls serverUrls, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
         MetadataParamsYaml.Status status = getFunctionDownloadStatuses(serverUrls.assetUrl, functionCode);
 
-        if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.verification.completed) {
+        if (status == null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.functionState== Enums.FunctionState.ready) {
             return;
         }
         SimpleCache simpleCache1 = simpleCacheMap.computeIfAbsent(serverUrls.dispatcherUrl.url, o -> {
             final MetadataParamsYaml.ProcessorState processorState = dispatcherUrlAsCode(serverUrls.dispatcherUrl);
             return new SimpleCache(
-                    dispatcherLookupExtendedService.lookupExtendedMap.get(serverUrls.dispatcherUrl.url),
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(serverUrls.dispatcherUrl),
                     asset,
                     processorState,
                     dispatcherLookupExtendedService.prepareBaseResourceDir(processorState)
@@ -325,7 +328,7 @@ public class MetadataService {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        AssetServerUrl assetUrl = new AssetServerUrl(dispatcher.dispatcherLookup.getAsset().url);
+        AssetServerUrl assetUrl = new AssetServerUrl(dispatcher.dispatcherLookup.assetUrl);
 
         synchronized (syncObj) {
             boolean isChanged = false;
@@ -363,8 +366,10 @@ public class MetadataService {
                 return false;
             }
             status.functionState = functionState;
-            status.verified = true;
             updateMetadataFile();
+            if (functionState.needVerification) {
+                eventPublisher.publishEvent(new ProcessChecksumAndSignatureEvent(assetUrl, functionCode));
+            }
             return true;
         }
     }
@@ -416,7 +421,7 @@ public class MetadataService {
     private void setFunctionDownloadStatusInternal(AssetServerUrl assetUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
         MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, Enums.VerificationType.not_yet);
+            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, Enums.ChecksumState.not_yet, Enums.SignatureState.not_yet);
             metadata.statuses.add(status);
         }
         status.functionState = functionState;

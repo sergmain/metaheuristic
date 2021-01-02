@@ -147,9 +147,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     log.error("#811.020 Unexpected state of function {}, dispatcher {}, will be resetted to none", functionCode, dispatcherUrl);
                     metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
                     break;
-                case signature_wrong:
-                case signature_not_found:
-                case checksum_wrong:
                 case not_supported_os:
                 case asset_error:
                 case download_error:
@@ -212,7 +209,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         final HttpResponse httpResponse = response.returnResponse();
                         int statusCode = httpResponse.getStatusLine().getStatusCode();
                         if (statusCode ==HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                            final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                            final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url, dispatcherUrl);
                             log.error(es);
                             metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
                             resourceState = Enums.FunctionState.dispatcher_config_error;

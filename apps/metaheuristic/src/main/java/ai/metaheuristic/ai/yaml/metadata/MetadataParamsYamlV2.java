@@ -23,7 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -69,7 +68,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public String code;
         public String assetUrl;
         public EnumsApi.FunctionSourcing sourcing;
-        public Enums.VerificationType verification = Enums.VerificationType.not_yet;
+//        public Enums.VerificationState verification = Enums.VerificationState.not_yet;
     }
 
     public final LinkedHashMap<String, ProcessorStateV2> processorStates = new LinkedHashMap<>();

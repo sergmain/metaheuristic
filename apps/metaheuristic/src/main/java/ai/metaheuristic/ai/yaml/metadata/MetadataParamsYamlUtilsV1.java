@@ -76,7 +76,7 @@ public class MetadataParamsYamlUtilsV1
     }
 
     private static MetadataParamsYamlV2.StatusV2 toStatus(FunctionDownloadStatusYaml.Status st) {
-        return new MetadataParamsYamlV2.StatusV2(st.functionState, st.code, st.dispatcherUrl, st.sourcing, Enums.VerificationType.not_yet);
+        return new MetadataParamsYamlV2.StatusV2(st.functionState, st.code, st.dispatcherUrl, st.sourcing);
     }
 
     @NonNull

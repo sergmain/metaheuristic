@@ -33,18 +33,32 @@ public final class Enums {
     public enum AssetType { company, account, function, source}
 
     public enum FunctionState {
-        none, ok, ready, not_found,
-        signature_wrong, signature_not_found, checksum_wrong, not_supported_os,
-        asset_error, download_error, function_config_error, io_error, dispatcher_config_error }
+        none, ok(true), ready, not_found,
+        not_supported_os,
+        asset_error, download_error, function_config_error, io_error, dispatcher_config_error;
 
-    public enum VerificationType { not_yet(false), error(true), none(true), checksum(true), checksum_with_signature(true);
+        public boolean needVerification = false;
+        FunctionState() {
+        }
+
+        FunctionState(boolean needVerification) {
+            this.needVerification = needVerification;
+        }
+    }
+
+    public enum ChecksumState { not_yet, none, ok, error }
+    public enum SignatureState { not_yet, none, ok, error }
+
+/*
+    public enum VerificationState { not_yet(false), error(true), ok(true);
 
         public boolean completed;
 
-        VerificationType(boolean completed) {
+        VerificationState(boolean completed) {
             this.completed = completed;
         }
     }
+*/
 
     public enum GitStatus {unknown, installed, not_found, error }
 
