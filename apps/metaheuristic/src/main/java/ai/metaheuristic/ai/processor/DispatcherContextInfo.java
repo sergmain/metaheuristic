@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.processor;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
@@ -24,6 +26,8 @@ import lombok.Data;
  * Time: 12:45 AM
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DispatcherContextInfo {
 
     // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing

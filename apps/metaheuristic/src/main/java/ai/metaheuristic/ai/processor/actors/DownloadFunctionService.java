@@ -66,7 +66,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
-    private final DispatcherContextService dispatcherContextService;
+    private final DispatcherContextInfoHolder dispatcherContextService;
     private final ChecksumAndSignatureService checksumAndSignatureService;
 
     @SuppressWarnings("Duplicates")
@@ -93,7 +93,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 //            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
 //                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), assetUrl);
 
-            final DispatcherContextInfo contextInfo = dispatcherContextService.getCtx(assetUrl);
+            final DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetUrl);
 
             // process only if dispatcher has already sent its config
             if (contextInfo==null || contextInfo.chunkSize==null) {
@@ -362,7 +362,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
                 ProcessorAndCoreData.AssetUrl assetServerUrl = new ProcessorAndCoreData.AssetUrl(o.assetUrl);
 
-                DispatcherContextInfo contextInfo = dispatcherContextService.getCtx(assetServerUrl);
+                DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetServerUrl);
 
                 if (contextInfo==null) {
                     log.info("#811.190 dispatcher contextInfo wasn't found, assetUrl: {}", o.assetUrl);

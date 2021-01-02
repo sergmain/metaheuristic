@@ -48,12 +48,14 @@ public class DispatcherRequestorHolderService {
     }
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
-    public DispatcherRequestorHolderService(Globals globals,
+    public DispatcherRequestorHolderService(
+            Globals globals,
             ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
-                                            CurrentExecState currentExecState,
-                                            DispatcherLookupExtendedService dispatcherLookupExtendedService,
-                                            ProcessorCommandProcessor processorCommandProcessor,
-                                            ProcessorKeepAliveProcessor processorKeepAliveProcessor
+            CurrentExecState currentExecState,
+            DispatcherLookupExtendedService dispatcherLookupExtendedService,
+            ProcessorCommandProcessor processorCommandProcessor,
+            ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+            DispatcherContextInfoHolder dispatcherContextService
     ) {
 
 
@@ -64,11 +66,11 @@ public class DispatcherRequestorHolderService {
                     dispatcherLookupExtendedService, processorCommandProcessor);
 
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
-                    dispatcher.dispatcherLookup.getDispatcherUrl(), globals,
+                    dispatcher.dispatcherUrl, globals,
                     processorTaskService, processorService, metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor);
+                    processorKeepAliveProcessor, dispatcherContextService);
 
-            dispatcherRequestorMap.put(dispatcher.dispatcherLookup.getDispatcherUrl(), new Requesters(requestor, keepAliveRequestor));
+            dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
         }
     }
 

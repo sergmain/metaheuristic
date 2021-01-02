@@ -29,20 +29,22 @@ import java.util.Map;
  * Date: 12/31/2020
  * Time: 6:16 AM
  */
-@Service
-@Slf4j
-@Profile("processor")
-public class DispatcherContextService {
+public class DispatcherContextInfoHolder {
 
     public static final Map<ProcessorAndCoreData.CommonUrl, DispatcherContextInfo> contexts = new HashMap<>();
 
     @Nullable
-    public DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
+    public static DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
         return contexts.get(commonUrl);
     }
 
-    public void put(ProcessorAndCoreData.CommonUrl commonUrl, DispatcherContextInfo context) {
+    public static void put(ProcessorAndCoreData.CommonUrl commonUrl, DispatcherContextInfo context) {
         // ###IDEA###, why?
         contexts.putIfAbsent(commonUrl, context).update(context);
+    }
+
+    public static void put(ProcessorAndCoreData.CommonUrl commonUrl, Long chunkSize) {
+        // ###IDEA###, why?
+        contexts.putIfAbsent(commonUrl, new DispatcherContextInfo()).chunkSize = chunkSize;
     }
 }
