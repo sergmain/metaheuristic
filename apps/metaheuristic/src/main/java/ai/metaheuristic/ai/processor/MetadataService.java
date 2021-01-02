@@ -31,6 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -66,22 +67,22 @@ public class MetadataService {
     private final Globals globals;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
-    private final ApplicationEventPublisher eventPublisher;
 
     private MetadataParamsYaml metadata = null;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ChecksumWithSignatureState {
-        public Enums.SignatureStates state = Enums.SignatureStates.unknown;
+    public static class ChecksumWithSignatureInfo {
+        public final CheckSumAndSignatureStatus checkSumAndSignatureStatus = new CheckSumAndSignatureStatus();
+//        public Enums.SignatureStates state = Enums.SignatureStates.unknown;
         public ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature;
         public String originChecksumWithSignature;
         public EnumsApi.HashAlgo hashAlgo;
 
-        public ChecksumWithSignatureState(Enums.SignatureStates state) {
-            this.state = state;
-        }
+//        public ChecksumWithSignatureInfo(Enums.SignatureStates state) {
+//            this.state = state;
+//        }
     }
 
     @Data
@@ -142,7 +143,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumWithSignatureState prepareChecksumWithSignature(AssetServerUrl assetUrl, String functionCode, TaskParamsYaml.FunctionConfig functionConfig) {
+    public ChecksumWithSignatureInfo prepareChecksumWithSignature(AssetServerUrl assetUrl, String functionCode, TaskParamsYaml.FunctionConfig functionConfig) {
 
         // check requirements of signature
         if (functionConfig.checksumMap==null) {
@@ -164,19 +165,19 @@ public class MetadataService {
             return setSignatureNotValid(functionCode, assetUrl);
         }
 
-        return new ChecksumWithSignatureState(Enums.SignatureStates.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
+        return new ChecksumWithSignatureInfo(Enums.SignatureStates.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
     }
 
-    private ChecksumWithSignatureState setSignatureNotValid(String functionCode, AssetServerUrl assetUrl) {
+    private ChecksumWithSignatureInfo setSignatureNotValid(String functionCode, AssetServerUrl assetUrl) {
         setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
         // TODO 2021-01-01 check this state
-        return new ChecksumWithSignatureState(Enums.SignatureStates.not_signed);
+        return new ChecksumWithSignatureInfo(Enums.SignatureStates.not_signed);
     }
 
-    private ChecksumWithSignatureState setSignatureNotFound(String functionCode, AssetServerUrl assetUrl) {
+    private ChecksumWithSignatureInfo setSignatureNotFound(String functionCode, AssetServerUrl assetUrl) {
         setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
         // TODO 2021-01-01 check this state
-        return new ChecksumWithSignatureState(Enums.SignatureStates.not_signed);
+        return new ChecksumWithSignatureInfo(Enums.SignatureStates.not_signed);
     }
 
     private void markAllAsUnverified() {

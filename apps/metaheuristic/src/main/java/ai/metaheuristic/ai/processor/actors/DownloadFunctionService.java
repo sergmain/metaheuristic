@@ -327,11 +327,11 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.error("#811.200 asset file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
-            MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(assetUrl, functionCode, functionConfigAndStatus.functionConfig);
+            MetadataService.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(assetUrl, functionCode, functionConfigAndStatus.functionConfig);
 
             CheckSumAndSignatureStatus status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, assetFile.getFile());
 
-            if (status.checksum == CheckSumAndSignatureStatus.Status.correct && status.signature == CheckSumAndSignatureStatus.Status.correct) {
+            if (status.checksum != EnumsApi.ChecksumState.error && status.signature == CheckSumAndSignatureStatus.Status.correct) {
                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
             } else {
                 assetFile.delete();

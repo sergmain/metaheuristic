@@ -182,7 +182,7 @@ public final class Enums {
         }
     }
 
-    public enum SignatureStates { unknown, signature_ok, signature_not_valid, not_signed }
+//    public enum SignatureStates { unknown, signature_ok, signature_not_valid, not_signed }
 
     public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
         PRODUCING(6), PROCESSOR_LOG(7);
