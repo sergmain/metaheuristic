@@ -60,7 +60,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionTask> {
+public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionTask> implements QueueProcessor {
 
     private final Globals globals;
     private final MetadataService metadataService;
@@ -70,7 +70,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     private final ChecksumAndSignatureService checksumAndSignatureService;
 
     @SuppressWarnings("Duplicates")
-    public void downloadFunctions() {
+    public void process() {
         if (globals.isUnitTesting) {
             return;
         }

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
+import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
@@ -199,6 +200,7 @@ public class Schedulers {
         private final DownloadFunctionService downloadFunctionActor;
         private final DownloadVariableService downloadResourceActor;
         private final UploadVariableService uploadResourceActor;
+        private final GetDispatcherContextInfoService getDispatcherContextInfoService;
         private final ArtifactCleanerAtProcessor artifactCleaner;
         private final EnvService envService;
         private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
@@ -309,8 +311,8 @@ public class Schedulers {
             if (!globals.processorEnabled) {
                 return;
             }
-            log.info("Run downloadFunctionActor.downloadFunctions()");
-            downloadFunctionActor.downloadFunctions();
+            log.info("Run downloadFunctionActor.process()");
+            downloadFunctionActor.process();
         }
 
         @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.prepare-function-for-downloading'), 20, 60, 30)*1000 }")
@@ -333,8 +335,8 @@ public class Schedulers {
             if (!globals.processorEnabled) {
                 return;
             }
-            log.info("Run downloadResourceActor.fixedDelay()");
-            downloadResourceActor.fixedDelay();
+            log.info("Run downloadResourceActor.process()");
+            downloadResourceActor.process();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.upload-result-resource'), 3, 20, 3)*1000 }")
@@ -345,8 +347,20 @@ public class Schedulers {
             if (!globals.processorEnabled) {
                 return;
             }
-            log.info("Run uploadResourceActor.fixedDelay()");
-            uploadResourceActor.fixedDelay();
+            log.info("Run uploadResourceActor.process()");
+            uploadResourceActor.process();
+        }
+
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.get-dispatcher-context-info'), 10, 60, 20)*1000 }")
+        public void getDispatcherContextInfoActor() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.processorEnabled) {
+                return;
+            }
+            log.info("Run getDispatcherContextInfoService.process()");
+            getDispatcherContextInfoService.process();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")

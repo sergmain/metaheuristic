@@ -54,7 +54,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> {
+public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> implements QueueProcessor {
 
     private static final ObjectMapper mapper;
 
@@ -76,7 +76,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
     }
 
     @SuppressWarnings("Duplicates")
-    public void fixedDelay() {
+    public void process() {
         if (globals.isUnitTesting) {
             return;
         }

@@ -50,14 +50,14 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableTask> {
+public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableTask> implements QueueProcessor {
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
 
     @SuppressWarnings("Duplicates")
-    public void fixedDelay() {
+    public void process() {
         if (globals.isUnitTesting) {
             return;
         }

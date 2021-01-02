@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,26 @@
 package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.oauth.OAuthTokenHolder;
-import ai.metaheuristic.ai.processor.tasks.OAuthTokenTask;
+import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+/**
+ * @author Serge
+ * Date: 1/2/2021
+ * Time: 10:38 AM
+ */
 @Service
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class OAuthTokenRequestorService extends AbstractTaskQueue<OAuthTokenTask> implements QueueProcessor {
+public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispatcherContextInfoTask> implements QueueProcessor {
 
     private final Globals globals;
-    private final OAuthTokenHolder oAuthTokenHolder;
 
+    @Override
     public void process() {
         if (globals.isUnitTesting) {
             return;
@@ -41,20 +45,8 @@ public class OAuthTokenRequestorService extends AbstractTaskQueue<OAuthTokenTask
             return;
         }
 
-        OAuthTokenTask task;
-        while((task = poll())!=null) {
-            String token = null;
-            
-            // localhost:8080/oauth/token -d "grant_type=password&scope=read&username=greg&password=turnquist" -u foo:bar
-            // ...
-
-
-            if (token!=null) {
-                oAuthTokenHolder.setToken(token);
-            }
-        }
-        if (oAuthTokenHolder.getToken()==null) {
-            add(new OAuthTokenTask());
+        GetDispatcherContextInfoTask task;
+        while ((task = poll()) != null) {
         }
     }
 }
