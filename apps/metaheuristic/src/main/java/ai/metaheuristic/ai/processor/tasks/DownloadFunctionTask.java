@@ -16,22 +16,17 @@
 package ai.metaheuristic.ai.processor.tasks;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = "functionCode", callSuper = false)
+@EqualsAndHashCode(of = {"functionCode", "assetUrl"}, callSuper = false)
 public class DownloadFunctionTask extends ProcessorRestTask {
     public final Long chunkSize;
     public final String functionCode;
-    public final TaskParamsYaml.FunctionConfig functionConfig;
+//    public final TaskParamsYaml.FunctionConfig functionConfig;
 
     public final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl;
     public final ProcessorAndCoreData.AssetServerUrl assetUrl;

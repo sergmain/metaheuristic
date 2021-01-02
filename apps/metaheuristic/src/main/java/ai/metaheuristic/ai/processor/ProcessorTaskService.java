@@ -84,7 +84,7 @@ public class ProcessorTaskService {
         try {
             Files.list(globals.processorTaskDir.toPath()).forEach(top -> {
                 try {
-                    DispatcherServerUrl dispatcherUrl = metadataService.findHostByCode(top.toFile().getName());
+                    DispatcherServerUrl dispatcherUrl = metadataService.findDispatcherByCode(top.toFile().getName());
                     if (dispatcherUrl==null) {
                         return;
                     }

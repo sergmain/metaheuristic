@@ -22,10 +22,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 @Data
 @NoArgsConstructor
@@ -65,6 +64,7 @@ public class MetadataParamsYaml implements BaseParams {
 
         public Enums.ChecksumState checksum = Enums.ChecksumState.not_yet;
         public Enums.SignatureState signature = Enums.SignatureState.not_yet;
+        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
     public final LinkedHashMap<String, ProcessorState> processorStates = new LinkedHashMap<>();

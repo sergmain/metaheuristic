@@ -19,16 +19,14 @@ package ai.metaheuristic.ai.processor.function;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.event.ProcessChecksumAndSignatureEvent;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -43,13 +41,10 @@ import java.io.IOException;
 @Slf4j
 @Service
 @Profile("processor")
+@AllArgsConstructor
 public class ChecksumAndSignatureService {
 
-    @Async
-    @EventListener
-    public void handleProcessChecksumAndSignatureEvent(ProcessChecksumAndSignatureEvent event) {
-
-    }
+    private final MetadataService metadataService;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             ProcessorAndCoreData.AssetServerUrl assetUrl, ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl, DispatcherLookupParamsYaml.Asset asset,

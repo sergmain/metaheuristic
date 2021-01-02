@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
@@ -31,6 +32,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -66,6 +68,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
     private final DispatcherContextService dispatcherContextService;
+    private final ChecksumAndSignatureService checksumAndSignatureService;
 
     @SuppressWarnings("Duplicates")
     public void downloadFunctions() {
@@ -79,271 +82,260 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         DownloadFunctionTask task;
         while((task = poll())!=null) {
             final String functionCode = task.functionCode;
-            final DispatcherLookupParamsYaml.DispatcherLookup dispatcher1 = task.dispatcher;
-            final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = task.dispatcherUrl;
-            final DispatcherLookupParamsYaml.Asset asset = task.getAsset();
 
-            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
-                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), new ProcessorAndCoreData.AssetServerUrl(asset.url));
+            final ProcessorAndCoreData.AssetServerUrl assetUrl = task.assetUrl;
+//            final DispatcherLookupParamsYaml.DispatcherLookup dispatcher1 = task.dispatcher;
+            final ProcessorAndCoreData.DispatcherServerUrl dispatcherUrl = task.dispatcherUrl;
+            final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetUrl);
+            if (asset==null) {
+                log.error("#811.007 asset server wasn't found for url {}", assetUrl.url);
+                continue;
+            }
+
+//            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
+//                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), assetUrl);
 
             if (task.chunkSize==null) {
-                log.error("#811.007 (task.chunkSize==null), dispatcher.url: {}, asset.url: {}", dispatcherUrl, asset.url);
+                log.error("#811.010 (task.chunkSize==null), dispatcher.url: {}, asset.url: {}", dispatcherUrl, asset.url);
                 continue;
             }
 
-            MetadataParamsYaml.Status sdsy = metadataService.syncFunctionStatus(serverUrls, asset, functionCode);
-            if (sdsy==null || sdsy.functionState == Enums.FunctionState.ready) {
+            MetadataService.FunctionConfigAndStatus functionConfigAndStatus = metadataService.syncFunctionStatus(assetUrl, asset, functionCode);
+            if (functionConfigAndStatus==null) {
                 continue;
             }
 
-            ProcessorAndCoreData.AssetServerUrl assetUrl = serverUrls.assetUrl;
-
-            final MetadataParamsYaml.Status functionDownloadStatus = metadataService.getFunctionDownloadStatuses(assetUrl, functionCode);
-            if (functionDownloadStatus==null) {
-                log.warn("#811.010 Function {} wasn't found on Dispatcher {}", functionCode, dispatcherUrl);
-                continue;
-            }
-            if (functionDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
-                log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, dispatcherUrl);
-                continue;
-            }
-            if (functionDownloadStatus.functionState != Enums.FunctionState.none) {
-                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, dispatcherUrl, functionDownloadStatus.functionState);
+            MetadataParamsYaml.Status functionDownloadStatus = functionConfigAndStatus.status;
+            // functionState == Enums.FunctionState.ready if function was processed already
+            if (functionDownloadStatus==null || functionDownloadStatus.functionState == Enums.FunctionState.ready) {
                 continue;
             }
 
-            // task.functionConfig is null when we are downloading a function proactively, without any task
-            TaskParamsYaml.FunctionConfig functionConfig = task.functionConfig;
-            if (functionConfig ==null) {
-                ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                        processorFunctionService.downloadFunctionConfig(asset, functionCode);
-                if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error);
-                    continue;
+            if (functionDownloadStatus.functionState != Enums.FunctionState.none && functionDownloadStatus.functionState != Enums.FunctionState.ok) {
+                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, asset.url, functionDownloadStatus.functionState);
+                continue;
+            }
+
+            final AssetFile assetFile = functionConfigAndStatus.assetFile;
+            if (assetFile==null) {
+                throw new IllegalStateException("(assetFile==null)");
+            }
+            if (functionDownloadStatus.functionState == Enums.FunctionState.none) {
+
+                TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
+                if (functionConfig == null) {
+                    throw new IllegalStateException("(functionConfig == null)");
                 }
-                if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.not_found) {
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.not_found);
-                    continue;
-                }
-                functionConfig = downloadedFunctionConfigStatus.functionConfig;
-            }
-            MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, assetUrl, functionConfig);
-            if (state.state== Enums.SignatureStates.signature_not_valid) {
-                continue;
-            }
-
-            final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.dispatcherUrlAsCode(serverUrls.dispatcherUrl);
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
-            final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
-
-            switch (functionDownloadStatus.functionState) {
-                case none:
-                    if (assetFile.isError) {
-                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error);
-                        continue;
-                    }
-                    break;
-                case ok:
-                    log.error("#811.020 Unexpected state of function {}, dispatcher {}, will be resetted to none", functionCode, dispatcherUrl);
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
-                    break;
-                case not_supported_os:
-                case asset_error:
-                case download_error:
-                case io_error:
-                case dispatcher_config_error:
-                    log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, dispatcherUrl, functionDownloadStatus.functionState);
-                    continue;
-                case function_config_error:
-                    log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", functionCode, dispatcherUrl);
-                    // reset to none for trying again
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
-                    continue;
-                case not_found:
-                    log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", functionCode, dispatcherUrl);
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
-                    continue;
-                case ready:
-                    if (assetFile.isError || !assetFile.isContent ) {
-                        log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", functionCode, dispatcherUrl);
-                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error);
-                    }
-                    continue;
-            }
-
-            try {
-
-                File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
-
-                final String targetUrl = asset.url + Consts.REST_ASSET_URL + "/function";
-
-                String mask = assetFile.file.getName() + ".%s.tmp";
-                File dir = assetFile.file.getParentFile();
-                Enums.FunctionState resourceState = Enums.FunctionState.none;
-                int idx = 0;
-                do {
-                    final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
-                    try {
-
-                        String chunkSize;
-                        if (task.chunkSize != null) {
-                            chunkSize = task.chunkSize.toString();
-                        }
-                        else {
-                            log.warn("#811.043 task.chunkSize is null, 500k will be used as value");
-                            chunkSize = "500000";
-                        }
-
-                        final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("code", task.functionCode)
-                                .addParameter("chunkSize", chunkSize)
-                                .addParameter("chunkNum", Integer.toString(idx));
-
-                        final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
-
-                        RestUtils.addHeaders(request);
-
-                        Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
-                        File partFile = new File(dir, String.format(mask, idx));
-
-                        final HttpResponse httpResponse = response.returnResponse();
-                        int statusCode = httpResponse.getStatusLine().getStatusCode();
-                        if (statusCode ==HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                            final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url, dispatcherUrl);
-                            log.error(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
-                            resourceState = Enums.FunctionState.dispatcher_config_error;
-                            break;
-                        }
-                        else if (statusCode !=HttpStatus.OK.value()) {
-                            final String es = S.f("#811.050 Function %s can't be downloaded from asset srv %s, dispatcher %s, status code: %d", task.functionCode, asset.url, dispatcherUrl, statusCode);
-                            log.error(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                            resourceState = Enums.FunctionState.download_error;
-                            break;
-                        }
-
-                        try (final FileOutputStream out = new FileOutputStream(partFile)) {
-                            final HttpEntity entity = httpResponse.getEntity();
-                            if (entity != null) {
-                                entity.writeTo(out);
-                            }
-                            else {
-                                log.warn("#811.055 http entity is null");
-                            }
-                        }
-                        final Header[] headers = httpResponse.getAllHeaders();
-                        if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
-                            log.error("#811.060 error while downloading chunk of function {}, size is different", functionCode);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                            resourceState = Enums.FunctionState.download_error;
-                            break;
-                        }
-                        if (DownloadUtils.isLastChunk(headers)) {
-                            resourceState = Enums.FunctionState.ok;
-                            break;
-                        }
-                        if (partFile.length()==0) {
-                            resourceState = Enums.FunctionState.ok;
-                            break;
-                        }
-                    } catch (HttpResponseException e) {
-                        if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                            final String es = S.f("#811.065 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
-                            resourceState = Enums.FunctionState.dispatcher_config_error;
-                            break;
-                        }
-                        else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY ) {
-                            final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
-                                    "a function #%s on asset srv %s, dispatcher %s. will try later again", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            // do nothing and try later again
-                            return;
-                        }
-                        else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.not_found);
-                            resourceState = Enums.FunctionState.not_found;
-                            break;
-                        }
-                        else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = S.f("#811.080 Unknown error with a function %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                            resourceState = Enums.FunctionState.download_error;
-                            break;
-                        }
-                        else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                            resourceState = Enums.FunctionState.download_error;
-                            break;
-                        }
-                        else {
-                            final String es = S.f("#811.091 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
-                            log.warn(es);
-                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                            resourceState = Enums.FunctionState.download_error;
-                            break;
-                        }
-                    }
-                    // work around for handling a burst access to asset server
-                    //noinspection BusyWait
-                    Thread.sleep(200);
-                    idx++;
-                } while (idx<1000);
-                if (resourceState == Enums.FunctionState.none) {
-                    log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
-                    continue;
-                }
-                else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found || resourceState == Enums.FunctionState.dispatcher_config_error) {
-                    log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, resourceState);
+/*
+                MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, assetUrl, functionConfig);
+                if (state.state == Enums.SignatureStates.signature_not_valid) {
                     continue;
                 }
 
-                try (FileOutputStream fos = new FileOutputStream(functionTempFile)) {
-                    for (int i = 0; i <= idx; i++) {
-                        final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
-                        if (input.length()==0) {
+                final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.dispatcherUrlAsCode(serverUrls.dispatcherUrl);
+                final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
+                final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
+*/
+/*
+                switch (functionDownloadStatus.functionState) {
+                    case none:
+                        if (assetFile.isError) {
+                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error);
                             continue;
                         }
-                        FileUtils.copyFile(input, fos);
-                    }
+                        break;
+                    case ok:
+                        log.error("#811.020 Unexpected state of function {}, dispatcher {}, will be resetted to none", functionCode, dispatcherUrl);
+                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
+                        break;
+                    case not_supported_os:
+                    case asset_error:
+                    case download_error:
+                    case io_error:
+                    case dispatcher_config_error:
+                        log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, dispatcherUrl, functionDownloadStatus.functionState);
+                        continue;
+                    case function_config_error:
+                        log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", functionCode, dispatcherUrl);
+                        // reset to none for trying again
+                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
+                        continue;
+                    case not_found:
+                        log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", functionCode, dispatcherUrl);
+                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
+                        continue;
+                    case ready:
+                        if (assetFile.isError || !assetFile.isContent) {
+                            log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", functionCode, dispatcherUrl);
+                            metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error);
+                        }
+                        continue;
                 }
 
-                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, state, functionTempFile);
-                if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
-                    //noinspection ResultOfMethodCallIgnored
+*/
+                try {
+
+                    File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
+
+                    final String targetUrl = asset.url + Consts.REST_ASSET_URL + "/function";
+
+                    String mask = assetFile.file.getName() + ".%s.tmp";
+                    File dir = assetFile.file.getParentFile();
+                    Enums.FunctionState resourceState = Enums.FunctionState.none;
+                    int idx = 0;
+                    do {
+                        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
+                        try {
+
+                            String chunkSize;
+                            if (task.chunkSize != null) {
+                                chunkSize = task.chunkSize.toString();
+                            } else {
+                                log.warn("#811.043 task.chunkSize is null, 500k will be used as value");
+                                chunkSize = "500000";
+                            }
+
+                            final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
+                                    .addParameter("code", task.functionCode)
+                                    .addParameter("chunkSize", chunkSize)
+                                    .addParameter("chunkNum", Integer.toString(idx));
+
+                            final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
+
+                            RestUtils.addHeaders(request);
+
+                            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
+                            File partFile = new File(dir, String.format(mask, idx));
+
+                            final HttpResponse httpResponse = response.returnResponse();
+                            int statusCode = httpResponse.getStatusLine().getStatusCode();
+                            if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                                final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url, dispatcherUrl);
+                                log.error(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
+                                resourceState = Enums.FunctionState.dispatcher_config_error;
+                                break;
+                            } else if (statusCode != HttpStatus.OK.value()) {
+                                final String es = S.f("#811.050 Function %s can't be downloaded from asset srv %s, dispatcher %s, status code: %d", task.functionCode, asset.url, dispatcherUrl, statusCode);
+                                log.error(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
+                                resourceState = Enums.FunctionState.download_error;
+                                break;
+                            }
+
+                            try (final FileOutputStream out = new FileOutputStream(partFile)) {
+                                final HttpEntity entity = httpResponse.getEntity();
+                                if (entity != null) {
+                                    entity.writeTo(out);
+                                } else {
+                                    log.warn("#811.055 http entity is null");
+                                }
+                            }
+                            final Header[] headers = httpResponse.getAllHeaders();
+                            if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
+                                log.error("#811.060 error while downloading chunk of function {}, size is different", functionCode);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
+                                resourceState = Enums.FunctionState.download_error;
+                                break;
+                            }
+                            if (DownloadUtils.isLastChunk(headers)) {
+                                resourceState = Enums.FunctionState.ok;
+                                break;
+                            }
+                            if (partFile.length() == 0) {
+                                resourceState = Enums.FunctionState.ok;
+                                break;
+                            }
+                        } catch (HttpResponseException e) {
+                            if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                                final String es = S.f("#811.065 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
+                                resourceState = Enums.FunctionState.dispatcher_config_error;
+                                break;
+                            } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
+                                final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
+                                        "a function #%s on asset srv %s, dispatcher %s. will try later again", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                // do nothing and try later again
+                                return;
+                            } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
+                                final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.not_found);
+                                resourceState = Enums.FunctionState.not_found;
+                                break;
+                            } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
+                                final String es = S.f("#811.080 Unknown error with a function %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
+                                resourceState = Enums.FunctionState.download_error;
+                                break;
+                            } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
+                                final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
+                                resourceState = Enums.FunctionState.download_error;
+                                break;
+                            } else {
+                                final String es = S.f("#811.091 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                log.warn(es);
+                                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
+                                resourceState = Enums.FunctionState.download_error;
+                                break;
+                            }
+                        }
+                        // work around for handling a burst access to asset server
+                        //noinspection BusyWait
+                        Thread.sleep(200);
+                        idx++;
+                    } while (idx < 1000);
+                    if (resourceState == Enums.FunctionState.none) {
+                        log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                        continue;
+                    } else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found || resourceState == Enums.FunctionState.dispatcher_config_error) {
+                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, resourceState);
+                        continue;
+                    }
+
+                    try (FileOutputStream fos = new FileOutputStream(functionTempFile)) {
+                        for (int i = 0; i <= idx; i++) {
+                            final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                            if (input.length() == 0) {
+                                continue;
+                            }
+                            FileUtils.copyFile(input, fos);
+                        }
+                    }
+
                     functionTempFile.renameTo(assetFile.file);
-                    metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
+
+                } catch (HttpResponseException e) {
+                    logError(functionCode, e);
+                } catch (SocketTimeoutException e) {
+                    log.error("#811.140 SocketTimeoutException: {}", e.toString());
+                } catch (ConnectException e) {
+                    log.error("#811.143 ConnectException: {}", e.toString());
+                } catch (IOException e) {
+                    log.error("#811.150 IOException", e);
+                } catch (URISyntaxException e) {
+                    log.error("#811.160 URISyntaxException", e);
+                } catch (Throwable th) {
+                    log.error("#811.165 Throwable", th);
                 }
-                else {
-                    //noinspection ResultOfMethodCallIgnored
-                    functionTempFile.delete();
-                }
             }
-            catch (HttpResponseException e) {
-                logError(functionCode, e);
+            if (!assetFile.getFile().exists()) {
+                log.error("#811.200 asset file {} is missing", assetFile.getFile().getAbsolutePath());
+                continue;
             }
-            catch (SocketTimeoutException e) {
-                log.error("#811.140 SocketTimeoutException: {}", e.toString());
+            CheckSumAndSignatureStatus status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetUrl, dispatcherUrl, asset, functionCode, state, functionTempFile);
+
+            if (status.checksum == CheckSumAndSignatureStatus.Status.correct && status.signature == CheckSumAndSignatureStatus.Status.correct) {
+                metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
+            } else {
+                functionTempFile.delete();
             }
-            catch (ConnectException e) {
-                log.error("#811.143 ConnectException: {}", e.toString());
-            }
-            catch (IOException e) {
-                log.error("#811.150 IOException", e);
-            }
-            catch (URISyntaxException e) {
-                log.error("#811.160 URISyntaxException", e);
-            }
-            catch (Throwable th) {
-                log.error("#811.165 Throwable", th);
-            }
+
         }
     }
 
