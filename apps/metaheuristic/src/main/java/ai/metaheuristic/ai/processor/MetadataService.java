@@ -145,10 +145,13 @@ public class MetadataService {
 
     public ChecksumWithSignatureInfo prepareChecksumWithSignature(AssetServerUrl assetUrl, String functionCode, TaskParamsYaml.FunctionConfig functionConfig) {
 
+        ChecksumWithSignatureInfo checksumWithSignatureInfo = new ChecksumWithSignatureInfo();
+
         // check requirements of signature
         if (functionConfig.checksumMap==null) {
-            setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_not_found);
-            return setSignatureNotValid(functionCode, assetUrl);
+            checksumWithSignatureInfo.checkSumAndSignatureStatus.checksum = EnumsApi.ChecksumState.not_present;
+            checksumWithSignatureInfo.checkSumAndSignatureStatus.signature = EnumsApi.SignatureState.not_present;
+            return checksumWithSignatureInfo;
         }
 
         // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing
@@ -166,6 +169,9 @@ public class MetadataService {
         }
 
         return new ChecksumWithSignatureInfo(Enums.SignatureStates.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
+        checksumWithSignatureInfo.checkSumAndSignatureStatus.checksum = EnumsApi.ChecksumState.not_present;
+        checksumWithSignatureInfo.checkSumAndSignatureStatus.signature = EnumsApi.SignatureState.not_present;
+        return checksumWithSignatureInfo;
     }
 
     private ChecksumWithSignatureInfo setSignatureNotValid(String functionCode, AssetServerUrl assetUrl) {
