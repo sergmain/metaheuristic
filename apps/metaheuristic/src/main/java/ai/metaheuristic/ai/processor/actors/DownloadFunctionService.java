@@ -348,7 +348,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            if (status.checksum != EnumsApi.ChecksumState.error && status.signature != EnumsApi.SignatureState.error) {
+            if (status.checksum != EnumsApi.ChecksumState.wrong && status.signature != EnumsApi.SignatureState.wrong) {
                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.ready);
             } else {
                 assetFile.file.delete();

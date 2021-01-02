@@ -16,14 +16,11 @@
 
 package ai.metaheuristic.ai.processor.function;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
@@ -52,27 +49,19 @@ public class ChecksumAndSignatureService {
             ProcessorAndCoreData.AssetUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
 
-        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.ok, EnumsApi.SignatureState.ok);
+        CheckSumAndSignatureStatus status;
+        try (FileInputStream fis = new FileInputStream(functionFile)) {
+            status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
+                    "Asset url: "+ assetUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
+                    checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
-        if (checksumState.state!= Enums.SignatureStates.signature_not_required) {
-            try (FileInputStream fis = new FileInputStream(functionFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                        "Dispatcher url: "+ dispatcherUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
-                        checksumState.originChecksumWithSignature, checksumState.hashAlgo);
-            }
-            if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.120 function {} has the broken signature", functionCode);
-                setFunctionState(assetUrl, functionCode, Enums.FunctionState.signature_wrong);
-            }
-            else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.140 function {} has the wrong checksum", functionCode);
-                setFunctionState(assetUrl, functionCode, Enums.FunctionState.checksum_wrong);
-            }
         }
+        metadataService.setChecksumAndSignatureStatus(assetUrl, functionCode, status);
         return status;
     }
 
 
+/*
     public void p() {
         try {
             CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(serverUrls.assetUrl,
@@ -89,4 +78,5 @@ public class ChecksumAndSignatureService {
         }
 
     }
+*/
 }

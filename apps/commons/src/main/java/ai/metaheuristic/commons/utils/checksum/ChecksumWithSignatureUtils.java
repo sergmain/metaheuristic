@@ -16,7 +16,6 @@
 package ai.metaheuristic.commons.utils.checksum;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
@@ -24,6 +23,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -36,11 +36,13 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 @Slf4j
 public class ChecksumWithSignatureUtils {
 
+    private static final CheckSumAndSignatureStatus CHECK_SUM_AND_SIGNATURE_NOT_PRESENTED = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.not_presented, EnumsApi.SignatureState.not_presented);
+
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
             status = verifyChecksumAndSignature(infoPrefix, fis, publicKey, entry.getValue(), entry.getKey());
-            if (status.checksum== EnumsApi.ChecksumState.error && status.signature== EnumsApi.SignatureState.error) {
+            if (status.checksum== EnumsApi.ChecksumState.wrong && status.signature== EnumsApi.SignatureState.wrong) {
                 return status;
             }
         }
@@ -48,34 +50,43 @@ public class ChecksumWithSignatureUtils {
     }
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
-        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
-        ChecksumWithSignature checksumWithSignature = parse(value);
-        String actualSum = Checksum.getChecksum(hashAlgo, fis);
-        if (actualSum.equals(checksumWithSignature.checksum)) {
-            status.checksum = EnumsApi.ChecksumState.ok;
-            log.info("{}, checksum is correct", infoPrefix);
-        } else {
-            log.error("{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
-            status.checksum = EnumsApi.ChecksumState.error;
-        }
-
-        if (!hashAlgo.isSigned) {
-            status.signature = EnumsApi.SignatureState.not_present;
-        }
-        else {
-            if (S.b(checksumWithSignature.signature)) {
-                status.signature = EnumsApi.SignatureState.not_present;
-            }
-            else {
-                status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
-            }
-        }
+        CheckSumAndSignatureStatus status = verifyChecksumAndSignatureInternal(infoPrefix, fis, publicKey, value, hashAlgo);
         log.info("{}, signature is {}", infoPrefix, status.signature);
-
         return status;
     }
 
-    public static ChecksumWithSignature parse(String data) {
+    private static CheckSumAndSignatureStatus verifyChecksumAndSignatureInternal(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
+        ChecksumWithSignature checksumWithSignature = parse(value);
+        // there isn't a signature without a checksum
+        if (checksumWithSignature.checksum==null) {
+            return CHECK_SUM_AND_SIGNATURE_NOT_PRESENTED;
+        }
+
+        String actualSum = Checksum.getChecksum(hashAlgo, fis);
+
+        EnumsApi.ChecksumState checksumState;
+        if (actualSum.equals(checksumWithSignature.checksum)) {
+            checksumState = EnumsApi.ChecksumState.correct;
+            log.info("{}, checksum is correct", infoPrefix);
+        }
+        else {
+            log.error("{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
+            checksumState = EnumsApi.ChecksumState.wrong;
+        }
+
+        if (!hashAlgo.isSigned || S.b(hashAlgo.signatureAlgo) || S.b(checksumWithSignature.signature)) {
+            return new CheckSumAndSignatureStatus(checksumState, EnumsApi.SignatureState.not_presented);
+        }
+
+        EnumsApi.SignatureState signatureState = isValid(hashAlgo.signatureAlgo, checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
+        return new CheckSumAndSignatureStatus(checksumState, signatureState);
+
+    }
+
+    public static ChecksumWithSignature parse(@Nullable String data) {
+        if (S.b(data)) {
+            return new ChecksumWithSignature();
+        }
         final int idx = data.indexOf(SecUtils.SIGNATURE_DELIMITER);
         if (idx == -1) {
             return new ChecksumWithSignature(data, null);
@@ -84,14 +95,14 @@ public class ChecksumWithSignatureUtils {
         return checksumWithSignature;
     }
 
-    public static EnumsApi.SignatureState isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
+    public static EnumsApi.SignatureState isValid(String signatureAlgo, byte[] data, String signatureAsBase64, PublicKey publicKey) {
         try {
-            Signature signature = Signature.getInstance("SHA256withRSA");
+            Signature signature = Signature.getInstance(signatureAlgo);
             signature.initVerify(publicKey);
             signature.update(data);
             final byte[] bytes = Base64.decodeBase64(StringUtils.getBytesUsAscii(signatureAsBase64));
             boolean status = signature.verify(bytes);
-            return status ? EnumsApi.SignatureState.ok : EnumsApi.SignatureState.error;
+            return status ? EnumsApi.SignatureState.correct : EnumsApi.SignatureState.wrong;
         }
         catch (GeneralSecurityException e) {
             log.error("Error checking signature", e);

@@ -31,6 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -378,7 +379,21 @@ public class MetadataService {
             }
             status.checksumMap.putAll(checksumMap);
             updateMetadataFile();
-            return;
+        }
+    }
+
+    public void setChecksumAndSignatureStatus(final AssetUrl assetUrl, String functionCode, CheckSumAndSignatureStatus checkSumAndSignatureStatus) {
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("#815.240 functionCode is null");
+        }
+        synchronized (syncObj) {
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            if (status == null) {
+                return;
+            }
+            status.checksum = checkSumAndSignatureStatus.checksum;
+            status.signature = checkSumAndSignatureStatus.signature;
+            updateMetadataFile();
         }
     }
 

@@ -54,13 +54,14 @@ public class TestChecksumWithSignature {
         CreateKeys keys = new CreateKeys(2048);
 
         byte[] bytes = createBytes(30_000_000);
-        String sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(bytes));
+        String sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256WithSignature, new ByteArrayInputStream(bytes));
         String signature = SecUtils.getSignature(sum, keys.getPrivateKey());
 
-        EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(sum.getBytes(), signature, keys.getPublicKey());
+        // ###idea### why?
+        EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, sum.getBytes(), signature, keys.getPublicKey());
         System.out.println(status);
 
-        assertEquals(EnumsApi.SignatureState.ok, status);
+        assertEquals(EnumsApi.SignatureState.correct, status);
 
 
         Signature signer= Signature.getInstance("SHA256withRSA");
@@ -79,7 +80,7 @@ public class TestChecksumWithSignature {
     public void test() throws GeneralSecurityException, IOException {
         CreateKeys keys = new CreateKeys(2048);
 
-        String checksum1 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, CONTENT_1);
+        String checksum1 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256WithSignature, CONTENT_1);
         String signature1 = SecUtils.getSignature(checksum1, keys.getPrivateKey());
         String forVerifying1 = checksum1 + SecUtils.SIGNATURE_DELIMITER + signature1;
 
@@ -89,9 +90,9 @@ public class TestChecksumWithSignature {
         assertNotNull(checksumWithSignature1.signature);
         assertEquals(signature1, checksumWithSignature1.signature);
 
-        assertEquals(EnumsApi.SignatureState.ok,
+        assertEquals(EnumsApi.SignatureState.correct,
                 ChecksumWithSignatureUtils.isValid(
-                        checksumWithSignature1.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
+                        EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksumWithSignature1.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
 
 
         String checksum2 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, CONTENT_2);
@@ -104,17 +105,17 @@ public class TestChecksumWithSignature {
         assertNotNull(checksumWithSignature2.signature);
         assertEquals(signature2, checksumWithSignature2.signature);
 
-        assertEquals(EnumsApi.SignatureState.ok,
+        assertEquals(EnumsApi.SignatureState.correct,
                 ChecksumWithSignatureUtils.isValid(
-                        checksumWithSignature2.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
+                        EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksumWithSignature2.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
 
-        assertEquals(EnumsApi.SignatureState.error,
+        assertEquals(EnumsApi.SignatureState.wrong,
                 ChecksumWithSignatureUtils.isValid(
-                        checksumWithSignature1.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
+                        EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksumWithSignature1.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
 
-        assertEquals(EnumsApi.SignatureState.error,
+        assertEquals(EnumsApi.SignatureState.wrong,
                 ChecksumWithSignatureUtils.isValid(
-                        checksumWithSignature2.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
+                        EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksumWithSignature2.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
 
         String signature = SecUtils.getSignature(checksum1, keys.getPrivateKey());
 
@@ -129,8 +130,8 @@ public class TestChecksumWithSignature {
         CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature("info:", is, keys.getPublicKey(), checksumWithSignature, EnumsApi.HashAlgo.SHA256WithSignature);
 //        CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", is, keys.getPublicKey());
         System.out.println(status);
-        assertEquals(EnumsApi.ChecksumState.ok, status.checksum);
-        assertEquals(EnumsApi.SignatureState.ok, status.signature);
+        assertEquals(EnumsApi.ChecksumState.correct, status.checksum);
+        assertEquals(EnumsApi.SignatureState.correct, status.signature);
     }
 
 

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -60,7 +59,7 @@ public class MetadataParamsYamlUtilsV1
         if (src.metadata!=null) {
             for (Map.Entry<String, String> o : src.metadata.entrySet()) {
                 if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
-                    trg.metadata.putIfAbsent(o.getKey(), o.getValue());
+                    trg.metadata.put(o.getKey(), o.getValue());
                 }
             }
 

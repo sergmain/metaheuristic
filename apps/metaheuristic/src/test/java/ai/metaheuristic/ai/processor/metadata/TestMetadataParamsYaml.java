@@ -153,7 +153,6 @@ public class TestMetadataParamsYaml {
             assertEquals("http://localhost:8080", status.assetUrl);
             assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
-            assertTrue(status.verified);
         }
         {
             status = statuses.get(1);
@@ -161,7 +160,6 @@ public class TestMetadataParamsYaml {
             assertEquals("https://localhost:8888", status.assetUrl);
             assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
-            assertFalse(status.verified);
         }
         {
             status = statuses.get(2);
@@ -169,7 +167,6 @@ public class TestMetadataParamsYaml {
             assertEquals("http://localhost:8080", status.assetUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
-            assertFalse(status.verified);
         }
         {
             status = statuses.get(3);
@@ -177,7 +174,6 @@ public class TestMetadataParamsYaml {
             assertEquals("http://localhost:8080", status.assetUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
-            assertFalse(status.verified);
         }
         {
             status = statuses.get(4);
@@ -185,7 +181,6 @@ public class TestMetadataParamsYaml {
             assertEquals("https://localhost:8888", status.assetUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
-            assertFalse(status.verified);
         }
     }
 }

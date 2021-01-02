@@ -49,9 +49,9 @@ public class Checksum {
             case MD5:
                 return DigestUtils.md5Hex(inputStream);
             case SHA256:
-                return DigestUtils.sha256Hex(inputStream);
             case SHA256WithSignature:
-                throw new IllegalStateException("Shouldn't be created here. Use external methods");
+                return DigestUtils.sha256Hex(inputStream);
+//                throw new IllegalStateException("Shouldn't be created here. Use external methods");
             default:
                 throw new IllegalStateException("Checksum for " + type +"  isn't supported yet");
         }

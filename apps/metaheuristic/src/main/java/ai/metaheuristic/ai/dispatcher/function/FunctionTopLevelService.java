@@ -253,15 +253,17 @@ public class FunctionTopLevelService {
                 String sum=null;
                 File file = null;
                 if (globals.isFunctionSignatureRequired) {
-                    // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing
-                    if (functionConfig.checksumMap==null || functionConfig.checksumMap.keySet().stream().noneMatch(o->o==EnumsApi.HashAlgo.SHA256WithSignature)) {
+                    // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
+                    EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
+
+                    if (functionConfig.checksumMap==null || functionConfig.checksumMap.keySet().stream().noneMatch(o->o== hashAlgo)) {
                         String es = S.f("#295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.error(es);
                         continue;
                     }
                     String data = functionConfig.checksumMap.entrySet().stream()
-                            .filter(o -> o.getKey() == EnumsApi.HashAlgo.SHA256WithSignature)
+                            .filter(o -> o.getKey() == hashAlgo)
                             .findFirst()
                             .map(Map.Entry::getValue).orElse(null);
 
@@ -283,7 +285,7 @@ public class FunctionTopLevelService {
                         case dispatcher:
                             if (S.b(functionConfig.file)) {
                                 String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
-                                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
+                                sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
                             }
                             else {
                                 file = new File(srcDir, functionConfig.file);
@@ -294,14 +296,14 @@ public class FunctionTopLevelService {
                                     continue;
                                 }
                                 try (InputStream inputStream = new FileInputStream(file)) {
-                                    sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, inputStream);
+                                    sum = Checksum.getChecksum(hashAlgo, inputStream);
                                 }
                             }
                             break;
                         case processor:
                         case git:
                             String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
-                            sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
+                            sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }
                     if (!checksumWithSignature.checksum.equals(sum)) {
@@ -310,8 +312,8 @@ public class FunctionTopLevelService {
                         log.warn(es);
                         continue;
                     }
-                    EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
-                    if (st!= EnumsApi.SignatureState.ok) {
+                    EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+                    if (st!= EnumsApi.SignatureState.correct) {
                         if (!checksumWithSignature.checksum.equals(sum)) {
                             String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);
                             statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));

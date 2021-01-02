@@ -57,7 +57,7 @@ public class MetadataParamsYamlUtilsV2
 
         for (Map.Entry<String, String> o : src.metadata.entrySet()) {
             if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
-                trg.metadata.putIfAbsent(o.getKey(), o.getValue());
+                trg.metadata.put(o.getKey(), o.getValue());
             }
         }
         src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));

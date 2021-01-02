@@ -16,10 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,20 +28,18 @@ import java.util.Map;
  */
 public class DispatcherContextInfoHolder {
 
-    public static final Map<ProcessorAndCoreData.CommonUrl, DispatcherContextInfo> contexts = new HashMap<>();
+    public static final Map<String, DispatcherContextInfo> contexts = new HashMap<>();
 
     @Nullable
     public static DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
-        return contexts.get(commonUrl);
+        return contexts.get(commonUrl.getUrl());
     }
 
     public static void put(ProcessorAndCoreData.CommonUrl commonUrl, DispatcherContextInfo context) {
-        // ###IDEA###, why?
-        contexts.putIfAbsent(commonUrl, context).update(context);
+        contexts.computeIfAbsent(commonUrl.getUrl(), o->new DispatcherContextInfo()).update(context);
     }
 
     public static void put(ProcessorAndCoreData.CommonUrl commonUrl, Long chunkSize) {
-        // ###IDEA###, why?
-        contexts.putIfAbsent(commonUrl, new DispatcherContextInfo()).chunkSize = chunkSize;
+        contexts.computeIfAbsent(commonUrl.getUrl(), o-> new DispatcherContextInfo()).chunkSize = chunkSize;
     }
 }

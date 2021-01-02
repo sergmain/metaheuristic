@@ -48,7 +48,9 @@ public final class Enums {
         io_error,
         dispatcher_config_error,
         signature_wrong,
-        checksum_wrong;
+        checksum_wrong,
+        // not used anymore, left there for backward compatibility
+        signature_not_found;
 
         public boolean needVerification = false;
         FunctionState() {

@@ -18,6 +18,7 @@ package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.S;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 public class EnumsApi {
 
@@ -335,12 +336,16 @@ public class EnumsApi {
     }
 
     public enum HashAlgo {
-        MD5(false), SHA256(false), SHA256WithSignature(true);
+        MD5(false, null), SHA256(false, null), SHA256WithSignature(true, "SHA256withRSA");
 
-        public boolean isSigned;
+        public final boolean isSigned;
 
-        HashAlgo(boolean isSigned) {
+        @Nullable
+        public final String signatureAlgo;
+
+        HashAlgo(boolean isSigned, @Nullable String signatureAlgo) {
             this.isSigned = isSigned;
+            this.signatureAlgo = signatureAlgo;
         }
 
     }
@@ -359,7 +364,7 @@ public class EnumsApi {
 
     public enum MetricsStatus { NotFound, Ok, Error }
 
-    public enum ChecksumState { not_yet, not_present, ok, error }
+    public enum ChecksumState { not_yet, not_presented, correct, wrong}
 
-    public enum SignatureState { not_yet, not_present, ok, error }
+    public enum SignatureState { not_yet, not_presented, correct, wrong}
 }

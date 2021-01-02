@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import org.junit.jupiter.api.Test;
@@ -32,15 +33,15 @@ public class TestRoundRobinForDispatcher {
 
         LinkedHashMap<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
-        DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
-        lle1.dispatcherLookup = new DispatcherLookupParamsYaml.DispatcherLookup();
         DispatcherUrl url1 = new DispatcherUrl("url1");
+        DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
+                url1, new DispatcherLookupParamsYaml.DispatcherLookup(), new DispatcherSchedule(null));
         lle1.dispatcherLookup.url = url1.url;
         lookupExtendedMap.put( url1, lle1);
 
-        DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
-        lle2.dispatcherLookup = new DispatcherLookupParamsYaml.DispatcherLookup();
         DispatcherUrl url2 = new DispatcherUrl("url2");
+        DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
+                url2, new DispatcherLookupParamsYaml.DispatcherLookup(), new DispatcherSchedule(null));
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 

@@ -72,9 +72,8 @@ public class VerifySignature {
         PublicKey publicKey = SecUtils.getPublicKey(pubKey);
         Checksum cs = new Checksum();
         cs.checksums.put(EnumsApi.HashAlgo.SHA256WithSignature, checksumAndSignature);
-//        checksum.checksums.put(EnumsApi.HashAlgo.SHA256WithSignature, checksum + SecUtils.SIGNATURE_DELIMITER + signature);
 
-        EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(checksum.getBytes(), signature, publicKey);
+        EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksum.getBytes(), signature, publicKey);
         System.out.println(status);
 
         try (FileInputStream fis = new FileInputStream(new File(args[0]))) {

@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.S;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -60,7 +61,7 @@ public class DispatcherSchedule {
 
     public final String asString;
 
-    public DispatcherSchedule(String cfg) {
+    public DispatcherSchedule(@Nullable String cfg) {
         if (StringUtils.isBlank(cfg)) {
             this.policy = ExtendedTimePeriod.SchedulePolicy.normal;
             this.asString = "";

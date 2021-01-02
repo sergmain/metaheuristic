@@ -17,13 +17,13 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,23 +31,22 @@ public class TestDispatcherLookup {
 
     @Test
     public void testParsingYaml() throws IOException {
-        try (InputStream is = TestDispatcherLookup.class.getResourceAsStream("/yaml/dispatchers.yaml")) {
-            DispatcherLookupParamsYaml ssc = DispatcherLookupParamsYamlUtils.to(is);
+        String yaml = IOUtils.resourceToString("/yaml/dispatchers.yaml", StandardCharsets.UTF_8);
+        DispatcherLookupParamsYaml ssc = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
-            assertEquals(2, ssc.dispatchers.size());
+        assertEquals(2, ssc.dispatchers.size());
 
-            assertEquals(new ProcessorAndCoreData.DispatcherUrl("http://localhost:8080"), ssc.dispatchers.get(0).getDispatcherUrl());
-            assertEquals(Enums.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
-            assertNull(ssc.dispatchers.get(0).publicKey);
-            assertFalse(ssc.dispatchers.get(0).signatureRequired);
-            assertFalse(ssc.dispatchers.get(0).disabled);
+        assertEquals("http://localhost:8080", ssc.dispatchers.get(0).url);
+        assertEquals(Enums.DispatcherLookupType.direct, ssc.dispatchers.get(0).lookupType);
+        assertNull(ssc.dispatchers.get(0).publicKey);
+        assertFalse(ssc.dispatchers.get(0).signatureRequired);
+        assertFalse(ssc.dispatchers.get(0).disabled);
 
-            assertEquals(new ProcessorAndCoreData.DispatcherUrl("https://host"), ssc.dispatchers.get(1).getDispatcherUrl());
-            assertEquals(Enums.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
-            assertEquals("some-public-key", ssc.dispatchers.get(1).publicKey);
-            assertTrue(ssc.dispatchers.get(1).signatureRequired);
-            assertTrue(ssc.dispatchers.get(1).disabled);
-        }
+        assertEquals("https://host", ssc.dispatchers.get(1).url);
+        assertEquals(Enums.DispatcherLookupType.registry, ssc.dispatchers.get(1).lookupType);
+        assertEquals("some-public-key", ssc.dispatchers.get(1).publicKey);
+        assertTrue(ssc.dispatchers.get(1).signatureRequired);
+        assertTrue(ssc.dispatchers.get(1).disabled);
     }
 
     @Test
@@ -69,19 +68,19 @@ public class TestDispatcherLookup {
 
         ssc.dispatchers.add(config);
 
-        String yaml = DispatcherLookupParamsYamlUtils.toString(ssc);
+        String yaml = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.toString(ssc);
         System.out.println(yaml);
 
-        DispatcherLookupParamsYaml ssc1 = DispatcherLookupParamsYamlUtils.to(yaml);
+        DispatcherLookupParamsYaml ssc1 = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         assertEquals(ssc.dispatchers.size(), ssc1.dispatchers.size());
 
-        assertEquals(ssc.dispatchers.get(0).getDispatcherUrl(), ssc1.dispatchers.get(0).getDispatcherUrl());
+        assertEquals(ssc.dispatchers.get(0).url, ssc1.dispatchers.get(0).url);
         assertEquals(ssc.dispatchers.get(0).publicKey, ssc1.dispatchers.get(0).publicKey);
         assertEquals(ssc.dispatchers.get(0).signatureRequired, ssc1.dispatchers.get(0).signatureRequired);
         assertEquals(ssc.dispatchers.get(0).lookupType, ssc1.dispatchers.get(0).lookupType);
 
-        assertEquals(ssc.dispatchers.get(1).getDispatcherUrl(), ssc1.dispatchers.get(1).getDispatcherUrl());
+        assertEquals(ssc.dispatchers.get(1).url, ssc1.dispatchers.get(1).url);
         assertEquals(ssc.dispatchers.get(1).publicKey, ssc1.dispatchers.get(1).publicKey);
         assertEquals(ssc.dispatchers.get(1).signatureRequired, ssc1.dispatchers.get(1).signatureRequired);
         assertEquals(ssc.dispatchers.get(1).lookupType, ssc1.dispatchers.get(1).lookupType);
