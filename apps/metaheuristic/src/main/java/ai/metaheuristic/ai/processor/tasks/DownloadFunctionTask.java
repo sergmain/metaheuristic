@@ -25,25 +25,5 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(of = {"functionCode", "assetUrl"}, callSuper = false)
 public class DownloadFunctionTask extends ProcessorRestTask {
     public final String functionCode;
-//    public final TaskParamsYaml.FunctionConfig functionConfig;
-
-    public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
     public final ProcessorAndCoreData.AssetUrl assetUrl;
-
-/*
-    private final Map<Integer, DispatcherLookupParamsYaml.Asset> assetMap = new HashMap<>();
-
-    public DispatcherLookupParamsYaml.Asset getAsset() {
-        return assetMap.computeIfAbsent(1, o-> initAsset());
-    }
-
-    private DispatcherLookupParamsYaml.Asset initAsset() {
-
-        final DispatcherLookupParamsYaml.Asset asset = dispatcher.asset!=null
-                ? dispatcher.asset
-                : new DispatcherLookupParamsYaml.Asset(dispatcher.getDispatcherUrl().url, dispatcher.restUsername, dispatcher.restPassword);
-        return asset;
-    }
-*/
-
 }

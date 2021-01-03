@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import org.junit.jupiter.api.Test;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetUrl;
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -39,19 +38,19 @@ public class TestDownloadQueue {
     public void test() {
         TestQueue testQueue = new TestQueue();
 
-        DownloadFunctionTask task1 = new DownloadFunctionTask("function-1", new DispatcherUrl("url1"), new AssetUrl("url2"));
+        DownloadFunctionTask task1 = new DownloadFunctionTask("function-1", new AssetUrl("url2"));
 
         testQueue.add(task1);
         assertEquals(1, testQueue.queueSize());
 
-        DownloadFunctionTask task2 = new DownloadFunctionTask("function-1", new DispatcherUrl("url1"), new AssetUrl("url2"));
+        DownloadFunctionTask task2 = new DownloadFunctionTask("function-1", new AssetUrl("url2"));
 
         testQueue.add(task2);
         assertEquals(1, testQueue.queueSize());
 
-        DownloadFunctionTask task3 = new DownloadFunctionTask("function-2", new DispatcherUrl("url1"), new AssetUrl("url2"));
+        DownloadFunctionTask task3 = new DownloadFunctionTask("function-2", new AssetUrl("url2"));
 
-        DownloadFunctionTask task4 = new DownloadFunctionTask("function-1", new DispatcherUrl("url1"), new AssetUrl("url2-1"));
+        DownloadFunctionTask task4 = new DownloadFunctionTask("function-1", new AssetUrl("url2-1"));
 
         testQueue.add(task3);
         testQueue.add(task4);

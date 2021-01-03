@@ -142,7 +142,7 @@ public class TaskAssetPreparer {
             }
             final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
             if (functionState == Enums.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.dispatcherUrl, serverUrls.assetUrl));
+                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetUrl));
                 return false;
             }
             else {
@@ -151,7 +151,7 @@ public class TaskAssetPreparer {
 
                     metadataService.setFunctionState(serverUrls.assetUrl, functionConfig.code, Enums.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.dispatcherUrl, serverUrls.assetUrl));
+                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetUrl));
                     return true;
                 }
                 else if (functionState==Enums.FunctionState.dispatcher_config_error) {

@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
+import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -69,6 +70,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ChecksumAndSignatureService checksumAndSignatureService;
+    private final GetDispatcherContextInfoService getDispatcherContextInfoService;
 
     @SuppressWarnings("Duplicates")
     public void process() {
@@ -84,30 +86,20 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             final String functionCode = task.functionCode;
 
             final ProcessorAndCoreData.AssetUrl assetUrl = task.assetUrl;
-            final ProcessorAndCoreData.DispatcherUrl dispatcherUrl = task.dispatcherUrl;
             final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetUrl);
             if (asset==null) {
                 log.error("#811.007 asset server wasn't found for url {}", assetUrl.url);
                 continue;
             }
 
-//            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
-//                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), assetUrl);
-
             final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetUrl);
 
             // process only if dispatcher has already sent its config
             if (contextInfo==null || contextInfo.chunkSize==null) {
-                log.warn("#951.120 Dispatcher {} doesn't provide chunkSize", task.dispatcherUrl);
+                log.warn("#951.120 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetUrl.url);
+                getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetUrl));
                 continue;
             }
-
-/*
-            if (task.chunkSize==null) {
-                log.error("#811.010 (task.chunkSize==null), dispatcher.url: {}, asset.url: {}", dispatcherUrl, asset.url);
-                continue;
-            }
-*/
 
             MetadataService.FunctionConfigAndStatus functionConfigAndStatus = metadataService.syncFunctionStatus(assetUrl, asset, functionCode);
             if (functionConfigAndStatus==null) {
@@ -197,15 +189,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
                         try {
 
-/*
-                            if (task.chunkSize != null) {
-                                chunkSize = task.chunkSize.toString();
-                            } else {
-                                log.warn("#811.043 task.chunkSize is null, 500k will be used as value");
-                                chunkSize = "500000";
-                            }
-*/
-
                             final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
                                     .addParameter("code", task.functionCode)
                                     .addParameter("chunkSize", contextInfo.chunkSize.toString())
@@ -221,13 +204,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             final HttpResponse httpResponse = response.returnResponse();
                             int statusCode = httpResponse.getStatusLine().getStatusCode();
                             if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.047 Function %s can't be downloaded, asset manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url);
                                 log.error(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
                                 functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (statusCode != HttpStatus.OK.value()) {
-                                final String es = S.f("#811.050 Function %s can't be downloaded from asset srv %s, dispatcher %s, status code: %d", task.functionCode, asset.url, dispatcherUrl, statusCode);
+                                final String es = S.f("#811.050 Function %s can't be downloaded from asset manager %s, status code: %d", task.functionCode, asset.url, statusCode);
                                 log.error(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
@@ -259,37 +242,37 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             }
                         } catch (HttpResponseException e) {
                             if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("#811.065 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.065 Function %s can't be downloaded, asset manager %s was mis-configured", task.functionCode, asset.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
                                 functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
                                 final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
-                                        "a function #%s on asset srv %s, dispatcher %s. will try later again", task.functionCode, asset.url, dispatcherUrl);
+                                        "a function #%s on asset srv %s. will try later again", task.functionCode, asset.url);
                                 log.warn(es);
                                 // do nothing and try later again
                                 return;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                                final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.070 Function %s wasn't found on asset manager %s", task.functionCode, asset.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.not_found);
                                 functionState = Enums.FunctionState.not_found;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
-                                final String es = S.f("#811.080 Unknown error with a function %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.080 Unknown error with a function %s on asset manager %s", task.functionCode, asset.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                                final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.090 Unknown error with a resource %s on asset manager %s", task.functionCode, asset.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
                                 break;
                             } else {
-                                final String es = S.f("#811.091 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
+                                final String es = S.f("#811.091 Unknown error with a resource %s on asset manager %s, dispatcher %s", task.functionCode, asset.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
@@ -371,7 +354,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetServerUrl);
 
                 if (contextInfo==null) {
-                    log.info("#811.190 dispatcher contextInfo wasn't found, assetUrl: {}", o.assetUrl);
+                    log.info("#811.190 contextInfo for asset manager {} wasn't found, function: {}", o.assetUrl, o.code);
                     return;
                 }
 
@@ -383,7 +366,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetUrl, contextInfo.chunkSize);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, null, assetServerUrl);
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetServerUrl);
                 add(functionTask);
             }
         });
