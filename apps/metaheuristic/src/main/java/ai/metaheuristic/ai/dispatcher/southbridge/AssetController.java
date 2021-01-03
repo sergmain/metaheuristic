@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -56,6 +57,13 @@ public class AssetController {
     private final Globals globals;
     private final SouthbridgeService serverService;
     private final FunctionTopLevelService functionTopLevelService;
+
+    @GetMapping("/context-info/{random-part}")
+    public DispatcherData.DispatcherContextInfo contextInfo(
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) {
+        return new DispatcherData.DispatcherContextInfo(globals.chunkSize, Consts.PROCESSOR_COMM_VERSION);
+    }
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverFunction(
@@ -97,9 +105,8 @@ public class AssetController {
         return functionTopLevelService.getFunctionChecksum(response, code);
     }
 
-    @GetMapping("/function-configs/{processorId}/{random-part}")
+    @GetMapping("/function-configs/{random-part}")
     public ReplicationApiData.FunctionConfigsReplication functionConfigs(
-            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
         return functionTopLevelService.getFunctionConfigs();

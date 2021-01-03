@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
@@ -88,7 +89,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     processorTaskService.markAsFinishedWithError(dispatcherUrl, task.taskId, es);
                     continue;
             }
-            DispatcherContextInfo dispatcherContextInfo = DispatcherContextInfoHolder.getCtx(dispatcherUrl);
+            DispatcherData.DispatcherContextInfo dispatcherContextInfo = DispatcherContextInfoHolder.getCtx(dispatcherUrl);
             if (dispatcherContextInfo==null || dispatcherContextInfo.chunkSize==null) {
                 log.info("DispatcherContextInfo isn't inited for dispatcherUrl {}", dispatcherUrl.url);
                 continue;

@@ -20,23 +20,13 @@ import ai.metaheuristic.ai.dispatcher.account.AccountCache;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Form;
-import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import static ai.metaheuristic.ai.dispatcher.replication.ReplicationAccountTopLevelService.*;
+import static ai.metaheuristic.ai.dispatcher.replication.ReplicationAccountTopLevelService.AccountLoopEntry;
 
 /**
  * @author Serge

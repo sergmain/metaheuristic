@@ -86,7 +86,7 @@ public class DispatcherRequestor {
         if (dispatcher == null) {
             throw new IllegalStateException("#775.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
-        serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        serverRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
     }
 
     private long lastRequestForMissingResources = 0;

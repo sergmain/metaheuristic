@@ -575,7 +575,7 @@ public class TaskProcessor {
         functionPrepareResult.function = function;
 
         if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(processorState);
+            final File baseResourceDir = metadataService.prepareBaseDir(assetUrl);
             functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
@@ -595,7 +595,7 @@ public class TaskProcessor {
                 functionPrepareResult.isError = true;
                 return functionPrepareResult;
             }
-            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(processorState);
+            final File resourceDir = metadataService.prepareBaseDir(assetUrl);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

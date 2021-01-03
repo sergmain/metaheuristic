@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -86,7 +87,7 @@ public class ProcessorKeepAliveRequestor {
         if (this.dispatcher == null) {
             throw new IllegalStateException("#776.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
-        this.dispatcherRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
+        this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
     private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
@@ -109,7 +110,7 @@ public class ProcessorKeepAliveRequestor {
         int maxVersionOfProcessor = responseParamYaml.dispatcherInfo.processorCommVersion != null
                 ? responseParamYaml.dispatcherInfo.processorCommVersion
                 : 1;
-        DispatcherContextInfoHolder.put(dispatcherUrl, new DispatcherContextInfo(responseParamYaml.dispatcherInfo.chunkSize, maxVersionOfProcessor));
+        DispatcherContextInfoHolder.put(dispatcherUrl, new DispatcherData.DispatcherContextInfo(responseParamYaml.dispatcherInfo.chunkSize, maxVersionOfProcessor));
     }
 
     public void proceedWithRequest() {

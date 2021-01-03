@@ -23,7 +23,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -53,8 +52,16 @@ public class DispatcherLookupParamsYamlUtilsV1
 
         src.dispatchers.stream().map(DispatcherLookupParamsYamlUtilsV1::toDispatcher).collect(Collectors.toCollection(() -> trg.dispatchers));
 
-        Set<DispatcherLookupParamsYamlV2.AssetV2> assets = src.dispatchers.stream().filter(o->o.asset!=null).map(o->new DispatcherLookupParamsYamlV2.AssetV2(o.url, o.asset.username, o.asset.password, o.publicKey, o.disabled)).collect(Collectors.toSet());
-        trg.assets.addAll(assets);
+        for (DispatcherLookupParamsYamlV1.DispatcherLookupV1 dispatcher : src.dispatchers) {
+            if (dispatcher.asset!=null) {
+                trg.assets.add(new DispatcherLookupParamsYamlV2.AssetV2(dispatcher.asset.url, dispatcher.asset.username, dispatcher.asset.password, dispatcher.publicKey, dispatcher.disabled));
+            }
+            else {
+                trg.assets.add(new DispatcherLookupParamsYamlV2.AssetV2(dispatcher.url, dispatcher.restUsername, dispatcher.restPassword, dispatcher.publicKey, dispatcher.disabled));
+            }
+        }
+//        Set<DispatcherLookupParamsYamlV2.AssetV2> assets = src.dispatchers.stream().filter(o->o.asset!=null).map(o->new DispatcherLookupParamsYamlV2.AssetV2(o.url, o.asset.username, o.asset.password, o.publicKey, o.disabled)).collect(Collectors.toSet());
+//        trg.assets.addAll(assets);
 
         trg.checkIntegrity();
         return trg;

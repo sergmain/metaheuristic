@@ -232,7 +232,7 @@ public class MetadataService {
         }
 */
 
-        File baseFunctionDir = prepareBaseFunctionDir(assetUrl);
+        File baseFunctionDir = prepareBaseDir(assetUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
@@ -537,8 +537,8 @@ public class MetadataService {
         return s;
     }
 
-    public File prepareBaseFunctionDir(AssetUrl assetUrl) {
-        final File dir = new File(globals.processorResourcesDir, asCode(assetUrl)+File.separatorChar+ EnumsApi.DataType.function);
+    public File prepareBaseDir(AssetUrl assetUrl) {
+        final File dir = new File(globals.processorResourcesDir, asCode(assetUrl));
         if (!dir.exists()) {
             //noinspection unused
             boolean status = dir.mkdirs();

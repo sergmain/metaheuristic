@@ -105,13 +105,15 @@ public class AssetUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareFunctionFile(File baseFunctionDir, String functionCode, @Nullable String resourceFilename) {
+    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, @Nullable String resourceFilename) {
 
-        final AssetFile assetFile = new AssetFile();
+        File baseFunctionDir = new File(baseDir, EnumsApi.DataType.function.toString());
 
         final String resId = functionCode.replace(':', '_');
         final File resDir = new File(baseFunctionDir, resId);
         resDir.mkdirs();
+
+        final AssetFile assetFile = new AssetFile();
         if (!resDir.exists()) {
             assetFile.isError = true;
             log.error("#025.080 Can't create a concrete function dir: {}", resDir.getAbsolutePath());

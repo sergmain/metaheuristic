@@ -18,10 +18,9 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
-import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,6 +45,9 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Profile("processor")
 public class DispatcherLookupExtendedService {
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final Globals globals;
+
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
     private static final YamlSchemeValidator<Void> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
             "dispatchers",
@@ -58,8 +60,6 @@ public class DispatcherLookupExtendedService {
             "the config file dispatcher.yaml",
             (es)-> {System.exit(-1); return null;}
     );
-
-    private final Globals globals;
 
     // Collections.unmodifiableMap
     public Map<DispatcherUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
@@ -129,15 +129,6 @@ public class DispatcherLookupExtendedService {
     @Nullable
     public DispatcherLookupParamsYaml.Asset getAsset(ProcessorAndCoreData.AssetUrl assetServerUrl) {
         return assets.get(assetServerUrl);
-    }
-
-    public File prepareBaseResourceDir(MetadataParamsYaml.ProcessorState processorState) {
-        final File dispatcherDir = new File(globals.processorResourcesDir, processorState.dispatcherCode);
-        if (!dispatcherDir.exists()) {
-            //noinspection unused
-            boolean status = dispatcherDir.mkdirs();
-        }
-        return dispatcherDir;
     }
 
 }

@@ -16,12 +16,31 @@
 
 package ai.metaheuristic.ai.processor.actors;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
+import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
+import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 /**
  * @author Serge
@@ -36,6 +55,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
     private final Globals globals;
 
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     @Override
     public void process() {
         if (globals.isUnitTesting) {
@@ -47,6 +67,55 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
         GetDispatcherContextInfoTask task;
         while ((task = poll()) != null) {
+
+            final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(task.assetUrl);
+            if (asset==null) {
+                log.error("#806.020 asset server wasn't found for url {}", task.assetUrl.url);
+                continue;
+            }
+
+            try {
+                final String targetUrl = task.assetUrl.url + Consts.REST_ASSET_URL + "/context-info";
+                final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
+
+                final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8);
+
+                final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
+
+                RestUtils.addHeaders(request);
+
+                Response response = HttpClientExecutor.getExecutor(task.assetUrl.url, asset.username, asset.password).execute(request);
+                String json = response.returnContent().asString(StandardCharsets.UTF_8);
+
+                DispatcherData.DispatcherContextInfo contextInfo = JsonUtils.getMapper().readValue(json, DispatcherData.DispatcherContextInfo.class);
+                DispatcherContextInfoHolder.put(task.assetUrl, contextInfo);
+            }
+            catch (HttpResponseException e) {
+                if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
+                    log.warn("#806.200 Access denied to url {}", asset.url);
+                }
+                else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
+                    log.warn("#806.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
+                }
+                else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+                    log.warn("#806.205 Functions wasn't found at {}", asset.url);
+                }
+                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+                    log.warn("#806.210 Functions are broken and need to be recreated");
+                }
+                else {
+                    log.error("#806.220 HttpResponseException", e);
+                }
+            }
+            catch (SocketTimeoutException e) {
+                log.error("#806.170 SocketTimeoutException: {}, assetUrl: {}", e.toString(), asset.url);
+            }
+            catch (IOException e) {
+                log.error(S.f("#806.180 IOException, assetUrl: %s", asset.url), e);
+            }
+            catch (Throwable th) {
+                log.error(S.f("#806.190 Throwable, assetUrl: %s", asset.url), th);
+            }
         }
     }
 }

@@ -18,7 +18,11 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
+import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.MetadataService;
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
@@ -90,7 +94,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 //            final ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(
 //                    new ProcessorAndCoreData.DispatcherServerUrl(dispatcherUrl.url), assetUrl);
 
-            final DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetUrl);
+            final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetUrl);
 
             // process only if dispatcher has already sent its config
             if (contextInfo==null || contextInfo.chunkSize==null) {
@@ -187,7 +191,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                     String mask = assetFile.file.getName() + ".%s.tmp";
                     File dir = assetFile.file.getParentFile();
-                    Enums.FunctionState resourceState = Enums.FunctionState.none;
+                    Enums.FunctionState functionState = Enums.FunctionState.none;
                     int idx = 0;
                     do {
                         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
@@ -220,13 +224,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 final String es = S.f("#811.047 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url, dispatcherUrl);
                                 log.error(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
-                                resourceState = Enums.FunctionState.dispatcher_config_error;
+                                functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (statusCode != HttpStatus.OK.value()) {
                                 final String es = S.f("#811.050 Function %s can't be downloaded from asset srv %s, dispatcher %s, status code: %d", task.functionCode, asset.url, dispatcherUrl, statusCode);
                                 log.error(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                                resourceState = Enums.FunctionState.download_error;
+                                functionState = Enums.FunctionState.download_error;
                                 break;
                             }
 
@@ -242,15 +246,15 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                                 log.error("#811.060 error while downloading chunk of function {}, size is different", functionCode);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                                resourceState = Enums.FunctionState.download_error;
+                                functionState = Enums.FunctionState.download_error;
                                 break;
                             }
                             if (DownloadUtils.isLastChunk(headers)) {
-                                resourceState = Enums.FunctionState.ok;
+                                functionState = Enums.FunctionState.ok;
                                 break;
                             }
                             if (partFile.length() == 0) {
-                                resourceState = Enums.FunctionState.ok;
+                                functionState = Enums.FunctionState.ok;
                                 break;
                             }
                         } catch (HttpResponseException e) {
@@ -258,7 +262,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 final String es = S.f("#811.065 Function %s can't be downloaded, asset srv %s was mis-configured, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
-                                resourceState = Enums.FunctionState.dispatcher_config_error;
+                                functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
                                 final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
@@ -270,25 +274,25 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 final String es = S.f("#811.070 Function %s wasn't found on asset srv %s for dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.not_found);
-                                resourceState = Enums.FunctionState.not_found;
+                                functionState = Enums.FunctionState.not_found;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
                                 final String es = S.f("#811.080 Unknown error with a function %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                                resourceState = Enums.FunctionState.download_error;
+                                functionState = Enums.FunctionState.download_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                                 final String es = S.f("#811.090 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                                resourceState = Enums.FunctionState.download_error;
+                                functionState = Enums.FunctionState.download_error;
                                 break;
                             } else {
                                 final String es = S.f("#811.091 Unknown error with a resource %s on asset srv %s, dispatcher %s", task.functionCode, asset.url, dispatcherUrl);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
-                                resourceState = Enums.FunctionState.download_error;
+                                functionState = Enums.FunctionState.download_error;
                                 break;
                             }
                         }
@@ -297,11 +301,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         Thread.sleep(200);
                         idx++;
                     } while (idx < 1000);
-                    if (resourceState == Enums.FunctionState.none) {
+                    if (functionState == Enums.FunctionState.none) {
                         log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
                         continue;
-                    } else if (resourceState == Enums.FunctionState.download_error || resourceState == Enums.FunctionState.not_found || resourceState == Enums.FunctionState.dispatcher_config_error) {
-                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, resourceState);
+                    } else if (functionState == Enums.FunctionState.download_error || functionState == Enums.FunctionState.not_found || functionState == Enums.FunctionState.dispatcher_config_error) {
+                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, functionState);
+                        metadataService.setFunctionState(assetUrl, functionCode, Enums.FunctionState.download_error);
                         continue;
                     }
 
@@ -358,8 +363,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         metadataService.getStatuses().forEach(o -> {
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
                 ProcessorAndCoreData.AssetUrl assetServerUrl = new ProcessorAndCoreData.AssetUrl(o.assetUrl);
+                final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetServerUrl);
+                if (asset==null || asset.disabled) {
+                    return;
+                }
 
-                DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetServerUrl);
+                DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetServerUrl);
 
                 if (contextInfo==null) {
                     log.info("#811.190 dispatcher contextInfo wasn't found, assetUrl: {}", o.assetUrl);

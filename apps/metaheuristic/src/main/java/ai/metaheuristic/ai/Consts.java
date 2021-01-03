@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.springframework.core.io.ByteArrayResource;
@@ -133,4 +134,7 @@ public class Consts {
     public static final InternalFunctionData.InternalFunctionProcessingResult INTERNAL_FUNCTION_PROCESSING_RESULT_OK = new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     public static final String UNKNOWN_FILENAME_IN_BATCH = Consts.UNKNOWN_INFO;
     public static final String TOP_LEVEL_CONTEXT_ID = "1";
+
+    // Processor's version for communicating with dispatcher
+    public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 }

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
@@ -73,9 +72,6 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 // !!! Do not change the name to SouthBridgeService
 public class SouthbridgeService {
-
-    // Processor's version for communicating with dispatcher
-    private static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 
     private final Globals globals;
     private final VariableService variableService;
@@ -237,7 +233,7 @@ public class SouthbridgeService {
 
             KeepAliveResponseParamYaml.DispatcherInfo  lcc = new KeepAliveResponseParamYaml.DispatcherInfo ();
             lcc.chunkSize = globals.chunkSize;
-            lcc.processorCommVersion = PROCESSOR_COMM_VERSION;
+            lcc.processorCommVersion = Consts.PROCESSOR_COMM_VERSION;
             resp.dispatcherInfo = lcc;
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", req);

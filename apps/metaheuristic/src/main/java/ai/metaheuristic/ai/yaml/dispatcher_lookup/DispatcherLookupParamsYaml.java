@@ -58,8 +58,8 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public Enums.DispatcherLookupType lookupType;
         public Enums.AuthType authType;
 
-        public String restPassword;
         public String restUsername;
+        public String restPassword;
         public String assetUrl;
 
 /*

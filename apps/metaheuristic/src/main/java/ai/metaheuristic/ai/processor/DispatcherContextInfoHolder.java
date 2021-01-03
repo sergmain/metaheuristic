@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.data.DispatcherData;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
@@ -28,18 +29,18 @@ import java.util.Map;
  */
 public class DispatcherContextInfoHolder {
 
-    public static final Map<String, DispatcherContextInfo> contexts = new HashMap<>();
+    public static final Map<String, DispatcherData.DispatcherContextInfo> contexts = new HashMap<>();
 
     @Nullable
-    public static DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
+    public static DispatcherData.DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
         return contexts.get(commonUrl.getUrl());
     }
 
-    public static void put(ProcessorAndCoreData.CommonUrl commonUrl, DispatcherContextInfo context) {
-        contexts.computeIfAbsent(commonUrl.getUrl(), o->new DispatcherContextInfo()).update(context);
+    public static void put(ProcessorAndCoreData.CommonUrl commonUrl, DispatcherData.DispatcherContextInfo context) {
+        contexts.computeIfAbsent(commonUrl.getUrl(), o->new DispatcherData.DispatcherContextInfo()).update(context);
     }
 
     public static void put(ProcessorAndCoreData.CommonUrl commonUrl, Long chunkSize) {
-        contexts.computeIfAbsent(commonUrl.getUrl(), o-> new DispatcherContextInfo()).chunkSize = chunkSize;
+        contexts.computeIfAbsent(commonUrl.getUrl(), o-> new DispatcherData.DispatcherContextInfo()).chunkSize = chunkSize;
     }
 }

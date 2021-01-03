@@ -127,7 +127,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             Enums.UploadVariableStatus status = null;
             try {
-                final String uploadRestUrl  = task.getDispatcherUrl() + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = task.getDispatcherUrl().url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
