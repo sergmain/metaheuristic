@@ -529,7 +529,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
-        verifyGraphIntegrity();
+//        verifyGraphIntegrity();
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
@@ -547,7 +547,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 
-        verifyGraphIntegrity();
+//        verifyGraphIntegrity();
     }
 
     private String getOKExecResult() {
