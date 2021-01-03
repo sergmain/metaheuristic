@@ -60,8 +60,13 @@ public class MetadataParamsYamlUtilsV2
             }
         }
         src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));
+        src.cores.stream().map(MetadataParamsYamlUtilsV2::toCore).collect(Collectors.toCollection(()->trg.cores));
         trg.checkIntegrity();
         return trg;
+    }
+
+    private static MetadataParamsYaml.Core toCore(MetadataParamsYamlV2.CoreV2 v2) {
+        return new MetadataParamsYaml.Core(v2.logicId, v2.coreId, v2.sessionId);
     }
 
     private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {

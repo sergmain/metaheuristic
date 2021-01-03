@@ -94,7 +94,6 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
             final UploadVariableTask finalTask = task;
-//            ProcessorTask.OutputStatus o = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
 
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {

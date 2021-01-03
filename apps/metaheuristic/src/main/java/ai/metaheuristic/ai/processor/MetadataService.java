@@ -124,11 +124,22 @@ public class MetadataService {
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             dispatcherUrlAsCode(entry.getKey());
         }
+/*
         // update metadata.yaml file after fixing broken metas
         updateMetadataFile();
+*/
+        allocateCores();
+
         markAllAsUnverified();
         //noinspection unused
         int i=0;
+    }
+
+    private void allocateCores() {
+        for (int i = metadata.cores.size(); i < globals.initCoreNumber; i++) {
+            metadata.cores.add(new MetadataParamsYaml.Core());
+        }
+
     }
 
     public ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -253,7 +264,7 @@ public class MetadataService {
             MetadataParamsYaml.ProcessorState dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             // fix for wrong metadata.yaml data
             if (dispatcherInfo.dispatcherCode == null) {
-                dispatcherInfo.dispatcherCode = asEmptyProcessorSate(dispatcherUrl).dispatcherCode;
+                dispatcherInfo.dispatcherCode = asEmptyProcessorState(dispatcherUrl).dispatcherCode;
                 updateMetadataFile();
             }
             return dispatcherInfo;
@@ -266,12 +277,14 @@ public class MetadataService {
         }
     }
 
+/*
     public DispatcherApiData.ProcessorSessionId getProcessorSessionId(final DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
             MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(dispatcherUrl);
             return new DispatcherApiData.ProcessorSessionId(Long.valueOf(processorState.processorId), processorState.sessionId);
         }
     }
+*/
 
     public void setProcessorIdAndSessionId(final DispatcherUrl dispatcherUrl, String processorId, String sessionId) {
         if (StringUtils.isBlank(processorId)) {
@@ -450,7 +463,7 @@ public class MetadataService {
 
     private MetadataParamsYaml.ProcessorState getDispatcherInfo(DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return metadata.processorStates.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorSate(dispatcherUrl));
+            return metadata.processorStates.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
         }
     }
 
@@ -494,7 +507,7 @@ public class MetadataService {
 
     }
 
-    private static MetadataParamsYaml.ProcessorState asEmptyProcessorSate(DispatcherUrl dispatcherUrl) {
+    private static MetadataParamsYaml.ProcessorState asEmptyProcessorState(DispatcherUrl dispatcherUrl) {
         MetadataParamsYaml.ProcessorState processorState = new MetadataParamsYaml.ProcessorState();
         processorState.dispatcherCode = asCode(dispatcherUrl);
         return processorState;

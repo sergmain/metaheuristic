@@ -55,7 +55,6 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public String dispatcherCode;
         public String processorId;
         public String sessionId;
-        public final List<CoreV2> cores = new ArrayList<>();
     }
 
     @Data
@@ -76,4 +75,5 @@ public class MetadataParamsYamlV2 implements BaseParams {
     public final LinkedHashMap<String, ProcessorStateV2> processorStates = new LinkedHashMap<>();
     public final List<StatusV2> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public final List<CoreV2> cores = new ArrayList<>();
 }

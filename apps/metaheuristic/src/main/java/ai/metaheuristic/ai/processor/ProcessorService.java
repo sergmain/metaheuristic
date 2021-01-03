@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -166,6 +167,11 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
         final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        if (S.b(processorState.processorId) ) {
+            // at this point processorId must be checked against null
+            throw new IllegalStateException("(S.b(processorState.processorId)");
+        }
+
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 

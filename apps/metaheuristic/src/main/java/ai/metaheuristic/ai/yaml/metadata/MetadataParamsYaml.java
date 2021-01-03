@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 
@@ -37,7 +38,9 @@ public class MetadataParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class Core {
         public int logicId;
+        @Nullable
         public String coreId;
+        @Nullable
         public String sessionId;
     }
 
@@ -47,9 +50,10 @@ public class MetadataParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class ProcessorState {
         public String dispatcherCode;
+        @Nullable
         public String processorId;
+        @Nullable
         public String sessionId;
-        public final List<Core> cores = new ArrayList<>();
     }
 
     @Data
@@ -70,4 +74,5 @@ public class MetadataParamsYaml implements BaseParams {
     public final LinkedHashMap<String, ProcessorState> processorStates = new LinkedHashMap<>();
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public final List<Core> cores = new ArrayList<>();
 }
