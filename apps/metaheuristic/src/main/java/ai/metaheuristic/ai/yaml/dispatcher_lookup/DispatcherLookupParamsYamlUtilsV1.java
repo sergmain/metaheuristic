@@ -54,10 +54,10 @@ public class DispatcherLookupParamsYamlUtilsV1
 
         for (DispatcherLookupParamsYamlV1.DispatcherLookupV1 dispatcher : src.dispatchers) {
             if (dispatcher.asset!=null) {
-                trg.assets.add(new DispatcherLookupParamsYamlV2.AssetV2(dispatcher.asset.url, dispatcher.asset.username, dispatcher.asset.password, dispatcher.publicKey, dispatcher.disabled));
+                trg.assetManagers.add(new DispatcherLookupParamsYamlV2.AssetManagerV2(dispatcher.asset.url, dispatcher.asset.username, dispatcher.asset.password, dispatcher.publicKey, dispatcher.disabled));
             }
             else {
-                trg.assets.add(new DispatcherLookupParamsYamlV2.AssetV2(dispatcher.url, dispatcher.restUsername, dispatcher.restPassword, dispatcher.publicKey, dispatcher.disabled));
+                trg.assetManagers.add(new DispatcherLookupParamsYamlV2.AssetManagerV2(dispatcher.url, dispatcher.restUsername, dispatcher.restPassword, dispatcher.publicKey, dispatcher.disabled));
             }
         }
 //        Set<DispatcherLookupParamsYamlV2.AssetV2> assets = src.dispatchers.stream().filter(o->o.asset!=null).map(o->new DispatcherLookupParamsYamlV2.AssetV2(o.url, o.asset.username, o.asset.password, o.publicKey, o.disabled)).collect(Collectors.toSet());

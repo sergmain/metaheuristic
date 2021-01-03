@@ -41,7 +41,7 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of="url")
-    public static class AssetV2 {
+    public static class AssetManagerV2 {
         public String url;
         public String username;
         public String password;
@@ -71,6 +71,6 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
     }
 
     public final List<DispatcherLookupV2> dispatchers = new ArrayList<>();
-    public final List<AssetV2> assets = new ArrayList<>();
+    public final List<AssetManagerV2> assetManagers = new ArrayList<>();
 
 }

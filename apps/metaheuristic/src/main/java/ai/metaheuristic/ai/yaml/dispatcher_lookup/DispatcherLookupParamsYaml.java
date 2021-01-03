@@ -64,6 +64,6 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     }
 
     public final List<DispatcherLookup> dispatchers = new ArrayList<>();
-    public final List<AssetManager> assets = new ArrayList<>();
+    public final List<AssetManager> assetManagers = new ArrayList<>();
 
 }

@@ -123,7 +123,7 @@ public class DispatcherLookupExtendedService {
             map.put(dispatcherServerUrl, lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
-        dispatcherLookupConfig.assets.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
+        dispatcherLookupConfig.assetManagers.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
     }
 
     @Nullable
