@@ -65,7 +65,7 @@ public class MetadataParamsYamlUtilsV2
     }
 
     private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {
-        return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetUrl, sV2.sourcing, sV2.checksum, sV2.signature);
+        return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetManagerUrl, sV2.sourcing, sV2.checksum, sV2.signature);
     }
 
     @NonNull

@@ -46,37 +46,17 @@ public class ChecksumAndSignatureService {
     private final MetadataService metadataService;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            ProcessorAndCoreData.AssetUrl assetUrl, DispatcherLookupParamsYaml.Asset asset,
+            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
 
         CheckSumAndSignatureStatus status;
         try (FileInputStream fis = new FileInputStream(functionFile)) {
             status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                    "Asset url: "+ assetUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
+                    "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
                     checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
         }
-        metadataService.setChecksumAndSignatureStatus(assetUrl, functionCode, status);
+        metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }
-
-
-/*
-    public void p() {
-        try {
-            CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(serverUrls.assetUrl,
-                    functionCode, simpleCache.dispatcher.dispatcherLookup, checksumState, assetFile.file);
-
-            if (checkSumAndSignatureStatus.checksum == CheckSumAndSignatureStatus.Status.correct && checkSumAndSignatureStatus.signature == CheckSumAndSignatureStatus.Status.correct) {
-                if (status.functionState != Enums.FunctionState.ready || !status.verified) {
-                    setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.ready);
-                }
-            }
-        } catch (Throwable th) {
-            log.error(S.f("#815.100 Error verifying function %s from asset server %s, dispatcher %s", functionCode, serverUrls.assetUrl, serverUrls.dispatcherUrl), th);
-            setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.io_error);
-        }
-
-    }
-*/
 }

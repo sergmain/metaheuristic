@@ -27,9 +27,9 @@ import lombok.EqualsAndHashCode;
  * Time: 10:39 AM
  */
 @Data
-@EqualsAndHashCode(of = {"assetUrl"}, callSuper = false)
+@EqualsAndHashCode(of = {"assetManagerUrl"}, callSuper = false)
 @AllArgsConstructor
 public class GetDispatcherContextInfoTask extends ProcessorRestTask {
-    public final ProcessorAndCoreData.AssetUrl assetUrl;
+    public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
 
 }

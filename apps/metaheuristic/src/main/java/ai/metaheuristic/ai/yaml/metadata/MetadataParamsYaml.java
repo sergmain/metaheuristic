@@ -58,7 +58,7 @@ public class MetadataParamsYaml implements BaseParams {
     public static class Status {
         public Enums.FunctionState functionState;
         public String code;
-        public String assetUrl;
+        public String assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
 
         public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;

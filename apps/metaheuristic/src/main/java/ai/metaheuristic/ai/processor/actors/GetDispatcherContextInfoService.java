@@ -68,14 +68,14 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
         GetDispatcherContextInfoTask task;
         while ((task = poll()) != null) {
 
-            final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(task.assetUrl);
-            if (asset==null) {
-                log.error("#806.020 asset server wasn't found for url {}", task.assetUrl.url);
+            final DispatcherLookupParamsYaml.AssetManager assetManager = dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
+            if (assetManager==null) {
+                log.error("#806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
                 continue;
             }
 
             try {
-                final String targetUrl = task.assetUrl.url + Consts.REST_ASSET_URL + "/context-info";
+                final String targetUrl = task.assetManagerUrl.url + Consts.REST_ASSET_URL + "/context-info";
                 final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
                 final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8);
@@ -84,21 +84,21 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
                 RestUtils.addHeaders(request);
 
-                Response response = HttpClientExecutor.getExecutor(task.assetUrl.url, asset.username, asset.password).execute(request);
+                Response response = HttpClientExecutor.getExecutor(task.assetManagerUrl.url, assetManager.username, assetManager.password).execute(request);
                 String json = response.returnContent().asString(StandardCharsets.UTF_8);
 
                 DispatcherData.DispatcherContextInfo contextInfo = JsonUtils.getMapper().readValue(json, DispatcherData.DispatcherContextInfo.class);
-                DispatcherContextInfoHolder.put(task.assetUrl, contextInfo);
+                DispatcherContextInfoHolder.put(task.assetManagerUrl, contextInfo);
             }
             catch (HttpResponseException e) {
                 if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                    log.warn("#806.200 Access denied to url {}", asset.url);
+                    log.warn("#806.200 Access denied to url {}", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
-                    log.warn("#806.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
+                    log.warn("#806.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("#806.205 Functions wasn't found at {}", asset.url);
+                    log.warn("#806.205 Functions wasn't found at {}", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
                     log.warn("#806.210 Functions are broken and need to be recreated");
@@ -108,13 +108,13 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
                 }
             }
             catch (SocketTimeoutException e) {
-                log.error("#806.170 SocketTimeoutException: {}, assetUrl: {}", e.toString(), asset.url);
+                log.error("#806.170 SocketTimeoutException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
             }
             catch (IOException e) {
-                log.error(S.f("#806.180 IOException, assetUrl: %s", asset.url), e);
+                log.error(S.f("#806.180 IOException, assetManagerUrl: %s", assetManager.url), e);
             }
             catch (Throwable th) {
-                log.error(S.f("#806.190 Throwable, assetUrl: %s", asset.url), th);
+                log.error(S.f("#806.190 Throwable, assetManagerUrl: %s", assetManager.url), th);
             }
         }
     }

@@ -131,7 +131,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumWithSignatureInfo prepareChecksumWithSignature(AssetUrl assetUrl, String functionCode, TaskParamsYaml.FunctionConfig functionConfig) {
+    public ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
 
         ChecksumWithSignatureInfo checksumWithSignatureInfo = new ChecksumWithSignatureInfo();
 
@@ -148,13 +148,11 @@ public class MetadataService {
 
         if (entry==null || S.b(entry.getValue())) {
             entry = functionConfig.checksumMap.entrySet().stream().findFirst().orElse(null);
-//            return setSignatureNotValid(functionCode, assetUrl);
         }
 
         if (entry==null || S.b(entry.getValue())) {
             // both checksum and signature are null
             return checksumWithSignatureInfo;
-//            return setSignatureNotValid(functionCode, assetUrl);
         }
 
         ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(entry.getValue());
@@ -176,89 +174,66 @@ public class MetadataService {
     }
 
     @Nullable
-    public FunctionConfigAndStatus syncFunctionStatus(AssetUrl assetUrl, DispatcherLookupParamsYaml.Asset asset, final String functionCode) {
+    public FunctionConfigAndStatus syncFunctionStatus(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset, final String functionCode) {
         try {
-            return syncFunctionStatusInternal(assetUrl, asset, functionCode);
+            return syncFunctionStatusInternal(assetManagerUrl, asset, functionCode);
         } catch (Throwable th) {
             log.error("#815.080 Error in syncFunctionStatus()", th);
-            return new FunctionConfigAndStatus(setFunctionState(assetUrl, functionCode, Enums.FunctionState.io_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.io_error));
         }
     }
 
     @Nullable
-    private FunctionConfigAndStatus syncFunctionStatusInternal(AssetUrl assetUrl, DispatcherLookupParamsYaml.Asset asset, String functionCode) {
-        MetadataParamsYaml.Status status = getFunctionDownloadStatuses(assetUrl, functionCode);
+    private FunctionConfigAndStatus syncFunctionStatusInternal(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset, String functionCode) {
+        MetadataParamsYaml.Status status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
 
         if (status == null) {
             return null;
         }
         if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
-            log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetUrl.url);
+            log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetManagerUrl.url);
             return null;
         }
         if (status.functionState== Enums.FunctionState.ready) {
             if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
                 return new FunctionConfigAndStatus(status);
             }
-            setFunctionState(assetUrl, functionCode, Enums.FunctionState.none);
+            setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none);
         }
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
                 processorFunctionService.downloadFunctionConfig(asset, functionCode);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
-            return new FunctionConfigAndStatus(setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.function_config_error));
         }
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.not_found) {
-            removeFunction(assetUrl, functionCode);
+            removeFunction(assetManagerUrl, functionCode);
             return null;
         }
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
-        setChecksumMap(assetUrl, functionCode, functionConfig.checksumMap);
+        setChecksumMap(assetManagerUrl, functionCode, functionConfig.checksumMap);
 
         if (S.b(functionConfig.file) && S.b(functionConfig.content)) {
             log.error("#815.100 name of file for function {} is blank and content of function is blank too", functionCode);
-            return new FunctionConfigAndStatus(setFunctionState(assetUrl, functionCode, Enums.FunctionState.function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.function_config_error));
         }
 
         if (!S.b(functionConfig.content)) {
-            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetUrl, functionCode, Enums.FunctionState.ok), null, true);
+            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.ok), null, true);
         }
 
-/*
-        ChecksumWithSignatureState checksumState = prepareChecksumWithSignature(simpleCache.dispatcher.dispatcherLookup.signatureRequired, functionCode, serverUrls.assetUrl, functionConfig);
-        if (checksumState.state== Enums.SignatureStates.signature_not_valid) {
-            return;
-        }
-*/
-
-        File baseFunctionDir = prepareBaseDir(assetUrl);
+        File baseFunctionDir = prepareBaseDir(assetManagerUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            return new FunctionConfigAndStatus(setFunctionState(assetUrl, functionCode, Enums.FunctionState.asset_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.asset_error));
         }
         if (!assetFile.isContent) {
-            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetUrl, functionCode, Enums.FunctionState.none), assetFile);
+            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none), assetFile);
         }
 
-        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetUrl, functionCode, Enums.FunctionState.ok), assetFile);
-
-/*
-        try {
-            CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(serverUrls.assetUrl,
-                    functionCode, simpleCache.dispatcher.dispatcherLookup, checksumState, assetFile.file);
-
-            if (checkSumAndSignatureStatus.checksum == CheckSumAndSignatureStatus.Status.correct && checkSumAndSignatureStatus.signature == CheckSumAndSignatureStatus.Status.correct) {
-                if (status.functionState != Enums.FunctionState.ready || !status.verified) {
-                    setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.ready);
-                }
-            }
-        } catch (Throwable th) {
-            log.error(S.f("#815.100 Error verifying function %s from asset server %s, dispatcher %s", functionCode, serverUrls.assetUrl, serverUrls.dispatcherUrl), th);
-            setFunctionState(serverUrls.assetUrl, functionCode, Enums.FunctionState.io_error);
-        }
-*/
+        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.ok), assetFile);
     }
 
     @Nullable
@@ -316,24 +291,24 @@ public class MetadataService {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        AssetUrl assetUrl = new AssetUrl(dispatcher.dispatcherLookup.assetUrl);
+        AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
         synchronized (syncObj) {
             boolean isChanged = false;
             for (KeepAliveResponseParamYaml.Functions.Info info : infos) {
                 MetadataParamsYaml.Status status = metadata.statuses.stream()
-                        .filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(info.code))
+                        .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.code))
                         .findFirst().orElse(null);
                 if (status==null || status.functionState == Enums.FunctionState.not_found) {
-                    setFunctionDownloadStatusInternal(assetUrl, info.code, info.sourcing, Enums.FunctionState.none);
+                    setFunctionDownloadStatusInternal(assetManagerUrl, info.code, info.sourcing, Enums.FunctionState.none);
                     isChanged = true;
                 }
             }
 
             // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
             for (MetadataParamsYaml.Status status : metadata.statuses) {
-                if (status.assetUrl.equals(assetUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
-                    setFunctionDownloadStatusInternal(assetUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
+                if (status.assetManagerUrl.equals(assetManagerUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
+                    setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
                     isChanged = true;
                 }
             }
@@ -345,12 +320,12 @@ public class MetadataService {
     }
 
     @Nullable
-    public MetadataParamsYaml.Status setFunctionState(final AssetUrl assetUrl, String functionCode, Enums.FunctionState functionState) {
+    public MetadataParamsYaml.Status setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, Enums.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return null;
             }
@@ -364,7 +339,7 @@ public class MetadataService {
         }
     }
 
-    public void setChecksumMap(final AssetUrl assetUrl, String functionCode, @Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {
+    public void setChecksumMap(final AssetManagerUrl assetManagerUrl, String functionCode, @Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
@@ -373,7 +348,7 @@ public class MetadataService {
         }
 
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
             }
@@ -382,12 +357,12 @@ public class MetadataService {
         }
     }
 
-    public void setChecksumAndSignatureStatus(final AssetUrl assetUrl, String functionCode, CheckSumAndSignatureStatus checkSumAndSignatureStatus) {
+    public void setChecksumAndSignatureStatus(final AssetManagerUrl assetManagerUrl, String functionCode, CheckSumAndSignatureStatus checkSumAndSignatureStatus) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetUrl.equals(assetUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
             }
@@ -397,12 +372,12 @@ public class MetadataService {
         }
     }
 
-    private boolean removeFunction(final AssetUrl assetUrl, String functionCode) {
+    private boolean removeFunction(final AssetManagerUrl assetManagerUrl, String functionCode) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.280 functionCode is empty");
         }
         synchronized (syncObj) {
-            List<MetadataParamsYaml.Status> statuses = metadata.statuses.stream().filter(o->!(o.assetUrl.equals(assetUrl.url) && o.code.equals(functionCode))).collect(Collectors.toList());
+            List<MetadataParamsYaml.Status> statuses = metadata.statuses.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))).collect(Collectors.toList());
             if (statuses.size()!= metadata.statuses.size()) {
                 metadata.statuses.clear();
                 metadata.statuses.addAll(statuses);
@@ -412,39 +387,39 @@ public class MetadataService {
         }
     }
 
-    public void setFunctionDownloadStatus(final AssetUrl assetUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+    public void setFunctionDownloadStatus(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.360 functionCode is empty");
         }
         synchronized (syncObj) {
-            setFunctionDownloadStatusInternal(assetUrl, functionCode, sourcing, functionState);
+            setFunctionDownloadStatusInternal(assetManagerUrl, functionCode, sourcing, functionState);
             updateMetadataFile();
         }
     }
 
     // it could be null if this function was deleted
     @Nullable
-    public MetadataParamsYaml.Status getFunctionDownloadStatuses(AssetUrl assetUrl, String functionCode) {
+    public MetadataParamsYaml.Status getFunctionDownloadStatuses(AssetManagerUrl assetManagerUrl, String functionCode) {
         synchronized (syncObj) {
             return metadata.statuses.stream()
-                    .filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(functionCode))
+                    .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))
                     .findFirst().orElse(null);
         }
     }
 
-    public List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> getAsFunctionDownloadStatuses(final AssetUrl assetUrl) {
+    public List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> getAsFunctionDownloadStatuses(final AssetManagerUrl assetManagerUrl) {
         synchronized (syncObj) {
             return metadata.statuses.stream()
-                    .filter(o->o.assetUrl.equals(assetUrl.url))
+                    .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url))
                     .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.functionState))
                     .collect(Collectors.toList());
         }
     }
 
-    private void setFunctionDownloadStatusInternal(AssetUrl assetUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
-        MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetUrl.equals(assetUrl.url) && o.code.equals(code)).findFirst().orElse(null);
+    private void setFunctionDownloadStatusInternal(AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+        MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
+            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetManagerUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
             metadata.statuses.add(status);
         }
         status.functionState = functionState;
@@ -537,8 +512,8 @@ public class MetadataService {
         return s;
     }
 
-    public File prepareBaseDir(AssetUrl assetUrl) {
-        final File dir = new File(globals.processorResourcesDir, asCode(assetUrl));
+    public File prepareBaseDir(AssetManagerUrl assetManagerUrl) {
+        final File dir = new File(globals.processorResourcesDir, asCode(assetManagerUrl));
         if (!dir.exists()) {
             //noinspection unused
             boolean status = dir.mkdirs();

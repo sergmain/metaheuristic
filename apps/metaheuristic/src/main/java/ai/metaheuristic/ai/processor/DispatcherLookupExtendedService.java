@@ -63,7 +63,7 @@ public class DispatcherLookupExtendedService {
 
     // Collections.unmodifiableMap
     public Map<DispatcherUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
-    public final Map<ProcessorAndCoreData.AssetUrl, DispatcherLookupParamsYaml.Asset> assets = new HashMap<>();
+    public final Map<ProcessorAndCoreData.AssetManagerUrl, DispatcherLookupParamsYaml.AssetManager> assets = new HashMap<>();
 
     @Data
     @AllArgsConstructor
@@ -123,12 +123,12 @@ public class DispatcherLookupExtendedService {
             map.put(dispatcherServerUrl, lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
-        dispatcherLookupConfig.assets.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetUrl(asset.url), asset));
+        dispatcherLookupConfig.assets.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
     }
 
     @Nullable
-    public DispatcherLookupParamsYaml.Asset getAsset(ProcessorAndCoreData.AssetUrl assetServerUrl) {
-        return assets.get(assetServerUrl);
+    public DispatcherLookupParamsYaml.AssetManager getAssetManager(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl) {
+        return assets.get(assetManagerUrl);
     }
 
 }

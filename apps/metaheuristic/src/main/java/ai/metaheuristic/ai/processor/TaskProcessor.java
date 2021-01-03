@@ -193,10 +193,10 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
 
-            ProcessorAndCoreData.AssetUrl assetUrl = new ProcessorAndCoreData.AssetUrl(dispatcher.dispatcherLookup.assetUrl);
+            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = prepareFunction(assetUrl, processorState, preFunctionConfig);
+                result = prepareFunction(assetManagerUrl, processorState, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(dispatcherUrl, task.taskId, result);
                     isNotReady = true;
@@ -212,7 +212,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(assetUrl, processorState, taskParamYaml.task.getFunction());
+            result = prepareFunction(assetManagerUrl, processorState, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(dispatcherUrl, task.taskId, result);
                 continue;
@@ -223,7 +223,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = prepareFunction(assetUrl, processorState, postFunctionConfig);
+                result = prepareFunction(assetManagerUrl, processorState, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(dispatcherUrl, task.taskId, result);
                     isNotReady = true;
@@ -570,19 +570,19 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetUrl assetUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final File baseResourceDir = metadataService.prepareBaseDir(assetUrl);
+            final File baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
             functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                 log.info("#100.370 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                 functionPrepareResult.isLoaded = false;
 
-                metadataService.setFunctionDownloadStatus(assetUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
+                metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
 
             }
         }
@@ -595,7 +595,7 @@ public class TaskProcessor {
                 functionPrepareResult.isError = true;
                 return functionPrepareResult;
             }
-            final File resourceDir = metadataService.prepareBaseDir(assetUrl);
+            final File resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

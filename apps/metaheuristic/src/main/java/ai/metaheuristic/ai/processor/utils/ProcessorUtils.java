@@ -32,7 +32,7 @@ public class ProcessorUtils {
 
     private static final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
 
-    public static PublicKey createPublicKey(DispatcherLookupParamsYaml.Asset asset) {
+    public static PublicKey createPublicKey(DispatcherLookupParamsYaml.AssetManager asset) {
         return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(asset.publicKey));
     }
 }

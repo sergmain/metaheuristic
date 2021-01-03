@@ -67,10 +67,10 @@ public class ProcessorFunctionService {
         public ConfigStatus status;
     }
 
-    public DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.Asset asset, String functionCode) {
+    public DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 
         // 999 - fake processorId for backward compatibility
-        final String functionConfigUrl = asset.url + Consts.REST_ASSET_URL + "/function-config/999";
+        final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config/999";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
         final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
@@ -84,7 +84,7 @@ public class ProcessorFunctionService {
 
             RestUtils.addHeaders(request);
 
-            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
+            Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
             functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.BASE_YAML_UTILS.to(yaml));
@@ -96,7 +96,7 @@ public class ProcessorFunctionService {
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
                 functionConfigStatus.status = ConfigStatus.not_found;
-                log.warn("#813.220 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
+                log.warn("#813.220 Url {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 functionConfigStatus.status = ConfigStatus.not_found;
@@ -109,18 +109,18 @@ public class ProcessorFunctionService {
                 log.error("#813.280 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.300 SocketTimeoutException: {}, function: {}, assetUrl: {}", e.toString(), functionCode, asset.url);
+            log.error("#813.300 SocketTimeoutException: {}, function: {}, assetManagerUrl: {}", e.toString(), functionCode, assetManager.url);
         } catch (IOException e) {
-            log.error(S.f("#813.320 IOException, function: %s, assetUrl: %s",functionCode, asset.url), e);
+            log.error(S.f("#813.320 IOException, function: %s, assetManagerUrl: %s",functionCode, assetManager.url), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.340 Throwable, function: %s, assetUrl: %s",functionCode, asset.url), th);
+            log.error(S.f("#813.340 Throwable, function: %s, assetManagerUrl: %s",functionCode, assetManager.url), th);
         }
         return functionConfigStatus;
     }
 
     public DownloadedFunctionConfigsStatus downloadFunctionConfigs(
             String dispatcherUrl,
-            DispatcherLookupParamsYaml.Asset asset, String processorId) {
+            DispatcherLookupParamsYaml.AssetManager asset, String processorId) {
 
         final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs/" + processorId;
         final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);
@@ -158,13 +158,13 @@ public class ProcessorFunctionService {
             }
         }
         catch (SocketTimeoutException e) {
-            log.error("#813.460 SocketTimeoutException: {}, dispatcher: {}, assetUrl: {}", e.toString(), dispatcherUrl, asset.url);
+            log.error("#813.460 SocketTimeoutException: {}, dispatcher: {}, assetManagerUrl: {}", e.toString(), dispatcherUrl, asset.url);
         }
         catch (IOException e) {
-            log.error(S.f("#813.480 IOException, dispatcher: %s, assetUrl: %s", dispatcherUrl, asset.url), e);
+            log.error(S.f("#813.480 IOException, dispatcher: %s, assetManagerUrl: %s", dispatcherUrl, asset.url), e);
         }
         catch (Throwable th) {
-            log.error(S.f("#813.500 Throwable, dispatcher: %s, assetUrl: %s", dispatcherUrl, asset.url), th);
+            log.error(S.f("#813.500 Throwable, dispatcher: %s, assetManagerUrl: %s", dispatcherUrl, asset.url), th);
         }
         return functionConfigStatus;
     }

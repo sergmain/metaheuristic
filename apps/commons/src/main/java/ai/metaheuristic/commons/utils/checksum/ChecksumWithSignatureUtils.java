@@ -37,6 +37,7 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 public class ChecksumWithSignatureUtils {
 
     private static final CheckSumAndSignatureStatus CHECK_SUM_AND_SIGNATURE_NOT_PRESENTED = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.not_presented, EnumsApi.SignatureState.not_presented);
+    private static final CheckSumAndSignatureStatus CHECK_SUM_AND_SIGNATURE_WRONG = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.wrong, EnumsApi.SignatureState.wrong);
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
@@ -64,15 +65,13 @@ public class ChecksumWithSignatureUtils {
 
         String actualSum = Checksum.getChecksum(hashAlgo, fis);
 
-        EnumsApi.ChecksumState checksumState;
-        if (actualSum.equals(checksumWithSignature.checksum)) {
-            checksumState = EnumsApi.ChecksumState.correct;
-            log.info("{}, checksum is correct", infoPrefix);
-        }
-        else {
+        if (!actualSum.equals(checksumWithSignature.checksum)) {
             log.error("{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
-            checksumState = EnumsApi.ChecksumState.wrong;
+            return CHECK_SUM_AND_SIGNATURE_WRONG;
         }
+
+        EnumsApi.ChecksumState checksumState = EnumsApi.ChecksumState.correct;
+        log.info("{}, checksum is correct", infoPrefix);
 
         if (!hashAlgo.isSigned || S.b(hashAlgo.signatureAlgo) || S.b(checksumWithSignature.signature)) {
             return new CheckSumAndSignatureStatus(checksumState, EnumsApi.SignatureState.not_presented);

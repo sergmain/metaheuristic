@@ -34,7 +34,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Asset {
+    public static class AssetManager {
         public String url;
         public String username;
         public String password;
@@ -60,23 +60,10 @@ public class DispatcherLookupParamsYaml implements BaseParams {
 
         public String restUsername;
         public String restPassword;
-        public String assetUrl;
-
-/*
-        public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
-            return new ProcessorAndCoreData.DispatcherServerUrl(url);
-        }
-
-        public Asset getAsset() {
-            final DispatcherLookupParamsYaml.Asset a = asset!=null
-                    ? asset
-                    : new DispatcherLookupParamsYaml.Asset(getDispatcherUrl().url, restUsername, restPassword, publicKey);
-            return a;
-        }
-*/
+        public String assetManagerUrl;
     }
 
     public final List<DispatcherLookup> dispatchers = new ArrayList<>();
-    public final List<Asset> assets = new ArrayList<>();
+    public final List<AssetManager> assets = new ArrayList<>();
 
 }

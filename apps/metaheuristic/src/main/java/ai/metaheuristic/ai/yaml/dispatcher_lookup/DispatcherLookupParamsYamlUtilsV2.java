@@ -55,7 +55,7 @@ public class DispatcherLookupParamsYamlUtilsV2
         src.dispatchers.stream().map(DispatcherLookupParamsYamlUtilsV2::toDispatcher).collect(Collectors.toCollection(() -> trg.dispatchers));
         src.assets.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toCollection(() -> trg.assets));
 
-        Set<DispatcherLookupParamsYaml.Asset> assets = src.assets.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toSet());
+        Set<DispatcherLookupParamsYaml.AssetManager> assets = src.assets.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toSet());
         trg.assets.addAll(assets);
 
         trg.checkIntegrity();
@@ -64,11 +64,11 @@ public class DispatcherLookupParamsYamlUtilsV2
 
     private static DispatcherLookupParamsYaml.DispatcherLookup toDispatcher(DispatcherLookupParamsYamlV2.DispatcherLookupV2 v2) {
         return new DispatcherLookupParamsYaml.DispatcherLookup(
-                v2.taskProcessingTime, v2.disabled, v2.url, v2.signatureRequired, v2.publicKey, v2.lookupType, v2.authType, v2.restUsername, v2.restPassword, v2.assetUrl);
+                v2.taskProcessingTime, v2.disabled, v2.url, v2.signatureRequired, v2.publicKey, v2.lookupType, v2.authType, v2.restUsername, v2.restPassword, v2.assetManagerUrl);
     }
 
-    private static DispatcherLookupParamsYaml.Asset toAsset(DispatcherLookupParamsYamlV2.AssetV2 v2) {
-        return new DispatcherLookupParamsYaml.Asset(v2.url, v2.username, v2.password, v2.publicKey, v2.disabled);
+    private static DispatcherLookupParamsYaml.AssetManager toAsset(DispatcherLookupParamsYamlV2.AssetV2 v2) {
+        return new DispatcherLookupParamsYaml.AssetManager(v2.url, v2.username, v2.password, v2.publicKey, v2.disabled);
     }
 
     @NonNull

@@ -30,12 +30,12 @@ public class TestDispatcherContextInfoHolder {
 
     @Test
     public void test() {
-        ProcessorAndCoreData.AssetUrl assetUrl = new ProcessorAndCoreData.AssetUrl("asset-url");
-        DispatcherContextInfoHolder.put(assetUrl, 42L);
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl("asset-url");
+        DispatcherContextInfoHolder.put(assetManagerUrl, 42L);
 
-        assertNotNull(DispatcherContextInfoHolder.getCtx(assetUrl));
+        assertNotNull(DispatcherContextInfoHolder.getCtx(assetManagerUrl));
         // ###IDEA###, why?
-        assertEquals(42L, DispatcherContextInfoHolder.getCtx(assetUrl).chunkSize);
+        assertEquals(42L, DispatcherContextInfoHolder.getCtx(assetManagerUrl).chunkSize);
 
         ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl("dispatcher-url");
         DispatcherContextInfoHolder.put(dispatcherUrl, 13L);
@@ -52,15 +52,15 @@ public class TestDispatcherContextInfoHolder {
         // ###IDEA###, why?
         assertEquals(21L, DispatcherContextInfoHolder.getCtx(dispatcherUrl1).chunkSize);
 
-        ProcessorAndCoreData.AssetUrl assetUrl1 = new ProcessorAndCoreData.AssetUrl("common-url");
-        assertNotNull(DispatcherContextInfoHolder.getCtx(assetUrl1));
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl1 = new ProcessorAndCoreData.AssetManagerUrl("common-url");
+        assertNotNull(DispatcherContextInfoHolder.getCtx(assetManagerUrl1));
         // ###IDEA###, why?
-        assertEquals(21L, DispatcherContextInfoHolder.getCtx(assetUrl1).chunkSize);
+        assertEquals(21L, DispatcherContextInfoHolder.getCtx(assetManagerUrl1).chunkSize);
 
-        DispatcherContextInfoHolder.put(assetUrl1, 17L);
-        assertNotNull(DispatcherContextInfoHolder.getCtx(assetUrl1));
+        DispatcherContextInfoHolder.put(assetManagerUrl1, 17L);
+        assertNotNull(DispatcherContextInfoHolder.getCtx(assetManagerUrl1));
         // ###IDEA###, why?
-        assertEquals(17, DispatcherContextInfoHolder.getCtx(assetUrl1).chunkSize);
+        assertEquals(17, DispatcherContextInfoHolder.getCtx(assetManagerUrl1).chunkSize);
 
 
     }

@@ -139,8 +139,8 @@ public class ProcessorKeepAliveRequestor {
                 karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                 karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
 
-                AssetUrl assetUrl = new AssetUrl(dispatcher.dispatcherLookup.assetUrl);
-                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetUrl));
+                AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
             }
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + processorId;

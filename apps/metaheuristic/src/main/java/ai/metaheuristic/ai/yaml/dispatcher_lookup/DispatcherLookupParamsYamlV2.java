@@ -67,20 +67,7 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
 
         public String restUsername;
         public String restPassword;
-        public String assetUrl;
-
-/*
-        public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
-            return new ProcessorAndCoreData.DispatcherServerUrl(url);
-        }
-
-        public Asset getAsset() {
-            final DispatcherLookupParamsYaml.Asset a = asset!=null
-                    ? asset
-                    : new DispatcherLookupParamsYaml.Asset(getDispatcherUrl().url, restUsername, restPassword, publicKey);
-            return a;
-        }
-*/
+        public String assetManagerUrl;
     }
 
     public final List<DispatcherLookupV2> dispatchers = new ArrayList<>();

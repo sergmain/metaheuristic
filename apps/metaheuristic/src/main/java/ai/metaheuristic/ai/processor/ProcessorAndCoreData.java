@@ -34,12 +34,12 @@ public class ProcessorAndCoreData {
 
     @Data
     @EqualsAndHashCode(of="url")
-    public static class AssetUrl implements CommonUrl {
+    public static class AssetManagerUrl implements CommonUrl {
         public final String url;
 
-        public AssetUrl(String url) {
+        public AssetManagerUrl(String url) {
             if (S.b(url)) {
-                throw new IllegalStateException("#819.020 assetUrl is null");
+                throw new IllegalStateException("#819.020 assetManagerUrl is null");
             }
             this.url = url;
         }
@@ -62,7 +62,7 @@ public class ProcessorAndCoreData {
     @AllArgsConstructor
     public static class ServerUrls {
         public final DispatcherUrl dispatcherUrl;
-        public final AssetUrl assetUrl;
+        public final AssetManagerUrl assetManagerUrl;
     }
 
 }

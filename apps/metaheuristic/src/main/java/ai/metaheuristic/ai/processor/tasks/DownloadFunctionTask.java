@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"functionCode", "assetUrl"}, callSuper = false)
+@EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"}, callSuper = false)
 public class DownloadFunctionTask extends ProcessorRestTask {
     public final String functionCode;
-    public final ProcessorAndCoreData.AssetUrl assetUrl;
+    public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
 }

@@ -150,35 +150,35 @@ public class TestMetadataParamsYaml {
         {
             status = statuses.get(0);
             assertEquals("test.function:1.0", status.code);
-            assertEquals("http://localhost:8080", status.assetUrl);
+            assertEquals("http://localhost:8080", status.assetManagerUrl);
             assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(1);
             assertEquals("test.function:1.0", status.code);
-            assertEquals("https://localhost:8888", status.assetUrl);
+            assertEquals("https://localhost:8888", status.assetManagerUrl);
             assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(2);
             assertEquals("function-01:1.1", status.code);
-            assertEquals("http://localhost:8080", status.assetUrl);
+            assertEquals("http://localhost:8080", status.assetManagerUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(3);
             assertEquals("function-02:1.1", status.code);
-            assertEquals("http://localhost:8080", status.assetUrl);
+            assertEquals("http://localhost:8080", status.assetManagerUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(4);
             assertEquals("fileless-function:1.0", status.code);
-            assertEquals("https://localhost:8888", status.assetUrl);
+            assertEquals("https://localhost:8888", status.assetManagerUrl);
             assertEquals(Enums.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }

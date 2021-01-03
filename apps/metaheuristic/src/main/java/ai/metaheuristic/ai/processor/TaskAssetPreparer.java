@@ -85,9 +85,7 @@ public class TaskAssetPreparer {
             final ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                     dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-            final ProcessorAndCoreData.AssetUrl assetUrl = new ProcessorAndCoreData.AssetUrl(dispatcher.dispatcherLookup.assetUrl);
-//            final DispatcherLookupParamsYaml.Asset asset = dispatcherLookupExtendedService.getAsset(assetUrl);
-
+            final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
             final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
 
             if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
@@ -97,7 +95,7 @@ public class TaskAssetPreparer {
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-            ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(dispatcherUrl, assetUrl);
+            ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(dispatcherUrl, assetManagerUrl);
 
             // Start preparing data for function
             File taskDir = processorTaskService.prepareTaskDir(processorState, task.taskId);
@@ -136,22 +134,22 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.ServerUrls serverUrls, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(serverUrls.assetUrl, functionConfig.code);
+            final MetadataParamsYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(serverUrls.assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
             final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
             if (functionState == Enums.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetUrl));
+                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetManagerUrl));
                 return false;
             }
             else {
                 if (functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    metadataService.setFunctionState(serverUrls.assetUrl, functionConfig.code, Enums.FunctionState.none);
+                    metadataService.setFunctionState(serverUrls.assetManagerUrl, functionConfig.code, Enums.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetUrl));
+                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetManagerUrl));
                     return true;
                 }
                 else if (functionState==Enums.FunctionState.dispatcher_config_error) {
