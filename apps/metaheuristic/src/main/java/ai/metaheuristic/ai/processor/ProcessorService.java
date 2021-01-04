@@ -50,6 +50,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 
@@ -73,7 +74,7 @@ public class ProcessorService {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
     public File logFile;
 
-    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(DispatcherUrl dispatcherUrl, DispatcherSchedule schedule) {
+    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(String processorCode, DispatcherUrl dispatcherUrl, DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
@@ -82,7 +83,7 @@ public class ProcessorService {
                 to(envService.getEnvYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
-                metadataService.getSessionId(dispatcherUrl),
+                metadataService.getSessionId(processorCode, dispatcherUrl),
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null,
                 logFile!=null && logFile.exists(),
@@ -102,7 +103,11 @@ public class ProcessorService {
     }
 
     private KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {
-        return null;
+        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(envYaml.tags);
+        t.mirrors.putAll(envYaml.mirrors);
+        t.envs.putAll(envYaml.envs);
+        envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
+        return t;
     }
 
     /**
@@ -112,9 +117,9 @@ public class ProcessorService {
      * @param dispatcherUrl String
      * @param ids List&lt;String> list if task ids
      */
-    public void markAsDelivered(DispatcherUrl dispatcherUrl, List<Long> ids) {
+    public void markAsDelivered(String processorCode, DispatcherUrl dispatcherUrl, List<Long> ids) {
         for (Long id : ids) {
-            processorTaskService.setDelivered(dispatcherUrl, id);
+            processorTaskService.setDelivered(processorCode, dispatcherUrl, id);
         }
     }
 
@@ -125,13 +130,13 @@ public class ProcessorService {
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(DispatcherUrl dispatcherUrl, Long taskId, Long variableId) {
-        ProcessorTask task = processorTaskService.findById(dispatcherUrl, taskId);
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(String processorCode, DispatcherUrl dispatcherUrl, Long taskId, Long variableId) {
+        ProcessorTask task = processorTaskService.findById(processorCode, dispatcherUrl, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
+        File taskDir = processorTaskService.prepareTaskDir(processorCode, metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl), taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -140,7 +145,7 @@ public class ProcessorService {
             Enums.ResendTaskOutputResourceStatus status;
             switch (outputVariable.sourcing) {
                 case dispatcher:
-                    status = scheduleSendingToDispatcher(dispatcherUrl, taskId, taskDir, outputVariable);
+                    status = scheduleSendingToDispatcher(processorCode, dispatcherUrl, taskId, taskDir, outputVariable);
                     break;
                 case disk:
                 case git:
@@ -159,19 +164,19 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(DispatcherUrl dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String processorCode, DispatcherUrl dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
-            processorTaskService.markAsFinishedWithError(dispatcherUrl, taskId,
+            processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, taskId,
                     "#749.050 Variable wasn't found. Considering that this task is broken");
 
-            processorTaskService.setCompleted(dispatcherUrl, taskId);
+            processorTaskService.setCompleted(processorCode, dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
-        final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
         if (S.b(processorState.processorId) ) {
             // at this point processorId must be checked against null
             throw new IllegalStateException("(S.b(processorState.processorId)");
@@ -195,7 +200,7 @@ public class ProcessorService {
         public boolean isError = false;
     }
 
-    public ProcessorService.ResultOfChecking checkForPreparingOVariables(ProcessorTask task, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public ProcessorService.ResultOfChecking checkForPreparingVariables(String processorCode, ProcessorTask task, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         DispatcherUrl dispatcherUrl = new DispatcherUrl(task.dispatcherUrl);
         try {
@@ -218,13 +223,13 @@ public class ProcessorService {
             });
         }
         catch (BreakFromLambdaException e) {
-            processorTaskService.markAsFinishedWithError(dispatcherUrl, task.taskId, e.getMessage());
+            processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (VariableProviderException e) {
             log.error("#749.070 Error", e);
-            processorTaskService.markAsFinishedWithError(dispatcherUrl, task.taskId, e.toString());
+            processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, e.toString());
             result.isError = true;
             return result;
         }
@@ -233,7 +238,7 @@ public class ProcessorService {
         }
         if (!result.isAllLoaded) {
             if (task.assetsPrepared) {
-                processorTaskService.markAsAssetPrepared(dispatcherUrl, task.taskId, false);
+                processorTaskService.markAsAssetPrepared(processorCode, dispatcherUrl, task.taskId, false);
             }
             result.isError = true;
             return result;
@@ -242,7 +247,7 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(String processorCode, ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         DispatcherUrl dispatcherUrl = new DispatcherUrl(task.dispatcherUrl);
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
@@ -253,7 +258,7 @@ public class ProcessorService {
             } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.toString();
                 log.error(msg, e);
-                processorTaskService.markAsFinishedWithError(dispatcherUrl, task.taskId, msg);
+                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, msg);
                 return false;
             }
         }

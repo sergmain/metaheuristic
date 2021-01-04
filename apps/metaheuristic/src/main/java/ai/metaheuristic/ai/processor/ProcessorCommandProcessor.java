@@ -45,33 +45,34 @@ public class ProcessorCommandProcessor {
 
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
-        processReportResultDelivering(dispatcherUrl, dispatcherYaml);
-        processAssignedTask(dispatcherUrl, dispatcherYaml);
-        storeProcessorId(dispatcherUrl, dispatcherYaml);
-        reAssignProcessorId(dispatcherUrl, dispatcherYaml);
+
+        pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(processorCode, dispatcherUrl, dispatcherYaml);
+        processReportResultDelivering(processorCode, dispatcherUrl, dispatcherYaml);
+        processAssignedTask(processorCode, dispatcherUrl, dispatcherYaml);
+        storeProcessorId(processorCode, dispatcherUrl, dispatcherYaml);
+        reAssignProcessorId(processorCode, dispatcherUrl, dispatcherYaml);
     }
 
     // processing at processor side
     @Nullable
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
             return null;
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (DispatcherCommParamsYaml.ResendTaskOutput output : request.resendTaskOutputs.resends) {
-            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(dispatcherUrl, output.taskId, output.variableId);
+            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(processorCode, dispatcherUrl, output.taskId, output.variableId);
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
     // processing at processor side
-    private void processReportResultDelivering(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
-        processorService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
+        processorService.markAsDelivered(processorCode, dispatcherUrl, request.reportResultDelivering.getIds());
     }
 
     private void processAssignedTask(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
@@ -92,12 +93,12 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void reAssignProcessorId(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void reAssignProcessorId(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorId(dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(dispatcherUrl);
+        final String currProcessorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
+        final String currSessionId = metadataService.getSessionId(processorCode, dispatcherUrl);
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(request.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(request.reAssignedProcessorId.sessionId)
@@ -110,7 +111,7 @@ public class ProcessorCommandProcessor {
                 currProcessorId, currSessionId,
                 request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId
         );
-        metadataService.setProcessorIdAndSessionId(
+        metadataService.setProcessorIdAndSessionId(processorCode,
                 dispatcherUrl, request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId);
     }
 

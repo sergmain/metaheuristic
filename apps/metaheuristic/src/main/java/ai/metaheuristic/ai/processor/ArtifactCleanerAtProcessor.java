@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -42,6 +43,9 @@ public class ArtifactCleanerAtProcessor {
     public void fixedDelay() {
         for (String processorCode : metadataService.getProcessorCodes()) {
 
+            File processorDir = new File(globals.processorDir, processorCode);
+            File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+
             for (ProcessorAndCoreData.DispatcherUrl dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
                 if (!globals.processorEnabled || !currentExecState.isInited(dispatcherUrl)) {
                     // don't delete anything until the processor has received the list of actual ExecContexts
@@ -49,7 +53,7 @@ public class ArtifactCleanerAtProcessor {
                 }
 
                 MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
-                final File dispatcherDir = new File(globals.processorTaskDir, processorState.dispatcherCode);
+                final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
                 if (!dispatcherDir.exists()) {
                     dispatcherDir.mkdir();
                 }

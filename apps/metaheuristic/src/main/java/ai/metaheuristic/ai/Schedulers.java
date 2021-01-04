@@ -198,7 +198,7 @@ public class Schedulers {
 
         private final Globals globals;
         private final TaskAssetPreparer taskAssetPreparer;
-        private final TaskProcessor taskProcessor;
+        private final TaskProcessorCoordinatorService taskProcessor;
         private final DownloadFunctionService downloadFunctionActor;
         private final DownloadVariableService downloadResourceActor;
         private final UploadVariableService uploadResourceActor;
