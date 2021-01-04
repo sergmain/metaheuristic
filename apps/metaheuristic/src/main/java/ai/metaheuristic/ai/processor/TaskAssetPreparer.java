@@ -71,7 +71,7 @@ public class TaskAssetPreparer {
             });
 
             // find all tasks which weren't finished and resources aren't prepared yet
-            List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(processorCode, false);
+            List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, false);
             if (tasks.size()>1) {
                 log.warn("#951.020 There is more than one task: {}", tasks.stream().map(ProcessorTask::getTaskId).collect(Collectors.toList()));
             }
@@ -85,29 +85,26 @@ public class TaskAssetPreparer {
                     continue;
                 }
 
-                final ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
                 final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+                        dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
 
-                final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
+                final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
                 if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-                    log.warn("#951.070 processor {} with dispatcher {} isn't ready", processorCode, dispatcherUrl.url);
+                    log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.processorCode, ref.dispatcherUrl.url);
                     continue;
                 }
 
                 final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
-                if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
+                if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(ref.dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(ref, task.taskId);
                     log.info("#951.080 Deleted orphan task {}", task);
                     continue;
                 }
                 final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-                ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(dispatcherUrl, assetManagerUrl);
-
                 // Start preparing data for function
-                File taskDir = processorTaskService.prepareTaskDir(ref, processorState, task.taskId);
+                File taskDir = processorTaskService.prepareTaskDir(ref, task.taskId);
                 ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
                 if (resultOfChecking.isError) {
                     continue;
@@ -116,16 +113,16 @@ public class TaskAssetPreparer {
                 // start preparing functions
                 final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
                 final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
-                if ( !checkFunctionPreparedness(processorCode, functionConfig, serverUrls, task.taskId) ) {
+                if ( !checkFunctionPreparedness(ref, functionConfig, assetManagerUrl, task.taskId) ) {
                     isAllReady.set(false);
                 }
                 taskParamYaml.task.preFunctions.forEach(sc-> {
-                    if ( !checkFunctionPreparedness(processorCode, sc, serverUrls, task.taskId) ) {
+                    if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
                         isAllReady.set(false);
                     }
                 });
                 taskParamYaml.task.postFunctions.forEach(sc-> {
-                    if ( !checkFunctionPreparedness(processorCode, sc, serverUrls, task.taskId) ) {
+                    if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
                         isAllReady.set(false);
                     }
                 });
@@ -133,40 +130,41 @@ public class TaskAssetPreparer {
                 // update the status of task if everything is prepared
                 if (isAllReady.get()) {
                     log.info("#951.140 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
-                    processorTaskService.markAsAssetPrepared(processorCode, dispatcherUrl, task.taskId, true);
+                    processorTaskService.markAsAssetPrepared(ref, task.taskId, true);
                 }
             }
         }
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean checkFunctionPreparedness(String processorCode,
-            TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.ServerUrls serverUrls, Long taskId) {
+    private boolean checkFunctionPreparedness(
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
+            TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(serverUrls.assetManagerUrl, functionConfig.code);
+            final MetadataParamsYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
             final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
             if (functionState == Enums.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetManagerUrl));
+                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                 return false;
             }
             else {
                 if (functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    metadataService.setFunctionState(serverUrls.assetManagerUrl, functionConfig.code, Enums.FunctionState.none);
+                    metadataService.setFunctionState(assetManagerUrl, functionConfig.code, Enums.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, serverUrls.assetManagerUrl));
+                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                     return true;
                 }
                 else if (functionState==Enums.FunctionState.dispatcher_config_error) {
-                    processorTaskService.markAsFinishedWithError(processorCode, serverUrls.dispatcherUrl,
+                    processorTaskService.markAsFinishedWithError(ref,
                             taskId,
                             S.f("Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
-                            taskId, serverUrls.dispatcherUrl, functionConfig.code));
+                            taskId, ref.dispatcherUrl.url, functionConfig.code));
                 }
                 if (functionState!= Enums.FunctionState.ready) {
                     log.warn("#951.180 Function {} has broken state as {}", functionConfig.code, functionState);

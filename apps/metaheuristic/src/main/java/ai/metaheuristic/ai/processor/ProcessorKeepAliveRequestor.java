@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -122,8 +123,10 @@ public class ProcessorKeepAliveRequestor {
         }
 
         try {
-            final String processorId = metadataService.getProcessorId(dispatcherUrl);
-            final String sessionId = metadataService.getSessionId(dispatcherUrl);
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = dfd;
+
+            final String processorId = metadataService.getProcessorId(ref);
+            final String sessionId = metadataService.getSessionId(ref);
 
             KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
             if (processorId == null || sessionId==null) {
@@ -136,8 +139,8 @@ public class ProcessorKeepAliveRequestor {
 
                 karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
                 // always report about current active tasks, if we have actual processorId
-                karpy.taskIds = processorTaskService.findAll(dispatcherUrl).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                karpy.processor = processorService.produceReportProcessorStatus(dispatcherUrl, dispatcher.schedule);
+                karpy.taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                karpy.processor = processorService.produceReportProcessorStatus(ref, dispatcher.schedule);
 
                 AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
                 karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));

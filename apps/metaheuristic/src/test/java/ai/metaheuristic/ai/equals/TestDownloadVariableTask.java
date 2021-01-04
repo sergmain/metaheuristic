@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.equals;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -35,10 +37,10 @@ public class TestDownloadVariableTask {
     @Test
     public void test() {
 
-//        String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
-//                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable
-        DownloadVariableTask o1 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), "42L", false);
-        DownloadVariableTask o2 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), "24L", true);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                "proc-code-1", "proc-id-1", new ProcessorAndCoreData.DispatcherUrl("url"));
+        DownloadVariableTask o1 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), false);
+        DownloadVariableTask o2 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), true);
 
         assertEquals(o1, o2);
     }

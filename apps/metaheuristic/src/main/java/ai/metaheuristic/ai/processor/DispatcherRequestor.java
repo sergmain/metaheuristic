@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -125,10 +126,10 @@ public class DispatcherRequestor {
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
-            for (String processorCode1 : metadataService.getAllRefs()) {
+            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
 
-                final String processorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
-                final String sessionId = metadataService.getSessionId(processorCode, dispatcherUrl);
+                final String processorId = metadataService.getProcessorId(ref);
+                final String sessionId = metadataService.getSessionId(ref);
 
                 if (processorId == null || sessionId==null) {
                     pcpy.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
@@ -138,14 +139,14 @@ public class DispatcherRequestor {
 
                     // we have to pull new tasks from server constantly
                     if (currentExecState.isInited(dispatcherUrl)) {
-                        final boolean b = processorTaskService.isNeedNewTask(processorCode);
+                        final boolean b = processorTaskService.isNeedNewTask(ref);
                         if (b && dispatcher.schedule.isCurrentTimeActive()) {
                             pcpy.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired);
                         }
                         else {
                             if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                                 // let's check variables for not completed and not sent yet tasks
-                                List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(processorCode, dispatcherUrl).stream()
+                                List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
                                         .filter(t -> t.delivered && t.finishedOn!=null && !t.output.allUploaded())
                                         .collect(Collectors.toList());
 
@@ -154,7 +155,7 @@ public class DispatcherRequestor {
                                     for (ProcessorTask.OutputStatus outputStatus : processorTask.output.outputStatuses) {
                                         statuses.add(new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
                                                 processorTask.taskId, outputStatus.variableId,
-                                                processorService.resendTaskOutputResources(processorCode, dispatcherUrl, processorTask.taskId, outputStatus.variableId))
+                                                processorService.resendTaskOutputResources(ref, processorTask.taskId, outputStatus.variableId))
                                         );
                                     }
                                 }
@@ -168,7 +169,7 @@ public class DispatcherRequestor {
                         pcpy.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
                         lastRequestForMissingResources = System.currentTimeMillis();
                     }
-                    pcpy.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(processorCode, dispatcherUrl);
+                    pcpy.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
                 }
 
                 if (noNewRequest(pcpy)) {

@@ -29,15 +29,15 @@ import java.io.File;
 @Data
 @EqualsAndHashCode(of={"ref", "taskId", "variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
-    public long taskId;
+    public Long taskId;
     @Nullable
     public File file = null;
     public Long variableId;
     public boolean nullified = false;
     public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
-    public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
+    public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
-    public UploadVariableTask(long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
+    public UploadVariableTask(Long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
         this.taskId = taskId;
         this.file = file;
         this.variableId = variableId;
@@ -45,7 +45,7 @@ public class UploadVariableTask extends ProcessorRestTask {
         this.dispatcher = dispatcher;
     }
 
-    public UploadVariableTask(long taskId, Long variableId, boolean nullified, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
+    public UploadVariableTask(Long taskId, Long variableId, boolean nullified, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
         this.taskId = taskId;
         this.variableId = variableId;
         this.nullified = nullified;

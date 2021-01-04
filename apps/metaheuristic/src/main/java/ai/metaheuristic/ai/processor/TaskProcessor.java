@@ -177,30 +177,30 @@ public class TaskProcessor {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            if (!processorService.checkOutputResourceFile(processorCode, task, taskParamYaml, dispatcher, taskDir)) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
+            if (!processorService.checkOutputResourceFile(ref, task, taskParamYaml, dispatcher, taskDir)) {
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
             if (taskParamYaml.task.outputs.isEmpty()) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, "#100.050 Broken task. output variable must be specified");
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.050 Broken task. output variable must be specified");
                 continue;
             }
 
             File artifactDir = processorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             File systemDir = processorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             String status = processorTaskService.prepareEnvironment(artifactDir);
             if (status!=null) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, status);
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, status);
             }
 
             boolean isNotReady = false;
@@ -213,7 +213,7 @@ public class TaskProcessor {
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
                 result = prepareFunction(assetManagerUrl, processorState, preFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(processorCode, dispatcherUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -229,7 +229,7 @@ public class TaskProcessor {
 
             result = prepareFunction(assetManagerUrl, processorState, taskParamYaml.task.getFunction());
             if (result.isError) {
-                markFunctionAsFinishedWithPermanentError(processorCode, dispatcherUrl, task.taskId, result);
+                markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                 continue;
             }
             results[idx++] = result;
@@ -240,7 +240,7 @@ public class TaskProcessor {
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
                 result = prepareFunction(assetManagerUrl, processorState, postFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(processorCode, dispatcherUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -261,12 +261,12 @@ public class TaskProcessor {
             } catch (Throwable th) {
                 String es = "#100.110 Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
                 log.warn(es);
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, es);
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, es);
                 continue;
             }
 
             // at this point all required resources have to be prepared
-            ProcessorTask taskResult = processorTaskService.setLaunchOn(processorCode, dispatcherUrl, task.taskId);
+            ProcessorTask taskResult = processorTaskService.setLaunchOn(ref, task.taskId);
             if (taskResult==null) {
                 String es = "#100.120 Task #"+task.taskId+" wasn't found";
                 log.warn(es);
@@ -275,26 +275,26 @@ public class TaskProcessor {
                 continue;
             }
             try {
-                execAllFunctions(processorCode, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(ref, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
                 processorTaskService.resetTask(ref, task.taskId);
-                processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
+                processorTaskService.delete(ref, task.taskId);
                 log.info("#100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
         }
     }
 
-    private void markFunctionAsFinishedWithPermanentError(String processorCode, ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Long taskId, FunctionPrepareResult result) {
+    private void markFunctionAsFinishedWithPermanentError(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
                 "#100.150 Function "+result.getFunction().code+" has a permanent error: " + result.getSystemExecResult().console);
-        processorTaskService.markAsFinished(processorCode, dispatcherUrl, taskId,
+        processorTaskService.markAsFinished(ref, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
     }
 
-    private void execAllFunctions(String processorCode,
+    private void execAllFunctions(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
                                   ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
                                   DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
                                   File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
@@ -361,7 +361,7 @@ public class TaskProcessor {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
                                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processOutputVariable(
-                                        processorCode, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
+                                        ref, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {
@@ -375,7 +375,7 @@ public class TaskProcessor {
             }
         }
 
-        processorTaskService.markAsFinished(processorCode, new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.getTaskId(),
+        processorTaskService.markAsFinished(ref, task.getTaskId(),
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 

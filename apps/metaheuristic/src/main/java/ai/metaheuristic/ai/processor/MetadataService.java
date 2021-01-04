@@ -122,7 +122,7 @@ public class MetadataService {
         }
         for (String processorCode : metadata.processors.keySet()) {
             for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-                processorStateBydispatcherUrl(processorCode, entry.getKey());
+                processorStateBydispatcherUrl(ref, entry.getKey());
             }
         }
 /*
@@ -240,9 +240,9 @@ public class MetadataService {
     }
 
     @Nullable
-    public DispatcherUrl findDispatcherByCode(String processorCode, String code) {
+    public DispatcherUrl findDispatcherByCode(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String code) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Processor p = metadata.processors.get(processorCode);
+            MetadataParamsYaml.Processor p = metadata.processors.get(ref.processorCode);
             if (p==null) {
                 return null;
             }
@@ -274,18 +274,18 @@ public class MetadataService {
     }
 
     @Nullable
-    public String getProcessorId(String processorCode, final DispatcherUrl dispatcherUrl) {
+    public String getProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            return getDispatcherInfo(processorCode, dispatcherUrl).processorId;
+            return getDispatcherInfo(ref).processorId;
         }
     }
 
-    public void setProcessorIdAndSessionId(String processorCode, final DispatcherUrl dispatcherUrl, String processorId, String sessionId) {
+    public void setProcessorIdAndSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String processorId, String sessionId) {
         if (StringUtils.isBlank(processorId)) {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(processorCode, dispatcherUrl);
+            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
@@ -509,7 +509,7 @@ public class MetadataService {
         return processorState;
     }
 
-    private static String asCode(CommonUrl commonUrl) {
+    public static String asCode(CommonUrl commonUrl) {
         String s = commonUrl.getUrl().toLowerCase();
         if (s.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());

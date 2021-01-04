@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -63,22 +64,22 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void storeProcessorId(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml request) {
+    private void storeProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", request.assignedProcessorId);
         metadataService.setProcessorIdAndSessionId(
-                dispatcherUrl, request.assignedProcessorId.assignedProcessorId.toString(), request.assignedProcessorId.assignedSessionId);
+                ref, request.assignedProcessorId.assignedProcessorId.toString(), request.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
-    private void reAssignProcessorId(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml response) {
+    private void reAssignProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml response) {
         if (response.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorId(dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(dispatcherUrl);
+        final String currProcessorId = metadataService.getProcessorId(ref);
+        final String currSessionId = metadataService.getSessionId(ref);
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(response.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(response.reAssignedProcessorId.sessionId)
@@ -92,7 +93,7 @@ public class ProcessorKeepAliveProcessor {
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
         metadataService.setProcessorIdAndSessionId(
-                dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
+                ref, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 
 }

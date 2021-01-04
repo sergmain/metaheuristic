@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
@@ -53,10 +54,10 @@ public class TaskProcessorCoordinatorService {
             return;
         }
 
-        for (String processorCode : metadataService.getAllRefs()) {
-            TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( processorCode,
+        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
+            TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( ref.processorCode,
                     o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
-            taskProcessor.process(processorCode);
+            taskProcessor.process(ref);
         }
     }
 }

@@ -128,11 +128,11 @@ public class DiskVariableProvider implements VariableProvider {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
-            processorTaskService.setVariableUploadedAndCompleted(processorCode, dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(ref, task.taskId, outputVariable.id);
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
             log.info("The result variable #{} is nullable, no need to upload to dispatcher", outputVariable.id);
-            processorTaskService.setVariableUploadedAndCompleted(processorCode, dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(ref, task.taskId, outputVariable.id);
             return null;
         }
         else {
@@ -145,7 +145,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public File getOutputVariableFromFile(
-            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvParamsYaml env = envService.getEnvYaml();

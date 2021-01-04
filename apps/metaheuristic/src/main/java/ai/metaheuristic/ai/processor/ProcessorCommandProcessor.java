@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -61,37 +62,36 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void processReportResultDelivering(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
-        processorService.markAsDelivered(processorCode, dispatcherUrl, request.reportResultDelivering.getIds());
+        processorService.markAsDelivered(ref, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processAssignedTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
-        processorService.assignTasks(processorCode, dispatcherUrl, request.assignedTask);
+        processorService.assignTasks(ref, request.assignedTask);
     }
 
     // processing at processor side
-    private void storeProcessorId(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void storeProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", request.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(processorCode,
-                dispatcherUrl, request.assignedProcessorId.assignedProcessorId, request.assignedProcessorId.assignedSessionId);
+        metadataService.setProcessorIdAndSessionId(ref, request.assignedProcessorId.assignedProcessorId, request.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
-    private void reAssignProcessorId(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void reAssignProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml request) {
         if (request.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(processorCode, dispatcherUrl);
+        final String currProcessorId = metadataService.getProcessorId(ref);
+        final String currSessionId = metadataService.getSessionId(ref);
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(request.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(request.reAssignedProcessorId.sessionId)
@@ -104,8 +104,7 @@ public class ProcessorCommandProcessor {
                 currProcessorId, currSessionId,
                 request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId
         );
-        metadataService.setProcessorIdAndSessionId(processorCode,
-                dispatcherUrl, request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId);
+        metadataService.setProcessorIdAndSessionId(ref, request.reAssignedProcessorId.getReAssignedProcessorId(), request.reAssignedProcessorId.sessionId);
     }
 
 }

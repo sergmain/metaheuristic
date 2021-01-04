@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.processor.actors;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -27,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestAbstractTaskQueue {
 
-    public static class SimpleClass extends AbstractTaskQueue<DownloadVariableTask> {
+    private static class SimpleClass extends AbstractTaskQueue<DownloadVariableTask> {
     }
 
     @Test
@@ -36,16 +38,21 @@ public class TestAbstractTaskQueue {
 
         DispatcherLookupParamsYaml.DispatcherLookup dispatcherStub = new DispatcherLookupParamsYaml.DispatcherLookup();
 
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                "proc-code-1", "proc-id-1", new ProcessorAndCoreData.DispatcherUrl("url"));
+
         DownloadVariableTask task = new DownloadVariableTask(
+                ref,
                 4242L, EnumsApi.VariableContext.local, 10,
-                new File("aaa"), dispatcherStub, "1", false);
+                new File("aaa"), dispatcherStub, false);
 
         actor.add(task);
         assertEquals(1, actor.queueSize());
 
         DownloadVariableTask task1 = new DownloadVariableTask(
+                ref,
                 4242L, EnumsApi.VariableContext.local, 10,
-                new File("bbb"), dispatcherStub, "1", false);
+                new File("bbb"), dispatcherStub, false);
         actor.add(task1);
         assertEquals(1, actor.queueSize());
 
@@ -55,17 +62,17 @@ public class TestAbstractTaskQueue {
         DownloadVariableTask t2 = actor.poll();
         assertNull(t2);
 
-        DownloadVariableTask task2 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 10, new File("."), dispatcherStub, "1", false);
+        DownloadVariableTask task2 = new DownloadVariableTask(ref, 4201L, EnumsApi.VariableContext.local, 10, new File("."), dispatcherStub, false);
         actor.add(task1);
         actor.add(task2);
         assertEquals(2, actor.queueSize());
 
         // now it doesn't matter which task because resourceId is unique across all tasks
-        DownloadVariableTask task31 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 11, new File("."), dispatcherStub, "1", false);
+        DownloadVariableTask task31 = new DownloadVariableTask(ref, 4201L, EnumsApi.VariableContext.local, 11, new File("."), dispatcherStub, false);
         actor.add(task31);
         assertEquals(2, actor.queueSize());
 
-        DownloadVariableTask task32 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.global, 11, new File("."), dispatcherStub, "1", false);
+        DownloadVariableTask task32 = new DownloadVariableTask(ref, 4201L, EnumsApi.VariableContext.global, 11, new File("."), dispatcherStub, false);
         actor.add(task32);
         assertEquals(3, actor.queueSize());
 

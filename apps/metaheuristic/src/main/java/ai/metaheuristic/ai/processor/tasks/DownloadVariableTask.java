@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.processor.tasks;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
@@ -24,36 +25,34 @@ import lombok.EqualsAndHashCode;
 import java.io.File;
 
 @Data
-@EqualsAndHashCode(of = {"variableId", "context"}, callSuper = false)
+@EqualsAndHashCode(of = {"ref", "variableId", "context"}, callSuper = false)
 public class DownloadVariableTask extends ProcessorRestTask {
     public final String variableId;
     public final EnumsApi.VariableContext context;
     public final long taskId;
     public final File targetDir;
     public final boolean nullable;
-    public final String processorId;
     public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
-    public final String processorCode;
+    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
 
     public DownloadVariableTask(
-            String processorCode,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
-            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
-        this(processorCode, variableId.toString(), context, taskId, targetDir, dispatcher, processorId, nullable);
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
+        this(ref, variableId.toString(), context, taskId, targetDir, dispatcher, nullable);
     }
 
     public DownloadVariableTask(
-            String processorCode,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
             String variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
-            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
+        this.ref = ref;
         this.variableId = variableId;
         this.context = context;
         this.taskId = taskId;
         this.targetDir = targetDir;
         this.dispatcher = dispatcher;
-        this.processorId = processorId;
         this.nullable = nullable;
-        this.processorCode = processorCode;
     }
 
     @Override
