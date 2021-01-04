@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +79,7 @@ public class ProcessorService {
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
         KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
-                envService.getEnvYaml(),
+                to(envService.getEnvYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 metadataService.getSessionId(dispatcherUrl),
@@ -98,6 +99,10 @@ public class ProcessorService {
         }
 
         return status;
+    }
+
+    private KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {
+        return null;
     }
 
     /**

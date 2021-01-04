@@ -15,41 +15,37 @@
  */
 package ai.metaheuristic.commons.yaml.env;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class EnvYaml {
+public class EnvParamsYamlV1 implements BaseParams {
+
+    public final int version=1;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code","path"})
+    public static class DiskStorageV1 {
+        public String code;
+        public String path;
+    }
+
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
-    public final List<DiskStorage> disk = new ArrayList<>();
-
-    public EnvYaml(Map<String, String> mirrors, Map<String, String> envs, List<DiskStorage> disk, @Nullable String tags) {
-        this.tags = tags;
-        this.mirrors.putAll(mirrors);
-        this.envs.putAll(envs);
-        this.disk.addAll(disk);
-    }
+    public final List<DiskStorageV1> disk = new ArrayList<>();
 
     @Nullable
     public String tags;
 
-    @Nullable
-    public DiskStorage findDiskStorageByCode(String code) {
-        for (DiskStorage diskStorage : disk) {
-            if (Objects.equals(diskStorage.code, code)) {
-                return diskStorage;
-            }
-        }
-        return null;
-    }
 }

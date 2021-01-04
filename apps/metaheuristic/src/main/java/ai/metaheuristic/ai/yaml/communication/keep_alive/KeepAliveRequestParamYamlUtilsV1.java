@@ -48,21 +48,15 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
     public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV1 v1, Long ... vars) {
         KeepAliveRequestParamYaml t = new KeepAliveRequestParamYaml();
 
-/*
-        public KeepAliveRequestParamYaml.ReportProcessor processor;
-        public final KeepAliveRequestParamYaml.FunctionDownloadStatuses functions = new KeepAliveRequestParamYaml.FunctionDownloadStatuses();
-
-        @Nullable
-        public KeepAliveRequestParamYaml.RequestProcessorId requestProcessorId;
-        public KeepAliveRequestParamYaml.ProcessorCommContext processorCommContext;
-
-        @Nullable
-        public String taskIds;
-
-*/
         if (v1.processor !=null) {
             t.processor = new KeepAliveRequestParamYaml.ReportProcessor();
             BeanUtils.copyProperties(v1.processor, t.processor);
+            if (v1.processor.env!=null) {
+                t.processor.env = new KeepAliveRequestParamYaml.Env(v1.processor.env.tags);
+                t.processor.env.mirrors.putAll(v1.processor.env.mirrors);
+                t.processor.env.envs.putAll(v1.processor.env.envs);
+                v1.processor.env.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.processor.env.disk));
+            }
         }
         v1.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
                 .collect(Collectors.toCollection(()->t.functions.statuses));

@@ -74,8 +74,6 @@ public class TestFunctionConfigYaml {
         FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
         FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc1);
         checkLatest(sc2);
-//        FunctionConfigYaml sc = new FunctionConfigYamlUtilsV1().upgradeTo(sc2);
-//        checkLatest(sc);
     }
 
     private FunctionConfigYamlV1 getFunctionConfigYamlV1() {

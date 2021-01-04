@@ -13,19 +13,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package ai.metaheuristic.commons.yaml.env;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.*;
+import org.springframework.lang.Nullable;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode( of={"code","path"})
-public class DiskStorage {
-    public String code;
-    public String path;
+@ToString
+@AllArgsConstructor
+public class EnvParamsYaml implements BaseParams {
+
+    public final int version=2;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code","path"})
+    public static class DiskStorage {
+        public String code;
+        public String path;
+    }
+
+    public final Map<String, String> mirrors = new ConcurrentHashMap<>();
+    public final Map<String, String> envs = new ConcurrentHashMap<>();
+    public final List<DiskStorage> disk = new ArrayList<>();
+
+    @Nullable
+    public String tags;
+
 }

@@ -32,8 +32,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.env.DiskStorage;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -235,7 +233,7 @@ public class ProcessorTransactionService {
 
             boolean isUpdated = false;
             if (isProcessorStatusDifferent(psy, status)) {
-                psy.env = status.env;
+                psy.env = to(status.env);
                 psy.gitStatusInfo = status.gitStatusInfo;
                 psy.schedule = status.schedule;
 
@@ -291,6 +289,15 @@ public class ProcessorTransactionService {
         return null;
     }
 
+    private ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
+        ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
+        envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
+        env.envs.putAll(envYaml.envs);
+        env.mirrors.putAll(envYaml.mirrors);
+        env.tags = envYaml.tags;
+        return env;
+    }
+
     private static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
@@ -305,11 +312,15 @@ public class ProcessorTransactionService {
         return false;
     }
 
-    private static boolean isEnvEmpty(@Nullable EnvYaml env) {
+    private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
         return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
     }
 
-    public static boolean envNotEquals(@Nullable EnvYaml env1, @Nullable EnvYaml env2) {
+    private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
+    }
+
+    public static boolean envNotEquals(@Nullable ProcessorStatusYaml.Env env1, @Nullable KeepAliveRequestParamYaml.Env env2) {
         if (isEnvEmpty(env1) && !isEnvEmpty(env2)) {
             return true;
         }
@@ -335,8 +346,8 @@ public class ProcessorTransactionService {
         if (env1.disk.size()!=env2.disk.size()) {
             return true;
         }
-        for (DiskStorage diskStorage : env1.disk) {
-            if (!env2.disk.contains(diskStorage)) {
+        for (ProcessorStatusYaml.DiskStorage diskStorage : env1.disk) {
+            if (!env2.disk.contains(new KeepAliveRequestParamYaml.DiskStorage(diskStorage.code, diskStorage.path))) {
                 return true;
             }
         }

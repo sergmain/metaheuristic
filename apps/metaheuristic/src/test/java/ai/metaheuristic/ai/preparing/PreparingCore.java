@@ -37,7 +37,6 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
@@ -132,7 +131,7 @@ public abstract class PreparingCore {
                 experimentCache.delete(e);
             }
 
-            EnvYaml envYaml = new EnvYaml();
+            ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
             envYaml.getEnvs().put("env-function-01:1.1", "python.exe" );
             envYaml.getEnvs().put("env-function-02:1.1", "python.exe" );

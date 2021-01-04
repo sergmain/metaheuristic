@@ -15,12 +15,13 @@
  */
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
-import ai.metaheuristic.commons.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,10 +30,9 @@ public class TestEnvYaml {
     @Test
     public void testEnvYaml() throws IOException {
 
-        EnvYaml envYaml;
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env/env.yaml")) {
-            envYaml = EnvYamlUtils.to(is);
-        }
+        String yaml = IOUtils.resourceToString("/yaml/env/env.yaml", StandardCharsets.UTF_8);
+        EnvParamsYaml envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+
         assertNotNull(envYaml);
         assertNotNull(envYaml.getEnvs());
         assertEquals(2, envYaml.getEnvs().size());
@@ -48,19 +48,18 @@ public class TestEnvYaml {
 
 
 
-        String s = EnvYamlUtils.toString(envYaml);
+        String s = EnvParamsYamlUtils.BASE_YAML_UTILS.toString(envYaml);
 
-        EnvYaml envYaml1 = EnvYamlUtils.to(s);
+        EnvParamsYaml envYaml1 = EnvParamsYamlUtils.BASE_YAML_UTILS.to(s);
         assertEquals(envYaml, envYaml1);
     }
 
     @Test
     public void testEnvYaml_1() throws IOException {
 
-        EnvYaml envYaml;
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env/env-2-lines.yaml")) {
-            envYaml = EnvYamlUtils.to(is);
-        }
+        String yaml = IOUtils.resourceToString("/yaml/env/env-2-lines.yaml", StandardCharsets.UTF_8);
+        EnvParamsYaml envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+
         assertNotNull(envYaml);
         assertNotNull(envYaml.getEnvs());
         assertEquals(2, envYaml.getEnvs().size());
@@ -70,9 +69,9 @@ public class TestEnvYaml {
         assertNotNull(envYaml.getDisk());
         assertTrue(envYaml.getDisk().isEmpty());
 
-        String s = EnvYamlUtils.toString(envYaml);
+        String s = EnvParamsYamlUtils.BASE_YAML_UTILS.toString(envYaml);
 
-        EnvYaml envYaml1 = EnvYamlUtils.to(s);
+        EnvParamsYaml envYaml1 = EnvParamsYamlUtils.BASE_YAML_UTILS.to(s);
         assertEquals(envYaml, envYaml1);
     }
 }

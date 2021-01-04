@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor.env;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
-import ai.metaheuristic.commons.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -40,7 +40,7 @@ public class EnvService {
     private final Globals globals;
 
     private String env;
-    private EnvYaml envYaml;
+    private EnvParamsYaml envYaml;
 
     @PostConstruct
     public void init() {
@@ -73,7 +73,7 @@ public class EnvService {
             throw new IllegalStateException("#747.050 Error while reading file: " + envYamlFile.getAbsolutePath(), e);
         }
 
-        envYaml = EnvYamlUtils.to(env);
+        envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
             log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.processorDir, File.separatorChar );
             throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
@@ -92,7 +92,7 @@ public class EnvService {
         }
     }
 
-    public EnvYaml getEnvYaml() {
+    public EnvParamsYaml getEnvYaml() {
         return envYaml;
     }
 

@@ -22,8 +22,7 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.commons.yaml.env.DiskStorage;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -33,11 +32,13 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -50,6 +51,16 @@ public class DiskVariableProvider implements VariableProvider {
     public DiskVariableProvider(EnvService envService, ProcessorTaskService processorTaskService) {
         this.envService = envService;
         this.processorTaskService = processorTaskService;
+    }
+
+    @Nullable
+    private static EnvParamsYaml.DiskStorage findDiskStorageByCode(List<EnvParamsYaml.DiskStorage> disk, String code) {
+        for (EnvParamsYaml.DiskStorage diskStorage : disk) {
+            if (Objects.equals(diskStorage.code, code)) {
+                return diskStorage;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -71,8 +82,8 @@ public class DiskVariableProvider implements VariableProvider {
         }
         DiskInfo diskInfo = variable.disk;
 
-        EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.code);
+        EnvParamsYaml env = envService.getEnvYaml();
+        EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, diskInfo.code);
         if (diskStorage==null) {
             throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
         }
@@ -136,11 +147,11 @@ public class DiskVariableProvider implements VariableProvider {
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
-        EnvYaml env = envService.getEnvYaml();
+        EnvParamsYaml env = envService.getEnvYaml();
         if (variable.disk==null) {
             throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
         }
-        DiskStorage diskStorage = env.findDiskStorageByCode(variable.disk.code);
+        EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, variable.disk.code);
         if (diskStorage==null) {
             throw new VariableProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
         }

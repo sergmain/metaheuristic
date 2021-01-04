@@ -18,24 +18,21 @@ package ai.metaheuristic.ai.yaml.processor_status;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class ProcessorStatusYamlV1 implements BaseParams {
-
 
     public final int version = 1;
 
@@ -63,9 +60,32 @@ public class ProcessorStatusYamlV1 implements BaseParams {
         public Long logReceivedOn;
     }
 
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code","path"})
+    public static class DiskStorageV1 {
+        public String code;
+        public String path;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EnvV1 {
+        public final Map<String, String> mirrors = new ConcurrentHashMap<>();
+        public final Map<String, String> envs = new ConcurrentHashMap<>();
+        public final List<DiskStorageV1> disk = new ArrayList<>();
+
+        @Nullable
+        public String tags;
+
+    }
+
     public List<DownloadStatusV1> downloadStatuses = new ArrayList<>();
 
-    public EnvYaml env;
+    public EnvV1 env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;

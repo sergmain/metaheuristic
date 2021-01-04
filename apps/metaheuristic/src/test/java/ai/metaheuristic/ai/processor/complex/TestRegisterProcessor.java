@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -144,7 +143,7 @@ public class TestRegisterProcessor {
         ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
 
         final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
-                new EnvYaml(),
+                new KeepAliveRequestParamYaml.Env(),
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
                 sessionId,

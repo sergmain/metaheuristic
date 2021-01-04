@@ -18,17 +18,18 @@ package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Serge
@@ -46,10 +47,32 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code","path"})
+    public static class DiskStorageV1 {
+        public String code;
+        public String path;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EnvV1 {
+        public final Map<String, String> mirrors = new ConcurrentHashMap<>();
+        public final Map<String, String> envs = new ConcurrentHashMap<>();
+        public final List<DiskStorageV1> disk = new ArrayList<>();
+
+        @Nullable
+        public String tags;
+
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportProcessorV1 {
-        public EnvYaml env;
+        public EnvV1 env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String sessionId;

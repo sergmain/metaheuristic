@@ -16,8 +16,6 @@
 package ai.metaheuristic.ai.yaml.processor_status;
 
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.env.DiskStorage;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -56,7 +54,7 @@ public class ProcessorStatusYamlUtilsV1
             trg.errors = new ArrayList<>(src.errors);
         }
         if (src.env!=null) {
-            trg.env = new EnvYaml();
+            trg.env = new ProcessorStatusYaml.Env();
             if (!src.env.envs.isEmpty()) {
                 final Map<String, String> envMap = src.env.envs.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
@@ -65,7 +63,7 @@ public class ProcessorStatusYamlUtilsV1
 
             if (!src.env.disk.isEmpty()) {
                 trg.env.disk.addAll(src.env.disk.stream()
-                        .map(d -> new DiskStorage(d.code, d.path))
+                        .map(d -> new ProcessorStatusYaml.DiskStorage(d.code, d.path))
                         .collect(Collectors.toList()));
             }
             if (!src.env.mirrors.isEmpty()) {

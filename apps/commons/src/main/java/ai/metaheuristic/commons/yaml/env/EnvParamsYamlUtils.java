@@ -15,34 +15,22 @@
  */
 package ai.metaheuristic.commons.yaml.env;
 
-import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.InputStream;
+import java.util.Map;
 
 @Slf4j
-public class EnvYamlUtils {
+public class EnvParamsYamlUtils {
+    private static final EnvParamsYamlUtilsV1 YAML_UTILS_V_1 = new EnvParamsYamlUtilsV1();
+    private static final EnvParamsYamlUtilsV2 YAML_UTILS_V_2 = new EnvParamsYamlUtilsV2();
+    private static final EnvParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    private static Yaml getYaml() {
-        return YamlUtils.init(EnvYaml.class);
-    }
-
-    public static String toString(EnvYaml config) {
-        return YamlUtils.toString(config, getYaml());
-    }
-
-    public static EnvYaml to(String s) {
-        return (EnvYaml) YamlUtils.to(s, getYaml());
-    }
-
-    public static EnvYaml to(InputStream is) {
-        return (EnvYaml) YamlUtils.to(is, getYaml());
-    }
-
-    public static EnvYaml to(File file) {
-        return (EnvYaml) YamlUtils.to(file, getYaml());
-    }
-
+    public static final BaseYamlUtils<EnvParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
+            ),
+            DEFAULT_UTILS
+    );
 }

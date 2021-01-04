@@ -29,8 +29,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.env.DiskStorage;
-import ai.metaheuristic.commons.yaml.env.EnvYaml;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -615,9 +614,9 @@ public class ProcessorTaskService {
     @AllArgsConstructor
     public static class EnvYamlShort {
         public final Map<String, String> envs;
-        public final List<DiskStorage> disk;
+        public final List<EnvParamsYaml.DiskStorage> disk;
 
-        public EnvYamlShort(EnvYaml envYaml) {
+        public EnvYamlShort(EnvParamsYaml envYaml) {
             this.envs = envYaml.envs;
             this.disk = envYaml.disk;
         }
