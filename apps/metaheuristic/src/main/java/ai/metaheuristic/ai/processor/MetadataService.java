@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
@@ -41,6 +40,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -49,10 +49,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
@@ -64,6 +61,7 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
+@DependsOn({"Globals"})
 public class MetadataService {
 
     private final ApplicationContext appCtx;
@@ -121,25 +119,18 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new MetadataParamsYaml();
         }
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-            dispatcherUrlAsCode(entry.getKey());
+        for (String processorCode : metadata.processors.keySet()) {
+            for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+                dispatcherUrlAsCode(processorCode, entry.getKey());
+            }
         }
 /*
         // update metadata.yaml file after fixing broken metas
         updateMetadataFile();
 */
-        allocateCores();
-
         markAllAsUnverified();
         //noinspection unused
         int i=0;
-    }
-
-    private void allocateCores() {
-        for (int i = metadata.cores.size(); i < globals.initCoreNumber; i++) {
-            metadata.cores.add(new MetadataParamsYaml.Core());
-        }
-
     }
 
     public ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -248,9 +239,13 @@ public class MetadataService {
     }
 
     @Nullable
-    public DispatcherUrl findDispatcherByCode(String code) {
+    public DispatcherUrl findDispatcherByCode(String processorCode, String code) {
         synchronized (syncObj) {
-            for (Map.Entry<String, MetadataParamsYaml.ProcessorState> entry : metadata.processorStates.entrySet()) {
+            MetadataParamsYaml.Processor p = metadata.processors.get(processorCode);
+            if (p==null) {
+                return null;
+            }
+            for (Map.Entry<String, MetadataParamsYaml.ProcessorState> entry : p.states.entrySet()) {
                 if (code.equals(entry.getValue().dispatcherCode)) {
                     return new DispatcherUrl(entry.getKey());
                 }
@@ -259,9 +254,9 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorState dispatcherUrlAsCode(DispatcherUrl dispatcherUrl) {
+    public MetadataParamsYaml.ProcessorState dispatcherUrlAsCode(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            MetadataParamsYaml.ProcessorState dispatcherInfo = getDispatcherInfo(processorCode, dispatcherUrl);
             // fix for wrong metadata.yaml data
             if (dispatcherInfo.dispatcherCode == null) {
                 dispatcherInfo.dispatcherCode = asEmptyProcessorState(dispatcherUrl).dispatcherCode;
@@ -271,27 +266,25 @@ public class MetadataService {
         }
     }
 
-    public String getProcessorId(final DispatcherUrl dispatcherUrl) {
+    public Set<String> getProcessorCodes() {
         synchronized (syncObj) {
-            return getDispatcherInfo(dispatcherUrl).processorId;
+            return metadata.processors.keySet();
         }
     }
 
-/*
-    public DispatcherApiData.ProcessorSessionId getProcessorSessionId(final DispatcherUrl dispatcherUrl) {
+    @Nullable
+    public String getProcessorId(String processorCode, final DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(dispatcherUrl);
-            return new DispatcherApiData.ProcessorSessionId(Long.valueOf(processorState.processorId), processorState.sessionId);
+            return getDispatcherInfo(processorCode, dispatcherUrl).processorId;
         }
     }
-*/
 
-    public void setProcessorIdAndSessionId(final DispatcherUrl dispatcherUrl, String processorId, String sessionId) {
+    public void setProcessorIdAndSessionId(String processorCode, final DispatcherUrl dispatcherUrl, String processorId, String sessionId) {
         if (StringUtils.isBlank(processorId)) {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(dispatcherUrl);
+            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(processorCode, dispatcherUrl);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
@@ -444,26 +437,28 @@ public class MetadataService {
         }
     }
 
-    public String getSessionId(final DispatcherUrl dispatcherUrl) {
+    @Nullable
+    public String getSessionId(String processorCode, final DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return getDispatcherInfo(dispatcherUrl).sessionId;
+            return getDispatcherInfo(processorCode, dispatcherUrl).sessionId;
         }
     }
 
     @SuppressWarnings("unused")
-    public void setSessionId(final DispatcherUrl dispatcherUrl, String sessionId) {
+    public void setSessionId(String processorCode, final DispatcherUrl dispatcherUrl, String sessionId) {
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
         synchronized (syncObj) {
-            getDispatcherInfo(dispatcherUrl).processorId = sessionId;
+            getDispatcherInfo(processorCode, dispatcherUrl).processorId = sessionId;
             updateMetadataFile();
         }
     }
 
-    private MetadataParamsYaml.ProcessorState getDispatcherInfo(DispatcherUrl dispatcherUrl) {
+    private MetadataParamsYaml.ProcessorState getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return metadata.processorStates.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
+            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(processorCode, o->new MetadataParamsYaml.Processor());
+            return p.states.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
         }
     }
 

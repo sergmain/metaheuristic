@@ -37,10 +37,10 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.getMetadata());
-        assertNotNull(m.getProcessorStates());
+        assertNotNull(m.getProcessors());
         assertEquals(1, m.getMetadata().size());
-        assertEquals(2, m.getProcessorStates().size());
-        Set<Map.Entry<String, MetadataParamsYaml.ProcessorState>> entry = m.getProcessorStates().entrySet();
+        assertEquals(2, m.getProcessors().size());
+        Set<Map.Entry<String, MetadataParamsYaml.ProcessorState>> entry = m.getProcessors().entrySet();
         Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorState>> iterator = entry.iterator();
         Map.Entry<String, MetadataParamsYaml.ProcessorState> map = iterator.next();
         Map.Entry<String, MetadataParamsYaml.ProcessorState> map1 = iterator.next();
@@ -61,9 +61,9 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
-        assertNotNull(m.processorStates);
+        assertNotNull(m.processors);
         assertEquals(0, m.metadata.size());
-        assertEquals(0, m.processorStates.size());
+        assertEquals(0, m.processors.size());
     }
 
     @Test
@@ -73,9 +73,9 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
-        assertNotNull(m.processorStates);
+        assertNotNull(m.processors);
         assertEquals(0, m.metadata.size());
-        assertEquals(0, m.processorStates.size());
+        assertEquals(0, m.processors.size());
     }
 
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor.variable_providers;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import java.util.Map;
 @Service
 @Profile("processor")
 @RequiredArgsConstructor
+@DependsOn({"DiskVariableProvider", "DispatcherVariableProvider"})
 public class VariableProviderFactory {
 
     private final DiskVariableProvider diskVariableProvider;

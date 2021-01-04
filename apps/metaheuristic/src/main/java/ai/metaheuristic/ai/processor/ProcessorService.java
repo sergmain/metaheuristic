@@ -118,10 +118,10 @@ public class ProcessorService {
         }
     }
 
-    public void assignTasks(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
+    public void assignTasks(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             currentExecState.registerDelta(dispatcherUrl, List.of(new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(task.execContextId, task.state)));
-            processorTaskService.createTask(dispatcherUrl, task.taskId, task.execContextId, task.params);
+            processorTaskService.createTask(processorCode, dispatcherUrl, task.taskId, task.execContextId, task.params);
         }
     }
 

@@ -137,4 +137,6 @@ public class Consts {
 
     // Processor's version for communicating with dispatcher
     public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
+
+    public static final String DEFAULT_PROCESSOR_CODE = "processor-01";
 }

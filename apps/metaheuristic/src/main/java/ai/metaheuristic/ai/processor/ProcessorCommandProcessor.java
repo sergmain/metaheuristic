@@ -74,20 +74,20 @@ public class ProcessorCommandProcessor {
         processorService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processAssignedTask(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
-        processorService.assignTasks(dispatcherUrl, request.assignedTask);
+        processorService.assignTasks(processorCode, dispatcherUrl, request.assignedTask);
     }
 
     // processing at processor side
-    private void storeProcessorId(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void storeProcessorId(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedProcessorId ==null) {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", request.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(
+        metadataService.setProcessorIdAndSessionId(processorCode,
                 dispatcherUrl, request.assignedProcessorId.assignedProcessorId, request.assignedProcessorId.assignedSessionId);
     }
 

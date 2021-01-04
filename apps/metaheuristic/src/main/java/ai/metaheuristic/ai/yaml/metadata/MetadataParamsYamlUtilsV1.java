@@ -53,8 +53,13 @@ public class MetadataParamsYamlUtilsV1
         src.checkIntegrity();
         MetadataParamsYamlV2 trg = new MetadataParamsYamlV2();
         if (src.dispatcher!=null) {
-            src.dispatcher.forEach((key, diV1) -> trg.processorStates.put(key,
-                    new MetadataParamsYamlV2.ProcessorStateV2(diV1.code, diV1.processorId, diV1.sessionId)));
+            MetadataParamsYamlV2.ProcessorV2 value = new MetadataParamsYamlV2.ProcessorV2();
+            for (Map.Entry<String, MetadataParamsYamlV1.DispatcherInfoV1> entry : src.dispatcher.entrySet()) {
+                MetadataParamsYamlV1.DispatcherInfoV1 v = entry.getValue();
+                value.states.put(entry.getKey(), new MetadataParamsYamlV2.ProcessorStateV2(v.code, v.processorId, v.sessionId));
+
+            }
+            trg.processors.put(Consts.DEFAULT_PROCESSOR_CODE, value);
         }
 
         if (src.metadata!=null) {

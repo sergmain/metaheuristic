@@ -38,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,6 +65,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
+@DependsOn({"Globals", "MetadataService"})
 public class ProcessorTaskService {
 
     private final Globals globals;
@@ -77,77 +80,81 @@ public class ProcessorTaskService {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorTaskDir.exists()) {
-            return;
-        }
         try {
-            Files.list(globals.processorTaskDir.toPath()).forEach(top -> {
-                try {
-                    DispatcherUrl dispatcherUrl = metadataService.findDispatcherByCode(top.toFile().getName());
-                    if (dispatcherUrl==null) {
-                        return;
-                    }
-                    Files.list(top).forEach(p -> {
-                        final File taskGroupDir = p.toFile();
-                        if (!taskGroupDir.isDirectory()) {
+            for (String processorCode : metadataService.getProcessorCodes()) {
+                File processorDir = new File(globals.processorDir, processorCode);
+                if (!processorDir.exists()) {
+                    processorDir.mkdirs();
+                }
+                File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+                Files.list(processorTaskDir.toPath()).forEach(top -> {
+                    try {
+                        DispatcherUrl dispatcherUrl = metadataService.findDispatcherByCode(processorCode, top.toFile().getName());
+                        if (dispatcherUrl==null) {
                             return;
                         }
-                        try {
-                            AtomicBoolean isEmpty = new AtomicBoolean(true);
-                            Files.list(p).forEach(s -> {
-                                isEmpty.set(false);
-                                String groupDirName = taskGroupDir.getName();
-                                final File currDir = s.toFile();
-                                String name = currDir.getName();
-                                long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
-                                log.info("Found dir of task with id: {}, {}, {}", taskId, groupDirName, name);
-                                File taskYamlFile = new File(currDir, Consts.TASK_YAML);
-                                if (!taskYamlFile.exists() || taskYamlFile.length()==0L) {
-                                    deleteDir(currDir, "Delete not valid dir of task " + s+", exist: "+taskYamlFile.exists()+", length: " +taskYamlFile.length());
-                                    return;
-                                }
-
-                                try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                    ProcessorTask task = ProcessorTaskUtils.to(fis);
-                                    if (S.b(task.dispatcherUrl)) {
-                                        deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                        log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                        Files.list(top).forEach(p -> {
+                            final File taskGroupDir = p.toFile();
+                            if (!taskGroupDir.isDirectory()) {
+                                return;
+                            }
+                            try {
+                                AtomicBoolean isEmpty = new AtomicBoolean(true);
+                                Files.list(p).forEach(s -> {
+                                    isEmpty.set(false);
+                                    String groupDirName = taskGroupDir.getName();
+                                    final File currDir = s.toFile();
+                                    String name = currDir.getName();
+                                    long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
+                                    log.info("Found dir of task with id: {}, {}, {}", taskId, groupDirName, name);
+                                    File taskYamlFile = new File(currDir, Consts.TASK_YAML);
+                                    if (!taskYamlFile.exists() || taskYamlFile.length()==0L) {
+                                        deleteDir(currDir, "Delete not valid dir of task " + s+", exist: "+taskYamlFile.exists()+", length: " +taskYamlFile.length());
                                         return;
                                     }
-                                    getMapForDispatcherUrl(dispatcherUrl).put(taskId, task);
 
-                                    // fix state of task
-                                    FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                                    if (functionExec !=null &&
-                                            ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
-                                                    (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
-                                        markAsFinished(dispatcherUrl, taskId, functionExec);
+                                    try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                        ProcessorTask task = ProcessorTaskUtils.to(fis);
+                                        if (S.b(task.dispatcherUrl)) {
+                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                            log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                                            return;
+                                        }
+                                        getMapForDispatcherUrl(dispatcherUrl).put(taskId, task);
+
+                                        // fix state of task
+                                        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                                        if (functionExec !=null &&
+                                                ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
+                                                        (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
+                                            markAsFinished(dispatcherUrl, taskId, functionExec);
+                                        }
                                     }
-                                }
-                                catch (IOException e) {
-                                    String es = "#713.010 Error";
-                                    log.error(es, e);
-                                    throw new RuntimeException(es, e);
-                                }
-                                catch (YAMLException e) {
-                                    String es = "#713.020 yaml Error: " + e.getMessage();
-                                    log.warn(es, e);
-                                    deleteDir(currDir, "Delete not valid dir of task " + s);
-                                }
-                            });
-                        }
-                        catch (IOException e) {
-                            String es = "#713.030 Error";
-                            log.error(es, e);
-                            throw new RuntimeException(es, e);
-                        }
-                    });
-                } catch (IOException e) {
-                    String es = "#713.040 Error";
-                    log.error(es, e);
-                    throw new RuntimeException(es, e);
-                }
-            });
+                                    catch (IOException e) {
+                                        String es = "#713.010 Error";
+                                        log.error(es, e);
+                                        throw new RuntimeException(es, e);
+                                    }
+                                    catch (YAMLException e) {
+                                        String es = "#713.020 yaml Error: " + e.getMessage();
+                                        log.warn(es, e);
+                                        deleteDir(currDir, "Delete not valid dir of task " + s);
+                                    }
+                                });
+                            }
+                            catch (IOException e) {
+                                String es = "#713.030 Error";
+                                log.error(es, e);
+                                throw new RuntimeException(es, e);
+                            }
+                        });
+                    } catch (IOException e) {
+                        String es = "#713.040 Error";
+                        log.error(es, e);
+                        throw new RuntimeException(es, e);
+                    }
+                });
+            }
         }
         catch (IOException e) {
             String es = "#713.050 Error";
@@ -426,7 +433,7 @@ public class ProcessorTaskService {
         return getMapForDispatcherUrl(dispatcherUrl).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(DispatcherUrl dispatcherUrl, long taskId, Long execContextId, String params) {
+    public void createTask(String processorCode, DispatcherUrl dispatcherUrl, long taskId, Long execContextId, String params) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.150 Prepare new task #{}", taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
@@ -451,7 +458,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).dispatcherCode);
+            File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl).dispatcherCode);
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {

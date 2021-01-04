@@ -41,20 +41,18 @@ public class MetadataParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class CoreV2 {
-        public int logicId;
-        public String coreId;
+    public static class ProcessorStateV2 {
+        public String dispatcherCode;
+        public String processorId;
         public String sessionId;
     }
 
     @Data
     @NoArgsConstructor
     @ToString
-    @AllArgsConstructor
-    public static class ProcessorStateV2 {
-        public String dispatcherCode;
-        public String processorId;
-        public String sessionId;
+    public static class ProcessorV2 {
+        // key is url of dispatcher
+        public final Map<String, ProcessorStateV2> states = new HashMap<>();
     }
 
     @Data
@@ -72,8 +70,8 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
-    public final LinkedHashMap<String, ProcessorStateV2> processorStates = new LinkedHashMap<>();
+    // key is a code of processor which is configured in env.yaml
+    public final LinkedHashMap<String, ProcessorV2> processors = new LinkedHashMap<>();
     public final List<StatusV2> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public final List<CoreV2> cores = new ArrayList<>();
 }

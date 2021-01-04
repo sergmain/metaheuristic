@@ -28,6 +28,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @ToString
 @RequiredArgsConstructor
+@DependsOn({"Environment", "ApplicationContext"})
 public class Globals {
 
     private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
@@ -196,7 +198,6 @@ public class Globals {
     public File dispatcherResourcesDir;
 
     public File processorResourcesDir;
-    public File processorTaskDir;
 //    public File processorTempDir;
 
     public PublicKey dispatcherPublicKey = null;
@@ -313,8 +314,6 @@ public class Globals {
         if (processorEnabled) {
             processorResourcesDir = new File(processorDir, Consts.RESOURCES_DIR);
             processorResourcesDir.mkdirs();
-            processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-            processorTaskDir.mkdirs();
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future

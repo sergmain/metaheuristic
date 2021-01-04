@@ -123,17 +123,17 @@ public class TestMetadataParamsYaml {
 
         MetadataParamsYaml metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(s);
         assertNotNull(metadata);
-        assertNotNull(metadata.processorStates);
-        assertFalse(metadata.processorStates.isEmpty());
-        assertTrue(metadata.processorStates.containsKey("http://localhost:8080"));
-        assertTrue(metadata.processorStates.containsKey("https://localhost:8888"));
-        MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processorStates.get("http://localhost:8080");
+        assertNotNull(metadata.processors);
+        assertFalse(metadata.processors.isEmpty());
+        assertTrue(metadata.processors.containsKey("http://localhost:8080"));
+        assertTrue(metadata.processors.containsKey("https://localhost:8888"));
+        MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processors.get(Consts.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);
         assertEquals("209", dispatcher8080.processorId);
         assertEquals("sessionId-11", dispatcher8080.sessionId);
 
-        MetadataParamsYaml.ProcessorState dispatcher8888 = metadata.processorStates.get("https://localhost:8888");
+        MetadataParamsYaml.ProcessorState dispatcher8888 = metadata.processors.get(Consts.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
         assertNotNull(dispatcher8888);
         assertEquals("localhost-8888", dispatcher8888.dispatcherCode);
         assertEquals("42", dispatcher8888.processorId);

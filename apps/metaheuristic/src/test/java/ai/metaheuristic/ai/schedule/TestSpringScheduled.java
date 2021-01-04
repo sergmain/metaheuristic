@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
@@ -35,6 +36,7 @@ import javax.annotation.PostConstruct;
 @Import({TestSpringScheduled.ScheduleService1.class, TestSpringScheduled.ScheduleService2.class})
 @DirtiesContext
 @AutoConfigureCache
+@DependsOn({"Globals"})
 public class TestSpringScheduled {
 
     private static int loops = 0;
@@ -65,7 +67,7 @@ public class TestSpringScheduled {
     public Globals globals;
 
     @PostConstruct
-    public void preapre_1() {
+    public void prepare_1() {
     }
 
     @BeforeEach

@@ -51,8 +51,16 @@ public class MetadataParamsYamlUtilsV2
     public MetadataParamsYaml upgradeTo(@NonNull MetadataParamsYamlV2 src, @Nullable Long ... vars) {
         src.checkIntegrity();
         MetadataParamsYaml trg = new MetadataParamsYaml();
-        src.processorStates.forEach((key, diV2) -> trg.processorStates.put(key,
-                new MetadataParamsYaml.ProcessorState(diV2.dispatcherCode, diV2.processorId, diV2.sessionId)));
+        for (Map.Entry<String, MetadataParamsYamlV2.ProcessorV2> entry : src.processors.entrySet()) {
+            String key = entry.getKey();
+
+            MetadataParamsYaml.Processor value =  new MetadataParamsYaml.Processor();
+            for (Map.Entry<String, MetadataParamsYamlV2.ProcessorStateV2> stateV2Entry : entry.getValue().states.entrySet()) {
+                MetadataParamsYamlV2.ProcessorStateV2 v = stateV2Entry.getValue();
+                value.states.put(stateV2Entry.getKey(), new MetadataParamsYaml.ProcessorState(v.dispatcherCode, v.processorId, v.sessionId));
+            }
+            trg.processors.put(key, value);
+        }
 
         for (Map.Entry<String, String> o : src.metadata.entrySet()) {
             if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
@@ -60,13 +68,8 @@ public class MetadataParamsYamlUtilsV2
             }
         }
         src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));
-        src.cores.stream().map(MetadataParamsYamlUtilsV2::toCore).collect(Collectors.toCollection(()->trg.cores));
         trg.checkIntegrity();
         return trg;
-    }
-
-    private static MetadataParamsYaml.Core toCore(MetadataParamsYamlV2.CoreV2 v2) {
-        return new MetadataParamsYaml.Core(v2.logicId, v2.coreId, v2.sessionId);
     }
 
     private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {

@@ -33,6 +33,7 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -192,6 +193,7 @@ public class Schedulers {
     @Slf4j
     @Profile("processor")
     @RequiredArgsConstructor
+    @DependsOn({"DispatcherLookupExtendedService"})
     public static class ProcessorSchedulers {
 
         private final Globals globals;

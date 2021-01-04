@@ -36,10 +36,10 @@ public class MetadataParamsYaml implements BaseParams {
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class Core {
-        public int logicId;
+    public static class ProcessorState {
+        public String dispatcherCode;
         @Nullable
-        public String coreId;
+        public String processorId;
         @Nullable
         public String sessionId;
     }
@@ -47,13 +47,9 @@ public class MetadataParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @ToString
-    @AllArgsConstructor
-    public static class ProcessorState {
-        public String dispatcherCode;
-        @Nullable
-        public String processorId;
-        @Nullable
-        public String sessionId;
+    public static class Processor {
+        // key is url of dispatcher
+        public final Map<String, ProcessorState> states = new HashMap<>();
     }
 
     @Data
@@ -71,8 +67,8 @@ public class MetadataParamsYaml implements BaseParams {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
-    public final LinkedHashMap<String, ProcessorState> processorStates = new LinkedHashMap<>();
+    // key is a code of processor which is configured in env.yaml
+    public final LinkedHashMap<String, Processor> processors = new LinkedHashMap<>();
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public final List<Core> cores = new ArrayList<>();
 }
