@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -46,29 +47,21 @@ public class ProcessorCommandProcessor {
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
 
-        pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(processorCode, dispatcherUrl, dispatcherYaml);
-        processReportResultDelivering(processorCode, dispatcherUrl, dispatcherYaml);
-        processAssignedTask(processorCode, dispatcherUrl, dispatcherYaml);
-        storeProcessorId(processorCode, dispatcherUrl, dispatcherYaml);
-        reAssignProcessorId(processorCode, dispatcherUrl, dispatcherYaml);
+        pcpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
+        processReportResultDelivering(dispatcherUrl, dispatcherYaml);
+        processAssignedTask(dispatcherUrl, dispatcherYaml);
+        storeProcessorId(dispatcherUrl, dispatcherYaml);
+        reAssignProcessorId(dispatcherUrl, dispatcherYaml);
     }
 
     // processing at processor side
-    @Nullable
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
-            return null;
-        }
-        List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
-        for (DispatcherCommParamsYaml.ResendTaskOutput output : request.resendTaskOutputs.resends) {
-            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(processorCode, dispatcherUrl, output.taskId, output.variableId);
-            statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
-        }
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+        List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorService.getResendTaskOutputResourceResultStatus(dispatcherUrl, request);
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
     // processing at processor side
-    private void processReportResultDelivering(String processorCode, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }

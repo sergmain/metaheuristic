@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -41,9 +42,9 @@ public class ArtifactCleanerAtProcessor {
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void fixedDelay() {
-        for (String processorCode : metadataService.getProcessorCodes()) {
+        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
 
-            File processorDir = new File(globals.processorDir, processorCode);
+            File processorDir = new File(globals.processorDir, ref.processorCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
             for (ProcessorAndCoreData.DispatcherUrl dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
@@ -52,17 +53,17 @@ public class ArtifactCleanerAtProcessor {
                     continue;
                 }
 
-                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
+                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
                 final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
                 if (!dispatcherDir.exists()) {
                     dispatcherDir.mkdir();
                 }
 
-                List<ProcessorTask> all = processorTaskService.findAll(processorCode, dispatcherUrl);
+                List<ProcessorTask> all = processorTaskService.findAll(ref);
                 for (ProcessorTask task : all) {
                     if (currentExecState.isState(dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                         log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(processorCode, dispatcherUrl, task.getTaskId());
+                        processorTaskService.delete(ref, task.getTaskId());
                         continue;
                     }
                     if (task.clean && task.delivered && task.completed) {

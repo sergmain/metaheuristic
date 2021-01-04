@@ -125,7 +125,7 @@ public class DispatcherRequestor {
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
-            for (String processorCode1 : metadataService.getProcessorCodes()) {
+            for (String processorCode1 : metadataService.getAllRefs()) {
 
                 final String processorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
                 final String sessionId = metadataService.getSessionId(processorCode, dispatcherUrl);

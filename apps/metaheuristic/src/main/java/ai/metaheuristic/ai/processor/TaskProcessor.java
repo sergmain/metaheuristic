@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -95,13 +96,13 @@ public class TaskProcessor {
         this.gitSourcingService = gitSourcingService;
     }
 
-    public void process(String processorCode) {
+    public void process(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         if (!globals.processorEnabled) {
             return;
         }
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
-        List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(processorCode, true);
+        List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
         for (ProcessorTask task : tasks) {
 
             if (StringUtils.isBlank(task.dispatcherUrl)) {
@@ -113,11 +114,11 @@ public class TaskProcessor {
 
             ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
 
-            processorTaskService.setLaunchOn(processorCode, dispatcherUrl, task.taskId);
+            processorTaskService.setLaunchOn(ref, task.taskId);
 
-            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
+            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
             if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-                log.warn("#100.010 processor {} with dispatcher {} isn't ready", processorCode, dispatcherUrl.url);
+                log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
                 continue;
             }
 /*
@@ -132,12 +133,12 @@ public class TaskProcessor {
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, es);
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, es);
                 continue;
             }
 
             if (dispatcher.schedule.isCurrentTimeInactive()) {
-                processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
+                processorTaskService.delete(ref, task.taskId);
                 log.info("#100.025 Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, dispatcherUrl, new Date(), dispatcher.schedule.asString);
                 return;
             }
@@ -149,29 +150,29 @@ public class TaskProcessor {
 
             EnumsApi.ExecContextState state = currentExecState.getState(dispatcherUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
-                processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
+                processorTaskService.delete(ref, task.taskId);
                 log.info("#100.032 The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, dispatcherUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
-                processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
+                processorTaskService.delete(ref, task.taskId);
                 log.info("#100.034 The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, dispatcherUrl, state, task.taskId);
                 continue;
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = processorTaskService.prepareTaskDir(processorCode, dispatcherUrl, task.taskId);
+            File taskDir = processorTaskService.prepareTaskDir(ref, task.taskId);
 
             final TaskParamsYaml taskParamYaml;
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (CheckIntegrityFailedException e) {
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, "#100.037 Broken task. Check of integrity was failed.");
+                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.037 Broken task. Check of integrity was failed.");
                 continue;
             }
 
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(processorCode, task, processorState, taskParamYaml, dispatcher, taskDir);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -277,7 +278,7 @@ public class TaskProcessor {
                 execAllFunctions(processorCode, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
-                processorTaskService.resetTask(processorCode, dispatcherUrl, task.taskId);
+                processorTaskService.resetTask(ref, task.taskId);
                 processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
                 log.info("#100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);

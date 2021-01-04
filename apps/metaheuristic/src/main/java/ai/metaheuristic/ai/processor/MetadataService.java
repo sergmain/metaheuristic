@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -254,19 +255,19 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorState processorStateBydispatcherUrl(String processorCode, DispatcherUrl dispatcherUrl) {
+    public MetadataParamsYaml.ProcessorState processorStateBydispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(processorCode, dispatcherUrl);
+            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
-                processorState.dispatcherCode = asEmptyProcessorState(dispatcherUrl).dispatcherCode;
+                processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
                 updateMetadataFile();
             }
             return processorState;
         }
     }
 
-    public Set<String> getProcessorCodes() {
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
         synchronized (syncObj) {
             return metadata.processors.keySet();
         }
@@ -438,27 +439,27 @@ public class MetadataService {
     }
 
     @Nullable
-    public String getSessionId(String processorCode, final DispatcherUrl dispatcherUrl) {
+    public String getSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            return getDispatcherInfo(processorCode, dispatcherUrl).sessionId;
+            return getDispatcherInfo(ref).sessionId;
         }
     }
 
     @SuppressWarnings("unused")
-    public void setSessionId(String processorCode, final DispatcherUrl dispatcherUrl, String sessionId) {
+    public void setSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String sessionId) {
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
         synchronized (syncObj) {
-            getDispatcherInfo(processorCode, dispatcherUrl).processorId = sessionId;
+            getDispatcherInfo(ref).processorId = sessionId;
             updateMetadataFile();
         }
     }
 
-    private MetadataParamsYaml.ProcessorState getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
+    private MetadataParamsYaml.ProcessorState getDispatcherInfo(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(processorCode, o->new MetadataParamsYaml.Processor());
-            return p.states.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
+            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(ref.processorCode, o->new MetadataParamsYaml.Processor());
+            return p.states.computeIfAbsent(ref.dispatcherUrl.url, m -> asEmptyProcessorState(ref.dispatcherUrl));
         }
     }
 

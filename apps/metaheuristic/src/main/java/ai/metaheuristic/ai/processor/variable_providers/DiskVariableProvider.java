@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor.variable_providers;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -70,7 +71,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -120,18 +121,18 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
-            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(processorCode, dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
             log.info("The result variable #{} is nullable, no need to upload to dispatcher", outputVariable.id);
-            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(processorCode, dispatcher.dispatcherUrl, task.taskId, outputVariable.id);
             return null;
         }
         else {

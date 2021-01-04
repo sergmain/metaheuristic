@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,37 +27,33 @@ import org.springframework.lang.Nullable;
 import java.io.File;
 
 @Data
-@EqualsAndHashCode(of={"taskId","variableId"}, callSuper = false)
+@EqualsAndHashCode(of={"ref", "taskId", "variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
     public long taskId;
     @Nullable
     public File file = null;
     public Long variableId;
     public boolean nullified = false;
-    public final String processorId;
-    public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
-    public final String processorCode;
+    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
+    public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
 
-    public UploadVariableTask(long taskId, @Nullable File file, Long variableId, String processorId, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorCode) {
+    public UploadVariableTask(long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
         this.taskId = taskId;
         this.file = file;
         this.variableId = variableId;
-        this.processorId = processorId;
+        this.ref = ref;
         this.dispatcher = dispatcher;
-        this.processorCode = processorCode;
     }
 
-    public UploadVariableTask(long taskId, Long variableId, boolean nullified, String processorId, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorCode) {
+    public UploadVariableTask(long taskId, Long variableId, boolean nullified, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
         this.taskId = taskId;
         this.variableId = variableId;
         this.nullified = nullified;
-        this.processorId = processorId;
+        this.ref = ref;
         this.dispatcher = dispatcher;
-        this.processorCode = processorCode;
     }
 
     public ProcessorAndCoreData.DispatcherUrl getDispatcherUrl() {
-        ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(dispatcher.url);
-        return dispatcherUrl;
+        return ref.dispatcherUrl;
     }
 }

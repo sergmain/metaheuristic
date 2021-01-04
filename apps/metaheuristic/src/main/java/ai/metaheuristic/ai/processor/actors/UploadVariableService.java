@@ -87,7 +87,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         UploadVariableTask task;
         List<UploadVariableTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
-            ProcessorTask processorTask = processorTaskService.findById(task.getDispatcherUrl(), task.taskId);
+            ProcessorTask processorTask = processorTaskService.findById(task.processorCode, task.getDispatcherUrl(), task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
@@ -98,13 +98,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {
                 log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.getDispatcherUrl(), task.taskId);
+                processorTaskService.delete(task.processorCode, task.getDispatcherUrl(), task.taskId);
                 continue;
             }
             ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
             if (outputStatus==null) {
                 log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.getDispatcherUrl(), task.taskId);
+                processorTaskService.delete(task.processorCode, task.getDispatcherUrl(), task.taskId);
                 continue;
             }
             if (outputStatus.uploaded) {
@@ -187,13 +187,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         // right we will assume that it's ok to set as UploadedAndCompleted
                     case OK:
                         log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.getDispatcherUrl(), task.taskId);
-                        processorTaskService.setVariableUploadedAndCompleted(task.getDispatcherUrl(), task.taskId, finalTask.variableId);
+                        processorTaskService.setVariableUploadedAndCompleted(task.processorCode, task.getDispatcherUrl(), task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
-                        processorTaskService.delete(task.getDispatcherUrl(), task.taskId);
+                        processorTaskService.delete(task.processorCode, task.getDispatcherUrl(), task.taskId);
                         log.error("#311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:

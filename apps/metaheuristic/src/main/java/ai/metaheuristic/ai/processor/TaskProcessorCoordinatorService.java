@@ -53,7 +53,7 @@ public class TaskProcessorCoordinatorService {
             return;
         }
 
-        for (String processorCode : metadataService.getProcessorCodes()) {
+        for (String processorCode : metadataService.getAllRefs()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( processorCode,
                     o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
             taskProcessor.process(processorCode);

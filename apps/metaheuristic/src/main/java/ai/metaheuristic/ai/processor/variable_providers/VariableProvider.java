@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.variable_providers;
 
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -30,20 +31,20 @@ import java.util.List;
 
 public interface VariableProvider {
     List<AssetFile> prepareForDownloadingVariable(
-            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable);
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
-            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 
     File getOutputVariableFromFile(
-            String processorCode, File taskDir,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable);
 

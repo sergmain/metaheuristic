@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
+import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -58,10 +59,10 @@ public class TaskAssetPreparer {
             return;
         }
 
-        for (String processorCode : metadataService.getProcessorCodes()) {
+        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
 
             // delete all orphan tasks
-            processorTaskService.findAll(processorCode).forEach(task -> {
+            processorTaskService.findAll(ref).forEach(task -> {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     log.info("#951.010 Deleted orphan task #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
@@ -97,7 +98,7 @@ public class TaskAssetPreparer {
                 final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
-                    processorTaskService.delete(processorCode, dispatcherUrl, task.taskId);
+                    processorTaskService.delete(ref, task.taskId);
                     log.info("#951.080 Deleted orphan task {}", task);
                     continue;
                 }
@@ -106,8 +107,8 @@ public class TaskAssetPreparer {
                 ProcessorAndCoreData.ServerUrls serverUrls = new ProcessorAndCoreData.ServerUrls(dispatcherUrl, assetManagerUrl);
 
                 // Start preparing data for function
-                File taskDir = processorTaskService.prepareTaskDir(processorCode, processorState, task.taskId);
-                ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(processorCode, task, processorState, taskParamYaml, dispatcher, taskDir);
+                File taskDir = processorTaskService.prepareTaskDir(ref, processorState, task.taskId);
+                ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
                 if (resultOfChecking.isError) {
                     continue;
                 }
