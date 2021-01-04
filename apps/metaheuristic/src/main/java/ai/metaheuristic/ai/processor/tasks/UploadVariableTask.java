@@ -28,22 +28,30 @@ import java.io.File;
 @EqualsAndHashCode(of={"taskId","variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
     public long taskId;
-    @Nullable public File file = null;
+    @Nullable
+    public File file = null;
     public Long variableId;
     public boolean nullified = false;
-    public String processorId;
-    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+    public final String processorId;
+    public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+    public final String processorCode;
 
-    public UploadVariableTask(long taskId, @Nullable File file, Long variableId) {
+    public UploadVariableTask(long taskId, @Nullable File file, Long variableId, String processorId, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorCode) {
         this.taskId = taskId;
         this.file = file;
         this.variableId = variableId;
+        this.processorId = processorId;
+        this.dispatcher = dispatcher;
+        this.processorCode = processorCode;
     }
 
-    public UploadVariableTask(long taskId, Long variableId, boolean nullified) {
+    public UploadVariableTask(long taskId, Long variableId, boolean nullified, String processorId, DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorCode) {
         this.taskId = taskId;
         this.variableId = variableId;
         this.nullified = nullified;
+        this.processorId = processorId;
+        this.dispatcher = dispatcher;
+        this.processorCode = processorCode;
     }
 
     public ProcessorAndCoreData.DispatcherUrl getDispatcherUrl() {

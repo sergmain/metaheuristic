@@ -31,16 +31,19 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final long taskId;
     public final File targetDir;
     public final boolean nullable;
-    public String processorId;
-    public DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+    public final String processorId;
+    public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
+    public final String processorCode;
 
     public DownloadVariableTask(
+            String processorCode,
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
-        this(variableId.toString(), context, taskId, targetDir, dispatcher, processorId, nullable);
+        this(processorCode, variableId.toString(), context, taskId, targetDir, dispatcher, processorId, nullable);
     }
 
     public DownloadVariableTask(
+            String processorCode,
             String variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, String processorId, boolean nullable) {
         this.variableId = variableId;
@@ -50,6 +53,7 @@ public class DownloadVariableTask extends ProcessorRestTask {
         this.dispatcher = dispatcher;
         this.processorId = processorId;
         this.nullable = nullable;
+        this.processorCode = processorCode;
     }
 
     @Override

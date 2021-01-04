@@ -136,7 +136,7 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(processorCode, metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl), taskId);
+        File taskDir = processorTaskService.prepareTaskDir(processorCode, metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl), taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -176,7 +176,7 @@ public class ProcessorService {
             processorTaskService.setCompleted(processorCode, dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
-        final MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
+        final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
         if (S.b(processorState.processorId) ) {
             // at this point processorId must be checked against null
             throw new IllegalStateException("(S.b(processorState.processorId)");
@@ -185,9 +185,7 @@ public class ProcessorService {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id);
-        uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
-        uploadResourceTask.processorId = processorState.processorId;
+        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, processorState.processorId, dispatcher.dispatcherLookup, processorCode);
         uploadResourceActor.add(uploadResourceTask);
 
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
@@ -212,7 +210,7 @@ public class ProcessorService {
                     // variable was initialized and is empty so we don't need to download it again
                     return;
                 }
-                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, processorState, input);
+                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(processorCode, taskDir, dispatcher, task, processorState, input);
                 for (AssetFile assetFile : assetFiles) {
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
@@ -254,7 +252,7 @@ public class ProcessorService {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputVariableFromFile(taskDir, dispatcher, task, outputVariable);
+                File outputResourceFile = resourceProvider.getOutputVariableFromFile(processorCode, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.toString();
                 log.error(msg, e);

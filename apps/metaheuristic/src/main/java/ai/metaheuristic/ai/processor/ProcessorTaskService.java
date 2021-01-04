@@ -52,7 +52,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -405,15 +404,15 @@ public class ProcessorTaskService {
         }
     }
 
-    private Map<Long, ProcessorTask> getMapForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+    private Map<Long, ProcessorTask> getMapForDispatcherUrl(String processorCode, DispatcherUrl dispatcherUrl) {
         return map.computeIfAbsent(dispatcherUrl, m -> new HashMap<>());
     }
 
-    public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean assetsPreparedStatus) {
+    public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(String processorCode, boolean assetsPreparedStatus) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
             for (DispatcherUrl dispatcherUrl : map.keySet()) {
-                Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
+                Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(processorCode, dispatcherUrl);
                 List<Long> forDeletion = new ArrayList<>();
                 for (ProcessorTask task : mapForDispatcherUrl.values()) {
                     if (S.b(task.dispatcherUrl)) {
@@ -467,7 +466,7 @@ public class ProcessorTaskService {
             }
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
-            File dispatcherDir = new File(processorTaskDir, metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl).dispatcherCode);
+            File dispatcherDir = new File(processorTaskDir, metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl).dispatcherCode);
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
@@ -556,25 +555,25 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> findAll(DispatcherUrl dispatcherUrl) {
+    public List<ProcessorTask> findAll(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            Collection<ProcessorTask> values = getMapForDispatcherUrl(dispatcherUrl).values();
+            Collection<ProcessorTask> values = getMapForDispatcherUrl(processorCode, dispatcherUrl).values();
             return List.copyOf(values);
         }
     }
 
-    public List<ProcessorTask> findAll() {
+    public List<ProcessorTask> findAll(String processorCode) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
             for (DispatcherUrl dispatcherUrl : map.keySet()) {
-                list.addAll( getMapForDispatcherUrl(dispatcherUrl).values());
+                list.addAll( getMapForDispatcherUrl(processorCode, dispatcherUrl).values());
             }
             return list;
         }
     }
 
     public void delete(String processorCode, DispatcherUrl dispatcherUrl, final long taskId) {
-        MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
+        MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             final File processorDir = new File(globals.processorDir, processorCode);
@@ -603,7 +602,7 @@ public class ProcessorTaskService {
     }
 
     File prepareTaskDir(String processorCode, DispatcherUrl dispatcherUrl, Long taskId) {
-        MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
+        MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
         return prepareTaskDir(processorCode, processorState, taskId);
     }
 

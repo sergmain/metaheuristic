@@ -52,22 +52,22 @@ public class ArtifactCleanerAtProcessor {
                     continue;
                 }
 
-                MetadataParamsYaml.ProcessorState processorState = metadataService.dispatcherUrlAsCode(processorCode, dispatcherUrl);
+                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(processorCode, dispatcherUrl);
                 final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
                 if (!dispatcherDir.exists()) {
                     dispatcherDir.mkdir();
                 }
 
-                List<ProcessorTask> all = processorTaskService.findAll(dispatcherUrl);
+                List<ProcessorTask> all = processorTaskService.findAll(processorCode, dispatcherUrl);
                 for (ProcessorTask task : all) {
                     if (currentExecState.isState(dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                         log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(dispatcherUrl, task.getTaskId());
+                        processorTaskService.delete(processorCode, dispatcherUrl, task.getTaskId());
                         continue;
                     }
                     if (task.clean && task.delivered && task.completed) {
                         log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(dispatcherUrl, task.getTaskId());
+                        processorTaskService.delete(processorCode, dispatcherUrl, task.getTaskId());
                     }
                 }
             }

@@ -35,7 +35,7 @@ public class TestDownloadVariableTask {
     @Test
     public void test() {
 
-//        tring variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
+//        String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
 //                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable
         DownloadVariableTask o1 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), "42L", false);
         DownloadVariableTask o2 = new DownloadVariableTask("111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), "24L", true);

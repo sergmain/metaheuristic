@@ -70,7 +70,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -120,7 +120,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
@@ -144,7 +144,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public File getOutputVariableFromFile(
-            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            String processorCode, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvParamsYaml env = envService.getEnvYaml();

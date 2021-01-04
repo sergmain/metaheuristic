@@ -121,7 +121,7 @@ public class MetadataService {
         }
         for (String processorCode : metadata.processors.keySet()) {
             for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-                dispatcherUrlAsCode(processorCode, entry.getKey());
+                processorStateBydispatcherUrl(processorCode, entry.getKey());
             }
         }
 /*
@@ -254,15 +254,15 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorState dispatcherUrlAsCode(String processorCode, DispatcherUrl dispatcherUrl) {
+    public MetadataParamsYaml.ProcessorState processorStateBydispatcherUrl(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState dispatcherInfo = getDispatcherInfo(processorCode, dispatcherUrl);
+            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(processorCode, dispatcherUrl);
             // fix for wrong metadata.yaml data
-            if (dispatcherInfo.dispatcherCode == null) {
-                dispatcherInfo.dispatcherCode = asEmptyProcessorState(dispatcherUrl).dispatcherCode;
+            if (processorState.dispatcherCode == null) {
+                processorState.dispatcherCode = asEmptyProcessorState(dispatcherUrl).dispatcherCode;
                 updateMetadataFile();
             }
-            return dispatcherInfo;
+            return processorState;
         }
     }
 
