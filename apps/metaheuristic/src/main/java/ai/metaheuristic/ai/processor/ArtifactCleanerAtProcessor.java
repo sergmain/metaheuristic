@@ -53,7 +53,7 @@ public class ArtifactCleanerAtProcessor {
                     continue;
                 }
 
-                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
+                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
                 final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
                 if (!dispatcherDir.exists()) {
                     dispatcherDir.mkdir();
@@ -68,7 +68,7 @@ public class ArtifactCleanerAtProcessor {
                     }
                     if (task.clean && task.delivered && task.completed) {
                         log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(processorCode, dispatcherUrl, task.getTaskId());
+                        processorTaskService.delete(ref, task.getTaskId());
                     }
                 }
             }

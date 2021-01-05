@@ -120,10 +120,8 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new MetadataParamsYaml();
         }
-        for (String processorCode : metadata.processors.keySet()) {
-            for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-                processorStateBydispatcherUrl(ref, entry.getKey());
-            }
+        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllRefs()) {
+            processorStateByDispatcherUrl(ref);
         }
 /*
         // update metadata.yaml file after fixing broken metas
@@ -255,7 +253,7 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorState processorStateBydispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public MetadataParamsYaml.ProcessorState processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
             MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref);
             // fix for wrong metadata.yaml data
@@ -269,7 +267,14 @@ public class MetadataService {
 
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
         synchronized (syncObj) {
-            return metadata.processors.keySet();
+            Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
+            for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
+                for (Map.Entry<String, MetadataParamsYaml.ProcessorState> stateEntry : processorEntry.getValue().states.entrySet()) {
+                    refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                            processorEntry.getKey(), stateEntry.getValue().processorId, new DispatcherUrl(stateEntry.getKey()) ));
+                }
+            }
+            return refs;
         }
     }
 

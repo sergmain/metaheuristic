@@ -464,7 +464,7 @@ public class ProcessorTaskService {
             }
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
-            File dispatcherDir = new File(processorTaskDir, metadataService.processorStateBydispatcherUrl(ref).dispatcherCode);
+            File dispatcherDir = new File(processorTaskDir, metadataService.processorStateByDispatcherUrl(ref).dispatcherCode);
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
@@ -573,7 +573,7 @@ public class ProcessorTaskService {
 */
 
     public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final long taskId) {
-        MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
+        MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             final File processorDir = new File(globals.processorDir, ref.processorCode);

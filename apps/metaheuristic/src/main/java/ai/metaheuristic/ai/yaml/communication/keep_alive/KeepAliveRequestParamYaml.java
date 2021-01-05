@@ -119,8 +119,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestProcessorId {
-        // TODO 2020-11-22 do we actually need this field?
-        public boolean keep = true;
+        public String processorCode;
     }
 
     @Data

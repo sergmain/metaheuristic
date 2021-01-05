@@ -116,7 +116,7 @@ public class ProcessorService {
      * mark tasks as delivered.
      * By delivering it means that result of exec was delivered to dispatcher
      *
-     * @param dispatcherUrl String
+     * @param ref ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef
      * @param ids List&lt;String> list if task ids
      */
     public void markAsDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<Long> ids) {
@@ -236,13 +236,13 @@ public class ProcessorService {
             });
         }
         catch (BreakFromLambdaException e) {
-            processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, e.getMessage());
+            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (VariableProviderException e) {
             log.error("#749.070 Error", e);
-            processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, e.toString());
+            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.toString());
             result.isError = true;
             return result;
         }

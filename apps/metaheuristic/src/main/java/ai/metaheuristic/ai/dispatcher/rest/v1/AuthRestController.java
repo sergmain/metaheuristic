@@ -41,7 +41,7 @@ public class AuthRestController {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
         Account acc = (Account) passwordAuthenticationToken.getPrincipal();
         Collection<GrantedAuthority> authorities = passwordAuthenticationToken.getAuthorities();
-        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities);
+        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities, acc.companyId);
     }
 
 

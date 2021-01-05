@@ -134,7 +134,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     continue;
                 }
 
-                final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.processorStateBydispatcherUrl(serverUrls.dispatcherUrl);
+                final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.processorStateByDispatcherUrl(serverUrls.dispatcherUrl);
                 final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
                 final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 */

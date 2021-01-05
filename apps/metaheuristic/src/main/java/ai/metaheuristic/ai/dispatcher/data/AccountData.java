@@ -102,5 +102,7 @@ public class AccountData {
         public String username;
         public String publicName;
         public Collection<GrantedAuthority> authorities;
+        // this field contains value from ai.metaheuristic.ai.dispatcher.beans.Account.companyId
+        public Long companyId;
     }
 }

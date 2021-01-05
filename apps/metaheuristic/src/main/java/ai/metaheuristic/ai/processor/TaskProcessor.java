@@ -116,7 +116,7 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(ref, task.taskId);
 
-            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateBydispatcherUrl(ref);
+            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
             if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
                 continue;
