@@ -135,14 +135,22 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         }
     }
 
-    public ReportProcessor processor;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessorRequest {
+        public ReportProcessor processor;
+
+        @Nullable
+        public RequestProcessorId requestProcessorId;
+        public ProcessorCommContext processorCommContext;
+
+        @Nullable
+        public String taskIds;
+    }
+
     public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
 
-    @Nullable
-    public RequestProcessorId requestProcessorId;
-    public ProcessorCommContext processorCommContext;
-
-    @Nullable
-    public String taskIds;
+    public final List<ProcessorRequest> requests = new ArrayList<>();
 
 }

@@ -114,15 +114,22 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         public String assignedSessionId;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DispatcherResponse {
+        @Nullable
+        public ReAssignedProcessorId reAssignedProcessorId;
+
+        @Nullable
+        public AssignedProcessorId assignedProcessorId;
+    }
+
+    public final List<DispatcherResponse> responses = new ArrayList<>();
+
     public final Functions functions = new Functions();
     public ExecContextStatus execContextStatus;
     public DispatcherInfo dispatcherInfo;
-
-    @Nullable
-    public ReAssignedProcessorId reAssignedProcessorId;
-
-    @Nullable
-    public AssignedProcessorId assignedProcessorId;
 
     @Nullable
     public RequestLogFile requestLogFile;

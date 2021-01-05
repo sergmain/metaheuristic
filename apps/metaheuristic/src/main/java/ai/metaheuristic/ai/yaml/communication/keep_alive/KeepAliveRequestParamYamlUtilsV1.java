@@ -45,31 +45,38 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV1 v1, Long ... vars) {
+    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV1 src, Long ... vars) {
         KeepAliveRequestParamYaml t = new KeepAliveRequestParamYaml();
 
-        if (v1.processor !=null) {
-            t.processor = new KeepAliveRequestParamYaml.ReportProcessor();
-            BeanUtils.copyProperties(v1.processor, t.processor);
-            if (v1.processor.env!=null) {
-                t.processor.env = new KeepAliveRequestParamYaml.Env(v1.processor.env.tags);
-                t.processor.env.mirrors.putAll(v1.processor.env.mirrors);
-                t.processor.env.envs.putAll(v1.processor.env.envs);
-                v1.processor.env.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.processor.env.disk));
-            }
-        }
-        v1.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
+        src.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
                 .collect(Collectors.toCollection(()->t.functions.statuses));
-        if (v1.requestProcessorId!=null) {
-            t.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId(v1.requestProcessorId.keep);
+
+        for (KeepAliveRequestParamYamlV1.ProcessorRequestV1 v1 : src.requests) {
+
+            KeepAliveRequestParamYaml.ProcessorRequest r = new KeepAliveRequestParamYaml.ProcessorRequest();
+            t.requests.add(r);
+
+            if (v1.processor !=null) {
+                r.processor = new KeepAliveRequestParamYaml.ReportProcessor();
+                BeanUtils.copyProperties(v1.processor, r.processor);
+                if (v1.processor.env!=null) {
+                    r.processor.env = new KeepAliveRequestParamYaml.Env(v1.processor.env.tags);
+                    r.processor.env.mirrors.putAll(v1.processor.env.mirrors);
+                    r.processor.env.envs.putAll(v1.processor.env.envs);
+                    v1.processor.env.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> r.processor.env.disk));
+                }
+            }
+            if (v1.requestProcessorId!=null) {
+                r.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId(v1.requestProcessorId.processorCode);
+            }
+            if (v1.processorCommContext!=null) {
+                r.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(v1.processorCommContext.processorId, v1.processorCommContext.sessionId);
+            }
+            else {
+                r.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext();
+            }
+            r.taskIds = v1.taskIds;
         }
-        if (v1.processorCommContext!=null) {
-            t.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(v1.processorCommContext.processorId, v1.processorCommContext.sessionId);
-        }
-        else {
-            t.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext();
-        }
-        t.taskIds = v1.taskIds;
         return t;
     }
 

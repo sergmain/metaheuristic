@@ -103,7 +103,7 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
     }
 
     @Data
-    public static class FunctionDownloadStatusV1 {
+    public static class FunctionDownloadStatusesV1 {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -126,7 +126,7 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestProcessorIdV1 {
-        public boolean keep = true;
+        public String processorCode;
     }
 
     @Data
@@ -137,15 +137,21 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
         @Nullable public String sessionId;
     }
 
-    public ReportProcessorV1 processor;
-    public final FunctionDownloadStatusV1 functions = new FunctionDownloadStatusV1();
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessorRequestV1 {
+        public ReportProcessorV1 processor;
 
-    @Nullable
-    public RequestProcessorIdV1 requestProcessorId;
-    public ProcessorCommContextV1 processorCommContext;
+        @Nullable
+        public RequestProcessorIdV1 requestProcessorId;
+        public ProcessorCommContextV1 processorCommContext;
 
-    @Nullable
-    public String taskIds;
+        @Nullable
+        public String taskIds;
+    }
 
+    public final FunctionDownloadStatusesV1 functions = new FunctionDownloadStatusesV1();
 
+    public final List<ProcessorRequestV1> requests = new ArrayList<>();
 }
