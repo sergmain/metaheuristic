@@ -44,19 +44,22 @@ public class ProcessorCommandProcessor {
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         for (ProcessorCommParamsYaml.ProcessorRequest request : pcpy.requests) {
+            for (DispatcherCommParamsYaml.DispatcherResponse response : dispatcherYaml.responses) {
+                if (!request.processorCode.equals(response.processorCode)) {
+                    continue;
+                }
 
-            DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse();
-            dispatcherYaml.responses.add(response);
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(request.processorCode, dispatcherUrl);
-            if(ref==null) {
-                log.warn("ref is null for processorId: {}, dispatcherUrl: {}", request.processorCode, dispatcherUrl);
-                continue;
+                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(request.processorCode, dispatcherUrl);
+                if(ref==null) {
+                    log.warn("ref is null for processorId: {}, dispatcherUrl: {}", request.processorCode, dispatcherUrl);
+                    continue;
+                }
+                request.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, response);
+                processReportResultDelivering(ref, response);
+                processAssignedTask(ref, response);
+                storeProcessorId(ref, response);
+                reAssignProcessorId(ref, response);
             }
-            request.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, response);
-            processReportResultDelivering(ref, response);
-            processAssignedTask(ref, response);
-            storeProcessorId(ref, response);
-            reAssignProcessorId(ref, response);
         }
     }
 

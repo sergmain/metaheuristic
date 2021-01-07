@@ -215,10 +215,8 @@ public class ProcessorTaskService {
     }
 
     public void setDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        if (true) throw new NotImplementedException("add processorCode");
-
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("#713.080 setDelivered({}, {})", ref.dispatcherUrl, taskId);
+            log.info("#713.080 setDelivered({}, {})", ref.dispatcherUrl.url, taskId);
             ProcessorTask task = findById(ref, taskId);
             if (task == null) {
                 log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
@@ -410,22 +408,20 @@ public class ProcessorTaskService {
     public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
-            for (DispatcherUrl dispatcherUrl : map.keySet()) {
-                Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
-                List<Long> forDeletion = new ArrayList<>();
-                for (ProcessorTask task : mapForDispatcherUrl.values()) {
-                    if (S.b(task.dispatcherUrl)) {
-                        forDeletion.add(task.taskId);
-                    }
-                    if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
-                        list.add(task);
-                    }
+            Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
+            List<Long> forDeletion = new ArrayList<>();
+            for (ProcessorTask task : mapForDispatcherUrl.values()) {
+                if (S.b(task.dispatcherUrl)) {
+                    forDeletion.add(task.taskId);
                 }
-                forDeletion.forEach(id-> {
-                    log.warn("#713.147 task #{} from dispatcher {} was deleted from global map with tasks", id, dispatcherUrl);
-                    mapForDispatcherUrl.remove(id);
-                });
+                if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
+                    list.add(task);
+                }
             }
+            forDeletion.forEach(id-> {
+                log.warn("#713.147 task #{} from dispatcher {} was deleted from global map with tasks", id, ref.dispatcherUrl.url);
+                mapForDispatcherUrl.remove(id);
+            });
             return list;
         }
     }
@@ -541,8 +537,6 @@ public class ProcessorTaskService {
 
     @Nullable
     public ProcessorTask findById(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        if(true) throw new NotImplementedException("add processorCode");
-
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             return getMapForDispatcherUrl(ref)
                     .entrySet()

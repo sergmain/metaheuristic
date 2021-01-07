@@ -127,6 +127,9 @@ public class DispatcherRequestor {
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
             for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
+                if (!ref.dispatcherUrl.equals(dispatcherUrl)) {
+                    continue;
+                }
                 ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(ref.processorCode);
                 pcpy.requests.add(r);
 
