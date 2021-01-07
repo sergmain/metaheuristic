@@ -34,6 +34,7 @@ import java.util.List;
 @Slf4j
 public class CleanerInterceptor extends HandlerInterceptorAdapter {
 
+    @SuppressWarnings("unchecked")
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         super.afterCompletion(request, response, handler, ex);
