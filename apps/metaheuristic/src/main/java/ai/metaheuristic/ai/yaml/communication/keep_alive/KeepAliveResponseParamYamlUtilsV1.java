@@ -67,9 +67,6 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
                     .map(o -> new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
                     .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
         }
-        if (v1.requestLogFile!=null) {
-            t.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(v1.requestLogFile.requestedOn);
-        }
         for (KeepAliveResponseParamYamlV1.DispatcherResponseV1 r : v1.responses) {
 
             KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
@@ -82,6 +79,10 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
             if (r.reAssignedProcessorId !=null) {
                 response.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
                         r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
+            }
+
+            if (r.requestLogFile!=null) {
+                response.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(r.requestLogFile.requestedOn);
             }
         }
 

@@ -111,7 +111,6 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
         public String assignedSessionId;
     }
 
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -121,15 +120,15 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
 
         @Nullable
         public AssignedProcessorIdV1 assignedProcessorId;
+
+        @Nullable
+        public RequestLogFileV1 requestLogFile;
     }
 
     public final List<DispatcherResponseV1> responses = new ArrayList<>();
     public final FunctionsV1 functions = new FunctionsV1();
     public ExecContextStatusV1 execContextStatus;
     public DispatcherInfoV1 dispatcherInfo;
-
-    @Nullable
-    public RequestLogFileV1 requestLogFile;
 
     public boolean success = true;
     public String msg;

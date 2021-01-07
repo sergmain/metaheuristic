@@ -44,9 +44,11 @@ public class ProcessorKeepAliveProcessor {
     private final CurrentExecState currentExecState;
 
     public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
+
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
         storeProcessorId(dispatcherUrl, responseParamYaml);
         reAssignProcessorId(dispatcherUrl, responseParamYaml);
+
         registerFunctions(karpy.functions, dispatcherUrl, responseParamYaml);
 //        processRequestLogFile(pcpy)
     }

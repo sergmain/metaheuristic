@@ -16,6 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -39,48 +42,53 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KeepAliveCommandProcessor  {
 
+    private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
     private final FunctionService functionService;
     private final ProcessorTransactionService processorService;
+    private final ExecContextStatusService execContextStatusService;
 
-    public void process(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
-        processProcessorTaskStatus(request);
-        processReportProcessorStatus(request, response);
-        response.assignedProcessorId = getNewProcessorId(request.requestProcessorId);
-        response.functions.infos.addAll( functionService.getFunctionInfos() );
+    public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
+        keepAliveResponse.functions.infos.addAll( functionService.getFunctionInfos() );
+        keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
+        keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.chunkSize, Consts.PROCESSOR_COMM_VERSION);
     }
 
-    // processing at dispatcher side
-    private void processProcessorTaskStatus(KeepAliveRequestParamYaml request) {
-        if (request.processorCommContext==null) {
+    public void processLogRequest(Long processorId, KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse) {
+        dispatcherResponse.requestLogFile = processorTopLevelService.processLogRequest(processorId);
+    }
+
+    public void processGetNewProcessorId(KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveResponseParamYaml.DispatcherResponse response) {
+        response.assignedProcessorId = getNewProcessorId(processorRequest.requestProcessorId);
+    }
+
+    public void processProcessorTaskStatus(KeepAliveRequestParamYaml.ProcessorRequest processorRequest) {
+        if (processorRequest.processorCommContext==null) {
             log.warn("#997.020 (request.processorCommContext==null)");
             return;
         }
-        processorTopLevelService.setTaskIds(request.processorCommContext.processorId, request.taskIds);
+        processorTopLevelService.setTaskIds(processorRequest.processorCommContext.processorId, processorRequest.taskIds);
 
         // TODO 2020-11-22 need to decide what to do with reconcileProcessorTasks() below
 //        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
     }
 
-    // processing at dispatcher side
-    private void processReportProcessorStatus(KeepAliveRequestParamYaml request, KeepAliveResponseParamYaml response) {
-        checkProcessorId(request);
-        // IDEA has become too lazy
-        if (request.processorCommContext.processorId==null) {
-            log.warn("#997.030 (request.processorCommContext==null)");
-            return;
-        }
-        processorTopLevelService.processProcessorStatuses(request.processorCommContext.processorId, request.processor, request.functions, response);
+    public void processReportProcessorStatus(
+            KeepAliveRequestParamYaml.FunctionDownloadStatuses functions, KeepAliveRequestParamYaml.ProcessorRequest processorRequest) {
+
+        checkProcessorId(processorRequest.processorCommContext);
+        // ###idea### why?
+        processorTopLevelService.processProcessorStatuses(
+                processorRequest.processorCommContext.processorId, processorRequest.processor, functions);
     }
 
-    private void checkProcessorId(KeepAliveRequestParamYaml request) {
-        if (request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
+    private void checkProcessorId(@Nullable KeepAliveRequestParamYaml.ProcessorCommContext commContext) {
+        if (commContext ==null || commContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");
         }
     }
 
-    // processing at dispatcher side
     @Nullable
     public KeepAliveResponseParamYaml.AssignedProcessorId getNewProcessorId(@Nullable KeepAliveRequestParamYaml.RequestProcessorId request) {
         if (request==null) {

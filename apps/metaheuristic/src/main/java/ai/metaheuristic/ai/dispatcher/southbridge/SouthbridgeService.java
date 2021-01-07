@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -80,7 +79,6 @@ public class SouthbridgeService {
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final KeepAliveCommandProcessor keepAliveCommandProcessor;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final ExecContextStatusService execContextStatusService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -209,32 +207,35 @@ public class SouthbridgeService {
     private KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
-            if (req.processorCommContext ==null) {
-                resp.assignedProcessorId = keepAliveCommandProcessor.getNewProcessorId(new KeepAliveRequestParamYaml.RequestProcessorId());
-                return resp;
-            }
-            if (req.processorCommContext.processorId==null) {
-                log.warn("#444.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
-                DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                resp.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
-            }
-            else {
-                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(req.processorCommContext.processorId, req.processorCommContext.sessionId, remoteAddress);
+            for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
+                KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse();
+                resp.responses.add(dispatcherResponse);
+
+                if (processorRequest.processorCommContext == null) {
+                    dispatcherResponse.assignedProcessorId = keepAliveCommandProcessor.getNewProcessorId(new KeepAliveRequestParamYaml.RequestProcessorId());
+                    continue;
+                }
+                if (processorRequest.processorCommContext.processorId == null) {
+                    log.warn("#444.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
+                    DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+                    dispatcherResponse.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
+                    continue;
+                }
+
+                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(processorRequest.processorCommContext.processorId, processorRequest.processorCommContext.sessionId, remoteAddress);
                 if (processorSessionId != null) {
-                    resp.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                    dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                    continue;
                 }
-                else {
-                    log.debug("Start processing commands");
-                    keepAliveCommandProcessor.process(req, resp);
-                }
+
+                log.debug("Start processing commands");
+                keepAliveCommandProcessor.processProcessorTaskStatus(processorRequest);
+                keepAliveCommandProcessor.processReportProcessorStatus(req.functions, processorRequest);
+                keepAliveCommandProcessor.processGetNewProcessorId(processorRequest, dispatcherResponse);
+                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
             }
+            keepAliveCommandProcessor.initDispatcherInfo(resp);
 
-            resp.execContextStatus = execContextStatusService.getExecContextStatuses();
-
-            KeepAliveResponseParamYaml.DispatcherInfo  lcc = new KeepAliveResponseParamYaml.DispatcherInfo ();
-            lcc.chunkSize = globals.chunkSize;
-            lcc.processorCommVersion = Consts.PROCESSOR_COMM_VERSION;
-            resp.dispatcherInfo = lcc;
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", req);
             log.error("#444.230 Error", th);

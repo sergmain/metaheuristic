@@ -220,7 +220,8 @@ public class ProcessorTransactionService {
     @Transactional
     public Void storeProcessorStatuses(
             Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
-            KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, KeepAliveResponseParamYaml dcpy) {
+            KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+
         processorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
@@ -277,14 +278,6 @@ public class ProcessorTransactionService {
             } else {
                 log.debug("#807.160 Processor status is equal to the status stored in db");
             }
-        }
-        if (psy.log!=null && psy.log.logRequested) {
-            if (psy.log.requestedOn==0) {
-                throw new IllegalStateException("(psy.log.requestedOn==0)");
-            }
-            // we will send request for a log file constantly until it'll be received.
-            // Double requests will be handled at the Processor side.
-            dcpy.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(psy.log.requestedOn);
         }
         return null;
     }

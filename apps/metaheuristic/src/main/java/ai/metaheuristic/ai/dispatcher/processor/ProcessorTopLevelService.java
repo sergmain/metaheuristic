@@ -94,10 +94,9 @@ public class ProcessorTopLevelService {
 */
 
     public void processProcessorStatuses(
-            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
-            KeepAliveResponseParamYaml lcpy) {
+            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
-        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus, lcpy));
+        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
     }
 
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<Long> taskIds) {
@@ -216,5 +215,23 @@ public class ProcessorTopLevelService {
         return bulkOperations;
     }
 
+    @Nullable
+    public KeepAliveResponseParamYaml.RequestLogFile processLogRequest(Long processorId) {
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
+        }
+        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
+        if (psy.log!=null && psy.log.logRequested) {
+            if (psy.log.requestedOn==0) {
+                throw new IllegalStateException("(psy.log.requestedOn==0)");
+            }
+            // we will send request for a log file constantly until it'll be received.
+            // Double requests will be handled at the Processor side.
+            return new KeepAliveResponseParamYaml.RequestLogFile(psy.log.requestedOn);
+        }
+        return null;
+    }
 }
