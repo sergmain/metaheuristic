@@ -86,7 +86,7 @@ public class ExecContextTaskStateTopLevelService {
     }
 
     @Nullable
-    private TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
+    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
         return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId);
     }
 

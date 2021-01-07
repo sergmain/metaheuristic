@@ -22,16 +22,10 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -104,6 +98,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     private TaskSyncService taskSyncService;
+
+    @Autowired
+    private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -219,6 +216,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 //        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 300);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -250,17 +249,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
             return null;
         });
 
-            // process and complete fit/predict tasks
-            for (int i = 0; i < 12; i++) {
-                step_FitAndPredict();
-            }
+        // process and complete fit/predict tasks
+        for (int i = 0; i < 12; i++) {
+            step_FitAndPredict();
+        }
 
-            verifyGraphIntegrity();
-            taskVertices.clear();
-            taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
-            // 1 'mh.aggregate-internal-context'  task,
-            // and 1 'mh.finish' task
-            assertEquals(2, taskVertices.size());
+        verifyGraphIntegrity();
+        taskVertices.clear();
+        taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
+        // 1 'mh.aggregate-internal-context'  task,
+        // and 1 'mh.finish' task
+        assertEquals(2, taskVertices.size());
 
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         DispatcherCommParamsYaml.AssignedTask t =
@@ -268,6 +267,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 40);
+        taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -283,6 +284,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(finishTask.task.id, 40);
+        taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
@@ -316,6 +319,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask32);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
     }
 
     private void step_FitAndPredict() {
@@ -393,6 +398,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask20);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task3.id);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -469,6 +476,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
     }
 
     @SneakyThrows

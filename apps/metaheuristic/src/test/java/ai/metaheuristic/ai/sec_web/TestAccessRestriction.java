@@ -107,8 +107,7 @@ public class TestAccessRestriction {
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
+        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE));
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 

@@ -179,6 +179,8 @@ public class TestRest {
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE));
+
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 
         MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)

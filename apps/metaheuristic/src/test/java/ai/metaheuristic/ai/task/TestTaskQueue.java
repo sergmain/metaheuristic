@@ -73,9 +73,12 @@ public class TestTaskQueue {
 
         assertEquals(1L, taskGroup.execContextId);
         assertTrue(taskGroup.alreadyRegistered(15L));
-        assertTrue(taskGroup.isNewTask());
-        assertFalse(taskGroup.noneTasks());
         assertFalse(taskGroup.isEmpty());
+        assertFalse(taskGroup.noneTasks());
+
+        assertFalse(taskGroup.isNewTask());
+        taskGroup.lock();
+        assertTrue(taskGroup.isNewTask());
 
         taskGroup.reset();
 
@@ -89,9 +92,12 @@ public class TestTaskQueue {
 
         assertEquals(1L, taskGroup.execContextId);
         assertTrue(taskGroup.alreadyRegistered(15L));
-        assertTrue(taskGroup.isNewTask());
         assertFalse(taskGroup.noneTasks());
         assertFalse(taskGroup.isEmpty());
+
+        assertFalse(taskGroup.isNewTask());
+        taskGroup.lock();
+        assertTrue(taskGroup.isNewTask());
 
         taskGroup.deRegisterTask(15L);
 
@@ -132,6 +138,8 @@ public class TestTaskQueue {
         taskGroup.addTask(task_1_4);
         taskGroup.addTask(task_1_5);
 
+        assertFalse(taskGroup.isNewTask());
+        taskGroup.lock();
         assertTrue(taskGroup.isNewTask());
 
         taskGroup.assignTask(task_1_1.taskId);
