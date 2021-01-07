@@ -111,6 +111,9 @@ public class TestRegisterProcessor {
     public void testRestPayload_asRest() throws Exception {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+
         DispatcherCommParamsYaml ed = requestServer(processorComm);
 
         assertNotNull(ed);
@@ -128,7 +131,7 @@ public class TestRegisterProcessor {
         sessionId = assignedProcessorId.getAssignedSessionId();
 
         processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        req = new ProcessorCommParamsYaml.ProcessorRequest();
         processorComm.requests.add(req);
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.

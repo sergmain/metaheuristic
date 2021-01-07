@@ -47,24 +47,24 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     @NonNull
     @Override
     public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1, Long ... vars) {
-        DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
-        DispatcherCommParamsYaml.DispatcherResponse r = new DispatcherCommParamsYaml.DispatcherResponse();
-        t.responses.add(r);
+        v1.checkIntegrity();
 
-        for (DispatcherCommParamsYaml.DispatcherResponse response : v1.responses) {
-            r.processorCode = response.processorCode;
+        DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
+
+        for (DispatcherCommParamsYamlV1.DispatcherResponseV1 response : v1.responses) {
+            DispatcherCommParamsYaml.DispatcherResponse r = new DispatcherCommParamsYaml.DispatcherResponse(response.processorCode);
+            t.responses.add(r);
 
             if (response.assignedTask!=null) {
                 r.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
                 BeanUtils.copyProperties(response.assignedTask, r.assignedTask);
             }
             if (response.assignedProcessorId !=null) {
-                r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId();
-                BeanUtils.copyProperties(r.assignedProcessorId, response.assignedProcessorId);
+                r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
             }
             if (response.reAssignedProcessorId !=null) {
-                r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId();
-                BeanUtils.copyProperties(r.reAssignedProcessorId, response.reAssignedProcessorId);
+                r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(
+                        response.reAssignedProcessorId.reAssignedProcessorId, response.reAssignedProcessorId.sessionId);
             }
             if (response.reportResultDelivering!=null) {
                 r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
@@ -72,8 +72,8 @@ public class DispatcherCommParamsYamlUtilsV1 extends
                         r.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
             }
             if (response.resendTaskOutputs!=null) {
-                response.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
-                response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> response.resendTaskOutputs.resends));
+                r.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
+                response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> r.resendTaskOutputs.resends));
             }
         }
         if (v1.requestLogFile!=null) {
@@ -81,6 +81,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
         }
 
         BeanUtils.copyProperties(v1, t);
+        t.checkIntegrity();
         return t;
     }
 
@@ -88,49 +89,6 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     @Override
     public Void downgradeTo(@NonNull Void yaml) {
         return null;
-/*
-        DispatcherCommParamsYamlV1 t = new DispatcherCommParamsYamlV1();
-
-        if( yaml.dispatcherCommContext!=null ) {
-            t.dispatcherCommContext = new DispatcherCommParamsYamlV1.DispatcherCommContextV1();
-            t.dispatcherCommContext.chunkSize = yaml.dispatcherCommContext.chunkSize;
-        }
-        if (yaml.assignedTask!=null) {
-            t.assignedTask = new DispatcherCommParamsYamlV1.AssignedTaskV1();
-            BeanUtils.copyProperties(yaml.assignedTask, t.assignedTask);
-        }
-        if (yaml.assignedProcessorId!=null) {
-            t.assignedProcessorId = new DispatcherCommParamsYamlV1.AssignedProcessorIdV1();
-            BeanUtils.copyProperties(yaml.assignedProcessorId, t.assignedProcessorId);
-        }
-        if (yaml.reAssignedProcessorId!=null) {
-            t.reAssignedProcessorId = new DispatcherCommParamsYamlV1.ReAssignProcessorIdV1();
-            BeanUtils.copyProperties(yaml.reAssignedProcessorId, t.reAssignedProcessorId);
-        }
-        if (yaml.reportResultDelivering!=null) {
-            t.reportResultDelivering = new DispatcherCommParamsYamlV1.ReportResultDeliveringV1();
-            t.reportResultDelivering.ids =
-                    yaml.reportResultDelivering.ids!=null ? new ArrayList<>(yaml.reportResultDelivering.ids) : new ArrayList<>();
-        }
-        if (yaml.execContextStatus !=null) {
-            t.execContextStatus = new DispatcherCommParamsYamlV1.ExecContextStatusV1();
-            t.execContextStatus.statuses =
-                    yaml.execContextStatus.statuses!=null
-                            ? yaml.execContextStatus.statuses
-                            .stream()
-                            .map(o->new DispatcherCommParamsYamlV1.ExecContextStatusV1.SimpleStatus(o.execContextId, o.state))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
-        if (yaml.resendTaskOutputResource!=null) {
-            t.resendTaskOutputResource = new DispatcherCommParamsYamlV1.ResendTaskOutputResourceV1();
-            t.resendTaskOutputResource.taskIds =
-                    yaml.resendTaskOutputResource.taskIds!=null ? new ArrayList<>(yaml.resendTaskOutputResource.taskIds) : new ArrayList<>();
-        }
-
-        BeanUtils.copyProperties(yaml, t);
-        return t;
-*/
     }
 
     @Override
@@ -145,6 +103,8 @@ public class DispatcherCommParamsYamlUtilsV1 extends
 
     @Override
     public String toString(@NonNull DispatcherCommParamsYamlV1 yaml) {
+        yaml.checkIntegrity();
+
         return getYaml().dump(yaml);
     }
 

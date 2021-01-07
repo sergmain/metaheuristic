@@ -16,9 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,19 @@ import java.util.List;
 public class DispatcherCommParamsYaml implements BaseParams {
 
     public final int version=1;
+
+    @Override
+    public boolean checkIntegrity() {
+        if (responses.isEmpty()) {
+            throw new CheckIntegrityFailedException("responses.isEmpty()");
+        }
+        for (DispatcherResponse response : responses) {
+            if (S.b(response.processorCode)) {
+                throw new CheckIntegrityFailedException("(S.b(response.processorCode))");
+            }
+        }
+        return true;
+    }
 
     @Data
     @AllArgsConstructor
@@ -107,6 +121,10 @@ public class DispatcherCommParamsYaml implements BaseParams {
         public @Nullable ReAssignProcessorId reAssignedProcessorId;
         public @Nullable ReportResultDelivering reportResultDelivering;
         public @Nullable ResendTaskOutputs resendTaskOutputs;
+
+        public DispatcherResponse(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final List<DispatcherResponse> responses = new ArrayList<>();

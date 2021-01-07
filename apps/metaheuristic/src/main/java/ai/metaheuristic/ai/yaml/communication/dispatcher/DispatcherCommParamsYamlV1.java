@@ -99,7 +99,8 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DispatcherResponse {
+    public static class DispatcherResponseV1 {
+        public String processorCode;
         @Nullable
         public AssignedTaskV1 assignedTask;
         @Nullable
@@ -110,11 +111,15 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         public ReportResultDeliveringV1 reportResultDelivering;
         @Nullable
         public ResendTaskOutputsV1 resendTaskOutputs;
+
+        public DispatcherResponseV1(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
-    public final List<DispatcherCommParamsYaml.DispatcherResponse> responses = new ArrayList<>();
+    public final List<DispatcherResponseV1> responses = new ArrayList<>();
     @Nullable
-    public DispatcherCommParamsYaml.RequestLogFile requestLogFile;
+    public RequestLogFileV1 requestLogFile;
 
     public boolean success = true;
     public String msg;

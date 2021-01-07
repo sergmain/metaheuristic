@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,6 +40,19 @@ import java.util.List;
 public class ProcessorCommParamsYamlV1 implements BaseParams {
 
     public final int version=1;
+
+    @Override
+    public boolean checkIntegrity() {
+        if (requests.isEmpty()) {
+            throw new CheckIntegrityFailedException("requests.isEmpty()");
+        }
+        for (ProcessorRequestV1 request : requests) {
+            if (S.b(request.processorCode)) {
+                throw new CheckIntegrityFailedException("(S.b(request.processorCode))");
+            }
+        }
+        return true;
+    }
 
     @Data
     @NoArgsConstructor

@@ -256,7 +256,9 @@ public class SouthbridgeService {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
             for (ProcessorCommParamsYaml.ProcessorRequest request : scpy.requests) {
-                DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse();
+                DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse(request.processorCode);
+                lcpy.responses.add(response);
+
                 if (request.processorCommContext ==null || S.b(request.processorCommContext.processorId)) {
                     DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
                     response.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);

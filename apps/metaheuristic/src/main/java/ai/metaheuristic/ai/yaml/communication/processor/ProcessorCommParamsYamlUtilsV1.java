@@ -51,6 +51,7 @@ public class ProcessorCommParamsYamlUtilsV1
 
         for (ProcessorCommParamsYamlV1.ProcessorRequestV1 v1 : src.requests) {
             ProcessorCommParamsYaml.ProcessorRequest t = new ProcessorCommParamsYaml.ProcessorRequest(v1.processorCode);
+            trg.requests.add(t);
 
             if (v1.processorCommContext !=null) {
                 t.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext();
@@ -85,8 +86,7 @@ public class ProcessorCommParamsYamlUtilsV1
                                 .collect(Collectors.toList())
                                 : new ArrayList<>();
             }
-
-            BeanUtils.copyProperties(v1, t);
+            t.processorCode = v1.processorCode;
         }
         return trg;
     }

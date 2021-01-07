@@ -84,6 +84,8 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     public void before() {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 

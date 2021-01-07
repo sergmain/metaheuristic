@@ -80,6 +80,9 @@ public class TestReAssignProcessorIdTimeoutSessionId {
     public void before() {
 
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
@@ -137,6 +140,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
         processorComm.requests.add(req);
+
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore);
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);

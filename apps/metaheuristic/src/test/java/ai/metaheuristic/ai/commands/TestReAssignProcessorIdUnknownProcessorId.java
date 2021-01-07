@@ -81,6 +81,8 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         }
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
+        processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
@@ -123,8 +125,8 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownProcessorId.toString(), sessionIdBefore.substring(0, 4));
 
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownProcessorId.toString(), sessionIdBefore.substring(0, 4));
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
