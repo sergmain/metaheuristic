@@ -67,7 +67,10 @@ public class MetadataParamsYaml implements BaseParams {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
-    // key is a code of processor which is configured in env.yaml
+    /**
+     * key  - a code of processor which is configured in env.yaml
+     * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.Processor
+     */
     public final LinkedHashMap<String, Processor> processors = new LinkedHashMap<>();
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();

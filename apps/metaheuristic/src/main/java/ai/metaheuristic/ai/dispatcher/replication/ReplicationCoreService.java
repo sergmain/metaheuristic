@@ -138,7 +138,8 @@ public class ReplicationCoreService {
 
     }
 
-    public static ReplicationData.ReplicationAsset getReplicationAsset(InputStream content, Class clazz) throws java.io.IOException {
+    @SuppressWarnings("unchecked")
+    private static ReplicationData.ReplicationAsset getReplicationAsset(InputStream content, Class clazz) throws java.io.IOException {
         Object assetResponse = JsonUtils.getMapper().readValue(content, clazz);
         return (ReplicationData.ReplicationAsset)assetResponse;
     }

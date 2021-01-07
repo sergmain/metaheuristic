@@ -72,6 +72,8 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
             KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
             t.responses.add(response);
 
+            response.processorCode = r.processorCode;
+
             if (r.assignedProcessorId !=null) {
                 response.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
                         r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);

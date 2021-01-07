@@ -38,18 +38,6 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
 
     public final int version=1;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    public @Nullable AssignedTaskV1 assignedTask;
-    public @Nullable AssignedProcessorIdV1 assignedProcessorId;
-    public @Nullable ReAssignProcessorIdV1 reAssignedProcessorId;
-    public @Nullable ReportResultDeliveringV1 reportResultDelivering;
-    public @Nullable ResendTaskOutputsV1 resendTaskOutputs;
-    public @Nullable RequestLogFileV1 requestLogFile;
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -107,6 +95,26 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     public static class RequestLogFileV1 {
         public long requestedOn;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DispatcherResponse {
+        @Nullable
+        public AssignedTaskV1 assignedTask;
+        @Nullable
+        public AssignedProcessorIdV1 assignedProcessorId;
+        @Nullable
+        public ReAssignProcessorIdV1 reAssignedProcessorId;
+        @Nullable
+        public ReportResultDeliveringV1 reportResultDelivering;
+        @Nullable
+        public ResendTaskOutputsV1 resendTaskOutputs;
+    }
+
+    public final List<DispatcherCommParamsYaml.DispatcherResponse> responses = new ArrayList<>();
+    @Nullable
+    public DispatcherCommParamsYaml.RequestLogFile requestLogFile;
 
     public boolean success = true;
     public String msg;

@@ -19,15 +19,12 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * @author Serge
@@ -39,26 +36,36 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 @Profile("processor")
 @RequiredArgsConstructor
 public class ProcessorKeepAliveProcessor {
-    private final ProcessorService processorService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
 
     public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
 
-        processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
-        storeProcessorId(dispatcherUrl, responseParamYaml);
-        reAssignProcessorId(dispatcherUrl, responseParamYaml);
+        for (KeepAliveResponseParamYaml.DispatcherResponse response : responseParamYaml.responses) {
 
-        registerFunctions(karpy.functions, dispatcherUrl, responseParamYaml);
+            processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(response.processorCode, dispatcherUrl);
+            if(ref==null) {
+                log.warn("ref is null for processorId: {}, dispatcherUrl: {}", response.processorCode, dispatcherUrl);
+                continue;
+            }
+            storeProcessorId(ref, response);
+            reAssignProcessorId(ref, response);
+        }
+
+        registerFunctions(dispatcherUrl, responseParamYaml.functions);
 //        processRequestLogFile(pcpy)
     }
 
-    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
-
+//    private void registerFunctions(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml dispatcherYaml) {
+    private void registerFunctions(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.Functions functions) {
+        metadataService.registerNewFunctionCode(dispatcherUrl, functions.infos);
+/*
         List<MetadataParamsYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (MetadataParamsYaml.Status status : statuses) {
             functionDownloadStatus.statuses.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(status.code, status.functionState));
         }
+*/
     }
 
     private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
@@ -66,17 +73,17 @@ public class ProcessorKeepAliveProcessor {
     }
 
     // processing at processor side
-    private void storeProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml request) {
-        if (request.assignedProcessorId ==null) {
+    private void storeProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml.DispatcherResponse response) {
+        if (response.assignedProcessorId ==null) {
             return;
         }
-        log.info("storeProcessorId() new processor Id: {}", request.assignedProcessorId);
+        log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
         metadataService.setProcessorIdAndSessionId(
-                ref, request.assignedProcessorId.assignedProcessorId.toString(), request.assignedProcessorId.assignedSessionId);
+                ref, response.assignedProcessorId.assignedProcessorId.toString(), response.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
-    private void reAssignProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml response) {
+    private void reAssignProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, KeepAliveResponseParamYaml.DispatcherResponse response) {
         if (response.reAssignedProcessorId ==null) {
             return;
         }

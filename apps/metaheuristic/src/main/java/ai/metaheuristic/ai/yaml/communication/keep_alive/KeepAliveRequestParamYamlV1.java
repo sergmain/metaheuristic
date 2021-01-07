@@ -149,6 +149,12 @@ public class KeepAliveRequestParamYamlV1 implements BaseParams {
 
         @Nullable
         public String taskIds;
+
+        public String processorCode;
+
+        public ProcessorRequestV1(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final FunctionDownloadStatusesV1 functions = new FunctionDownloadStatusesV1();

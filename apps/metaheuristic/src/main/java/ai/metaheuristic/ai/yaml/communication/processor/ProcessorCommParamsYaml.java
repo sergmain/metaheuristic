@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,18 +39,6 @@ import java.util.List;
 public class ProcessorCommParamsYaml implements BaseParams {
 
     public final int version=1;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    public @Nullable ProcessorCommContext processorCommContext;
-    public @Nullable RequestProcessorId requestProcessorId;
-    public @Nullable RequestTask requestTask;
-    public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
-    public CheckForMissingOutputResources checkForMissingOutputResources;
-    public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
     @Data
     @NoArgsConstructor
@@ -116,4 +105,21 @@ public class ProcessorCommParamsYaml implements BaseParams {
 
         public List<SimpleStatus> statuses;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessorRequest {
+        public @Nullable ProcessorCommContext processorCommContext;
+        public @Nullable RequestProcessorId requestProcessorId;
+        public @Nullable RequestTask requestTask;
+        public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
+        public CheckForMissingOutputResources checkForMissingOutputResources;
+        public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+
+        public String processorCode;
+    }
+
+    public final List<ProcessorRequest > requests = new ArrayList<>();
+
 }

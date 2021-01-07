@@ -115,6 +115,8 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DispatcherResponseV1 {
+        public String processorCode;
+
         @Nullable
         public ReAssignedProcessorIdV1 reAssignedProcessorId;
 
@@ -123,6 +125,10 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
 
         @Nullable
         public RequestLogFileV1 requestLogFile;
+
+        public DispatcherResponseV1(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final List<DispatcherResponseV1> responses = new ArrayList<>();

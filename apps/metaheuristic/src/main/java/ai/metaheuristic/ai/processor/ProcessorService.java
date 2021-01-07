@@ -132,13 +132,14 @@ public class ProcessorService {
         }
     }
 
-    public List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> getResendTaskOutputResourceResultStatus(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
+    public List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> getResendTaskOutputResourceResultStatus(
+            DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml.DispatcherResponse response) {
+        if (response.resendTaskOutputs==null || response.resendTaskOutputs.resends.isEmpty()) {
             return List.of();
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
-            for (DispatcherCommParamsYaml.ResendTaskOutput output : request.resendTaskOutputs.resends) {
+            for (DispatcherCommParamsYaml.ResendTaskOutput output : response.resendTaskOutputs.resends) {
                 Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(ref, output.taskId, output.variableId);
                 statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
             }

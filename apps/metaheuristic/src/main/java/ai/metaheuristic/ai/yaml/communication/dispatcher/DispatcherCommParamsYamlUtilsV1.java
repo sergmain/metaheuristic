@@ -48,27 +48,33 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     @Override
     public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1, Long ... vars) {
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
+        DispatcherCommParamsYaml.DispatcherResponse r = new DispatcherCommParamsYaml.DispatcherResponse();
+        t.responses.add(r);
 
-        if (v1.assignedTask!=null) {
-            t.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
-            BeanUtils.copyProperties(v1.assignedTask, t.assignedTask);
-        }
-        if (v1.assignedProcessorId !=null) {
-            t.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId();
-            BeanUtils.copyProperties(v1.assignedProcessorId, t.assignedProcessorId);
-        }
-        if (v1.reAssignedProcessorId !=null) {
-            t.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId();
-            BeanUtils.copyProperties(v1.reAssignedProcessorId, t.reAssignedProcessorId);
-        }
-        if (v1.reportResultDelivering!=null) {
-            t.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
-            t.reportResultDelivering.ids =
-                    v1.reportResultDelivering.ids!=null ? new ArrayList<>(v1.reportResultDelivering.ids) : new ArrayList<>();
-        }
-        if (v1.resendTaskOutputs!=null) {
-            t.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
-            v1.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> t.resendTaskOutputs.resends));
+        for (DispatcherCommParamsYaml.DispatcherResponse response : v1.responses) {
+            r.processorCode = response.processorCode;
+
+            if (response.assignedTask!=null) {
+                r.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
+                BeanUtils.copyProperties(response.assignedTask, r.assignedTask);
+            }
+            if (response.assignedProcessorId !=null) {
+                r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId();
+                BeanUtils.copyProperties(r.assignedProcessorId, response.assignedProcessorId);
+            }
+            if (response.reAssignedProcessorId !=null) {
+                r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId();
+                BeanUtils.copyProperties(r.reAssignedProcessorId, response.reAssignedProcessorId);
+            }
+            if (response.reportResultDelivering!=null) {
+                r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
+                r.reportResultDelivering.ids =
+                        r.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
+            }
+            if (response.resendTaskOutputs!=null) {
+                response.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
+                response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> response.resendTaskOutputs.resends));
+            }
         }
         if (v1.requestLogFile!=null) {
             t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v1.requestLogFile.requestedOn);

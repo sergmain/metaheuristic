@@ -53,7 +53,7 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
 
         for (KeepAliveRequestParamYamlV1.ProcessorRequestV1 v1 : src.requests) {
 
-            KeepAliveRequestParamYaml.ProcessorRequest r = new KeepAliveRequestParamYaml.ProcessorRequest();
+            KeepAliveRequestParamYaml.ProcessorRequest r = new KeepAliveRequestParamYaml.ProcessorRequest(v1.processorCode);
             t.requests.add(r);
 
             if (v1.processor !=null) {
@@ -67,7 +67,7 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
                 }
             }
             if (v1.requestProcessorId!=null) {
-                r.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId(v1.requestProcessorId.processorCode);
+                r.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId();
             }
             if (v1.processorCommContext!=null) {
                 r.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(v1.processorCommContext.processorId, v1.processorCommContext.sessionId);

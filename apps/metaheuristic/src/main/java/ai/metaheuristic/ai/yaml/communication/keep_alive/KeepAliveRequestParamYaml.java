@@ -117,9 +117,8 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
+//    @AllArgsConstructor
     public static class RequestProcessorId {
-        public String processorCode;
     }
 
     @Data
@@ -147,6 +146,12 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
         @Nullable
         public String taskIds;
+
+        public String processorCode;
+
+        public ProcessorRequest(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();

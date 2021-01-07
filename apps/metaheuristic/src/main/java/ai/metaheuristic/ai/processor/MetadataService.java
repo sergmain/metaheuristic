@@ -285,6 +285,20 @@ public class MetadataService {
         }
     }
 
+    @Nullable
+    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(String processorCode, DispatcherUrl dispatcherUrl) {
+        synchronized (syncObj) {
+            for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
+                if (!processorCode.equals(processorEntry.getKey())) {
+                    continue;
+                }
+                MetadataParamsYaml.ProcessorState processorState = processorEntry.getValue().states.get(dispatcherUrl.url);
+                return processorState==null ? null : new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorState.processorId, dispatcherUrl);
+            }
+            return null;
+        }
+    }
+
     public void setProcessorIdAndSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String processorId, String sessionId) {
         if (StringUtils.isBlank(processorId)) {
             throw new IllegalStateException("#815.180 processorId is null");

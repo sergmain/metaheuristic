@@ -49,19 +49,19 @@ public class DispatcherCommandProcessor {
     private final ProcessorTransactionService processorService;
     private final TaskProviderTopLevelService taskProviderService;
 
-    public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
-        if (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId)) {
+    public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response) {
+        if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("(scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
-        lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
-        processResendTaskOutputResourceResult(scpy);
-        lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
-        lcpy.assignedTask = processRequestTask(scpy);
+        response.resendTaskOutputs = checkForMissingOutputResources(request);
+        processResendTaskOutputResourceResult(request);
+        response.reportResultDelivering = processReportTaskProcessingResult(request);
+        response.assignedTask = processRequestTask(request);
     }
 
     // processing at dispatcher side
     @Nullable
-    private DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml request) {
+    private DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
@@ -71,7 +71,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    private void processResendTaskOutputResourceResult(ProcessorCommParamsYaml request) {
+    private void processResendTaskOutputResourceResult(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.resendTaskOutputResourceResult==null) {
             return;
         }
@@ -86,7 +86,7 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     @Nullable
-    private DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
+    private DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
@@ -98,7 +98,7 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
+    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.requestTask==null || Boolean.FALSE.equals(request.requestTask.newTask) ||
                 request.processorCommContext==null || S.b(request.processorCommContext.processorId)) {
             return null;
@@ -125,7 +125,7 @@ public class DispatcherCommandProcessor {
         return assignedTask;
     }
 
-    private void checkProcessorId(ProcessorCommParamsYaml request) {
+    private void checkProcessorId(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.processorCommContext ==null  || S.b(request.processorCommContext.processorId)) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");

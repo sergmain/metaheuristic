@@ -208,7 +208,7 @@ public class SouthbridgeService {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
             for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
-                KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse();
+                KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
                 resp.responses.add(dispatcherResponse);
 
                 if (processorRequest.processorCommContext == null) {
@@ -255,19 +255,22 @@ public class SouthbridgeService {
     private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
-            if (scpy.processorCommContext ==null || S.b(scpy.processorCommContext.processorId)) {
-                DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                lcpy.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                return lcpy;
-            }
-            DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(Long.parseLong(scpy.processorCommContext.processorId), scpy.processorCommContext.sessionId, remoteAddress);
-            if (processorSessionId!=null) {
-                lcpy.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                return lcpy;
-            }
+            for (ProcessorCommParamsYaml.ProcessorRequest request : scpy.requests) {
+                DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse();
+                if (request.processorCommContext ==null || S.b(request.processorCommContext.processorId)) {
+                    DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+                    response.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                    continue;
+                }
+                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(Long.parseLong(request.processorCommContext.processorId), request.processorCommContext.sessionId, remoteAddress);
+                if (processorSessionId!=null) {
+                    response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                    continue;
+                }
 
-            log.debug("Start processing commands");
-            dispatcherCommandProcessor.process(scpy, lcpy);
+                log.debug("Start processing commands");
+                dispatcherCommandProcessor.process(request, response);
+            }
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
             log.error("#444.230 Error", th);
@@ -277,7 +280,7 @@ public class SouthbridgeService {
         return lcpy;
     }
 
-    private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
+    private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml.DispatcherResponse lcpy) {
         return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;
     }
 

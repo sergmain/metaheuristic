@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -37,18 +38,6 @@ import java.util.List;
 public class DispatcherCommParamsYaml implements BaseParams {
 
     public final int version=1;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    public @Nullable AssignedTask assignedTask;
-    public @Nullable AssignedProcessorId assignedProcessorId;
-    public @Nullable ReAssignProcessorId reAssignedProcessorId;
-    public @Nullable ReportResultDelivering reportResultDelivering;
-    public @Nullable ResendTaskOutputs resendTaskOutputs;
-    public @Nullable RequestLogFile requestLogFile;
 
     @Data
     @AllArgsConstructor
@@ -107,6 +96,21 @@ public class DispatcherCommParamsYaml implements BaseParams {
     public static class RequestLogFile {
         public long requestedOn;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DispatcherResponse {
+        public String processorCode;
+        public @Nullable AssignedTask assignedTask;
+        public @Nullable AssignedProcessorId assignedProcessorId;
+        public @Nullable ReAssignProcessorId reAssignedProcessorId;
+        public @Nullable ReportResultDelivering reportResultDelivering;
+        public @Nullable ResendTaskOutputs resendTaskOutputs;
+    }
+
+    public final List<DispatcherResponse> responses = new ArrayList<>();
+    public @Nullable RequestLogFile requestLogFile;
 
     public boolean success = true;
     public String msg;
