@@ -35,8 +35,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -69,12 +68,15 @@ public class TestReAssignProcessorId {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.assignedProcessorId);
+        assertNotNull(assignedProcessorId.assignedSessionId);
 
-        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
-        sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
+        processorIdBefore = Long.valueOf(assignedProcessorId.getAssignedProcessorId());
+        sessionIdBefore = assignedProcessorId.getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -99,19 +101,25 @@ public class TestReAssignProcessorId {
 
         // in this scenario we test that processor has got a new re-assigned processorId
 
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        final ProcessorCommParamsYaml processorCommParamsYaml = new ProcessorCommParamsYaml();
+        final ProcessorCommParamsYaml.ProcessorRequest processorComm = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorCommParamsYaml.requests.add(processorComm);
+
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorCommParamsYaml);
         String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getSessionId());
+        assertNotNull(d.responses);
+        assertFalse(d.responses.isEmpty());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.sessionId);
 
-        Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        Long processorId = Long.valueOf(reAssignedProcessorId.getReAssignedProcessorId());
 
         Processor s = processorCache.findById(processorId);
 
