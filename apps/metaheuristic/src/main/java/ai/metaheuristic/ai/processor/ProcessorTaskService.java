@@ -84,10 +84,11 @@ public class ProcessorTaskService {
         try {
             for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
                 File processorDir = new File(globals.processorDir, ref.processorCode);
-                if (!processorDir.exists()) {
-                    processorDir.mkdirs();
-                }
                 File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+                if (!processorTaskDir.exists()) {
+                    processorTaskDir.mkdirs();
+                }
+
                 Files.list(processorTaskDir.toPath()).forEach(top -> {
                     try {
                         DispatcherUrl dispatcherUrl = metadataService.findDispatcherByCode(ref, top.toFile().getName());

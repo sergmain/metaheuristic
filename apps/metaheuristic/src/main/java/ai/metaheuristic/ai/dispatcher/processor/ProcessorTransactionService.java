@@ -252,6 +252,7 @@ public class ProcessorTransactionService {
                 psy.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
                 psy.currDir = status.currDir;
 
+
                 processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
                 processor.updatedOn = System.currentTimeMillis();
                 isUpdated = true;
