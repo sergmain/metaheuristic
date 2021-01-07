@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.preparing;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -103,7 +104,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     public String initSessionId() {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);

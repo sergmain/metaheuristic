@@ -80,7 +80,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
     public void before() {
 
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
@@ -138,7 +138,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         // in this scenario we test that a processor has got a refreshed sessionId
 
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore);

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -61,7 +62,7 @@ public class TestRequestProcessorId {
     @BeforeEach
     public void before() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
@@ -96,7 +97,7 @@ public class TestRequestProcessorId {
     @Test
     public void testRequestProcessorId() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
@@ -124,7 +125,7 @@ public class TestRequestProcessorId {
     @Test
     public void testEmptySessionId() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId.toString(), null);

@@ -125,8 +125,8 @@ public class TestMetadataParamsYaml {
         assertNotNull(metadata);
         assertNotNull(metadata.processors);
         assertFalse(metadata.processors.isEmpty());
-        assertTrue(metadata.processors.containsKey("http://localhost:8080"));
-        assertTrue(metadata.processors.containsKey("https://localhost:8888"));
+        assertEquals(1, metadata.processors.size());
+        assertTrue(metadata.processors.containsKey(Consts.DEFAULT_PROCESSOR_CODE));
         MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processors.get(Consts.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);

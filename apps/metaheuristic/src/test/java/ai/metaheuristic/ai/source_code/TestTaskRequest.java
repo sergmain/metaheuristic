@@ -86,7 +86,7 @@ public class TestTaskRequest extends FeatureMethods {
     private String step_1() {
         String sessionId;
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
@@ -116,7 +116,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
@@ -162,7 +162,7 @@ public class TestTaskRequest extends FeatureMethods {
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
         req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
@@ -179,7 +179,7 @@ public class TestTaskRequest extends FeatureMethods {
 
     private void step_4(String sessionId) {
         final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm1.requests.add(req1);
         req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
         req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);

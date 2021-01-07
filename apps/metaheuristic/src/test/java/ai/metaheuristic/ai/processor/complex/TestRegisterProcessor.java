@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.complex;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -111,7 +112,7 @@ public class TestRegisterProcessor {
     public void testRestPayload_asRest() throws Exception {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         DispatcherCommParamsYaml ed = requestServer(processorComm);
@@ -131,7 +132,7 @@ public class TestRegisterProcessor {
         sessionId = assignedProcessorId.getAssignedSessionId();
 
         processorComm = new ProcessorCommParamsYaml();
-        req = new ProcessorCommParamsYaml.ProcessorRequest();
+        req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
@@ -200,7 +201,10 @@ public class TestRegisterProcessor {
     @Test
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(new ProcessorCommParamsYaml());
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE));
+
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 
         final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
         mockMvc.perform(buildPostRequest(processorYaml, url))

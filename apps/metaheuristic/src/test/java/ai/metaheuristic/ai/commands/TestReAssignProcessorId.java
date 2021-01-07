@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -62,7 +63,7 @@ public class TestReAssignProcessorId {
     @BeforeEach
     public void before() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
@@ -104,7 +105,7 @@ public class TestReAssignProcessorId {
         // in this scenario we test that processor has got a new re-assigned processorId
 
         final ProcessorCommParamsYaml processorCommParamsYaml = new ProcessorCommParamsYaml();
-        final ProcessorCommParamsYaml.ProcessorRequest processorComm = new ProcessorCommParamsYaml.ProcessorRequest();
+        final ProcessorCommParamsYaml.ProcessorRequest processorComm = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorCommParamsYaml.requests.add(processorComm);
 
         processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));

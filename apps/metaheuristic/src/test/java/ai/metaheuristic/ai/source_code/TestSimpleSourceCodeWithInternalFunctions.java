@@ -96,7 +96,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
@@ -131,7 +131,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
 
     public void step_3(String sessionId) {
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
@@ -152,7 +152,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
 
     public void step_4(String sessionId) {
         final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest();
+        ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
         processorComm1.requests.add(req1);
 
         req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
