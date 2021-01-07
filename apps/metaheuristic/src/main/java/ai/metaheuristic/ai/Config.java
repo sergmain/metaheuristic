@@ -105,7 +105,7 @@ public class Config {
     @EnableAsync
     @RequiredArgsConstructor
     @Slf4j
-    @DependsOn({"Globals"})
+//    @DependsOn({"Globals"})
     public static class SpringAsyncConfig implements AsyncConfigurer {
 
         private final Globals globals;

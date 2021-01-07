@@ -66,7 +66,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-@DependsOn({"Globals", "MetadataService"})
+//@DependsOn({"Globals", "MetadataService"})
 public class ProcessorTaskService {
 
     private final Globals globals;

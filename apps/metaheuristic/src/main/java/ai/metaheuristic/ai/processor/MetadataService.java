@@ -62,7 +62,7 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-@DependsOn({"Globals"})
+//@DependsOn({"Globals"})
 public class MetadataService {
 
     private final ApplicationContext appCtx;

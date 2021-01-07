@@ -45,7 +45,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-@DependsOn({"DispatcherLookupExtendedService"})
+//@DependsOn({"DispatcherLookupExtendedService"})
 public class ProcessorEventBusService {
 
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;

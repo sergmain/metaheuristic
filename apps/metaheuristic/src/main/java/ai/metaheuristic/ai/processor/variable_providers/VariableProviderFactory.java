@@ -30,7 +30,7 @@ import java.util.Map;
 @Service
 @Profile("processor")
 @RequiredArgsConstructor
-@DependsOn({"DiskVariableProvider", "DispatcherVariableProvider"})
+//@DependsOn({"DiskVariableProvider", "DispatcherVariableProvider"})
 public class VariableProviderFactory {
 
     private final DiskVariableProvider diskVariableProvider;

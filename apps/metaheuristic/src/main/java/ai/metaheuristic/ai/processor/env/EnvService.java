@@ -36,7 +36,7 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 @Profile("processor")
-@DependsOn({"Globals"})
+//@DependsOn({"Globals"})
 public class EnvService {
 
     private final Globals globals;

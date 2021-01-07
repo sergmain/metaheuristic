@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @ToString
 @RequiredArgsConstructor
-@DependsOn({"Environment", "ApplicationContext"})
+//@DependsOn({"Environment", "ApplicationContext"})
 public class Globals {
 
     private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");

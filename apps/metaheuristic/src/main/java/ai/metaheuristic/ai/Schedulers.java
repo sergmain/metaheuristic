@@ -193,7 +193,7 @@ public class Schedulers {
     @Slf4j
     @Profile("processor")
     @RequiredArgsConstructor
-    @DependsOn({"DispatcherLookupExtendedService"})
+//    @DependsOn({"ai.metaheuristic.ai.processor.DispatcherLookupExtendedService"})
     public static class ProcessorSchedulers {
 
         private final Globals globals;

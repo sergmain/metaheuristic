@@ -44,7 +44,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Service
 @Slf4j
 @Profile("processor")
-@DependsOn({"Globals"})
+//@DependsOn({"Globals"})
 public class DispatcherLookupExtendedService {
 
     @SuppressWarnings("FieldCanBeLocal")
