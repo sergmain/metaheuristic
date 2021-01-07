@@ -46,45 +46,49 @@ public class ProcessorCommParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 v1, Long ... vars) {
-        ProcessorCommParamsYaml t = new ProcessorCommParamsYaml();
+    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 src, Long ... vars) {
+        ProcessorCommParamsYaml trg = new ProcessorCommParamsYaml();
 
-        if (v1.processorCommContext !=null) {
-            t.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext();
-            BeanUtils.copyProperties(v1.processorCommContext, t.processorCommContext);
-        }
-        if (v1.requestProcessorId !=null) {
-            t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
-        }
-        if (v1.requestTask!=null) {
-            t.requestTask = new ProcessorCommParamsYaml.RequestTask(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);
-        }
-        if (v1.reportTaskProcessingResult!=null) {
-            t.reportTaskProcessingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
-            t.reportTaskProcessingResult.results =
-                    v1.reportTaskProcessingResult.results!=null
-                            ? v1.reportTaskProcessingResult.results
-                            .stream()
-                            .map(o->new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
-        if (v1.checkForMissingOutputResources!=null) {
-            t.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources(true);
-        }
-        if (v1.resendTaskOutputResourceResult!=null) {
-            t.resendTaskOutputResourceResult = new ProcessorCommParamsYaml.ResendTaskOutputResourceResult();
-            t.resendTaskOutputResourceResult.statuses =
-                    v1.resendTaskOutputResourceResult.statuses!=null
-                            ? v1.resendTaskOutputResourceResult.statuses
-                            .stream()
-                            .map(o->new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.variableId, o.status))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
+        for (ProcessorCommParamsYamlV1.ProcessorRequestV1 v1 : src.requests) {
+            ProcessorCommParamsYaml.ProcessorRequest t = new ProcessorCommParamsYaml.ProcessorRequest(v1.processorCode);
 
-        BeanUtils.copyProperties(v1, t);
-        return t;
+            if (v1.processorCommContext !=null) {
+                t.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext();
+                BeanUtils.copyProperties(v1.processorCommContext, t.processorCommContext);
+            }
+            if (v1.requestProcessorId !=null) {
+                t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
+            }
+            if (v1.requestTask!=null) {
+                t.requestTask = new ProcessorCommParamsYaml.RequestTask(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);
+            }
+            if (v1.reportTaskProcessingResult!=null) {
+                t.reportTaskProcessingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
+                t.reportTaskProcessingResult.results =
+                        v1.reportTaskProcessingResult.results!=null
+                                ? v1.reportTaskProcessingResult.results
+                                .stream()
+                                .map(o->new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result))
+                                .collect(Collectors.toList())
+                                : new ArrayList<>();
+            }
+            if (v1.checkForMissingOutputResources!=null) {
+                t.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources(true);
+            }
+            if (v1.resendTaskOutputResourceResult!=null) {
+                t.resendTaskOutputResourceResult = new ProcessorCommParamsYaml.ResendTaskOutputResourceResult();
+                t.resendTaskOutputResourceResult.statuses =
+                        v1.resendTaskOutputResourceResult.statuses!=null
+                                ? v1.resendTaskOutputResourceResult.statuses
+                                .stream()
+                                .map(o->new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.variableId, o.status))
+                                .collect(Collectors.toList())
+                                : new ArrayList<>();
+            }
+
+            BeanUtils.copyProperties(v1, t);
+        }
+        return trg;
     }
 
     @NonNull

@@ -124,28 +124,27 @@ public class ProcessorKeepAliveRequestor {
 
         try {
             KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
-
             for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
+                KeepAliveRequestParamYaml.ProcessorRequest request = new KeepAliveRequestParamYaml.ProcessorRequest(ref.processorCode);
+                karpy.requests.add(request);
 
                 final String processorId = metadataService.getProcessorId(ref);
                 final String sessionId = metadataService.getSessionId(ref);
 
                 if (processorId == null || sessionId==null) {
-                    karpy.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId(ref.processorCode);
+                    request.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId();
+                    continue;
                 }
-                else {
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                        dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-                    final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                            dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+                request.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
+                // always report about current active tasks, if we have actual processorId
+                request.taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                request.processor = processorService.produceReportProcessorStatus(ref, dispatcher.schedule);
 
-                    karpy.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-                    // always report about current active tasks, if we have actual processorId
-                    karpy.taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                    karpy.processor = processorService.produceReportProcessorStatus(ref, dispatcher.schedule);
-
-                    AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-                    karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
-                }
+                AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
             }
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);

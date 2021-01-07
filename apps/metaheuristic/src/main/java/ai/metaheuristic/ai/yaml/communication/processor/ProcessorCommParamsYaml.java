@@ -118,6 +118,10 @@ public class ProcessorCommParamsYaml implements BaseParams {
         public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
         public String processorCode;
+
+        public ProcessorRequest(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final List<ProcessorRequest > requests = new ArrayList<>();

@@ -39,18 +39,6 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
 
     public final int version=1;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    public @Nullable ProcessorCommContextV1 processorCommContext;
-    public @Nullable RequestProcessorIdV1 requestProcessorId;
-    public @Nullable RequestTaskV1 requestTask;
-    public @Nullable ReportTaskProcessingResultV1 reportTaskProcessingResult;
-    public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
-    public @Nullable ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -115,4 +103,21 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
 
         public List<SimpleStatus> statuses;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessorRequestV1 {
+        public @Nullable ProcessorCommContextV1 processorCommContext;
+        public @Nullable RequestProcessorIdV1 requestProcessorId;
+        public @Nullable RequestTaskV1 requestTask;
+        public @Nullable ReportTaskProcessingResultV1 reportTaskProcessingResult;
+        public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
+        public @Nullable ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
+
+
+        public String processorCode;
+    }
+
+    public final List<ProcessorRequestV1> requests = new ArrayList<>();
 }
