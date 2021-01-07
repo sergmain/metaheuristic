@@ -52,7 +52,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
     @ToString
     public static class ProcessorV2 {
         // key is url of dispatcher
-        public final Map<String, ProcessorStateV2> states = new HashMap<>();
+        public final Map<String, ProcessorStateV2> states = new LinkedHashMap<>();
     }
 
     @Data

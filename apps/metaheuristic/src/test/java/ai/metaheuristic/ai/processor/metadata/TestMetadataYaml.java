@@ -39,24 +39,26 @@ public class TestMetadataYaml {
         assertNotNull(m);
         assertNotNull(m.getMetadata());
         assertNotNull(m.getProcessors());
+        assertEquals(Consts.DEFAULT_PROCESSOR_CODE, m.processors.keySet().stream().findFirst().orElse(null));
+
         assertEquals(1, m.getMetadata().size());
-        assertEquals(2, m.getProcessors().size());
-        Set<Map.Entry<String, MetadataParamsYaml.Processor>> entry = m.getProcessors().entrySet();
-        Iterator<Map.Entry<String, MetadataParamsYaml.Processor>> iterator = entry.iterator();
-        Map.Entry<String, MetadataParamsYaml.Processor> map = iterator.next();
-        Map.Entry<String, MetadataParamsYaml.Processor> map1 = iterator.next();
+        assertEquals(1, m.getProcessors().size());
+        final MetadataParamsYaml.Processor actual = m.getProcessors().values().stream().findFirst().orElse(null);
+        assertNotNull(actual);
+        Set<Map.Entry<String, MetadataParamsYaml.ProcessorState>> entry = actual.states.entrySet();
+        Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorState>> iterator = entry.iterator();
+        Map.Entry<String, MetadataParamsYaml.ProcessorState> map = iterator.next();
+        Map.Entry<String, MetadataParamsYaml.ProcessorState> map1 = iterator.next();
 
-        assertEquals(Consts.DEFAULT_PROCESSOR_CODE, map.getKey());
-        MetadataParamsYaml.Processor p = map.getValue();
-        assertTrue(p.states.containsKey("http://localhost:8080"));
-        assertEquals("localhost-8080", p.states.get("http://localhost:8080").dispatcherCode);
-        assertEquals("15", p.states.get("http://localhost:8080").processorId);
+        MetadataParamsYaml.ProcessorState p = map.getValue();
 
+        assertEquals("http://localhost:8080", map.getKey());
+        assertEquals("localhost-8080", map.getValue().dispatcherCode);
+        assertEquals("15", map.getValue().processorId);
 
-        MetadataParamsYaml.Processor p1 = map1.getValue();
-        assertTrue(p1.states.containsKey("http://host"));
-        assertEquals("host", p.states.get("http://host").dispatcherCode);
-        assertNull(p.states.get("http://host").processorId);
+        assertEquals("http://host", map1.getKey());
+        assertEquals("host", map1.getValue().dispatcherCode);
+        assertNull(map1.getValue().processorId);
     }
 
     @Test
@@ -80,7 +82,7 @@ public class TestMetadataYaml {
         assertNotNull(m.metadata);
         assertNotNull(m.processors);
         assertEquals(0, m.metadata.size());
-        assertEquals(0, m.processors.size());
+        assertEquals(1, m.processors.size());
     }
 
 
