@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.processor.metadata;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
@@ -40,18 +41,22 @@ public class TestMetadataYaml {
         assertNotNull(m.getProcessors());
         assertEquals(1, m.getMetadata().size());
         assertEquals(2, m.getProcessors().size());
-        Set<Map.Entry<String, MetadataParamsYaml.ProcessorState>> entry = m.getProcessors().entrySet();
-        Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorState>> iterator = entry.iterator();
-        Map.Entry<String, MetadataParamsYaml.ProcessorState> map = iterator.next();
-        Map.Entry<String, MetadataParamsYaml.ProcessorState> map1 = iterator.next();
+        Set<Map.Entry<String, MetadataParamsYaml.Processor>> entry = m.getProcessors().entrySet();
+        Iterator<Map.Entry<String, MetadataParamsYaml.Processor>> iterator = entry.iterator();
+        Map.Entry<String, MetadataParamsYaml.Processor> map = iterator.next();
+        Map.Entry<String, MetadataParamsYaml.Processor> map1 = iterator.next();
 
-        assertEquals("http://localhost:8080", map.getKey());
-        assertEquals("localhost-8080", map.getValue().dispatcherCode);
-        assertEquals("15", map.getValue().processorId);
+        assertEquals(Consts.DEFAULT_PROCESSOR_CODE, map.getKey());
+        MetadataParamsYaml.Processor p = map.getValue();
+        assertTrue(p.states.containsKey("http://localhost:8080"));
+        assertEquals("localhost-8080", p.states.get("http://localhost:8080").dispatcherCode);
+        assertEquals("15", p.states.get("http://localhost:8080").processorId);
 
-        assertEquals("http://host", map1.getKey());
-        assertEquals("host", map1.getValue().dispatcherCode);
-        assertNull(map1.getValue().processorId);
+
+        MetadataParamsYaml.Processor p1 = map1.getValue();
+        assertTrue(p1.states.containsKey("http://host"));
+        assertEquals("host", p.states.get("http://host").dispatcherCode);
+        assertNull(p.states.get("http://host").processorId);
     }
 
     @Test

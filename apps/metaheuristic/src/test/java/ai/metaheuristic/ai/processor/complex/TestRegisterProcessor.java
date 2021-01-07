@@ -113,29 +113,38 @@ public class TestRegisterProcessor {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         DispatcherCommParamsYaml ed = requestServer(processorComm);
 
-        assertNotNull(ed.getAssignedProcessorId());
-        assertNotNull(ed.getAssignedProcessorId().getAssignedProcessorId());
-        assertFalse(ed.getAssignedProcessorId().getAssignedProcessorId().isBlank());
-        assertNotNull(ed.getAssignedProcessorId().getAssignedSessionId());
-        assertFalse(ed.getAssignedProcessorId().getAssignedSessionId().isBlank());
+        assertNotNull(ed);
+        assertEquals(1, ed.responses.size());
+        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = ed.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.getAssignedProcessorId());
+        assertFalse(assignedProcessorId.getAssignedProcessorId().isBlank());
+        assertNotNull(assignedProcessorId.getAssignedSessionId());
+        assertFalse(assignedProcessorId.getAssignedSessionId().isBlank());
 
-        processorIdAsStr = ed.getAssignedProcessorId().getAssignedProcessorId();
+        processorIdAsStr = assignedProcessorId.getAssignedProcessorId();
         processorId = Long.valueOf(processorIdAsStr);
         processorIds.add(processorId);
-        sessionId = ed.getAssignedProcessorId().getAssignedSessionId();
+        sessionId = assignedProcessorId.getAssignedSessionId();
 
         processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        processorComm.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
-        processorComm.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+        req.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
         ed = requestServer(processorComm);
-        if (ed.getAssignedProcessorId()!=null) {
+
+        assignedProcessorId = ed.responses.get(0).getAssignedProcessorId();
+
+        if (assignedProcessorId!=null) {
             // collect for deletion
-            processorIds.add(Long.valueOf(ed.getAssignedProcessorId().getAssignedProcessorId()));
+            processorIds.add(Long.valueOf(assignedProcessorId.getAssignedProcessorId()));
         }
-        assertNull(ed.getAssignedProcessorId());
+        assertNull(assignedProcessorId);
 
         Processor s = processorRepository.findById(processorId).orElse(null);
         assertNotNull(s);

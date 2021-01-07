@@ -86,12 +86,15 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.getAssignedProcessorId());
+        assertNotNull(assignedProcessorId.getAssignedSessionId());
 
-        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
-        sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
+        processorIdBefore = Long.valueOf(assignedProcessorId.getAssignedProcessorId());
+        sessionIdBefore = assignedProcessorId.getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -132,7 +135,9 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         // in this scenario we test that a processor has got a refreshed sessionId
 
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore);
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore);
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");

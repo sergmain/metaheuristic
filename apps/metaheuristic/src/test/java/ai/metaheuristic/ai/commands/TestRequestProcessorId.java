@@ -67,11 +67,14 @@ public class TestRequestProcessorId {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.getAssignedProcessorId());
+        assertNotNull(assignedProcessorId.getAssignedSessionId());
 
-        processorId = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        processorId = Long.valueOf(assignedProcessorId.getAssignedProcessorId());
 
         System.out.println("processorId: " + processorId);
     }
@@ -96,16 +99,18 @@ public class TestRequestProcessorId {
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
-
         assertNotNull(d);
-        assertNotNull(d.getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.getAssignedProcessorId());
+        assertNotNull(assignedProcessorId.getAssignedSessionId());
 
-        System.out.println("processorId: " + d.getAssignedProcessorId().getAssignedProcessorId());
-        System.out.println("sessionId: " + d.getAssignedProcessorId().getAssignedSessionId());
+        System.out.println("processorId: " + assignedProcessorId.getAssignedProcessorId());
+        System.out.println("sessionId: " + assignedProcessorId.getAssignedSessionId());
 
-        processorId = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        processorId = Long.valueOf(assignedProcessorId.getAssignedProcessorId());
 
         Processor s = processorCache.findById(processorId);
 
@@ -115,24 +120,30 @@ public class TestRequestProcessorId {
     @Test
     public void testEmptySessionId() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId.toString(), null);
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId.toString(), null);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
         assertNotNull(d);
-        assertNotNull(d.getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+
+        assertNotNull(reAssignedProcessorId.getReAssignedProcessorId());
+        assertNotNull(reAssignedProcessorId.getSessionId());
         // actually, only sessionId was changed, processorId must be the same
 
-        Long processorIdForEmptySession = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        Long processorIdForEmptySession = Long.valueOf(reAssignedProcessorId.getReAssignedProcessorId());
 
         assertEquals(processorId, processorIdForEmptySession);
 
 
-        System.out.println("processorId: " + d.getReAssignedProcessorId().getReAssignedProcessorId());
-        System.out.println("sessionId: " + d.getReAssignedProcessorId().getSessionId());
+        System.out.println("processorId: " + reAssignedProcessorId.getReAssignedProcessorId());
+        System.out.println("sessionId: " + reAssignedProcessorId.getSessionId());
 
         Processor s = processorCache.findById(processorIdForEmptySession);
 

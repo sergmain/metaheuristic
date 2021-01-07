@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -86,12 +87,15 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         DispatcherCommParamsYaml dispatcherComm = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(dispatcherComm);
-        assertNotNull(dispatcherComm.getAssignedProcessorId());
-        assertNotNull(dispatcherComm.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(dispatcherComm.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(dispatcherComm.responses);
+        assertEquals(1, dispatcherComm.responses.size());
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = dispatcherComm.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.getAssignedProcessorId());
+        assertNotNull(assignedProcessorId.getAssignedSessionId());
 
-        processorIdBefore = Long.valueOf(dispatcherComm.getAssignedProcessorId().getAssignedProcessorId());
-        sessionIdBefore = dispatcherComm.getAssignedProcessorId().getAssignedSessionId();
+        processorIdBefore = Long.valueOf(assignedProcessorId.getAssignedProcessorId());
+        sessionIdBefore = assignedProcessorId.getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -117,7 +121,9 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         // in this scenario we test that processor has got a new re-assigned processorId
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownProcessorId.toString(), sessionIdBefore.substring(0, 4));
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
+        processorComm.requests.add(req);
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownProcessorId.toString(), sessionIdBefore.substring(0, 4));
 
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
@@ -125,11 +131,14 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.getReAssignedProcessorId());
+        assertNotNull(reAssignedProcessorId.getSessionId());
 
-        Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        Long processorId = Long.valueOf(reAssignedProcessorId.getReAssignedProcessorId());
 
         assertNotEquals(unknownProcessorId, processorId);
 

@@ -38,7 +38,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestKeepAliveRequestParamYamlUtils {
 
     private KeepAliveRequestParamYamlV1 getKeepAliveRequestParamYamlV1() {
-        KeepAliveRequestParamYamlV1 r = new KeepAliveRequestParamYamlV1();
+        KeepAliveRequestParamYamlV1 req = new KeepAliveRequestParamYamlV1();
+        KeepAliveRequestParamYamlV1.ProcessorRequestV1 r = new KeepAliveRequestParamYamlV1.ProcessorRequestV1();
+        req.requests.add(r);
         r.processor = new KeepAliveRequestParamYamlV1.ReportProcessorV1();
 
         r.processor.env = new KeepAliveRequestParamYamlV1.EnvV1("tag1");
@@ -58,14 +60,14 @@ public class TestKeepAliveRequestParamYamlUtils {
         r.processor.os = EnumsApi.OS.any;
         r.processor.currDir = "/home";
 
-        r.functions.statuses.addAll(List.of(new KeepAliveRequestParamYamlV1.FunctionDownloadStatusV1.Status("code1", Enums.FunctionState.none),
-                new KeepAliveRequestParamYamlV1.FunctionDownloadStatusV1.Status("code2", Enums.FunctionState.checksum_wrong)));
+        req.functions.statuses.addAll(List.of(new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code1", Enums.FunctionState.none),
+                new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code2", Enums.FunctionState.checksum_wrong)));
 
         r.requestProcessorId = new KeepAliveRequestParamYamlV1.RequestProcessorIdV1();
 
         r.processorCommContext = new KeepAliveRequestParamYamlV1.ProcessorCommContextV1(11L, "session-11");
 
-        return r;
+        return req;
     }
 
     @Test
@@ -75,41 +77,43 @@ public class TestKeepAliveRequestParamYamlUtils {
 
         System.out.println(KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(kar2));
 
-        assertNotNull(kar2.processor);
-        assertNotNull(kar2.processor.env);
+        assertEquals(1, kar2.requests.size());
+        
+        assertNotNull(kar2.requests.get(0).processor);
+        assertNotNull(kar2.requests.get(0).processor.env);
 
-        assertEquals("tag1", kar2.processor.env.tags);
-        assertEquals(2, kar2.processor.env.envs.size());
-        assertEquals("env-value1", kar2.processor.env.envs.get("env-key1"));
-        assertEquals("env-value2", kar2.processor.env.envs.get("env-key2"));
-        assertEquals(2, kar2.processor.env.mirrors.size());
-        assertEquals("mirror-value1", kar2.processor.env.mirrors.get("mirror-key1"));
-        assertEquals("mirror-value2", kar2.processor.env.mirrors.get("mirror-key2"));
-        assertEquals(2, kar2.processor.env.disk.size());
-        assertEquals("code1", kar2.processor.env.disk.get(0).code);
-        assertEquals("path1", kar2.processor.env.disk.get(0).path);
-        assertEquals("code2", kar2.processor.env.disk.get(1).code);
-        assertEquals("path2", kar2.processor.env.disk.get(1).path);
+        assertEquals("tag1", kar2.requests.get(0).processor.env.tags);
+        assertEquals(2, kar2.requests.get(0).processor.env.envs.size());
+        assertEquals("env-value1", kar2.requests.get(0).processor.env.envs.get("env-key1"));
+        assertEquals("env-value2", kar2.requests.get(0).processor.env.envs.get("env-key2"));
+        assertEquals(2, kar2.requests.get(0).processor.env.mirrors.size());
+        assertEquals("mirror-value1", kar2.requests.get(0).processor.env.mirrors.get("mirror-key1"));
+        assertEquals("mirror-value2", kar2.requests.get(0).processor.env.mirrors.get("mirror-key2"));
+        assertEquals(2, kar2.requests.get(0).processor.env.disk.size());
+        assertEquals("code1", kar2.requests.get(0).processor.env.disk.get(0).code);
+        assertEquals("path1", kar2.requests.get(0).processor.env.disk.get(0).path);
+        assertEquals("code2", kar2.requests.get(0).processor.env.disk.get(1).code);
+        assertEquals("path2", kar2.requests.get(0).processor.env.disk.get(1).path);
 
-        assertNotNull(kar2.processor.gitStatusInfo);
+        assertNotNull(kar2.requests.get(0).processor.gitStatusInfo);
 
-        assertEquals(Enums.GitStatus.unknown, kar2.processor.gitStatusInfo.status);
-        assertEquals("ver1", kar2.processor.gitStatusInfo.version);
-        assertEquals("no-error", kar2.processor.gitStatusInfo.error);
+        assertEquals(Enums.GitStatus.unknown, kar2.requests.get(0).processor.gitStatusInfo.status);
+        assertEquals("ver1", kar2.requests.get(0).processor.gitStatusInfo.version);
+        assertEquals("no-error", kar2.requests.get(0).processor.gitStatusInfo.error);
 
-        assertEquals("schedule1", kar2.processor.schedule);
-        assertEquals("sessionId-42", kar2.processor.sessionId);
-        assertEquals(13, kar2.processor.sessionCreatedOn);
-        assertEquals("192.168.0.17", kar2.processor.ip);
-        assertEquals("host-17", kar2.processor.host);
-        assertEquals("host-17", kar2.processor.host);
-        assertEquals(2, kar2.processor.errors.size());
-        assertEquals("error-1", kar2.processor.errors.get(0));
-        assertEquals("error-2", kar2.processor.errors.get(1));
-        assertTrue(kar2.processor.logDownloadable);
-        assertEquals(2, kar2.processor.taskParamsVersion);
-        assertEquals(EnumsApi.OS.any, kar2.processor.os);
-        assertEquals("/home", kar2.processor.currDir);
+        assertEquals("schedule1", kar2.requests.get(0).processor.schedule);
+        assertEquals("sessionId-42", kar2.requests.get(0).processor.sessionId);
+        assertEquals(13, kar2.requests.get(0).processor.sessionCreatedOn);
+        assertEquals("192.168.0.17", kar2.requests.get(0).processor.ip);
+        assertEquals("host-17", kar2.requests.get(0).processor.host);
+        assertEquals("host-17", kar2.requests.get(0).processor.host);
+        assertEquals(2, kar2.requests.get(0).processor.errors.size());
+        assertEquals("error-1", kar2.requests.get(0).processor.errors.get(0));
+        assertEquals("error-2", kar2.requests.get(0).processor.errors.get(1));
+        assertTrue(kar2.requests.get(0).processor.logDownloadable);
+        assertEquals(2, kar2.requests.get(0).processor.taskParamsVersion);
+        assertEquals(EnumsApi.OS.any, kar2.requests.get(0).processor.os);
+        assertEquals("/home", kar2.requests.get(0).processor.currDir);
 
         assertNotNull(kar2.functions.statuses);
         assertEquals(2, kar2.functions.statuses.size());
@@ -118,11 +122,10 @@ public class TestKeepAliveRequestParamYamlUtils {
         assertEquals("code2", kar2.functions.statuses.get(1).code);
         assertEquals(Enums.FunctionState.checksum_wrong, kar2.functions.statuses.get(1).state);
 
-        assertNotNull(kar2.requestProcessorId);
-        assertTrue(kar2.requestProcessorId.keep);
+        assertNotNull(kar2.requests.get(0).requestProcessorId);
 
-        assertNotNull(kar2.processorCommContext);
-        assertEquals(11L, kar2.processorCommContext.processorId);
-        assertEquals("session-11", kar2.processorCommContext.sessionId);
+        assertNotNull(kar2.requests.get(0).processorCommContext);
+        assertEquals(11L, kar2.requests.get(0).processorCommContext.processorId);
+        assertEquals("session-11", kar2.requests.get(0).processorCommContext.sessionId);
     }
 }

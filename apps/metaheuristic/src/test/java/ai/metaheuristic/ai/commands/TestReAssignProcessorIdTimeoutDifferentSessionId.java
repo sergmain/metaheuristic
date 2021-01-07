@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -89,12 +90,15 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
-        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        assertNotNull(assignedProcessorId);
+        assertNotNull(assignedProcessorId.assignedProcessorId);
+        assertNotNull(assignedProcessorId.assignedSessionId);
 
-        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
-        sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
+        processorIdBefore = Long.valueOf(assignedProcessorId.assignedProcessorId);
+        sessionIdBefore = assignedProcessorId.assignedSessionId;
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -130,8 +134,11 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         setSessionAsExpired();
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
+        processorComm.requests.add(req);
+
         final String newSessionId = sessionIdBefore + '-';
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), newSessionId);
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), newSessionId);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
@@ -139,13 +146,16 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
 
         assertNotNull(d);
-        assertNotNull(d.getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
-        assertNotNull(d.getReAssignedProcessorId().getSessionId());
+        assertNotNull(d.responses);
+        assertEquals(1, d.responses.size());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.sessionId);
 
-        final Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        final Long processorId = Long.valueOf(reAssignedProcessorId.getReAssignedProcessorId());
         assertEquals(processorIdBefore, processorId);
-        assertNotEquals(newSessionId, d.getReAssignedProcessorId().getSessionId());
+        assertNotEquals(newSessionId, reAssignedProcessorId.getSessionId());
 
         Processor s = processorCache.findById(processorId);
 
@@ -158,7 +168,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         // 1L was used as an expired value
         assertNotEquals(EXPIRED_SESSION_CREATED_ON, ss.sessionCreatedOn);
 
-        assertEquals(d.getReAssignedProcessorId().getSessionId(), ss.sessionId);
+        assertEquals(reAssignedProcessorId.sessionId, ss.sessionId);
         assertTrue(ss.sessionCreatedOn > EXPIRED_SESSION_CREATED_ON);
     }
 

@@ -103,7 +103,10 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     public String initSessionId() {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest();
+        processorComm.requests.add(req);
+
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
 
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
@@ -112,11 +115,13 @@ public abstract class FeatureMethods extends PreparingExperiment {
         DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d0);
-        assertNotNull(d0.getReAssignedProcessorId());
-        assertNotNull(d0.getReAssignedProcessorId().sessionId);
-        assertEquals(processorIdAsStr, d0.getReAssignedProcessorId().reAssignedProcessorId);
+        assertEquals(1, d0.responses.size());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.sessionId);
+        assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
 
-        String sessionId = d0.getReAssignedProcessorId().sessionId;
+        String sessionId = reAssignedProcessorId.sessionId;
         return sessionId;
     }
 
