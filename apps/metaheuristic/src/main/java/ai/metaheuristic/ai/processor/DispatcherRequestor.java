@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,10 +123,14 @@ public class DispatcherRequestor {
         if (!globals.processorEnabled) {
             return;
         }
+        if (dispatcher.dispatcherLookup.disabled) {
+            log.warn("#775.020 dispatcher {} is disabled", dispatcherUrl.url);
+            return;
+        }
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
+            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
                 if (!ref.dispatcherUrl.equals(dispatcherUrl)) {
                     continue;
                 }

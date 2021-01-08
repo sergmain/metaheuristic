@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -59,7 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @SuppressWarnings({"WeakerAccess", "DuplicatedCode"})
 @Service
@@ -74,7 +72,17 @@ public class ProcessorTaskService {
     private final MetadataService metadataService;
     private final EnvService envService;
 
-    private final Map<DispatcherUrl, Map<Long, ProcessorTask>> map = new ConcurrentHashMap<>();
+    /**key - processorCode
+     * value:
+     *      Map of:
+     *      key - DispatcherUrl
+     *      value:
+     *             Map.of:
+     *             key - ProcessorTask.taskId,
+     *             Value - ProcessorTask
+     */
+    private final Map<String, Map<DispatcherUrl, Map<Long, ProcessorTask>>> map = new ConcurrentHashMap<>();
+//    private final Map<DispatcherUrl, Map<Long, ProcessorTask>> map = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -82,7 +90,7 @@ public class ProcessorTaskService {
             return;
         }
         try {
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
+            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
                 File processorDir = new File(globals.processorDir, ref.processorCode);
                 File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
                 if (!processorTaskDir.exists()) {
@@ -402,7 +410,7 @@ public class ProcessorTaskService {
     }
 
     private Map<Long, ProcessorTask> getMapForDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        return map.computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
+        return map.computeIfAbsent(ref.processorCode, k->new HashMap<>()).computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
     }
 
     public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {
@@ -466,11 +474,7 @@ public class ProcessorTaskService {
             File taskDir = new File(dispatcherDir, path);
             try {
                 //noinspection StatementWithEmptyBody
-                if (taskDir.exists()) {
-//                deleteOrRenameTaskDir(taskDir, taskYamlFile);
-//                    FileUtils.deleteDirectory(taskDir);
-                }
-                else {
+                if (!taskDir.exists()) {
                     taskDir.mkdirs();
                 }
                 //noinspection ResultOfMethodCallIgnored

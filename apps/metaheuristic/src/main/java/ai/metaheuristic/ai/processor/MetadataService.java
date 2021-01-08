@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -120,7 +119,7 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new MetadataParamsYaml();
         }
-        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllRefs()) {
+        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
             processorStateByDispatcherUrl(ref);
         }
 /*
@@ -265,13 +264,22 @@ public class MetadataService {
         }
     }
 
-    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefs() {
         synchronized (syncObj) {
             Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
                 for (Map.Entry<String, MetadataParamsYaml.ProcessorState> stateEntry : processorEntry.getValue().states.entrySet()) {
+                    final DispatcherUrl dispatcherUrl = new DispatcherUrl(stateEntry.getKey());
+/*
+                    final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
+
+                    if (dispatcher==null || dispatcher.dispatcherLookup.disabled) {
+                        continue;
+                    }
+*/
+
                     refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                            processorEntry.getKey(), stateEntry.getValue().processorId, new DispatcherUrl(stateEntry.getKey()) ));
+                            processorEntry.getKey(), stateEntry.getValue().processorId, dispatcherUrl));
                 }
             }
             return refs;
