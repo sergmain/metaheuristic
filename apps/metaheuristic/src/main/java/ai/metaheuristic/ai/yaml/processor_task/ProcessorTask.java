@@ -30,6 +30,8 @@ import java.util.Set;
 @NoArgsConstructor
 public class ProcessorTask {
 
+    // TODO 2020-12-30 'String dispatcherUrl' need to be changed it to DispatcherServerUrl when this class will be based on BaseClass
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

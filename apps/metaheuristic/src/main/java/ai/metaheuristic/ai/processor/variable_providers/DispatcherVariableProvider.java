@@ -78,8 +78,7 @@ public class DispatcherVariableProvider implements VariableProvider {
             }
             else {
                 DownloadVariableTask variableTask = new DownloadVariableTask(
-                        ref,
-                        variable.id, variable.context, task.getTaskId(), taskDir,
+                        ref, variable.id, variable.context, task.getTaskId(), taskDir,
                         dispatcher.dispatcherLookup, variable.getNullable());
                 downloadVariableService.add(variableTask);
             }

@@ -17,9 +17,12 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -29,12 +32,18 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +59,34 @@ public class TaskAssetPreparer {
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
     private final ProcessorService processorService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public static class TaskAssetPreparingSync {
+        private static final CommonSync<String> commonSync = new CommonSync<>();
+
+        public static <T> T getWithSync(final String processorCode, Supplier<T> supplier) {
+            TxUtils.checkTxNotExists();
+            final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(processorCode);
+            try {
+                lock.lock();
+                return supplier.get();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Nullable
+        public static <T> T getWithSyncNullable(final String processorCode, Supplier<T> supplier) {
+            TxUtils.checkTxNotExists();
+            final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(processorCode);
+            try {
+                lock.lock();
+                return supplier.get();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
 
     public void fixedDelay() {
         if (globals.isUnitTesting) {
@@ -65,8 +102,9 @@ public class TaskAssetPreparer {
             processorTaskService.findAll(ref).forEach(task -> {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
-                    log.info("#951.010 Deleted orphan task #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
-                    log.info("#951.010  registered execContext: {}", currentExecState.getExecContexts(dispatcherUrl));
+                    processorTaskService.delete(ref, task.taskId);
+                    log.info("#951.010 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
+                    log.info("#951.015  registered execContext: {}", currentExecState.getExecContexts(dispatcherUrl));
                 }
             });
 
@@ -75,65 +113,82 @@ public class TaskAssetPreparer {
             if (tasks.size()>1) {
                 log.warn("#951.020 There is more than one task: {}", tasks.stream().map(ProcessorTask::getTaskId).collect(Collectors.toList()));
             }
+
             for (ProcessorTask task : tasks) {
-                if (StringUtils.isBlank(task.dispatcherUrl)) {
-                    log.error("#951.040 dispatcherUrl for task {} is blank", task.getTaskId());
-                    continue;
-                }
-                if (StringUtils.isBlank(task.getParams())) {
-                    log.error("#951.060 Params for task {} is blank", task.getTaskId());
-                    continue;
-                }
-
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
-
-                final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
-                if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-                    log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.processorCode, ref.dispatcherUrl.url);
-                    continue;
-                }
-
-                final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-
-                if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(ref.dispatcherUrl, task.execContextId)) {
-                    processorTaskService.delete(ref, task.taskId);
-                    log.info("#951.080 Deleted orphan task {}", task);
-                    continue;
-                }
-                final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-
-                // Start preparing data for function
-                File taskDir = processorTaskService.prepareTaskDir(ref, task.taskId);
-                ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
-                if (resultOfChecking.isError) {
-                    continue;
-                }
-
-                // start preparing functions
-                final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
-                final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
-                if ( !checkFunctionPreparedness(ref, functionConfig, assetManagerUrl, task.taskId) ) {
-                    isAllReady.set(false);
-                }
-                taskParamYaml.task.preFunctions.forEach(sc-> {
-                    if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
-                        isAllReady.set(false);
-                    }
-                });
-                taskParamYaml.task.postFunctions.forEach(sc-> {
-                    if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
-                        isAllReady.set(false);
-                    }
-                });
-
-                // update the status of task if everything is prepared
-                if (isAllReady.get()) {
-                    log.info("#951.140 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
-                    processorTaskService.markAsAssetPrepared(ref, task.taskId, true);
-                }
+                eventPublisher.publishEvent(new AssetPreparingForProcessorTaskEvent(ref, task.taskId));
             }
         }
+    }
+
+    @Async
+    @EventListener
+    public void processAssetPreparing(AssetPreparingForProcessorTaskEvent event) {
+        TaskAssetPreparingSync.getWithSyncNullable(event.ref.processorCode,
+                ()-> processAssetPreparingInternal(event.ref, event.taskId));
+    }
+
+    private Void processAssetPreparingInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
+        ProcessorTask task = processorTaskService.findById(ref, taskId);
+        if (task==null) {
+            return null;
+        }
+        if (StringUtils.isBlank(task.dispatcherUrl)) {
+            log.error("#951.040 dispatcherUrl for task {} is blank", task.getTaskId());
+            return null;
+        }
+        if (StringUtils.isBlank(task.getParams())) {
+            log.error("#951.060 Params for task {} is blank", task.getTaskId());
+            return null;
+        }
+
+        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
+
+        final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
+        if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
+            log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.processorCode, ref.dispatcherUrl.url);
+            return null;
+        }
+
+        final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+
+        if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(ref.dispatcherUrl, task.execContextId)) {
+            processorTaskService.delete(ref, task.taskId);
+            log.info("#951.080 Deleted orphan task {}", task);
+            return null;
+        }
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+
+        // Start preparing data for function
+        File taskDir = processorTaskService.prepareTaskDir(ref, task.taskId);
+        ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
+        if (resultOfChecking.isError) {
+            return null;
+        }
+
+        // start preparing functions
+        final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
+        final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
+        if ( !checkFunctionPreparedness(ref, functionConfig, assetManagerUrl, task.taskId) ) {
+            isAllReady.set(false);
+        }
+        taskParamYaml.task.preFunctions.forEach(sc-> {
+            if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
+                isAllReady.set(false);
+            }
+        });
+        taskParamYaml.task.postFunctions.forEach(sc-> {
+            if ( !checkFunctionPreparedness(ref, sc, assetManagerUrl, task.taskId) ) {
+                isAllReady.set(false);
+            }
+        });
+
+        // update the status of task if everything is prepared
+        if (isAllReady.get()) {
+            log.info("#951.140 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
+            processorTaskService.markAsAssetPrepared(ref, task.taskId, true);
+        }
+        return null;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -164,7 +219,7 @@ public class TaskAssetPreparer {
                     processorTaskService.markAsFinishedWithError(ref,
                             taskId,
                             S.f("Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
-                            taskId, ref.dispatcherUrl.url, functionConfig.code));
+                                    taskId, ref.dispatcherUrl.url, functionConfig.code));
                 }
                 if (functionState!= Enums.FunctionState.ready) {
                     log.warn("#951.180 Function {} has broken state as {}", functionConfig.code, functionState);
@@ -174,4 +229,5 @@ public class TaskAssetPreparer {
         }
         return true;
     }
+
 }

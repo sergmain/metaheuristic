@@ -74,7 +74,7 @@ public class Globals {
     @Value("${mh.thread-number.scheduler:#{null}}")
     public Integer schedulerThreadNumber;
 
-    @Value("${mh.thread-number.event:#{null}}")
+    @Value("${mh.thread-number.event:#{2}}")
     public Integer eventThreadNumber;
 
     @Value("${mh.is-testing:#{false}}")
