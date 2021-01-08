@@ -255,13 +255,19 @@ public class MetadataService {
 
     public MetadataParamsYaml.ProcessorState processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref);
+            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
                 processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
                 updateMetadataFile();
             }
             return processorState;
+        }
+    }
+
+    public List<String> getProcessorCodes() {
+        synchronized (syncObj) {
+            return new ArrayList<>(metadata.processors.keySet());
         }
     }
 
@@ -294,6 +300,9 @@ public class MetadataService {
         synchronized (syncObj) {
             Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
+                if (processorEntry.getValue()==null) {
+                    continue;
+                }
                 for (Map.Entry<String, MetadataParamsYaml.ProcessorState> stateEntry : processorEntry.getValue().states.entrySet()) {
                     final DispatcherUrl dispatcherUrl = new DispatcherUrl(stateEntry.getKey());
                     if (function.apply(dispatcherUrl)) {
@@ -307,9 +316,9 @@ public class MetadataService {
     }
 
     @Nullable
-    public String getProcessorId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public String getProcessorId(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return getDispatcherInfo(ref).processorId;
+            return getDispatcherInfo(processorCode, dispatcherUrl).processorId;
         }
     }
 
@@ -332,7 +341,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref);
+            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
@@ -486,27 +495,27 @@ public class MetadataService {
     }
 
     @Nullable
-    public String getSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public String getSessionId(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return getDispatcherInfo(ref).sessionId;
+            return getDispatcherInfo(processorCode, dispatcherUrl).sessionId;
         }
     }
 
     @SuppressWarnings("unused")
-    public void setSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String sessionId) {
+    public void setSessionId(String processorCode, DispatcherUrl dispatcherUrl, String sessionId) {
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
         synchronized (syncObj) {
-            getDispatcherInfo(ref).processorId = sessionId;
+            getDispatcherInfo(processorCode, dispatcherUrl).processorId = sessionId;
             updateMetadataFile();
         }
     }
 
-    private MetadataParamsYaml.ProcessorState getDispatcherInfo(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    private MetadataParamsYaml.ProcessorState getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(ref.processorCode, o->new MetadataParamsYaml.Processor());
-            return p.states.computeIfAbsent(ref.dispatcherUrl.url, m -> asEmptyProcessorState(ref.dispatcherUrl));
+            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(processorCode, o->new MetadataParamsYaml.Processor());
+            return p.states.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
         }
     }
 

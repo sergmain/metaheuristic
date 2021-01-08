@@ -87,8 +87,8 @@ public class ProcessorKeepAliveProcessor {
         if (response.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorId(ref);
-        final String currSessionId = metadataService.getSessionId(ref);
+        final String currProcessorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
+        final String currSessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(response.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(response.reAssignedProcessorId.sessionId)

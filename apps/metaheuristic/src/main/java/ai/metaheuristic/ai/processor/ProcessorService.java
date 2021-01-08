@@ -85,7 +85,7 @@ public class ProcessorService {
                 to(envService.getEnvYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
-                metadataService.getSessionId(ref),
+                metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null,
                 logFile!=null && logFile.exists(),

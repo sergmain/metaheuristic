@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
@@ -63,7 +64,7 @@ public class DispatcherLookupExtendedService {
     );
 
     // Collections.unmodifiableMap
-    public Map<DispatcherUrl, DispatcherLookupExtended> lookupExtendedMap = Map.of();
+    public final Map<DispatcherUrl, DispatcherLookupExtended> lookupExtendedMap;
     public final Map<ProcessorAndCoreData.AssetManagerUrl, DispatcherLookupParamsYaml.AssetManager> assets = new HashMap<>();
 
     @Data
@@ -75,61 +76,70 @@ public class DispatcherLookupExtendedService {
     }
 
     public DispatcherLookupExtendedService(Globals globals) {
-        this.globals = globals;
-        final File dispatcherFile = new File(globals.processorDir, Consts.DISPATCHER_YAML_FILE_NAME);
-        final String cfg;
-        if (!dispatcherFile.exists()) {
-            if (globals.defaultDispatcherYamlFile == null) {
-                log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
-                return;
+        Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
+        try {
+            this.globals = globals;
+            final File dispatcherFile = new File(globals.processorDir, Consts.DISPATCHER_YAML_FILE_NAME);
+            final String cfg;
+            if (!dispatcherFile.exists()) {
+                if (globals.defaultDispatcherYamlFile == null) {
+                    log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
+                    return;
+                }
+                if (!globals.defaultDispatcherYamlFile.exists()) {
+                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
+                    return;
+                }
+                try {
+                    FileUtils.copyFile(globals.defaultDispatcherYamlFile, dispatcherFile);
+                } catch (IOException e) {
+                    log.error("Error", e);
+                    throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
+                }
             }
-            if (!globals.defaultDispatcherYamlFile.exists()) {
-                log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
-                return;
+            if (!dispatcherFile.exists()) {
+                throw new IllegalStateException(
+                        "File dispatcher.yaml wasn't found. " +
+                        "It must be configured in directory "+globals.processorDir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
             }
+
             try {
-                FileUtils.copyFile(globals.defaultDispatcherYamlFile, dispatcherFile);
+                cfg = FileUtils.readFileToString(dispatcherFile, Charsets.UTF_8);
             } catch (IOException e) {
                 log.error("Error", e);
-                throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
+                throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
             }
-        }
-        if (!dispatcherFile.exists()) {
-            throw new IllegalStateException(
-                    "File dispatcher.yaml wasn't found. " +
-                    "It must be configured in directory "+globals.processorDir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
-        }
 
-        try {
-            cfg = FileUtils.readFileToString(dispatcherFile, Charsets.UTF_8);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
-        }
+            YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
 
-        YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+            DispatcherLookupParamsYaml dispatcherLookupConfig = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
 
-        DispatcherLookupParamsYaml dispatcherLookupConfig = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
-
-        if (dispatcherLookupConfig == null) {
-            log.error("{} wasn't found or empty. path: {}{}{}",
-                    Consts.DISPATCHER_YAML_FILE_NAME, globals.processorDir,
-                    File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
-            throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
+            if (dispatcherLookupConfig == null) {
+                log.error("{} wasn't found or empty. path: {}{}{}",
+                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processorDir,
+                        File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
+                throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
+            }
+            final Map<DispatcherUrl, DispatcherLookupExtended> map = new HashMap<>();
+            for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
+                DispatcherUrl dispatcherServerUrl = new DispatcherUrl(dispatcher.url);
+                DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended(dispatcherServerUrl, dispatcher, new DispatcherSchedule(dispatcher.taskProcessingTime));
+                map.put(dispatcherServerUrl, lookupExtended);
+            }
+            dispatcherLookupExtendedMap = Collections.unmodifiableMap(map);
+            dispatcherLookupConfig.assetManagers.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
+        } finally {
+            lookupExtendedMap = dispatcherLookupExtendedMap;
         }
-        final Map<DispatcherUrl, DispatcherLookupExtended> map = new HashMap<>();
-        for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
-            DispatcherUrl dispatcherServerUrl = new DispatcherUrl(dispatcher.url);
-            DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended(dispatcherServerUrl, dispatcher, new DispatcherSchedule(dispatcher.taskProcessingTime));
-            map.put(dispatcherServerUrl, lookupExtended);
-        }
-        lookupExtendedMap = Collections.unmodifiableMap(map);
-        dispatcherLookupConfig.assetManagers.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
     }
 
     @Nullable
     public DispatcherLookupExtended getDispatcher(DispatcherUrl dispatcherUrl) {
         return lookupExtendedMap.get(dispatcherUrl);
+    }
+
+    public List<DispatcherUrl> getAllEnabledDispatchers() {
+        return lookupExtendedMap.values().stream().filter(o->!o.dispatcherLookup.disabled).map(o->o.dispatcherUrl).collect(Collectors.toList());
     }
 
     @Nullable

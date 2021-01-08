@@ -52,14 +52,14 @@ public class MetadataParamsYamlUtilsV2
         src.checkIntegrity();
         MetadataParamsYaml trg = new MetadataParamsYaml();
         for (Map.Entry<String, MetadataParamsYamlV2.ProcessorV2> entry : src.processors.entrySet()) {
-            String key = entry.getKey();
-
             MetadataParamsYaml.Processor value =  new MetadataParamsYaml.Processor();
-            for (Map.Entry<String, MetadataParamsYamlV2.ProcessorStateV2> stateV2Entry : entry.getValue().states.entrySet()) {
-                MetadataParamsYamlV2.ProcessorStateV2 v = stateV2Entry.getValue();
-                value.states.put(stateV2Entry.getKey(), new MetadataParamsYaml.ProcessorState(v.dispatcherCode, v.processorId, v.sessionId));
+            trg.processors.put(entry.getKey(), value);
+            if (entry.getValue()!=null) {
+                for (Map.Entry<String, MetadataParamsYamlV2.ProcessorStateV2> stateV2Entry : entry.getValue().states.entrySet()) {
+                    MetadataParamsYamlV2.ProcessorStateV2 v = stateV2Entry.getValue();
+                    value.states.put(stateV2Entry.getKey(), new MetadataParamsYaml.ProcessorState(v.dispatcherCode, v.processorId, v.sessionId));
+                }
             }
-            trg.processors.put(key, value);
         }
 
         for (Map.Entry<String, String> o : src.metadata.entrySet()) {

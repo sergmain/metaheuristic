@@ -130,18 +130,19 @@ public class DispatcherRequestor {
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getRefsForDispatcherUrl(dispatcherUrl)) {
-//            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
-                ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(ref.processorCode);
+            for (String processorCode : metadataService.getProcessorCodes()) {
+
+                ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(processorCode);
                 pcpy.requests.add(r);
 
-                final String processorId = metadataService.getProcessorId(ref);
-                final String sessionId = metadataService.getSessionId(ref);
+                final String processorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
+                final String sessionId = metadataService.getSessionId(processorCode, dispatcherUrl);
 
                 if (processorId == null || sessionId == null) {
                     r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
                     continue;
                 }
+                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorId, dispatcherUrl);
                 r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
 
                 // we have to pull new tasks from server constantly
