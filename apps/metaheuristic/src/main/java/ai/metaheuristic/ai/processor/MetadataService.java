@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
@@ -264,22 +265,41 @@ public class MetadataService {
         }
     }
 
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+        return getAllRefs( (du) -> {
+            if (du.equals(dispatcherUrl)) {
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
+                return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
+            }
+            return false;
+        } );
+    }
+
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+        return getAllRefs( (du) -> du.equals(dispatcherUrl) );
+    }
+
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
+        return getAllRefs( (dispatcherUrl) -> true );
+    }
+
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefs() {
+        return getAllRefs( (dispatcherUrl) -> {
+            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
+            return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
+        } );
+    }
+
+    private Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs(Function<DispatcherUrl, Boolean> function) {
         synchronized (syncObj) {
             Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
                 for (Map.Entry<String, MetadataParamsYaml.ProcessorState> stateEntry : processorEntry.getValue().states.entrySet()) {
                     final DispatcherUrl dispatcherUrl = new DispatcherUrl(stateEntry.getKey());
-/*
-                    final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
-
-                    if (dispatcher==null || dispatcher.dispatcherLookup.disabled) {
-                        continue;
+                    if (function.apply(dispatcherUrl)) {
+                        refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                                processorEntry.getKey(), stateEntry.getValue().processorId, dispatcherUrl));
                     }
-*/
-
-                    refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                            processorEntry.getKey(), stateEntry.getValue().processorId, dispatcherUrl));
                 }
             }
             return refs;

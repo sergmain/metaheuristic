@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -84,6 +85,8 @@ public class TaskProcessor {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
+    public final AtomicBoolean processing = new AtomicBoolean();
+
     public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, MetadataService metadataService, EnvService envService, ProcessorService processorService, VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -100,6 +103,22 @@ public class TaskProcessor {
         if (!globals.processorEnabled) {
             return;
         }
+        synchronized (this) {
+            if (processing.get()) {
+                return;
+            }
+            processing.set(true);
+        }
+        try {
+            processInternal(ref);
+        } finally {
+            synchronized (this) {
+                processing.set(false);
+            }
+        }
+    }
+
+    private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);

@@ -130,10 +130,8 @@ public class DispatcherRequestor {
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         try {
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-                if (!ref.dispatcherUrl.equals(dispatcherUrl)) {
-                    continue;
-                }
+            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getRefsForDispatcherUrl(dispatcherUrl)) {
+//            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllRefs()) {
                 ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(ref.processorCode);
                 pcpy.requests.add(r);
 
@@ -179,7 +177,7 @@ public class DispatcherRequestor {
                 }
                 r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
             }
-            if (noNewRequest(pcpy)) {
+            if (!newRequest(pcpy)) {
                 log.info("#775.045 no new requests");
                 return;
             }
@@ -265,16 +263,16 @@ public class DispatcherRequestor {
         }
     }
 
-    private boolean noNewRequest(ProcessorCommParamsYaml pcpy) {
+    private boolean newRequest(ProcessorCommParamsYaml pcpy) {
         for (ProcessorCommParamsYaml.ProcessorRequest request : pcpy.requests) {
-            boolean state = request.requestProcessorId==null && request.requestTask==null &&
-                    request.reportTaskProcessingResult==null && request.checkForMissingOutputResources==null &&
-                    request.resendTaskOutputResourceResult==null;
-            if (!state) {
-                return false;
+            boolean state = request.requestProcessorId!=null || request.requestTask!=null ||
+                    request.reportTaskProcessingResult!=null || request.checkForMissingOutputResources!=null ||
+                    request.resendTaskOutputResourceResult!=null;
+            if (state) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
 }

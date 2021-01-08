@@ -54,7 +54,7 @@ public class ProcessorCommandProcessor {
                     log.warn("ref is null for processorId: {}, dispatcherUrl: {}", request.processorCode, dispatcherUrl);
                     continue;
                 }
-                request.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, response);
+                request.resendTaskOutputResourceResult = resendTaskOutputResource(ref, response);
                 processReportResultDelivering(ref, response);
                 processAssignedTask(ref, response);
                 storeProcessorId(ref, response);
@@ -64,8 +64,8 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml.DispatcherResponse response) {
-        List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorService.getResendTaskOutputResourceResultStatus(dispatcherUrl, response);
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
+        List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorService.getResendTaskOutputResourceResultStatus(ref, response);
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 

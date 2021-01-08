@@ -69,7 +69,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             if (response.reportResultDelivering!=null) {
                 r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
                 r.reportResultDelivering.ids =
-                        r.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
+                        response.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
             }
             if (response.resendTaskOutputs!=null) {
                 r.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
