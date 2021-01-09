@@ -34,6 +34,9 @@ import java.util.List;
 @Profile("dispatcher")
 public interface BatchRepository extends CrudRepository<Batch, Long> {
 
+    @Query(value="select b.id, b.execContextId, b.companyId from Batch b ")
+    List<Object[]> findAllBatchedShort();
+
     @Override
     @Modifying
     @Query(value="delete from Batch t where t.id=:id")

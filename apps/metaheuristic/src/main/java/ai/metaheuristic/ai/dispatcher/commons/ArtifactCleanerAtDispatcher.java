@@ -15,10 +15,10 @@
  */
 package ai.metaheuristic.ai.dispatcher.commons;
 
+import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
@@ -44,12 +44,33 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
+    private final BatchRepository batchRepository;
+    private final CompanyRepository companyRepository;
+    private final BatchTopLevelService batchTopLevelService;
 
     public void fixedDelay() {
-        // !!! DO NOT CHANGE THE ORDER OF CALLING !!!
+        // do not change the order of calling
+        deleteOrphanBatches();
         deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
+    }
+
+    private void deleteOrphanBatches() {
+        List<Long> execContextIds = execContextRepository.findAllIds();
+        List<Long> companyUniqueIds = companyRepository.findAllUniqueIds();
+        Set<Long> forDeletion = new HashSet<>();
+        List<Object[]> objs = batchRepository.findAllBatchedShort();
+        for (Object[] obj : objs) {
+            // id, b.execContextId, b.companyId
+            Long execContextId = ((Number)obj[1]).longValue();
+            Long companyUniqueId = ((Number)obj[2]).longValue();
+            if (!execContextIds.contains(execContextId) || !companyUniqueIds.contains(companyUniqueId)) {
+                Long batchId = ((Number)obj[0]).longValue();
+                forDeletion.add(batchId);
+            }
+        }
+        batchTopLevelService.deleteOrphanBatches(forDeletion);
     }
 
     private void deleteOrphanExecContexts() {

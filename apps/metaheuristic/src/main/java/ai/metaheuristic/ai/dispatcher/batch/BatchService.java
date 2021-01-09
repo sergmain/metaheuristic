@@ -105,7 +105,7 @@ public class BatchService {
         return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
     }
 
-    public static String getActualExtension(SourceCodeParamsYaml scpy, String defaultResultFileExtension) {
+    private static String getActualExtension(SourceCodeParamsYaml scpy, String defaultResultFileExtension) {
         final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
 
         return S.b(ext)
@@ -254,7 +254,6 @@ public class BatchService {
             batchCache.save(b);
         }
         eventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
-//        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
@@ -266,6 +265,11 @@ public class BatchService {
         execContextService.deleteExecContext(execContextId, companyUniqueId);
         batchCache.deleteById(batchId);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
+    }
+
+    @Transactional
+    public void deleteBatch(Long batchId) {
+        batchCache.deleteById(batchId);
     }
 
     @Nullable

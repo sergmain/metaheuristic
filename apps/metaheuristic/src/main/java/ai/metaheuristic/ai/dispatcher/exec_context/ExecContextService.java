@@ -254,7 +254,7 @@ public class ExecContextService {
         }
         else if (!em.contains(execContext) ) {
 //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", execContext));
+            throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContext));
         }
         return execContext;
     }
@@ -283,7 +283,7 @@ public class ExecContextService {
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec == null) {
-            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("Can't find execContext for Id " + execContextId);
+            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
@@ -344,11 +344,7 @@ public class ExecContextService {
     @Transactional
     public Void deleteExecContext(Long execContextId) {
         eventPublisher.publishEvent(new ProcessDeletedExecContextTxEvent(execContextId));
-//        holder.events.add(new ProcessDeletedExecContextEvent(execContextId));
-
         eventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
-//        holder.events.add(new TaskQueueCleanByExecContextIdEvent(execContextId));
-
         execContextCache.deleteById(execContextId);
         // tasks and variables will be deleted in another thread launched by Scheduler
         return null;
@@ -358,7 +354,7 @@ public class ExecContextService {
     public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new SourceCodeApiData.ExecContextForDeletion("#705.060 execContext wasn't found, execContextId: " + execContextId);
+            return new SourceCodeApiData.ExecContextForDeletion("#705.260 execContext wasn't found, execContextId: " + execContextId);
         }
         ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         SourceCodeApiData.ExecContextForDeletion result = new SourceCodeApiData.ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
@@ -380,7 +376,7 @@ public class ExecContextService {
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#705.080 ExecContext wasn't found, execContextId: " + execContextId );
+            return new OperationStatusRest(OperationStatus.ERROR, "#705.280 ExecContext wasn't found, execContextId: " + execContextId );
         }
         return null;
     }
@@ -403,14 +399,14 @@ public class ExecContextService {
 
             SourceCodeImpl sc = sourceCodeCache.findById(execContext.sourceCodeId);
             if (sc==null) {
-                final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + execContext.sourceCodeId;
+                final String es = "#705.300 SourceCode wasn't found, sourceCodeId: " + execContext.sourceCodeId;
                 log.warn(es);
                 return resource;
             }
 
             SimpleVariable variable = variableRepository.findByIdAsSimple(variableId);
             if (variable==null) {
-                final String es = "#981.480 Can't find variable #"+variableId;
+                final String es = "#705.330 Can't find variable #"+variableId;
                 log.warn(es);
                 return resource;
             }
@@ -437,11 +433,11 @@ public class ExecContextService {
             resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, varFile.length()), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
-            log.error("Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
+            log.error("#705.350 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         } catch (Throwable th) {
-            log.error("#981.515 General error", th);
+            log.error("#705.370 General error", th);
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }

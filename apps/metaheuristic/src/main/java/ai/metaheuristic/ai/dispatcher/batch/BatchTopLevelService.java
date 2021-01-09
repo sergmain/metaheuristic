@@ -62,7 +62,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,6 +104,15 @@ public class BatchTopLevelService {
     public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
         BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
         return execStatuses;
+    }
+
+    public void deleteOrphanBatches(Set<Long> batchIds) {
+        for (Long batchId : batchIds) {
+            log.info("210.140 Found orphan batch #{}", batchId);
+
+            batchService.deleteBatch(batchId);
+        }
+
     }
 
     @Data
