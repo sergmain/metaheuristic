@@ -213,6 +213,10 @@ public class BatchTopLevelService {
     }
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
+        if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
+            return new BatchData.UploadingStatus("#981.030 Batch can't be created in company #1");
+        }
+
         log.info("#981.055 Staring of batchUploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
         String tempFilename = file.getOriginalFilename();
