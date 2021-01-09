@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @NoArgsConstructor
 @ToString
-@AllArgsConstructor
 public class EnvParamsYamlV2 implements BaseParams {
 
     public final int version=2;
@@ -41,11 +40,19 @@ public class EnvParamsYamlV2 implements BaseParams {
         public String path;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code"})
+    public static class ProcessorV2 {
+        public String code;
+        @Nullable
+        public String tags;
+    }
+
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
     public final List<DiskStorageV2> disk = new ArrayList<>();
-
-    @Nullable
-    public String tags;
+    public final List<ProcessorV2> processors = new ArrayList<>();
 
 }

@@ -36,7 +36,7 @@ public class RoundRobinForDispatcher {
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
             DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
-                log.info("dispatcher {} is disabled", dispatcherLookup.getLookupType());
+                log.info("dispatcher {} is disabled", dispatcherLookup.url);
                 continue;
             }
             log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);

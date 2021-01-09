@@ -83,7 +83,7 @@ public class DiskVariableProvider implements VariableProvider {
         }
         DiskInfo diskInfo = variable.disk;
 
-        EnvParamsYaml env = envService.getEnvYaml();
+        EnvParamsYaml env = envService.getEnvParamsYaml();
         EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, diskInfo.code);
         if (diskStorage==null) {
             throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
@@ -148,7 +148,7 @@ public class DiskVariableProvider implements VariableProvider {
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
-        EnvParamsYaml env = envService.getEnvYaml();
+        EnvParamsYaml env = envService.getEnvParamsYaml();
         if (variable.disk==null) {
             throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
         }

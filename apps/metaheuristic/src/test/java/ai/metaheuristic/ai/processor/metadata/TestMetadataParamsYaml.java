@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor.metadata;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.metadata.*;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import org.apache.commons.io.IOUtils;
@@ -126,14 +127,14 @@ public class TestMetadataParamsYaml {
         assertNotNull(metadata.processors);
         assertFalse(metadata.processors.isEmpty());
         assertEquals(1, metadata.processors.size());
-        assertTrue(metadata.processors.containsKey(Consts.DEFAULT_PROCESSOR_CODE));
-        MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processors.get(Consts.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
+        assertTrue(metadata.processors.containsKey(ConstsApi.DEFAULT_PROCESSOR_CODE));
+        MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);
         assertEquals("209", dispatcher8080.processorId);
         assertEquals("sessionId-11", dispatcher8080.sessionId);
 
-        MetadataParamsYaml.ProcessorState dispatcher8888 = metadata.processors.get(Consts.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
+        MetadataParamsYaml.ProcessorState dispatcher8888 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
         assertNotNull(dispatcher8888);
         assertEquals("localhost-8888", dispatcher8888.dispatcherCode);
         assertEquals("42", dispatcher8888.processorId);

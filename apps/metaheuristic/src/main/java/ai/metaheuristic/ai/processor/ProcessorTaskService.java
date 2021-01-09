@@ -651,7 +651,7 @@ public class ProcessorTaskService {
         if (envFile.isDirectory()) {
             return "#713.220 path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
         }
-        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvYaml());
+        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvParamsYaml());
         final String newEnv = envYamlShortToString(envYaml);
 
         try {

@@ -62,7 +62,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -108,11 +107,10 @@ public class BatchTopLevelService {
 
     public void deleteOrphanBatches(Set<Long> batchIds) {
         for (Long batchId : batchIds) {
-            log.info("210.140 Found orphan batch #{}", batchId);
+            log.info("210.140 Orphan batch #{} as deleted", batchId);
 
             batchService.deleteBatch(batchId);
         }
-
     }
 
     @Data

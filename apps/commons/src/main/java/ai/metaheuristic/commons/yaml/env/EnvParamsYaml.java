@@ -19,13 +19,14 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
 @ToString
-@AllArgsConstructor
 public class EnvParamsYaml implements BaseParams {
 
     public final int version=2;
@@ -39,11 +40,19 @@ public class EnvParamsYaml implements BaseParams {
         public String path;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"code"})
+    public static class Processor {
+        public String code;
+        @Nullable
+        public String tags;
+    }
+
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
     public final List<DiskStorage> disk = new ArrayList<>();
-
-    @Nullable
-    public String tags;
+    public final List<Processor> processors = new ArrayList<>();
 
 }

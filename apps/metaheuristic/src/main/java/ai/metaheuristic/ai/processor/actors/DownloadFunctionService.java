@@ -127,54 +127,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             }
 
             if (functionDownloadStatus.functionState == Enums.FunctionState.none) {
-
-/*
-                MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, assetManagerUrl, functionConfig);
-                if (state.state == Enums.SignatureStates.signature_not_valid) {
-                    continue;
-                }
-
-                final MetadataParamsYaml.ProcessorState dispatcherInfo = metadataService.processorStateByDispatcherUrl(serverUrls.dispatcherUrl);
-                final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
-                final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
-*/
-/*
-                switch (functionDownloadStatus.functionState) {
-                    case none:
-                        if (assetFile.isError) {
-                            metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.asset_error);
-                            continue;
-                        }
-                        break;
-                    case ok:
-                        log.error("#811.020 Unexpected state of function {}, dispatcher {}, will be resetted to none", functionCode, dispatcherUrl);
-                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none);
-                        break;
-                    case not_supported_os:
-                    case asset_error:
-                    case download_error:
-                    case io_error:
-                    case dispatcher_config_error:
-                        log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, dispatcherUrl, functionDownloadStatus.functionState);
-                        continue;
-                    case function_config_error:
-                        log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", functionCode, dispatcherUrl);
-                        // reset to none for trying again
-                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none);
-                        continue;
-                    case not_found:
-                        log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", functionCode, dispatcherUrl);
-                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none);
-                        continue;
-                    case ready:
-                        if (assetFile.isError || !assetFile.isContent) {
-                            log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", functionCode, dispatcherUrl);
-                            metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.asset_error);
-                        }
-                        continue;
-                }
-
-*/
                 try {
 
                     File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");

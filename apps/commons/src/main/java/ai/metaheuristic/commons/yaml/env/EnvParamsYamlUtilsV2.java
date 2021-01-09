@@ -48,11 +48,12 @@ public class EnvParamsYamlUtilsV2
     @Override
     public EnvParamsYaml upgradeTo(@NonNull EnvParamsYamlV2 src, Long ... vars) {
         src.checkIntegrity();
-        EnvParamsYaml trg = new EnvParamsYaml(src.tags);
+        EnvParamsYaml trg = new EnvParamsYaml();
 
         trg.mirrors.putAll(src.mirrors);
         trg.envs.putAll(src.envs);
         src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
 
         trg.checkIntegrity();
         return trg;

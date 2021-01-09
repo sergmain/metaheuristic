@@ -24,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -94,8 +94,15 @@ public class EnvService {
         }
     }
 
-    public EnvParamsYaml getEnvYaml() {
+    public EnvParamsYaml getEnvParamsYaml() {
         return envYaml;
+    }
+
+    @Nullable
+    public String getTags(String processorCode) {
+        synchronized (this) {
+            return envYaml.processors.stream().filter(o->o.code.equals(processorCode)).findFirst().map(o->o.tags).orElse(null);
+        }
     }
 
     // TODO 2020-12-30 no need it any more. leave it here in case we need to restore hot deploy

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -59,7 +60,7 @@ public class MetadataParamsYamlUtilsV1
                 value.states.put(entry.getKey(), new MetadataParamsYamlV2.ProcessorStateV2(v.code, v.processorId, v.sessionId));
 
             }
-            trg.processors.put(Consts.DEFAULT_PROCESSOR_CODE, value);
+            trg.processors.put(ConstsApi.DEFAULT_PROCESSOR_CODE, value);
         }
 
         if (src.metadata!=null) {

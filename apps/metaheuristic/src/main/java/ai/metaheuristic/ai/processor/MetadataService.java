@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -67,6 +68,7 @@ public class MetadataService {
 
     private final ApplicationContext appCtx;
     private final Globals globals;
+    private final EnvService envService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
 
@@ -120,16 +122,33 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new MetadataParamsYaml();
         }
+        fixProcessorCodes();
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
             processorStateByDispatcherUrl(ref);
         }
-/*
-        // update metadata.yaml file after fixing broken metas
-        updateMetadataFile();
-*/
         markAllAsUnverified();
+        updateMetadataFile();
         //noinspection unused
         int i=0;
+    }
+
+    private void fixProcessorCodes() {
+        final List<String> codes = envService.getEnvParamsYaml().processors.stream().map(o -> o.code).collect(Collectors.toList());
+
+        Set<String> forDeletion = new HashSet<>();
+        for (String key : metadata.processors.keySet()) {
+            if (!codes.contains(key)) {
+                forDeletion.add(key);
+            }
+        }
+        forDeletion.forEach(key -> metadata.processors.remove(key));
+
+        for (String code : codes) {
+            if (!metadata.processors.containsKey(code)) {
+                metadata.processors.put(code, new MetadataParamsYaml.Processor());
+            }
+        }
+        ;
     }
 
     public ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -171,7 +190,6 @@ public class MetadataService {
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
-        updateMetadataFile();
     }
 
     @Nullable

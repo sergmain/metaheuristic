@@ -63,6 +63,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public final Map<String, String> envs = new ConcurrentHashMap<>();
         public final List<DiskStorage> disk = new ArrayList<>();
 
+        // this field is specific for concrete processorCode
         @Nullable
         public String tags;
 

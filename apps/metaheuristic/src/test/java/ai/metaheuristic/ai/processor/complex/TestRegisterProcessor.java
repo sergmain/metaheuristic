@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.processor.complex;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -30,6 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
@@ -112,7 +112,7 @@ public class TestRegisterProcessor {
     public void testRestPayload_asRest() throws Exception {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         DispatcherCommParamsYaml ed = requestServer(processorComm);
@@ -132,7 +132,7 @@ public class TestRegisterProcessor {
         sessionId = assignedProcessorId.getAssignedSessionId();
 
         processorComm = new ProcessorCommParamsYaml();
-        req = new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE);
+        req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
@@ -202,7 +202,7 @@ public class TestRegisterProcessor {
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(Consts.DEFAULT_PROCESSOR_CODE));
+        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE));
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 

@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai.processor.metadata;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +39,7 @@ public class TestMetadataYaml {
         assertNotNull(m);
         assertNotNull(m.getMetadata());
         assertNotNull(m.getProcessors());
-        assertEquals(Consts.DEFAULT_PROCESSOR_CODE, m.processors.keySet().stream().findFirst().orElse(null));
+        assertEquals(ConstsApi.DEFAULT_PROCESSOR_CODE, m.processors.keySet().stream().findFirst().orElse(null));
 
         assertEquals(1, m.getMetadata().size());
         assertEquals(1, m.getProcessors().size());

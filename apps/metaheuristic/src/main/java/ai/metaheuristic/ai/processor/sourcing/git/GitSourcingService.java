@@ -102,7 +102,7 @@ public class GitSourcingService {
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
-        // at this point result.systemExecResult must be not null
+        // at this point result.systemExecResult must be not null, it can be null only if result.ok==false, but see above
         if (result.systemExecResult.exitCode!=0) {
             return new GitStatusInfo(
                     Enums.GitStatus.not_found, null,
@@ -295,7 +295,7 @@ public class GitSourcingService {
     private GitExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git -C <path> clone <git-repo-url> git
 
-        String mirror = envService.getEnvYaml().mirrors.get(functionConfig.git.repo);
+        String mirror = envService.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);

@@ -72,6 +72,7 @@ public class MetadataParamsYaml implements BaseParams {
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.Processor
      */
     public final LinkedHashMap<String, Processor> processors = new LinkedHashMap<>();
+
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

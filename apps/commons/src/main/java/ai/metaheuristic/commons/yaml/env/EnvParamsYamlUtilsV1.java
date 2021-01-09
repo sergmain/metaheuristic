@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.env;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -48,11 +49,12 @@ public class EnvParamsYamlUtilsV1
     @Override
     public EnvParamsYamlV2 upgradeTo(@NonNull EnvParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        EnvParamsYamlV2 trg = new EnvParamsYamlV2(src.tags);
+        EnvParamsYamlV2 trg = new EnvParamsYamlV2();
 
         trg.mirrors.putAll(src.mirrors);
         trg.envs.putAll(src.envs);
         src.disk.stream().map(o->new EnvParamsYamlV2.DiskStorageV2(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        trg.processors.add(new EnvParamsYamlV2.ProcessorV2(ConstsApi.DEFAULT_PROCESSOR_CODE, src.tags));
 
         trg.checkIntegrity();
         return trg;

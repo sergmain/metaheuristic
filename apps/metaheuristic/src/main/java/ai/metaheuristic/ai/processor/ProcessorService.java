@@ -45,6 +45,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -53,8 +54,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 
 @Service
 @Slf4j
@@ -82,7 +81,7 @@ public class ProcessorService {
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
         KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
-                to(envService.getEnvYaml()),
+                to(envService.getEnvParamsYaml(), envService.getTags(ref.processorCode)),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
@@ -104,8 +103,8 @@ public class ProcessorService {
         return status;
     }
 
-    private KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {
-        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(envYaml.tags);
+    private KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
+        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
         t.mirrors.putAll(envYaml.mirrors);
         t.envs.putAll(envYaml.envs);
         envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));

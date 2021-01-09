@@ -63,4 +63,5 @@ public class ConstsApi {
 
     public final static SourceCodeApiData.SourceCodeValidationResult SOURCE_CODE_VALIDATION_RESULT_OK = new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 
+    public static final String DEFAULT_PROCESSOR_CODE = "processor-01";
 }

@@ -95,7 +95,7 @@ public class SouthbridgeService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(final EnumsApi.DataType binaryType, final String code, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(final EnumsApi.DataType binaryType, final String code, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         final String key = "--" + binaryType + "--" + code;
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);

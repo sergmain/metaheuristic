@@ -511,7 +511,7 @@ public class TaskProcessor {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
-            interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(functionPrepareResult.function.env));
+            interpreter = new Interpreter(envService.getEnvParamsYaml().getEnvs().get(functionPrepareResult.function.env));
             if (interpreter.list == null) {
                 String es = "#100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
                 log.warn(es);
