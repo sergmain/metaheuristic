@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -127,7 +128,16 @@ public class AccountService {
     }
 
     @Transactional
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
+    public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, @Nullable Long companyUniqueId) {
+        if (accountId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.055 System error, accountId is null");
+        }
+        if (S.b(publicName)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.056 System error, publicName is blank");
+        }
+        if (companyUniqueId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.057 System error, companyUniqueId is null");
+        }
         Account a = accountRepository.findByIdForUpdate(accountId);
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.060 account wasn't found, accountId: " + accountId);

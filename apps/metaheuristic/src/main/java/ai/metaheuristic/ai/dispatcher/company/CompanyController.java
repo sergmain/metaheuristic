@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -186,8 +187,8 @@ public class CompanyController {
 
     @PostMapping("/company-account-edit-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String editFormCommit(Long id, String publicName, boolean enabled,
-                                 final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
+    public String editFormCommit(@Nullable Long id, @Nullable String publicName, boolean enabled,
+                                 final RedirectAttributes redirectAttributes, @Nullable @PathVariable Long companyUniqueId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.editFormCommit(id, publicName, enabled, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -26,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -52,7 +52,7 @@ public class AccountTopLevelService {
         return accountService.getAccount(id, context.getCompanyId());
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, DispatcherContext context) {
+    public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, DispatcherContext context) {
         return accountService.editFormCommit(accountId, publicName, enabled, context.getCompanyId());
     }
 

@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -57,7 +58,7 @@ public class CompanyAccountTopLevelService {
                 Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_POSSIBLE_ROLES : SecConsts.POSSIBLE_ROLES, account.getErrorMessages());
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
+    public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, @Nullable Long companyUniqueId) {
         return accountService.editFormCommit(accountId, publicName, enabled, companyUniqueId);
     }
 
