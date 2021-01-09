@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
@@ -31,7 +32,6 @@ import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -80,6 +80,7 @@ public class ProcessorService {
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
+        final File processorFile = new File(globals.processorDir, ref.processorCode);
         KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
                 to(envService.getEnvParamsYaml(), envService.getTags(ref.processorCode)),
                 gitSourcingService.gitStatusInfo,
@@ -89,7 +90,7 @@ public class ProcessorService {
                 "[unknown]", "[unknown]", null,
                 logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
-                globals.os, globals.processorDir.getAbsolutePath());
+                globals.os, processorFile.getAbsolutePath());
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
