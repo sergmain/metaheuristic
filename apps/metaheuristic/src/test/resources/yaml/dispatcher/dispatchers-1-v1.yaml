@@ -1,0 +1,13 @@
+dispatchers:
+  - disabled: true
+    signatureRequired: false
+    url: http://192.168.10.8:8888
+    lookupType: direct
+    authType: basic
+    restPassword: 123
+    restUsername: rest_user
+    taskProcessingTime: |
+      workingDay: 0:00-23:59
+      weekend: 0:00-23:59
+      policy: strict
+    publicKey: <public-key>

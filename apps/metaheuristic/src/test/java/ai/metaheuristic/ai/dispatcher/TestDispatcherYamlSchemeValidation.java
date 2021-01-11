@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public class TestDispatcherYamlSchemeValidation {
 
     @Test
-    public void test_v1() throws IOException {
+    public void test_1_v1() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
@@ -49,7 +49,22 @@ public class TestDispatcherYamlSchemeValidation {
     }
 
     @Test
-    public void test_v2() throws IOException {
+    public void test_2_v1() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-1-v1.yaml", StandardCharsets.UTF_8);
+
+        YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+                DispatcherLookupExtendedService.SCHEMES,
+                "url",
+                (es)-> false,
+                "see more"
+        );
+
+        Boolean result = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result);
+    }
+
+    @Test
+    public void test_1_v2() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-v2.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
