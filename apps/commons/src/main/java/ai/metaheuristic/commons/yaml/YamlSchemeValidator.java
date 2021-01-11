@@ -43,16 +43,22 @@ public class YamlSchemeValidator<T> {
     public Function<String, T> exitFunction;
 
     @AllArgsConstructor
-    public static class RootElement {
-        public final String rootElement;
-        public final List<String> possibleElements2dnLevel;
-        public final List<String> deprecatedElements;
-        public final boolean required;
+    public static class Element {
+        public final String name;
+        public boolean required;
+        public boolean deprecated;
+        public final List<Element> elements;
+    }
+
+    @AllArgsConstructor
+    public static class Schema {
+        public final List<Element> roots;
+        public final String version;
     }
 
     public YamlSchemeValidator(
-            List<RootElement> rootElements,
-            String seeMoreInfo, List<String> versions, String filename,
+            String seeMoreInfo,
+            List<String> versions, String filename,
             Function<String, T> exitFunction)  {
         this.rootElements = rootElements;
         this.seeMoreInfo = seeMoreInfo;
