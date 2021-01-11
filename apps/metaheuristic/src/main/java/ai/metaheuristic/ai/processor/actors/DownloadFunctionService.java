@@ -165,7 +165,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             else if (statusCode == HttpStatus.GONE.value()) {
                                 final String es = S.f("#811.048 Function %s was deleted at asset manager %s.", task.functionCode, asset.url);
                                 log.error(es);
-                                metadataService.deRegisterFunctionCode(assetManagerUrl, functionCode);
+                                // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
+                                metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.not_found);
                                 functionState = Enums.FunctionState.not_found;
                                 break;
                             }
@@ -216,6 +217,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
                                 final String es = S.f("#811.070 Function %s wasn't found on asset manager %s", task.functionCode, asset.url);
                                 log.warn(es);
+                                // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.not_found);
                                 functionState = Enums.FunctionState.not_found;
                                 break;
@@ -254,8 +256,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         continue;
                     }
                     else if (functionState == Enums.FunctionState.not_found) {
-//                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, functionState);
-//                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
+                        log.warn("#811.112 function {} can't be downloaded, state: {}", functionCode, functionState);
+                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                         continue;
                     }
 
