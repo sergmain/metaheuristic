@@ -57,7 +57,7 @@ public class TaskProcessorCoordinatorService {
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( ref.processorCode,
                     o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
-            taskProcessor.process(ref);
+            new Thread(()-> taskProcessor.process(ref), "task-processor-"+ref.processorCode).start();
         }
     }
 }

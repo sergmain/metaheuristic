@@ -46,6 +46,7 @@ public class SystemProcessLauncher {
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
+//        log.warn("Start executing a system process in dir {}", execDir.getAbsolutePath());
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
@@ -176,6 +177,7 @@ public class SystemProcessLauncher {
         String console = readLastLines(taskConsoleOutputMaxLines, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
+//        log.warn("Finish executing a system process in dir {}", execDir.getAbsolutePath());
         return new FunctionApiData.SystemExecResult(functionCode, exitCode==0, exitCode, console);
     }
 

@@ -368,6 +368,12 @@ public class MetadataService {
         }
     }
 
+    public void deRegisterFunctionCode(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
+        synchronized (syncObj) {
+            metadata.statuses.removeIf(next -> next.assetManagerUrl.equals(assetManagerUrl.url) && next.code.equals(functionCode));
+        }
+    }
+
     public List<MetadataParamsYaml.Status> registerNewFunctionCode(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.Functions.Info> infos) {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);

@@ -163,9 +163,9 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 break;
                             }
                             else if (statusCode == HttpStatus.GONE.value()) {
-                                final String es = S.f("#811.047 Function %s was deleted at asset manager %s.", task.functionCode, asset.url);
+                                final String es = S.f("#811.048 Function %s was deleted at asset manager %s.", task.functionCode, asset.url);
                                 log.error(es);
-                                metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.not_found);
+                                metadataService.deRegisterFunctionCode(assetManagerUrl, functionCode);
                                 functionState = Enums.FunctionState.not_found;
                                 break;
                             }
