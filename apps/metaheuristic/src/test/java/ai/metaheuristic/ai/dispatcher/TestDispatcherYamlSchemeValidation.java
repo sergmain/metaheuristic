@@ -19,14 +19,12 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Serge
@@ -36,16 +34,30 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestDispatcherYamlSchemeValidation {
 
     @Test
-    public void test() throws IOException {
+    public void test_v1() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers.yaml", StandardCharsets.UTF_8);
+
+        YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+                DispatcherLookupExtendedService.SCHEMES,
+                "url",
+                (es)-> false,
+                "see more"
+        );
+
+        Boolean result = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result);
+    }
+
+    @Test
+    public void test_v2() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-v2.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-                DispatcherLookupExtendedService.ROOT_ELEMENTS,
-                "url", List.of("1", "2"),
-                "the config file dispatcher.yaml",
-                (es)-> {return false;}
+                DispatcherLookupExtendedService.SCHEMES,
+                "url",
+                (es)-> false,
+                "see more"
         );
-
 
         Boolean result = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result);

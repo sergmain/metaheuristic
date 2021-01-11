@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -30,15 +31,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 public class TestYamlSchemeValidator {
 
-    public static final String SEE_MORE_INFO = "https://docs.metaheuristic.ai";
+    private static final String SEE_MORE_INFO = "https://docs.metaheuristic.ai";
 
     @Test
     public void testOk() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(new YamlSchemeValidator.RootElement(
-                        "root", List.of("element1", "element2"), List.of(), true
-                )),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root", true, false, new String[]{"element1", "element2"})
+                        ), 1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml",(es)-> es, SEE_MORE_INFO
         );
 
         String cfg="root:\n  - element1: 1\n    element2: 2";
@@ -48,11 +51,13 @@ public class TestYamlSchemeValidator {
     @Test
     public void testOk_2() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(
-                        new YamlSchemeValidator.RootElement("root1", List.of("element1-1", "element1-2"), List.of(), true),
-                        new YamlSchemeValidator.RootElement("root2", List.of("element2-1", "element2-2"), List.of(), false)
-                        ),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root1", true, false, new String[]{"element1-1", "element1-2"}),
+                                new Element("root2", true, false, new String[]{"element2-1", "element2-2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
 
         String cfg="root1:\n  - element1-1: 1\n    element1-2: 2\nroot2:\n  - element2-1: 1\n    element2-2: 2";
@@ -62,11 +67,13 @@ public class TestYamlSchemeValidator {
     @Test
     public void testOk_3() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(
-                        new YamlSchemeValidator.RootElement("root1", List.of("element1-1", "element1-2"), List.of(), true),
-                        new YamlSchemeValidator.RootElement("root2", List.of("element2-1", "element2-2"), List.of(), false)
-                        ),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root1", true, false, new String[]{"element1-1", "element1-2"}),
+                                new Element("root2", false, false, new String[]{"element2-1", "element2-2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
 
         String cfg="root1:\n  - element1-1: 1\n    element1-2: 2";
@@ -76,10 +83,13 @@ public class TestYamlSchemeValidator {
     @Test
     public void testOkWithVersion() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(new YamlSchemeValidator.RootElement(
-                        "root", List.of("element1", "element2"), List.of(), true
-                )),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es);
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root", true, false, new String[]{"element1", "element2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
+        );
 
         String cfg="root:\n  - element1: 1\n    element2: 2\nversion: 1";
         assertNull(validator.validateStructureOfDispatcherYaml(cfg));
@@ -88,22 +98,28 @@ public class TestYamlSchemeValidator {
     @Test
     public void testWrongVersion() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(new YamlSchemeValidator.RootElement(
-                        "root", List.of("element1", "element2"), List.of(), true
-                )),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es);
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root", true, false, new String[]{"element1", "element2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
+        );
 
-        String cfg="root:\n  - element1: 1\n    element2: 2\nversion: 2";
+        String cfg="root:\n  - element1: 1\n    element2: 2\nversion: 99";
         assertNotNull(validator.validateStructureOfDispatcherYaml(cfg));
     }
 
     @Test
     public void testRootElement() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(new YamlSchemeValidator.RootElement(
-                        "root", List.of("element1", "element2"), List.of(), true
-                )),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es);
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root", true, false, new String[]{"element1", "element2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
+        );
 
         String cfg="root1:\n  - element1: 1\n    element2: 2";
         assertNotNull(validator.validateStructureOfDispatcherYaml(cfg));
@@ -112,10 +128,13 @@ public class TestYamlSchemeValidator {
     @Test
     public void test2ndLevelElements() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
-                List.of(new YamlSchemeValidator.RootElement(
-                        "root", List.of("element1", "element2"), List.of(), true
-                )),
-                SEE_MORE_INFO, List.of("1"),"the config file test.yaml",(es)-> es);
+                List.of(new Scheme(
+                        List.of(
+                                new Element("root", true, false, new String[]{"element1", "element2"})
+                        ),1, SEE_MORE_INFO)
+                ),
+                "the config file test.yaml", (es)-> es, SEE_MORE_INFO
+        );
 
         String cfg="root1:\n  - element11: 1\n    element2: 2";
         assertNotNull(validator.validateStructureOfDispatcherYaml(cfg));

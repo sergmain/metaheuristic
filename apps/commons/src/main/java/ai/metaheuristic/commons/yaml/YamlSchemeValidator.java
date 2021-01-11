@@ -23,9 +23,11 @@ import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -36,35 +38,52 @@ import java.util.function.Function;
 @Slf4j
 public class YamlSchemeValidator<T> {
 
-    public final List<RootElement> rootElements;
-    public final String seeMoreInfo;
-    public final List<String> versions;
-    public String filename;
-    public Function<String, T> exitFunction;
+    public final List<Scheme> schemes;
+    public final String filename;
+    public final Function<String, T> exitFunction;
+    public final String mainSeeMoreInfo;
 
     @AllArgsConstructor
     public static class Element {
         public final String name;
-        public boolean required;
-        public boolean deprecated;
+        public final boolean required;
+        public final boolean deprecated;
         public final List<Element> elements;
+
+        public Element(String name, boolean required, boolean deprecated, String[] names) {
+            this.name = name;
+            this.required = required;
+            this.deprecated = deprecated;
+            this.elements = Arrays.stream(names).map(n->new Element(n, true, false, List.of())).collect(Collectors.toList());
+        }
+
+        public Element(String name) {
+            this.name = name;
+            this.required = true;
+            this.deprecated = false;
+            this.elements = List.of();
+        }
+
+        public Element(String name, boolean required, boolean deprecated) {
+            this.name = name;
+            this.required = required;
+            this.deprecated = deprecated;
+            this.elements = List.of();
+        }
     }
 
     @AllArgsConstructor
-    public static class Schema {
+    public static class Scheme {
         public final List<Element> roots;
-        public final String version;
+        public final int version;
+        public final String seeMoreInfo;
     }
 
-    public YamlSchemeValidator(
-            String seeMoreInfo,
-            List<String> versions, String filename,
-            Function<String, T> exitFunction)  {
-        this.rootElements = rootElements;
-        this.seeMoreInfo = seeMoreInfo;
-        this.versions = versions;
+    public YamlSchemeValidator(List<Scheme> schemes, String filename, Function<String, T> exitFunction, String mainSeeMoreInfo)  {
+        this.schemes = schemes;
         this.filename = filename;
         this.exitFunction = exitFunction;
+        this.mainSeeMoreInfo = mainSeeMoreInfo;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked", "RedundantCast"})
@@ -73,39 +92,52 @@ public class YamlSchemeValidator<T> {
         Yaml yaml = YamlUtils.init(Map.class);
         Map m = (Map) YamlUtils.to(cfg, yaml);
 
-        for (RootElement re : rootElements) {
-            if (!m.containsKey(re.rootElement) && re.required) {
-                String es = "\n\n!!! Root element '"+re.rootElement+"' wasn't found in "+filename+"\n"+seeMoreInfo;
-                log.error(es);
-                return exitFunction.apply(es);
-            }
-        }
-
         Object versionObj = m.get("version");
-        if ((versionObj instanceof String) || (versionObj instanceof Integer)) {
-            if (!versions.contains(versionObj.toString())) {
-                final String es = "\nNot supported version of "+filename+". Must be one of "+versions+".\n" + seeMoreInfo;
-                log.error(es);
-                return exitFunction.apply(es);
-            }
+        int currVersion = 1;
+        if ((versionObj instanceof String)) {
+            currVersion = Integer.parseInt((String)versionObj);
+        }
+        else if ((versionObj instanceof Integer)) {
+            currVersion = ((Integer)versionObj);
+        }
+        else if ((versionObj instanceof Number)) {
+            currVersion = ((Number)versionObj).intValue();
         }
         else if (versionObj!=null) {
-            final String es = "\nValue of version element must be string. "+filename+"\n" + seeMoreInfo;
+            final String es = "\nValue of version element must be string. "+filename+"\n" + mainSeeMoreInfo;
             log.error(es);
             return exitFunction.apply(es);
+        }
+
+        final int finalVersion = currVersion;
+        Scheme scheme = schemes.stream().filter(o->o.version==finalVersion).findFirst().orElse(null);
+
+        if (scheme==null) {
+            final String es = "\nNot supported version of "+filename+". Must be one of "+schemes.stream().map(o->o.version).collect(Collectors.toList())+".\n" + mainSeeMoreInfo;
+            log.error(es);
+            return exitFunction.apply(es);
+        }
+
+
+        for (Element re : scheme.roots) {
+            if (!m.containsKey(re.name) && re.required) {
+                String es = "\n\n!!! Root element '"+re.name+"' wasn't found in "+filename+"\n"+scheme.seeMoreInfo;
+                log.error(es);
+                return exitFunction.apply(es);
+            }
         }
 
         boolean isAnyError = false;
         List<String> unknowns = new ArrayList<>();
 
-        for (RootElement re : rootElements) {
+        for (Element re : scheme.roots) {
 
-            Object rootObj = m.get(re.rootElement);
+            Object rootObj = m.get(re.name);
             if (rootObj==null && !re.required) {
                 continue;
             }
             if (!(rootObj instanceof List)) {
-                final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
+                final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + scheme.seeMoreInfo;
                 log.error(es);
                 return exitFunction.apply(es);
             }
@@ -113,19 +145,19 @@ public class YamlSchemeValidator<T> {
             boolean isError = false;
             for (Object o : (List) rootObj) {
                 if (!(o instanceof Map)) {
-                    final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
+                    final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + scheme.seeMoreInfo;
                     log.error(es);
                     return exitFunction.apply(es);
                 }
 
                 Map<String, Object> props = (Map)o;
                 for (Map.Entry<String, Object> entry : props.entrySet()) {
-                    if (!re.possibleElements2dnLevel.contains(entry.getKey())) {
+                    if (re.elements.stream().noneMatch(e->e.name.equals(entry.getKey()))) {
                         unknowns.add(entry.getKey());
                         log.error("\n"+filename+", unknown property: " + entry.getKey());
                         isError=true;
                     }
-                    if (re.deprecatedElements.contains(entry.getKey())) {
+                    if (re.elements.stream().anyMatch(e->e.name.equals(entry.getKey()) && e.deprecated )) {
                         log.error("\n\tproperty '" + entry.getKey()+"' is deprecated and has to be removed from "+filename+".");
                     }
                 }
@@ -133,8 +165,8 @@ public class YamlSchemeValidator<T> {
             if (isError) {
                 final String es = "\nUnknown elements "+unknowns+" were encountered in " + filename + ".\n" +
                         "Need to be fixed.\n" +
-                        "Allowed elements are: " + re.possibleElements2dnLevel + "\n" +
-                        seeMoreInfo;
+                        "Allowed elements are: " + re.elements.stream().map(o->o.name).collect(Collectors.joining(", ")) + "\n" +
+                        scheme.seeMoreInfo;
                 log.error(es);
                 isAnyError = true;
             }

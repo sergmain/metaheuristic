@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
 @Service
 @Slf4j
@@ -51,21 +53,55 @@ public class DispatcherLookupExtendedService {
     private final Globals globals;
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
-    public static final List<YamlSchemeValidator.RootElement> ROOT_ELEMENTS = List.of(new YamlSchemeValidator.RootElement(
-                    "dispatchers",
+
+    // verifying a structure of ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml
+    public static final List<Scheme> SCHEMES = List.of(
+            new Scheme(
                     List.of(
-                            "taskProcessingTime", "disabled", "url", "signatureRequired", "publicKey", "lookupType",
-                            "authType", "restPassword", "restUsername", "asset", "acceptOnlySignedFunctions", "assetManagerUrl"
+                            new Element(
+                                    "dispatchers",
+                                    true, false,
+                                    List.of(new Element("taskProcessingTime"), new Element("disabled"),
+                                            new Element("url"), new Element("signatureRequired"),
+                                            new Element("publicKey"), new Element("lookupType"),
+                                            new Element("authType"), new Element("restPassword"),
+                                            new Element("restUsername"), new Element("asset"),
+                                            new Element("asset", false, false, new String[]{"url", "username", "password", "publicKey"}),
+                                            new Element("acceptOnlySignedFunctions", false, true))
+                                    )
                     ),
-                    List.of("acceptOnlySignedFunctions"), true
-            ),
-            new YamlSchemeValidator.RootElement("assetManagers", List.of("url", "username", "password", "publicKey", "disabled"), List.of(), false)
+                    1,
+                    SEE_MORE_INFO),
+            new Scheme(
+                    List.of(
+                            new Element(
+                                    "dispatchers",
+                                    true, false,
+                                    List.of(new Element("taskProcessingTime"), new Element("disabled"),
+                                            new Element("url"), new Element("signatureRequired"),
+                                            new Element("publicKey"), new Element("lookupType"),
+                                            new Element("authType"), new Element("restPassword"),
+                                            new Element("restUsername"), new Element("asset"),
+                                            new Element("assetManagerUrl"))
+                                    ),
+                            new Element(
+                                    "assetManagers",
+                                    true, false,
+                                    List.of(new Element("url"), new Element("username"),
+                                            new Element("password"), new Element("publicKey"),
+                                            new Element("disabled"))
+                            )
+                    ),
+                    2,
+                    SEE_MORE_INFO)
+
     );
+
     private static final YamlSchemeValidator<Void> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            ROOT_ELEMENTS,
-            SEE_MORE_INFO, List.of("1", "2"),
+            SCHEMES,
             "the config file dispatcher.yaml",
-            (es)-> {System.exit(-1); return null;}
+            (es)-> {System.exit(-1); return null;},
+            SEE_MORE_INFO
     );
 
     // Collections.unmodifiableMap
