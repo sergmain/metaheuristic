@@ -51,18 +51,19 @@ public class DispatcherLookupExtendedService {
     private final Globals globals;
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
-    private static final YamlSchemeValidator<Void> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            List.of(new YamlSchemeValidator.RootElement(
+    public static final List<YamlSchemeValidator.RootElement> ROOT_ELEMENTS = List.of(new YamlSchemeValidator.RootElement(
                     "dispatchers",
                     List.of(
                             "taskProcessingTime", "disabled", "url", "signatureRequired", "publicKey", "lookupType",
                             "authType", "restPassword", "restUsername", "asset", "acceptOnlySignedFunctions", "assetManagerUrl"
                     ),
                     List.of("acceptOnlySignedFunctions"), true
-                    ),
-                    new YamlSchemeValidator.RootElement("assetManagers", List.of("url", "username", "password", "publicKey", "disabled"), List.of(), false)
             ),
-            SEE_MORE_INFO, List.of("1"),
+            new YamlSchemeValidator.RootElement("assetManagers", List.of("url", "username", "password", "publicKey", "disabled"), List.of(), false)
+    );
+    private static final YamlSchemeValidator<Void> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+            ROOT_ELEMENTS,
+            SEE_MORE_INFO, List.of("1", "2"),
             "the config file dispatcher.yaml",
             (es)-> {System.exit(-1); return null;}
     );
