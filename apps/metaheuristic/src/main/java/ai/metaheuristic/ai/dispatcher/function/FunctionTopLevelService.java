@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.*;
 
 @Service
 @Slf4j
@@ -65,13 +66,41 @@ public class FunctionTopLevelService {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
     public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            List.of( new YamlSchemeValidator.Scheme(
-                    List.of( new YamlSchemeValidator.Element(
+            List.of( new Scheme(
+                    List.of( new Element(
                             "functions",
                             true, false,
-                            new String[]{"code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap", "content"}
+                            List.of(
+                                    new Element("code"),
+                                    new Element("env", false, false),
+                                    new Element("file", false, false),
+                                    new Element("git", false, false),
+                                    new Element("params", false, false),
+                                    new Element("metas", false, false),
+                                    new Element("skipParams", false, false),
+                                    new Element("sourcing"),
+                                    new Element("type", false, false),
+                                    new Element("checksumMap", false, false))
                     ) ),
-            1, SEE_MORE_INFO)),
+            1, SEE_MORE_INFO),
+                    new Scheme(
+                    List.of( new Element(
+                            "functions",
+                            true, false,
+                            List.of(
+                                    new Element("code"),
+                                    new Element("env", false, false),
+                                    new Element("file", false, false),
+                                    new Element("git", false, false),
+                                    new Element("params", false, false),
+                                    new Element("metas", false, false),
+                                    new Element("skipParams", false, false),
+                                    new Element("sourcing"),
+                                    new Element("type", false, false),
+                                    new Element("content", false, false),
+                                    new Element("checksumMap", false, false))
+                    ) ),
+            2, SEE_MORE_INFO)),
             "the config file functions.yaml",
             (es)-> es, SEE_MORE_INFO
     );
@@ -257,7 +286,7 @@ public class FunctionTopLevelService {
                 File file = null;
                 if (globals.isFunctionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
-                    EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
+                    final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
                     if (functionConfig.checksumMap==null || functionConfig.checksumMap.keySet().stream().noneMatch(o->o== hashAlgo)) {
                         String es = S.f("#295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
