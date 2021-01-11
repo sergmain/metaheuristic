@@ -62,7 +62,6 @@ public class TxTestingService {
 
     @Transactional
     public String updateWithSyncSingle(Long execContextId, Long taskId) {
-        return execContextSyncService.getWithSync(execContextId, () -> {
             TaskImpl t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
 
             t.params = AAA;
@@ -73,7 +72,6 @@ public class TxTestingService {
             }
 
             return AAA;
-        });
     }
 
     @Transactional
@@ -91,7 +89,6 @@ public class TxTestingService {
 
     @Transactional
     public String updateWithSyncDouble(Long execContextId, Long taskId) {
-        return execContextSyncService.getWithSync(execContextId, () -> {
             TaskImpl t = taskRepository.findById(taskId)
                     .orElseThrow(() -> new IllegalStateException("Task not found"));
 
@@ -110,7 +107,6 @@ public class TxTestingService {
                 throw new IllegalStateException("(!AAA2.equals(t1.params)) ");
             }
             return AAA2;
-        });
     }
 
     @Transactional

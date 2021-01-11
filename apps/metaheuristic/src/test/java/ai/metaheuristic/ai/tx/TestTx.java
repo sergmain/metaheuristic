@@ -297,18 +297,20 @@ public class TestTx extends PreparingSourceCode {
                 break;
             }
         }
-        assertTrue(error.get());
+        assertFalse(error.get());
     }
 
     private void testService(Long taskId) {
         ////
+        String s = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> txTestingService.updateWithSyncSingle(execContextForTest.id, taskId));
 
-        String s = txTestingService.updateWithSyncSingle(execContextForTest.id, taskId);
         assertEquals("AAA", s);
 
         ////
 
-        s = txTestingService.updateWithSyncDouble(execContextForTest.id, taskId);
+        s = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> txTestingService.updateWithSyncDouble(execContextForTest.id, taskId));
         assertEquals("AAAAAA", s);
 
 
