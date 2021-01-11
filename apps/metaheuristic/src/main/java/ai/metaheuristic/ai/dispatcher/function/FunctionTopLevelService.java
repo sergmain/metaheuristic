@@ -137,17 +137,6 @@ public class FunctionTopLevelService {
         return result;
     }
 
-/*
-    // TODO 2020-12-25 delete this code after 2021-01-01 if everything is ok
-    public FunctionData.FunctionsResult getFunctions() {
-        FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
-        result.functions = functionRepository.findAll();
-        result.functions.sort((o1, o2)->o2.getId().compareTo(o1.getId()));
-        result.assetMode = globals.assetMode;
-        return result;
-    }
-*/
-
     public OperationStatusRest deleteFunctionById(Long id) {
         return deleteFunctionById(id, true);
     }
