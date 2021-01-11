@@ -65,9 +65,11 @@ public class FunctionTopLevelService {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
     public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            "functions",
-            List.of("code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap", "content"),
-            List.of(),
+            List.of(new YamlSchemeValidator.RootElement(
+                    "functions",
+                    List.of("code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap", "content"),
+                    List.of(), true
+            )),
             SEE_MORE_INFO, List.of("1", "2"),
             "the config file functions.yaml",
             (es)-> es
@@ -312,6 +314,7 @@ public class FunctionTopLevelService {
                         log.warn(es);
                         continue;
                     }
+                    // ###idea### why?
                     EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
                     if (st!= EnumsApi.SignatureState.correct) {
                         if (!checksumWithSignature.checksum.equals(sum)) {

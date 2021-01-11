@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -35,21 +36,25 @@ import java.util.function.Function;
 @Slf4j
 public class YamlSchemeValidator<T> {
 
-    public final String rootElement;
-    public final List<String> possibleElements2dnLevel;
-    public final List<String> deprecatedElements;
+    public final List<RootElement> rootElements;
     public final String seeMoreInfo;
     public final List<String> versions;
     public String filename;
     public Function<String, T> exitFunction;
 
+    @AllArgsConstructor
+    public static class RootElement {
+        public final String rootElement;
+        public final List<String> possibleElements2dnLevel;
+        public final List<String> deprecatedElements;
+        public final boolean required;
+    }
+
     public YamlSchemeValidator(
-            String rootElement, List<String> possibleElements2dnLevel,
-            List<String> deprecatedElements, String seeMoreInfo, List<String> versions, String filename,
+            List<RootElement> rootElements,
+            String seeMoreInfo, List<String> versions, String filename,
             Function<String, T> exitFunction)  {
-        this.rootElement = rootElement;
-        this.possibleElements2dnLevel = possibleElements2dnLevel;
-        this.deprecatedElements = deprecatedElements;
+        this.rootElements = rootElements;
         this.seeMoreInfo = seeMoreInfo;
         this.versions = versions;
         this.filename = filename;
@@ -62,10 +67,12 @@ public class YamlSchemeValidator<T> {
         Yaml yaml = YamlUtils.init(Map.class);
         Map m = (Map) YamlUtils.to(cfg, yaml);
 
-        if (!m.containsKey(rootElement)) {
-            String es = "\n\n!!! Root element '"+rootElement+"' wasn't found in "+filename+"\n"+seeMoreInfo;
-            log.error(es);
-            return exitFunction.apply(es);
+        for (RootElement re : rootElements) {
+            if (!m.containsKey(re.rootElement) && re.required) {
+                String es = "\n\n!!! Root element '"+re.rootElement+"' wasn't found in "+filename+"\n"+seeMoreInfo;
+                log.error(es);
+                return exitFunction.apply(es);
+            }
         }
 
         Object versionObj = m.get("version");
@@ -82,42 +89,54 @@ public class YamlSchemeValidator<T> {
             return exitFunction.apply(es);
         }
 
-        Object rootObj = m.get(rootElement);
-        if (!(rootObj instanceof List)) {
-            final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
-            log.error(es);
-            return exitFunction.apply(es);
-        }
-
-        boolean isError = false;
+        boolean isAnyError = false;
         List<String> unknowns = new ArrayList<>();
-        for (Object o : (List) rootObj) {
-            if (!(o instanceof Map)) {
+
+        for (RootElement re : rootElements) {
+
+            Object rootObj = m.get(re.rootElement);
+            if (rootObj==null && !re.required) {
+                continue;
+            }
+            if (!(rootObj instanceof List)) {
                 final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
                 log.error(es);
                 return exitFunction.apply(es);
             }
 
-            Map<String, Object> props = (Map)o;
-            for (Map.Entry<String, Object> entry : props.entrySet()) {
-                if (!possibleElements2dnLevel.contains(entry.getKey())) {
-                    unknowns.add(entry.getKey());
-                    log.error("\n"+filename+", unknown property: " + entry.getKey());
-                    isError=true;
+            boolean isError = false;
+            for (Object o : (List) rootObj) {
+                if (!(o instanceof Map)) {
+                    final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
+                    log.error(es);
+                    return exitFunction.apply(es);
                 }
-                if (deprecatedElements.contains(entry.getKey())) {
-                    log.error("\n\tproperty '" + entry.getKey()+"' is deprecated and has to be removed from "+filename+".");
+
+                Map<String, Object> props = (Map)o;
+                for (Map.Entry<String, Object> entry : props.entrySet()) {
+                    if (!re.possibleElements2dnLevel.contains(entry.getKey())) {
+                        unknowns.add(entry.getKey());
+                        log.error("\n"+filename+", unknown property: " + entry.getKey());
+                        isError=true;
+                    }
+                    if (re.deprecatedElements.contains(entry.getKey())) {
+                        log.error("\n\tproperty '" + entry.getKey()+"' is deprecated and has to be removed from "+filename+".");
+                    }
                 }
             }
+            if (isError) {
+                final String es = "\nUnknown elements "+unknowns+" were encountered in " + filename + ".\n" +
+                        "Need to be fixed.\n" +
+                        "Allowed elements are: " + re.possibleElements2dnLevel + "\n" +
+                        seeMoreInfo;
+                log.error(es);
+                isAnyError = true;
+            }
+
         }
 
-        if (isError) {
-            final String es = "\nUnknown elements "+unknowns+" were encountered in " + filename + ".\n" +
-                    "Need to be fixed.\n" +
-                    "Allowed elements are: " + possibleElements2dnLevel + "\n" +
-                    seeMoreInfo;
-            log.error(es);
-            return exitFunction.apply(es);
+        if (isAnyError) {
+            return exitFunction.apply("There is an error with " + filename);
         }
         return null;
     }
