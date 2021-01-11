@@ -1,0 +1,18 @@
+version: 2
+dispatchers:
+  - signatureRequired: false
+    url: http://localhost:8080
+    lookupType: direct
+    assetManagerUrl: http://localhost:8889
+  - publicKey: some-public-key
+    signatureRequired: true
+    url: https://host
+    lookupType: registry
+    disabled: true
+    assetManagerUrl: http://localhost:8889
+assetManagers:
+  - url: http://localhost:8889
+    username: rest_user
+    password: 123
+    publicKey: <public key>
+    disabled: false

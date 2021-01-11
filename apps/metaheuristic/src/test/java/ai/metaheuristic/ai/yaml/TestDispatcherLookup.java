@@ -31,7 +31,7 @@ public class TestDispatcherLookup {
 
     @Test
     public void testParsingYaml() throws IOException {
-        String yaml = IOUtils.resourceToString("/yaml/dispatchers.yaml", StandardCharsets.UTF_8);
+        String yaml = IOUtils.resourceToString("/yaml/dispatcher/dispatchers.yaml", StandardCharsets.UTF_8);
         DispatcherLookupParamsYaml ssc = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         assertEquals(2, ssc.dispatchers.size());
