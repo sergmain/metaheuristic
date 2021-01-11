@@ -72,7 +72,7 @@ public class TaskProviderTopLevelService {
 
     // this sync is here because of the presence of @Transactional in TaskProviderTransactionalService
     // so we don't want to have an opened TX with holding sync within it
-    public static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
+    private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
     public void registerTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {

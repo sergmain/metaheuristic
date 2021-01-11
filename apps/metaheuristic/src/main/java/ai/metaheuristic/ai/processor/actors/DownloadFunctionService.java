@@ -247,9 +247,15 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     if (functionState == Enums.FunctionState.none) {
                         log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
                         continue;
-                    } else if (functionState == Enums.FunctionState.download_error || functionState == Enums.FunctionState.not_found || functionState == Enums.FunctionState.dispatcher_config_error) {
+                    }
+                    else if (functionState == Enums.FunctionState.download_error || functionState == Enums.FunctionState.dispatcher_config_error) {
                         log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, functionState);
                         metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
+                        continue;
+                    }
+                    else if (functionState == Enums.FunctionState.not_found) {
+//                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, functionState);
+//                        metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                         continue;
                     }
 
