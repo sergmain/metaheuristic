@@ -255,7 +255,7 @@ public class TaskProviderTransactionalService {
                 }
 
                 resultTask = allocatedTask;
-                // check that downgrading is supporting
+                // check that downgrading is being supported
                 try {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
                     //noinspection unused
