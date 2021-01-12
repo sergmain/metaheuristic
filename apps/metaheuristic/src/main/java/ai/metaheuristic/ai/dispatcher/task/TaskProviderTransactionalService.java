@@ -320,7 +320,7 @@ public class TaskProviderTransactionalService {
         ProcessorStatusYaml.DownloadStatus ds = status.downloadStatuses.stream().filter(o->o.functionCode.equals(functionConfig.code)).findFirst().orElse(null);
 
         if (ds==null || ds.functionState!= Enums.FunctionState.ready) {
-            log.debug("#317.180 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "not prepared yet" : ds.functionState);
+            log.debug("#317.180 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "'not prepared yet'" : ds.functionState);
             result.set(true);
         }
     }

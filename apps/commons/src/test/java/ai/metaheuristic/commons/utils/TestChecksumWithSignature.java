@@ -90,6 +90,7 @@ public class TestChecksumWithSignature {
         assertNotNull(checksumWithSignature1.signature);
         assertEquals(signature1, checksumWithSignature1.signature);
 
+        // ###idea### why?
         assertEquals(EnumsApi.SignatureState.correct,
                 ChecksumWithSignatureUtils.isValid(
                         EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksumWithSignature1.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
@@ -121,15 +122,17 @@ public class TestChecksumWithSignature {
 
         String checksumWithSignature = checksum1 + SecUtils.SIGNATURE_DELIMITER + signature;
 
-        ChecksumWithSignature cws = ChecksumWithSignatureUtils.parse(checksumWithSignature);
-
-        Checksum checksum = new Checksum();
-        checksum.checksums = Map.of(EnumsApi.HashAlgo.SHA256WithSignature, checksumWithSignature);
-
         InputStream is = new ByteArrayInputStream(CONTENT_1.getBytes());
         CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature("info:", is, keys.getPublicKey(), checksumWithSignature, EnumsApi.HashAlgo.SHA256WithSignature);
-//        CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", is, keys.getPublicKey());
         System.out.println(status);
+        assertEquals(EnumsApi.ChecksumState.correct, status.checksum);
+        assertEquals(EnumsApi.SignatureState.correct, status.signature);
+
+
+        is = new ByteArrayInputStream(CONTENT_1.getBytes());
+        Checksum checksum = new Checksum();
+        checksum.checksums = Map.of(EnumsApi.HashAlgo.SHA256WithSignature, checksumWithSignature);
+        status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", is, keys.getPublicKey());
         assertEquals(EnumsApi.ChecksumState.correct, status.checksum);
         assertEquals(EnumsApi.SignatureState.correct, status.signature);
     }
