@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -46,6 +47,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
@@ -191,7 +193,6 @@ public class TaskProviderTransactionalService {
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
                     log.error("#317.040 Task #{} with function '{}' was already processed with status {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
-//                    forRemoving.add(queuedTask);
                     continue;
                 }
 
@@ -246,6 +247,12 @@ public class TaskProviderTransactionalService {
                         continue;
                     }
                 }
+                ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+
+                if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
+                    log.info("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
+                    continue;
+                }
 
                 resultTask = allocatedTask;
                 // check that downgrading is supporting
@@ -295,6 +302,27 @@ public class TaskProviderTransactionalService {
         eventPublisher.publishEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
 
         return t;
+    }
+
+    private boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {
+        AtomicBoolean result = new AtomicBoolean(false);
+        notAllFunctionsReadyInternal(processorId, status, taskParamYaml.task.function, result);
+        for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
+            notAllFunctionsReadyInternal(processorId, status, preFunction, result);
+        }
+        for (TaskParamsYaml.FunctionConfig postFunction : taskParamYaml.task.postFunctions) {
+            notAllFunctionsReadyInternal(processorId, status, postFunction, result);
+        }
+        return result.get();
+    }
+
+    private void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
+        ProcessorStatusYaml.DownloadStatus ds = status.downloadStatuses.stream().filter(o->o.functionCode.equals(functionConfig.code)).findFirst().orElse(null);
+
+        if (ds==null || ds.functionState!= Enums.FunctionState.ready) {
+            log.debug("#317.180 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "not prepared yet" : ds.functionState);
+            result.set(true);
+        }
     }
 
     public void deregisterTasksByExecContextId(Long execContextId) {

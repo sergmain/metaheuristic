@@ -288,7 +288,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
             }
             if (!assetFile.getFile().exists()) {
-                log.error("#811.200 asset file {} is missing", assetFile.getFile().getAbsolutePath());
+                log.error("#811.180 asset file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
             ChecksumAndSignatureData.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
@@ -297,6 +297,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             try {
                 status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, state, assetFile.getFile());
             } catch (IOException e) {
+                log.error("#811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  asset file {}, error: {}",
+                        functionCode, assetFile.getFile().getAbsolutePath(), e.toString());
                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.io_error);
                 continue;
             }

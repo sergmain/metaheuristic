@@ -261,7 +261,7 @@ public class TaskProviderTopLevelService {
                 return null;
             }
 
-            // because we're already providing ith task that means that execCOntext was started
+            // because we're already providing with task that means that execCOntext was started
             return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.STARTED);
 
         } catch (Throwable th) {
@@ -290,7 +290,6 @@ public class TaskProviderTopLevelService {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
-//                    deregisterTask(task.execContextId, task.id);
                     return task;
                 }
             }
