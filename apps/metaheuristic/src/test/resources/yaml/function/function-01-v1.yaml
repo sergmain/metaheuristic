@@ -1,0 +1,11 @@
+functions:
+  - code: aggregate-command-inspection:1.5
+    env: java-11
+    file: command-inspection-aggregator.jar
+    metas:
+      - key: mh.task-params-version
+        value: '1'
+    skipParams: false
+    sourcing: dispatcher
+    type: aggregate-command-inspection
+version: 1

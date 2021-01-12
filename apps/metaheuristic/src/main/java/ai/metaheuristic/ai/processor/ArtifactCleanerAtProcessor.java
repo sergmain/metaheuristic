@@ -47,29 +47,27 @@ public class ArtifactCleanerAtProcessor {
             File processorDir = new File(globals.processorDir, ref.processorCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
-            for (ProcessorAndCoreData.DispatcherUrl dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
-                if (!globals.processorEnabled || !currentExecState.isInited(dispatcherUrl)) {
-                    // don't delete anything until the processor has received the list of actual ExecContexts
+            if (!globals.processorEnabled || !currentExecState.isInited(ref.dispatcherUrl)) {
+                // don't delete anything until the processor has received the list of actual ExecContexts
+                continue;
+            }
+
+            MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
+            final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
+            if (!dispatcherDir.exists()) {
+                dispatcherDir.mkdir();
+            }
+
+            List<ProcessorTask> all = processorTaskService.findAll(ref);
+            for (ProcessorTask task : all) {
+                if (currentExecState.isState(ref.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                    log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
+                    processorTaskService.delete(ref, task.getTaskId());
                     continue;
                 }
-
-                MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
-                final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
-                if (!dispatcherDir.exists()) {
-                    dispatcherDir.mkdir();
-                }
-
-                List<ProcessorTask> all = processorTaskService.findAll(ref);
-                for (ProcessorTask task : all) {
-                    if (currentExecState.isState(dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
-                        log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(ref, task.getTaskId());
-                        continue;
-                    }
-                    if (task.clean && task.delivered && task.completed) {
-                        log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), dispatcherUrl);
-                        processorTaskService.delete(ref, task.getTaskId());
-                    }
+                if (task.clean && task.delivered && task.completed) {
+                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
+                    processorTaskService.delete(ref, task.getTaskId());
                 }
             }
         }

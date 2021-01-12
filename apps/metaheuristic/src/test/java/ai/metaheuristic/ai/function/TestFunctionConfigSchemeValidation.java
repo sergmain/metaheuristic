@@ -16,13 +16,18 @@
 
 package ai.metaheuristic.ai.function;
 
+import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.NonNull;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -55,8 +60,24 @@ public class TestFunctionConfigSchemeValidation {
         assertNotNull(result, result);
     }
 
+    @Test
+    public void test_01() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/function/function-01-v1.yaml", StandardCharsets.UTF_8);
+
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result, result);
+    }
+
+    @Test
+    public void test_02() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/function/function-02-v2.yaml", StandardCharsets.UTF_8);
+
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result, result);
+    }
+
     @NonNull
-    public String createYaml() {
+    private String createYaml() {
         FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
         FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();
         cfg.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "123");
