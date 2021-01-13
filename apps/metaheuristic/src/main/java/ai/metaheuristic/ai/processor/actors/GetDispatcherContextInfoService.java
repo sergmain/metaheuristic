@@ -33,6 +33,7 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.HttpHostConnectException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -107,8 +108,11 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
                     log.error("#806.220 HttpResponseException", e);
                 }
             }
+            catch (HttpHostConnectException e) {
+                log.error("#806.170 HttpHostConnectException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
+            }
             catch (SocketTimeoutException e) {
-                log.error("#806.170 SocketTimeoutException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
+                log.error("#806.175 SocketTimeoutException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
             }
             catch (IOException e) {
                 log.error(S.f("#806.180 IOException, assetManagerUrl: %s", assetManager.url), e);
