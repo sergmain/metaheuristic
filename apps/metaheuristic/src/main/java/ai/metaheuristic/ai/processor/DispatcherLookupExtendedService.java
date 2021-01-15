@@ -51,10 +51,6 @@ import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 //@DependsOn({"Globals"})
 public class DispatcherLookupExtendedService {
 
-    @SuppressWarnings("FieldCanBeLocal")
-    private final Globals globals;
-    private final ApplicationContext appCtx;
-
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
 
     // verifying a structure of ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml
@@ -123,10 +119,8 @@ public class DispatcherLookupExtendedService {
     }
 
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
-        this.appCtx = appCtx;
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
-            this.globals = globals;
             final File dispatcherFile = new File(globals.processorDir, Consts.DISPATCHER_YAML_FILE_NAME);
             final String cfg;
             if (!dispatcherFile.exists()) {
@@ -162,7 +156,7 @@ public class DispatcherLookupExtendedService {
                     SCHEMES,
                     "the config file dispatcher.yaml",
                     (es)-> {
-                        System.exit(SpringApplication.exit(appCtx, () -> -199));
+                        System.exit(SpringApplication.exit(appCtx, () -> -500));
                         return true;
                     },
                     SEE_MORE_INFO

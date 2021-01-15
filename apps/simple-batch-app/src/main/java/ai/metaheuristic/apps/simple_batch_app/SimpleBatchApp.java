@@ -47,17 +47,17 @@ import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariab
 public class SimpleBatchApp implements CommandLineRunner {
 
     public static void main(String[] args) {
-        SpringApplication.run(SimpleBatchApp.class, args);
-    }
-
-    @Override
-    public void run(String... args) throws IOException, InterruptedException {
         if (args.length==0) {
             System.out.println("Parameter file wasn't specified");
             System.exit(-1);
         }
         System.out.println("args = " + Arrays.toString(args));
 
+        SpringApplication.run(SimpleBatchApp.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws IOException, InterruptedException {
         // sleep for testing timeoutBeforeTerminate
         System.out.println("Start timeout...");
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
