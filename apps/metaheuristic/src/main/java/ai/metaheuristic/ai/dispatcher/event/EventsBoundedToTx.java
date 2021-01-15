@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,6 +37,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class EventsBoundedToTx {
 
     private final ApplicationEventPublisher eventPublisher;
+    private final DispatcherEventService dispatcherEventService;
 
     // TransactionPhase.AFTER_COMMIT
 
@@ -43,6 +45,9 @@ public class EventsBoundedToTx {
     public void handleSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
         log.debug("call EventsBoundedToTx.handleSetTaskExecStateTxEvent(execContextId:#{}, taskId:#{}, state:{})", event.execContextId, event.taskId, event.state);
         eventPublisher.publishEvent(event.to());
+        if (event.state== EnumsApi.TaskExecState.OK) {
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_FINISHED, null, event.taskId, event.execContextId);
+        }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
