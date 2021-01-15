@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -76,5 +76,21 @@ public class TestDispatcherYamlSchemeValidation {
 
         Boolean result = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result);
+    }
+
+    @Test
+    public void test_2_v2() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-with-error-v2.yaml", StandardCharsets.UTF_8);
+
+        YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+                DispatcherLookupExtendedService.SCHEMES,
+                "url",
+                (es)-> true,
+                "see more"
+        );
+
+        Boolean result = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNotNull(result);
+        assertTrue(result);
     }
 }

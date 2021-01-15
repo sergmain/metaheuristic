@@ -3,19 +3,18 @@ dispatchers:
   - signatureRequired: false
     url: http://localhost:8080
     lookupType: direct
-    authType: basic
-    restUsername: user
-    restPassword: 123
     assetManagerUrl: http://localhost:8889
   - publicKey: some-public-key
     signatureRequired: true
     url: https://host
     lookupType: registry
-    authType: basic
     disabled: true
-    restUsername: user
-    restPassword: 123
     assetManagerUrl: http://localhost:8889
+  - publicKey: some-public-key
+    signatureRequired: true
+    url: https://host
+    lookupType: registry
+    disabled: false
 assetManagers:
   - url: http://localhost:8889
     username: rest_user

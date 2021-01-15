@@ -27,6 +27,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -51,6 +53,7 @@ public class DispatcherLookupExtendedService {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final Globals globals;
+    private final ApplicationContext appCtx;
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
 
@@ -61,11 +64,15 @@ public class DispatcherLookupExtendedService {
                             new Element(
                                     "dispatchers",
                                     true, false,
-                                    List.of(new Element("taskProcessingTime"), new Element("disabled"),
-                                            new Element("url"), new Element("signatureRequired"),
-                                            new Element("publicKey"), new Element("lookupType"),
-                                            new Element("authType"), new Element("restPassword"),
-                                            new Element("restUsername"), new Element("asset"),
+                                    List.of(new Element("taskProcessingTime", false, false),
+                                            new Element("disabled", false, false),
+                                            new Element("url"),
+                                            new Element("signatureRequired", false, false),
+                                            new Element("publicKey", false, false),
+                                            new Element("lookupType"),
+                                            new Element("authType"),
+                                            new Element("restPassword"),
+                                            new Element("restUsername"),
                                             new Element("asset", false, false, new String[]{"url", "username", "password", "publicKey"}),
                                             new Element("acceptOnlySignedFunctions", false, true))
                                     )
@@ -77,31 +84,30 @@ public class DispatcherLookupExtendedService {
                             new Element(
                                     "dispatchers",
                                     true, false,
-                                    List.of(new Element("taskProcessingTime"), new Element("disabled"),
-                                            new Element("url"), new Element("signatureRequired"),
-                                            new Element("publicKey"), new Element("lookupType"),
-                                            new Element("authType"), new Element("restPassword"),
-                                            new Element("restUsername"), new Element("asset"),
+                                    List.of(new Element("taskProcessingTime", false, false),
+                                            new Element("disabled", false, false),
+                                            new Element("signatureRequired", false, false),
+                                            new Element("lookupType", false, false),
+                                            new Element("url"),
+                                            new Element("publicKey", false, false),
+                                            new Element("authType"),
+                                            new Element("restPassword"),
+                                            new Element("restUsername"),
                                             new Element("assetManagerUrl"))
                                     ),
                             new Element(
                                     "assetManagers",
                                     true, false,
-                                    List.of(new Element("url"), new Element("username"),
-                                            new Element("password"), new Element("publicKey"),
-                                            new Element("disabled"))
+                                    List.of(new Element("url"),
+                                            new Element("username"),
+                                            new Element("password"),
+                                            new Element("publicKey"),
+                                            new Element("disabled", false, false))
                             )
                     ),
                     2,
                     SEE_MORE_INFO)
 
-    );
-
-    private static final YamlSchemeValidator<Void> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            SCHEMES,
-            "the config file dispatcher.yaml",
-            (es)-> {System.exit(-1); return null;},
-            SEE_MORE_INFO
     );
 
     // Collections.unmodifiableMap
@@ -116,7 +122,8 @@ public class DispatcherLookupExtendedService {
         public final DispatcherSchedule schedule;
     }
 
-    public DispatcherLookupExtendedService(Globals globals) {
+    public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
+        this.appCtx = appCtx;
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
             this.globals = globals;
@@ -151,7 +158,19 @@ public class DispatcherLookupExtendedService {
                 throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
             }
 
-            YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+            final YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+                    SCHEMES,
+                    "the config file dispatcher.yaml",
+                    (es)-> {
+                        System.exit(SpringApplication.exit(appCtx, () -> -199));
+                        return true;
+                    },
+                    SEE_MORE_INFO
+            );
+
+            if (Boolean.TRUE.equals(YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg))) {
+                return;
+            }
 
             DispatcherLookupParamsYaml dispatcherLookupConfig = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
 

@@ -22,10 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -142,7 +140,7 @@ public class YamlSchemeValidator<T> {
                 return exitFunction.apply(es);
             }
 
-            boolean isError = false;
+            AtomicBoolean isError = new AtomicBoolean();
             for (Object o : (List) rootObj) {
                 if (!(o instanceof Map)) {
                     final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + scheme.seeMoreInfo;
@@ -151,26 +149,37 @@ public class YamlSchemeValidator<T> {
                 }
 
                 Map<String, Object> props = (Map)o;
+                Set<String> presentedElements = new HashSet<>();
                 for (Map.Entry<String, Object> entry : props.entrySet()) {
                     if (re.elements.stream().noneMatch(e->e.name.equals(entry.getKey()))) {
                         unknowns.add(entry.getKey());
                         log.error("\n"+filename+", unknown property: " + entry.getKey());
-                        isError=true;
+                        isError.set(true);
+                    }
+                    else {
+                        presentedElements.add(entry.getKey());
                     }
                     if (re.elements.stream().anyMatch(e->e.name.equals(entry.getKey()) && e.deprecated )) {
                         log.error("\n\tproperty '" + entry.getKey()+"' is deprecated and has to be removed from "+filename+".");
                     }
                 }
+                re.elements.forEach(e -> {
+                    if (!presentedElements.contains(e.name) && e.required) {
+                        log.error("\n" + filename + ", property " + e.name + "  is required.");
+                        isError.set(true);
+                    }
+                });
             }
-            if (isError) {
-                final String es = "\nUnknown elements "+unknowns+" were encountered in " + filename + ".\n" +
-                        "Need to be fixed.\n" +
-                        "Allowed elements are: " + re.elements.stream().map(o->o.name).collect(Collectors.joining(", ")) + "\n" +
-                        scheme.seeMoreInfo;
-                log.error(es);
+            if (isError.get()) {
+                if (!unknowns.isEmpty()) {
+                    final String es = "\nUnknown elements " + unknowns + " were encountered in " + filename + ".\n" +
+                            "Need to be fixed.\n" +
+                            "Allowed elements are: " + re.elements.stream().map(o -> o.name).collect(Collectors.joining(", ")) + "\n" +
+                            scheme.seeMoreInfo;
+                    log.error(es);
+                }
                 isAnyError = true;
             }
-
         }
 
         if (isAnyError) {
