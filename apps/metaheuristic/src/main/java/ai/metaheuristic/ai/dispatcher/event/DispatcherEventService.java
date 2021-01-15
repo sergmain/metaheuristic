@@ -121,15 +121,19 @@ public class DispatcherEventService {
     @Async
     @EventListener
     public void handleAsync(DispatcherApplicationEvent event) {
-        if (!globals.isEventEnabled) {
-            return;
+        try {
+            if (!globals.isEventEnabled) {
+                return;
+            }
+            DispatcherEvent le = new DispatcherEvent();
+            le.companyId = event.companyUniqueId;
+            le.period = getPeriod( LocalDateTime.parse( event.dispatcherEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
+            le.event = event.dispatcherEventYaml.event.toString();
+            le.params = DispatcherEventYamlUtils.BASE_YAML_UTILS.toString(event.dispatcherEventYaml);
+            dispatcherEventRepository.save(le);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
-        DispatcherEvent le = new DispatcherEvent();
-        le.companyId = event.companyUniqueId;
-        le.period = getPeriod( LocalDateTime.parse( event.dispatcherEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
-        le.event = event.dispatcherEventYaml.event.toString();
-        le.params = DispatcherEventYamlUtils.BASE_YAML_UTILS.toString(event.dispatcherEventYaml);
-        dispatcherEventRepository.save(le);
     }
 
     private static int getPeriod(LocalDateTime createdOn) {

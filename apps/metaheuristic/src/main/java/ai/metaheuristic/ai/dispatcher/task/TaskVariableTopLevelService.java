@@ -45,13 +45,17 @@ public class TaskVariableTopLevelService {
     @Async
     @EventListener
     public void setVariableReceived(SetVariableReceivedEvent event) {
-        log.debug("call TaskVariableTopLevelService.setVariableReceived({},{}, {})", event.variableId, event.variableId, event.nullified);
         try {
-            taskSyncService.getWithSync(event.taskId,
-                    () -> updateStatusOfVariable(event.taskId, event.variableId, event.nullified));
+            log.debug("call TaskVariableTopLevelService.setVariableReceived({},{}, {})", event.variableId, event.variableId, event.nullified);
+            try {
+                taskSyncService.getWithSync(event.taskId,
+                        () -> updateStatusOfVariable(event.taskId, event.variableId, event.nullified));
 
-        } catch (TaskVariableService.UpdateStatusOfVariableException e) {
-            log.error("{}, status: {}", e.uploadResult.error, e.uploadResult.status);
+            } catch (TaskVariableService.UpdateStatusOfVariableException e) {
+                log.error("{}, status: {}", e.uploadResult.error, e.uploadResult.status);
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
     }
 

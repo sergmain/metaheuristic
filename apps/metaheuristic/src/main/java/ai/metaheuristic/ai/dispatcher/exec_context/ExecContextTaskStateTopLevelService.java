@@ -53,36 +53,44 @@ public class ExecContextTaskStateTopLevelService {
     @Async
     @EventListener
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
-        log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
-        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
-        if (task==null) {
-            return;
-        }
-        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        if (!event.execContextId.equals(task.execContextId)) {
-            log.error("(!execContextId.equals(task.execContextId))");
-        }
+        try {
+            log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
+            TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+            if (task==null) {
+                return;
+            }
+            TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            if (!event.execContextId.equals(task.execContextId)) {
+                log.error("(!execContextId.equals(task.execContextId))");
+            }
 
-        execContextSyncService.getWithSyncNullable(event.execContextId,
-                () -> taskSyncService.getWithSyncNullable(event.taskId,
-                        () -> updateTaskExecStatesInGraph(event.execContextId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
+            execContextSyncService.getWithSyncNullable(event.execContextId,
+                    () -> taskSyncService.getWithSyncNullable(event.taskId,
+                            () -> updateTaskExecStatesInGraph(event.execContextId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Async
     @EventListener
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
-        log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
-        for (int i = 0; i < 100; i++) {
-            TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(event.execContextId,
-                    () -> transferStateFromTaskQueueToExecContext(event.execContextId));
+        try {
+            log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
+            for (int i = 0; i < 100; i++) {
+                TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(event.execContextId,
+                        () -> transferStateFromTaskQueueToExecContext(event.execContextId));
 
-            if (taskGroup==null){
-                return;
+                if (taskGroup==null){
+                    return;
+                }
+                taskGroup.reset();
             }
-            taskGroup.reset();
-        }
 
-        transferStateFromTaskQueueToExecContext(event.execContextId);
+            transferStateFromTaskQueueToExecContext(event.execContextId);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Nullable

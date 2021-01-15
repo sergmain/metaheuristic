@@ -75,7 +75,11 @@ public class ExperimentTopLevelService {
     @Async
     @EventListener
     public void deleteExperimentByExecContextId(ProcessDeletedExecContextEvent event) {
-        experimentService.deleteExperimentByExecContextId(event.execContextId);
+        try {
+            experimentService.deleteExperimentByExecContextId(event.execContextId);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {

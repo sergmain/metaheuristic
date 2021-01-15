@@ -123,8 +123,12 @@ public class TaskAssetPreparer {
     @Async
     @EventListener
     public void processAssetPreparing(AssetPreparingForProcessorTaskEvent event) {
-        TaskAssetPreparingSync.getWithSyncNullable(event.ref.processorCode,
-                ()-> processAssetPreparingInternal(event.ref, event.taskId));
+        try {
+            TaskAssetPreparingSync.getWithSyncNullable(event.ref.processorCode,
+                    ()-> processAssetPreparingInternal(event.ref, event.taskId));
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     private Void processAssetPreparingInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {

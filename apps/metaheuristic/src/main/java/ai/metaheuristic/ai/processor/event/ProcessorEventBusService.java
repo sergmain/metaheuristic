@@ -63,26 +63,30 @@ public class ProcessorEventBusService {
     @EventListener
     public void keepAlive(KeepAliveEvent event) {
 
-        // TODO 2020-11-22 do we need to convert Set to List and sort it?
-        Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
-        if (dispatchers.isEmpty()) {
-            log.info("Can't find any enabled dispatcher");
-            return;
-        }
-        int activeCount = executor.getActiveCount();
-        if (activeCount >0) {
-            log.error("#047.020 executor has not finished tasks, count: {}", activeCount);
-        }
-        for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
-            executor.submit(() -> {
-                log.info("processorKeepAliveRequestor.proceedWithRequest(), url: {}", dispatcher);
-                try {
-                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
-                } catch (Throwable th) {
-                    log.error("ProcessorSchedulers.dispatcherRequester()", th);
-                }
-            });
+        try {
+            // TODO 2020-11-22 do we need to convert Set to List and sort it?
+            Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
+            if (dispatchers.isEmpty()) {
+                log.info("Can't find any enabled dispatcher");
+                return;
+            }
+            int activeCount = executor.getActiveCount();
+            if (activeCount >0) {
+                log.error("#047.020 executor has not finished tasks, count: {}", activeCount);
+            }
+            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
+                executor.submit(() -> {
+                    log.info("processorKeepAliveRequestor.proceedWithRequest(), url: {}", dispatcher);
+                    try {
+                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
+                    } catch (Throwable th) {
+                        log.error("ProcessorSchedulers.dispatcherRequester()", th);
+                    }
+                });
 
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
     }
 

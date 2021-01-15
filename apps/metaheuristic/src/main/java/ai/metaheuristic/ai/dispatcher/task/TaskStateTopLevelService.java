@@ -41,7 +41,11 @@ public class TaskStateTopLevelService {
     @Async
     @EventListener
     public void finishWithErrorWithTx(TaskFinishWithErrorEvent event) {
-        taskSyncService.getWithSyncNullable(event.taskId,
-                () -> taskStateService.finishWithErrorWithTx(event.taskId, event.error));
+        try {
+            taskSyncService.getWithSyncNullable(event.taskId,
+                    () -> taskStateService.finishWithErrorWithTx(event.taskId, event.error));
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 }

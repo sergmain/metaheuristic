@@ -83,24 +83,36 @@ public class TaskProviderTopLevelService {
     @Async
     @EventListener
     public void processDeletedExecContext(TaskQueueCleanByExecContextIdEvent event) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.processDeletedExecContext(event);
+        try {
+            synchronized (syncObj) {
+                taskProviderTransactionalService.processDeletedExecContext(event);
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
     }
 
     @Async
     @EventListener
     public void processDeletedExecContext(StartTaskProcessingEvent event) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.startTaskProcessing(event);
+        try {
+            synchronized (syncObj) {
+                taskProviderTransactionalService.startTaskProcessing(event);
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
     }
 
     @Async
     @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
+        try {
+            synchronized (syncObj) {
+                taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
         }
     }
 
@@ -133,7 +145,11 @@ public class TaskProviderTopLevelService {
     @Async
     @EventListener
     public void lock(LockByExecContextIdEvent event) {
-        lock(event.execContextId);
+        try {
+            lock(event.execContextId);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     public void lock(Long execContextId) {
@@ -151,7 +167,11 @@ public class TaskProviderTopLevelService {
     @Async
     @EventListener
     public void setTaskExecState(SetTaskExecStateEvent event) {
-        setTaskExecState(event.execContextId, event.taskId, event.state);
+        try {
+            setTaskExecState(event.execContextId, event.taskId, event.state);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {

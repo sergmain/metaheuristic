@@ -54,40 +54,64 @@ public class EventBusService {
     @Async
     @EventListener
     public void registerVariableState(VariableUploadedEvent event) {
-        log.debug("call EventBusService.registerVariableState(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
-        execContextTopLevelService.registerVariableState(event);
+        try {
+            log.debug("call EventBusService.registerVariableState(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
+            execContextTopLevelService.registerVariableState(event);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Async
     @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
-        execContextTopLevelService.registerCreatedTask(event);
+        try {
+            execContextTopLevelService.registerCreatedTask(event);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Async
     @EventListener
     public void checkTaskCanBeFinished(CheckTaskCanBeFinishedEvent event) {
-        log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
-        taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId);
+        try {
+            log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
+            taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Async
     @EventListener
     public void registerTask(RegisterTaskForCheckCachingEvent event) {
-        taskCheckCachingService.checkCaching();
+        try {
+            taskCheckCachingService.checkCaching();
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Async
     @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
-        taskWithInternalContextEventService.processInternalFunction(event);
+        try {
+            taskWithInternalContextEventService.processInternalFunction(event);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @SuppressWarnings("unused")
     @Async
     @EventListener
     public void checkAndCreateNewDispatcher(final DispatcherCacheCheckingEvent event) {
-        dispatcherParamsService.checkAndCreateNewDispatcher();
+        try {
+            dispatcherParamsService.checkAndCreateNewDispatcher();
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
 
