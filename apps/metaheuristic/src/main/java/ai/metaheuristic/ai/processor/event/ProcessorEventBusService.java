@@ -72,7 +72,7 @@ public class ProcessorEventBusService {
             }
             int activeCount = executor.getActiveCount();
             if (activeCount >0) {
-                log.error("#047.020 executor has not finished tasks, count: {}", activeCount);
+                log.error("#047.020 executor has a not finished tasks, count: {}", activeCount);
             }
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
                 executor.submit(() -> {

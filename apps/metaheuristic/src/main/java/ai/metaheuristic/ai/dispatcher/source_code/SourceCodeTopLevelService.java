@@ -18,15 +18,19 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.StrUtils;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +43,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 import static ai.metaheuristic.ai.Consts.YAML_EXT;
 import static ai.metaheuristic.ai.Consts.YML_EXT;
@@ -51,6 +57,7 @@ public class SourceCodeTopLevelService {
 
     private final SourceCodeService sourceCodeService;
     private final Globals globals;
+    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
     public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
@@ -83,7 +90,7 @@ public class SourceCodeTopLevelService {
     }
 
     @Nullable
-    public SourceCodeApiData.SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
+    private SourceCodeApiData.SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.130 the code of sourceCode is empty");
@@ -143,6 +150,46 @@ public class SourceCodeTopLevelService {
             log.error("#560.370 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.380 can't load source codes, Error: " + e.toString());
+        }
+    }
+
+    public void diff(Long sourceCodeId1, Long sourceCodeId2) {
+        SourceCodeImpl sc1 = sourceCodeCache.findById(sourceCodeId1);
+        if (sc1==null) {
+            return;
+        }
+        SourceCodeImpl sc2 = sourceCodeCache.findById(sourceCodeId2);
+        if (sc2==null) {
+            return;
+        }
+
+        SourceCodeStoredParamsYaml scspy = sc1.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+
+        DiffRowGenerator generator = DiffRowGenerator.create()
+                .showInlineDiffs(true)
+                .mergeOriginalRevised(false)
+                .inlineDiffByWord(true)
+                .reportLinesUnchanged(true)
+                .oldTag(f -> "~")      //introduce markdown style for strikethrough
+                .newTag(f -> "**")     //introduce markdown style for bold
+                .build();
+
+        //compute the differences for two sourceCodes.
+        List<DiffRow> rows = generator.generateDiffRows(
+                List.of(sc1.getSourceCodeStoredParamsYaml().source),
+                List.of(sc2.getSourceCodeStoredParamsYaml().source));
+
+        for (DiffRow row : rows) {
+            final String oldLine = row.getOldLine();
+            final String newLine = row.getNewLine();
+            if (!oldLine.equals(newLine)) {
+                System.out.println("- " + oldLine);
+                System.out.println("+ " + newLine);
+            }
+            else {
+                System.out.println("  " + oldLine);
+            }
         }
     }
 
