@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -32,6 +30,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -102,23 +101,30 @@ public class TaskStateService {
 
     @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console) {
-        taskSyncService.checkWriteLockPresent(taskId);
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#319.140 task #{} wasn't found", taskId);
-            return null;
-        }
-        String taskContextId = null;
         try {
-            final TaskParamsYaml taskParamYaml;
-            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            taskContextId = taskParamYaml.task.taskContextId;
-        } catch (YAMLException e) {
-            String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
-            log.error(es, e.getMessage());
-        }
+            taskSyncService.checkWriteLockPresent(taskId);
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#319.140 task #{} wasn't found", taskId);
+                return null;
+            }
+            String taskContextId = null;
+            try {
+                final TaskParamsYaml taskParamYaml;
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskContextId = taskParamYaml.task.taskContextId;
+            } catch (YAMLException e) {
+                String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                log.error(es, e.getMessage());
+            }
 
-        return finishWithError(task, console, taskContextId, -10001);
+            return finishWithError(task, console, taskContextId, -10001);
+        } catch (Throwable th) {
+            log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
+            log.warn("#319.170 Error", th);
+            ExceptionUtils.rethrow(th);
+        }
+        return null;
     }
 
     public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
