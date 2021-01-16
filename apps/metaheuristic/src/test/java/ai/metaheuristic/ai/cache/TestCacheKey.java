@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * @author Serge
@@ -44,6 +45,23 @@ public class TestCacheKey {
     @Test
     public void test() {
         assertEquals(KEY_AS_STRING, KEY.asString());
+    }
+
+    @Test
+    public void test_1() {
+        final CacheData.Key key1 = new CacheData.Key("function-01", "");
+        key1.inline.put("top-inline",Map.of("key-1","value-1"));
+        key1.inputs.addAll(List.of(
+                new CacheData.Sha256PlusLength("sha256-1",42L),
+                new CacheData.Sha256PlusLength("sha256-2",11L)));
+
+        final CacheData.Key key2 = new CacheData.Key("function-01", "");
+        key2.inline.put("top-inline",Map.of("key-1","value-2"));
+        key2.inputs.addAll(List.of(
+                new CacheData.Sha256PlusLength("sha256-1",42L),
+                new CacheData.Sha256PlusLength("sha256-2",11L)));
+
+        assertNotEquals(key1.asString(), key2.asString());
     }
 
     public static void main(String[] args) {
