@@ -41,6 +41,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -84,27 +85,33 @@ public class TaskWithInternalContextService {
 
     @Transactional
     public Void processInternalFunctionWithTx(Long execContextId, Long taskId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-        lastTaskId = null;
+        try {
+            execContextSyncService.checkWriteLockPresent(execContextId);
+            lastTaskId = null;
 
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#707.020 ExecContext #{} doesn't exist", execContextId);
-            return null;
-        }
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
-            return null;
-        }
-        if (!execContextId.equals(task.execContextId)) {
-            log.error("#707.060 The task #{} has different execContextId, expected: {}, actual: {}",
-                    taskId, execContextId, task.execContextId);
-            return null;
-        }
-        processInternalFunction(execContext, task);
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                log.warn("#707.020 ExecContext #{} doesn't exist", execContextId);
+                return null;
+            }
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+                return null;
+            }
+            if (!execContextId.equals(task.execContextId)) {
+                log.error("#707.060 The task #{} has different execContextId, expected: {}, actual: {}",
+                        taskId, execContextId, task.execContextId);
+                return null;
+            }
+            processInternalFunction(execContext, task);
 
-        eventPublisher.publishEvent(new LockByExecContextIdTxEvent(execContextId));
+            eventPublisher.publishEvent(new LockByExecContextIdTxEvent(execContextId));
+        } catch (Throwable th) {
+            log.warn("#707.065 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
+            log.warn("#707.070 Error", th);
+            ExceptionUtils.rethrow(th);
+        }
 
         return null;
     }
