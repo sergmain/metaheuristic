@@ -132,13 +132,13 @@ public class AggregateFunction implements InternalFunction {
                     taskContextDir.mkdirs();
                     list.stream().filter(t-> contextId.equals(t.taskContextId))
                             .forEach( v->{
+                                if (v.nullified) {
+                                    return;
+                                }
                                 try {
                                     File varFile = new File(taskContextDir, v.variable);
                                     variableService.storeToFile(v.id, varFile);
                                 } catch (VariableDataNotFoundException e) {
-                                    if (v.nullified) {
-                                        return;
-                                    }
                                     log.error("#992.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
                                     if (policy==ErrorControlPolicy.fail) {
                                         throw e;
