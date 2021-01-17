@@ -33,8 +33,9 @@
 
                     <div th:if="${c.outs!=null && c.state!=T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag" th:each="o : ${c.outs}">
                         <div class="no-wrap">
-                            <a href="#" th:href="${'/dispatcher/source-code/exec-context/'+result.execContextId+'/download-variable/' + o.id}"
+                            <a href="#" th:if="${!o.nullified}" th:href="${'/dispatcher/source-code/exec-context/'+result.execContextId+'/download-variable/' + o.id}"
                                th:text="${o.id+', ' + o.name}">Download var</a>
+                            <div th:if="${o.nullified}" th:text="${o.id+', ' + o.name+', is null'}" class="no-wrap">Variable is null</div>
                         </div>
                     </div>
                     <div th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag">
