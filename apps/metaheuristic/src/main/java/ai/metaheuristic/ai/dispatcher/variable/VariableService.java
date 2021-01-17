@@ -285,7 +285,6 @@ public class VariableService {
         return taskContextId.substring(0, taskContextId.lastIndexOf(',')).strip();
     }
 
-    @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
@@ -326,7 +325,12 @@ public class VariableService {
 
     @Nullable
     @Transactional(readOnly = true)
+    public Void storeToFileWithTx(Long variableId, File trgFile) {
+        return storeToFile(variableId, trgFile);
+    }
+
     public Void storeToFile(Long variableId, File trgFile) {
+        TxUtils.checkTxExists();
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -347,7 +351,6 @@ public class VariableService {
         return null;
     }
 
-    @Transactional(readOnly = true)
     public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {
         if (variables.length==0) {
             return List.of();

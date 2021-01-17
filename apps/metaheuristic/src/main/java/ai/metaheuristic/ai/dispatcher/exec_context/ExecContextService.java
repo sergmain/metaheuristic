@@ -423,7 +423,7 @@ public class ExecContextService {
             String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
 
             File varFile = new File(resultDir, "variable-"+variableId+".bin");
-            variableService.storeToFile(variable.id, varFile);
+            variableService.storeToFileWithTx(variable.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);

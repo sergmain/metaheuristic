@@ -130,7 +130,7 @@ public class SouthbridgeService {
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
-                dataSaver = (variableId, trgFile) -> variableService.storeToFile(Long.parseLong(variableId), trgFile);
+                dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
                 break;
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
@@ -139,7 +139,7 @@ public class SouthbridgeService {
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
-                dataSaver = (variableId, trgFile) -> globalVariableService.storeToFile(Long.parseLong(variableId), trgFile);
+                dataSaver = (variableId, trgFile) -> globalVariableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
                 break;
             default:
                 throw new IllegalStateException("#444.160 Unknown type of data: " + binaryType);

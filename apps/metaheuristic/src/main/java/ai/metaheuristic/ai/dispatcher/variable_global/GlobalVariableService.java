@@ -84,6 +84,10 @@ public class GlobalVariableService {
 
     @Nullable
     @Transactional(readOnly = true)
+    public Void storeToFileWithTx(Long variableId, File trgFile) {
+        return storeToFile(variableId, trgFile);
+    }
+
     public Void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);

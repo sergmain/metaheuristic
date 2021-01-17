@@ -101,7 +101,7 @@ public class TestBinaryDataSaveAndLoad {
         assertNotNull(variable.id);
 
         File trgFile = new File(tempDir, TRG_DATA_FILE_BIN);
-        variableService.storeToFile(variable.id, trgFile);
+        variableService.storeToFileWithTx(variable.id, trgFile);
 
         assertTrue(FileUtils.contentEquals(dataFile, trgFile));
 
