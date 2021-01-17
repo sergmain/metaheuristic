@@ -148,7 +148,7 @@ public class Schedulers {
             artifactCleanerAtDispatcher.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtDispatcher() {
             if (globals.isUnitTesting) {
                 return;

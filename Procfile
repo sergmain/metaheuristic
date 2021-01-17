@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS  -XX:-UseGCOverheadLimit -Xms100m -Xmx100m -Dfile.encoding=UTF-8 -Dserver.port=$PORT -jar apps/metaheuristic/target/metaheuristic.jar
+web: java $JAVA_OPTS  -XX:-UseGCOverheadLimit -Xms75m -Xmx75m -Dfile.encoding=UTF-8 -Dserver.port=$PORT -jar apps/metaheuristic/target/metaheuristic.jar
