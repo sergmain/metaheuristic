@@ -316,10 +316,6 @@ public class ExperimentResultService {
     }
 
 
-//    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
-//        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, isFull);
-//    }
-
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> hyperParams) {
         return getHyperParamsAsMap(hyperParams, true);
     }
