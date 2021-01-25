@@ -103,6 +103,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         @Nullable
         public String ext;
 
+        @SuppressWarnings("SimplifiableConditionalExpression")
         public Boolean getNullable() {
             return nullable==null ? false : nullable;
         }

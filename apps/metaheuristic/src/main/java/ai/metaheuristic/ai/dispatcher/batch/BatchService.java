@@ -411,7 +411,7 @@ public class BatchService {
         return getBatchProcessingResultInternal(batch, companyUniqueId, includeDeleted, "batch-result");
     }
 
-    public CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
+    private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
         return getVariable(batch, companyUniqueId, includeDeleted, (scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {

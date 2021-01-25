@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +29,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,9 +52,6 @@ public class SourceCodeData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SourceCodeUidsForCompany extends BaseDataClass {
-        // it must be full name of class, i.e. with packages
-        // todo 2020-02-24 why?
-//        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
         public List<SourceCodeUid> items;
     }
 
@@ -70,5 +70,30 @@ public class SourceCodeData {
 
         public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
         public final DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+    }
+
+    public static class SimpleProcess {
+        public String name;
+        public String code;
+        public List<String> preFunctions = new ArrayList<>();
+        public String function;
+        public List<String> postFunctions = new ArrayList<>();
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class Development extends BaseDataClass {
+        public String uid;
+        public long id;
+        public List<SimpleProcess> processes;
+
+        public Development(List<String> errorMessage) {
+            this.errorMessages = errorMessage;
+        }
+
+        public Development(String errorMessage) {
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
     }
 }

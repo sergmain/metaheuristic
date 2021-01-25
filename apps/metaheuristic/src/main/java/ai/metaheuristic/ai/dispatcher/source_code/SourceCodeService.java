@@ -143,19 +143,6 @@ public class SourceCodeService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
-        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
-            return new SourceCodeApiData.SourceCodeResult(
-                    errorMessage,
-                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
-        }
-        SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
-        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
-    }
-
     @Transactional
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);

@@ -61,7 +61,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult edit(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getSourceCode(id, context);
+        return sourceCodeTopLevelService.getSourceCode(id, context);
     }
 
     @GetMapping(value = "/source-code-validate/{id}")

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,8 +44,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.YAML_EXT;
 import static ai.metaheuristic.ai.Consts.YML_EXT;
@@ -87,6 +88,44 @@ public class SourceCodeTopLevelService {
         } catch (DataIntegrityViolationException e) {
             return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
         }
+    }
+
+    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
+        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
+            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            return new SourceCodeApiData.SourceCodeResult(
+                    errorMessage,
+                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
+        }
+        SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
+    }
+
+    public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, DispatcherContext context) {
+        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
+            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            return new SourceCodeData.Development(errorMessage);
+        }
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+
+        SourceCodeData.Development d = new SourceCodeData.Development();
+        for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
+            SourceCodeData.SimpleProcess sp = new SourceCodeData.SimpleProcess();
+            sp.code = process.code;
+            sp.name = process.name;
+            if (process.preFunctions!=null) {
+                process.preFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.preFunctions));
+            }
+            sp.function = process.function.code;
+            if (process.postFunctions!=null) {
+                process.postFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.postFunctions));
+            }
+            d.processes.add(sp);
+        }
+        return d;
     }
 
     @Nullable

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -87,13 +88,26 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", sourceCodeResultRest);
         return "dispatcher/source-code/source-code-view";
+    }
+
+    @GetMapping(value = "/source-code-devs/{id}")
+    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    public String development(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        SourceCodeData.Development development = sourceCodeTopLevelService.getSourceCodeDevs(id, context);
+        if (development.isErrorMessages()) {
+            ControllerUtils.initRedirectAttributes(redirectAttributes, development);
+            return REDIRECT_DISPATCHER_SOURCE_CODES;
+        }
+        model.addAttribute("result", development);
+        return "dispatcher/source-code/source-code-devs";
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
@@ -147,7 +161,7 @@ public class SourceCodeController {
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -169,7 +183,7 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
             return REDIRECT_DISPATCHER_SOURCE_CODES;

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
@@ -58,7 +59,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class ExecContextController {
 
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
     private final UserContextService userContextService;
@@ -101,7 +102,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAdd(Model model, @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.getSourceCode(sourceCodeId, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
