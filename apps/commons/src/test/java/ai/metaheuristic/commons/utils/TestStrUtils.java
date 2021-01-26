@@ -34,5 +34,7 @@ public class TestStrUtils {
         assertFalse(StrUtils.isCodeOk("aaa bbb.txt"));
         assertFalse(StrUtils.isCodeOk("aaa,bbb.txt"));
         assertFalse(StrUtils.isCodeOk("aaaäöü.txt"));
+        assertFalse(StrUtils.isCodeOk("aaa\\aaaäöü.txt"));
+        assertFalse(StrUtils.isCodeOk("aaa/aaaäöü.txt"));
     }
 }

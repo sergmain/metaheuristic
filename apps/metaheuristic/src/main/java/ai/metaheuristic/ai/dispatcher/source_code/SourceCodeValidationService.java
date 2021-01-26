@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -92,11 +93,22 @@ public class SourceCodeValidationService {
         List<String> processCodes = new ArrayList<>();
         for (int i = 0; i < processes.size(); i++) {
             SourceCodeParamsYaml.Process process = processes.get(i);
-            String code = validateProcessCode(processCodes, process);
+            if (S.b(process.code)){
+                final String msg = "#177.090 Code of process is blank";
+                log.error(msg);
+                return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_FOUND_ERROR, msg);
+            }
+            String code = findDoublesOfProcessCode(processCodes, process);
             if (code!=null) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
                         "#177.100 There are at least two processes with the same code '" + process.code+"'");
+            }
+            code = validateProcessCode(process);
+            if (code!=null) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
+                        "#177.105 The code of process contains not allowed chars: '" + process.code+"'");
             }
             if (process.function.context==EnumsApi.FunctionExecContext.internal && process.cache!=null && process.cache.enabled) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
@@ -136,11 +148,6 @@ public class SourceCodeValidationService {
                 // test that there isn't any mh.finish process which isn't actually for function mn.finish
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "#177.200 There is process with code mh.finish but function is " + process.function.code);
-            }
-            if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
-                log.error("#177.210 Error while validating sourceCode {}", sourceCodeYaml);
-                return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR, "#177.220 Code of process with illegal chars: " + process.code);
             }
             SourceCodeApiData.SourceCodeValidationResult status = checkFunctions(sourceCode, process);
             if (status.status!=OK) {
@@ -187,7 +194,7 @@ public class SourceCodeValidationService {
     }
 
     @Nullable
-    private static String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
+    private static String findDoublesOfProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
         if (processCodes.contains(process.code)) {
             return process.code;
         }
@@ -197,7 +204,24 @@ public class SourceCodeValidationService {
             return null;
         }
         for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
-            String code = validateProcessCode(processCodes, subProcess);
+            String code = findDoublesOfProcessCode(processCodes, subProcess);
+            if (code!=null) {
+                return code;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String validateProcessCode(SourceCodeParamsYaml.Process process) {
+        if (!StrUtils.isCodeOk(process.code)) {
+            return process.code;
+        }
+        if (process.subProcesses==null) {
+            return null;
+        }
+        for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+            String code = validateProcessCode(subProcess);
             if (code!=null) {
                 return code;
             }
