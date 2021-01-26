@@ -73,20 +73,19 @@ public class SourceCodeData {
     }
 
     public static class SimpleProcess {
-        public String name;
         public String code;
-        public List<String> preFunctions = new ArrayList<>();
+        public final List<String> preFunctions = new ArrayList<>();
         public String function;
-        public List<String> postFunctions = new ArrayList<>();
+        public final List<String> postFunctions = new ArrayList<>();
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class Development extends BaseDataClass {
-        public String uid;
-        public long id;
-        public List<SimpleProcess> processes;
+        public String sourceCodeUid;
+        public long sourceCodeId;
+        public final List<SimpleProcess> processes = new ArrayList<>();
 
         public Development(List<String> errorMessage) {
             this.errorMessages = errorMessage;

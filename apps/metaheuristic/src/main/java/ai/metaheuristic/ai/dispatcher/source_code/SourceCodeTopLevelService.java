@@ -21,9 +21,11 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -45,6 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.YAML_EXT;
@@ -112,10 +115,21 @@ public class SourceCodeTopLevelService {
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
         SourceCodeData.Development d = new SourceCodeData.Development();
-        for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
+        d.sourceCodeUid = scpy.source.uid;
+        d.sourceCodeId = sourceCodeId;
+
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
+                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
+
+        for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
+            if (process.function.context== EnumsApi.FunctionExecContext.internal) {
+                continue;
+            }
+
             SourceCodeData.SimpleProcess sp = new SourceCodeData.SimpleProcess();
-            sp.code = process.code;
-            sp.name = process.name;
+            d.processes.add(sp);
+            sp.code = process.processCode;
             if (process.preFunctions!=null) {
                 process.preFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.preFunctions));
             }
@@ -123,7 +137,6 @@ public class SourceCodeTopLevelService {
             if (process.postFunctions!=null) {
                 process.postFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.postFunctions));
             }
-            d.processes.add(sp);
         }
         return d;
     }
