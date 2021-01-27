@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -43,6 +44,7 @@ import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import com.github.difflib.text.DiffRow;
@@ -309,7 +311,9 @@ public class SourceCodeTopLevelService {
             createLocalVariables(process, outputDir, localIds, localId);
 
             createSystemDir(outputDir);
-            createArtifactsDir(outputDir);
+            if (createArtifactsDir(outputDir)) {
+                return resource;
+            }
 
             String filename = "process-"+processCodeDirName+".zip";
             File zipFile = new File(tempDir, filename);
@@ -333,9 +337,20 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    private void createArtifactsDir(File outputDir) {
-//        ConstsApi.ARTIFACTS_DIR
+    private boolean createArtifactsDir(File outputDir) {
+        File artefactsDir = new File(outputDir, ConstsApi.ARTIFACTS_DIR);
+        artefactsDir.mkdirs();
+        EnvParamsYaml epy = new EnvParamsYaml();
 
+        epy.envs.putAll(Map.of("python-3", "/path-to-python/python", "java-11", "/path-to-java/java -Dfile.encoding=UTF-8 -jar"));
+        epy.disk.addAll(List.of(new EnvParamsYaml.DiskStorage("path-1", "/full/path/1"), new EnvParamsYaml.DiskStorage("path-2", "/full/path/2")));
+
+        String status = EnvServiceUtils.prepareEnvironment(artefactsDir, new EnvServiceUtils.EnvYamlShort(epy));
+        if (status!=null) {
+            log.error(status);
+            return true;
+        }
+        return false;
     }
 
     private void createSystemDir(File outputDir) throws IOException {

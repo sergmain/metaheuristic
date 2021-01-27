@@ -25,15 +25,10 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,14 +37,12 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -463,14 +456,12 @@ public class ProcessorTaskService {
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
-                //noinspection StatementWithEmptyBody
                 if (!taskDir.exists()) {
                     taskDir.mkdirs();
                 }
                 //noinspection ResultOfMethodCallIgnored
                 taskDir.mkdirs();
                 File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
-//                deleteYamlTaskFile(taskYamlFile);
                 FileUtils.write(taskYamlFile, ProcessorTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
                 String es = "#713.160 Error";
@@ -549,18 +540,6 @@ public class ProcessorTaskService {
         }
     }
 
-/*
-    public List<ProcessorTask> findAll(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            List<ProcessorTask> list = new ArrayList<>();
-            for (DispatcherUrl dispatcherUrl : map.keySet()) {
-                list.addAll( getMapForDispatcherUrl(ref).values());
-            }
-            return list;
-        }
-    }
-*/
-
     public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final long taskId) {
         MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
@@ -615,41 +594,4 @@ public class ProcessorTaskService {
         return taskSubDir;
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class EnvYamlShort {
-        public final Map<String, String> envs;
-        public final List<EnvParamsYaml.DiskStorage> disk;
-
-        public EnvYamlShort(EnvParamsYaml envYaml) {
-            this.envs = envYaml.envs;
-            this.disk = envYaml.disk;
-        }
-    }
-
-    private static Yaml getYamlForEnvYamlShort() {
-        return YamlUtils.init(EnvYamlShort.class);
-    }
-
-    private static String envYamlShortToString(EnvYamlShort envYamlShort) {
-        return YamlUtils.toString(envYamlShort, getYamlForEnvYamlShort());
-    }
-
-    @Nullable
-    public String prepareEnvironment(File artifactDir) {
-        File envFile = new File(artifactDir, ConstsApi.MH_ENV_FILE);
-        if (envFile.isDirectory()) {
-            return "#713.220 path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
-        }
-        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvParamsYaml());
-        final String newEnv = envYamlShortToString(envYaml);
-
-        try {
-            FileUtils.writeStringToFile(envFile, newEnv, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return "#713.223 error creating "+ConstsApi.MH_ENV_FILE+", error: " + e.getMessage();
-        }
-
-        return null;
-    }
 }

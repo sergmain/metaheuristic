@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
+import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -217,7 +218,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            String status = processorTaskService.prepareEnvironment(artifactDir);
+            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(envService.getEnvParamsYaml()));
             if (status!=null) {
                 processorTaskService.markAsFinishedWithError(ref, task.taskId, status);
             }
