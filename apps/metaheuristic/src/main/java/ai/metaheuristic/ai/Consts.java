@@ -73,7 +73,7 @@ public class Consts {
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
 
-    // TODO 20221-01-26 why this constant is deprecated
+    // TODO 2021-01-26 why is this constant deprecated
     @Deprecated
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 

@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -38,6 +39,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
@@ -70,6 +72,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -287,7 +290,7 @@ public class SourceCodeTopLevelService {
 
             ExecContextParamsYaml.Process process = sourceCodeGraph.processes.stream().filter(o->o.processCode.equals(processCode)).findFirst().orElse(null);
             if (process == null) {
-                log.info("#560.420 process wasn't found, processCode: {}", processCode);
+                log.warn("#560.420 process wasn't found, processCode: {}", processCode);
                 return resource;
             }
 
@@ -298,20 +301,23 @@ public class SourceCodeTopLevelService {
 
             File outputDir = new File(tempDir, processCodeDirName);
             if (!outputDir.mkdirs()) {
-                log.info("#560.440 process wasn't found, processCode: {}", processCode);
+                log.error("#560.440 process wasn't found, processCode: {}", processCode);
                 return resource;
             }
 
-            Map<String, Integer> globalIds = new HashMap<>();
-            AtomicInteger globalId = new AtomicInteger(1000);
+            Map<String, Long> globalIds = new HashMap<>();
+            AtomicLong globalId = new AtomicLong(1000);
             createGlobalVariables(process, outputDir, globalIds, globalId);
 
-            Map<String, Integer> localIds = new HashMap<>();
-            AtomicInteger localId = new AtomicInteger(2000);
+            Map<String, Long> localIds = new HashMap<>();
+            AtomicLong localId = new AtomicLong(2000);
             createLocalVariables(process, outputDir, localIds, localId);
 
             createSystemDir(outputDir);
-            if (createArtifactsDir(outputDir)) {
+            TaskParamsYaml tpy = asTaskParamsYaml(scpy, process, globalIds, localIds);
+
+            if (createArtifactsDir(outputDir, tpy)) {
+                log.error("#560.445 error creating artifact dir, processCode: {}", processCode);
                 return resource;
             }
 
@@ -337,9 +343,68 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    private boolean createArtifactsDir(File outputDir) {
-        File artefactsDir = new File(outputDir, ConstsApi.ARTIFACTS_DIR);
-        artefactsDir.mkdirs();
+    private static TaskParamsYaml asTaskParamsYaml(SourceCodeParamsYaml scpy, ExecContextParamsYaml.Process process, Map<String, Long> globalIds, Map<String, Long> localIds) {
+        TaskParamsYaml tpy = new TaskParamsYaml();
+        tpy.task.execContextId = 42L;
+        tpy.task.inline = scpy.source.variables.inline;
+        // tpy.task.workingPath will be inited later
+        for (ExecContextParamsYaml.Variable o : process.inputs) {
+            Long id;
+            if (o.context == EnumsApi.VariableContext.global) {
+                id = globalIds.get(o.name);
+            }
+            else {
+                id = localIds.get(o.name);
+            }
+            if (id==null) {
+                throw new IllegalStateException("(id==null)");
+            }
+            TaskParamsYaml.InputVariable input = new TaskParamsYaml.InputVariable();
+            input.id = id;
+            input.name = o.name;
+            input.context = o.context;
+            input.type = o.type;
+            input.sourcing = o.sourcing;
+            input.empty = false;
+            input.setNullable(false);
+            input.disk = o.disk;
+            input.git = o.git;
+            input.filename = "file-name-for-this-variable.txt";
+            tpy.task.inputs.add(input);
+        }
+        AtomicLong outputId = new AtomicLong(3000);
+        for (ExecContextParamsYaml.Variable o : process.outputs) {
+            TaskParamsYaml.OutputVariable output = new TaskParamsYaml.OutputVariable();
+            output.id = outputId.getAndIncrement();
+            output.name = o.name;
+            output.sourcing = o.sourcing;
+            output.context = o.context;
+            output.type = o.type;
+            output.ext = o.ext;
+            output.disk = o.disk;
+            output.git = o.git;
+            output.empty = false;
+            output.setNullable(false);
+            tpy.task.outputs.add(output);
+        }
+
+        return tpy;
+    }
+
+    /**
+     * @return boolean - true if error
+     */
+    private boolean createArtifactsDir(File outputDir, TaskParamsYaml tpy) {
+        File artifactsDir = new File(outputDir, ConstsApi.ARTIFACTS_DIR);
+        artifactsDir.mkdirs();
+        if (createEnvParamsFile(artifactsDir)) {
+            return true;
+        }
+
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, new File(outputDir.getName()), tpy, Set.of(1));
+    }
+
+    private boolean createEnvParamsFile(File artefactsDir) {
         EnvParamsYaml epy = new EnvParamsYaml();
 
         epy.envs.putAll(Map.of("python-3", "/path-to-python/python", "java-11", "/path-to-java/java -Dfile.encoding=UTF-8 -jar"));
@@ -359,20 +424,20 @@ public class SourceCodeTopLevelService {
         FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for variable "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
     }
 
-    private void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Integer> localIds, AtomicInteger localId) throws IOException {
+    private void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
         boolean isLocalVars = process.inputs.stream().anyMatch(o->o.context!=EnumsApi.VariableContext.global);
         if (isLocalVars) {
             File localVarDir = new File(outputDir, EnumsApi.DataType.variable.toString());
             localVarDir.mkdirs();
             for (ExecContextParamsYaml.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.local) {
-                    Integer id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
+                    Long id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
                     FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
                 }
                 else if (o.context == EnumsApi.VariableContext.array) {
                     final String nameForVariableInArray = VariableUtils.getNameForVariableInArray();
 
-                    Integer id = localIds.computeIfAbsent(nameForVariableInArray, k -> localId.getAndIncrement());
+                    Long id = localIds.computeIfAbsent(nameForVariableInArray, k -> localId.getAndIncrement());
                     FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
 
                     VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
@@ -389,14 +454,14 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    private void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Integer> globalIds, AtomicInteger globalsId) throws IOException {
+    private void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
         boolean isGlobalVars = process.inputs.stream().anyMatch(o->o.context== EnumsApi.VariableContext.global);
         if (isGlobalVars) {
             File globalVarDir = new File(outputDir, EnumsApi.DataType.global_variable.toString());
             globalVarDir.mkdirs();
             for (ExecContextParamsYaml.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.global) {
-                    Integer id = globalIds.computeIfAbsent(o.name, k -> globalsId.getAndIncrement());
+                    Long id = globalIds.computeIfAbsent(o.name, k -> globalsId.getAndIncrement());
                     FileUtils.writeStringToFile(new File(globalVarDir, id.toString()), "<a stub value for global variable "+o.name+">", StandardCharsets.UTF_8);
                 }
             }
