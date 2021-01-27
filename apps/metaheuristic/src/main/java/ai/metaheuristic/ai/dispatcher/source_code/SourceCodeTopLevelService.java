@@ -47,6 +47,8 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import com.github.difflib.text.DiffRow;
@@ -401,7 +403,8 @@ public class SourceCodeTopLevelService {
             return true;
         }
 
-        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, new File(outputDir.getName()), tpy, Set.of(1));
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, new File(outputDir.getName()), tpy,
+                Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
     private boolean createEnvParamsFile(File artefactsDir) {
