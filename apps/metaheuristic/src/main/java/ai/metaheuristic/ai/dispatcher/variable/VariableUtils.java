@@ -16,17 +16,19 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.Data;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author Serge
@@ -34,6 +36,7 @@ import java.util.Objects;
  * Time: 10:48 AM
  */
 public class VariableUtils {
+
     public static VariableArrayParamsYaml toVariableArrayParamsYaml(List<VariableHolder> permutedVariables) {
         VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
         for (VariableHolder pv : permutedVariables) {
@@ -64,6 +67,11 @@ public class VariableUtils {
             vapy.array.add(v);
         }
         return vapy;
+    }
+
+    @NonNull
+    public static String getNameForVariableInArray() {
+        return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }
 
     @Data

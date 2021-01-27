@@ -111,7 +111,7 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-context-add";
     }
 
-    @GetMapping(value= "/exec-context/{execContextId}/download-variable//{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/exec-context/{execContextId}/download-variable/{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadVariable(
             HttpServletRequest request, @PathVariable("execContextId") Long execContextId, @PathVariable("variableId") Long variableId,
             Authentication authentication) {

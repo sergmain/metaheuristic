@@ -86,9 +86,9 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             final String functionCode = task.functionCode;
 
             final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
-            final DispatcherLookupParamsYaml.AssetManager asset = dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
-            if (asset==null) {
-                log.error("#811.007 asset server wasn't found for url {}", assetManagerUrl.url);
+            final DispatcherLookupParamsYaml.AssetManager assetManager = dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
+            if (assetManager==null) {
+                log.error("#811.007 assetManager server wasn't found for url {}", assetManagerUrl.url);
                 continue;
             }
 
@@ -101,7 +101,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            MetadataService.FunctionConfigAndStatus functionConfigAndStatus = metadataService.syncFunctionStatus(assetManagerUrl, asset, functionCode);
+            MetadataService.FunctionConfigAndStatus functionConfigAndStatus = metadataService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
             if (functionConfigAndStatus==null) {
                 continue;
             }
@@ -113,7 +113,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             }
 
             if (functionDownloadStatus.functionState != Enums.FunctionState.none && functionDownloadStatus.functionState != Enums.FunctionState.ok) {
-                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, asset.url, functionDownloadStatus.functionState);
+                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.functionState);
                 continue;
             }
 
@@ -131,7 +131,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                     File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
 
-                    final String targetUrl = asset.url + Consts.REST_ASSET_URL + "/function";
+                    final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
 
                     String mask = assetFile.file.getName() + ".%s.tmp";
                     File dir = assetFile.file.getParentFile();
@@ -150,20 +150,20 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                             RestUtils.addHeaders(request);
 
-                            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
+                            Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
                             File partFile = new File(dir, String.format(mask, idx));
 
                             final HttpResponse httpResponse = response.returnResponse();
                             int statusCode = httpResponse.getStatusLine().getStatusCode();
                             if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("#811.047 Function %s can't be downloaded, asset manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, asset.url);
+                                final String es = S.f("#811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);
                                 log.error(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
                                 functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             }
                             else if (statusCode == HttpStatus.GONE.value()) {
-                                final String es = S.f("#811.048 Function %s was deleted at asset manager %s.", task.functionCode, asset.url);
+                                final String es = S.f("#811.048 Function %s was deleted at assetManager manager %s.", task.functionCode, assetManager.url);
                                 log.error(es);
                                 // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.not_found);
@@ -171,7 +171,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 break;
                             }
                             else if (statusCode != HttpStatus.OK.value()) {
-                                final String es = S.f("#811.050 Function %s can't be downloaded from asset manager %s, status code: %d", task.functionCode, asset.url, statusCode);
+                                final String es = S.f("#811.050 Function %s can't be downloaded from assetManager manager %s, status code: %d", task.functionCode, assetManager.url, statusCode);
                                 log.error(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
@@ -203,47 +203,47 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             }
                         } catch (HttpResponseException e) {
                             if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("#811.065 Function %s can't be downloaded, asset manager %s was mis-configured", task.functionCode, asset.url);
+                                final String es = S.f("#811.065 Function %s can't be downloaded, assetManager manager %s was mis-configured", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.dispatcher_config_error);
                                 functionState = Enums.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
                                 final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
-                                        "a function #%s on asset srv %s. will try later again", task.functionCode, asset.url);
+                                        "a function #%s on assetManager srv %s. will try later again", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 // do nothing and try later again
                                 return;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                                final String es = S.f("#811.070 Function %s wasn't found on asset manager %s", task.functionCode, asset.url);
+                                final String es = S.f("#811.070 Function %s wasn't found on assetManager manager %s", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.not_found);
                                 functionState = Enums.FunctionState.not_found;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
-                                final String es = S.f("#811.080 Unknown error with a function %s on asset manager %s", task.functionCode, asset.url);
+                                final String es = S.f("#811.080 Unknown error with a function %s on assetManager manager %s", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                                final String es = S.f("#811.090 Unknown error with a resource %s on asset manager %s", task.functionCode, asset.url);
+                                final String es = S.f("#811.090 Unknown error with a resource %s on assetManager manager %s", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
                                 break;
                             } else {
-                                final String es = S.f("#811.091 Unknown error with a resource %s on asset manager %s, dispatcher %s", task.functionCode, asset.url);
+                                final String es = S.f("#811.091 Unknown error with a resource %s on assetManager manager %s, dispatcher %s", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.download_error);
                                 functionState = Enums.FunctionState.download_error;
                                 break;
                             }
                         }
-                        // work around for handling a burst access to asset server
+                        // work around for handling a burst access to assetManager server
                         //noinspection BusyWait
-                        Thread.sleep(200);
+                        Thread.sleep(50);
                         idx++;
                     } while (idx < 1000);
                     if (functionState == Enums.FunctionState.none) {
@@ -288,16 +288,16 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
             }
             if (!assetFile.getFile().exists()) {
-                log.error("#811.180 asset file {} is missing", assetFile.getFile().getAbsolutePath());
+                log.error("#811.180 assetManager file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
             ChecksumAndSignatureData.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
 
             CheckSumAndSignatureStatus status;
             try {
-                status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, state, assetFile.getFile());
+                status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, assetFile.getFile());
             } catch (IOException e) {
-                log.error("#811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  asset file {}, error: {}",
+                log.error("#811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
                         functionCode, assetFile.getFile().getAbsolutePath(), e.toString());
                 metadataService.setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.io_error);
                 continue;

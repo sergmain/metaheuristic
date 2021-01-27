@@ -193,9 +193,9 @@ public class MetadataService {
     }
 
     @Nullable
-    public FunctionConfigAndStatus syncFunctionStatus(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset, final String functionCode) {
+    public FunctionConfigAndStatus syncFunctionStatus(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
         try {
-            return syncFunctionStatusInternal(assetManagerUrl, asset, functionCode);
+            return syncFunctionStatusInternal(assetManagerUrl, assetManager, functionCode);
         } catch (Throwable th) {
             log.error("#815.080 Error in syncFunctionStatus()", th);
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.io_error));
@@ -203,7 +203,7 @@ public class MetadataService {
     }
 
     @Nullable
-    private FunctionConfigAndStatus syncFunctionStatusInternal(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset, String functionCode) {
+    private FunctionConfigAndStatus syncFunctionStatusInternal(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
         MetadataParamsYaml.Status status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
 
         if (status == null) {
@@ -221,7 +221,7 @@ public class MetadataService {
         }
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                processorFunctionService.downloadFunctionConfig(asset, functionCode);
+                processorFunctionService.downloadFunctionConfig(assetManager, functionCode);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.function_config_error));

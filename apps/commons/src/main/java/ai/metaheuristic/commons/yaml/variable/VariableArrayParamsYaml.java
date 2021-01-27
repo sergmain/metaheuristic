@@ -67,6 +67,13 @@ public class VariableArrayParamsYaml implements BaseParams {
             this.name = name;
             this.sourcing = sourcing;
         }
+
+        public Variable(String id, String name, EnumsApi.DataSourcing sourcing, EnumsApi.DataType dataType) {
+            this.id = id;
+            this.name = name;
+            this.sourcing = sourcing;
+            this.dataType = dataType;
+        }
     }
 
     public final List<Variable> array = new ArrayList<>();

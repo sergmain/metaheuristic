@@ -69,7 +69,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -127,7 +126,7 @@ public class VariableService {
         if (!files.isEmpty() || inputVariableContent!=null) {
             List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
             for (BatchTopLevelService.FileWithMapping f : files) {
-                String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+                String variableName = VariableUtils.getNameForVariableInArray();
 
                 FileInputStream fis = new FileInputStream(f.file);
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
@@ -138,7 +137,7 @@ public class VariableService {
             }
 
             if (!S.b(inputVariableContent)) {
-                String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
+                String variableName = VariableUtils.getNameForVariableInArray();
                 final byte[] bytes = inputVariableContent.getBytes();
                 InputStream is = new ByteArrayInputStream(bytes);
                 // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX

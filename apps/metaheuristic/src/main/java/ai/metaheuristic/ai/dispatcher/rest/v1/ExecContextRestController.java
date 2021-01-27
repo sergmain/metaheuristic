@@ -155,7 +155,7 @@ public class ExecContextRestController {
 
 
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'OPERATOR', 'MANAGER')")
-    @GetMapping(value= "/exec-context/{execContextId}/download-variable//{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/exec-context/{execContextId}/download-variable/{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadVariable(
             HttpServletRequest request, @PathVariable("execContextId") Long execContextId, @PathVariable("variableId") Long variableId,
             Authentication authentication) {

@@ -16,13 +16,21 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -30,23 +38,37 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import com.github.difflib.text.DiffRow;
 import com.github.difflib.text.DiffRowGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -245,4 +267,124 @@ public class SourceCodeTopLevelService {
         }
     }
 
+    public CleanerInfo generateDirsForDev(Long sourceCodeId, String processCode, Long companyId) {
+        CleanerInfo resource = new CleanerInfo();
+        try {
+            final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+            if (sourceCode == null) {
+                log.info("#560.400 sourceCode wasn't found, sourceCodeId: {}", sourceCodeId);
+                return resource;
+            }
+
+            SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+            SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+
+            AtomicLong contextId = new AtomicLong();
+            SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
+                    EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
+
+            ExecContextParamsYaml.Process process = sourceCodeGraph.processes.stream().filter(o->o.processCode.equals(processCode)).findFirst().orElse(null);
+            if (process == null) {
+                log.info("#560.420 process wasn't found, processCode: {}", processCode);
+                return resource;
+            }
+
+            File tempDir = DirUtils.createTempDir("generate-dirs-for-dev-");
+            resource.toClean.add(tempDir);
+
+            final String processCodeDirName = process.processCode.replace(':', '_');
+
+            File outputDir = new File(tempDir, processCodeDirName);
+            if (!outputDir.mkdirs()) {
+                log.info("#560.440 process wasn't found, processCode: {}", processCode);
+                return resource;
+            }
+
+            Map<String, Integer> globalIds = new HashMap<>();
+            AtomicInteger globalId = new AtomicInteger(1000);
+            createGlobalVariables(process, outputDir, globalIds, globalId);
+
+            Map<String, Integer> localIds = new HashMap<>();
+            AtomicInteger localId = new AtomicInteger(2000);
+            createLocalVariables(process, outputDir, localIds, localId);
+
+            createSystemDir(outputDir);
+            createArtifactsDir(outputDir);
+
+            String filename = "process-"+processCodeDirName+".zip";
+            File zipFile = new File(tempDir, filename);
+
+            ZipUtils.createZip(outputDir, zipFile);
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            httpHeaders.setContentDisposition(ContentDisposition.parse(
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            return resource;
+        } catch (VariableDataNotFoundException e) {
+            log.error("#560.460 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            return resource;
+        } catch (Throwable th) {
+            log.error("#560.480 General error", th);
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            return resource;
+        }
+    }
+
+    private void createArtifactsDir(File outputDir) {
+//        ConstsApi.ARTIFACTS_DIR
+
+    }
+
+    private void createSystemDir(File outputDir) throws IOException {
+        File systemDir = new File(outputDir, Consts.SYSTEM_DIR);
+        systemDir.mkdirs();
+        FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for variable "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
+    }
+
+    private void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Integer> localIds, AtomicInteger localId) throws IOException {
+        boolean isLocalVars = process.inputs.stream().anyMatch(o->o.context!=EnumsApi.VariableContext.global);
+        if (isLocalVars) {
+            File localVarDir = new File(outputDir, EnumsApi.DataType.variable.toString());
+            localVarDir.mkdirs();
+            for (ExecContextParamsYaml.Variable o : process.inputs) {
+                if (o.context == EnumsApi.VariableContext.local) {
+                    Integer id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
+                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
+                }
+                else if (o.context == EnumsApi.VariableContext.array) {
+                    final String nameForVariableInArray = VariableUtils.getNameForVariableInArray();
+
+                    Integer id = localIds.computeIfAbsent(nameForVariableInArray, k -> localId.getAndIncrement());
+                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
+
+                    VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
+                    vapy.array.add(new VariableArrayParamsYaml.Variable(id.toString(), nameForVariableInArray, EnumsApi.DataSourcing.dispatcher, EnumsApi.DataType.variable));
+                    String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+
+                    id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
+                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), yaml, StandardCharsets.UTF_8);
+                }
+                else {
+                    throw new IllegalStateException("Wrong variable context" + o.context);
+                }
+            }
+        }
+    }
+
+    private void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Integer> globalIds, AtomicInteger globalsId) throws IOException {
+        boolean isGlobalVars = process.inputs.stream().anyMatch(o->o.context== EnumsApi.VariableContext.global);
+        if (isGlobalVars) {
+            File globalVarDir = new File(outputDir, EnumsApi.DataType.global_variable.toString());
+            globalVarDir.mkdirs();
+            for (ExecContextParamsYaml.Variable o : process.inputs) {
+                if (o.context == EnumsApi.VariableContext.global) {
+                    Integer id = globalIds.computeIfAbsent(o.name, k -> globalsId.getAndIncrement());
+                    FileUtils.writeStringToFile(new File(globalVarDir, id.toString()), "<a stub value for global variable "+o.name+">", StandardCharsets.UTF_8);
+                }
+            }
+        }
+    }
 }
