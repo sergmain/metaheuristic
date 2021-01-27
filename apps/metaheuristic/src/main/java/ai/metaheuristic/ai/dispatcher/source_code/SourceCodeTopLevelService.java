@@ -403,7 +403,7 @@ public class SourceCodeTopLevelService {
             return true;
         }
 
-        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, new File(outputDir.getName()), tpy,
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, outputDir.getName(), tpy,
                 Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
@@ -424,7 +424,7 @@ public class SourceCodeTopLevelService {
     private void createSystemDir(File outputDir) throws IOException {
         File systemDir = new File(outputDir, Consts.SYSTEM_DIR);
         systemDir.mkdirs();
-        FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for variable "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for log file "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
     }
 
     private void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {

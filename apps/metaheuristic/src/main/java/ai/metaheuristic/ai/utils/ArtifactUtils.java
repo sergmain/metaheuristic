@@ -46,9 +46,9 @@ public class ArtifactUtils {
      * @param versions
      * @return boolean - true if Ok
      */
-    public static boolean prepareParamsFileForTask(File artifactDir, File taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
+    public static boolean prepareParamsFileForTask(File artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
         TaskFileParamsYaml taskFileParamYaml = toTaskFileParamsYaml(taskParamYaml);
-        taskFileParamYaml.task.workingPath = taskDir.getAbsolutePath();
+        taskFileParamYaml.task.workingPath = taskDir;
         for (Integer version : versions) {
 
             final String params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskFileParamYaml, version);

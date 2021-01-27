@@ -408,7 +408,7 @@ public class TaskProcessor {
                 .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.function.metas))
                 .collect(Collectors.toSet());
 
-        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir, taskParamYaml, versions);
+        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.getAbsolutePath(), taskParamYaml, versions);
     }
 
     private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
