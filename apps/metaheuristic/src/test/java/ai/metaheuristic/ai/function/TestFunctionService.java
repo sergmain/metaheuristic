@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
@@ -41,7 +40,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,9 +70,6 @@ public class TestFunctionService {
     private FunctionRepository functionRepository;
 
     @Autowired
-    private FunctionCache functionCache;
-
-    @Autowired
     private FunctionDataService functionDataService;
 
     @Autowired
@@ -97,12 +92,12 @@ public class TestFunctionService {
     }
 
     @BeforeEach
-    public void beforePreparingExperiment() throws IOException {
+    public void beforePreparingExperiment() {
         assertTrue(globals.isUnitTesting);
         function = initFunction();
     }
 
-    public Function initFunction() {
+    private Function initFunction() {
         long mills;
         byte[] bytes = "some program code".getBytes();
         Function f = functionRepository.findByCode(TEST_FUNCTION);
@@ -131,7 +126,7 @@ public class TestFunctionService {
         log.info("Start after()");
         if (function != null) {
             try {
-                functionCache.delete(function.getId());
+                functionService.deleteFunction(function.getId(), function.code);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

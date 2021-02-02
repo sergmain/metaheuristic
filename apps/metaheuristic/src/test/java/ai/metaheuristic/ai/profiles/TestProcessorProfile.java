@@ -27,6 +27,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("processor")
@@ -40,9 +42,6 @@ public class TestProcessorProfile {
 
     @Test
     public void simpleTest() {
-        System.out.println("We don't need any test here " +
-                "because this test is about " +
-                "correctness of class wiring for 'processor' profile." +
-                "Number of threads: " + globals.schedulerThreadNumber);
+        assertEquals(11, globals.schedulerThreadNumber);
     }
 }

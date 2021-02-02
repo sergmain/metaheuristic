@@ -87,12 +87,6 @@ public class ProcessorTopLevelService {
         return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
-/*
-    public DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Long processorId, ProcessorStatusYaml ss) {
-        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.assignNewSessionIdWithTx(processorId, ss));
-    }
-*/
-
     public void processProcessorStatuses(
             final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 

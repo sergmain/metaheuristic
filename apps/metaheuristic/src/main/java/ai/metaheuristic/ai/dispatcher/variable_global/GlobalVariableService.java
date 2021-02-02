@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -121,7 +121,7 @@ public class GlobalVariableService {
         data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
 
         globalVariableRepository.save(data);
@@ -148,7 +148,7 @@ public class GlobalVariableService {
     public void update(InputStream is, long size, GlobalVariable data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
 
         globalVariableRepository.save(data);

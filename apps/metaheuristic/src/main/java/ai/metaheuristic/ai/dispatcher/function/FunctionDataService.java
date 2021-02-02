@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.lang.Nullable;
@@ -102,7 +102,7 @@ public class FunctionDataService {
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-            Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+            Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
             data.setData(blob);
 
             functionDataRepository.save(data);
@@ -121,7 +121,7 @@ public class FunctionDataService {
     public void update(InputStream is, long size, FunctionData data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
 
         functionDataRepository.save(data);

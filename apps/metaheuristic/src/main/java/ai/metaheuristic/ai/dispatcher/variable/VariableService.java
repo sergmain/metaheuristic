@@ -50,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -371,7 +371,7 @@ public class VariableService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
 
         variableRepository.save(data);
@@ -438,7 +438,7 @@ public class VariableService {
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
         data.inited = true;
         data.nullified = false;
@@ -456,7 +456,7 @@ public class VariableService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
         data.setData(blob);
         data.inited = true;
         data.nullified = false;

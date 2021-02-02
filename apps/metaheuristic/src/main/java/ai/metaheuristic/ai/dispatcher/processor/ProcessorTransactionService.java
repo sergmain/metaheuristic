@@ -189,12 +189,6 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
-        processorSyncService.checkWriteLockPresent(id);
-        processorCache.deleteById(id);
-    }
-
-    @Transactional
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
         processorSyncService.checkWriteLockPresent(processorId);
         Processor s = processorCache.findById(processorId);

@@ -79,7 +79,7 @@ public class TestDispatcherYamlSchemeValidation {
     }
 
     @Test
-    public void test_2_v2() throws IOException {
+    public void test_2__with_error_v2() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-with-error-v2.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (

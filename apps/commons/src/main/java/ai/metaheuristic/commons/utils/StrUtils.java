@@ -75,7 +75,7 @@ public class StrUtils {
             return formatString(mainPart, num+1);
         }
         catch(NumberFormatException e) {
-            log.warn("Error while incrimenting copy number for string {}", s);
+            log.warn("Error while incrementing copy number for string '{}'", s);
         }
         return formatString(mainPart, 2);
     }

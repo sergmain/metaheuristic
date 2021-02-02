@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.cache;
 
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -28,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -54,7 +52,6 @@ public class CacheVariableService {
 
     private final EntityManager em;
     private final CacheVariableRepository cacheVariableRepository;
-    private final VariableRepository variableRepository;
 
     @Transactional(readOnly = true)
     public void storeToFile(Long variableId, File trgFile) throws IOException, SQLException {
@@ -90,7 +87,7 @@ public class CacheVariableService {
             data.nullified = true;
         }
         else {
-            data.data = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+            data.data = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
             data.nullified = false;
         }
 

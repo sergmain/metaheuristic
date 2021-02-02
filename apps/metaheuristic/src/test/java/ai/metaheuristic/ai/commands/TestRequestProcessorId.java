@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -57,6 +58,9 @@ public class TestRequestProcessorId {
     @Autowired
     public ProcessorCache processorCache;
 
+    @Autowired
+    public ProcessorTopLevelService processorTopLevelService;
+
     private Long processorId;
 
     @BeforeEach
@@ -87,7 +91,7 @@ public class TestRequestProcessorId {
         log.info("Start after()");
         if (processorId !=null) {
             try {
-                processorCache.deleteById(processorId);
+                processorTopLevelService.deleteProcessorById(processorId);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
