@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused")
 @Slf4j
 public class StrUtils {
 

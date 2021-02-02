@@ -99,5 +99,6 @@ public class TestProcessTimeout {
         System.out.println("info: " + process.info());
         System.out.println("console:\n" + baos.toString());
 
+        // TODO 2021.02.02 add here some actual checks
     }
 }
