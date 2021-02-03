@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -59,7 +59,13 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
             return null;
         });
+
+        String sessionId = step_1_0_init_session_id();
+        step_1_1_register_function_statuses(sessionId);
+
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask();
 

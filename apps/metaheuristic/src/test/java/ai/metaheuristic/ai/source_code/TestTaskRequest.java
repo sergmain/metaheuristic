@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
@@ -55,9 +55,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
-    public SouthbridgeService serverService;
-
-    @Autowired
     public TaskService taskService;
 
     @Autowired
@@ -78,35 +75,11 @@ public class TestTaskRequest extends FeatureMethods {
     public void testTaskRequest() {
         produceTasks();
         toStarted();
-        String sessionId = step_1();
+        String sessionId = step_1_0_init_session_id();
+        step_1_1_register_function_statuses(sessionId);
         step_2(sessionId);
         step_3(sessionId);
         step_4(sessionId);
-    }
-
-    private String step_1() {
-        String sessionId;
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
-
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
-        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
-
-        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
-
-        assertNotNull(d0);
-        assertNotNull(d0.responses);
-        assertEquals(1, d0.responses.size());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
-        assertNotNull(reAssignedProcessorId);
-        assertNotNull(reAssignedProcessorId.sessionId);
-        assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
-
-        sessionId = reAssignedProcessorId.sessionId;
-        return sessionId;
     }
 
     private void step_2(String sessionId) {
@@ -150,6 +123,8 @@ public class TestTaskRequest extends FeatureMethods {
             return null;
         });
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
+        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
+                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);

@@ -99,9 +99,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired
     private TaskSyncService taskSyncService;
 
-    @Autowired
-    private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
-
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -154,6 +151,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
         });
+
+        String sessionId = step_1_0_init_session_id();
+        step_1_1_register_function_statuses(sessionId);
 
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         step_AssembledRaw();

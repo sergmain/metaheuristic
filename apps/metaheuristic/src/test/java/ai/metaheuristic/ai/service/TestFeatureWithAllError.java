@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +26,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-;import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -38,7 +37,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class TestFeatureWithAllError extends FeatureMethods {
 
     @Test
-    public void testFeatureCompletionWithAllError() throws InterruptedException {
+    public void testFeatureCompletionWithAllError() {
         createExperiment();
         assertTrue(isCorrectInit);
 
@@ -48,6 +47,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         toStarted();
+
+        String sessionId = step_1_0_init_session_id();
+        step_1_1_register_function_statuses(sessionId);
+
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         mills = System.currentTimeMillis();

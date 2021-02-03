@@ -160,18 +160,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
     }
 
-    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
-        long mills;
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentService.getTaskAndAssignToProcessor()");
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
-        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
-
-        assertNotNull(task);
-        return task;
-    }
-
     protected void storeConsoleResultAsError() {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();

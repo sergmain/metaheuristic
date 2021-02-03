@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
@@ -29,12 +30,22 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -143,12 +154,18 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired
     public TaskProviderTopLevelService taskProviderService;
 
+    @Autowired
+    public SouthbridgeService serverService;
+
+    @Autowired
+    public ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+
     public SourceCodeImpl sourceCode = null;
-    public Function s1 = null;
-    public Function s2 = null;
-    public Function s3 = null;
-    public Function s4 = null;
-    public Function s5 = null;
+    public Function f1 = null;
+    public Function f2 = null;
+    public Function f3 = null;
+    public Function f4 = null;
+    public Function f5 = null;
     public ExecContextImpl execContextForTest = null;
 
     public ExecContextParamsYaml execContextYaml;
@@ -191,11 +208,11 @@ public abstract class PreparingSourceCode extends PreparingCore {
         // id==1L must be assigned only to master company
         assertNotEquals(Consts.ID_1, company.id);
 
-        s1 = createFunction("function-01:1.1");
-        s2 = createFunction("function-02:1.1");
-        s3 = createFunction("function-03:1.1");
-        s4 = createFunction("function-04:1.1");
-        s5 = createFunction("function-05:1.1");
+        f1 = createFunction("function-01:1.1");
+        f2 = createFunction("function-02:1.1");
+        f3 = createFunction("function-03:1.1");
+        f4 = createFunction("function-04:1.1");
+        f5 = createFunction("function-05:1.1");
 
         SourceCodeApiData.SourceCodeResult scr = sourceCodeTopLevelService.createSourceCode(getSourceCodeYamlAsString(), company.uniqueId);
         sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
@@ -213,6 +230,86 @@ public abstract class PreparingSourceCode extends PreparingCore {
         execContextYaml = new ExecContextParamsYaml();
         execContextYaml.variables.globals = new ArrayList<>();
         execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
+    }
+
+    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
+        long mills;
+
+        mills = System.currentTimeMillis();
+
+        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
+
+        // get a task for processing
+        log.info("Start experimentService.getTaskAndAssignToProcessor()");
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
+        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
+
+        assertNotNull(task);
+        return task;
+    }
+
+    /**
+     * this method must be called after   produceTasks() and after toStarted()
+     * @return
+     */
+    public String step_1_0_init_session_id() {
+        String sessionId;
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        processorComm.requests.add(req);
+
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
+
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
+
+        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
+
+        assertNotNull(d0);
+        assertNotNull(d0.responses);
+        assertEquals(1, d0.responses.size());
+        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(reAssignedProcessorId);
+        assertNotNull(reAssignedProcessorId.sessionId);
+        assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
+
+        sessionId = reAssignedProcessorId.sessionId;
+        return sessionId;
+    }
+
+    public void step_1_1_register_function_statuses(String sessionId) {
+        KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
+        karpy.functions.statuses = asListOfReady(f1, f2, f3, f4, f5, fitFunction, predictFunction);
+
+        KeepAliveRequestParamYaml.ProcessorRequest pr = new KeepAliveRequestParamYaml.ProcessorRequest();
+        pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
+        final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
+        env.envs.put("env-for-test-function", "/path/to/cmd");
+        env.envs.put("python-3", "/path/to/python-3");
+
+        pr.processor = new KeepAliveRequestParamYaml.ReportProcessor(
+                env,
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
+                "0:00 - 23:59",
+                sessionId,
+                System.currentTimeMillis(),
+                "[unknown]", "[unknown]", null, true,
+                1, EnumsApi.OS.unknown, "/users/yyy");
+        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+        karpy.requests.add(pr);
+
+        String yamlRequest = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karpy);
+        String yamlResponse = serverService.keepAlive(yamlRequest, "127.0.0.1");
+        KeepAliveResponseParamYaml response = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(yamlResponse);
+        int i =0;
+    }
+
+    private List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
+        List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> list = new ArrayList<>();
+        for (Function function : f) {
+            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, Enums.FunctionState.ready));
+        }
+        return list;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -283,7 +380,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         sc.code = functionCode;
         sc.type = functionCode + "-type";
         sc.file = "some-file";
-        sc.setEnv("env-"+functionCode);
+        sc.env = "env-for-test-function";
         sc.sourcing = EnumsApi.FunctionSourcing.processor;
 
 //  metas:
@@ -315,11 +412,11 @@ public abstract class PreparingSourceCode extends PreparingCore {
                 log.error("Error while companyRepository.deleteById()", th);
             }
         }
-        deleteFunction(s1);
-        deleteFunction(s2);
-        deleteFunction(s3);
-        deleteFunction(s4);
-        deleteFunction(s5);
+        deleteFunction(f1);
+        deleteFunction(f2);
+        deleteFunction(f3);
+        deleteFunction(f4);
+        deleteFunction(f5);
         if (execContextForTest != null) {
             if (execContextCache.findById(execContextForTest.getId()) != null) {
                 try {
