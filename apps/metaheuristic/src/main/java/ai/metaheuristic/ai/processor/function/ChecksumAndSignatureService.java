@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author Serge
@@ -49,13 +50,20 @@ public class ChecksumAndSignatureService {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
 
-        CheckSumAndSignatureStatus status;
         try (FileInputStream fis = new FileInputStream(functionFile)) {
-            status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                    "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, fis, ProcessorUtils.createPublicKey(asset),
-                    checksumState.originChecksumWithSignature, checksumState.hashAlgo);
-
+            return getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, checksumState, fis);
         }
+    }
+
+    public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
+            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
+            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, InputStream is) {
+
+        CheckSumAndSignatureStatus status;
+        status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
+                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, ProcessorUtils.createPublicKey(asset),
+                checksumState.originChecksumWithSignature, checksumState.hashAlgo);
+
         metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }

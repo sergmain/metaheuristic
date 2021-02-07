@@ -241,12 +241,6 @@
             <version>1.5.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>jquery-ui</artifactId>
-            <version>1.12.1</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/io.github.java-diff-utils/java-diff-utils -->
         <dependency>
             <!--License	Apache 2.0-->
@@ -256,11 +250,16 @@
         </dependency>
 
         <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery-ui</artifactId>
+            <version>1.12.1</version>
+        </dependency>
+
+        <dependency>
             <!--License	MIT-->
             <groupId>org.webjars</groupId>
             <artifactId>jquery</artifactId>
-            <version>3.5.1</version>
-<!--            <version>3.2.1</version>-->
+            <version>3.2.1</version>
         </dependency>
 
         <dependency>
@@ -275,8 +274,7 @@
             <!--License	Apache 2.0-->
             <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
-<!--            <version>3.3.7</version>-->
-            <version>4.6.0</version>
+            <version>3.3.7</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.webjars</groupId>

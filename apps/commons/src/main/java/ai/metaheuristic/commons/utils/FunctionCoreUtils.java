@@ -20,6 +20,8 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
@@ -86,15 +88,31 @@ public class FunctionCoreUtils {
     }
 
     public static String getDataForChecksumForConfigOnly(FunctionConfigListYaml.FunctionConfig functionConfig) {
-        // old version
-//        return "" + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params;
-
-        return functionConfig.code + " " + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params +
-                (S.b(functionConfig.content) ? "" : " " + functionConfig.content) +
-                (functionConfig.git!=null ? " " + functionConfig.git.branch+":"+functionConfig.git.commit : "") +
-                (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher ? "" : " " + functionConfig.sourcing );
+        return getDataForChecksumForConfigOnly(
+                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params,
+                functionConfig.content, functionConfig.git, functionConfig.sourcing);
     }
 
+    public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {
+        return getDataForChecksumForConfigOnly(
+                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params,
+                functionConfig.content, functionConfig.git, functionConfig.sourcing);
+    }
+
+    private static String getDataForChecksumForConfigOnly(
+            String functionCode, @Nullable String env, @Nullable String functionFile,
+            @Nullable String functionParams, @Nullable String content, @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
+
+        return functionCode + " " +
+                (S.b(env) ? null : env) +
+                ", " +
+                (S.b(functionFile) ? null : functionFile) +
+                " " +
+                (S.b(functionParams) ? null : functionParams) +
+                (S.b(content) ? "" : " " + content) +
+                (git !=null ? " " + git.branch+":"+ git.commit : "") +
+                (sourcing == EnumsApi.FunctionSourcing.dispatcher ? "" : " " + sourcing);
+    }
 
     public static List<EnumsApi.OS> getSupportedOS(@Nullable List<Map<String, String>> metas) {
         final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_FUNCTION_SUPPORTED_OS);

@@ -1,5 +1,5 @@
 source:
-  uid: source-code-for-size-of-files-v1.6-nullable
+  uid: source-code-for-size-of-files-v1.7-nullable
   metas:
     - mh.result-file-extension: .zip
   variables:
@@ -7,10 +7,10 @@ source:
       list-files:
         dir-code: 'dir-for-processing'
   processes:
-    - code: get-list-of-files:1.4
-      name: get-list-of-files:1.4
+    - code: get-list-of-files:1.5
+      name: get-list-of-files:1.5
       function:
-        code: get-list-of-files:1.4
+        code: get-list-of-files:1.5
       outputs:
         - name: var-logger-list-of-files
         - name: var-list-of-files

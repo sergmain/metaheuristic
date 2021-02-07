@@ -426,6 +426,22 @@ public class MetadataService {
         }
     }
 
+    public void setFunctionFromProcessorAsReady(final AssetManagerUrl assetManagerUrl, String functionCode) {
+        synchronized (syncObj) {
+            if (S.b(functionCode)) {
+                throw new IllegalStateException("#815.240 functionCode is null");
+            }
+            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            if (status == null) {
+                return;
+            }
+            status.functionState = Enums.FunctionState.ready;
+            status.checksum= EnumsApi.ChecksumState.runtime;
+            status.signature= EnumsApi.SignatureState.runtime;
+        }
+        updateMetadataFile();
+    }
+
     public void setChecksumMap(final AssetManagerUrl assetManagerUrl, String functionCode, @Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");

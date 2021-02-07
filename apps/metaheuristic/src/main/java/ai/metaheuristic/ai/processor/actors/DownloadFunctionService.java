@@ -314,14 +314,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
                 assetFile.file.delete();
             }
-
         }
     }
 
     public void prepareFunctionForDownloading() {
         metadataService.getStatuses().forEach(o -> {
+            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(o.assetManagerUrl);
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
-                ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(o.assetManagerUrl);
                 final DispatcherLookupParamsYaml.AssetManager asset = dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
                 if (asset==null || asset.disabled) {
                     return;
@@ -345,6 +344,9 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                 DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetManagerUrl);
                 add(functionTask);
+            }
+            else if (o.sourcing== EnumsApi.FunctionSourcing.processor) {
+                metadataService.setFunctionFromProcessorAsReady(assetManagerUrl, o.code);
             }
         });
     }

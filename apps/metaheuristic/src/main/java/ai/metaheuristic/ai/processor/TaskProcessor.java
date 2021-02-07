@@ -37,11 +37,14 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
+import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -68,6 +72,7 @@ public class TaskProcessor {
     @Data
     public static class FunctionPrepareResult {
         public TaskParamsYaml.FunctionConfig function;
+        @Nullable
         public AssetFile functionAssetFile;
         public FunctionApiData.SystemExecResult systemExecResult;
         boolean isLoaded = true;
@@ -139,14 +144,6 @@ public class TaskProcessor {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
                 continue;
             }
-/*
-            if (processorState ==null) {
-                final String es = "#100.010 processorState is null for "+ dispatcherUrl +". task #" + task.taskId;
-                log.warn(es);
-                processorTaskService.markAsFinishedWithError(processorCode, dispatcherUrl, task.taskId, es);
-                continue;
-            }
-*/
 
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
@@ -229,7 +226,7 @@ public class TaskProcessor {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = prepareFunction(assetManagerUrl, processorState, preFunctionConfig);
+                result = prepareFunction(dispatcher, assetManagerUrl, processorState, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                     isNotReady = true;
@@ -245,7 +242,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(assetManagerUrl, processorState, taskParamYaml.task.getFunction());
+            result = prepareFunction(dispatcher, assetManagerUrl, processorState, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                 continue;
@@ -256,7 +253,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = prepareFunction(assetManagerUrl, processorState, postFunctionConfig);
+                result = prepareFunction(dispatcher, assetManagerUrl, processorState, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
                     isNotReady = true;
@@ -442,8 +439,8 @@ public class TaskProcessor {
             cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
         }
         else {
-            // function.file is executable file which will be present in any environment,
-            // so we dont need to add environment specific command-line param
+            // function.file is executable file which will be existed in any environment,
+            // so we don't need to add environment specific command-line param
             // i.e. 'curl'
             cmd = new ArrayList<>();
         }
@@ -519,13 +516,62 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
+    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, TaskParamsYaml.FunctionConfig function) {
+        if (!signatureRequired) {
+            return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
+        }
+        if (function.checksumMap==null) {
+            final String es = "#100.360 signature is required but function.checksumMap is null";
+            log.error(es);
+            return new FunctionApiData.SystemExecResult(function.code, false, -980, es);
+        }
+
+        // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
+        final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
+        String data = function.checksumMap.entrySet().stream()
+                .filter(o -> o.getKey() == hashAlgo)
+                .findFirst()
+                .map(Map.Entry::getValue).orElse(null);
+
+        if (S.b(data)) {
+            String es = S.f("#100.380 Global signatureRequired==true but function %s has empty value for algo %s", function.code, hashAlgo);
+            log.error(es);
+            return new FunctionApiData.SystemExecResult(function.code, false, -981, es);
+        }
+        ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
+        if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
+            String es = S.f("#100.400 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", function.code);
+            log.error(es);
+            return new FunctionApiData.SystemExecResult(function.code, false, -982, es);
+        }
+
+        String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(function);
+        String sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
+        if (!checksumWithSignature.checksum.equals(sum)) {
+            String es = S.f("#100.420 Function %s has a wrong checksum", function.code);
+            log.error(es);
+            return new FunctionApiData.SystemExecResult(function.code, false, -983, es);
+        }
+        // ###idea### why?
+        //noinspection ConstantConditions
+        EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+        if (st!= EnumsApi.SignatureState.correct) {
+            if (!checksumWithSignature.checksum.equals(sum)) {
+                String es = S.f("#100.440 Function %s has wrong signature", function.code);
+                log.error(es);
+                return new FunctionApiData.SystemExecResult(function.code, false, -984, es);
+            }
+        }
+        return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
+    }
+
     private String toFilename(String functionCode) {
         return functionCode.replace(':', '_').replace(' ', '_');
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
@@ -534,16 +580,15 @@ public class TaskProcessor {
             functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-                log.info("#100.370 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+                log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                 functionPrepareResult.isLoaded = false;
 
                 metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
-
             }
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
             if (S.b(functionPrepareResult.function.file)) {
-                String s = S.f("#100.390 Function %s has a blank file", functionPrepareResult.function.code);
+                String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
                 log.warn(s);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
                 functionPrepareResult.isLoaded = false;
@@ -554,7 +599,7 @@ public class TaskProcessor {
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {
-                log.warn("#100.410 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
+                log.warn("#100.500 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
                 functionPrepareResult.isLoaded = false;
                 functionPrepareResult.isError = true;
@@ -563,6 +608,20 @@ public class TaskProcessor {
             functionPrepareResult.functionAssetFile = new AssetFile();
             functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
             log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
+        }
+        else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
+
+            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, functionPrepareResult.function);
+            if (!checksumAndSignature.isOk) {
+                log.warn("#100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
+                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
+                functionPrepareResult.isLoaded = false;
+                functionPrepareResult.isError = true;
+                return functionPrepareResult;
+            }
+        }
+        else {
+            throw new IllegalStateException("#100.540 Shouldn't get there");
         }
         return functionPrepareResult;
     }

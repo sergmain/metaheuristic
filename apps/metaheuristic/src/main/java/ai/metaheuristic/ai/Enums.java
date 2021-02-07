@@ -37,7 +37,7 @@ public final class Enums {
         none(true),
         // asset file for function exists and we need to check checksum and signature, if they are presented
         ok(true),
-        // function is verified and ready for execution
+        // function is ready for executing
         ready,
 
         not_found,

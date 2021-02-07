@@ -364,7 +364,7 @@ public class EnumsApi {
 
     public enum MetricsStatus { NotFound, Ok, Error }
 
-    public enum ChecksumState { not_yet, not_presented, correct, wrong}
+    public enum ChecksumState { not_yet, not_presented, correct, wrong, runtime }
 
-    public enum SignatureState { not_yet, not_presented, correct, wrong}
+    public enum SignatureState { not_yet, not_presented, correct, wrong, runtime }
 }
