@@ -29,7 +29,6 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -64,7 +63,7 @@ public class ExecContextTaskProducingService {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         long mills = System.currentTimeMillis();
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        log.info("#701.100 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.100 SourceCode {} was validated for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
 
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
             log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
@@ -73,13 +72,15 @@ public class ExecContextTaskProducingService {
         }
         mills = System.currentTimeMillis();
 
+        log.info("#701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
+
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-            log.info(S.f("#701.160 Tasks were produced with status %s", produceTaskResult.status));
+            log.info("#701.160 Tasks were produced with status {}", produceTaskResult.status);
         }
         else {
-            log.info(S.f("#701.180 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+            log.info("#701.180 Tasks were produced with status {}, error: {}", produceTaskResult.status, produceTaskResult.error);
         }
 
         if (produceTaskResult.status==EnumsApi.TaskProducingStatus.OK) {
@@ -91,7 +92,7 @@ public class ExecContextTaskProducingService {
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
 
-        log.info("#701.140 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.140 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
 
         return result;
     }

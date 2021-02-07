@@ -62,7 +62,7 @@ public class TaskWithInternalContextEventService {
                             () -> taskWithInternalContextService.processInternalFunctionWithTx(event.execContextId, event.taskId)));
         } catch (Throwable th) {
             final String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
-                    ((th.getCause()!=null) ? ". Cause error: " + th.getCause().getMessage() : "");
+                    ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
             execContextSyncService.getWithSyncNullable(event.execContextId,
