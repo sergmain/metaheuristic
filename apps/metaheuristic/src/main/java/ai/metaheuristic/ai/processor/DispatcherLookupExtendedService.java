@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -116,6 +118,11 @@ public class DispatcherLookupExtendedService {
         public final DispatcherUrl dispatcherUrl;
         public final DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
         public final DispatcherSchedule schedule;
+        private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
+
+        public PublicKey getPublicKey() {
+            return publicKeyMap.computeIfAbsent(1, k-> SecUtils.getPublicKey(dispatcherLookup.publicKey));
+        }
     }
 
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {

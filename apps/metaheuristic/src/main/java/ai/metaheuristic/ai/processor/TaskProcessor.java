@@ -516,8 +516,8 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
-    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, TaskParamsYaml.FunctionConfig function) {
-        if (!signatureRequired) {
+    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, TaskParamsYaml.FunctionConfig function) {
+        if (!dispatcher.dispatcherLookup.signatureRequired) {
             return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
         }
         if (function.checksumMap==null) {
@@ -526,7 +526,7 @@ public class TaskProcessor {
             return new FunctionApiData.SystemExecResult(function.code, false, -980, es);
         }
 
-        // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
+        // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right now
         final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
         String data = function.checksumMap.entrySet().stream()
                 .filter(o -> o.getKey() == hashAlgo)
@@ -554,7 +554,7 @@ public class TaskProcessor {
         }
         // ###idea### why?
         //noinspection ConstantConditions
-        EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+        EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, dispatcher.getPublicKey());
         if (st!= EnumsApi.SignatureState.correct) {
             if (!checksumWithSignature.checksum.equals(sum)) {
                 String es = S.f("#100.440 Function %s has wrong signature", function.code);
@@ -611,7 +611,7 @@ public class TaskProcessor {
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
 
-            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, functionPrepareResult.function);
+            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher, functionPrepareResult.function);
             if (!checksumAndSignature.isOk) {
                 log.warn("#100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
