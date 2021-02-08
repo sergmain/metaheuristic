@@ -576,53 +576,62 @@ public class TaskProcessor {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
-        if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final File baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
-            functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
-            // is this function prepared?
-            if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-                log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
-                functionPrepareResult.isLoaded = false;
+        try {
+            if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+                final File baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
+                // is this function prepared?
+                if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
+                    log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+                    functionPrepareResult.isLoaded = false;
 
-                metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
+                    metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
+                }
             }
-        }
-        else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
-            if (S.b(functionPrepareResult.function.file)) {
-                String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
-                log.warn(s);
-                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
-                functionPrepareResult.isLoaded = false;
-                functionPrepareResult.isError = true;
-                return functionPrepareResult;
+            else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
+                if (S.b(functionPrepareResult.function.file)) {
+                    String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
+                    log.warn(s);
+                    functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
+                    functionPrepareResult.isLoaded = false;
+                    functionPrepareResult.isError = true;
+                    return functionPrepareResult;
+                }
+                final File resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                log.info("Root dir for function: " + resourceDir);
+                GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
+                if (!result.ok) {
+                    log.warn("#100.500 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
+                    functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
+                    functionPrepareResult.isLoaded = false;
+                    functionPrepareResult.isError = true;
+                    return functionPrepareResult;
+                }
+                functionPrepareResult.functionAssetFile = new AssetFile();
+                functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
+                log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
             }
-            final File resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
-            log.info("Root dir for function: " + resourceDir);
-            GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
-            if (!result.ok) {
-                log.warn("#100.500 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
-                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
-                functionPrepareResult.isLoaded = false;
-                functionPrepareResult.isError = true;
-                return functionPrepareResult;
-            }
-            functionPrepareResult.functionAssetFile = new AssetFile();
-            functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
-            log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
-        }
-        else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
+            else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
 
-            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, dispatcher.getPublicKey(), functionPrepareResult.function);
-            if (!checksumAndSignature.isOk) {
-                log.warn("#100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
-                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
-                functionPrepareResult.isLoaded = false;
-                functionPrepareResult.isError = true;
-                return functionPrepareResult;
+                final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, dispatcher.getPublicKey(), functionPrepareResult.function);
+                if (!checksumAndSignature.isOk) {
+                    log.warn("#100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
+                    functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
+                    functionPrepareResult.isLoaded = false;
+                    functionPrepareResult.isError = true;
+                    return functionPrepareResult;
+                }
             }
-        }
-        else {
-            throw new IllegalStateException("#100.540 Shouldn't get there");
+            else {
+                throw new IllegalStateException("#100.540 Shouldn't get there");
+            }
+        } catch (Throwable th) {
+            String es = "#100.540 System error: " + th.getMessage();
+            log.error(es, th);
+            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1000, es);
+            functionPrepareResult.isLoaded = false;
+            functionPrepareResult.isError = true;
+            return functionPrepareResult;
         }
         return functionPrepareResult;
     }
