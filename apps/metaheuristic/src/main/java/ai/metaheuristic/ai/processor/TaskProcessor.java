@@ -56,6 +56,7 @@ import org.springframework.lang.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -516,8 +517,8 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
-    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, TaskParamsYaml.FunctionConfig function) {
-        if (!dispatcher.dispatcherLookup.signatureRequired) {
+    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
+        if (!signatureRequired) {
             return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
         }
         if (function.checksumMap==null) {
@@ -554,7 +555,7 @@ public class TaskProcessor {
         }
         // ###idea### why?
         //noinspection ConstantConditions
-        EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, dispatcher.getPublicKey());
+        EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, publicKey);
         if (st!= EnumsApi.SignatureState.correct) {
             if (!checksumWithSignature.checksum.equals(sum)) {
                 String es = S.f("#100.440 Function %s has wrong signature", function.code);
@@ -611,7 +612,7 @@ public class TaskProcessor {
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
 
-            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher, functionPrepareResult.function);
+            final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, dispatcher.getPublicKey(), functionPrepareResult.function);
             if (!checksumAndSignature.isOk) {
                 log.warn("#100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
