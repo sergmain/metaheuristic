@@ -46,16 +46,17 @@ public class SourceCodeParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = source != null && !S.b(source.uid) && source.processes != null;
-        if (!b) {
-            throw new CheckIntegrityFailedException("!(source != null && !S.b(source.uid) && source.processes != null) ");
+        if (source == null || S.b(source.uid) || source.processes == null) {
+            throw new CheckIntegrityFailedException("#608.020 (source == null || S.b(source.uid) || source.processes == null)");
+        }
+        if (source.uid.length()>50) {
+            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 50 chars");
         }
         for (Process process : source.processes) {
             if (process.function ==null) {
-                throw new CheckIntegrityFailedException("(process.function==null)");
+                throw new CheckIntegrityFailedException("#608.060 (process.function==null)");
             }
         }
-
         return true;
     }
 

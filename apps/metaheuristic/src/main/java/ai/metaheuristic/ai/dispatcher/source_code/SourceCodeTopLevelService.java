@@ -17,11 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
@@ -29,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
+import ai.metaheuristic.ai.utils.ErrorUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -41,13 +40,12 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
@@ -57,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -75,13 +74,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.YAML_EXT;
 import static ai.metaheuristic.ai.Consts.YML_EXT;
 
+@SuppressWarnings("unused")
 @Slf4j
 @Profile("dispatcher")
 @Service
@@ -94,31 +93,46 @@ public class SourceCodeTopLevelService {
     private final SourceCodeRepository sourceCodeRepository;
 
     public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
-        }
-        if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
-            return new SourceCodeApiData.SourceCodeResult("#560.090 sourceCode yaml is empty");
-        }
-
-        SourceCodeParamsYaml ppy;
         try {
-            ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
-        } catch (WrongVersionOfYamlFileException e) {
-            String es = "#560.110 An error parsing yaml: " + e.getMessage();
-            log.error(es, e);
+            if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+                return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
+            }
+            if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
+                return new SourceCodeApiData.SourceCodeResult("#560.090 sourceCode yaml is empty");
+            }
+
+            SourceCodeParamsYaml ppy;
+            try {
+                ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
+            }
+            catch (WrongVersionOfYamlFileException e) {
+                String es = "#560.110 An error parsing yaml: " + e.getMessage();
+                log.error(es);
+                return new SourceCodeApiData.SourceCodeResult(es);
+            } catch (CheckIntegrityFailedException e) {
+                String es = "#560.120 An error of checking integrity: " + e.getMessage();
+                log.error(es);
+                return new SourceCodeApiData.SourceCodeResult(es);
+            }
+
+            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
+            if (sourceCodeResult != null) {
+                return sourceCodeResult;
+            }
+
+            try {
+                return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
+            } catch (DataIntegrityViolationException e) {
+                final String error = ErrorUtils.getAllMessages(e, 1);
+                final String es = "#560.155 data integrity error: " + error;
+                log.error(es, e);
+                return new SourceCodeApiData.SourceCodeResult(es);
+            }
+        } catch (Throwable th) {
+            final String error = ErrorUtils.getAllMessages(th);
+            String es = "#560.180 An unknown error: " + error;
+            log.error(es, th);
             return new SourceCodeApiData.SourceCodeResult(es);
-        }
-
-        final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
-        if (sourceCodeResult != null) {
-            return sourceCodeResult;
-        }
-
-        try {
-            return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
-        } catch (DataIntegrityViolationException e) {
-            return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
         }
     }
 

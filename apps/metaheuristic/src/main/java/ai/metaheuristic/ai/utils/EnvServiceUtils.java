@@ -21,6 +21,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
@@ -36,6 +37,7 @@ import java.util.Map;
  * Date: 1/27/2021
  * Time: 1:09 AM
  */
+@Slf4j
 public class EnvServiceUtils {
     @Data
     @AllArgsConstructor
@@ -59,16 +61,23 @@ public class EnvServiceUtils {
 
     @Nullable
     public static String prepareEnvironment(File artifactDir, EnvYamlShort envYaml) {
+        if (!artifactDir.exists()) {
+            if (!artifactDir.mkdirs()) {
+                return "#712.020 An error while creating a path "+ artifactDir.getAbsolutePath();
+            }
+        }
         File envFile = new File(artifactDir, ConstsApi.MH_ENV_FILE);
         if (envFile.isDirectory()) {
-            return "#713.220 path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
+            return "#712.040 A path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
         }
         final String newEnv = envYamlShortToString(envYaml);
 
         try {
             FileUtils.writeStringToFile(envFile, newEnv, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            return "#713.223 error creating "+ConstsApi.MH_ENV_FILE+", error: " + e.getMessage();
+            final String es = "#712.060 An error while creating " + ConstsApi.MH_ENV_FILE + ", error: " + ErrorUtils.getAllMessages(e);
+            log.error(es, e);
+            return es;
         }
 
         return null;
