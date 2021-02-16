@@ -8,7 +8,7 @@
             <a class="pure-menu-link" href="dispatcher/ai/experiment/experiments.html" th:href="@{/dispatcher/ai/experiment/experiments}">Experiments</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/experiment-result/experiment-results')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/experiment-result/experiment-result')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/ai/experiment-result/experiment-results.html" th:href="@{/dispatcher/ai/experiment-result/experiment-results}">Experiment results</a>
         </li>
     </ul>

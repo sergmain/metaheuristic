@@ -163,6 +163,7 @@ public class ExperimentResultTopLevelService {
             experimentResult.code = experimentResult.name;
             experimentResult.params = params;
             experimentResult.companyId = context.getCompanyId();
+            experimentResult.createdOn = System.currentTimeMillis();
             experimentResult = experimentResultRepository.save(experimentResult);
 
             ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);

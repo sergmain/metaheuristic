@@ -44,7 +44,7 @@ public class ExperimentResult implements Serializable {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    // even thought db field is 'experiment',  field of bean will be params
+    // even thought db field is 'experiment',  field of bean will be named as params
     @Column(name = "EXPERIMENT")
     public String params;
 
