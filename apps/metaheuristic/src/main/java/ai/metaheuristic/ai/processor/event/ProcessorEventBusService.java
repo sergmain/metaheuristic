@@ -56,7 +56,7 @@ public class ProcessorEventBusService {
     @PostConstruct
     public void post() {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, dispatcherLookupExtendedService.lookupExtendedMap.size()));
-        this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
+        this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive");
     }
 
     @Async
@@ -76,11 +76,11 @@ public class ProcessorEventBusService {
             }
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
                 executor.submit(() -> {
-                    log.info("processorKeepAliveRequestor.proceedWithRequest(), url: {}", dispatcher);
+                    log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);
                     try {
                         dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
                     } catch (Throwable th) {
-                        log.error("ProcessorSchedulers.dispatcherRequester()", th);
+                        log.error("ProcessorEventBusService.keepAlive()", th);
                     }
                 });
 

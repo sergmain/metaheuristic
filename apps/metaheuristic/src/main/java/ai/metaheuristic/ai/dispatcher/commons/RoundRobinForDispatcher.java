@@ -31,15 +31,15 @@ public class RoundRobinForDispatcher {
 
     private final Map<DispatcherUrl, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
+    public RoundRobinForDispatcher(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
         Map<DispatcherUrl, AtomicBoolean> map = new LinkedHashMap<>();
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
             DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
-                log.info("dispatcher {} is disabled", dispatcherLookup.url);
+                log.info("{}, dispatcher {} is disabled", info, dispatcherLookup.url);
                 continue;
             }
-            log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
+            log.info("{}, dispatcher {} was added to round-robin", info, dispatcherLookup.url);
             map.putIfAbsent(new DispatcherUrl(dispatcherLookup.url), new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);

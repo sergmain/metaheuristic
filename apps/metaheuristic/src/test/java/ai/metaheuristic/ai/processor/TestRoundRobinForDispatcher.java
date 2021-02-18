@@ -45,7 +45,7 @@ public class TestRoundRobinForDispatcher {
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 
-        RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap);
+        RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap, "RoundRobin for testing");
 
         DispatcherUrl url = rr.next();
         assertEquals(new DispatcherUrl("url1"), url);

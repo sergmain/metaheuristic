@@ -96,6 +96,7 @@ public class DispatcherRequestor {
     private static class DispatcherRequestorSync {}
     private static final DispatcherRequestorSync syncObj = new DispatcherRequestorSync();
 
+    @SuppressWarnings("unused")
     private static <T> T getWithSync(Supplier<T> function) {
         synchronized (syncObj) {
             return function.get();
@@ -185,6 +186,7 @@ public class DispatcherRequestor {
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {
+                // TODO 2021-02-18 refactor a common method
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -233,13 +235,13 @@ public class DispatcherRequestor {
                     log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof ConnectTimeoutException) {
-                    log.error("#775.093 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.warn("#775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SocketTimeoutException) {
-                    log.error("#775.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.warn("#775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
-                    log.error("#775.093 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#775.100 Error, url: " + url, e);
@@ -248,10 +250,13 @@ public class DispatcherRequestor {
                 if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
                     int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
                     if (errorCode==503) {
-                        log.error("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                        log.warn("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                    }
+                    else if (errorCode==502) {
+                        log.warn("#775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
                     }
                     else {
-                        log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
+                        log.error("#775.117 Error accessing url: {}, error: {}", url, e.getMessage());
                     }
                 }
                 else {

@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpEntity;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
@@ -112,7 +113,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 continue;
             }
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
-                throw new NotImplementedException("Implement");
+                throw new NotImplementedException("#311.032 Need to implement");
             }
             if (!task.nullified && (task.file==null || !task.file.exists())) {
                 log.error("#311.040 File {} doesn't exist", task.file.getPath());
@@ -141,8 +142,8 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 if (!task.nullified) {
                     if (task.file==null) {
                         // TODO 2020-11-26 in case that ai.metaheuristic.ai.processor.tasks.UploadVariableTask.file is @Nullable
-                        //  what is the problem with this state? Should wwe handle this state in more sophisticated way?
-                        throw new IllegalStateException("(task.file==null)");
+                        //  what is the problem with this state? Should we handle this state in more sophisticated way?
+                        throw new IllegalStateException("#311.043 (task.file==null)");
                     }
                     builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
                 }
@@ -174,6 +175,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             catch (ConnectException e) {
                 log.error("#311.073 ConnectException, {}", e.toString());
+            }
+            catch (NoHttpResponseException e) {
+                log.error("#311.075 org.apache.http.NoHttpResponseException, {}", e.toString());
+            }
+            catch (org.apache.http.conn.ConnectTimeoutException e) {
+                log.warn("#311.076 org.apache.http.conn.ConnectTimeoutException, {}", e.toString());
+            }
+            catch (java.net.UnknownHostException e) {
+                log.warn("#311.077 java.net.UnknownHostException, {}", e.toString());
             }
             catch (IOException e) {
                 log.error("#311.080 IOException", e);
@@ -207,7 +217,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 }
             }
             else {
-                log.error("#311.130 Error accessing rest-server. Assign task one more time.");
+                log.warn("#311.130 Error accessing rest-server. Assign task one more time.");
                 repeat.add(task);
             }
         }

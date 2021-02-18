@@ -216,7 +216,7 @@ public class Schedulers {
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
+            this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for scheduler");
         }
 
         @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)

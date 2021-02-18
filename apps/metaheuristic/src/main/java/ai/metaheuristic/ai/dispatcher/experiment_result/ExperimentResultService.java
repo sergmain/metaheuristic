@@ -165,17 +165,7 @@ public class ExperimentResultService {
                     "#604.180 Inline variable '" + inlineVariableItem.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
-        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContext.id, metricsVariableName);
-        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
-        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(execContext.id, fittingVariableName);
-        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(execContext.id, inlineVariableName);
-        Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
-        featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
-        fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
-        inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
-
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
-
         ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
         erpy.numberOfTask = ids.size();
 
@@ -192,6 +182,8 @@ public class ExperimentResultService {
         a.code = erpy.code;
         a.createdOn = System.currentTimeMillis();
         a.companyId = execContext.companyId;
+
+        // ExperimentResult is created here because we need experimentResult.id for ExperimentTask
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
 
 /*
@@ -205,6 +197,15 @@ public class ExperimentResultService {
         AtomicLong taskFeatureId = new AtomicLong(1);
         final List<ExperimentFeature> features = new ArrayList<>();
         final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
+
+        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContext.id, metricsVariableName);
+        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
+        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(execContext.id, fittingVariableName);
+        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(execContext.id, inlineVariableName);
+        Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
+        featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+        fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+        inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
 
         for (Long taskId : ids) {
 
@@ -258,8 +259,7 @@ public class ExperimentResultService {
             ertpy.taskId = t.getId();
 
             String inlineAsStr = variableService.getVariableDataAsString(inlineVar.variable.id);
-            Yaml yampUtil = YamlUtils.init(Map.class);
-            Map<String, String> currInline = yampUtil.load(inlineAsStr);
+            Map<String, String> currInline = YamlUtils.init(Map.class).load(inlineAsStr);
             ertpy.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(inlineVariableItem.inlines, currInline);
 
             // typeAsString will have been initialized when ExperimentResultTaskParamsYaml will be requested

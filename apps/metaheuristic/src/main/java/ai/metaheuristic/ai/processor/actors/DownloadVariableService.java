@@ -95,11 +95,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
             }
             ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
             if (processorTask==null) {
-                log.info("Task #{} wasn't found, skip it", task.taskId);
+                log.info("#810.008 Task #{} wasn't found, skip it", task.taskId);
                 continue;
             }
             if (processorTask.finishedOn!=null) {
-                log.info("Task #{} was already finished, skip it", task.taskId);
+                log.info("#810.009 Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
             EnumsApi.ExecContextState state = currentExecState.getState(task.ref.dispatcherUrl, processorTask.execContextId);
