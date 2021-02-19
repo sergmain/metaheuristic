@@ -73,7 +73,7 @@ public class Globals {
     @Value("${mh.thread-number.scheduler:#{null}}")
     public Integer schedulerThreadNumber;
 
-    @Value("${mh.thread-number.event:#{2}}")
+    @Value("${mh.thread-number.event:#{10}}")
     public Integer eventThreadNumber;
 
     @Value("${mh.is-testing:#{false}}")
@@ -412,10 +412,10 @@ public class Globals {
             schedulerThreadNumber = oldThreadNumber;
         }
         if (schedulerThreadNumber==null) {
-            schedulerThreadNumber = 4;
+            schedulerThreadNumber = 10;
         }
         else {
-            schedulerThreadNumber = EnvProperty.minMax( schedulerThreadNumber, 1, 16);
+            schedulerThreadNumber = EnvProperty.minMax( schedulerThreadNumber, 10, 32);
         }
     }
 

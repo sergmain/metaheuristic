@@ -112,9 +112,9 @@ public class Config {
         public Executor getAsyncExecutor() {
             Integer threads = globals.eventThreadNumber;
             if (threads==null) {
-                threads = Math.max(2, Runtime.getRuntime().availableProcessors()/2);
+                threads = Math.max(10, Runtime.getRuntime().availableProcessors()/2);
             }
-            threads = EnvProperty.minMax( threads, 2, 16);
+            threads = EnvProperty.minMax( threads, 10, 32);
             log.info("Config.SpringAsyncConfig will use {} as a number of threads for an event processing", threads);
 
             ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
