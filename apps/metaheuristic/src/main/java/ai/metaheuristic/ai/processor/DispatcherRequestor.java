@@ -186,7 +186,7 @@ public class DispatcherRequestor {
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {
-                // TODO 2021-02-18 refactor a common method
+                // TODO 2021-02-18 refactor as a common method
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
