@@ -108,7 +108,10 @@ public class TaskProcessor {
         if (!globals.processorEnabled) {
             return;
         }
-        synchronized (this) {
+        if (processing.get()) {
+            return;
+        }
+        synchronized (processing) {
             if (processing.get()) {
                 return;
             }
@@ -116,14 +119,17 @@ public class TaskProcessor {
         }
         try {
             processInternal(ref);
-        } finally {
-            synchronized (this) {
+        }
+        finally {
+            synchronized (processing) {
                 processing.set(false);
             }
         }
     }
 
     private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+
+        log.info("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
