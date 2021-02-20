@@ -173,8 +173,9 @@ public class TaskProcessor {
 
             EnumsApi.ExecContextState state = currentExecState.getState(dispatcherUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
-                processorTaskService.delete(ref, task.taskId);
-                log.info("#100.032 The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, dispatcherUrl, task.taskId);
+//                processorTaskService.delete(ref, task.taskId);
+//                log.info("#100.032 The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, dispatcherUrl, task.taskId);
+                log.info("#100.032 The state for ExecContext #{}, host {} is unknown, the task #{} will be skipped", task.execContextId, dispatcherUrl, task.taskId);
                 continue;
             }
 
