@@ -87,6 +87,9 @@ public class ExecContextApiData {
         @JsonProperty("tId")
         public Long taskId;
 
+        @JsonProperty("pId")
+        public Long processorId;
+
         @JsonProperty("ecId")
         public Long execContextId;
 
@@ -136,11 +139,13 @@ public class ExecContextApiData {
         public String state;
         // context of function
         public String context;
+        public Long processorId;
 
         @Nullable
         public List<VariableInfo> outs;
 
-        public StateCell(Long taskId, String state, String context, @Nullable List<VariableInfo> outs) {
+        public StateCell(Long processorId, Long taskId, String state, String context, @Nullable List<VariableInfo> outs) {
+            this.processorId = processorId;
             this.empty = false;
             this.taskId = taskId;
             this.state = state;

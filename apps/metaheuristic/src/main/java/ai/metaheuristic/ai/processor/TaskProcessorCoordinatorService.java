@@ -53,6 +53,7 @@ public class TaskProcessorCoordinatorService {
         if (!globals.processorEnabled) {
             return;
         }
+        log.info("#415.020 Start processing task by processors. taskProcessors.size(): {}", taskProcessors.size());
 
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( ref.processorCode,

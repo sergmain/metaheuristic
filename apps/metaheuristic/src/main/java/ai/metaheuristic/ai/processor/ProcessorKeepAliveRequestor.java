@@ -218,11 +218,14 @@ public class ProcessorKeepAliveRequestor {
             catch (RestClientException e) {
                 if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
                     int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
+                    if (errorCode==502) {
+                        log.error("#776.105 Error accessing url: {}, error: 502 Bad Gateway", url);
+                    }
                     if (errorCode==503) {
                         log.error("#776.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
                     else {
-                        log.error("#776.110 Error accessing url: {}, error: {}", url, e.getMessage());
+                        log.error("#776.113 Error accessing url: {}, error: {}", url, e.getMessage());
                     }
                 }
                 else {

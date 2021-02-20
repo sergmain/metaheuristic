@@ -283,11 +283,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     log.error("#810.091 HttpResponseException", e);
                 }
             } catch (SocketTimeoutException e) {
-                log.error("#810.100 SocketTimeoutException", e);
+                log.error("#810.100 SocketTimeoutException, error: {}", e.getMessage());
             } catch (IOException e) {
                 log.error("#810.110 IOException", e);
             } catch (URISyntaxException e) {
-                log.error("#810.120 URISyntaxException", e);
+                log.error("#810.120 URISyntaxException, error: {} ", e.getMessage());
             }
         }
     }

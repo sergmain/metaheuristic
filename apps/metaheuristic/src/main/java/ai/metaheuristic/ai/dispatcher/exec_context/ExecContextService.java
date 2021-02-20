@@ -173,7 +173,7 @@ public class ExecContextService {
                         outputs = simpleTaskInfo.outputs;
                     }
                 }
-                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
+                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.processorId, simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
             }
         }
         return r;

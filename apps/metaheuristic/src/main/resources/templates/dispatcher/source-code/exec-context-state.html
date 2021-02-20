@@ -29,7 +29,7 @@
             <div th:remove="tag" th:each="c : ${l.cells}">
                 <td th:if="${c.empty}" th:text="${''}">Empty cell</td>
                 <td th:if="${!c.empty}">
-                    <div th:text="${c.taskId +', ' + c.state}" class="no-wrap">State</div>
+                    <div th:text="${c.processorId +', ' + c.taskId +', ' + c.state}" class="no-wrap">State</div>
 
                     <div th:if="${c.outs!=null && c.state!=T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag" th:each="o : ${c.outs}">
                         <div class="no-wrap">
@@ -38,12 +38,18 @@
                             <div th:if="${o.nullified}" th:text="${o.id+', ' + o.name+', is null'}" class="no-wrap">Variable is null</div>
                         </div>
                     </div>
+                    <div class="no-wrap" th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}">
+                        <a href="#" th:href="${'/dispatcher/source-code/exec-context-task-exec-info/'+result.sourceCodeId+'/'+result.execContextId+'/' +c.taskId}"
+                           th:text="${'Task exec info'}">Task exec inf</a>
+                    </div>
+<!--
                     <div th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}" th:remove="tag">
                         <div class="no-wrap">
                             <a href="#" th:href="${'/dispatcher/source-code/exec-context-task-exec-info/'+result.sourceCodeId+'/'+result.execContextId+'/' +c.taskId}"
                                th:text="${'Task exec info'}">Task exec inf</a>
                         </div>
                     </div>
+-->
                 </td>
             </div>
         </tr>

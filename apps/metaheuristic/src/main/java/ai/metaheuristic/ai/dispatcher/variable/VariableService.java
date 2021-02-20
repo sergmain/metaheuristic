@@ -408,7 +408,7 @@ public class VariableService {
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
 
         TaskCreatedTxEvent event = new TaskCreatedTxEvent(
-                new ExecContextApiData.TaskStateInfo(task.id, execContextId,
+                new ExecContextApiData.TaskStateInfo(task.id, task.processorId, execContextId,
                         taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
                         null,
                         taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));
