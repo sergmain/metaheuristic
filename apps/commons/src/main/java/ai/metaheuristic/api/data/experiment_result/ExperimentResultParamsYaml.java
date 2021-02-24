@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.experiment_result;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ExperimentResultParamsYaml implements BaseParams {
 
-    public final int version = 1;
+    public final int version = 2;
 
     @Override
     public boolean checkIntegrity() {
@@ -50,6 +51,16 @@ public class ExperimentResultParamsYaml implements BaseParams {
     public static class MetricValues {
         // key - name of metric, value - value of metric
         public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ExperimentPart {
+        public String taskContextId;
+        public Map<String, String> hyperParams;
+        public EnumsApi.Fitting fitting;
+        public final MetricValues metrics = new MetricValues();
     }
 
     @Data
@@ -98,6 +109,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
     public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
     public final List<ExperimentFeature> features = new ArrayList<>();
     public final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
+    public final List<ExperimentPart> parts = new ArrayList<>();
 
     @Nullable
     @JsonIgnore

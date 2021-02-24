@@ -187,7 +187,7 @@ public class ExperimentResultTopLevelService {
         catch (Exception e) {
             log.error("#422.040 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.050 can't load functions, Error: " + e.toString());
+                    "#422.050 can't load experiment results, Error: " + e.toString());
         }
         finally {
             DirUtils.deleteAsync(resultDir);
@@ -321,9 +321,10 @@ public class ExperimentResultTopLevelService {
                 return new ExperimentInfoExtended(es);
             }
             ypywc = new ExperimentResultParamsYamlWithCache(erpy);
-        } catch (YAMLException e) {
-            String es = "#422.180 Can't parse an experimentResult, error: " + e.toString();
-            log.error(es, e);
+        }
+        catch (Throwable th) {
+            String es = "#422.180 Can't parse an experimentResult, error: " + th.toString();
+            log.error(es, th);
             return new ExperimentInfoExtended(es);
         }
         if (ypywc.experimentResult.execContext == null) {

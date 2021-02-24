@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.experiment_result;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.AllArgsConstructor;
@@ -46,6 +47,16 @@ public class ExperimentResultParamsYamlV2 implements BaseParams {
     public static class MetricValuesV2 {
         // key - name of metric, value - value of metric
         public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ExperimentPartV2 {
+        public String taskContextId;
+        public final Map<String, String> hyperParams = new HashMap<>();
+        public EnumsApi.Fitting fitting;
+        public final MetricValuesV2 metrics = new MetricValuesV2();
     }
 
     @Data
@@ -91,5 +102,6 @@ public class ExperimentResultParamsYamlV2 implements BaseParams {
     public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
     public final List<ExperimentFeatureV2> features = new ArrayList<>();
     public final List<ExperimentTaskFeatureV2> taskFeatures = new ArrayList<>();
+    public final List<ExperimentPartV2> parts = new ArrayList<>();
 
 }

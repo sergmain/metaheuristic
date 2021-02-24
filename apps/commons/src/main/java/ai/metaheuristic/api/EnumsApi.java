@@ -50,7 +50,7 @@ public class EnumsApi {
 
     public enum Fitting {
 
-        UNDERFITTING, NORMAL, OVERFITTING;
+        UNKNOWN, UNDERFITTING, NORMAL, OVERFITTING;
 
         public static Fitting of(String s) {
             if (S.b(s)) {

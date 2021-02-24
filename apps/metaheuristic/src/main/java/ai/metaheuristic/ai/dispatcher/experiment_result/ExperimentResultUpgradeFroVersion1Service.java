@@ -17,12 +17,21 @@
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
+import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtilsV1;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYamlV1;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -30,6 +39,10 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +58,7 @@ public class ExperimentResultUpgradeFroVersion1Service {
 
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
+    private final ExecContextGraphService execContextGraphService;
 
     @Transactional
     public String upgrade(Long experimentResultId) {
@@ -59,6 +73,36 @@ public class ExperimentResultUpgradeFroVersion1Service {
         }
         ExperimentResultParamsYamlV1 v1 = forVersion.to(er.params);
         ExperimentResultParamsYaml v = upgradeTo(v1);
+
+        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(v.execContext.execContextParams);
+
+        final Set<ExecContextData.TaskVertex> vertices = ExecContextGraphService.importProcessGraph(ecpy).vertexSet();
+        Set<String> taskContextIds = vertices.stream()
+                .map(o->o.taskContextId)
+                .filter(o->o.contains(ContextUtils.CONTEXT_SEPARATOR))
+                .collect(Collectors.toSet());
+
+        for (String taskContextId : taskContextIds) {
+            ExperimentResultParamsYaml.ExperimentPart part = new ExperimentResultParamsYaml.ExperimentPart();
+            part.taskContextId = taskContextId;
+
+            final ExperimentResultTaskParamsYaml task = vertices.stream()
+                    .filter(o -> o.taskContextId.equals(taskContextId))
+                    .map(o -> experimentTaskRepository.findByExperimentResultIdAndTaskId(experimentResultId, o.taskId))
+                    .filter(Objects::nonNull)
+                    .map(o -> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
+                    .findFirst().orElse(null);
+
+            if (task==null) {
+                throw new RuntimeException("#458.020 can't find any experimentTaskResult in taskContextId #"+taskContextId);
+            }
+
+            part.fitting = task.fitting;
+            part.hyperParams = task.taskParams.inline;
+            part.metrics.values.putAll(task.metrics.values);
+
+            v.parts.add(part);
+        }
 
         er.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(v);
         experimentResultRepository.save(er);

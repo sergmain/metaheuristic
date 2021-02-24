@@ -50,6 +50,9 @@ public class ExperimentTask implements Serializable {
     @Column(name = "TASK_ID")
     public Long taskId;
 
+    /**
+     * .map(o-> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
+     */
     @Column(name = "PARAMS")
     public String params;
 }
