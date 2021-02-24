@@ -22,7 +22,6 @@ import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.CoreMatchers;
 
 import org.junit.jupiter.api.Test;
 

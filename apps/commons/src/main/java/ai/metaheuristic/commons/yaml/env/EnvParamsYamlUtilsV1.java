@@ -47,7 +47,7 @@ public class EnvParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public EnvParamsYamlV2 upgradeTo(@NonNull EnvParamsYamlV1 src, Long ... vars) {
+    public EnvParamsYamlV2 upgradeTo(@NonNull EnvParamsYamlV1 src) {
         src.checkIntegrity();
         EnvParamsYamlV2 trg = new EnvParamsYamlV2();
 

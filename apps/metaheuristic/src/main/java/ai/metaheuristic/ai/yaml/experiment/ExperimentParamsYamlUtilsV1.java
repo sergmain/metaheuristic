@@ -44,7 +44,7 @@ public class ExperimentParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ExperimentParamsYaml upgradeTo(@NonNull ExperimentParamsYamlV1 src, Long ... vars) {
+    public ExperimentParamsYaml upgradeTo(@NonNull ExperimentParamsYamlV1 src) {
         src.checkIntegrity();
         ExperimentParamsYaml trg = new ExperimentParamsYaml();
         trg.createdOn = src.createdOn;

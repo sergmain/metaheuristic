@@ -47,7 +47,7 @@ public class SourceCodeParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public SourceCodeParamsYamlV2 upgradeTo(@NonNull SourceCodeParamsYamlV1 v1, Long ... vars) {
+    public SourceCodeParamsYamlV2 upgradeTo(@NonNull SourceCodeParamsYamlV1 v1) {
         v1.checkIntegrity();
 
         SourceCodeParamsYamlV2 p = new SourceCodeParamsYamlV2();

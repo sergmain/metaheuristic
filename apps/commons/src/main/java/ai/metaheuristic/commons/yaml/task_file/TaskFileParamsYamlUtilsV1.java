@@ -48,7 +48,7 @@ public class TaskFileParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public TaskFileParamsYaml upgradeTo(@NonNull TaskFileParamsYamlV1 v1, Long ... vars) {
+    public TaskFileParamsYaml upgradeTo(@NonNull TaskFileParamsYamlV1 v1) {
         v1.checkIntegrity();
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();

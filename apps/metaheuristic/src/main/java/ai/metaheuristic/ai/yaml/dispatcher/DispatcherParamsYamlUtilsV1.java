@@ -44,7 +44,7 @@ public class DispatcherParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public DispatcherParamsYaml upgradeTo(@NonNull DispatcherParamsYamlV1 v1, Long ... vars) {
+    public DispatcherParamsYaml upgradeTo(@NonNull DispatcherParamsYamlV1 v1) {
         DispatcherParamsYaml t = new DispatcherParamsYaml();
 
         // stream is being used for possible future extension

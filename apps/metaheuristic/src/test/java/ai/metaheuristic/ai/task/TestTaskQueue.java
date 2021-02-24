@@ -323,7 +323,7 @@ public class TestTaskQueue {
         assertTrue(iter.hasNext());
         TaskQueue.AllocatedTask allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
-        assertEquals( task_1_7_1.taskId, allocatedTask.queuedTask.taskId );
+        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
 
         assertTrue(iter.hasNext());
         allocatedTask = iter.next();
@@ -333,7 +333,12 @@ public class TestTaskQueue {
         taskQueue.deRegisterTask(task_1_7_1.execContextId, task_1_7_1.taskId);
         taskQueue.shrink();
 
-        assertEquals(2, taskQueue.groupCount() );
+        assertEquals(2, taskQueue.groupCount());
 
     }
+
+//    @Test
+//    public void test_3_1() {
+//
+//    }
 }

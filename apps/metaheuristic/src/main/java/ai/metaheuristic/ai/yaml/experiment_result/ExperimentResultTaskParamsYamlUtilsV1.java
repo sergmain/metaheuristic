@@ -45,7 +45,7 @@ public class ExperimentResultTaskParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ExperimentResultTaskParamsYaml upgradeTo(@NonNull ExperimentResultTaskParamsYamlV1 src, Long ... vars) {
+    public ExperimentResultTaskParamsYaml upgradeTo(@NonNull ExperimentResultTaskParamsYamlV1 src) {
         src.checkIntegrity();
 
         ExperimentResultTaskParamsYaml trg = new ExperimentResultTaskParamsYaml();

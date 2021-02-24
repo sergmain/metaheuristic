@@ -37,12 +37,14 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -92,6 +94,7 @@ public class ExperimentResultTopLevelService {
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExperimentResultUpgradeFroVersion1Service experimentResultUpgradeFroVersion1Service;
 
     private static class ParamFilter {
         String key;
@@ -278,7 +281,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params, experimentResultId));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             String es = "#422.130 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -311,7 +314,13 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params, experimentResultId));
+            final ExperimentResultParamsYaml erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.params);
+            if (erpy==null) {
+                String es = "#422.177 Can't prepare experimentResult #" + experimentResult.id;
+                log.error(es);
+                return new ExperimentInfoExtended(es);
+            }
+            ypywc = new ExperimentResultParamsYamlWithCache(erpy);
         } catch (YAMLException e) {
             String es = "#422.180 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -366,6 +375,25 @@ public class ExperimentResultTopLevelService {
         return result;
     }
 
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
+    private ExperimentResultParamsYaml checkVersionAndUpgrade(Long experimentResultId, String params) {
+
+        YamlVersion v = YamlForVersioning.getYamlVersion(params);
+
+        final String newParams;
+        switch(v.getActualVersion()) {
+            case 1:
+                newParams = experimentResultUpgradeFroVersion1Service.upgrade(experimentResultId);
+                break;
+            default:
+                newParams = params;
+                break;
+        }
+
+        final ExperimentResultParamsYaml experimentResult = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(newParams);
+        return experimentResult;
+    }
+
     public OperationStatusRest experimentResultDeleteCommit(Long id) {
         Long experimentResultId = experimentResultRepository.findIdById(id);
         if (experimentResultId == null) {
@@ -394,7 +422,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params, experimentResultId));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             String es = "#422.240 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -644,7 +672,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params, experimentResultId));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -773,7 +801,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params, experimentResultId));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);

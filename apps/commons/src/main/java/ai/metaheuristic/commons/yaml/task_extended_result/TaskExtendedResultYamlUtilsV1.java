@@ -44,7 +44,7 @@ public class TaskExtendedResultYamlUtilsV1
 
     @NonNull
     @Override
-    public TaskExtendedResultYaml upgradeTo(@NonNull TaskExtendedResultYamlV1 src, Long ... vars) {
+    public TaskExtendedResultYaml upgradeTo(@NonNull TaskExtendedResultYamlV1 src) {
         src.checkIntegrity();
         TaskExtendedResultYaml trg = new TaskExtendedResultYaml();
         trg.predicted = src.predicted;

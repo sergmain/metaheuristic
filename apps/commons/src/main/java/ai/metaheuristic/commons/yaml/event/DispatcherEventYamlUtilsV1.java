@@ -46,7 +46,7 @@ public class DispatcherEventYamlUtilsV1
 
     @NonNull
     @Override
-    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV1 src, Long ... vars) {
+    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV1 src) {
         src.checkIntegrity();
         DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;

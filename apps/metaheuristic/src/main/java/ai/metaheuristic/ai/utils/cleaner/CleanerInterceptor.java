@@ -19,7 +19,8 @@ package ai.metaheuristic.ai.utils.cleaner;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.lang.Nullable;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,14 +33,15 @@ import java.util.List;
  * Time: 5:17 PM
  */
 @Slf4j
-public class CleanerInterceptor extends HandlerInterceptorAdapter {
+public class CleanerInterceptor implements AsyncHandlerInterceptor {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        super.afterCompletion(request, response, handler, ex);
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
         List<File> toClean = (List<File>) request.getAttribute(Consts.RESOURCES_TO_CLEAN);
-        DirUtils.deleteFiles(toClean);
+        if (toClean!=null && !toClean.isEmpty()) {
+            DirUtils.deleteFiles(toClean);
+        }
     }
 
 }

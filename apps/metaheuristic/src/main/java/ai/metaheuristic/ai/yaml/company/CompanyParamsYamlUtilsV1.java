@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.yaml.company;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -43,7 +42,7 @@ public class CompanyParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src, @Nullable Long ... vars) {
+    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src) {
         src.checkIntegrity();
         CompanyParamsYamlV2 trg = new CompanyParamsYamlV2();
         if (src.ac!=null) {

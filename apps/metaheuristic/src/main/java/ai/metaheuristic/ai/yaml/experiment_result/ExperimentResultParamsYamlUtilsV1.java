@@ -16,14 +16,14 @@
 
 package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYamlV1;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYamlV2;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 11:36 PM
  */
 public class ExperimentResultParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExperimentResultParamsYamlV1, ExperimentResultParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExperimentResultParamsYamlV1, ExperimentResultParamsYamlV2, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,53 +46,14 @@ public class ExperimentResultParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ExperimentResultParamsYaml upgradeTo(@NonNull ExperimentResultParamsYamlV1 src, Long ... vars) {
-        src.checkIntegrity();
-        ExperimentResultParamsYaml trg = new ExperimentResultParamsYaml();
-        trg.createdOn = src.createdOn;
-        trg.code = src.code;
-        trg.name = src.name;
-        trg.description = src.description;
-        trg.maxValueCalculated = src.maxValueCalculated;
-        trg.numberOfTask = src.numberOfTask;
-
-        trg.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams);
-        trg.hyperParams.addAll(src.hyperParams);
-        src.features.stream().map(this::toFeature).collect(Collectors.toCollection(()->trg.features));
-        src.taskFeatures.stream().map(this::toTaskFeature).collect(Collectors.toCollection(()->trg.taskFeatures));
-
-        trg.checkIntegrity();
-        return trg;
-    }
-
-    private ExperimentResultParamsYaml.ExperimentTaskFeature toTaskFeature(ExperimentResultParamsYamlV1.ExperimentTaskFeatureV1 src) {
-        ExperimentResultParamsYaml.ExperimentTaskFeature etf = new ExperimentResultParamsYaml.ExperimentTaskFeature();
-
-        etf.id = src.id;
-        etf.execContextId = src.execContextId;
-        etf.taskId = src.taskId;
-        etf.featureId = src.featureId;
-        etf.taskType = src.taskType;
-        etf.metrics = new ExperimentResultParamsYaml.MetricValues(src.metrics.values);
-
-        return etf;
-    }
-
-    private ExperimentResultParamsYaml.ExperimentFeature toFeature(ExperimentResultParamsYamlV1.ExperimentFeatureV1 src) {
-        ExperimentResultParamsYaml.ExperimentFeature ef = new ExperimentResultParamsYaml.ExperimentFeature();
-        ef.id = src.id;
-        ef.variables = src.variables;
-        ef.execStatus = src.execStatus;
-        ef.experimentId = src.experimentId;
-        ef.maxValues.putAll(src.maxValues);
-
-        return ef;
+    public ExperimentResultParamsYamlV2 upgradeTo(@NonNull ExperimentResultParamsYamlV1 src) {
+        throw new UpgradeNotSupportedException();
     }
 
     @NonNull
     @Override
     public Void downgradeTo(@NonNull Void yaml) {
-        return null;
+        throw new DowngradeNotSupportedException();
     }
 
     @Override

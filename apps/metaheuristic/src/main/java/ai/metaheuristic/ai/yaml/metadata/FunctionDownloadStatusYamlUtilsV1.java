@@ -24,7 +24,6 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +47,7 @@ public class FunctionDownloadStatusYamlUtilsV1
 
     @NonNull
     @Override
-    public FunctionDownloadStatusYaml upgradeTo(@NonNull FunctionDownloadStatusYamlV1 src, Long ... vars) {
+    public FunctionDownloadStatusYaml upgradeTo(@NonNull FunctionDownloadStatusYamlV1 src) {
         src.checkIntegrity();
         FunctionDownloadStatusYaml trg = new FunctionDownloadStatusYaml();
         trg.statuses = src.statuses.stream().map( source -> {

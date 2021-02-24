@@ -45,7 +45,7 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1, Long ... vars) {
+    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1) {
         KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
 
         if( v1.dispatcherInfo !=null ) {

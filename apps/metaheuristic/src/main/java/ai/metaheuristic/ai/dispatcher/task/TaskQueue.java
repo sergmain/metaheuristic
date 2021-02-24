@@ -174,7 +174,7 @@ public class TaskQueue {
         public boolean isEmpty() {
             boolean noneTasks = noneTasks();
             if (!noneTasks && execContextId==null) {
-                log.warn("There is a task but execContextId is null. Shouldn't happened.");
+                log.error("There is a task but execContextId is null. Shouldn't happened.");
             }
             return execContextId==null || noneTasks;
         }
@@ -302,7 +302,14 @@ public class TaskQueue {
                     continue;
                 }
                 if (!task.assigned) {
-                    log.warn("task wasn't assigned!!!");
+                    log.warn("#029.022 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
+                    try {
+                        throw new RuntimeException("for stacktrace");
+                    }
+                    catch (RuntimeException e) {
+                        log.warn("#029.023 Stacktrace", e);
+                    }
+                    continue;
                 }
                 task.state = state;
                 ok = true;

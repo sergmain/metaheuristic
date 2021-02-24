@@ -250,7 +250,7 @@ public class TaskProviderTransactionalService {
                 ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
                 if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
-                    log.info("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
+                    log.debug("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
                     continue;
                 }
 

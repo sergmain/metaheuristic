@@ -21,6 +21,9 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 /**
  * @author Serge
  * Date: 6/17/2019
@@ -30,7 +33,7 @@ abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT ex
 
     public abstract @NonNull Yaml getYaml();
 
-    public abstract @NonNull NextT upgradeTo(@NonNull CurrT yaml, @Nullable Long ... vars);
+    public abstract @NonNull NextT upgradeTo(@NonNull CurrT yaml);
 
     public abstract @NonNull PrevT downgradeTo(@NonNull CurrForDownT yaml);
 

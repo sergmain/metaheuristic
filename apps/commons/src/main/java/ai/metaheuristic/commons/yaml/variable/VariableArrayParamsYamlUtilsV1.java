@@ -47,7 +47,7 @@ public class VariableArrayParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public VariableArrayParamsYaml upgradeTo(VariableArrayParamsYamlV1 v1, Long ... vars) {
+    public VariableArrayParamsYaml upgradeTo(VariableArrayParamsYamlV1 v1) {
         v1.checkIntegrity();
         VariableArrayParamsYaml t = new VariableArrayParamsYaml();
         v1.array.stream().map(VariableArrayParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.array));

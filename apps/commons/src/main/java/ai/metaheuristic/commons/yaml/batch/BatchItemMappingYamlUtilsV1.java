@@ -44,7 +44,7 @@ public class BatchItemMappingYamlUtilsV1
 
     @NonNull
     @Override
-    public BatchItemMappingYaml upgradeTo(@NonNull BatchItemMappingYamlV1 src, Long ... vars) {
+    public BatchItemMappingYaml upgradeTo(@NonNull BatchItemMappingYamlV1 src) {
         src.checkIntegrity();
         BatchItemMappingYaml trg = new BatchItemMappingYaml();
         trg.targetDir = src.targetDir;

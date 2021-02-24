@@ -23,7 +23,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.Map;
@@ -50,7 +49,7 @@ public class MetadataParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public MetadataParamsYamlV2 upgradeTo(@NonNull MetadataParamsYamlV1 src, @Nullable Long ... vars) {
+    public MetadataParamsYamlV2 upgradeTo(@NonNull MetadataParamsYamlV1 src) {
         src.checkIntegrity();
         MetadataParamsYamlV2 trg = new MetadataParamsYamlV2();
         if (src.dispatcher!=null) {

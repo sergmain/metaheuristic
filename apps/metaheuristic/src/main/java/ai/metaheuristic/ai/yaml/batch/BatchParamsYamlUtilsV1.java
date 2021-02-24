@@ -42,7 +42,7 @@ public class BatchParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public BatchParamsYaml upgradeTo(@NonNull BatchParamsYamlV1 v2, Long ... vars) {
+    public BatchParamsYaml upgradeTo(@NonNull BatchParamsYamlV1 v2) {
         v2.checkIntegrity();
         BatchParamsYaml t = new BatchParamsYaml();
         if( v2.batchStatus!=null ) {

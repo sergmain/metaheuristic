@@ -44,7 +44,7 @@ public class ProcessorStatusYamlUtilsV1
 
     @NonNull
     @Override
-    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV1 src, Long ... vars) {
+    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV1 src) {
         src.checkIntegrity();
         ProcessorStatusYaml trg = new ProcessorStatusYaml();
         trg.downloadStatuses = src.downloadStatuses.stream()

@@ -51,7 +51,7 @@ public class FunctionConfigListYamlUtilsV2
 
     @NonNull
     @Override
-    public FunctionConfigListYaml upgradeTo(@NonNull FunctionConfigListYamlV2 src, Long ... vars) {
+    public FunctionConfigListYaml upgradeTo(@NonNull FunctionConfigListYamlV2 src) {
         src.checkIntegrity();
         FunctionConfigListYaml trg = new FunctionConfigListYaml();
         trg.functions = src.functions.stream().map(fnCfgSrc-> {

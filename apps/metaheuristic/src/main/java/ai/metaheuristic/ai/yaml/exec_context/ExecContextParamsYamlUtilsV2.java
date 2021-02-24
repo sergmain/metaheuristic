@@ -47,7 +47,7 @@ public class ExecContextParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV2 v1, Long ... vars) {
+    public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV2 v1) {
         ExecContextParamsYaml t = new ExecContextParamsYaml();
 
         // right now we don't need to convert Graph because it has only one version of structure

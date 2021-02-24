@@ -45,7 +45,7 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV1 src, Long ... vars) {
+    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV1 src) {
         KeepAliveRequestParamYaml t = new KeepAliveRequestParamYaml();
 
         src.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))

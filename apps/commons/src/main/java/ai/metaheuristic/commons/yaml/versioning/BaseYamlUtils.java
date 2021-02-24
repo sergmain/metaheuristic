@@ -85,7 +85,7 @@ public class BaseYamlUtils<T extends BaseParams> {
         }
     }
 
-    public T to(@NonNull String s, @Nullable Long ... vars) {
+    public T to(@NonNull String s) {
         try {
             YamlVersion v = YamlForVersioning.getYamlVersion(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
@@ -96,7 +96,7 @@ public class BaseYamlUtils<T extends BaseParams> {
             BaseParams currBaseParamsYaml = yamlUtils.to(s);
             do {
                 //noinspection unchecked
-                currBaseParamsYaml = yamlUtils.upgradeTo(currBaseParamsYaml, vars);
+                currBaseParamsYaml = yamlUtils.upgradeTo(currBaseParamsYaml);
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
             //noinspection unchecked

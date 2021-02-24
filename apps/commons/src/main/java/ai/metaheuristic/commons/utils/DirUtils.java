@@ -73,7 +73,6 @@ public class DirUtils {
             }
             try {
                 Files.createDirectories(newTempDir.toPath());
-//                newTempDir.mkdirs();
                 return newTempDir;
             } catch (IOException e) {
                 log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.getAbsolutePath(), i, e.getMessage()));
@@ -84,8 +83,8 @@ public class DirUtils {
 
     public static void deleteFiles(@Nullable List<File> toClean) {
         if (toClean!=null) {
-            try {
-                for (File file : toClean) {
+            for (File file : toClean) {
+                try {
                     if (!file.exists()) {
                         continue;
                     }
@@ -95,9 +94,9 @@ public class DirUtils {
                     else {
                         deleteAsync(file);
                     }
+                } catch (Throwable th) {
+                    log.error("Error while cleaning resources", th);
                 }
-            } catch (Throwable th) {
-                log.error("Error while cleaning resources", th);
             }
         }
     }

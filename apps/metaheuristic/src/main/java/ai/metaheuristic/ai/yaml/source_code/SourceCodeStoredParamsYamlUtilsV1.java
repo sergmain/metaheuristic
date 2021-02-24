@@ -22,7 +22,6 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -44,7 +43,7 @@ public class SourceCodeStoredParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public SourceCodeStoredParamsYaml upgradeTo(@NonNull SourceCodeStoredParamsYamlV1 v1, @Nullable Long ... vars) {
+    public SourceCodeStoredParamsYaml upgradeTo(@NonNull SourceCodeStoredParamsYamlV1 v1) {
         v1.checkIntegrity();
         SourceCodeStoredParamsYaml p = new SourceCodeStoredParamsYaml();
         p.internalParams.init(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);

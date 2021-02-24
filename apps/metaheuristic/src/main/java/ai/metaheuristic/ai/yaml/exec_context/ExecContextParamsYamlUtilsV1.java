@@ -22,7 +22,6 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ public class ExecContextParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ExecContextParamsYamlV2 upgradeTo(@NonNull ExecContextParamsYamlV1 v1, @Nullable Long ... vars) {
+    public ExecContextParamsYamlV2 upgradeTo(@NonNull ExecContextParamsYamlV1 v1) {
         ExecContextParamsYamlV2 t = new ExecContextParamsYamlV2();
 
         // right now we don't need to convert Graph because it has only one version of structure

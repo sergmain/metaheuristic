@@ -44,7 +44,7 @@ public class FittingYamlUtilsV1
 
     @NonNull
     @Override
-    public FittingYaml upgradeTo(@NonNull FittingYamlV1 src, Long ... vars) {
+    public FittingYaml upgradeTo(@NonNull FittingYamlV1 src) {
         src.checkIntegrity();
         FittingYaml trg = new FittingYaml();
         trg.fitting = src.fitting;

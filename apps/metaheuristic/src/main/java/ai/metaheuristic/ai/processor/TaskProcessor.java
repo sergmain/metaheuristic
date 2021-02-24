@@ -173,8 +173,6 @@ public class TaskProcessor {
 
             EnumsApi.ExecContextState state = currentExecState.getState(dispatcherUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
-//                processorTaskService.delete(ref, task.taskId);
-//                log.info("#100.032 The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, dispatcherUrl, task.taskId);
                 log.info("#100.032 The state for ExecContext #{}, host {} is unknown, the task #{} will be skipped", task.execContextId, dispatcherUrl, task.taskId);
                 continue;
             }
@@ -425,7 +423,7 @@ public class TaskProcessor {
         return count;
     }
 
-    @SuppressWarnings({"WeakerAccess", "deprecation"})
+    @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
             ProcessorTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,

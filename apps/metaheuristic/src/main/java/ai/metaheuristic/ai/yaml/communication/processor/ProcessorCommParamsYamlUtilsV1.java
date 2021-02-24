@@ -46,7 +46,7 @@ public class ProcessorCommParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 src, Long ... vars) {
+    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 src) {
         ProcessorCommParamsYaml trg = new ProcessorCommParamsYaml();
 
         for (ProcessorCommParamsYamlV1.ProcessorRequestV1 v1 : src.requests) {

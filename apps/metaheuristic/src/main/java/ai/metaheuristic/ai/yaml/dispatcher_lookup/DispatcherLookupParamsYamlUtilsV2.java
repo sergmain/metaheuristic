@@ -20,7 +20,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.Set;
@@ -47,7 +46,7 @@ public class DispatcherLookupParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public DispatcherLookupParamsYaml upgradeTo(@NonNull DispatcherLookupParamsYamlV2 src, @Nullable Long ... vars) {
+    public DispatcherLookupParamsYaml upgradeTo(@NonNull DispatcherLookupParamsYamlV2 src) {
         src.checkIntegrity();
 
         DispatcherLookupParamsYaml trg = new DispatcherLookupParamsYaml();

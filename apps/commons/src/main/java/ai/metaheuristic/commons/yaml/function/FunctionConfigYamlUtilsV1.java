@@ -48,7 +48,7 @@ public class FunctionConfigYamlUtilsV1
 
     @NonNull
     @Override
-    public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV1 src, Long ... vars) {
+    public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV1 src) {
         src.checkIntegrity();
         FunctionConfigYaml trg = new FunctionConfigYaml();
         BeanUtils.copyProperties(src, trg, "checksumMap", "metas");

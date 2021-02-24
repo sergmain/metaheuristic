@@ -46,7 +46,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1, Long ... vars) {
+    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1) {
         v1.checkIntegrity();
 
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();

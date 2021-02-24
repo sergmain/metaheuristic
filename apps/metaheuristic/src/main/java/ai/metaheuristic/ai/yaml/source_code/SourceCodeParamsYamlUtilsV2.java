@@ -50,7 +50,7 @@ public class SourceCodeParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV2 v2, Long ... vars) {
+    public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV2 v2) {
         v2.checkIntegrity();
 
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
