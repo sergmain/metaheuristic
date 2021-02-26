@@ -29,9 +29,27 @@ import java.util.List;
 public class ResourceCloseEvent {
     public final List<InputStream> inputStreams = new ArrayList<>();
     public final List<File> files = new ArrayList<>();
+    public final List<File> dirs = new ArrayList<>();
 
     public ResourceCloseEvent(List<InputStream> inputStreams, List<File> files) {
-        this.inputStreams.addAll(inputStreams);
-        this.files.addAll(files);
+        this(inputStreams, files, List.of());
+    }
+
+    public ResourceCloseEvent(List<InputStream> inputStreams, List<File> files, List<File> dirs ) {
+        if (!inputStreams.isEmpty()) {
+            this.inputStreams.addAll(inputStreams);
+        }
+        if (!files.isEmpty()) {
+            this.files.addAll(files);
+        }
+        if (!dirs.isEmpty()) {
+            this.dirs.addAll(dirs);
+        }
+    }
+
+    public void clean() {
+        this.inputStreams.clear();
+        this.files.clear();
+        this.dirs.clear();
     }
 }

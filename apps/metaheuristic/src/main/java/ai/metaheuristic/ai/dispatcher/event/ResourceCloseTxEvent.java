@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import lombok.NoArgsConstructor;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -26,9 +28,11 @@ import java.util.List;
  * Date: 12/21/2020
  * Time: 12:26 AM
  */
+@NoArgsConstructor
 public class ResourceCloseTxEvent {
-    public final List<InputStream> inputStreams = new ArrayList<>();
-    public final List<File> files = new ArrayList<>();
+    private final List<InputStream> inputStreams = new ArrayList<>();
+    private final List<File> files = new ArrayList<>();
+    private final List<File> dirs = new ArrayList<>();
 
     public ResourceCloseTxEvent(InputStream inputStream) {
         this.inputStreams.add(inputStream);
@@ -43,7 +47,27 @@ public class ResourceCloseTxEvent {
         this.files.add(tempFile);
     }
 
-    public ResourceCloseEvent to() {
-        return new ResourceCloseEvent(inputStreams, files);
+    public void add(InputStream inputStream) {
+        this.inputStreams.add(inputStream);
     }
+
+    public void add(File path) {
+        if (path.isFile()) {
+            this.files.add(path);
+        }
+        else {
+            this.dirs.add(path);
+        }
+    }
+
+    public ResourceCloseEvent to() {
+        return new ResourceCloseEvent(inputStreams, files, dirs);
+    }
+
+    public void clean() {
+        this.inputStreams.clear();
+        this.files.clear();
+        this.dirs.clear();
+    }
+
 }

@@ -119,7 +119,6 @@ public class CompanyTopLevelService {
             return new CompanyData.SimpleCompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
-//        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
         CompanyParamsYaml cpy = S.b(company.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
 
         if (cpy.ac!=null && !S.b(cpy.ac.groups)) {

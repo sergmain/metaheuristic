@@ -87,6 +87,9 @@ public class AggregateFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
+        final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
+        eventPublisher.publishEvent(resourceCloseTxEvent);
+
         if (taskParamsYaml.task.outputs.size()!=1) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
                     "#992.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
@@ -119,6 +122,8 @@ public class AggregateFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
         }
+        resourceCloseTxEvent.add(tempDir);
+
         File outputDir = new File(tempDir, outputVariable.name);
         if (!outputDir.mkdirs()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
@@ -152,7 +157,7 @@ public class AggregateFunction implements InternalFunction {
         ZipUtils.createZip(outputDir, zipFile);
         try {
             InputStream is = new FileInputStream(zipFile);
-            eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
+            resourceCloseTxEvent.add(is);
             variableService.update(is, zipFile.length(), variable);
         } catch (FileNotFoundException e) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,

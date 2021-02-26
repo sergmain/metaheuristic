@@ -91,6 +91,7 @@ public class EventsBoundedToTx {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     public void handleResourceCloseTxEvent(ResourceCloseTxEvent event) {
         eventPublisher.publishEvent(event.to());
+        event.clean();
     }
 
 

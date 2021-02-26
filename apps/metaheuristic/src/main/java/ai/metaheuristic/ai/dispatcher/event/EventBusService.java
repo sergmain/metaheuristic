@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -118,7 +119,7 @@ public class EventBusService {
     @Async
     @EventListener
     public void resourceCloseEvent(ResourceCloseEvent event) {
-        // !!! DO NOT CHANGE THE ORDER OF CLOSING: InputStream - FIRST, File - SECOND
+        // !!! DO NOT CHANGE THE ORDER OF CLOSING: InputStream - FIRST, File - SECOND, Dirs - THIRDS
         for (InputStream inputStream : event.inputStreams) {
             try {
                 inputStream.close();
@@ -128,11 +129,27 @@ public class EventBusService {
             }
         }
         for (File file : event.files) {
+            if (file.isDirectory()) {
+                log.error("#448.030 error in code. path {} is a directory", file.getAbsolutePath());
+                continue;
+            }
             try {
                 Files.delete(file.toPath());
             }
             catch(Throwable th)  {
                 log.warn("#448.040 Error while deleting file "+ file.getAbsolutePath(), th);
+            }
+        }
+        for (File dir : event.dirs) {
+            if (dir.isFile()) {
+                log.error("#448.060 error in code. path {} is a file", dir.getAbsolutePath());
+                continue;
+            }
+            try {
+                FileUtils.deleteDirectory(dir);
+            }
+            catch(Throwable th)  {
+                log.warn("#448.080 Error while deleting dir "+ dir.getAbsolutePath(), th);
             }
         }
     }

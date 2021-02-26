@@ -15,8 +15,9 @@
  */
 package ai.metaheuristic.ai.dispatcher.commons;
 
+import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -47,6 +48,7 @@ public class ArtifactCleanerAtDispatcher {
     private final BatchRepository batchRepository;
     private final CompanyRepository companyRepository;
     private final BatchTopLevelService batchTopLevelService;
+    private final BatchCache batchCache;
 
     public void fixedDelay() {
         // do not change the order of calling
@@ -60,14 +62,14 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> execContextIds = execContextRepository.findAllIds();
         List<Long> companyUniqueIds = companyRepository.findAllUniqueIds();
         Set<Long> forDeletion = new HashSet<>();
-        List<Object[]> objs = batchRepository.findAllBatchedShort();
-        for (Object[] obj : objs) {
-            // id, b.execContextId, b.companyId
-            Long execContextId = ((Number)obj[1]).longValue();
-            Long companyUniqueId = ((Number)obj[2]).longValue();
-            if (!execContextIds.contains(execContextId) || !companyUniqueIds.contains(companyUniqueId)) {
-                Long batchId = ((Number)obj[0]).longValue();
-                forDeletion.add(batchId);
+        List<Long> ids = batchRepository.findAllIds();
+        for (Long id : ids) {
+            Batch b = batchCache.findById(id);
+            if (b==null) {
+                continue;
+            }
+            if (!execContextIds.contains(b.execContextId) || !companyUniqueIds.contains(b.companyId)) {
+                forDeletion.add(b.id);
             }
         }
         batchTopLevelService.deleteOrphanBatches(forDeletion);
