@@ -88,6 +88,11 @@ public class KeepAliveResponseParamYaml implements BaseParams {
             }
             return false;
         }
+
+        @Nullable
+        public SimpleStatus getStatus(Long execContextId) {
+            return statuses.stream().filter(o->o.id.equals(execContextId)).findFirst().orElse(null);
+        }
     }
 
     @Data

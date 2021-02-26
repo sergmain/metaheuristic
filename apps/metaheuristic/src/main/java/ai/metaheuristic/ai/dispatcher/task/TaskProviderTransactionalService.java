@@ -170,6 +170,13 @@ public class TaskProviderTransactionalService {
                     break;
                 }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
+                final KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus simpleStatus = statuses.getStatus(queuedTask.execContextId);
+                if (simpleStatus!=null && simpleStatus.getState() == EnumsApi.ExecContextState.FINISHED) {
+                    log.warn("#317.036 task #{} in execContext #{} was already finished", queuedTask.taskId, queuedTask.execContextId);
+                    forRemoving.add(queuedTask);
+                    continue;
+                }
+
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
                     log.error("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                             "assigned: {}, state: {}\n" +
