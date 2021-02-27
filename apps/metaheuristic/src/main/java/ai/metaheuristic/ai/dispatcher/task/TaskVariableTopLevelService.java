@@ -37,7 +37,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TaskVariableTopLevelService {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
+    public static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK);
 
     private final TaskVariableService taskVariableService;
     private final TaskSyncService taskSyncService;

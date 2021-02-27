@@ -124,6 +124,20 @@ public class SouthbridgeController {
     }
 
     /**
+     * return string as "true"/"false".
+     *      "true" - if variable already inited or it doesn't exist
+     *      "false" - variable isn't inited yet
+     *
+     * @param variableId
+     * @return
+     */
+    @PostMapping("/variable-status")
+    public String variableStatus(Long variableId) {
+        log.debug("variableStatus(), variableId: {}", variableId);
+        return execContextVariableTopLevelService.getVariableStatus(variableId);
+    }
+
+    /**
      * This endpoint is only for testing security. Do not delete
      * @return String
      */

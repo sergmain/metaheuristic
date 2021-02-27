@@ -45,6 +45,7 @@ public class Consts {
     public static final String SERVER_REST_URL_V2 = "/srv-v2";
     public static final String KEEP_ALIVE_REST_URL = "/keep-alive";
     public static final String UPLOAD_REST_URL = "/upload";
+    public static final String VARIABLE_STATUS_REST_URL = "/variable-status";
     public static final String REST_ASSET_URL = "/rest/v1/asset";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);

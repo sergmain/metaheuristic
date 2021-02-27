@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 @Data
 @AllArgsConstructor
@@ -28,5 +29,11 @@ import lombok.ToString;
 @ToString
 public class UploadResult {
     public Enums.UploadVariableStatus status;
+
+    @Nullable
     public String error;
+
+    public UploadResult(Enums.UploadVariableStatus status) {
+        this.status = status;
+    }
 }

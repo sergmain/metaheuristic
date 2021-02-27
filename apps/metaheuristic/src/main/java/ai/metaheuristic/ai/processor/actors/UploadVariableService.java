@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -31,25 +32,38 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -127,6 +141,12 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             Enums.UploadVariableStatus status = null;
             try {
+                final Executor executor = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword);
+
+                if (!isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor)) {
+                    continue;
+                }
+
                 final String uploadRestUrl  = task.getDispatcherUrl().url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.ref.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
@@ -152,7 +172,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000).body(entity);
 
                 log.info("Start uploading variable to rest-server, {}", randonPart);
-                Response response = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
+                Response response = executor.execute(request);
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
@@ -225,4 +245,62 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             add(uploadResourceTask);
         }
     }
+
+    private static boolean isVariableReadyForUploading(String dispatcherUrl, Long variableId, Executor executor) {
+        final String variableStatusRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.VARIABLE_STATUS_REST_URL;
+
+        try {
+            final URI build = new URIBuilder(variableStatusRestUrl).setCharset(StandardCharsets.UTF_8).build();
+            final Request request = Request.Post(build)
+                    .bodyForm(Form.form().add("variableId", ""+variableId).build(), StandardCharsets.UTF_8)
+                    .connectTimeout(5000).socketTimeout(20000);
+
+            RestUtils.addHeaders(request);
+            Response response = executor.execute(request);
+
+            final HttpResponse httpResponse = response.returnResponse();
+            if (httpResponse.getStatusLine().getStatusCode()!=200) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final HttpEntity entity = httpResponse.getEntity();
+                if (entity != null) {
+                    entity.writeTo(baos);
+                }
+
+                log.error("Server response:\n" + baos.toString());
+                // let's try to upload variable anyway
+                return true;
+            }
+            final HttpEntity entity = httpResponse.getEntity();
+            if (entity != null) {
+                String value = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
+                // right now uri /variable-status returns value of 'inited' field
+
+                return "false".equals(value);
+            }
+            else {
+                return true;
+            }
+        }
+        catch (HttpHostConnectException | SocketTimeoutException th) {
+            log.error("Error: {}", th.getMessage());
+            return true;
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+            return true;
+        }
+    }
+
+    private static Executor getExecutor(String dispatcherUrl, String restUsername, String restPassword) {
+        HttpHost dispatcherHttpHostWithAuth;
+        try {
+            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(dispatcherUrl).toURI());
+        } catch (Throwable th) {
+            throw new IllegalArgumentException("Can't build HttpHost for " + dispatcherUrl, th);
+        }
+        return Executor.newInstance()
+                .authPreemptive(dispatcherHttpHostWithAuth)
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
+    }
+
 }

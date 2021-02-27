@@ -19,11 +19,14 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -38,7 +41,10 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 /**
  * @author Serge
@@ -55,7 +61,9 @@ public class ExecContextVariableTopLevelService {
     private final TaskVariableService taskVariableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final VariableService variableService;
+    private final VariableRepository variableRepository;
     private final TaskSyncService taskSyncService;
+    private final VariableSyncService variableSyncService;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
         TxUtils.checkTxNotExists();
@@ -140,8 +148,31 @@ public class ExecContextVariableTopLevelService {
             try(OutputStream os = new FileOutputStream(variableFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
+
+            UploadResult uploadResult;
             // FileInputStream will be closed by event ResourceCloseTxEvent
-            UploadResult uploadResult = variableService.storeVariable(new FileInputStream(variableFile), variableFile.length(), execContextId, taskId, variableId);
+            uploadResult = variableSyncService.getWithSync(variableId,
+                    () -> {
+                        SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
+                        if (v==null) {
+                            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #"+variableId+" wasn't found");
+                        }
+                        if (v.inited) {
+                            return TaskVariableTopLevelService.OK_UPLOAD_RESULT;
+                        }
+                        try (final FileInputStream inputStream = new FileInputStream(variableFile)) {
+                            return variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
+                        }
+                        catch (Throwable th) {
+                            final String error = "#440.290 can't store the result, Error: " + th.toString();
+                            log.error(error, th);
+                            return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
+                        }
+                    });
+//            finally {
+//                eventPublisher.publishEvent(new ResourceCloseTxEvent(variableIS));
+//            }
+
             if (uploadResult.status!= Enums.UploadVariableStatus.OK) {
                 return uploadResult;
             }
@@ -193,5 +224,22 @@ public class ExecContextVariableTopLevelService {
 
     }
 
-
+    /**
+     * return string as "true"/"false".
+     *      "true" - if variable already inited or it doesn't exist
+     *      "false" - variable isn't inited yet
+     *
+     * @param variableId
+     * @return
+     */
+    public String getVariableStatus(Long variableId) {
+        return variableSyncService.getWithSync(variableId,
+                () -> {
+                    SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
+                    if (v==null) {
+                        return "true";
+                    }
+                    return ""+v.inited;
+                });
+    }
 }

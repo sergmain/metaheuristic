@@ -91,7 +91,6 @@ public class VariableService {
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
-        eventPublisher.publishEvent(new ResourceCloseTxEvent(variableIS));
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
