@@ -137,10 +137,11 @@ public class ExecContextReconciliationService {
                     // ---> This is a normal situation
                 }
                 else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
-                    // #307.140 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
+                    // #307.120 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
                 else {
+                    // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
