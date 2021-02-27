@@ -88,7 +88,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         taskSyncService.checkWriteLockPresent(task.id);
 
-        log.info("#305.140 set task #{} as {}", task.id, state);
+        log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.processorId);
         switch (state) {
             case ERROR:
                 throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithError()");

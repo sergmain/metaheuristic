@@ -86,6 +86,13 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(event.to());
     }
 
+    // TransactionPhase.AFTER_ROLLBACK
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleUnAssignTaskTxEvent(UnAssignTaskTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
     // TransactionPhase.AFTER_COMPLETION
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)

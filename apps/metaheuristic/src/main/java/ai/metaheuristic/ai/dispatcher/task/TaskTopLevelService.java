@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -77,14 +78,15 @@ public class TaskTopLevelService {
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         switch (status) {
             case SEND_SCHEDULED:
-                log.info("#303.380 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
+                log.info("#303.380 Processor #{} scheduled for sending an output variable #{}, task #{}. This is normal operation of Processor", processorId, variableId, taskId);
                 break;
             case TASK_NOT_FOUND:
             case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
 
-                applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId, "#303.390 Task was finished while resending variable with status " + status));
+                applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId,
+                        S.f("#303.390 Task #%s was finished while resending variable #%s with status %s", taskId, variableId, status)));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:

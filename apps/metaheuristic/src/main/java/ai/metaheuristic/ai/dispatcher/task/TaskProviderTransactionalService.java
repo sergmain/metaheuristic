@@ -306,6 +306,11 @@ public class TaskProviderTransactionalService {
         t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         t.setResultResourceScheduledOn(0);
 
+        taskRepository.save(t);
+
+        resultTask.assigned = true;
+
+        eventPublisher.publishEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
         eventPublisher.publishEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
 
         return t;
@@ -348,5 +353,9 @@ public class TaskProviderTransactionalService {
     @Nullable
     public AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
         return taskQueue.getTaskExecState(execContextId, taskId);
+    }
+
+    public void unAssignTask(UnAssignTaskEvent event) {
+        taskQueue.deRegisterTask(event.execContextId, event.taskId);
     }
 }

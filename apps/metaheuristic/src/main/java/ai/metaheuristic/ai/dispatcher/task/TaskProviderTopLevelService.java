@@ -94,10 +94,22 @@ public class TaskProviderTopLevelService {
 
     @Async
     @EventListener
-    public void processDeletedExecContext(StartTaskProcessingEvent event) {
+    public void processStartTaskProcessing(StartTaskProcessingEvent event) {
         try {
             synchronized (syncObj) {
                 taskProviderTransactionalService.startTaskProcessing(event);
+            }
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
+    }
+
+    @Async
+    @EventListener
+    public void processUnAssignTaskEvent(UnAssignTaskEvent event) {
+        try {
+            synchronized (syncObj) {
+                taskProviderTransactionalService.unAssignTask(event);
             }
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
@@ -281,7 +293,7 @@ public class TaskProviderTopLevelService {
                 return null;
             }
 
-            // because we're already providing with task that means that execCOntext was started
+            // because we're already providing with task that means that execContext was started
             return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.STARTED);
 
         } catch (Throwable th) {
