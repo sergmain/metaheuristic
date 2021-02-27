@@ -186,7 +186,7 @@ public class ProcessorService {
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
             processorTaskService.markAsFinishedWithError(ref, taskId,
-                    "#749.050 Variable wasn't found. Considering that this task is broken");
+                    "#749.050 Variable #"+outputVariable.id+" wasn't found. Considering that this task is broken");
 
             processorTaskService.setCompleted(ref, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;

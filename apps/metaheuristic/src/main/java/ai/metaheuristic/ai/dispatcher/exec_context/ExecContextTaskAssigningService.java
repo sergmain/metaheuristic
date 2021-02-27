@@ -85,7 +85,7 @@ public class ExecContextTaskAssigningService {
                 }
                 final TaskParamsYaml taskParamYaml;
                 if (task.execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.warn("#703.240 task #{} with IN_PROGRESS is here?", task.id);
+                    log.warn("#703.240 task #{} with IN_PROGRESS is there?", task.id);
                     continue;
                 }
                 try {

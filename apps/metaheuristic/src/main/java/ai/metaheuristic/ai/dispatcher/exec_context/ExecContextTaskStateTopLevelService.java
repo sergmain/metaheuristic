@@ -88,7 +88,7 @@ public class ExecContextTaskStateTopLevelService {
                     break;
                 }
             }
-            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops", i);
+            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops", i-1);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

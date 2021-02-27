@@ -72,10 +72,36 @@ public class TaskFinishingTopLevelService {
 
         EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
 
+        switch (state) {
+            case ERROR:
+            case OK:
+            case SKIPPED:
+                // ---> This is a normal operation. do nothing
+                return;
+
+            case NONE:
+                log.info("#318.020 Task {} has a state as NONE, do nothing", task.id);
+                // ---> This is a normal operation. do nothing
+                return;
+
+            case IN_PROGRESS:
+            case CHECK_CACHE:
+                break;
+
+            case NOT_USED_ANYMORE:
+                throw new IllegalStateException("Must not happened");
+        }
+
+/*
         if (state != EnumsApi.TaskExecState.IN_PROGRESS && state != EnumsApi.TaskExecState.CHECK_CACHE) {
-            log.info("#318.020 Task {} already isn't in IN_PROGRESS or CHECK_CACHE state, actual: {}", task.id, state);
+            if (state== EnumsApi.TaskExecState.OK || state== EnumsApi.TaskExecState.ERROR) {
+            }
+            else {
+                log.info("#318.020 Task {} already has a state neither IN_PROGRESS nor CHECK_CACHE state, actual: {}", task.id, state);
+            }
             return;
         }
+*/
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
