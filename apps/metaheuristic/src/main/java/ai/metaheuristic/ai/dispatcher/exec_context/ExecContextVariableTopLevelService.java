@@ -149,29 +149,22 @@ public class ExecContextVariableTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
 
-            UploadResult uploadResult;
-            // FileInputStream will be closed by event ResourceCloseTxEvent
-            uploadResult = variableSyncService.getWithSync(variableId,
-                    () -> {
-                        SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
-                        if (v==null) {
-                            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #"+variableId+" wasn't found");
-                        }
-                        if (v.inited) {
-                            return TaskVariableTopLevelService.OK_UPLOAD_RESULT;
-                        }
-                        try (final FileInputStream inputStream = new FileInputStream(variableFile)) {
-                            return variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
-                        }
-                        catch (Throwable th) {
-                            final String error = "#440.290 can't store the result, Error: " + th.toString();
-                            log.error(error, th);
-                            return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
-                        }
-                    });
-//            finally {
-//                eventPublisher.publishEvent(new ResourceCloseTxEvent(variableIS));
-//            }
+            UploadResult uploadResult = variableSyncService.getWithSync(variableId, () -> {
+                SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
+                if (v == null) {
+                    return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #" + variableId + " wasn't found");
+                }
+                if (v.inited) {
+                    return TaskVariableTopLevelService.OK_UPLOAD_RESULT;
+                }
+                try (final FileInputStream inputStream = new FileInputStream(variableFile)) {
+                    return variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
+                } catch (Throwable th) {
+                    final String error = "#440.290 can't store the result, Error: " + th.toString();
+                    log.error(error, th);
+                    return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
+                }
+            });
 
             if (uploadResult.status!= Enums.UploadVariableStatus.OK) {
                 return uploadResult;
