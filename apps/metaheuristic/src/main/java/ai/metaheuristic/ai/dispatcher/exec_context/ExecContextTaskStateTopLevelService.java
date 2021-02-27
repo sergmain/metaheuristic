@@ -61,14 +61,14 @@ public class ExecContextTaskStateTopLevelService {
             }
             TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             if (!event.execContextId.equals(task.execContextId)) {
-                log.error("(!execContextId.equals(task.execContextId))");
+                log.error("#417.020 (!execContextId.equals(task.execContextId))");
             }
 
             execContextSyncService.getWithSyncNullable(event.execContextId,
                     () -> taskSyncService.getWithSyncNullable(event.taskId,
                             () -> updateTaskExecStatesInGraph(event.execContextId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#417.020 Error, need to investigate ", th);
         }
     }
 
@@ -77,17 +77,18 @@ public class ExecContextTaskStateTopLevelService {
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
-            for (int i = 0; i < 100; i++) {
-                TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(event.execContextId,
-                        () -> transferStateFromTaskQueueToExecContext(event.execContextId));
-
-                if (taskGroup==null){
-                    return;
-                }
+            TaskQueue.TaskGroup taskGroup;
+            int i = 1;
+            while ((taskGroup = execContextSyncService.getWithSync(event.execContextId,
+                    () -> transferStateFromTaskQueueToExecContext(event.execContextId)))!=null) {
                 taskGroup.reset();
+                i++;
+                if (i>10_000) {
+                    log.error("#417.040 To many calls to transferStateFromTaskQueueToExecContext()");
+                    break;
+                }
             }
-
-            transferStateFromTaskQueueToExecContext(event.execContextId);
+            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops", i);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

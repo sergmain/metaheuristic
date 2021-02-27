@@ -285,6 +285,14 @@ public class TaskQueue {
         return null;
     }
 
+    /**
+     *
+     * @param execContextId
+     * @param taskId
+     * @param state
+     *
+     * @return true is all tasks in group were finished
+     */
     public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
             log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);

@@ -97,8 +97,8 @@ public class ExecContextReconciliationService {
                         status.taskForResettingIds.add(tv.taskId);
                     }
                     else if (taskState.execState==EnumsApi.TaskExecState.NONE.value && tv.execState== EnumsApi.TaskExecState.CHECK_CACHE) {
-                        // #307.060 Found different states for task #37978, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
-                        // normal situation, will occur after restarting dispatcher
+                        // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
+                        // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
@@ -108,34 +108,40 @@ public class ExecContextReconciliationService {
                 }
                 else if (!allocatedTask.assigned) {
                     if (taskState.execState==EnumsApi.TaskExecState.NONE.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
-                        // #307.080 Found different states for task #37978, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
-                        // normal situation, will occur after restarting dispatcher
+                        // #307.080 Found different states for task, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
+                        // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else {
-                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
                                 tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                     }
                 }
-                else if ((taskState.execState==EnumsApi.TaskExecState.OK.value || taskState.execState==EnumsApi.TaskExecState.ERROR.value || taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
+                else if ((taskState.execState==EnumsApi.TaskExecState.OK.value ||
+                        taskState.execState==EnumsApi.TaskExecState.ERROR.value ||
+                        taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
                     && taskState.execState==allocatedTask.state.value) {
-                    log.info("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}",
+/*
+                    log.info("#307.100 Found different states for task #{}, db: {}, graph: {}, state in queue: {}",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                     log.info("#307.120 task #{} will be removed from queue and state of task will be changed in execContext",
                             tv.taskId);
 
                     taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+*/
+                    // ---> This is a normal situation
+                    // statuses of tasks are copying from taskQueue when all tasks in group will be finished. so there is a period of time when state is as this
                 }
                 else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
-                    // Found different states for task #37131, db: IN_PROGRESS, graph: CHECK_CACHE, assigned: false, state in queue: IN_PROGRESS
-                    // normal situation
+                    // Found different states for task , db: IN_PROGRESS, graph: CHECK_CACHE, state in queue: IN_PROGRESS
+                    // ---> This is a normal situation
                 }
                 else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
-                    // #307.140 Found different states for task #37709, db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
-                    // normal situation
+                    // #307.140 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
+                    // ---> This is a normal situation
                 }
                 else {
-                    log.warn("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}",
+                    log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
                             tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
                 }
             }
