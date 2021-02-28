@@ -125,11 +125,16 @@ public class ExecContextApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class ExecContextsResult extends BaseDataClass {
         public Long sourceCodeId;
+        public EnumsApi.DispatcherAssetMode assetMode;
         public String sourceCodeUid;
         public boolean sourceCodeValid;
         public EnumsApi.SourceCodeType sourceCodeType;
         public Slice<ExecContextsListItem> instances;
-        public EnumsApi.DispatcherAssetMode assetMode;
+
+        public ExecContextsResult(Long sourceCodeId, EnumsApi.DispatcherAssetMode assetMode) {
+            this.sourceCodeId = sourceCodeId;
+            this.assetMode = assetMode;
+        }
     }
 
     @Data

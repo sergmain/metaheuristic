@@ -89,8 +89,6 @@ public class ExecContextService {
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
-        result.sourceCodeId = sourceCodeId;
-        result.assetMode = globals.assetMode;
         initInfoAboutSourceCode(sourceCodeId, result);
         return result;
     }
@@ -278,8 +276,7 @@ public class ExecContextService {
     public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         TxUtils.checkTxNotExists();
 
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();
-        result.sourceCodeId = sourceCodeId;
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -332,7 +329,7 @@ public class ExecContextService {
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         return result;
     }
