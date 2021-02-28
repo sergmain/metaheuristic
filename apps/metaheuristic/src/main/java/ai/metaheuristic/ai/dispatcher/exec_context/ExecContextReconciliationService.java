@@ -120,17 +120,8 @@ public class ExecContextReconciliationService {
                         taskState.execState==EnumsApi.TaskExecState.ERROR.value ||
                         taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
                     && taskState.execState==allocatedTask.state.value) {
-/*
-                    log.info("#307.100 Found different states for task #{}, db: {}, graph: {}, state in queue: {}",
-                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
-                    log.info("#307.120 task #{} will be removed from queue and state of task will be changed in execContext",
-                            tv.taskId);
-
-                    taskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
-                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
-*/
                     // ---> This is a normal situation
-                    // statuses of tasks are copying from taskQueue when all tasks in group will be finished. so there is a period of time when state is as this
+                    // statuses of tasks are copying from taskQueue when all tasks in a group will be finished. so there is a period of time when the state is as this
                 }
                 else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                     // Found different states for task , db: IN_PROGRESS, graph: CHECK_CACHE, state in queue: IN_PROGRESS

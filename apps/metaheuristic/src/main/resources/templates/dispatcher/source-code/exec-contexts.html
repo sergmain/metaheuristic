@@ -27,9 +27,13 @@
 
     <h1 class="widget-header">Exec contexts</h1>
 
-    <!--       th:if="${result.sourceCodeType==T(ai.metaheuristic.api.EnumsApi.SourceCodeType).common}"-->
     <a class="pure-button pure-button-primary" href="exec-context-add.html"
-       th:href="${'/dispatcher/source-code/exec-context-add/' + result.sourceCodeId}">Add new exec context</a>
+       th:href="${'/dispatcher/source-code/exec-context-add/' + result.sourceCodeId}"
+       th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).source}"
+    >Add new exec context</a>
+    <p class="alert alert-info" th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).source}">
+        Creation of a new exec context is disabled, assetMode is 'source'.</p>
+
     <p></p>
 
     <p th:text="${'Source code UID: ' + result.sourceCodeUid}"></p>
