@@ -90,6 +90,7 @@ public class ExecContextService {
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
         result.sourceCodeId = sourceCodeId;
+        result.assetMode = globals.assetMode;
         initInfoAboutSourceCode(sourceCodeId, result);
         return result;
     }

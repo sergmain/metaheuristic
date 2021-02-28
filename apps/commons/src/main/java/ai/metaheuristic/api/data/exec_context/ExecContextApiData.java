@@ -129,6 +129,7 @@ public class ExecContextApiData {
         public boolean sourceCodeValid;
         public EnumsApi.SourceCodeType sourceCodeType;
         public Slice<ExecContextsListItem> instances;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data
