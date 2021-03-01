@@ -27,8 +27,6 @@
 
     <h1 class="widget-header">Exec contexts</h1>
 
-    <p th:text="${'assetMode: ' + result.assetMode}"></p>
-
     <a class="pure-button pure-button-primary" href="exec-context-add.html"
        th:href="${'/dispatcher/source-code/exec-context-add/' + result.sourceCodeId}"
        th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).source}"
