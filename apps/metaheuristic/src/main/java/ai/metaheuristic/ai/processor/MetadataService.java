@@ -438,8 +438,9 @@ public class MetadataService {
             status.functionState = Enums.FunctionState.ready;
             status.checksum= EnumsApi.ChecksumState.runtime;
             status.signature= EnumsApi.SignatureState.runtime;
+
+            updateMetadataFile();
         }
-        updateMetadataFile();
     }
 
     public void setChecksumMap(final AssetManagerUrl assetManagerUrl, String functionCode, @Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {

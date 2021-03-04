@@ -12,19 +12,19 @@
             <a class="pure-menu-link" href="dispatcher/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Variables</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/function/'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/function/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/function/functions.html" th:href="@{/dispatcher/function/functions}">Functions</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/processor/'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/processor/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/processor/processors.html" th:href="@{/dispatcher/processor/processors}">Processors</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN')"
-                th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+                th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/account/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/account/accounts.html" th:href="@{/dispatcher/account/accounts}">Accounts</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')"
-                th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/company/companies'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+                th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/company/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/company/companies.html" th:href="@{/dispatcher/company/companies}">Company</a>
         </li>
     </ul>
