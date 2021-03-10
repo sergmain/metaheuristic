@@ -14,22 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable_global;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params_create_tasks;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-public class SimpleGlobalVariable {
-    public Long id;
-    public Integer version;
-    public String variable;
-    public java.util.Date uploadTs;
-    public String filename;
-    public String params;
-}
+import javax.annotation.ParametersAreNonnullByDefault;

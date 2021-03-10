@@ -21,20 +21,24 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
 public class SimpleVariable {
-    public final Long id;
-    public final String variable;
-    public final String params;
-    public final String filename;
-    public final boolean inited;
-    public final boolean nullified;
-    public final String taskContextId;
+    public Long id;
+    public String variable;
+    public String params;
+    public String filename;
+    public boolean inited;
+    public boolean nullified;
+    public String taskContextId;
 
     @JsonIgnore
-    public DataStorageParams getParams() {
+    public DataStorageParams getDataStorageParams() {
         return DataStorageParamsUtils.to(params);
     }
 }

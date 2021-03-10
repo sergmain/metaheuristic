@@ -391,10 +391,13 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     S.f("#993.213 Attempt to create a file outside of zip tree structure, zipDir: %s, resultDir: %s",
                             zipDir.getAbsolutePath(), resultDir.getAbsolutePath()));
         }
+        resultDir.mkdir();
+/*
         if (!resultDir.mkdir()) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     S.f("#993.213 can't create a result dir: %s", resultDir.getAbsolutePath())));
         }
+*/
 
         storeVariableToFile(bimy, resultDir, item.items);
         storeVariableToFile(bimy, resultDir, List.of(item.status));

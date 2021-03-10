@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -60,6 +62,7 @@ public class VariableData {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class Permutation {
         @JsonProperty("pvs")
         public List<VariableUtils.VariableHolder> permutedVariables;
@@ -75,7 +78,7 @@ public class VariableData {
 
         @JsonProperty("ip")
         public Map<String, String> inlinePermuted;
-   }
+    }
 
     @Data
     @AllArgsConstructor

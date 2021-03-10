@@ -16,13 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -57,7 +61,7 @@ public class VariableUtils {
                 v.id = variable.id.toString();
                 v.name = variable.variable;
 
-                DataStorageParams dsp = variable.getParams();
+                DataStorageParams dsp = variable.getDataStorageParams();
                 v.sourcing = dsp.sourcing;
                 v.git = dsp.git;
                 v.disk = dsp.disk;
@@ -74,7 +78,18 @@ public class VariableUtils {
         return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }
 
+    public static String permutationAsString(VariableData.Permutation ps) throws JsonProcessingException {
+        String s = JsonUtils.getMapper().writeValueAsString(ps);
+        return s;
+    }
+
+    public static VariableData.Permutation asStringAsPermutation(String json) throws JsonProcessingException {
+        VariableData.Permutation p = JsonUtils.getMapper().readValue(json, VariableData.Permutation.class);
+        return p;
+    }
+
     @Data
+    @NoArgsConstructor
     public static class VariableHolder {
         @Nullable
         public SimpleVariable variable;

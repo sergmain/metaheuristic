@@ -149,13 +149,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                throw new InternalFunctionException(
-                    loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id));
+                loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id);
             }
             else {
                 log.debug("Start loading file data to db");
-                throw new InternalFunctionException(
-                    loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id));
+                loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id);
             }
         }
         catch(UnzipArchiveException e) {
@@ -187,24 +185,26 @@ public class BatchSplitterFunction implements InternalFunction {
         }
     }
 
-    private InternalFunctionProcessingResult loadFilesFromDirAfterZip(
+    private void loadFilesFromDirAfterZip(
             Long sourceCodeId, ExecContextImpl execContext, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
-            return executionContextData.internalFunctionProcessingResult;
+            throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#995.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#995.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
         if (S.b(variableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "#995.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "#995.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
         }
 
         final List<Long> lastIds = new ArrayList<>();
@@ -233,7 +233,6 @@ public class BatchSplitterFunction implements InternalFunction {
                     }
                 });
         execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
-        return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     @Nullable

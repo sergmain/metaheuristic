@@ -19,16 +19,19 @@ package ai.metaheuristic.ai.internal_function.permute_variables_and_hyper_params
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params_as_variable.PermuteVariablesAndInlinesAsVariableFunction.permutationAsString;
+import static ai.metaheuristic.ai.dispatcher.variable.VariableUtils.permutationAsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -69,5 +72,19 @@ public class PermutationMappingTest {
 
         assertEquals(2, lines.size());
 
+        VariableData.Permutation r1 = VariableUtils.asStringAsPermutation(lines.get(0));
+        assertEquals(p1.permutedVariables.size(), r1.permutedVariables.size());
+        assertEquals(1, r1.permutedVariables.size());
+        assertEquals(sv1, r1.permutedVariables.get(0).variable);
+
+        assertEquals(p1.permutedVariableName, r1.permutedVariableName);
+        assertTrue(CollectionUtils.isEquals(p1.inlines.keySet(), r1.inlines.keySet()));
+        assertEquals(1, p1.inlines.keySet().size());
+        assertEquals("inline1", new ArrayList<>(p1.inlines.keySet()).get(0));
+        assertTrue(CollectionUtils.isMapEquals(p1.inlines.get("inline1"), r1.inlines.get("inline1")));
+
+        assertEquals(p1.inlineVariableName, r1.inlineVariableName);
+
+        assertTrue(CollectionUtils.isMapEquals(p1.inlinePermuted, r1.inlinePermuted));
     }
 }
