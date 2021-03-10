@@ -41,8 +41,9 @@ public class InlineVariableUtils {
               value: true
             - key: permutation
               value: var-permutation
-        */
-        private static final String INLINE_KEY = "inline-key";
+    */
+
+    private static final String INLINE_KEY = "inline-key";
     public static final String PERMUTE_INLINE = "permute-inline";
 
     public static InlineVariableData.InlineVariableItem getInlineVariableItem(

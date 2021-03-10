@@ -152,8 +152,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
         }
 
         // each holder contains an input variable
-        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names);
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {

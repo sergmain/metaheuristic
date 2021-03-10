@@ -111,8 +111,7 @@ public class BatchSplitterFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#995.020 Meta 'variable-for-splitting' wasn't found"));
         }
 
-        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, holders);
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName);
         if (holders.size()>1) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));

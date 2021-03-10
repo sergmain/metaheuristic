@@ -148,8 +148,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet()));
         }
 
-        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names);
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {

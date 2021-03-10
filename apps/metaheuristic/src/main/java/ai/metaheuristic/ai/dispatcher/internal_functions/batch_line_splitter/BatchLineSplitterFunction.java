@@ -103,8 +103,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found"));
         }
 
-        List<VariableUtils.VariableHolder> varHolders = new ArrayList<>();
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, varHolders);
+        List<VariableUtils.VariableHolder> varHolders = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName);
         if (varHolders.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found"));

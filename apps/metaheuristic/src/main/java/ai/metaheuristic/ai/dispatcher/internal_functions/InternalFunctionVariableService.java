@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -62,11 +63,12 @@ public class InternalFunctionVariableService {
     }
 
     @Transactional(readOnly = true)
-    public void discoverVariables(Long execContextId, String taskContextId, String name, List<VariableUtils.VariableHolder> holders) {
-        discoverVariables(execContextId, taskContextId, new String[]{name}, holders);
+    public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String name) {
+        return discoverVariables(execContextId, taskContextId, new String[]{name});
     }
 
-    public void discoverVariables(Long execContextId, String taskContextId, String[] names, List<VariableUtils.VariableHolder> holders) {
+    public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names) {
+        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
@@ -84,5 +86,6 @@ public class InternalFunctionVariableService {
                 }
             }
         }
+        return holders;
     }
 }

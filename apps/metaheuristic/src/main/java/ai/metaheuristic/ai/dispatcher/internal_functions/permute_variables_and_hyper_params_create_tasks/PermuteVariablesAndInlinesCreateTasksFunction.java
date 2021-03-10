@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
@@ -30,22 +29,16 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -99,9 +92,8 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.020 There must be only one an input variable, the actual number: "+taskParamsYaml.task.inputs.size()+", process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
-        List<VariableUtils.VariableHolder> hs = new ArrayList<>();
         final String varName = taskParamsYaml.task.inputs.get(0).name;
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, varName, hs);
+        List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, varName);
         if (hs.size()!=1) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
@@ -131,62 +123,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
-
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
-        if (descendants.isEmpty()) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
-        }
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
-
-        final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
-        if (process==null) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
-                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found"));
-        }
-
-        // variableNames contains a list of variables for permutation
-        String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
-        if (S.b(variableNames)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.100 Meta 'variables-for-permutation' must be defined and can't be empty"));
-        }
-        String[] names = StringUtils.split(variableNames, ", ");
-
-        boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE);
-
-        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
-        if (S.b(item.inlineKey)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.120 Meta 'inline-key' wasn't found or empty."));
-        }
-        if (item.inlines == null || item.inlines.isEmpty()) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
-                    "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet()));
-        }
-
-        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
-
-        final String variableName = MetaUtils.getValue(process.metas, "output-variable");
-        if (S.b(variableName)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'"));
-        }
-        final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
-        if (S.b(inlineVariableName)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'"));
-        }
         final List<Long> lastIds = new ArrayList<>();
-        final List<InlineVariable> inlineVariables = permuteInlines ? InlineVariableUtils.getAllInlineVariants(item.inlines) : List.of();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
 
@@ -200,11 +137,18 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(p);
 
             variableService.createInputVariablesForSubProcess(
-                    variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
+                    variableDataSource, execContext, currTaskNumber, p.permutedVariableName, subProcessContextId);
 
             taskProducingService.createTasksForSubProcesses(
                     execContext, executionContextData, currTaskNumber, task.id, lastIds);
 
+        }
+
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
+        if (descendants.isEmpty()) {
+            throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
+                            "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
         }
         execContextGraphService.createEdges(execContext, lastIds, descendants);
     }
