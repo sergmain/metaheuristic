@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,14 +94,14 @@ public class ExecContextTaskAssigningService {
                 }
                 catch (YAMLException e) {
                     log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskStateService.finishWithError(task, null);
+                    taskStateService.finishWithError(task, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     // all tasks with internal function will be processed in a different thread after registering in TaskQueue
                     if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
                         log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                        taskProviderService.registerInternalTask(execContextId, taskId, taskParamYaml);
+                        taskProviderService.registerInternalTask(execContext.sourceCodeId, execContextId, taskId, taskParamYaml);
                     }
                     else {
                         taskProviderService.registerTask(execContextId, taskId);

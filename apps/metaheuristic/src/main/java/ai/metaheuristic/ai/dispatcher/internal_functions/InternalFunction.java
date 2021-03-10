@@ -46,7 +46,7 @@ public interface InternalFunction {
      *
      * @see ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
      */
-    InternalFunctionData.InternalFunctionProcessingResult process(
+    void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml);

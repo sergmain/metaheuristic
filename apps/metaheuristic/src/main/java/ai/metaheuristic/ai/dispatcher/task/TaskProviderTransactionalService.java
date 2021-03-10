@@ -137,9 +137,9 @@ public class TaskProviderTransactionalService {
         taskQueue.startTaskProcessing(event.execContextId, event.taskId);
     }
 
-    public void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+    public void registerInternalTask(Long sourceCodeId, Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         taskQueue.addNewInternalTask(execContextId, taskId, taskParamYaml);
-        eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContextId, taskId));
+        eventPublisher.publishEvent(new TaskWithInternalContextEvent(sourceCodeId, execContextId, taskId));
     }
 
     @Nullable

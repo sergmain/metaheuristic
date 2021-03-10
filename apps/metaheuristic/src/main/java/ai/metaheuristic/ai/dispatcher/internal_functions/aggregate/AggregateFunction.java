@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -67,7 +68,7 @@ public class AggregateFunction implements InternalFunction {
     private final VariableService variableService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public static final String META_ERROR_CONTROL = "error-control-policy";
+    private static final String META_ERROR_CONTROL = "error-control-policy";
     public enum ErrorControlPolicy { fail, ignore }
 
     @Override
@@ -81,7 +82,7 @@ public class AggregateFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
@@ -91,8 +92,9 @@ public class AggregateFunction implements InternalFunction {
         eventPublisher.publishEvent(resourceCloseTxEvent);
 
         if (taskParamsYaml.task.outputs.size()!=1) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
-                    "#992.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
+            throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
+                            "#992.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs));
         }
 
         Variable variable;
@@ -109,8 +111,9 @@ public class AggregateFunction implements InternalFunction {
 
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
         if (names==null || names.length==0) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#992.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "#992.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
         }
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
         ErrorControlPolicy policy = S.b(policyMeta) ? ErrorControlPolicy.ignore : ErrorControlPolicy.valueOf(policyMeta);
@@ -119,15 +122,17 @@ public class AggregateFunction implements InternalFunction {
 
         File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
         if (tempDir==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR));
         }
         resourceCloseTxEvent.add(tempDir);
 
         File outputDir = new File(tempDir, outputVariable.name);
         if (!outputDir.mkdirs()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "#992.120 Can't create output directory  "+ outputDir.getAbsolutePath());
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "#992.120 Can't create output directory  "+ outputDir.getAbsolutePath()));
         }
 
         list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
@@ -160,10 +165,9 @@ public class AggregateFunction implements InternalFunction {
             resourceCloseTxEvent.add(is);
             variableService.update(is, zipFile.length(), variable);
         } catch (FileNotFoundException e) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "Can't open zipFile   "+ zipFile.getAbsolutePath());
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "Can't open zipFile   "+ zipFile.getAbsolutePath()));
         }
-
-        return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }

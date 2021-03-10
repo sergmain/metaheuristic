@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
@@ -84,46 +85,52 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
-                    "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
+                    "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(execContext.sourceCodeId, execContext, taskParamsYaml, task.id);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
-            return executionContextData.internalFunctionProcessingResult;
+            throw new InternalFunctionException(
+                executionContextData.internalFunctionProcessingResult);
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
 
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
         if (descendants.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ execContext +" is broken");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
+                    "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
         }
         ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
 
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
-                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
+                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found"));
         }
 
         // variableNames contains a list of variables for permutation
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
         if (S.b(variableNames)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.100 Meta 'variables-for-permutation' must be defined and can't be empty");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "#991.100 Meta 'variables-for-permutation' must be defined and can't be empty"));
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
@@ -131,29 +138,30 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
         InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(item.inlineKey)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.120 Meta 'inline-key' wasn't found or empty.");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "#991.120 Meta 'inline-key' wasn't found or empty."));
         }
         if (item.inlines == null || item.inlines.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
-                    "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
+                    "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet()));
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
-        if (result != null) {
-            return result;
-        }
+        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "#991.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'"));
         }
         final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
         if (S.b(inlineVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'"));
         }
         final List<Long> lastIds = new ArrayList<>();
         final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(item.inlines);
@@ -199,10 +207,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 );
             } catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage());
+                throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
         execContextGraphService.createEdges(execContext, lastIds, descendants);
-        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 }

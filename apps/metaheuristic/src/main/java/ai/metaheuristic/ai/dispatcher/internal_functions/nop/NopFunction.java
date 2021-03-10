@@ -51,12 +51,11 @@ public class NopFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
         log.debug("#055.020 Nop function was invoked");
-        return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }

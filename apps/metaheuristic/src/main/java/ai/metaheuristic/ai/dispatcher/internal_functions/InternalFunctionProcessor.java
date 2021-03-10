@@ -19,12 +19,15 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,20 +47,24 @@ public class InternalFunctionProcessor {
     private final ExecContextSyncService execContextSyncService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public InternalFunctionProcessingResult process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public void process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml) {
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
+            throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
         ExecContextParamsYaml expy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
         try {
-            return internalFunction.process(execContext, task, internalContextId, expy.variables, taskParamsYaml);
-        } catch (Throwable th) {
+            internalFunction.process(execContext, task, internalContextId, expy.variables, taskParamsYaml);
+        }
+        catch(InternalFunctionException e) {
+            throw e;
+        }
+        catch(Throwable th) {
             String es = "#977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
             log.error(es, th);
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+            throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
     }
 }

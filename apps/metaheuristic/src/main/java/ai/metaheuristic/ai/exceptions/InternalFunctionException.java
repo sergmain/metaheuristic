@@ -14,20 +14,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.event;
+package ai.metaheuristic.ai.exceptions;
 
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 /**
  * @author Serge
- * Date: 3/15/2020
- * Time: 10:55 PM
+ * Date: 3/10/2021
+ * Time: 1:54 AM
  */
-@Data
-@AllArgsConstructor
-public class TaskWithInternalContextEvent {
-    public final Long sourceCodeId;
-    public final Long execContextId;
-    public final Long taskId;
+public class InternalFunctionException extends RuntimeException {
+    public final InternalFunctionData.InternalFunctionProcessingResult result;
+
+    public InternalFunctionException(InternalFunctionData.InternalFunctionProcessingResult result) {
+        this.result = result;
+    }
+
 }

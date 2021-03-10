@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -53,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ai.metaheuristic.ai.Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
@@ -84,7 +84,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_LINE_SPLITTER_FUNCTION;
     }
 
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
@@ -93,25 +93,26 @@ public class BatchLineSplitterFunction implements InternalFunction {
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found"));
         }
         // number-of-lines-per-task
         Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, "number-of-lines-per-task");
         if (numberOfLines==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found"));
         }
 
         List<VariableUtils.VariableHolder> varHolders = new ArrayList<>();
-        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, varHolders);
-        if (result != null) {
-            return result;
-        }
+        internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName, varHolders);
         if (varHolders.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found"));
         }
 
         if (varHolders.size()>1) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.040 Too many variables");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.040 Too many variables"));
         }
 
         VariableUtils.VariableHolder variableHolder = varHolders.get(0);
@@ -122,44 +123,53 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 content = variableService.getVariableDataAsString(variableHolder.variable.id);
             }
             else {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time");
+                throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time"));
             }
-            return createTasks(execContext.sourceCodeId, execContext, content, taskParamsYaml, task.id, numberOfLines);
+            createTasks(execContext.sourceCodeId, execContext, content, taskParamsYaml, task.id, numberOfLines);
+        }
+        catch (InternalFunctionException e) {
+            throw e;
         }
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
         catch(BatchProcessingException e) {
             final String es = "#994.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
         catch(Throwable th) {
             final String es = "#994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
     }
 
-    private InternalFunctionProcessingResult createTasks(
+    private void createTasks(
             Long sourceCodeId, ExecContextImpl execContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) throws IOException {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
-            return executionContextData.internalFunctionProcessingResult;
+            throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
         if (S.b(variableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(
+            new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
         }
 
         List<List<String>> allLines = stringToListOfList(content, numberOfLines);
@@ -193,7 +203,6 @@ public class BatchLineSplitterFunction implements InternalFunction {
             }
         });
         execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
-        return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     private static List<List<String>> stringToListOfList(String content, Long numberOfLines) throws IOException {

@@ -118,7 +118,7 @@ public class TaskStateService {
                 log.error(es, e.getMessage());
             }
 
-            return finishWithError(task, console, taskContextId, -10001);
+            return finishWithError(task, console, -10001);
         } catch (Throwable th) {
             log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#319.170 Error", th);
@@ -127,15 +127,11 @@ public class TaskStateService {
         return null;
     }
 
-    public void finishWithError(TaskImpl task, @Nullable String taskContextId) {
-        finishWithError(task, "#319.180 Task was finished with an unknown error, can't process it", taskContextId);
+    public Void finishWithError(TaskImpl task, String console) {
+        return finishWithError(task, console, -10002);
     }
 
-    public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId) {
-        return finishWithError(task, console, taskContextId, -10002);
-    }
-
-    public Void finishWithError(TaskImpl task, String console, @Nullable String taskContextId, int exitCode) {
+    public Void finishWithError(TaskImpl task, String console, int exitCode) {
         TxUtils.checkTxExists();
 
         taskSyncService.checkWriteLockPresent(task.id);

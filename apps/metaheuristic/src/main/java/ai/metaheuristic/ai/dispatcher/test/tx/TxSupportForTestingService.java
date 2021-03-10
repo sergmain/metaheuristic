@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -226,7 +225,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             throw new IllegalStateException("Reporting about non-existed task #" + taskId);
         }
-        return taskStateService.finishWithError(task, console, taskContextId);
+        return taskStateService.finishWithError(task, console);
     }
 
     @Transactional

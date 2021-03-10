@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -107,7 +108,11 @@ public class TaskWithInternalContextService {
             processInternalFunction(execContext, task);
 
             eventPublisher.publishEvent(new LockByExecContextIdTxEvent(execContextId));
-        } catch (Throwable th) {
+        }
+        catch(InternalFunctionException e) {
+            throw e;
+        }
+        catch (Throwable th) {
             log.warn("#707.065 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#707.070 Error", th);
             ExceptionUtils.rethrow(th);
@@ -147,26 +152,17 @@ public class TaskWithInternalContextService {
                         p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                     }
                     else {
-                        log.warn("#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
-                        return;
+                        final String msg = "#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id;
+                        log.warn(msg);
+                        throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
                     }
                 }
 
                 variableService.initOutputVariables(execContext.id, task, p, taskParamsYaml);
 
-                InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                        execContext, task, p.internalContextId, taskParamsYaml);
+                internalFunctionProcessor.process(execContext, task, p.internalContextId, taskParamsYaml);
 
                 eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
-
-                if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                    log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
-                            result.processing, result.error, execContext.sourceCodeId, execContext.id);
-                    final String console = "#707.180 Task #" + task.id + " was finished with status '" + result.processing + "', text of error: " + result.error;
-                    final String taskContextId = taskParamsYaml.task.taskContextId;
-                    taskStateService.finishWithError(task, console, taskContextId);
-                    return;
-                }
 
                 execContextVariableService.setResultReceivedForInternalFunction(task.id);
 
@@ -180,16 +176,16 @@ public class TaskWithInternalContextService {
 
             } catch (CommonErrorWithDataException th) {
                 String es = "#707.200 Task #" + task.id + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
-                taskStateService.finishWithError(task, es, null, -10002);
+                taskStateService.finishWithError(task, es, -10002);
                 log.error(es);
             } catch (Throwable th) {
                 String es = "#707.220 Task #" + task.id + " was processed with error: " + th.getMessage();
-                taskStateService.finishWithError(task, es, null, -10003);
+                taskStateService.finishWithError(task, es, -10003);
                 log.error(es, th);
             }
         } catch (Throwable th) {
             String es = "#707.240 Task #" + task.id + " was processed with error: " + th.getMessage();
-            taskStateService.finishWithError(task, es, null, -10004);
+            taskStateService.finishWithError(task, es, -10004);
             log.error(es, th);
         }
         finally {

@@ -170,9 +170,9 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    public void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+    public void registerInternalTask(Long sourceCodeId, Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         synchronized (syncObj) {
-            taskProviderTransactionalService.registerInternalTask(execContextId, taskId, taskParamYaml);
+            taskProviderTransactionalService.registerInternalTask(sourceCodeId, execContextId, taskId, taskParamYaml);
         }
     }
 

@@ -25,10 +25,10 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,14 +61,12 @@ public class InternalFunctionVariableService {
         }
     }
 
-    @Nullable
     @Transactional(readOnly = true)
-    public InternalFunctionData.InternalFunctionProcessingResult discoverVariables(Long execContextId, String taskContextId, String name, List<VariableUtils.VariableHolder> holders) {
-        return discoverVariables(execContextId, taskContextId, new String[]{name}, holders);
+    public void discoverVariables(Long execContextId, String taskContextId, String name, List<VariableUtils.VariableHolder> holders) {
+        discoverVariables(execContextId, taskContextId, new String[]{name}, holders);
     }
 
-    @Nullable
-    public InternalFunctionData.InternalFunctionProcessingResult discoverVariables(Long execContextId, String taskContextId, String[] names, List<VariableUtils.VariableHolder> holders) {
+    public void discoverVariables(Long execContextId, String taskContextId, String[] names, List<VariableUtils.VariableHolder> holders) {
         for (String name : names) {
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
@@ -80,13 +78,11 @@ public class InternalFunctionVariableService {
                     holders.add(new VariableUtils.VariableHolder(gv));
                 }
                 else {
-                    return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"' not found in local and global contexts, internal context #"+taskContextId);
+                    throw new InternalFunctionException(
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                            "Variable '"+name+"' not found in local and global contexts, internal context #"+taskContextId));
                 }
             }
         }
-        return null;
     }
-
-
 }

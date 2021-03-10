@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -59,7 +60,7 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionData.InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
@@ -69,11 +70,12 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
         try {
             OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext, taskParamsYaml);
             if (status.status!=EnumsApi.OperationStatus.OK) {
-                return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr());
+                throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr()));
             }
-            return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
         } catch (Throwable th) {
-            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, th.getMessage());
+            throw new InternalFunctionException(
+                new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, th.getMessage()));
         }
     }
 }

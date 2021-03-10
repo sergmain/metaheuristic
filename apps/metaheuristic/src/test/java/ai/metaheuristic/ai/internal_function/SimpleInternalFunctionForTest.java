@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.internal_function;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -62,7 +63,7 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
@@ -72,16 +73,18 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
         if (inputVariable.context== EnumsApi.VariableContext.local) {
             Variable bd = variableRepository.findById(inputVariable.id).orElse(null);
             if (bd == null) {
-                throw new IllegalStateException("Variable not found for code " + inputVariable);
+                throw new InternalFunctionException(
+                        new InternalFunctionProcessingResult(
+                                Enums.InternalFunctionProcessing.variable_not_found, "Variable not found for code " + inputVariable));
             }
         }
         else {
             GlobalVariable gv = globalVariableRepository.findById(inputVariable.id).orElse(null);
             if (gv == null) {
-                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+                throw new InternalFunctionException(
+                        new InternalFunctionProcessingResult(
+                                Enums.InternalFunctionProcessing.global_variable_not_found, "GlobalVariable not found for code " + inputVariable));
             }
         }
-
-        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 }

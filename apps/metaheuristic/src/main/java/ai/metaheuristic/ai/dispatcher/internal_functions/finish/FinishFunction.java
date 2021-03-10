@@ -57,7 +57,7 @@ public class FinishFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(
+    public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
@@ -65,6 +65,5 @@ public class FinishFunction implements InternalFunction {
 
         log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", task, Consts.MH_FINISH_FUNCTION));
         execContextFSM.toFinished(execContext);
-        return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }
