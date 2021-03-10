@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -32,6 +33,7 @@ public class SimpleVariable {
     public final boolean nullified;
     public final String taskContextId;
 
+    @JsonIgnore
     public DataStorageParams getParams() {
         return DataStorageParamsUtils.to(params);
     }

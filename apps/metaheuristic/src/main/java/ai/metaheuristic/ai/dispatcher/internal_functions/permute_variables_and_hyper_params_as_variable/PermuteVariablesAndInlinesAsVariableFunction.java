@@ -14,22 +14,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
+package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params_as_variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -37,53 +37,63 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
- * Date: 2/1/2020
+ * Date: 3/10/2021
  * Time: 9:17 PM
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class PermuteVariablesAndInlinesFunction implements InternalFunction {
+public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFunction {
 
     private final VariableService variableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExecContextGraphService execContextGraphService;
-    private final TaskProducingService taskProducingService;
     private final InternalFunctionService internalFunctionService;
+    private final VariableRepository variableRepository;
 
     @Override
     public String getCode() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_AS_VARIABLE_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_AS_VARIABLE_FUNCTION;
     }
 
+    public static String permutationAsString(VariableData.Permutation ps) throws JsonProcessingException {
+        String s = JsonUtils.getMapper().writeValueAsString(ps);
+        return s;
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    @SneakyThrows
     @Override
     public void process(
             ExecContextImpl execContext, TaskImpl task, String taskContextId,
@@ -148,6 +158,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet()));
         }
 
+        // each holder contains an input variable
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, names, holders);
 
@@ -163,12 +174,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'"));
         }
-        final List<Long> lastIds = new ArrayList<>();
         final List<InlineVariable> inlineVariables = permuteInlines ? InlineVariableUtils.getAllInlineVariants(item.inlines) : List.of();
-        AtomicInteger currTaskNumber = new AtomicInteger(0);
-        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
-
         final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
+
+        final List<VariableData.Permutation> permutations = new ArrayList<>();
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -176,31 +185,16 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                             log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
                             if (permuteInlines) {
                                 for (InlineVariable inlineVariable : inlineVariables) {
-                                    currTaskNumber.incrementAndGet();
                                     Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
                                     map.put(item.inlineKey, inlineVariable.params);
 
-                                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                                    permutations.add(
                                             new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
-
-                                    variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
-
-                                    taskProducingService.createTasksForSubProcesses(
-                                            execContext, executionContextData, currTaskNumber, task.id, lastIds);
                                 }
                             }
                             else {
-                                currTaskNumber.incrementAndGet();
-
-                                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                        new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of()));
-
-                                variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
-
-                                taskProducingService.createTasksForSubProcesses(
-                                        execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                                permutations.add(
+                                        new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName, Map.of()));
                             }
                             return true;
                         }
@@ -211,6 +205,28 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
-        execContextGraphService.createEdges(execContext, lastIds, descendants);
+
+        Variable variable;
+        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+        if (outputVariable.context== EnumsApi.VariableContext.local) {
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
+            if (variable == null) {
+                throw new InternalFunctionException(
+                        new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                                "#992.040 Variable not found for code " + outputVariable));
+            }
+        }
+        else {
+            throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
+                            "#992.060 Can't store data in a global variable " + outputVariable.name));
+        }
+
+        StringBuilder json = new StringBuilder();
+        for (VariableData.Permutation p : permutations) {
+            json.append(permutationAsString(p));
+        }
+        byte[] bytes = json.toString().getBytes();
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
     }
 }

@@ -82,11 +82,11 @@ public class VariableUtils {
         @Nullable
         public SimpleGlobalVariable globalVariable;
 
-        public VariableHolder(@Nullable SimpleGlobalVariable globalVariable) {
+        public VariableHolder(SimpleGlobalVariable globalVariable) {
             this.globalVariable = globalVariable;
         }
 
-        public VariableHolder(@Nullable SimpleVariable variable) {
+        public VariableHolder(SimpleVariable variable) {
             this.variable = variable;
         }
 

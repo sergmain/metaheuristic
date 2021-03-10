@@ -20,13 +20,11 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.utils.TxUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,10 +61,19 @@ public class VariableData {
     @Data
     @AllArgsConstructor
     public static class Permutation {
+        @JsonProperty("pvs")
         public List<VariableUtils.VariableHolder> permutedVariables;
+
+        @JsonProperty("pvn")
         public String permutedVariableName;
+
+        @JsonProperty("inls")
         public Map<String, Map<String, String>> inlines;
+
+        @JsonProperty("ivn")
         public String inlineVariableName;
+
+        @JsonProperty("ip")
         public Map<String, String> inlinePermuted;
    }
 

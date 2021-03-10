@@ -102,11 +102,15 @@ public class AggregateFunction implements InternalFunction {
         if (outputVariable.context==EnumsApi.VariableContext.local) {
             variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
-                throw new IllegalStateException("#992.040 Variable not found for code " + outputVariable);
+                throw new InternalFunctionException(
+                        new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                        "#992.040 Variable not found for code " + outputVariable));
             }
         }
         else {
-            throw new IllegalStateException("#992.060 GlobalVariable not found for code " + outputVariable);
+            throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
+                    "#992.060 Can't store data in a global variable " + outputVariable.name));
         }
 
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
@@ -115,6 +119,7 @@ public class AggregateFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "#992.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
         }
+
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
         ErrorControlPolicy policy = S.b(policyMeta) ? ErrorControlPolicy.ignore : ErrorControlPolicy.valueOf(policyMeta);
 

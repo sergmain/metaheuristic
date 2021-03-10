@@ -20,7 +20,10 @@ public final class Enums {
     public enum InternalFunctionProcessing {
         ok, function_not_found, source_code_not_found, source_code_is_broken,
         system_error, number_of_inputs_is_incorrect, number_of_outputs_is_incorrect,
-        variable_not_found, global_variable_not_found, variable_with_type_not_found,
+        variable_not_found,
+        global_variable_not_found,
+        global_variable_is_immutable,
+        variable_with_type_not_found,
         exec_context_not_found,
         process_not_found,
         sub_process_not_found,
