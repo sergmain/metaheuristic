@@ -62,6 +62,9 @@ public class GlobalVariableTopLevelService {
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.020 name of uploaded file is null");
         }
+        if (file.getSize()==0) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 Global variables with size as 0, isn't supported");
+        }
         File tempFile = globals.createTempFileForDispatcher("temp-raw-file-");
         if (tempFile.exists()) {
             if (!tempFile.delete() ) {

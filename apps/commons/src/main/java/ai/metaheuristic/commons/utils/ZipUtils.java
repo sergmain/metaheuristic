@@ -17,6 +17,7 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.exceptions.ZipArchiveException;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -28,6 +29,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
+import java.util.zip.ZipEntry;
 
 /**
  * Utility to Zip and Unzip nested directories recursively.
@@ -37,8 +39,30 @@ import java.util.function.Function;
  * @author Serge
  * circa 01.01.15
  */
+@SuppressWarnings("WeakerAccess")
 @Slf4j
 public class ZipUtils {
+
+    public enum State {OK, ERROR}
+
+    public static final ValidationResult VALIDATION_RESULT_OK = new ValidationResult();
+
+    @NoArgsConstructor
+    public static class ValidationResult {
+        public State state = State.OK;
+        private final List<String> errors = new ArrayList<>();
+        public void addError(String error) {
+            state = State.ERROR;
+            errors.add(error);
+        }
+        public List<String> getErrors() {
+            return errors;
+        }
+
+        public ValidationResult(String error) {
+            addError(error);
+        }
+    }
 
     public static void createZip(File directory, File zipFile)  {
         createZip(directory, zipFile, Collections.emptyMap());
@@ -129,7 +153,7 @@ public class ZipUtils {
         }
     }
 
-    public static List<String> validate(File archiveFile, Function<String, Boolean> validateZip) {
+    public static List<String> validate(File archiveFile, Function<ZipEntry, ValidationResult> validateZip) {
 
         log.debug("Start validating archive file");
         log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
@@ -143,9 +167,9 @@ public class ZipUtils {
                 ZipArchiveEntry zipEntry = entries.nextElement();
                 log.debug("'\t\tzip entry: {}, is directory: {}", zipEntry.getName(), zipEntry.isDirectory());
 
-                String name = zipEntry.getName();
-                if (!validateZip.apply(name)) {
-                    errors.add(name);
+                ValidationResult validationResult = validateZip.apply(zipEntry);
+                if (validationResult.state==State.ERROR) {
+                    errors.addAll(validationResult.getErrors());
                 }
             }
         }

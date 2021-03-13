@@ -45,6 +45,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +69,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
 
 import static ai.metaheuristic.ai.Consts.XML_EXT;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -98,7 +101,8 @@ public class BatchTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
 
-    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
+    public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
+    public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
 
     public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
         BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
@@ -120,9 +124,17 @@ public class BatchTopLevelService {
         public String originName;
     }
 
-    public static boolean isZipEntityNameOk(String name) {
-        Matcher m = zipCharsPattern.matcher(name);
-        return m.matches();
+    private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {
+        Matcher m = zipCharsPattern.matcher(zipEntry.getName());
+        return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("#981.010 Wrong name of file in zip file. Name: "+zipEntry.getName());
+    }
+
+    private static ZipUtils.ValidationResult isZipEntitySizeOk(ZipEntry zipEntry) {
+        if (zipEntry.isDirectory()) {
+            return ZipUtils.VALIDATION_RESULT_OK;
+        }
+        return zipEntry.getSize()>0 ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult(
+                "#981.013 File "+zipEntry.getName()+" has a zero length.");
     }
 
     public BatchData.BatchesResult getBatches(Pageable pageable, DispatcherContext context, boolean includeDeleted, boolean filterBatches) {
@@ -225,6 +237,9 @@ public class BatchTopLevelService {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
             return new BatchData.UploadingStatus("#981.030 Batch can't be created in company #1");
         }
+        if (file.getSize()==0) {
+            return new BatchData.UploadingStatus("#981.035 Can't create a new batch because uploaded file has a zero length");
+        }
 
         log.info("#981.055 Staring of batchUploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
@@ -232,7 +247,7 @@ public class BatchTopLevelService {
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
         }
-        // fix for the case when browser sends full path, ie Edge
+        // fix for the case when browser sends a full path, ie Edge
         final String originFilename = new File(tempFilename).getName();
 
         String ext = StrUtils.getExtension(originFilename);
@@ -255,11 +270,21 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
-
-        if (file.getSize()==0) {
-            return new BatchData.UploadingStatus("#981.140 Empty files aren't supported");
+        File tempZipFile;
+        try {
+            tempZipFile = File.createTempFile("mh-temp-file-for-checking integrity-", ".bin");
+            file.transferTo(tempZipFile);
+        } catch (IOException e) {
+            return new BatchData.UploadingStatus("#981.140 Can't create a new temp filed");
         }
+        List<String> errors = ZipUtils.validate(tempZipFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+        if (!errors.isEmpty()) {
+            final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
+            status.addErrorMessages(errors);
+            return status;
+        }
+
+        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
 
         final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
         if (sc==null) {

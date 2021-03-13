@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  * Date: 6/5/2019
  * Time: 12:24 PM
  */
-public class TextZipUtils {
+public class TestZipUtils {
 
     @Test
     public void validateZip() throws IOException {
@@ -43,7 +43,7 @@ public class TextZipUtils {
 
         final File tempZipFile = File.createTempFile("temp-zip-file-", ".zip", dir);
         try (FileOutputStream fos = new FileOutputStream(tempZipFile);
-             InputStream is = TextZipUtils.class.getResourceAsStream("/bin/test-zip.zip")) {
+             InputStream is = TestZipUtils.class.getResourceAsStream("/bin/test-zip.zip")) {
             FileCopyUtils.copy(is, fos);
         }
         List<String> errors = ZipUtils.validate(tempZipFile, VALIDATE_ZIP_FUNCTION);

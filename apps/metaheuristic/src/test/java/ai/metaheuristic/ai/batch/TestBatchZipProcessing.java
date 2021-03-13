@@ -17,10 +17,12 @@
 package ai.metaheuristic.ai.batch;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.zip.ZipEntry;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -29,15 +31,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class TestBatchZipProcessing {
 
+
+    public static class CustomZipEntry extends ZipEntry {
+        public CustomZipEntry(String name, long size) {
+            super(name);
+            super.setSize(size);
+        }
+    }
+
     @Test
     public void testZipName() {
-        assertTrue(BatchTopLevelService.isZipEntityNameOk("aaa.txt"));
-        assertTrue(BatchTopLevelService.isZipEntityNameOk("aaa."));
-        assertTrue(BatchTopLevelService.isZipEntityNameOk("bbb/aaa."));
-        assertTrue(BatchTopLevelService.isZipEntityNameOk("bbb/aaa"));
 
-        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaa bbb.txt"));
-        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaa,bbb.txt"));
-        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaaäöü.txt"));
+        assertSame(ZipUtils.State.OK, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("aaa.txt")).state);
+        assertSame(ZipUtils.State.OK, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("aaa.")).state);
+        assertSame(ZipUtils.State.OK, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("bbb/aaa.")).state);
+        assertSame(ZipUtils.State.OK, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("bbb/aaa")).state);
+
+        assertSame(ZipUtils.State.ERROR, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("aaa bbb.txt")).state);
+        assertSame(ZipUtils.State.ERROR, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("aaa,bbb.txt")).state);
+        assertSame(ZipUtils.State.ERROR, BatchTopLevelService.VALIDATE_ZIP_FUNCTION.apply(new ZipEntry("aaaäöü.txt")).state);
+    }
+
+    @Test
+    public void testFileSize() {
+        assertEquals(ZipUtils.State.OK, BatchTopLevelService.VALIDATE_ZIP_ENTRY_SIZE_FUNCTION.apply(new CustomZipEntry("file1", 1L)).state);
+        assertEquals(ZipUtils.State.ERROR, BatchTopLevelService.VALIDATE_ZIP_ENTRY_SIZE_FUNCTION.apply(new CustomZipEntry("file2", 0L)).state);
     }
 }
