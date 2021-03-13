@@ -61,6 +61,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -250,12 +251,13 @@ public class BatchTopLevelService {
         // fix for the case when browser sends a full path, ie Edge
         final String originFilename = new File(tempFilename).getName();
 
-        String ext = StrUtils.getExtension(originFilename);
-        if (ext==null) {
+        String extTemp = StrUtils.getExtension(originFilename);
+        if (extTemp==null) {
             return new BatchData.UploadingStatus(
                     "#981.060 file without extension, bad filename: " + originFilename);
         }
-        if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, XML_EXT)) {
+        String ext = extTemp.toLowerCase();
+        if (!StringUtils.equalsAny(ext, ZIP_EXT, XML_EXT)) {
             return new BatchData.UploadingStatus("#981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
@@ -270,18 +272,26 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        File tempZipFile;
+        File tempFile;
         try {
-            tempZipFile = File.createTempFile("mh-temp-file-for-checking integrity-", ".bin");
-            file.transferTo(tempZipFile);
+            // TODO 2021.03.13 add a support of
+            //  CleanerInfo resource = new CleanerInfo();
+            tempFile = File.createTempFile("mh-temp-file-for-checking integrity-", ".bin");
+            file.transferTo(tempFile);
+            if (file.getSize()!=tempFile.length()) {
+                return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
+            }
         } catch (IOException e) {
-            return new BatchData.UploadingStatus("#981.140 Can't create a new temp filed");
+            return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
         }
-        List<String> errors = ZipUtils.validate(tempZipFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
-        if (!errors.isEmpty()) {
-            final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
-            status.addErrorMessages(errors);
-            return status;
+
+        if (ext.equals(ZIP_EXT)) {
+            List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+            if (!errors.isEmpty()) {
+                final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
+                status.addErrorMessages(errors);
+                return status;
+            }
         }
 
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
@@ -297,7 +307,7 @@ public class BatchTopLevelService {
             }
             final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
             final BatchData.UploadingStatus uploadingStatus;
-            try(InputStream is = file.getInputStream()) {
+            try(InputStream is = new FileInputStream(tempFile)) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
                         () -> batchService.createBatchForFile(
                                 is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));

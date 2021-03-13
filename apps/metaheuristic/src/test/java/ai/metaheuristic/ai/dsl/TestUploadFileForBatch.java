@@ -91,8 +91,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
     public ExecContextService execContextService;
     @Autowired
     private BatchTopLevelService batchTopLevelService;
-    @Autowired
-    private BatchCache batchCache;
+
     @Autowired
     private SourceCodeTopLevelService sourceCodeTopLevelService;
 
@@ -103,7 +102,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         if (uploadingStatus!=null) {
             if (uploadingStatus.batchId!=null) {
                 try {
-                    batchCache.deleteById(uploadingStatus.batchId);
+                    txSupportForTestingService.batchCacheDeleteById(uploadingStatus.batchId);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }
@@ -117,7 +116,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
             }
             if (uploadingStatus.execContextId !=null) {
                 try {
-                    execContextCache.deleteById(uploadingStatus.execContextId);
+                    txSupportForTestingService.execContextCacheDeleteById(uploadingStatus.execContextId);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }

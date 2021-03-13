@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.test.tx;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
@@ -78,6 +79,8 @@ public class TxSupportForTestingService {
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSyncService sourceCodeSyncService;
     private final TaskSyncService taskSyncService;
+    private final BatchCache batchCache;
+    private final ExecContextCache execContextCache;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -86,6 +89,22 @@ public class TxSupportForTestingService {
         }
         return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
                 () -> execContextCreatorService.createExecContext(sourceCode, companyId));
+    }
+
+    @Transactional
+    public void batchCacheDeleteById(Long batchId) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        batchCache.deleteById(batchId);
+    }
+
+    @Transactional
+    public void execContextCacheDeleteById(Long execContextId) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("Only for testing");
+        }
+        execContextCache.deleteById(execContextId);
     }
 
     @Transactional
