@@ -357,6 +357,9 @@ public class VariableService {
     }
 
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+        if (size==0) {
+            throw new IllegalStateException("#171.260 Variable can't be with zero length");
+        }
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -386,7 +389,7 @@ public class VariableService {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
-                        S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                        S.f("#171.280 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
                                 p.processCode, variable.context, p.internalContextId, execContextId));
             }
 
@@ -434,6 +437,9 @@ public class VariableService {
     }
 
     public void update(InputStream is, long size, Variable data) {
+        if (size==0) {
+            throw new IllegalStateException("#171.290 Variable can't be with zero length");
+        }
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
@@ -449,7 +455,7 @@ public class VariableService {
 
         Variable data = variableRepository.findById(variableId).orElse(null);
         if (data==null) {
-            log.error("#171.260 can't find variable #" + variableId);
+            log.error("#171.300 can't find variable #" + variableId);
             return;
         }
         data.filename = filename;

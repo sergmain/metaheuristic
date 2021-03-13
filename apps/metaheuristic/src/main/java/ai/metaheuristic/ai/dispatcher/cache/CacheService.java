@@ -178,7 +178,7 @@ public class CacheService {
         try {
             Blob blob = function.apply(variableId);
             if (blob==null) {
-                String es = S.f("#171.320 Data for variableId #%d wasn't found", variableId);
+                String es = S.f("#611.320 Data for variableId #%d wasn't found", variableId);
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
@@ -190,7 +190,7 @@ public class CacheService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable e) {
-            String es = "#171.340 Error while storing data to file";
+            String es = "#611.340 Error while storing data to file";
             log.error(es, e);
             throw new VariableCommonException(es, variableId);
         }
