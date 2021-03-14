@@ -109,6 +109,12 @@ public class SourceCodeValidationService {
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
                         "#177.105 The code of process contains not allowed chars: '" + process.code+"'");
             }
+            code = validateSubProcessLogic(process);
+            if (code!=null) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.SUB_PROCESS_LOGIC_NOT_DEFINED,
+                        "#177.107 The process '" + code+"' has sub processes but logic isn't defined");
+            }
             if (process.function.context==EnumsApi.FunctionExecContext.internal && process.cache!=null && process.cache.enabled) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
@@ -221,6 +227,23 @@ public class SourceCodeValidationService {
         }
         for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
             String code = validateProcessCode(subProcess);
+            if (code!=null) {
+                return code;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String validateSubProcessLogic(SourceCodeParamsYaml.Process process) {
+        if (process.subProcesses==null) {
+            return null;
+        }
+        if (!process.subProcesses.processes.isEmpty() && process.subProcesses.logic==null) {
+            return process.code;
+        }
+        for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+            String code = validateSubProcessLogic(subProcess);
             if (code!=null) {
                 return code;
             }
