@@ -60,9 +60,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         Set<String> processCodes = new HashSet<>();
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
-        List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
+        Set<ExecContextData.ProcessVertex> parentProcesses =  new HashSet<>();
 
-        List<ExecContextData.ProcessVertex> lastProcesses = new ArrayList<>();
         for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.processes) {
             if (finishPresent) {
                 throw new SourceCodeGraphException("mh.finish isn't the last process");
@@ -75,7 +74,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 finishPresent = true;
             }
 
-            parentProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, vertex, currentInternalContextId, processCodes, ids, currId, vertex, p.subProcesses);
+            parentProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, vertex, currentInternalContextId, processCodes, ids, currId, p.subProcesses);
         }
         if (!finishPresent) {
             SourceCodeParamsYaml.Process p = createFinishProcess();
@@ -87,7 +86,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     private static ExecContextData.ProcessVertex addProcessVertex(
             SourceCodeParamsYaml sourceCodeParams, SourceCodeData.SourceCodeGraph scg,
             String currentInternalContextId, Map<String, Long> ids, AtomicLong currId,
-            List<ExecContextData.ProcessVertex> parentProcesses, SourceCodeParamsYaml.Process p) {
+            Set<ExecContextData.ProcessVertex> parentProcesses, SourceCodeParamsYaml.Process p) {
 
         ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
         scg.processes.add(processInGraph);
@@ -107,36 +106,53 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return p;
     }
 
-    private static List<ExecContextData.ProcessVertex> processSubProcesses(
+    private static Set<ExecContextData.ProcessVertex> processSubProcesses(
             Supplier<String> contextIdSupplier, SourceCodeParamsYaml sourceCodeParams,
             SourceCodeData.SourceCodeGraph scg, ExecContextData.ProcessVertex parentProcess,
             String currentInternalContextId, Set<String> processCodes, Map<String, Long> ids,
-            AtomicLong currId, ExecContextData.ProcessVertex vertex, @Nullable SourceCodeParamsYaml.SubProcesses subProcesses) {
+            AtomicLong currId, @Nullable SourceCodeParamsYaml.SubProcesses subProcesses) {
 
-        List<ExecContextData.ProcessVertex> lastProcesses = new ArrayList<>();
+        Set<ExecContextData.ProcessVertex> lastProcesses = new HashSet<>();
         // tasks for sub-processes of internal function will be produced at runtime phase
         if (subProcesses !=null && subProcesses.processes != null && !subProcesses.processes.isEmpty()) {
-            List<ExecContextData.ProcessVertex> prevProcesses = new ArrayList<>();
-            prevProcesses.add(vertex);
+            Set<ExecContextData.ProcessVertex> prevProcesses = new HashSet<>();
             String subInternalContextId = null;
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
             }
             List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
-            List<ExecContextData.ProcessVertex> tempLastProcesses = new ArrayList<>();
+            Set<ExecContextData.ProcessVertex> tempLastProcesses = CollectionUtils.asSet(parentProcess);
             for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
                 checkProcessCode(processCodes, subP);
                 if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                     subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                    tempLastProcesses.add(parentProcess);
+                }
+                else if (subProcesses.logic== EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                    // .
+                }
+                else {
+                    throw new NotImplementedException("not yet");
                 }
                 if (subInternalContextId==null) {
                     throw new IllegalStateException("(subInternalContextId==null)");
                 }
+                Set<ExecContextData.ProcessVertex> tempParents;
+                if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+                    tempParents = CollectionUtils.asSet(parentProcess);
+                }
+                else if (subProcesses.logic== EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                    tempParents = tempLastProcesses;
+                }
+                else {
+                    throw new NotImplementedException("not yet");
+                }
 
-                ExecContextData.ProcessVertex subV = addProcessVertex(sourceCodeParams, scg, subInternalContextId, ids, currId, prevProcesses, subP);
+                ExecContextData.ProcessVertex subV = addProcessVertex(sourceCodeParams, scg, subInternalContextId, ids, currId, tempParents, subP);
+                tempLastProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, subV, subInternalContextId, processCodes, ids, currId, subP.subProcesses);
 
                 if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                    prevProcesses = CollectionUtils.asList(subV);
+                    prevProcesses = CollectionUtils.asSet(subV);
                 }
                 else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
                     andProcesses.add(subV);
@@ -144,7 +160,6 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 else {
                     throw new NotImplementedException("not yet");
                 }
-                tempLastProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, parentProcess, subInternalContextId, processCodes, ids, currId, vertex, subP.subProcesses);
             }
             lastProcesses.addAll(andProcesses);
             lastProcesses.addAll(prevProcesses);

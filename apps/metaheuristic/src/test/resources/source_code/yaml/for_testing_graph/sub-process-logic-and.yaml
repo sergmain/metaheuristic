@@ -22,16 +22,8 @@ source:
             function:
               code: feature.standard:1.5
               params: CLUSTER
-            inputs:
-              - name: dataset-processing
-            outputs:
-              - name: feature-processing_cluster
           - code: feature-processing_matrix
             name: feature processing
             function:
               code: feature.standard:1.5
               params: MATRIX
-            inputs:
-              - name: dataset-processing
-            outputs:
-              - name: feature-processing_matrix

@@ -32,6 +32,13 @@ public class CollectionUtils {
         list.add(t);
         return list;
     }
+
+    public static <T> Set<T> asSet(T t) {
+        Set<T> set = new HashSet<>();
+        set.add(t);
+        return set;
+    }
+
     public static <T> List<List<T>> parseAsPages(List<T> ids, int pageSize) {
         if (ids.isEmpty() || pageSize==0) {
             return List.of();

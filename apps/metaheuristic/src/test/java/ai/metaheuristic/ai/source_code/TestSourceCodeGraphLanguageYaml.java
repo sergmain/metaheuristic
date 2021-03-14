@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml;
 import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -28,9 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
@@ -77,15 +74,15 @@ public class TestSourceCodeGraphLanguageYaml {
 
         List<ExecContextData.ProcessVertex> vs2 = findTargets(graph.processGraph, processDataset);
 
-        assertEquals(3, vs2.size());
+        assertEquals(3, vs2.size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextData.ProcessVertex v21 = vs2.stream().filter(o->o.process.equals("feature-processing_cluster")).findFirst().orElseThrow();
         ExecContextData.ProcessVertex v22 = vs2.stream().filter(o->o.process.equals("feature-processing_matrix")).findFirst().orElseThrow();
         ExecContextData.ProcessVertex v23 = vs2.stream().filter(o->o.process.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        assertEquals(1, findTargets(graph.processGraph, v21.process).size());
-        assertEquals(1, findTargets(graph.processGraph, v22.process).size());
-        assertEquals(2, findTargets(graph.processGraph, v23.process).size());
+        assertEquals(1, findTargets(graph.processGraph, v21.process).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(1, findTargets(graph.processGraph, v22.process).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, findTargets(graph.processGraph, v23.process).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextParamsYaml.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
         assertEquals("ai", p.tags);
@@ -189,8 +186,8 @@ public class TestSourceCodeGraphLanguageYaml {
         // check for mh.finish
         assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
 
-        assertEquals(6, graph.processGraph.vertexSet().size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(6, graph.processes.size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(9, graph.processGraph.vertexSet().size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(9, graph.processes.size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextData.ProcessVertex nopVertex1 = findVertex(graph.processGraph, "mh.nop-1");
         assertNotNull(nopVertex1);
@@ -198,13 +195,13 @@ public class TestSourceCodeGraphLanguageYaml {
 
         ExecContextData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
         assertNotNull(nopVertex2);
-        assertEquals(4, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(7, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
         assertEquals(2, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextData.ProcessVertex finishVertex = findVertex(graph.processGraph, Consts.MH_FINISH_FUNCTION);
         assertNotNull(finishVertex);
         assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(2, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(3, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
 
 
     }
