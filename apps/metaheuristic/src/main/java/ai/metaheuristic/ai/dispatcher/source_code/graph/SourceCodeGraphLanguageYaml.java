@@ -27,6 +27,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,97 +55,106 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         scg.variables.startInputAs = sourceCodeParams.source.variables.startInputAs;
         scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
 
-        List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
-
         String currentInternalContextId = contextIdSupplier.get();
         boolean finishPresent = false;
         Set<String> processCodes = new HashSet<>();
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
+        List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
+
+        List<ExecContextData.ProcessVertex> lastProcesses = new ArrayList<>();
         for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.processes) {
             if (finishPresent) {
-                throw new SourceCodeGraphException("(finishPresent)");
+                throw new SourceCodeGraphException("mh.finish isn't the last process");
             }
             checkProcessCode(processCodes, p);
-            ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
-            scg.processes.add(processInGraph);
 
+            ExecContextData.ProcessVertex vertex = addProcessVertex(sourceCodeParams, scg, currentInternalContextId, ids, currId, parentProcesses, p);
 
-            ExecContextData.ProcessVertex vertex = getVertex(ids, currId, p.code, currentInternalContextId);
-
-            ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, vertex, parentProcesses);
             if (Consts.MH_FINISH_FUNCTION.equals(p.function.code)) {
                 finishPresent = true;
             }
 
-            parentProcesses.clear();
-            parentProcesses.add(vertex);
-
-            SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
-            // tasks for sub-processes of internal function will be produced at runtime phase
-            if (subProcesses!=null && subProcesses.processes != null && !((Collection<?>) subProcesses.processes).isEmpty()) {
-                // todo 2020-04-02 replace with recursion for supporting cases then there are more than 2 levels of inclusion
-
-                List<ExecContextData.ProcessVertex> prevProcesses = new ArrayList<>();
-                prevProcesses.add(vertex);
-                String subInternalContextId = null;
-                if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                    subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
-                }
-                List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
-                for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
-                    if (subP.subProcesses!=null && subP.subProcesses.processes != null && !((Collection<?>) subP.subProcesses.processes).isEmpty()) {
-                        throw new IllegalStateException("SubProcesses with level of recursion more that 1 isn't supported right now.");
-                    }
-                    checkProcessCode(processCodes, subP);
-                    if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
-                        subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
-                    }
-                    if (subInternalContextId==null) {
-                        throw new IllegalStateException("(subInternalContextId==null)");
-                    }
-
-                    processInGraph = toProcessForExecCode(sourceCodeParams, subP, subInternalContextId);
-                    scg.processes.add(processInGraph);
-
-                    ExecContextData.ProcessVertex subV = getVertex(ids, currId, subP.code, subInternalContextId);
-
-                    ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, subV, prevProcesses);
-                    if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                        prevProcesses.clear();
-                        prevProcesses.add(subV);
-                    }
-                    else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
-                        andProcesses.add(subV);
-                    }
-                    else {
-                        throw new NotImplementedException("not yet");
-                    }
-                }
-                parentProcesses.addAll(andProcesses);
-                parentProcesses.addAll(prevProcesses);
-            }
+            parentProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, vertex, currentInternalContextId, processCodes, ids, currId, vertex, p.subProcesses);
         }
         if (!finishPresent) {
-            SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
-            p.code = Consts.MH_FINISH_FUNCTION;
-            p.name = Consts.MH_FINISH_FUNCTION;
-            SourceCodeParamsYaml.FunctionDefForSourceCode f = new SourceCodeParamsYaml.FunctionDefForSourceCode();
-            f.code = Consts.MH_FINISH_FUNCTION;
-            f.context = EnumsApi.FunctionExecContext.internal;
-            p.function = f;
-
-            ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, Consts.TOP_LEVEL_CONTEXT_ID);
-            scg.processes.add(processInGraph);
-
-            ExecContextData.ProcessVertex finishVertex = getVertex(ids, currId, Consts.MH_FINISH_FUNCTION, currentInternalContextId);
-            ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, finishVertex, parentProcesses);
-
+            SourceCodeParamsYaml.Process p = createFinishProcess();
+            addProcessVertex(sourceCodeParams, scg, Consts.TOP_LEVEL_CONTEXT_ID, ids, currId, parentProcesses, p);
         }
         return scg;
     }
 
-    public static ExecContextData.ProcessVertex getVertex(Map<String, Long> ids, AtomicLong currId, String process, String internalContextId) {
+    private static ExecContextData.ProcessVertex addProcessVertex(
+            SourceCodeParamsYaml sourceCodeParams, SourceCodeData.SourceCodeGraph scg,
+            String currentInternalContextId, Map<String, Long> ids, AtomicLong currId,
+            List<ExecContextData.ProcessVertex> parentProcesses, SourceCodeParamsYaml.Process p) {
+
+        ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
+        scg.processes.add(processInGraph);
+        ExecContextData.ProcessVertex vertex = createProcessVertex(ids, currId, p.code, currentInternalContextId);
+        ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, vertex, parentProcesses);
+        return vertex;
+    }
+
+    private static SourceCodeParamsYaml.Process createFinishProcess() {
+        SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
+        p.code = Consts.MH_FINISH_FUNCTION;
+        p.name = Consts.MH_FINISH_FUNCTION;
+        SourceCodeParamsYaml.FunctionDefForSourceCode f = new SourceCodeParamsYaml.FunctionDefForSourceCode();
+        f.code = Consts.MH_FINISH_FUNCTION;
+        f.context = EnumsApi.FunctionExecContext.internal;
+        p.function = f;
+        return p;
+    }
+
+    private static List<ExecContextData.ProcessVertex> processSubProcesses(
+            Supplier<String> contextIdSupplier, SourceCodeParamsYaml sourceCodeParams,
+            SourceCodeData.SourceCodeGraph scg, ExecContextData.ProcessVertex parentProcess,
+            String currentInternalContextId, Set<String> processCodes, Map<String, Long> ids,
+            AtomicLong currId, ExecContextData.ProcessVertex vertex, @Nullable SourceCodeParamsYaml.SubProcesses subProcesses) {
+
+        List<ExecContextData.ProcessVertex> lastProcesses = new ArrayList<>();
+        // tasks for sub-processes of internal function will be produced at runtime phase
+        if (subProcesses !=null && subProcesses.processes != null && !subProcesses.processes.isEmpty()) {
+            List<ExecContextData.ProcessVertex> prevProcesses = new ArrayList<>();
+            prevProcesses.add(vertex);
+            String subInternalContextId = null;
+            if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+            }
+            List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
+            List<ExecContextData.ProcessVertex> tempLastProcesses = new ArrayList<>();
+            for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
+                checkProcessCode(processCodes, subP);
+                if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+                    subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                }
+                if (subInternalContextId==null) {
+                    throw new IllegalStateException("(subInternalContextId==null)");
+                }
+
+                ExecContextData.ProcessVertex subV = addProcessVertex(sourceCodeParams, scg, subInternalContextId, ids, currId, prevProcesses, subP);
+
+                if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                    prevProcesses = CollectionUtils.asList(subV);
+                }
+                else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
+                    andProcesses.add(subV);
+                }
+                else {
+                    throw new NotImplementedException("not yet");
+                }
+                tempLastProcesses = processSubProcesses(contextIdSupplier, sourceCodeParams, scg, parentProcess, subInternalContextId, processCodes, ids, currId, vertex, subP.subProcesses);
+            }
+            lastProcesses.addAll(andProcesses);
+            lastProcesses.addAll(prevProcesses);
+            lastProcesses.addAll(tempLastProcesses);
+        }
+        lastProcesses.add(parentProcess);
+        return lastProcesses;
+    }
+
+    public static ExecContextData.ProcessVertex createProcessVertex(Map<String, Long> ids, AtomicLong currId, String process, String internalContextId) {
         return new ExecContextData.ProcessVertex(ids.computeIfAbsent(process, o -> currId.incrementAndGet()), process, internalContextId);
     }
 
@@ -177,7 +187,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return new ExecContextParamsYaml.Variable(v.name, context, v.getSourcing(), v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext);
     }
 
-    private void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {
+    private static void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {
         if (processCodes.contains(p.code)) {
             throw new SourceCodeGraphException("(processCodes.contains(p.code))");
         }

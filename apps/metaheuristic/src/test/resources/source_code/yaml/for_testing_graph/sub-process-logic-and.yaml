@@ -1,0 +1,37 @@
+version: 2
+source:
+  uid: source-code-for-testing-1.0
+  processes:
+    - code: mh.nop-1
+      name: nop 1
+      function:
+        code: mh.nop
+        context: internal
+    - code: mh.nop-2
+      name: nop 2
+      function:
+        code: mh.nop
+        context: internal
+      subProcesses:
+        logic: and
+        processes:
+          - code: feature-processing_cluster
+            name: feature processing
+            tags: ai
+            priority: -1
+            function:
+              code: feature.standard:1.5
+              params: CLUSTER
+            inputs:
+              - name: dataset-processing
+            outputs:
+              - name: feature-processing_cluster
+          - code: feature-processing_matrix
+            name: feature processing
+            function:
+              code: feature.standard:1.5
+              params: MATRIX
+            inputs:
+              - name: dataset-processing
+            outputs:
+              - name: feature-processing_matrix

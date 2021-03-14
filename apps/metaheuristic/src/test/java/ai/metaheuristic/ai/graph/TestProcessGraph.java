@@ -65,11 +65,11 @@ public class TestProcessGraph {
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
 
-        ExecContextData.ProcessVertex v1 = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "code-1", Consts.TOP_LEVEL_CONTEXT_ID);
-        ExecContextProcessGraphService.addNewTasksToGraph(processGraph, v1, List.of());
+        ExecContextData.ProcessVertex v1 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-1", Consts.TOP_LEVEL_CONTEXT_ID);
+        ExecContextProcessGraphService.addProcessVertexToGraph(processGraph, v1, List.of());
 
-        ExecContextData.ProcessVertex v2 = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "code-2", Consts.TOP_LEVEL_CONTEXT_ID);
-        ExecContextProcessGraphService.addNewTasksToGraph(processGraph, v2, List.of(v1));
+        ExecContextData.ProcessVertex v2 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-2", Consts.TOP_LEVEL_CONTEXT_ID);
+        ExecContextProcessGraphService.addProcessVertexToGraph(processGraph, v2, List.of(v1));
 
         System.out.println(ExecContextProcessGraphService.asString(processGraph));
 

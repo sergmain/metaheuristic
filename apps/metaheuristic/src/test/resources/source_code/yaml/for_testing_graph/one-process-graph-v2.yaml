@@ -1,0 +1,9 @@
+version: 2
+source:
+  uid: source-code-for-testing-1.0
+  processes:
+    - code: mh.nop-1
+      name: nop 1
+      function:
+        code: mh.nop
+        context: internal

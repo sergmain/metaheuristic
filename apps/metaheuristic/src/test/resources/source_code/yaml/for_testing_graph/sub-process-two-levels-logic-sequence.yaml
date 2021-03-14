@@ -1,0 +1,51 @@
+version: 2
+source:
+  uid: source-code-for-testing-1.0
+  processes:
+    - code: mh.nop-1
+      name: nop 1
+      function:
+        code: mh.nop
+        context: internal
+    - code: mh.nop-2
+      name: nop 2
+      function:
+        code: mh.nop
+        context: internal
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: fit-data
+            name: fit-data
+            function:
+              code: fit:6.2
+            subProcesses:
+              logic: sequential
+              processes:
+                - code: mh.nop-1-1
+                  name: nop 1 1
+                  function:
+                    code: mh.nop
+                    context: internal
+                - code: mh.nop-1-2
+                  name: nop 1 2
+                  function:
+                    code: mh.nop
+                    context: internal
+          - code: predict-result
+            name: predict-result
+            function:
+              code: predict:6.2
+            subProcesses:
+              logic: sequential
+              processes:
+                - code: mh.nop-2-1
+                  name: nop 2 1
+                  function:
+                    code: mh.nop
+                    context: internal
+                - code: mh.nop-2-2
+                  name: nop 2 2
+                  function:
+                    code: mh.nop
+                    context: internal

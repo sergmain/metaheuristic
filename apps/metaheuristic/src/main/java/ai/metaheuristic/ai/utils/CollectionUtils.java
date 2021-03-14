@@ -27,6 +27,11 @@ import java.util.stream.Stream;
 @Slf4j
 public class CollectionUtils {
 
+    public static <T> List<T> asList(T t) {
+        List<T> list = new ArrayList<T>();
+        list.add(t);
+        return list;
+    }
     public static <T> List<List<T>> parseAsPages(List<T> ids, int pageSize) {
         if (ids.isEmpty() || pageSize==0) {
             return List.of();

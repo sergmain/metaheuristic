@@ -1,0 +1,47 @@
+version: 2
+source:
+  uid: source-code-for-testing-1.0
+  processes:
+    - code: mh.nop-1
+      name: nop 1
+      function:
+        code: mh.nop
+        context: internal
+    - code: mh.nop-2
+      name: nop 2
+      function:
+        code: mh.nop
+        context: internal
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: fit-data
+            name: fit-data
+            function:
+              code: fit:6.2
+            inputs:
+              - name: dataset-processing
+              - name: feature-per-task
+              - name: var-inline-permutation
+            outputs:
+              - name: model
+          - code: predict-result
+            name: predict-result
+            function:
+              code: predict:6.2
+            inputs:
+              - name: dataset-processing
+              - name: feature-per-task
+              - name: var-inline-permutation
+              - name: model
+            outputs:
+              - name: metrics
+              - name: predicted
+          - code: check-fitting
+            name: check-fitting
+            function:
+              code: check-fitting:6.2
+            inputs:
+              - name: predicted
+            outputs:
+              - name: overfitting

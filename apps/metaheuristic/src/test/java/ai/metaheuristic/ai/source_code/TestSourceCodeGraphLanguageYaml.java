@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml;
+import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
@@ -52,17 +53,15 @@ public class TestSourceCodeGraphLanguageYaml {
         assertNotNull(graph);
         assertTrue(graph.clean);
         assertEquals(10, graph.processGraph.vertexSet().size());
-
-        // it's 10 because mh.finish was added to processes graph even in wasn't specified explicitly in SourceCode
         assertEquals(10, graph.processes.size());
-
-        Map<String, Long> ids = new HashMap<>();
-        AtomicLong currId = new AtomicLong();
+        // check for mh.finish
+        assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
 
         // value of internalContextId doesn't matter in this case
-        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file", Consts.TOP_LEVEL_CONTEXT_ID);
-        assertEquals(9, findDescendants(graph, vertexAssembly).size());
-        assertEquals(1, findLeafs(graph).size());
+        ExecContextData.ProcessVertex vertexAssembly = findVertex(graph.processGraph, "assembly-raw-file");
+        assertNotNull(vertexAssembly);
+        assertEquals(1, graph.processGraph.outgoingEdgesOf(vertexAssembly).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(9, findDescendants(graph, vertexAssembly).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextData.ProcessVertex v = findVertex(graph.processGraph, vertexAssembly.process);
         assertNotNull(v);
@@ -91,5 +90,122 @@ public class TestSourceCodeGraphLanguageYaml {
         ExecContextParamsYaml.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
         assertEquals("ai", p.tags);
         assertEquals(-1, p.priority);
+    }
+
+    @Test
+    public void test_02_empty_graph_v1() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/empty-graph-v1.yaml", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        assertThrows(SourceCodeGraphException.class, ()-> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet()));
+    }
+
+    @Test
+    public void test_03_one_process() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/one-process-graph-v2.yaml", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+
+        assertNotNull(graph);
+        // check for mh.finish
+        assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
+
+        assertEquals(2, graph.processGraph.vertexSet().size());
+        assertEquals(2, graph.processes.size());
+
+        ExecContextData.ProcessVertex nopVertex1 = findVertex(graph.processGraph, "mh.nop-1");
+        assertNotNull(nopVertex1);
+        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex1).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex finishVertex = findVertex(graph.processGraph, Consts.MH_FINISH_FUNCTION);
+        assertNotNull(finishVertex);
+        assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(1, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_04_sub_processes_logic_and() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-logic-and.yaml", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+
+        assertNotNull(graph);
+        // check for mh.finish
+        assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
+
+        assertEquals(5, graph.processGraph.vertexSet().size());
+        assertEquals(5, graph.processes.size());
+
+        ExecContextData.ProcessVertex nopVertex1 = findVertex(graph.processGraph, "mh.nop-1");
+        assertNotNull(nopVertex1);
+        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex1).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
+        assertNotNull(nopVertex2);
+        assertEquals(3, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex finishVertex = findVertex(graph.processGraph, Consts.MH_FINISH_FUNCTION);
+        assertNotNull(finishVertex);
+        assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(3, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+
+
+    }
+
+    @Test
+    public void test_05_sub_processes_logic_sequence() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-logic-sequence.yaml", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+
+        assertNotNull(graph);
+        // check for mh.finish
+        assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
+
+        assertEquals(6, graph.processGraph.vertexSet().size());
+        assertEquals(6, graph.processes.size());
+
+        ExecContextData.ProcessVertex nopVertex1 = findVertex(graph.processGraph, "mh.nop-1");
+        assertNotNull(nopVertex1);
+        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex1).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
+        assertNotNull(nopVertex2);
+        assertEquals(4, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex finishVertex = findVertex(graph.processGraph, Consts.MH_FINISH_FUNCTION);
+        assertNotNull(finishVertex);
+        assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_06_sub_processes_two_levels_logic_sequence() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-two-levels-logic-sequence.yaml", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+
+        assertNotNull(graph);
+        // check for mh.finish
+        assertEquals(1, findLeafs(graph).size(), "Graph: \n" + asString(graph.processGraph));
+
+        assertEquals(6, graph.processGraph.vertexSet().size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(6, graph.processes.size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex nopVertex1 = findVertex(graph.processGraph, "mh.nop-1");
+        assertNotNull(nopVertex1);
+        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex1).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
+        assertNotNull(nopVertex2);
+        assertEquals(4, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+
+        ExecContextData.ProcessVertex finishVertex = findVertex(graph.processGraph, Consts.MH_FINISH_FUNCTION);
+        assertNotNull(finishVertex);
+        assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+
+
     }
 }

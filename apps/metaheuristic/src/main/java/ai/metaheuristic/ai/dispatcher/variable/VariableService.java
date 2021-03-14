@@ -451,6 +451,9 @@ public class VariableService {
     }
 
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
+        if (size==0) {
+            throw new IllegalStateException("#171.295 Variable can't be with zero length");
+        }
         TxUtils.checkTxExists();
 
         Variable data = variableRepository.findById(variableId).orElse(null);

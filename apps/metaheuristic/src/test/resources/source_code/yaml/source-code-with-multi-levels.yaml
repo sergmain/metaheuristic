@@ -122,6 +122,7 @@ source:
               - name: var-permuted-item
                 array: true
             subProcesses:
+              logic: sequential
               processes:
                 - code: fit-dataset
                   name: fit-dataset

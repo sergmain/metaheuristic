@@ -104,7 +104,7 @@ public class ExecContextProcessGraphService {
         return processGraph;
     }
 
-    public static void addNewTasksToGraph(
+    public static void addProcessVertexToGraph(
             DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex vertex, List<ExecContextData.ProcessVertex> parentProcesses) {
 
         List<ExecContextData.ProcessVertex> parentVertices = processGraph.vertexSet()
