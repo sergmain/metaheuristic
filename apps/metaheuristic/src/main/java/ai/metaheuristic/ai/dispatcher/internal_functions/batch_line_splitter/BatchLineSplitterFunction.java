@@ -41,7 +41,6 @@ import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -49,6 +48,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -204,9 +205,30 @@ public class BatchLineSplitterFunction implements InternalFunction {
         execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
     }
 
+    private static class CustomLineIterator extends LineIterator {
+
+        /**
+         * Constructs an iterator of the lines for a <code>Reader</code>.
+         *
+         * @param reader the <code>Reader</code> to read from, not null
+         * @throws IllegalArgumentException if the reader is null
+         */
+        public CustomLineIterator(Reader reader) throws IllegalArgumentException {
+            super(reader);
+        }
+
+        @Override
+        protected boolean isValidLine(String line) {
+            return line!=null && !line.isBlank();
+        }
+    }
+
     private static List<List<String>> stringToListOfList(String content, Long numberOfLines) throws IOException {
         List<List<String>> allLines = new ArrayList<>();
-        LineIterator it = IOUtils.lineIterator(new ByteArrayInputStream(content.getBytes()), StandardCharsets.UTF_8);
+        // new LineIterator(new InputStreamReader(input, Charsets.toCharset(encoding)))
+//        LineIterator it = IOUtils.lineIterator(new ByteArrayInputStream(content.getBytes()), StandardCharsets.UTF_8);
+        LineIterator it = new CustomLineIterator(new InputStreamReader(new ByteArrayInputStream(content.getBytes()), StandardCharsets.UTF_8));
+
         List<String> currList = new ArrayList<>();
         allLines.add(currList);
         while (it.hasNext()) {

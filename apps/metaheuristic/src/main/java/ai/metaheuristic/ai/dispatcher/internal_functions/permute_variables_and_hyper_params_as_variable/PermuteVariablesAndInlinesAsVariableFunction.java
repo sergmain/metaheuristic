@@ -106,13 +106,6 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                 executionContextData.internalFunctionProcessingResult);
         }
 
-        if (executionContextData.subProcesses.isEmpty()) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
-        }
-
-
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
@@ -216,7 +209,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
 
         StringBuilder json = new StringBuilder();
         for (VariableData.Permutation p : permutations) {
-            json.append(VariableUtils.permutationAsString(p));
+            json.append(VariableUtils.permutationAsString(p)).append('\n');
         }
         byte[] bytes = json.toString().getBytes();
         variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);

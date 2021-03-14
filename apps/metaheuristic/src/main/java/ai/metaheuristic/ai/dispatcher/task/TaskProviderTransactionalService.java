@@ -178,7 +178,8 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
-                    log.error("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
+                    // TODO 2021.03.14 this could happened when execContext as deleted while a task executing was active
+                    log.warn("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                             "assigned: {}, state: {}\n" +
                             "taskId: {}, queuedTask.execContext: {}\n" +
                             "queuedTask.task: {}\n" +
@@ -224,6 +225,7 @@ public class TaskProviderTransactionalService {
 
                 // check of tags
                 if (!CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env==null ? null : psy.env.tags)) {
+                    log.debug("#317.077 Check CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env==null ? null : psy.env.tags) was failed");
                     continue;
                 }
 

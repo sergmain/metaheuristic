@@ -35,6 +35,8 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
  * Date: 2/1/2020
  * Time: 9:17 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -93,7 +96,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         }
 
         final String varName = taskParamsYaml.task.inputs.get(0).name;
-        List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, varName);
+        List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(execContext.id, taskParamsYaml.task.taskContextId, varName);
         if (hs.size()!=1) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
@@ -109,7 +112,16 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                             "#991.035 An input variable '"+varName+"' must be local variable, not a global variable"));
         }
 
-        String json = variableService.getVariableDataAsString(variableHolder.variable.id);
+        String arrayData = variableService.getVariableDataAsString(variableHolder.variable.id);
+        VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(arrayData);
+        if (vapy.array.size()!=1) {
+            throw new InternalFunctionException(
+                    new InternalFunctionProcessingResult(
+                            Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
+                            "#991.037 There must be only one an input variable in an array variable '"+varName+"', the actual number: " + vapy.array.size()));
+        }
+
+        String json = variableService.getVariableDataAsString(Long.valueOf(vapy.array.get(0).id));
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(execContext.sourceCodeId, execContext, taskParamsYaml, task.id);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
