@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -176,7 +177,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
-        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+        String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
+                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         allLines.forEach( lines -> {
             if (lines.isEmpty()) {
@@ -188,11 +190,13 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 String str = StringUtils.join(lines, '\n' );
 
                 VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
+                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+
                 variableService.createInputVariablesForSubProcess(
-                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
+                        variableDataSource, execContext, variableName, currTaskContextId);
 
                 taskProducingService.createTasksForSubProcesses(
-                        execContext, executionContextData, currTaskNumber, taskId, lastIds);
+                        execContext, executionContextData, currTaskContextId, taskId, lastIds);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

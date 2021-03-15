@@ -69,7 +69,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -110,8 +109,8 @@ public class VariableService {
     @SneakyThrows
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
-            ExecContextImpl execContext, AtomicInteger currTaskNumber, String inputVariableName,
-            String subProcessContextId) {
+            ExecContextImpl execContext, String inputVariableName,
+            String currTaskContextId) {
 
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
         String inputVariableContent = variableDataSource.inputVariableContent;
@@ -121,7 +120,6 @@ public class VariableService {
             throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null && permutation==null)");
         }
 
-        String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
         if (!files.isEmpty() || inputVariableContent!=null) {
             List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
             for (BatchTopLevelService.FileWithMapping f : files) {
@@ -280,7 +278,7 @@ public class VariableService {
         if (!taskContextId.contains(",")) {
             return null;
         }
-        return taskContextId.substring(0, taskContextId.lastIndexOf(',')).strip();
+        return taskContextId.substring(0, taskContextId.lastIndexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)).strip();
     }
 
     public String getVariableDataAsString(Long variableId) {

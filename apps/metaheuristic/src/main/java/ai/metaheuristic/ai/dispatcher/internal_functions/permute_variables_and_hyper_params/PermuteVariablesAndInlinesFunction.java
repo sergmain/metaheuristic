@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -165,7 +166,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         final List<Long> lastIds = new ArrayList<>();
         final List<InlineVariable> inlineVariables = permuteInlines ? InlineVariableUtils.getAllInlineVariants(item.inlines) : List.of();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
-        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+        String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
+                task.id, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
         for (int i = 0; i < holders.size(); i++) {
@@ -182,11 +184,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
                                             new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
 
+                                    String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+
                                     variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
+                                            variableDataSource, execContext, variableName, currTaskContextId);
 
                                     taskProducingService.createTasksForSubProcesses(
-                                            execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                                            execContext, executionContextData, currTaskContextId, task.id, lastIds);
                                 }
                             }
                             else {
@@ -195,11 +199,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                 VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
                                         new VariableData.Permutation(permutedVariables, variableName, execContextParamsYaml.variables.inline, inlineVariableName,Map.of()));
 
+                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+
                                 variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, execContext, currTaskNumber, variableName, subProcessContextId);
+                                        variableDataSource, execContext, variableName, currTaskContextId);
 
                                 taskProducingService.createTasksForSubProcesses(
-                                        execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                                        execContext, executionContextData, currTaskContextId, task.id, lastIds);
                             }
                             return true;
                         }

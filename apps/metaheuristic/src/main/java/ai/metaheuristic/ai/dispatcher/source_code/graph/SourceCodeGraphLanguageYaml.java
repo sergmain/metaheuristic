@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -118,14 +119,14 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             Set<ExecContextData.ProcessVertex> prevProcesses = new HashSet<>();
             String subInternalContextId = null;
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                subInternalContextId = currentInternalContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + contextIdSupplier.get();
             }
             List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
             Set<ExecContextData.ProcessVertex> tempLastProcesses = CollectionUtils.asSet(parentProcess);
             for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
                 checkProcessCode(processCodes, subP);
                 if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
-                    subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                    subInternalContextId = currentInternalContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + contextIdSupplier.get();
                     tempLastProcesses.add(parentProcess);
                 }
                 else if (subProcesses.logic== EnumsApi.SourceCodeSubProcessLogic.sequential) {

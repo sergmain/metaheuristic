@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -144,7 +145,8 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
-        String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+        String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
+                task.id, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         StringReader sr = new StringReader(json);
         List<String> lines = IOUtils.readLines(sr);
@@ -155,11 +157,13 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
             VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(p);
 
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+
             variableService.createInputVariablesForSubProcess(
-                    variableDataSource, execContext, currTaskNumber, p.permutedVariableName, subProcessContextId);
+                    variableDataSource, execContext, p.permutedVariableName, currTaskContextId);
 
             taskProducingService.createTasksForSubProcesses(
-                    execContext, executionContextData, currTaskNumber, task.id, lastIds);
+                    execContext, executionContextData, currTaskContextId, task.id, lastIds);
 
         }
 

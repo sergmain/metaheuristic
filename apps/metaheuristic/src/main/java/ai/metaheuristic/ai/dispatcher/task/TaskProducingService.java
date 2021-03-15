@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -42,7 +41,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -88,13 +86,13 @@ public class TaskProducingService {
 
     /**
      * @param execContext
-     * @param currTaskNumber
+     * @param currTaskContextId
      * @param parentTaskId
      * @param lastIds
      */
     public void createTasksForSubProcesses(
             ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
-            AtomicInteger currTaskNumber, Long parentTaskId, List<Long> lastIds) {
+            String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
@@ -125,8 +123,6 @@ public class TaskProducingService {
             if (!subProcessContextId.equals(subProcess.processContextId)) {
                 throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
             }
-
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
 
             t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
 
