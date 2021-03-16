@@ -41,4 +41,12 @@ public class TaskData {
             this.error = error;
         }
     }
+
+    @Data
+    @AllArgsConstructor
+    public static class TaskWithInternalContext {
+        public final Long sourceCodeId;
+        public final Long execContextId;
+        public final Long taskId;
+    }
 }

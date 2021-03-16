@@ -94,16 +94,6 @@ public class EventBusService {
         }
     }
 
-    @Async
-    @EventListener
-    public void processInternalFunction(final TaskWithInternalContextEvent event) {
-        try {
-            taskWithInternalContextEventService.processInternalFunction(event);
-        } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
-        }
-    }
-
     @SuppressWarnings("unused")
     @Async
     @EventListener

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -31,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Serge
@@ -54,7 +58,13 @@ public class TaskWithInternalContextEventService {
     private final TaskSyncService taskSyncService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void processInternalFunction(final TaskWithInternalContextEvent event) {
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+
+    public void processInternalFunction(final TaskData.TaskWithInternalContext event) {
+        executor.submit(() -> process(event));
+    }
+
+    private void process(final TaskData.TaskWithInternalContext event) {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 
