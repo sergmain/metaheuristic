@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -60,11 +59,11 @@ public class TaskWithInternalContextEventService {
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
 
-    public void processInternalFunction(final TaskData.TaskWithInternalContext event) {
+    public void processInternalFunction(final TaskWithInternalContextEvent event) {
         executor.submit(() -> process(event));
     }
 
-    private void process(final TaskData.TaskWithInternalContext event) {
+    private void process(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
         execContextSyncService.checkWriteLockNotPresent(event.execContextId);
 

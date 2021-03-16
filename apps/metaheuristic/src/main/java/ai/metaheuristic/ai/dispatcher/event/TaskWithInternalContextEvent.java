@@ -14,31 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
+package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
- * Date: 2/24/2020
- * Time: 6:32 PM
+ * Date: 3/15/2020
+ * Time: 10:55 PM
  */
-public class TaskData {
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProduceTaskResult {
-        public EnumsApi.TaskProducingStatus status;
-        public @Nullable String error;
-        public Long taskId;
-
-        public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {
-            this.status = status;
-            this.error = error;
-        }
-    }
+@Data
+@AllArgsConstructor
+public class TaskWithInternalContextEvent {
+    public final Long sourceCodeId;
+    public final Long execContextId;
+    public final Long taskId;
 }
