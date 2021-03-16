@@ -179,7 +179,7 @@ public class TaskProviderTransactionalService {
 
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
                     // TODO 2021.03.14 this could happened when execContext as deleted while a task executing was active
-                    log.warn("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
+                    log.debug("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                             "assigned: {}, state: {}\n" +
                             "taskId: {}, queuedTask.execContext: {}\n" +
                             "queuedTask.task: {}\n" +
