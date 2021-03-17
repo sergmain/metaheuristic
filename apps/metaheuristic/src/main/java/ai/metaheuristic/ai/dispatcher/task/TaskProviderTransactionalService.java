@@ -94,7 +94,7 @@ public class TaskProviderTransactionalService {
             log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
             return;
         }
-        final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
@@ -170,6 +170,7 @@ public class TaskProviderTransactionalService {
                     break;
                 }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
+
                 final KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus simpleStatus = statuses.getStatus(queuedTask.execContextId);
                 if (simpleStatus!=null && (simpleStatus.getState() == EnumsApi.ExecContextState.STOPPED || simpleStatus.getState() == EnumsApi.ExecContextState.FINISHED)) {
                     log.warn("#317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, simpleStatus.getState());
@@ -177,14 +178,21 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
+                // all tasks with internal function should be already called.
+                // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService#registerInternalTask
+                if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
+                    log.error("#317.055 this situation shouldn't be happened.");
+                    continue;
+                }
+
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
                     // TODO 2021.03.14 this could happened when execContext as deleted while a task executing was active
-                    log.debug("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
+                    log.warn("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                             "assigned: {}, state: {}\n" +
                             "taskId: {}, queuedTask.execContext: {}\n" +
-                            "queuedTask.task: {}\n" +
-                            "queuedTask.taskParamYaml: {}",
-                            allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task, queuedTask.taskParamYaml);
+                            "queuedTask.task is null: {}\n" +
+                            "queuedTask.taskParamYaml is null: {}",
+                            allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task==null, queuedTask.taskParamYaml==null);
                     continue;
                 }
 
@@ -201,13 +209,6 @@ public class TaskProviderTransactionalService {
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
                     log.error("#317.040 Task #{} with function '{}' was already processed with status {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
-                    continue;
-                }
-
-                // all tasks with internal function should be already called.
-                // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService.registerInternalTask
-                if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
-                    log.error("#317.055 this situation shouldn't be happened.");
                     continue;
                 }
 

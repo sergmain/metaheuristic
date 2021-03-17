@@ -111,7 +111,7 @@ public class ExecContextCreatorService {
         }
 
         execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
-            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
                     sourceCode, creationResult.execContext, execContextParamsYaml);
             if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
@@ -175,7 +175,7 @@ public class ExecContextCreatorService {
         ec.setCompletedOn(null);
         ExecContextParamsYaml expy = to(sourceCodeGraph);
         expy.sourceCodeUid = sourceCode.uid;
-        ec.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy);
+        ec.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy));
         ec.setValid(true);
 
         ExecContextImpl execContext = execContextService.save(ec);

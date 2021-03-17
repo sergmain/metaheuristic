@@ -148,7 +148,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             assertTrue(tasks02.isEmpty());
 
             long mills = System.currentTimeMillis();
-            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.params);
+            ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
             txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
 
             log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");

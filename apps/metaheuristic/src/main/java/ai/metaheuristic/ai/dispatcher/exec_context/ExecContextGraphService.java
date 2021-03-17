@@ -61,9 +61,12 @@ import java.util.stream.Collectors;
 @SuppressWarnings("WeakerAccess")
 public class ExecContextGraphService {
 
-    private static final String TASK_ID_STR_ATTR = "task_id_str";
-    private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
-    private static final String TASK_CONTEXT_ID_ATTR = "task_context_id";
+    private static final String TASK_ID_STR_ATTR = "tids";
+    private static final String TASK_ID_STR_ATTR_OLD = "task_id_str";
+    private static final String TASK_EXEC_STATE_ATTR = "state";
+    private static final String TASK_EXEC_STATE_ATTR_OLD = "task_exec_state";
+    private static final String TASK_CONTEXT_ID_ATTR = "ctxid";
+    private static final String TASK_CONTEXT_ID_ATTR_OLD = "task_context_id";
 
     private final ExecContextService execContextService;
     private final ExecContextSyncService execContextSyncService;
@@ -72,13 +75,13 @@ public class ExecContextGraphService {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importProcessGraph(ecpy);
         try {
             callable.accept(graph);
         } finally {
             ecpy.graph = asString(graph);
-            execContext.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy);
+            execContext.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
             execContextService.save(execContext);
         }
     }
@@ -130,7 +133,7 @@ public class ExecContextGraphService {
     }
 
     private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextImpl execContext) {
-        return importProcessGraph(ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params));
+        return importProcessGraph(execContext.getExecContextParamsYaml());
     }
 
     @SneakyThrows
@@ -144,12 +147,15 @@ public class ExecContextGraphService {
         importer.addVertexAttributeConsumer(((vertex, attribute) -> {
             switch(vertex.getSecond()) {
                 case TASK_EXEC_STATE_ATTR:
+                case TASK_EXEC_STATE_ATTR_OLD:
                     vertex.getFirst().execState = EnumsApi.TaskExecState.valueOf(attribute.getValue());
                     break;
                 case TASK_ID_STR_ATTR:
+                case TASK_ID_STR_ATTR_OLD:
                     vertex.getFirst().taskIdStr = attribute.getValue();
                     break;
                 case TASK_CONTEXT_ID_ATTR:
+                case TASK_CONTEXT_ID_ATTR_OLD:
                     vertex.getFirst().taskContextId = attribute.getValue();
                     break;
                 case "ID":

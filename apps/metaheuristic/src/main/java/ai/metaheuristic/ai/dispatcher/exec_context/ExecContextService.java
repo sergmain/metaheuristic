@@ -284,7 +284,7 @@ public class ExecContextService {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params);
+        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
         ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
@@ -354,7 +354,7 @@ public class ExecContextService {
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextForDeletion("#705.260 execContext wasn't found, execContextId: " + execContextId);
         }
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         SourceCodeApiData.ExecContextForDeletion result = new SourceCodeApiData.ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
         return result;
     }
@@ -409,7 +409,7 @@ public class ExecContextService {
                 return resource;
             }
 
-            ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+            ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
             ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
             String ext = info.tasks.stream()
                     .filter(o->o.outputs!=null)

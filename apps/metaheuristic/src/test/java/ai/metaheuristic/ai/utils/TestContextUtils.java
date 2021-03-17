@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
 
+import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -36,15 +37,15 @@ public class TestContextUtils {
     @Test
     public void testGetWithoutSubContext() {
         assertEquals("123", ContextUtils.getWithoutSubContext("123"));
-        assertEquals("123", ContextUtils.getWithoutSubContext("123###1"));
+        assertEquals("123", ContextUtils.getWithoutSubContext("12"+CONTEXT_SEPARATOR+"1"));
     }
 
     @Test
     public void testGetSubContext() {
         assertNull(ContextUtils.getSubContext(""));
         assertNull(ContextUtils.getSubContext("123"));
-        assertEquals("1", ContextUtils.getSubContext("123###1"));
-        assertEquals("2", ContextUtils.getSubContext("123###2"));
+        assertEquals("1", ContextUtils.getSubContext("123"+CONTEXT_SEPARATOR+"1"));
+        assertEquals("2", ContextUtils.getSubContext("123"+CONTEXT_SEPARATOR+"2"));
     }
 
 

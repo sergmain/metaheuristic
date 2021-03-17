@@ -117,7 +117,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
                     "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
         }
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {

@@ -147,7 +147,7 @@ public class TaskFinishingTopLevelService {
             }
 
             taskSyncService.getWithSyncNullable(task.id,
-                    () -> finishAndStoreVariableFunction.apply(taskId, ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params)));
+                    () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
         }
     }
 

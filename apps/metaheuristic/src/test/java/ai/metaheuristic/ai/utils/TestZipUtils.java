@@ -16,15 +16,18 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.FileCopyUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
@@ -38,8 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class TestZipUtils {
 
     @Test
-    public void validateZip() throws IOException {
-        File dir = DirUtils.createTempDir("test-unzip-");
+    public void validateZip(@TempDir File dir) throws IOException {
+//        File dir = DirUtils.createTempDir("test-unzip-");
 
         final File tempZipFile = File.createTempFile("temp-zip-file-", ".zip", dir);
         try (FileOutputStream fos = new FileOutputStream(tempZipFile);
@@ -52,5 +55,31 @@ public class TestZipUtils {
 
         assertFalse(errors.isEmpty());
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (InputStream is = new FileInputStream("docs-dev/error/params_1"); ) {
+            IOUtils.copy(is, baos);
+        }
+        final byte[] origin = baos.toByteArray();
+        byte[] bytes = zip(origin, "params.yaml");
+        System.out.println(S.f("Origin: %d\nZipped: %d", origin.length, bytes.length ));
+    }
+
+    private static byte[] zip(byte[] data, String filename) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ZipArchiveOutputStream zos = new ZipArchiveOutputStream(bos);
+
+        ZipArchiveEntry entry = new ZipArchiveEntry(filename);
+        entry.setSize(data.length);
+        zos.putArchiveEntry(entry);
+        zos.write(data);
+        zos.closeArchiveEntry();
+
+        zos.close();
+        bos.close();
+
+        return bos.toByteArray();
     }
 }

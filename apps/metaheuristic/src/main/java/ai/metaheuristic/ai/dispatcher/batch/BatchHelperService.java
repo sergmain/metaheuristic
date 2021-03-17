@@ -45,7 +45,7 @@ public class BatchHelperService {
 
     public String findUploadedFilenameForBatchId(ExecContextImpl execContext, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         String startInputVariableName = ecpy.variables.startInputAs;
         if (S.b(startInputVariableName)) {
             return defName;

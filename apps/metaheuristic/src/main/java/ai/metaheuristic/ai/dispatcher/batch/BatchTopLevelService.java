@@ -305,7 +305,7 @@ public class BatchTopLevelService {
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
-            final ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(creationResult.execContext.params);
+            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = new FileInputStream(tempFile)) {
                 uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,

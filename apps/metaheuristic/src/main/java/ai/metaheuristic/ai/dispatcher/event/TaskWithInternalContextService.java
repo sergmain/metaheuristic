@@ -130,7 +130,7 @@ public class TaskWithInternalContextService {
                     task, EnumsApi.TaskExecState.IN_PROGRESS, null);
 
             TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-            ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+            ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
             if (p == null) {
                 if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {

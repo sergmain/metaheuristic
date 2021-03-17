@@ -66,7 +66,7 @@ public class InternalFunctionService {
                     "#994.240 Graph for ExecContext #"+execContext.id+" is broken"));
         }
 
-        ExecContextParamsYaml execContextParamsYaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionData.ExecutionContextData(

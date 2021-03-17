@@ -68,23 +68,41 @@ public class ZipUtils {
         createZip(directory, zipFile, Collections.emptyMap());
     }
 
+    public static void createZip(File directory, File zipFile, Map<String, String> renameTo)  {
+        try (FileOutputStream fOut = new FileOutputStream(zipFile)) {
+            createZip(directory,fOut, renameTo);
+        }
+        catch (ZipArchiveException e) {
+            log.error("Zipping error", e);
+            throw e;
+        }
+        catch (Throwable th) {
+            log.error("Zipping error", th);
+            throw new ZipArchiveException("Zip failed", th);
+        }
+    }
+
     /**
      * Creates a zip file at the specified path with the contents of the specified directory.
      * NB:
      *
      * @param directory The path of the directory where the archive will be created. eg. c:/temp
-     * @param zipFile zip file
+     * @param os OutputStream stream for writing result
      * @throws ZipArchiveException If anything goes wrong
      */
-    public static void createZip(File directory, File zipFile, Map<String, String> renameTo)  {
+    public static void createZip(File directory, OutputStream os, Map<String, String> renameTo)  {
 
         try {
-            try (FileOutputStream fOut = new FileOutputStream(zipFile);
-                 BufferedOutputStream bOut = new BufferedOutputStream(fOut);
+            try (BufferedOutputStream bOut = new BufferedOutputStream(os);
                  ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) ) {
                 addFileToZip(tOut, directory, "", renameTo);
             }
-        } catch (Throwable th) {
+        }
+        catch (ZipArchiveException e) {
+            log.error("Zipping error", e);
+            throw e;
+        }
+        catch (Throwable th) {
             log.error("Zipping error", th);
             throw new ZipArchiveException("Zip failed", th);
         }

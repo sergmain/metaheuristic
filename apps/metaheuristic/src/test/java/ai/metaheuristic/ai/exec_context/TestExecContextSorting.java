@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
@@ -33,15 +34,15 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 public class TestExecContextSorting {
 
     private static final String CTX_1 = "1";
-    private static final String CTX_1_2___1 = "1,2###1";
-    private static final String CTX_1_2___2 = "1,2###2";
-    private static final String CTX_1_2___3 = "1,2###3";
-    private static final String CTX_1_2___10 = "1,2###10";
-    private static final String CTX_1_2___11 = "1,2###11";
-    private static final String CTX_1_2___100 = "1,2###100";
-    private static final String CTX_1_2___5 = "1,2###5";
-    private static final String CTX_1_2___50 = "1,2###50";
-    private static final String CTX_1_2___500 = "1,2###500";
+    private static final String CTX_1_2___1 = "1,2"+CONTEXT_SEPARATOR+"1";
+    private static final String CTX_1_2___2 = "1,2"+CONTEXT_SEPARATOR+"2";
+    private static final String CTX_1_2___3 = "1,2"+CONTEXT_SEPARATOR+"3";
+    private static final String CTX_1_2___10 = "1,2"+CONTEXT_SEPARATOR+"10";
+    private static final String CTX_1_2___11 = "1,2"+CONTEXT_SEPARATOR+"11";
+    private static final String CTX_1_2___100 = "1,2"+CONTEXT_SEPARATOR+"100";
+    private static final String CTX_1_2___5 = "1,2"+CONTEXT_SEPARATOR+"5";
+    private static final String CTX_1_2___50 = "1,2"+CONTEXT_SEPARATOR+"50";
+    private static final String CTX_1_2___500 = "1,2"+CONTEXT_SEPARATOR+"500";
     private static final String CTX_1_2 = "1,2";
 
     private static final List<String> ALL_CTXS = new ArrayList<>(

@@ -150,7 +150,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         // key is name of variable
         Map<String, ExecContextParamsYaml.Variable> nameToVar = gatherVars(ecpy);
         Set<String> varNames = nameToVar.keySet();

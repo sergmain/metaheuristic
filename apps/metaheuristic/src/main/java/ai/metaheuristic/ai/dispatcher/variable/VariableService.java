@@ -252,7 +252,7 @@ public class VariableService {
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
     public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
-        ExecContextParamsYaml.Process p = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params).findProcess(processCode);
+        ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;
         }

@@ -267,7 +267,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.290 An associated execContext for experimentId #" + id +" wasn't found");
         }
-        String sourceCodeUid = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(ec.params).sourceCodeUid;
+        String sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
 
         String newCode = StrUtils.incCopyNumber(e.getCode());
         int i = 0;

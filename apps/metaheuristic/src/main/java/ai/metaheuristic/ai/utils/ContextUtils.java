@@ -28,7 +28,7 @@ import org.thymeleaf.util.StringUtils;
 @Slf4j
 public class ContextUtils {
 
-    public static final String CONTEXT_SEPARATOR = "###";
+    public static final String CONTEXT_SEPARATOR = "#";
     public static final char CONTEXT_DIGIT_SEPARATOR = ',';
 
     public static String getTaskContextId(String processContextId, String subContext) {

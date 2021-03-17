@@ -15,11 +15,13 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -60,9 +62,15 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @NotBlank
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
 
-    @NonNull
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.ecpy =null;
+        }
+    }
+
     public String getParams() {
         return params;
     }
@@ -72,4 +80,26 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Column(name = "STATE")
     public int state;
-}
+
+    @Transient
+    @JsonIgnore
+    @Nullable
+    private ExecContextParamsYaml ecpy = null;
+
+    @JsonIgnore
+    public ExecContextParamsYaml getExecContextParamsYaml() {
+        if (ecpy ==null) {
+            synchronized (this) {
+                if (ecpy ==null) {
+                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+                }
+            }
+        }
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public void updateParams(ExecContextParamsYaml wpy) {
+        setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    }}

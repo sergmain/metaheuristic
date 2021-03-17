@@ -161,9 +161,9 @@ public class ExecContextStatusService {
             log.warn("#211.120 ExecContext #{} wasn't found", execContextId);
             return null;
         }
-        ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.params);
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         supplier.accept(ecpy);
-        execContext.params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy);
+        execContext.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
 
         return null;
     }
