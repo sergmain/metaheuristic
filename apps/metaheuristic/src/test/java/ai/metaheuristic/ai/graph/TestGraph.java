@@ -135,10 +135,10 @@ public class TestGraph extends PreparingSourceCode {
         });
     }
 
-    private void checkState(long id, EnumsApi.TaskExecState state) {
-        TaskVertex v = execContextGraphService.findVertex(execContextForTest, id);
+    private void checkState(Long id, EnumsApi.TaskExecState state) {
+        EnumsApi.TaskExecState v = findTaskState(execContextForTest, id);
         assertNotNull(v);
-        assertEquals(state, v.execState);
+        assertEquals(state, v);
     }
 
 }

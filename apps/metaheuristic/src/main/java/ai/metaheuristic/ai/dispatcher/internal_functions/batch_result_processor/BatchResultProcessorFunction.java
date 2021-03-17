@@ -29,8 +29,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -192,9 +192,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir);
 
-        Map<String, List<ExecContextData.TaskVertex>> vertices = execContextGraphService.findVerticesByTaskContextIds(execContext, prepared.keySet());
-        for (Map.Entry<String, List<ExecContextData.TaskVertex>> entry : vertices.entrySet()) {
-            boolean isOK = entry.getValue().stream().noneMatch(o->o.execState!= EnumsApi.TaskExecState.OK);
+        Map<String, List<ExecContextData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(execContext, prepared.keySet());
+        for (Map.Entry<String, List<ExecContextData.TaskWithState>> entry : vertices.entrySet()) {
+            boolean isOK = entry.getValue().stream().noneMatch(o->o.state!= EnumsApi.TaskExecState.OK);
             if (isOK) {
                 ItemWithStatusWithMapping item = prepared.get(entry.getKey());
                 storeResultVariables(zipDir, execContext.id, item);
@@ -477,9 +477,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.ok = true;
 
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.getAllTasksTopologically(ec);
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            if (taskVertex.execState==EnumsApi.TaskExecState.NONE || taskVertex.execState== EnumsApi.TaskExecState.IN_PROGRESS) {
+        List<ExecContextData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(ec);
+        for (ExecContextData.TaskWithState taskVertex : taskVertices) {
+            if (taskVertex.state==EnumsApi.TaskExecState.NONE || taskVertex.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                 continue;
             }
             storeStatusOfTask(bs, ec, taskVertex.taskId);

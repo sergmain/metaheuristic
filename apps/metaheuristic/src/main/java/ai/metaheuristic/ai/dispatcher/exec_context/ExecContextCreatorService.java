@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -186,7 +185,6 @@ public class ExecContextCreatorService {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);
-        params.graph = ConstsApi.EMPTY_GRAPH;
         params.processesGraph = ExecContextProcessGraphService.asString(sourceCodeGraph.processGraph);
         initVariables(sourceCodeGraph.variables, params.variables);
 

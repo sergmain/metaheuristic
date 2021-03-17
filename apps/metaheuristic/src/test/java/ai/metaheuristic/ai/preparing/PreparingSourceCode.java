@@ -527,5 +527,18 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return execContextGraphService.findLeafs(ecg);
     }
 
+    @Nullable
+    public EnumsApi.TaskExecState findTaskState(ExecContextImpl execContext, Long taskId) {
+        if (execContext.execContextTaskStateId==null) {
+            return EnumsApi.TaskExecState.NONE;
+        }
+        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        if (ects==null) {
+            return EnumsApi.TaskExecState.NONE;
+        }
+
+        return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
+    }
+
 
 }
