@@ -22,6 +22,9 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -73,6 +76,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("WeakerAccess")
 @Slf4j
 public abstract class PreparingSourceCode extends PreparingCore {
 
@@ -141,6 +145,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextTaskStateService execContextTaskStateService;
+
+    @Autowired
+    public ExecContextTaskStateCache execContextTaskStateCache;
 
     @Autowired
     public ExecContextTaskFinishingService execContextTaskFinishingService;
@@ -481,4 +488,17 @@ public abstract class PreparingSourceCode extends PreparingCore {
             }
         }
     }
+
+    public long getCountUnfinishedTasks(ExecContextImpl execContextForTest) {
+        if (execContextForTest.execContextTaskStateId==null) {
+            return 0;
+        }
+        ExecContextTaskState ects = execContextTaskStateCache.findById(execContextForTest.execContextTaskStateId);
+        if (ects==null) {
+            return 0;
+        }
+        return execContextTaskStateService.getCountUnfinishedTasks(ects);
+    }
+
+
 }

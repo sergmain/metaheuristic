@@ -14,12 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context_graph;
+package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,29 +29,30 @@ import org.springframework.stereotype.Service;
 /**
  * @author Serge
  * Date: 3/17/2021
- * Time: 11:09 AM
+ * Time: 12:55 PM
  */
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextGraphCache {
+public class ExecContextTaskStateCache {
 
-    private final ExecContextGraphRepository execContextGraphRepository;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextSyncService execContextSyncService;
 
-    public ExecContextGraph save(ExecContextGraph execContextGraph) {
+    public ExecContextTaskState save(ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
-        if (execContextGraph.execContextId==null) {
-            throw new IllegalStateException(" (execContextGraph.execContextId==null)");
+        if (execContextTaskState.execContextId==null) {
+            throw new IllegalStateException(" (execContextTaskState.execContextId==null)");
         }
-        execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
-        return execContextGraphRepository.save(execContextGraph);
+        execContextSyncService.checkWriteLockPresent(execContextTaskState.execContextId);
+        return execContextTaskStateRepository.save(execContextTaskState);
     }
 
     @Nullable
-    public ExecContextGraph findById(Long id) {
-        return execContextGraphRepository.findById(id).orElse(null);
+    public ExecContextTaskState findById(Long id) {
+        return execContextTaskStateRepository.findById(id).orElse(null);
     }
+
 }

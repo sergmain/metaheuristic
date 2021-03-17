@@ -94,7 +94,6 @@ public class ExperimentResultTopLevelService {
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExperimentResultUpgradeFroVersion1Service experimentResultUpgradeFroVersion1Service;
 
     private static class ParamFilter {
         String key;
@@ -279,27 +278,12 @@ public class ExperimentResultTopLevelService {
             return new ExperimentResultSimpleResult("#422.120 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
         }
 
-        ExperimentResultParamsYamlWithCache ypywc;
-        try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
-        } catch (YAMLException e) {
-            String es = "#422.130 Can't parse an experimentResult, error: " + e.toString();
-            log.error(es, e);
-            return new ExperimentResultSimpleResult(es);
-        }
-        if (ypywc.experimentResult.execContext == null) {
-            return new ExperimentResultSimpleResult("#422.150 experiment has broken ref to execContext, experimentId: " + experimentResultId);
-        }
-        if (ypywc.experimentResult.execContext.execContextId ==null ) {
-            return new ExperimentResultSimpleResult("#422.160 experiment wasn't startet yet, experimentId: " + experimentResultId);
-        }
-
         ExperimentResultSimpleResult result = new ExperimentResultSimpleResult();
         result.experimentResult = new ExperimentResultSimple();
-        result.experimentResult.code = ypywc.experimentResult.code;
-        result.experimentResult.name = ypywc.experimentResult.name;
-        result.experimentResult.description = ypywc.experimentResult.description;
-        result.experimentResult.createdOn = ypywc.experimentResult.createdOn;
+        result.experimentResult.code = experimentResult.code;
+        result.experimentResult.name = experimentResult.name;
+        result.experimentResult.description = experimentResult.description;
+        result.experimentResult.createdOn = experimentResult.createdOn;
         result.experimentResult.id = experimentResultId;
 
         return result;
@@ -384,8 +368,6 @@ public class ExperimentResultTopLevelService {
         final String newParams;
         switch(v.getActualVersion()) {
             case 1:
-                newParams = experimentResultUpgradeFroVersion1Service.upgrade(experimentResultId);
-                break;
             default:
                 newParams = params;
                 break;

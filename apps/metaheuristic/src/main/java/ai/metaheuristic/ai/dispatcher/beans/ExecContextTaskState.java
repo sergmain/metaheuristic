@@ -16,13 +16,16 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.lang.Nullable;
 
-import javax.persistence.Cacheable;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -37,4 +40,53 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextTaskState implements Serializable {
+    private static final long serialVersionUID = -8849182851275372257L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
+
+    @Version
+    public Integer version;
+
+    @Column(name = "EXEC_CONTEXT_ID")
+    public Long execContextId;
+
+    @NotBlank
+    @Column(name = "PARAMS")
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.ecpy =null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
+
+    @Transient
+    @JsonIgnore
+    @Nullable
+    private ExecContextTaskStateParamsYaml ecpy = null;
+
+    @JsonIgnore
+    public ExecContextTaskStateParamsYaml getExecContextTaskStateParamsYaml() {
+        if (ecpy ==null) {
+            synchronized (this) {
+                if (ecpy ==null) {
+                    ExecContextTaskStateParamsYaml temp = ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    ecpy = temp==null ? new ExecContextTaskStateParamsYaml() : temp;
+                }
+            }
+        }
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public void updateParams(ExecContextTaskStateParamsYaml wpy) {
+        setParams(ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    }
 }

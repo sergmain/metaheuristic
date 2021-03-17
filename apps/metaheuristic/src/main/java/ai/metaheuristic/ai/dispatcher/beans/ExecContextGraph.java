@@ -40,6 +40,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextGraph implements Serializable {
+    private static final long serialVersionUID = 1790345825460507592L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

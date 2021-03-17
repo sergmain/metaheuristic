@@ -80,7 +80,7 @@ public class TestGraph extends PreparingSourceCode {
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-            long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            long count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(1, count);
 
 
@@ -94,13 +94,13 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(4, count);
 
             List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
             assertEquals(1, leafs.size());
-            assertTrue(leafs.contains(new TaskVertex(4L, "4L", EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID)));
+            assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
             txSupportForTestingService.updateTaskExecState(execContextForTest.id, 1L, EnumsApi.TaskExecState.ERROR, null);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -117,7 +117,7 @@ public class TestGraph extends PreparingSourceCode {
             assertTrue(states.contains(EnumsApi.TaskExecState.SKIPPED));
             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 
-            count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            count = getCountUnfinishedTasks(execContextForTest);
             // there is one unfinished task which is mh.finish and which must me invoked in any case
             assertEquals(1, count);
 

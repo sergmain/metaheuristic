@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -83,7 +84,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-            long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            long count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(1, count);
 
 
@@ -107,7 +108,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(10, count);
 
             List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);

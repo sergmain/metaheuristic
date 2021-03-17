@@ -14,10 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -49,12 +56,22 @@ public class ExecContextTaskStateService {
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
 
+    public long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
+        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
+                .stream()
+                .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
+                .count();
+    }
+
     @Transactional
     public OperationStatusRest updateTaskExecStatesInGraph( Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
         taskSyncService.checkWriteLockPresent(taskId);
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
         taskExecStateService.updateTasksStateInDb(status);
         return status.status;

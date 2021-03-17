@@ -74,7 +74,7 @@ public class TestGraphEdges extends PreparingSourceCode {
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-            long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            long count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(1, count);
 
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id,List.of(1L),

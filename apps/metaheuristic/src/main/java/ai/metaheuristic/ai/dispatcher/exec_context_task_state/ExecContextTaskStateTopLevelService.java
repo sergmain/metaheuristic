@@ -14,11 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -49,6 +51,10 @@ public class ExecContextTaskStateTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
+
+    public Long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
+        return execContextTaskStateService.getCountUnfinishedTasks(execContextTaskState);
+    }
 
     @Async
     @EventListener
