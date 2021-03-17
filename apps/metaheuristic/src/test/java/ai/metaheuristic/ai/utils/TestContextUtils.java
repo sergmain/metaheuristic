@@ -37,7 +37,7 @@ public class TestContextUtils {
     @Test
     public void testGetWithoutSubContext() {
         assertEquals("123", ContextUtils.getWithoutSubContext("123"));
-        assertEquals("123", ContextUtils.getWithoutSubContext("12"+CONTEXT_SEPARATOR+"1"));
+        assertEquals("123", ContextUtils.getWithoutSubContext("123"+CONTEXT_SEPARATOR+"1"));
     }
 
     @Test

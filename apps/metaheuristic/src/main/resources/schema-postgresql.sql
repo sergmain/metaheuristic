@@ -267,7 +267,9 @@ CREATE TABLE MH_EXEC_CONTEXT
   COMPLETED_ON      bigint,
   PARAMS            TEXT NOT NULL,
   IS_VALID          BOOLEAN default false not null,
-  STATE             smallint not null default 0
+  STATE             smallint not null default 0,
+  CTX_GRAPH_ID      INT UNSIGNED default NULL,
+  CTX_TASK_STATE_ID INT UNSIGNED default NULL
 );
 
 CREATE INDEX MH_EXEC_CONTEXT_STATE_IDX
@@ -275,6 +277,22 @@ CREATE INDEX MH_EXEC_CONTEXT_STATE_IDX
 
 CREATE INDEX MH_EXEC_CONTEXT_ID_SOURCE_CODE_ID_IDX
     ON MH_EXEC_CONTEXT (ID, SOURCE_CODE_ID);
+
+CREATE TABLE mh_exec_context_graph
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    PARAMS            TEXT NOT NULL
+);
+
+CREATE TABLE mh_exec_context_task_state
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    PARAMS            TEXT NOT NULL
+);
 
 CREATE TABLE MH_EXPERIMENT_RESULT
 (

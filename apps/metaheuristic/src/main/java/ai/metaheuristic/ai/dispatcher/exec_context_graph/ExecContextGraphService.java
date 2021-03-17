@@ -14,16 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
@@ -62,27 +65,41 @@ import java.util.stream.Collectors;
 public class ExecContextGraphService {
 
     private static final String TASK_ID_STR_ATTR = "tids";
-    private static final String TASK_ID_STR_ATTR_OLD = "task_id_str";
     private static final String TASK_EXEC_STATE_ATTR = "state";
-    private static final String TASK_EXEC_STATE_ATTR_OLD = "task_exec_state";
     private static final String TASK_CONTEXT_ID_ATTR = "ctxid";
-    private static final String TASK_CONTEXT_ID_ATTR_OLD = "task_context_id";
 
-    private final ExecContextService execContextService;
+    private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextSyncService execContextSyncService;
+    private final EntityManager em;
 
-    private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
+    public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        if (execContextGraph.id!=null) {
+            execContextSyncService.checkWriteLockPresent(execContextGraph.id);
+        }
+        if (execContextGraph.id==null) {
+            final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
+            return ec;
+        }
+        else if (!em.contains(execContextGraph) ) {
+//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
+            throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContextGraph));
+        }
+        return execContextGraph;
+    }
 
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+    private void changeGraph(ExecContextGraph execContextGraph, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
+        TxUtils.checkTxExists();
+        execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
+
+        ExecContextGraphParamsYaml ecpy = execContextGraph.getExecContextGraphParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importProcessGraph(ecpy);
         try {
             callable.accept(graph);
         } finally {
             ecpy.graph = asString(graph);
-            execContext.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
-            execContextService.save(execContext);
+            execContextGraph.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
+            save(execContextGraph);
         }
     }
 
@@ -105,39 +122,39 @@ public class ExecContextGraphService {
     }
 
     private Set<ExecContextData.TaskVertex> readOnlyGraphSetOfTaskVertex(
-            ExecContextImpl execContext,
+            ExecContextGraph execContextGraph,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Set<ExecContextData.TaskVertex>> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         Set<ExecContextData.TaskVertex> apply = callable.apply(graph);
         return apply!=null ? apply : Set.of();
     }
 
     @Nullable
     private <T> T readOnlyGraphNullable(
-            ExecContextImpl execContext,
+            ExecContextGraph execContextGraph,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
     private <T> T readOnlyGraph(
-            ExecContextImpl execContext,
+            ExecContextGraph execContextGraph,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
-    private long readOnlyGraphLong(ExecContextImpl execContext, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+    private long readOnlyGraphLong(ExecContextGraph execContextGraph, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
-    private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextImpl execContext) {
-        return importProcessGraph(execContext.getExecContextParamsYaml());
+    private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextGraph execContextGraph) {
+        return importProcessGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
 
     @SneakyThrows
-    public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+    public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importProcessGraph(ExecContextGraphParamsYaml wpy) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(
                 ExecContextData.TaskVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
 
@@ -147,15 +164,12 @@ public class ExecContextGraphService {
         importer.addVertexAttributeConsumer(((vertex, attribute) -> {
             switch(vertex.getSecond()) {
                 case TASK_EXEC_STATE_ATTR:
-                case TASK_EXEC_STATE_ATTR_OLD:
                     vertex.getFirst().execState = EnumsApi.TaskExecState.valueOf(attribute.getValue());
                     break;
                 case TASK_ID_STR_ATTR:
-                case TASK_ID_STR_ATTR_OLD:
                     vertex.getFirst().taskIdStr = attribute.getValue();
                     break;
                 case TASK_CONTEXT_ID_ATTR:
-                case TASK_CONTEXT_ID_ATTR_OLD:
                     vertex.getFirst().taskContextId = attribute.getValue();
                     break;
                 case "ID":
@@ -174,14 +188,14 @@ public class ExecContextGraphService {
      * !!! This method doesn't return the current Id of Task and its new status. Must be changed by outside code.
      */
     @SuppressWarnings("StatementWithEmptyBody")
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(@Nullable ExecContextImpl execContext, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(@Nullable ExecContextGraph execContextGraph, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
-        if (execContext == null) {
+        if (execContextGraph == null) {
             return status;
         }
 
-        changeGraph(execContext, graph -> {
+        changeGraph(execContextGraph, graph -> {
             ExecContextData.TaskVertex tv = graph.vertexSet()
                     .stream()
                     .filter(o -> o.taskId.equals(taskId))
@@ -214,24 +228,24 @@ public class ExecContextGraphService {
         return status;
     }
 
-    public long getCountUnfinishedTasks(ExecContextImpl execContext) {
-        return readOnlyGraphLong(execContext, graph -> graph
+    public long getCountUnfinishedTasks(ExecContextGraph execContextGraph) {
+        return readOnlyGraphLong(execContextGraph, graph -> graph
                 .vertexSet()
                 .stream()
                 .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS || o.execState==EnumsApi.TaskExecState.CHECK_CACHE)
                 .count());
     }
 
-    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext, graph -> graph
+    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph, graph -> graph
                 .vertexSet()
                 .stream()
                 .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS || o.execState==EnumsApi.TaskExecState.CHECK_CACHE)
                 .collect(Collectors.toList()));
     }
 
-    public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext, graph -> {
+    public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph, graph -> {
             TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
 
             List<ExecContextData.TaskVertex> tasks = new ArrayList<>();
@@ -240,12 +254,12 @@ public class ExecContextGraphService {
         });
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextImpl execContext, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextGraph execContextGraph, Long taskId) {
         final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-        if (execContext==null) {
+        if (execContextGraph==null) {
             return withTaskList;
         }
-        changeGraph(execContext, graph -> {
+        changeGraph(execContextGraph, graph -> {
 
             Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
             set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
@@ -254,8 +268,8 @@ public class ExecContextGraphService {
         return withTaskList;
     }
 
-    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext, graph -> {
+    public List<ExecContextData.TaskVertex> findLeafs(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph, graph -> {
 
             try {
                 List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
@@ -270,8 +284,8 @@ public class ExecContextGraphService {
         });
     }
 
-    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
-        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDescendantsInternal(graph, taskId));
+    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDescendantsInternal(graph, taskId));
     }
 
     private Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -295,8 +309,8 @@ public class ExecContextGraphService {
         return descendants;
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
-        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
+    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDirectDescendantsInternal(graph, taskId));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -312,8 +326,8 @@ public class ExecContextGraphService {
         return descendants;
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
-        return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectAncestorsInternal(graph, vertex));
+    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
+        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
@@ -321,8 +335,8 @@ public class ExecContextGraphService {
         return ancestors;
     }
 
-    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext, boolean includeForCaching) {
-        return readOnlyGraph(execContext, graph -> {
+    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, boolean includeForCaching) {
+        return readOnlyGraph(execContextGraph, graph -> {
 
             log.debug("Start find a task for assigning");
             if (log.isDebugEnabled()) {
@@ -351,7 +365,7 @@ public class ExecContextGraphService {
                 return List.of(startVertex);
             }
 
-            log.debug("\tThe root vertex of execContext was already processes");
+            log.debug("\tThe root vertex of execContextGraph was already processes");
 
             // get all non-processed tasks
             Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
@@ -422,8 +436,8 @@ public class ExecContextGraphService {
         });
     }
 
-    public List<ExecContextData.TaskVertex> findAllRootVertices(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext,
+    public List<ExecContextData.TaskVertex> findAllRootVertices(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph,
                 graph -> graph.vertexSet().stream()
                         .filter( v -> graph.incomingEdgesOf(v).isEmpty() )
                         .collect(Collectors.toList()));
@@ -440,16 +454,16 @@ public class ExecContextGraphService {
         return true;
     }
 
-    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
-        return readOnlyGraph(execContext, graph -> {
+    public List<ExecContextData.TaskVertex> findAll(ExecContextGraph execContextGraph) {
+        return readOnlyGraph(execContextGraph, graph -> {
             List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
             return vertices;
         });
     }
 
     @Nullable
-    public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
-        return readOnlyGraphNullable(execContext, graph -> {
+    public ExecContextData.TaskVertex findVertex(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraphNullable(execContextGraph, graph -> {
             ExecContextData.TaskVertex vertex = graph.vertexSet()
                     .stream()
                     .filter(o -> o.taskId.equals(taskId))
@@ -460,8 +474,8 @@ public class ExecContextGraphService {
     }
 
     @SneakyThrows
-    public Map<String, List<ExecContextData.TaskVertex>> findVerticesByTaskContextIds(ExecContextImpl execContext, Collection<String> taskContextIds) {
-        return readOnlyGraph(execContext, graph -> {
+    public Map<String, List<ExecContextData.TaskVertex>> findVerticesByTaskContextIds(ExecContextGraph execContextGraph, Collection<String> taskContextIds) {
+        return readOnlyGraph(execContextGraph, graph -> {
             Map<String, List<ExecContextData.TaskVertex>> vertices = new HashMap<>();
             for (ExecContextData.TaskVertex v : graph.vertexSet()) {
                 if (!taskContextIds.contains(v.taskContextId)) {
@@ -473,8 +487,8 @@ public class ExecContextGraphService {
         });
     }
 
-    public void setStateForAllChildrenTasks(ExecContextImpl execContext, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
-        changeGraph(execContext, graph -> {
+    public void setStateForAllChildrenTasks(ExecContextGraph execContextGraph, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+        changeGraph(execContextGraph, graph -> {
             setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, state);
         });
     }
@@ -505,8 +519,8 @@ public class ExecContextGraphService {
         withTaskList.childrenTasks.addAll(setFiltered);
     }
 
-    public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
-        changeGraph(execContext, graph -> {
+    public OperationStatusRest addNewTasksToGraph(ExecContextGraph execContextGraph, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
+        changeGraph(execContextGraph, graph -> {
             List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
                     .stream()
                     .filter(o -> parentTaskIds.contains(o.taskId))
@@ -522,11 +536,11 @@ public class ExecContextGraphService {
     }
 
     @Nullable
-    public Void createEdges(@Nullable ExecContextImpl execContext, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
-        if (execContext==null) {
+    public Void createEdges(@Nullable ExecContextGraph execContextGraph, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+        if (execContextGraph==null) {
             return null;
         }
-        changeGraph(execContext, graph ->
+        changeGraph(execContextGraph, graph ->
                 graph.vertexSet().stream()
                         .filter(o -> lastIds.contains(o.taskId))
                         .forEach(parentV-> descendants.forEach(trgV -> graph.addEdge(parentV, trgV)))

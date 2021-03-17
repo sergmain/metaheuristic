@@ -13,11 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,17 +26,20 @@ import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
+/**
+ * @author Serge
+ * Date: 3/17/2021
+ * Time: 10:22 AM
+ */
 @Entity
-@Table(name = "MH_EXEC_CONTEXT")
+@Table(name = "MH_EXEC_CONTEXT_GRAPH")
 @Data
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class ExecContextImpl implements Serializable, ExecContext {
-    private static final long serialVersionUID = -8687758209537096490L;
+public class ExecContextGraph implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,20 +48,8 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Version
     public Integer version;
 
-    @Column(name = "SOURCE_CODE_ID")
-    public Long sourceCodeId;
-
-    // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
-    @Column(name = "COMPANY_ID")
-    public Long companyId;
-
-    @Column(name="CREATED_ON")
-    public long createdOn;
-
-    @Nullable
-    @Column(name="COMPLETED_ON")
-    public Long completedOn;
+    @Column(name = "EXEC_CONTEXT_ID")
+    public Long execContextId;
 
     @NotBlank
     @Column(name = "PARAMS")
@@ -75,24 +66,18 @@ public class ExecContextImpl implements Serializable, ExecContext {
         return params;
     }
 
-    @Column(name = "IS_VALID")
-    public boolean valid;
-
-    @Column(name = "STATE")
-    public int state;
-
     @Transient
     @JsonIgnore
     @Nullable
-    private ExecContextParamsYaml ecpy = null;
+    private ExecContextGraphParamsYaml ecpy = null;
 
     @JsonIgnore
-    public ExecContextParamsYaml getExecContextParamsYaml() {
+    public ExecContextGraphParamsYaml getExecContextGraphParamsYaml() {
         if (ecpy ==null) {
             synchronized (this) {
                 if (ecpy ==null) {
-                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+                    ExecContextGraphParamsYaml temp = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    ecpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
                 }
             }
         }
@@ -100,7 +85,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextParamsYaml wpy) {
-        setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    public void updateParams(ExecContextGraphParamsYaml wpy) {
+        setParams(ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
     }
 }

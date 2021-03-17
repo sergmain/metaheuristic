@@ -263,15 +263,17 @@ CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
 
 CREATE TABLE mh_exec_context
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    SOURCE_CODE_ID  INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    NOT NULL,
-    CREATED_ON      bigint NOT NULL,
-    COMPLETED_ON    bigint,
-    PARAMS          LONGTEXT NOT NULL,
-    IS_VALID        BOOLEAN  default false not null,
-    STATE           smallint not null default 0
+    ID                      INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                 INT UNSIGNED    NOT NULL,
+    SOURCE_CODE_ID          INT UNSIGNED    NOT NULL,
+    COMPANY_ID              INT UNSIGNED    NOT NULL,
+    CREATED_ON              bigint NOT NULL,
+    COMPLETED_ON            bigint,
+    PARAMS                  LONGTEXT NOT NULL,
+    IS_VALID                BOOLEAN  default false not null,
+    STATE                   smallint not null default 0,
+    CTX_GRAPH_ID            INT UNSIGNED default NULL,
+    CTX_TASK_STATE_ID       INT UNSIGNED default NULL
 );
 
 CREATE INDEX mh_exec_context_state_idx
@@ -279,6 +281,22 @@ CREATE INDEX mh_exec_context_state_idx
 
 CREATE INDEX mh_exec_context_id_source_code_id_idx
     ON mh_exec_context (ID, SOURCE_CODE_ID);
+
+CREATE TABLE mh_exec_context_graph
+(
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    PARAMS              LONGTEXT NOT NULL
+);
+
+CREATE TABLE mh_exec_context_task_state
+(
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    PARAMS              LONGTEXT NOT NULL
+);
 
 CREATE TABLE mh_experiment_result
 (

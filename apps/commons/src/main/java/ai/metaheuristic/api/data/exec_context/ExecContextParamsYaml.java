@@ -172,7 +172,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public final VariableDeclaration variables = new VariableDeclaration();
 
     // this is a graph of processes for runtime phase
-    public String graph = ConstsApi.EMPTY_GRAPH;
+    public String graph1 = ConstsApi.EMPTY_GRAPH;
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
