@@ -302,14 +302,6 @@ public class ExecContextGraphService {
         return status;
     }
 
-    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextGraph execContextGraph) {
-        return readOnlyGraph(execContextGraph, graph -> graph
-                .vertexSet()
-                .stream()
-                .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS || o.execState==EnumsApi.TaskExecState.CHECK_CACHE)
-                .collect(Collectors.toList()));
-    }
-
     public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextGraph execContextGraph) {
         return readOnlyGraph(execContextGraph, graph -> {
             TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
@@ -320,15 +312,14 @@ public class ExecContextGraphService {
         });
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextGraph execContextGraph, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(
+            ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId) {
         final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-        if (execContextGraph==null) {
-            return withTaskList;
-        }
-        changeGraph(execContextGraph, graph -> {
+
+        changeState(execContextGraph, execContextTaskState, (graph, stateParamsYaml) -> {
 
             Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-            set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
+            set.forEach( t-> stateParamsYaml.states.put(t.taskId, EnumsApi.TaskExecState.NONE));
             withTaskList.childrenTasks.addAll(set);
         });
         return withTaskList;

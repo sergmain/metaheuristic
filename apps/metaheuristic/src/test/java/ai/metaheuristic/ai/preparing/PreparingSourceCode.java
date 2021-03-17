@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
@@ -148,6 +150,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextTaskStateCache execContextTaskStateCache;
+
+    @Autowired
+    public ExecContextGraphCache execContextGraphCache;
 
     @Autowired
     public ExecContextTaskFinishingService execContextTaskFinishingService;
@@ -489,15 +494,37 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
     }
 
-    public long getCountUnfinishedTasks(ExecContextImpl execContextForTest) {
-        if (execContextForTest.execContextTaskStateId==null) {
+    public long getCountUnfinishedTasks(ExecContextImpl execContext) {
+        if (execContext.execContextTaskStateId==null) {
             return 0;
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContextForTest.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
         if (ects==null) {
             return 0;
         }
         return execContextTaskStateService.getCountUnfinishedTasks(ects);
+    }
+
+    public List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {
+        if (execContext.execContextTaskStateId==null) {
+            return List.of();
+        }
+        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        if (ects==null) {
+            return List.of();
+        }
+        return execContextTaskStateService.getUnfinishedTaskVertices(ects);
+    }
+
+    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
+        if (execContext.execContextGraphId==null) {
+            return List.of();
+        }
+        ExecContextGraph ecg = execContextGraphCache.findById(execContext.execContextGraphId);
+        if (ecg==null) {
+            return List.of();
+        }
+        return execContextGraphService.findLeafs(ecg);
     }
 
 

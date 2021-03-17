@@ -16,15 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -37,6 +34,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -61,6 +62,14 @@ public class ExecContextTaskStateService {
                 .stream()
                 .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
                 .count();
+    }
+
+    public List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
+        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
+                .stream()
+                .filter(o -> o.getValue()==EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 
     @Transactional

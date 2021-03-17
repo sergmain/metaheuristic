@@ -171,13 +171,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        final List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-        assertEquals(3, taskVertices.size());
+        final List<Long> taskIds = getUnfinishedTaskVertices(execContextForTest);
+        assertEquals(3, taskIds.size());
 
         TaskHolder finishTask = new TaskHolder(), permuteTask = new TaskHolder(), aggregateTask = new TaskHolder();
 
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
+        for (Long taskId : taskIds) {
+            TaskImpl tempTask = taskRepository.findById(taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
             assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
@@ -232,14 +232,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode + ", console: " + functionExec.exec.console);
 
             verifyGraphIntegrity();
-            taskVertices.clear();
-            taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
+            taskIds.clear();
+            taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
 
             // there are 3 'test.fit.function:1.0' tasks,
             // 3 'test.predict.function:1.0',
             // 1 'mh.aggregate-internal-context'  task,
             // and 1 'mh.finish' task
-            assertEquals(14, taskVertices.size());
+            assertEquals(14, taskIds.size());
 
             Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.task.id);
             assertEquals(14, descendants.size());
@@ -255,11 +255,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
 
         verifyGraphIntegrity();
-        taskVertices.clear();
-        taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
+        taskIds.clear();
+        taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
         // 1 'mh.aggregate-internal-context'  task,
         // and 1 'mh.finish' task
-        assertEquals(2, taskVertices.size());
+        assertEquals(2, taskIds.size());
 
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         DispatcherCommParamsYaml.AssignedTask t =
@@ -273,9 +273,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             verifyGraphIntegrity();
-            taskVertices.clear();
-            taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
-            assertEquals(1, taskVertices.size());
+            taskIds.clear();
+            taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
+            assertEquals(1, taskIds.size());
             return null;
         });
 
@@ -289,9 +289,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
-            taskVertices.clear();
-            taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
-            assertEquals(0, taskVertices.size());
+            taskIds.clear();
+            taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
+            assertEquals(0, taskIds.size());
 
             ExecContext execContext = execContextService.findById(execContextForTest.id);
             assertNotNull(execContext);

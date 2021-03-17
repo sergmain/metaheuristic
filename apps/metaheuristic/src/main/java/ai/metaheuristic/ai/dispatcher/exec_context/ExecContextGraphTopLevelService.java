@@ -68,8 +68,4 @@ public class ExecContextGraphTopLevelService {
         return execContextGraphService.findAllForAssigning(execContext, includeForCaching);
     }
 
-    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
-        return execContextGraphService.getUnfinishedTaskVertices(execContext);
-    }
-
 }
