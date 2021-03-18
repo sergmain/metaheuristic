@@ -71,10 +71,7 @@ import org.springframework.lang.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -525,6 +522,17 @@ public abstract class PreparingSourceCode extends PreparingCore {
             return List.of();
         }
         return execContextGraphService.findLeafs(ecg);
+    }
+
+    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
+        if (execContext.execContextGraphId==null) {
+            return Set.of();
+        }
+        ExecContextGraph ecg = execContextGraphCache.findById(execContext.execContextGraphId);
+        if (ecg==null) {
+            return Set.of();
+        }
+        return execContextGraphService.findDirectAncestors(ecg, vertex);
     }
 
     @Nullable

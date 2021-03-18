@@ -187,14 +187,6 @@ public class ExecContextGraphService {
         return writer.toString();
     }
 
-    private Set<ExecContextData.TaskVertex> readOnlyGraphSetOfTaskVertex(
-            ExecContextGraph execContextGraph,
-            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Set<ExecContextData.TaskVertex>> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
-        Set<ExecContextData.TaskVertex> apply = callable.apply(graph);
-        return apply!=null ? apply : Set.of();
-    }
-
     @Nullable
     private <T> T readOnlyGraphNullable(
             ExecContextGraph execContextGraph,
@@ -359,8 +351,32 @@ public class ExecContextGraphService {
         });
     }
 
-    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextGraph execContextGraph, Long taskId) {
-        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDescendantsInternal(graph, taskId));
+    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
+        ExecContextGraph execContextGraph = prepareReadOnlyExecContextGraph(execContext);
+        return findDescendants(execContextGraph, taskId);
+    }
+
+    private Set<ExecContextData.TaskVertex> findDescendants(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraph(execContextGraph, graph -> {
+            final Set<ExecContextData.TaskVertex> descendantsInternal = findDescendantsInternal(graph, taskId);
+            return descendantsInternal;
+        });
+    }
+
+    public Set<ExecContextData.TaskWithState> findDescendantsWithState(ExecContextImpl execContext, Long taskId) {
+        ExecContextGraph execContextGraph = prepareReadOnlyExecContextGraph(execContext);
+        ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
+        return findDescendantsWithState(execContextGraph, execContextTaskState, taskId);
+    }
+
+    private Set<ExecContextData.TaskWithState> findDescendantsWithState(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId) {
+        return readOnlyGraph(execContextGraph, graph -> {
+            final Set<ExecContextData.TaskVertex> descendantsInternal = findDescendantsInternal(graph, taskId);
+            Set<ExecContextData.TaskWithState> set = descendantsInternal.stream()
+                    .map(o-> new ExecContextData.TaskWithState(o.taskId, execContextTaskState.getExecContextTaskStateParamsYaml().states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE)))
+                    .collect(Collectors.toSet());
+            return set;
+        });
     }
 
     private Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -384,8 +400,13 @@ public class ExecContextGraphService {
         return descendants;
     }
 
+    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
+        ExecContextGraph execContextGraph = prepareReadOnlyExecContextGraph(execContext);
+        return findDirectDescendants(execContextGraph, taskId);
+    }
+
     public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextGraph execContextGraph, Long taskId) {
-        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDirectDescendantsInternal(graph, taskId));
+        return readOnlyGraph(execContextGraph, graph -> findDirectDescendantsInternal(graph, taskId));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
@@ -402,12 +423,18 @@ public class ExecContextGraphService {
     }
 
     public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
-        return readOnlyGraphSetOfTaskVertex(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
+        return readOnlyGraph(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
     }
 
     private Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
         Set<ExecContextData.TaskVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
         return ancestors;
+    }
+
+    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext, boolean includeForCaching) {
+        ExecContextGraph execContextGraph = prepareReadOnlyExecContextGraph(execContext);
+        ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
+        return findAllForAssigning(execContextGraph, execContextTaskState, includeForCaching);
     }
 
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
@@ -474,7 +501,7 @@ public class ExecContextGraphService {
                 if (log.isDebugEnabled()) {
                     log.debug("\tfound tasks for assigning:");
                     StringBuilder sb = new StringBuilder();
-                    vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, stateParamsYaml.states.getOrDefault(v.taskId, EnumsApi.TaskExecState.NONE))));
+                    vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, stateParamsYaml.states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE))));
                     log.debug("\t\t" + sb.toString());
                 }
                 return vertices;
@@ -612,23 +639,35 @@ public class ExecContextGraphService {
         //noinspection SimplifiableConditionalExpression
         Set<ExecContextData.TaskVertex> setFiltered = set.stream()
                 .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getWithoutSubContext(tv.taskContextId).startsWith(context)))
-                .filter( tv-> tv.execState!=state)
                 .collect(Collectors.toSet());
 
-        setFiltered.forEach( tv-> tv.execState = state);
+        setFiltered.forEach( tv-> stateParamsYaml.states.put(tv.taskId, state));
 
         withTaskList.childrenTasks.addAll(setFiltered);
     }
 
-    public OperationStatusRest addNewTasksToGraph(ExecContextGraph execContextGraph, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
-        changeGraph(execContextGraph, graph -> {
+    public OperationStatusRest addNewTasksToGraph(
+            ExecContextImpl execContext, List<Long> parentTaskIds,
+            List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
+
+        ExecContextGraph execContextGraph = prepareExecContextGraph(execContext);
+        ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
+        return addNewTasksToGraph(execContextGraph, execContextTaskState, parentTaskIds, taskIds, state);
+    }
+
+    public OperationStatusRest addNewTasksToGraph(
+            ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, List<Long> parentTaskIds,
+            List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
+
+        changeGraphWithState(execContextGraph, execContextTaskState, (graph, stateParamsYaml) -> {
             List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
                     .stream()
                     .filter(o -> parentTaskIds.contains(o.taskId))
                     .collect(Collectors.toList());
 
             taskIds.forEach(taskWithContext -> {
-                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, state, taskWithContext.taskContextId );
+                stateParamsYaml.states.put(taskWithContext.taskId, state);
+                final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId );
                 graph.addVertex(v);
                 vertices.forEach(parentV -> graph.addEdge(parentV, v) );
             });

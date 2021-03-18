@@ -79,42 +79,42 @@ public class ExecContextReconciliationService {
         if (rootVertices.isEmpty()) {
             return status;
         }
-        Set<ExecContextData.TaskVertex> vertices = execContextGraphService.findDescendants(execContext, rootVertices.get(0).taskId);
+        Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(execContext, rootVertices.get(0).taskId);
 
         final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
 
-        for (ExecContextData.TaskVertex tv : vertices) {
+        for (ExecContextData.TaskWithState tv : vertices) {
 
             TaskApiData.TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {
                 status.isNullState.set(true);
             }
-            else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
+            else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.state.value!=taskState.execState) {
                 TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
                 if (allocatedTask==null) {
-                    if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value && tv.execState== EnumsApi.TaskExecState.NONE) {
+                    if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value && tv.state== EnumsApi.TaskExecState.NONE) {
                         log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state);
                         status.taskForResettingIds.add(tv.taskId);
                     }
-                    else if (taskState.execState==EnumsApi.TaskExecState.NONE.value && tv.execState== EnumsApi.TaskExecState.CHECK_CACHE) {
+                    else if (taskState.execState==EnumsApi.TaskExecState.NONE.value && tv.state== EnumsApi.TaskExecState.CHECK_CACHE) {
                         // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState);
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                 }
                 else if (!allocatedTask.assigned) {
-                    if (taskState.execState==EnumsApi.TaskExecState.NONE.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
+                    if (taskState.execState==EnumsApi.TaskExecState.NONE.value &&  tv.state==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
                         // #307.080 Found different states for task, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else {
                         log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                     }
                 }
                 else if ((taskState.execState==EnumsApi.TaskExecState.OK.value ||
@@ -124,18 +124,18 @@ public class ExecContextReconciliationService {
                     // ---> This is a normal situation
                     // statuses of tasks are copying from taskQueue when all tasks in a group will be finished. so there is a period of time when the state is as this
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.state==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                     // Found different states for task , db: IN_PROGRESS, graph: CHECK_CACHE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.execState==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.state==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                     // #307.120 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
                 else {
                     // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
-                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.execState, allocatedTask.state);
+                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                 }
             }
         }

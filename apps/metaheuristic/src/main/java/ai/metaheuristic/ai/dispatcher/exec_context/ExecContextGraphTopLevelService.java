@@ -56,10 +56,6 @@ public class ExecContextGraphTopLevelService {
         return execContextGraphService.findDirectDescendants(execContext, taskId);
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
-        return execContextGraphService.findDirectAncestors(execContext, vertex);
-    }
-
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         return findAllForAssigning(execContext, false);
     }

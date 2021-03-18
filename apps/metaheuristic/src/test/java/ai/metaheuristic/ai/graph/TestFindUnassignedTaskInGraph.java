@@ -116,7 +116,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             assertEquals(1, leafs.size());
 
-            Set<ExecContextData.TaskVertex> ancestors = execContextGraphTopLevelService.findDirectAncestors(execContextForTest, leafs.get(0));
+            Set<ExecContextData.TaskVertex> ancestors = findDirectAncestors(execContextForTest, leafs.get(0));
 
             assertEquals(9, ancestors.size());
             assertTrue(ancestors.contains(new ExecContextData.TaskVertex(1L, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID)));
