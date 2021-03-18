@@ -122,7 +122,7 @@ public class TaskExecStateService {
                 t -> taskSyncService.getWithSyncNullable(t.taskId, () -> {
                     TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                     if (task != null) {
-                        changeTaskState(task, t.execState);
+                        changeTaskState(task, t.state);
                     } else {
                         log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
                     }

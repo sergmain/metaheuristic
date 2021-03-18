@@ -22,8 +22,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Serge
@@ -35,7 +35,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ExecContextOperationStatusWithTaskList {
     public OperationStatusRest status;
-    public List<ExecContextData.TaskVertex> childrenTasks = new ArrayList<>();
+    public Set<ExecContextData.TaskWithState> childrenTasks = new HashSet<>();
 
     public ExecContextOperationStatusWithTaskList(OperationStatusRest status) {
         this.status = status;

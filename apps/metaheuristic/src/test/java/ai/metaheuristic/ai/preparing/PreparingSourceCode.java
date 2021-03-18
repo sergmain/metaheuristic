@@ -548,5 +548,17 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
     }
 
+    public List<EnumsApi.TaskExecState> findTaskState(ExecContextImpl execContext, Long taskId) {
+        if (execContext.execContextTaskStateId==null) {
+            return EnumsApi.TaskExecState.NONE;
+        }
+        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        if (ects==null) {
+            return EnumsApi.TaskExecState.NONE;
+        }
+
+        return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
+    }
+
 
 }

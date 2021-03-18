@@ -44,6 +44,7 @@ public class ExecContextData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode(of="taskId")
     public static class TaskWithState {
         public Long taskId;
         public EnumsApi.TaskExecState state;

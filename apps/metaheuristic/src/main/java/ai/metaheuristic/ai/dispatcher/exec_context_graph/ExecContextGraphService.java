@@ -337,8 +337,10 @@ public class ExecContextGraphService {
         changeState(execContextGraph, execContextTaskState, (graph, stateParamsYaml) -> {
 
             Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-            set.forEach( t-> stateParamsYaml.states.put(t.taskId, EnumsApi.TaskExecState.NONE));
-            withTaskList.childrenTasks.addAll(set);
+            set.stream()
+                    .peek( t-> stateParamsYaml.states.put(t.taskId, EnumsApi.TaskExecState.NONE))
+                    .map(o->new ExecContextData.TaskWithState(taskId, EnumsApi.TaskExecState.NONE))
+                    .collect(Collectors.toCollection(()->withTaskList.childrenTasks));;
         });
         return withTaskList;
     }
@@ -655,9 +657,10 @@ public class ExecContextGraphService {
                 .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getWithoutSubContext(tv.taskContextId).startsWith(context)))
                 .collect(Collectors.toSet());
 
-        setFiltered.forEach( tv-> stateParamsYaml.states.put(tv.taskId, state));
-
-        withTaskList.childrenTasks.addAll(setFiltered);
+        setFiltered.stream()
+                .peek( t-> stateParamsYaml.states.put(t.taskId, state))
+                .map(o->new ExecContextData.TaskWithState(taskId, state))
+                .collect(Collectors.toCollection(()->withTaskList.childrenTasks));;
     }
 
     public OperationStatusRest addNewTasksToGraph(
