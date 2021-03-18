@@ -111,7 +111,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(10, count);
 
-            List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+            List<ExecContextData.TaskVertex> leafs = findLeafs(execContextForTest);
 
 
             assertEquals(1, leafs.size());

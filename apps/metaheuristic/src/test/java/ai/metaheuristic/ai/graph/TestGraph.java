@@ -97,7 +97,7 @@ public class TestGraph extends PreparingSourceCode {
             count = getCountUnfinishedTasks(execContextForTest);
             assertEquals(4, count);
 
-            List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+            List<TaskVertex> leafs = findLeafs(execContextForTest);
 
             assertEquals(1, leafs.size());
             assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));

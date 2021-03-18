@@ -64,7 +64,6 @@ public class ExecContextReconciliationService {
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
 

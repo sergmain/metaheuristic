@@ -44,10 +44,6 @@ public class ExecContextGraphTopLevelService {
         return execContextGraphService.findAll(execContext);
     }
 
-    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
-        return execContextGraphService.findLeafs(execContext);
-    }
-
     public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
         return execContextGraphService.findDescendants(execContext, taskId);
     }

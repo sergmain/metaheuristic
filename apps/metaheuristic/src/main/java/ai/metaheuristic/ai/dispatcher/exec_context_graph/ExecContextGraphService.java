@@ -93,19 +93,20 @@ public class ExecContextGraphService {
         return execContextGraph;
     }
 
+    @SuppressWarnings("unused")
     public void save(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
             execContextSyncService.checkWriteLockPresent(execContextGraph.id);
         }
         if (execContextGraph.id==null) {
-            final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
+            final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
         }
         else if (!em.contains(execContextGraph) ) {
             throw new IllegalStateException(S.f("#705.023 Bean %s isn't managed by EntityManager", execContextGraph));
         }
         if (execContextTaskState.id==null) {
-            final ExecContextTaskState ec = execContextTaskStateCache.save(execContextTaskState);
+            final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
         }
         else if (!em.contains(execContextTaskState) ) {
             throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
@@ -320,6 +321,13 @@ public class ExecContextGraphService {
             });
             return tasks;
         });
+    }
+
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(
+            ExecContextImpl execContext, Long taskId) {
+        ExecContextGraph execContextGraph = prepareExecContextGraph(execContext);
+        ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
+        return updateGraphWithResettingAllChildrenTasks(execContextGraph, execContextTaskState, taskId);
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(
@@ -613,6 +621,12 @@ public class ExecContextGraphService {
             }
             return vertices;
         });
+    }
+
+    public void setStateForAllChildrenTasks(ExecContextImpl execContext, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+        ExecContextGraph execContextGraph = prepareExecContextGraph(execContext);
+        ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
+        setStateForAllChildrenTasks(execContextGraph, execContextTaskState, taskId, withTaskList, state);
     }
 
     public void setStateForAllChildrenTasks(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
