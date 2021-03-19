@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.exec_context_task_state;
 
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
@@ -30,7 +28,7 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class ExecContextTaskStateParamsYamlUtilsV1
         extends AbstractParamsYamlUtils<
-        ExecContextGraphParamsYamlV1, ExecContextGraphParamsYaml, Void,
+        ExecContextTaskStateParamsYamlV1, ExecContextTaskStateParamsYaml, Void,
         Void, Void, Void> {
 
     @Override
@@ -41,14 +39,14 @@ public class ExecContextTaskStateParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExecContextGraphParamsYamlV1.class);
+        return YamlUtils.init(ExecContextTaskStateParamsYamlV1.class);
     }
 
     @NonNull
     @Override
-    public ExecContextGraphParamsYaml upgradeTo(@NonNull ExecContextGraphParamsYamlV1 v1) {
-        ExecContextGraphParamsYaml t = new ExecContextGraphParamsYaml();
-        t.graph = v1.graph;
+    public ExecContextTaskStateParamsYaml upgradeTo(@NonNull ExecContextTaskStateParamsYamlV1 v1) {
+        ExecContextTaskStateParamsYaml t = new ExecContextTaskStateParamsYaml();
+        t.states.putAll(v1.states);
         return t;
     }
 
@@ -69,14 +67,14 @@ public class ExecContextTaskStateParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExecContextGraphParamsYamlV1 yaml) {
+    public String toString(@NonNull ExecContextTaskStateParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ExecContextGraphParamsYamlV1 to(@NonNull String s) {
-        final ExecContextGraphParamsYamlV1 p = getYaml().load(s);
+    public ExecContextTaskStateParamsYamlV1 to(@NonNull String s) {
+        final ExecContextTaskStateParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 }

@@ -80,7 +80,7 @@ public class ExecContextGraphService {
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContextGraph.id);
+            execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
@@ -97,7 +97,7 @@ public class ExecContextGraphService {
     public void save(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContextGraph.id);
+            execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
@@ -261,6 +261,7 @@ public class ExecContextGraphService {
         if (execContext.execContextTaskStateId==null || (execContextTaskState = execContextTaskStateCache.findById(execContext.execContextTaskStateId))==null) {
             execContextTaskState = new ExecContextTaskState();
             execContextTaskState.execContextId = execContext.id;
+            execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
             execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
             execContext.execContextTaskStateId = execContextTaskState.id;
         }
@@ -704,6 +705,7 @@ public class ExecContextGraphService {
         if (execContext.execContextGraphId == null || (execContextGraph = execContextGraphCache.findById(execContext.execContextGraphId)) == null) {
             execContextGraph = new ExecContextGraph();
             execContextGraph.execContextId = execContext.id;
+            execContextGraph.updateParams(new ExecContextGraphParamsYaml());
             execContextGraph = execContextGraphCache.save(execContextGraph);
             execContext.execContextGraphId = execContextGraph.id;
         }
@@ -711,8 +713,6 @@ public class ExecContextGraphService {
     }
 
     public ExecContextGraph prepareReadOnlyExecContextGraph(ExecContextImpl execContext) {
-        TxUtils.checkTxNotExists();
-
         ExecContextGraph execContextGraph;
         if (execContext.execContextGraphId == null || (execContextGraph = execContextGraphCache.findById(execContext.execContextGraphId)) == null) {
             execContextGraph = new ExecContextGraph();

@@ -173,9 +173,6 @@ public class ExecContextParamsYamlV2 implements BaseParams {
     public final List<ProcessV2> processes = new ArrayList<>();
     public final VariableDeclarationV2 variables = new VariableDeclarationV2();
 
-    // this is a graph of processes for runtime phase
-    public String graph = ConstsApi.EMPTY_GRAPH;
-
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
 

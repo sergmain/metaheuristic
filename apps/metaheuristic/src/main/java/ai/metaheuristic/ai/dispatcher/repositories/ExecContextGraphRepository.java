@@ -29,4 +29,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 @Profile("dispatcher")
 public interface ExecContextGraphRepository extends CrudRepository<ExecContextGraph, Long> {
+
 }

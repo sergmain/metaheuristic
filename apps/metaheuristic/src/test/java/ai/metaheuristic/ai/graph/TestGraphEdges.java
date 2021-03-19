@@ -88,9 +88,9 @@ public class TestGraphEdges extends PreparingSourceCode {
 
             assertEquals(3, leafs.size());
 
-            assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, 21L, EnumsApi.TaskExecState.NONE, "123###1")));
-            assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, 22L, EnumsApi.TaskExecState.NONE, "123###1")));
-            assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, 23L, EnumsApi.TaskExecState.NONE, "123###1")));
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, "123###1")));
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, "123###1")));
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, "123###1")));
 
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
                     List.of(new TaskApiData.TaskWithContext(311L, "123###1"),

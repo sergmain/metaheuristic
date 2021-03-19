@@ -28,10 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
@@ -69,7 +66,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -169,6 +165,12 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired
     public ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
 
+    @Autowired
+    public ExecContextGraphRepository execContextGraphRepository;
+
+    @Autowired
+    public ExecContextTaskStateRepository execContextTaskStateRepository;
+
     public SourceCodeImpl sourceCode = null;
     public Function f1 = null;
     public Function f2 = null;
@@ -196,7 +198,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public static final String GLOBAL_TEST_VARIABLE = "global-test-variable";
 
     @BeforeEach
-    public void beforePreparingSourceCode() throws IOException {
+    public void beforePreparingSourceCode() {
         assertTrue(globals.isUnitTesting);
         assertNotSame(globals.assetMode, EnumsApi.DispatcherAssetMode.replicated);
 
@@ -431,12 +433,24 @@ public abstract class PreparingSourceCode extends PreparingCore {
                 try {
                     execContextRepository.deleteById(execContextForTest.getId());
                 } catch (Throwable th) {
-                    log.error("Error while workbookRepository.deleteById()", th);
+                    log.error("Error while execContextRepository.deleteById()", th);
                 }
             }
-            assertDoesNotThrow(() -> {
-                taskRepository.deleteByExecContextId(execContextForTest.getId());
-            });
+            if (execContextForTest.execContextGraphId!=null) {
+                try {
+                    execContextGraphRepository.deleteById(execContextForTest.execContextGraphId);
+                } catch (Throwable th) {
+                    log.error("Error while execContextGraphRepository.deleteById()", th);
+                }
+            }
+            if (execContextForTest.execContextTaskStateId!=null) {
+                try {
+                    execContextTaskStateRepository.deleteById(execContextForTest.execContextTaskStateId);
+                } catch (Throwable th) {
+                    log.error("Error while execContextTaskStateRepository.deleteById()", th);
+                }
+            }
+            taskRepository.deleteByExecContextId(execContextForTest.getId());
         }
         try {
             globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
@@ -548,16 +562,16 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
     }
 
-    public List<EnumsApi.TaskExecState> findTaskState(ExecContextImpl execContext, Long taskId) {
+    public Set<EnumsApi.TaskExecState> findTaskStates(ExecContextImpl execContext) {
         if (execContext.execContextTaskStateId==null) {
-            return EnumsApi.TaskExecState.NONE;
+            return Set.of();
         }
         ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
         if (ects==null) {
-            return EnumsApi.TaskExecState.NONE;
+            return Set.of();
         }
 
-        return ects.getExecContextTaskStateParamsYaml().states.getOrDefault(taskId, EnumsApi.TaskExecState.NONE);
+        return new HashSet<>(ects.getExecContextTaskStateParamsYaml().states.values());
     }
 
 

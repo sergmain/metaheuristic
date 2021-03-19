@@ -54,7 +54,6 @@ public class ExecContextParamsYamlUtilsV2
         // so just copying of graph field is Ok
         t.clean = v1.clean;
         t.sourceCodeUid = v1.sourceCodeUid;
-        t.graph = v1.graph;
         t.processesGraph = v1.processesGraph;
         v1.processes.stream().map(ExecContextParamsYamlUtilsV2::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v1.variables, t.variables);

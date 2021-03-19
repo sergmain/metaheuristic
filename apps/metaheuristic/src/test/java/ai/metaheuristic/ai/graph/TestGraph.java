@@ -38,7 +38,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -110,7 +109,7 @@ public class TestGraph extends PreparingSourceCode {
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
+            Set<EnumsApi.TaskExecState> states = findTaskStates(execContextForTest);
             assertEquals(3, states.size());
             // there are 'ERROR' state for 1st task and NONE for the other two
             assertTrue(states.contains(EnumsApi.TaskExecState.ERROR));
@@ -128,7 +127,7 @@ public class TestGraph extends PreparingSourceCode {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             // there is only 'NONE' exec state
-            states = txSupportForTestingService.findAllWithTx(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
+            states = findTaskStates(execContextForTest);
             assertEquals(1, states.size());
             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
             return null;

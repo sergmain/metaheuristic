@@ -21,8 +21,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
@@ -93,7 +91,6 @@ public class ExperimentResultTopLevelService {
 
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static class ParamFilter {
         String key;
@@ -350,10 +347,9 @@ public class ExperimentResultTopLevelService {
 
         ExperimentInfo experimentInfoResult = new ExperimentInfo();
         experimentInfoResult.features = List.of();
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         experimentInfoResult.features = ypywc.experimentResult.features
                 .stream()
-                .map(e -> asExperimentFeatureData(e, taskVertices, ypywc.experimentResult.taskFeatures)).collect(Collectors.toList());
+                .map(e -> asExperimentFeatureData(e, ypywc.experimentResult.taskFeatures)).collect(Collectors.toList());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -424,7 +420,6 @@ public class ExperimentResultTopLevelService {
 
     public static ExperimentFeatureData asExperimentFeatureData(
             @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
-            List<ExecContextData.TaskVertex> taskVertices,
             List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
 
         final ExperimentFeatureData featureData = new ExperimentFeatureData();
@@ -438,30 +433,7 @@ public class ExperimentResultTopLevelService {
         BeanUtils.copyProperties(experimentFeature, featureData, "variables");
         featureData.variables.addAll(experimentFeature.variables);
         featureData.maxValues = experimentFeature.maxValues;
-
-        List<ExperimentResultParamsYaml.ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
-
-        Set<EnumsApi.TaskExecState> statuses = taskVertices
-                .stream()
-                .filter(t -> etfs
-                        .stream()
-                        .filter(etf-> etf.taskId.equals(t.taskId))
-                        .findFirst()
-                        .orElse(null) !=null ).map(o->o.execState)
-                .collect(Collectors.toSet());
-
-        FeatureExecStatus execStatus = statuses.isEmpty() ? FeatureExecStatus.empty : FeatureExecStatus.unknown;
-        if (statuses.contains(EnumsApi.TaskExecState.OK)) {
-            execStatus = FeatureExecStatus.finished;
-        }
-        if (statuses.contains(EnumsApi.TaskExecState.ERROR)) {
-            execStatus = FeatureExecStatus.finished_with_errors;
-        }
-        if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
-            execStatus = FeatureExecStatus.processing;
-        }
-        // todo 202-08-16 do we need to handle a 'SKIPPED' status here?
-        featureData.execStatusAsString = execStatus.info;
+        featureData.execStatusAsString = FeatureExecStatus.finished.info;
         return featureData;
     }
 
@@ -709,8 +681,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = tasks;
         result.consoleResult = new ConsoleResult();
 
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature, ypywc.experimentResult.taskFeatures);
 
         return result;
     }
@@ -802,8 +773,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
         result.consoleResult = new ConsoleResult();
 
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-        result.experimentFeature = asExperimentFeatureData(feature, taskVertices, ypywc.experimentResult.taskFeatures);
+        result.experimentFeature = asExperimentFeatureData(feature, ypywc.experimentResult.taskFeatures);
 
         return result;
     }
