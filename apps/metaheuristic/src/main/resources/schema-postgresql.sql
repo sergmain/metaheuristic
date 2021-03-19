@@ -268,8 +268,8 @@ CREATE TABLE MH_EXEC_CONTEXT
   PARAMS            TEXT NOT NULL,
   IS_VALID          BOOLEAN default false not null,
   STATE             smallint not null default 0,
-  CTX_GRAPH_ID      INT UNSIGNED default NULL,
-  CTX_TASK_STATE_ID INT UNSIGNED default NULL
+  CTX_GRAPH_ID      NUMERIC(10, 0) default NULL,
+  CTX_TASK_STATE_ID NUMERIC(10, 0) default NULL
 );
 
 CREATE INDEX MH_EXEC_CONTEXT_STATE_IDX

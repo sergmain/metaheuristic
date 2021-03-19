@@ -1,8 +1,8 @@
 alter table mh_exec_context
-    add CTX_GRAPH_ID      INT UNSIGNED default NULL;
+    add CTX_GRAPH_ID      NUMERIC(10, 0) default NULL;
 
 alter table mh_exec_context
-    add CTX_TASK_STATE_ID INT UNSIGNED default NULL;
+    add CTX_TASK_STATE_ID NUMERIC(10, 0) default NULL;
 
 CREATE TABLE mh_exec_context_graph
 (
