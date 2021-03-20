@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +45,7 @@ public class ExecContextVariableStateTopLevelService {
     public final ExecContextCache execContextCache;
 
     public void registerCreatedTask(TaskCreatedEvent event) {
+        TxUtils.checkTxNotExists();
         Long execContextVariableStateId = getExecContextVariableStateId(event.taskVariablesInfo.execContextId);
         if (execContextVariableStateId == null) {
             return;
@@ -70,14 +72,7 @@ public class ExecContextVariableStateTopLevelService {
         Long execContextVariableStateId = execContext.execContextVariableStateId;
         if (execContextVariableStateId==null) {
             execContextVariableStateId = execContextSyncService.getWithSync(execContext.id, ()->{
-                ExecContextImpl ec = execContextCache.findById(execContext.id);
-                if (ec==null) {
-                    return null;
-                }
-                Long id = ec.execContextVariableStateId;
-                if (id==null) {
-                    id = execContextVariableStateService.initExecContextVariableState(execContext.id);
-                }
+                Long id = execContextVariableStateService.initExecContextVariableState(execContext.id);
                 return id;
             });
         }

@@ -16,16 +16,19 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,7 @@ public class ExecContextVariableStateService {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ExecContextVariableStateSyncService execContextVariableStateSyncService;
     private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -116,8 +120,23 @@ public class ExecContextVariableStateService {
         return null;
     }
 
+    @Nullable
     @Transactional
     public Long initExecContextVariableState(Long execContextId) {
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            return null;
+        }
+        Long id = ec.execContextVariableStateId;
+        if (id==null) {
+            id = createExecContextVariableState(ec.id);
+            ec.execContextVariableStateId = id;
+            execContextCache.save(ec);
+        }
+        return id;
+    }
+
+    private Long createExecContextVariableState(Long execContextId) {
         ExecContextVariableState bean = new ExecContextVariableState();
         bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
         bean.execContextId = execContextId;
