@@ -26,7 +26,7 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class TaskCreatedTxEvent {
-    public final ExecContextApiData.TaskStateInfo taskVariablesInfo;
+    public final ExecContextApiData.VariableState taskVariablesInfo;
 
     public TaskCreatedEvent to() {
         return new TaskCreatedEvent(taskVariablesInfo);

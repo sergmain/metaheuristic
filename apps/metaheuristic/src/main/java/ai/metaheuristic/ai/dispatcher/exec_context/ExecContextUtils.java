@@ -30,13 +30,13 @@ import org.springframework.lang.Nullable;
 public class ExecContextUtils {
 
     @SneakyThrows
-    public static ExecContextApiData.ExecContextTasksStatesInfo getExecContextTasksStatesInfo(@Nullable String tasksStatesInfo) {
-        ExecContextApiData.ExecContextTasksStatesInfo info;
+    public static ExecContextApiData.ExecContextVariableStates getExecContextTasksStatesInfo(@Nullable String tasksStatesInfo) {
+        ExecContextApiData.ExecContextVariableStates info;
         if (S.b(tasksStatesInfo)) {
-            info = new ExecContextApiData.ExecContextTasksStatesInfo();
+            info = new ExecContextApiData.ExecContextVariableStates();
         }
         else {
-            info = JsonUtils.getMapper().readValue(tasksStatesInfo, ExecContextApiData.ExecContextTasksStatesInfo.class);
+            info = JsonUtils.getMapper().readValue(tasksStatesInfo, ExecContextApiData.ExecContextVariableStates.class);
         }
         return info;
     }

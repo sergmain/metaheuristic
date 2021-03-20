@@ -83,7 +83,7 @@ public class ExecContextApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of={"taskId","execContextId"})
-    public static class TaskStateInfo {
+    public static class VariableState {
         @JsonProperty("tId")
         public Long taskId;
 
@@ -117,8 +117,8 @@ public class ExecContextApiData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExecContextTasksStatesInfo {
-        public List<TaskStateInfo> tasks = new ArrayList<>();
+    public static class ExecContextVariableStates {
+        public List<VariableState> tasks = new ArrayList<>();
     }
 
     @Data
@@ -197,7 +197,7 @@ public class ExecContextApiData {
     @AllArgsConstructor
     public static class RawExecContextStateResult extends BaseDataClass {
         public Long sourceCodeId;
-        public List<ExecContextApiData.TaskStateInfo> infos;
+        public List<VariableState> infos;
         public List<String> processCodes;
         public EnumsApi.SourceCodeType sourceCodeType;
         public String sourceCodeUid;

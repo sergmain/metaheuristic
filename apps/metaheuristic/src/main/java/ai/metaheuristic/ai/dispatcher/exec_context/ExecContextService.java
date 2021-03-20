@@ -20,11 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -37,7 +39,6 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -86,6 +87,7 @@ public class ExecContextService {
     private final EntityManager em;
     private final VariableService variableService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ExecContextVariableStateCache execContextVariableStateCache;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -119,8 +121,8 @@ public class ExecContextService {
         r.execContextId = execContextId;
 
         Set<String> contexts = new HashSet<>();
-        Map<String, List<ExecContextApiData.TaskStateInfo>> map = new HashMap<>();
-        for (ExecContextApiData.TaskStateInfo info : raw.infos) {
+        Map<String, List<ExecContextApiData.VariableState>> map = new HashMap<>();
+        for (ExecContextApiData.VariableState info : raw.infos) {
             contexts.add(info.taskContextId);
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
@@ -143,11 +145,11 @@ public class ExecContextService {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        for (ExecContextApiData.TaskStateInfo taskInfo : raw.infos) {
+        for (ExecContextApiData.VariableState taskInfo : raw.infos) {
             for (int i = 0; i < r.lines.length; i++) {
-                ExecContextApiData.TaskStateInfo simpleTaskInfo = null;
-                List<ExecContextApiData.TaskStateInfo> tasksInContext = map.get(r.lines[i].context);
-                for (ExecContextApiData.TaskStateInfo contextTaskInfo : tasksInContext) {
+                ExecContextApiData.VariableState simpleTaskInfo = null;
+                List<ExecContextApiData.VariableState> tasksInContext = map.get(r.lines[i].context);
+                for (ExecContextApiData.VariableState contextTaskInfo : tasksInContext) {
                     if (contextTaskInfo.taskId.equals(taskInfo.taskId)) {
                         simpleTaskInfo = contextTaskInfo;
                         break;
@@ -284,14 +286,26 @@ public class ExecContextService {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
+        ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(ec);
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
-        ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
                 sourceCodeId, info.tasks, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
                 getExecStateOfTasks(execContextId)
         );
+    }
+
+    private ExecContextApiData.ExecContextVariableStates getExecContextVariableStates(ExecContextImpl ec) {
+        ExecContextApiData.ExecContextVariableStates info;
+        if (ec.execContextVariableStateId==null) {
+            info = new ExecContextApiData.ExecContextVariableStates();
+        }
+        else {
+            ExecContextVariableState ecvs = execContextVariableStateCache.findById(ec.execContextVariableStateId);
+            info = ecvs!=null ? ecvs.getExecContextVariableStateInfo() : new ExecContextApiData.ExecContextVariableStates();
+        }
+        return info;
     }
 
     public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
@@ -410,7 +424,7 @@ public class ExecContextService {
             }
 
             ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
+            ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(execContext);
             String ext = info.tasks.stream()
                     .filter(o->o.outputs!=null)
                     .flatMap(o->o.outputs.stream())

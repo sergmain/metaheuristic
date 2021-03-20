@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -408,7 +407,7 @@ public class VariableService {
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
 
         TaskCreatedTxEvent event = new TaskCreatedTxEvent(
-                new ExecContextApiData.TaskStateInfo(task.id, task.processorId, execContextId,
+                new ExecContextApiData.VariableState(task.id, task.processorId, execContextId,
                         taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
                         null,
                         taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));

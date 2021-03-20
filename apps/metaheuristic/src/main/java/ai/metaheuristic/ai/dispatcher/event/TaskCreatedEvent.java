@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
@@ -28,5 +26,5 @@ import lombok.NoArgsConstructor;
  */
 @AllArgsConstructor
 public class TaskCreatedEvent {
-    public final ExecContextApiData.TaskStateInfo taskVariablesInfo;
+    public final ExecContextApiData.VariableState taskVariablesInfo;
 }

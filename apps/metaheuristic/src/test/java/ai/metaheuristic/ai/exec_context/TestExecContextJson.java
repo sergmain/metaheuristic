@@ -36,8 +36,8 @@ public class TestExecContextJson {
     @SneakyThrows
     @Test
     public void test() {
-        ExecContextApiData.TaskStateInfo info;
-        info = new ExecContextApiData.TaskStateInfo(1L, 1111L, 2L, "1,2###1", "process-1", "function-1",
+        ExecContextApiData.VariableState info;
+        info = new ExecContextApiData.VariableState(1L, 1111L, 2L, "1,2###1", "process-1", "function-1",
                 List.of(new ExecContextApiData.VariableInfo(3L, "var-name-3", EnumsApi.VariableContext.local, null)),
                 List.of(new ExecContextApiData.VariableInfo(4L, "var-name-4", EnumsApi.VariableContext.global, ".zip")) );
 
@@ -47,7 +47,7 @@ public class TestExecContextJson {
         assertTrue(s.contains("ins"));
         assertTrue(s.contains("outs"));
 
-        info = new ExecContextApiData.TaskStateInfo(1L, 1111L, 2L, "1,2###1", "process-1", "function-1",
+        info = new ExecContextApiData.VariableState(1L, 1111L, 2L, "1,2###1", "process-1", "function-1",
                 null, List.of() );
 
         s = JsonUtils.getMapper().writeValueAsString(info);

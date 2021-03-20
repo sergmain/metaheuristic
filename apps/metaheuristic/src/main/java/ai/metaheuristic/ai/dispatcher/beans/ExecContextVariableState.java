@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -74,15 +72,15 @@ public class ExecContextVariableState implements Serializable {
     @Transient
     @JsonIgnore
     @Nullable
-    private ExecContextApiData.ExecContextTasksStatesInfo ecpy = null;
+    private ExecContextApiData.ExecContextVariableStates ecpy = null;
 
     @JsonIgnore
-    public ExecContextApiData.ExecContextTasksStatesInfo getExecContextVariableStateInfo() {
+    public ExecContextApiData.ExecContextVariableStates getExecContextVariableStateInfo() {
         if (ecpy ==null) {
             synchronized (this) {
                 if (ecpy ==null) {
-                    ExecContextApiData.ExecContextTasksStatesInfo temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
-                    ecpy = temp==null ? new ExecContextApiData.ExecContextTasksStatesInfo() : temp;
+                    ExecContextApiData.ExecContextVariableStates temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
+                    ecpy = temp==null ? new ExecContextApiData.ExecContextVariableStates() : temp;
                 }
             }
         }
@@ -91,7 +89,7 @@ public class ExecContextVariableState implements Serializable {
 
     @JsonIgnore
     @SneakyThrows
-    public void updateParams(ExecContextApiData.ExecContextTasksStatesInfo info) {
+    public void updateParams(ExecContextApiData.ExecContextVariableStates info) {
         setParams(JsonUtils.getMapper().writeValueAsString(info));
     }
 

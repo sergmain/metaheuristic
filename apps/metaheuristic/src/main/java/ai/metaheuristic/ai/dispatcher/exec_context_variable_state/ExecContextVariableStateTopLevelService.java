@@ -38,56 +38,56 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextVariableStateTopLevelService {
 
-    public final ExecContextVariableStateSyncService execContextTaskStateSyncService;
+    public final ExecContextVariableStateSyncService execContextVariableStateSyncService;
     public final ExecContextSyncService execContextSyncService;
     public final ExecContextVariableStateService execContextVariableStateService;
     public final ExecContextCache execContextCache;
 
     public void registerCreatedTask(TaskCreatedEvent event) {
-        Long execContextTaskStateId = getExecContextTaskStateId(event.taskVariablesInfo.execContextId);
-        if (execContextTaskStateId == null) {
+        Long execContextVariableStateId = getExecContextVariableStateId(event.taskVariablesInfo.execContextId);
+        if (execContextVariableStateId == null) {
             return;
         }
-        execContextTaskStateSyncService.getWithSyncNullable(execContextTaskStateId,
-                () -> execContextVariableStateService.registerCreatedTask(event));
+        execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+                () -> execContextVariableStateService.registerCreatedTask(execContextVariableStateId, event));
     }
 
     public void registerVariableState(VariableUploadedEvent event) {
-        Long execContextTaskStateId = getExecContextTaskStateId(event.execContextId);
-        if (execContextTaskStateId == null) {
+        Long execContextVariableStateId = getExecContextVariableStateId(event.execContextId);
+        if (execContextVariableStateId == null) {
             return;
         }
-        execContextTaskStateSyncService.getWithSyncNullable(execContextTaskStateId,
-                () -> registerVariableStateInternal(execContextTaskStateId, event));
+        execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+                () -> registerVariableStateInternal(execContextVariableStateId, event));
     }
 
     @Nullable
-    private Long getExecContextTaskStateId(Long execContextId) {
+    private Long getExecContextVariableStateId(Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return null;
         }
-        Long execContextTaskStateId = execContext.execContextTaskStateId;
-        if (execContextTaskStateId==null) {
-            execContextTaskStateId = execContextSyncService.getWithSync(execContext.id, ()->{
+        Long execContextVariableStateId = execContext.execContextVariableStateId;
+        if (execContextVariableStateId==null) {
+            execContextVariableStateId = execContextSyncService.getWithSync(execContext.id, ()->{
                 ExecContextImpl ec = execContextCache.findById(execContext.id);
                 if (ec==null) {
                     return null;
                 }
-                Long id = execContext.execContextTaskStateId;
+                Long id = ec.execContextVariableStateId;
                 if (id==null) {
-                    id = execContextVariableStateService.initExecContextTaskState(execContext.id);
+                    id = execContextVariableStateService.initExecContextVariableState(execContext.id);
                 }
                 return id;
             });
         }
-        return execContextTaskStateId;
+        return execContextVariableStateId;
     }
 
     // this method is here to work around some strange situation
     // about calling transactional method from lambda
-    private Void registerVariableStateInternal(Long execContextTaskStateId, VariableUploadedEvent event) {
-        return execContextVariableStateService.registerVariableState(execContextTaskStateId, event);
+    private Void registerVariableStateInternal(Long execContextVariableStateId, VariableUploadedEvent event) {
+        return execContextVariableStateService.registerVariableState(execContextVariableStateId, event);
     }
 
 

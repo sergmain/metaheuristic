@@ -16,14 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,22 +42,21 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class ExecContextVariableStateService {
 
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ExecContextVariableStateSyncService execContextVariableStateSyncService;
-    private final ExecContextCache execContextCache;
     private final ExecContextVariableStateCache execContextVariableStateCache;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public Void registerVariableState(Long execContextTaskStateId, VariableUploadedEvent event) {
+    public Void registerVariableState(Long execContextVariableStateId, VariableUploadedEvent event) {
         eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(event.execContextId, event.taskId));
-        registerVariableStateInternal(execContextTaskStateId, event);
+        registerVariableStateInternal(execContextVariableStateId, event);
         return null;
     }
 
-    private Void registerVariableStateInternal(Long execContextTaskStateId, VariableUploadedEvent event) {
-        register(execContextTaskStateId, (ecpy)-> {
-            for (ExecContextApiData.TaskStateInfo task : ecpy.tasks) {
+    private Void registerVariableStateInternal(Long execContextVariableStateId, VariableUploadedEvent event) {
+        register(execContextVariableStateId, (ecpy)-> {
+            for (ExecContextApiData.VariableState task : ecpy.tasks) {
                 if (task.taskId.equals(event.taskId)) {
                     if (task.outputs==null || task.outputs.isEmpty()) {
                         log.warn(" (task.outputs==null || task.outputs.isEmpty()) can't process event {}", event);
@@ -81,10 +77,10 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
-    public Void registerCreatedTask(TaskCreatedEvent event) {
-        register(event.taskVariablesInfo.execContextId, (ecpy)-> {
+    public Void registerCreatedTask(Long execContextVariableStateId, TaskCreatedEvent event) {
+        register(execContextVariableStateId, (ecpy)-> {
             boolean isNew = true;
-            for (ExecContextApiData.TaskStateInfo task : ecpy.tasks) {
+            for (ExecContextApiData.VariableState task : ecpy.tasks) {
                 if (task.taskId.equals(event.taskVariablesInfo.taskId)) {
                     isNew = false;
                     if (task.inputs != null && !task.inputs.isEmpty()) {
@@ -105,15 +101,15 @@ public class ExecContextVariableStateService {
         return null;
     }
 
-    private Void register(Long execContextTaskStateId, Consumer<ExecContextApiData.ExecContextTasksStatesInfo> supplier) {
-        execContextVariableStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+    private Void register(Long execContextVariableStateId, Consumer<ExecContextApiData.ExecContextVariableStates> supplier) {
+        execContextVariableStateSyncService.checkWriteLockPresent(execContextVariableStateId);
 
-        ExecContextVariableState execContextVariableState = execContextVariableStateCache.findById(execContextTaskStateId);
+        ExecContextVariableState execContextVariableState = execContextVariableStateCache.findById(execContextVariableStateId);
         if (execContextVariableState==null) {
-            log.warn("#211.120 ExecContext #{} wasn't found", execContextTaskStateId);
+            log.warn("#211.120 ExecContext #{} wasn't found", execContextVariableStateId);
             return null;
         }
-        ExecContextApiData.ExecContextTasksStatesInfo ecpy = execContextVariableState.getExecContextVariableStateInfo();
+        ExecContextApiData.ExecContextVariableStates ecpy = execContextVariableState.getExecContextVariableStateInfo();
         supplier.accept(ecpy);
         execContextVariableState.updateParams(ecpy);
 
@@ -121,11 +117,11 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
-    public Long initExecContextTaskState(Long execContextId) {
-        ExecContextTaskState bean = new ExecContextTaskState();
-        bean.updateParams(new ExecContextTaskStateParamsYaml());
+    public Long initExecContextVariableState(Long execContextId) {
+        ExecContextVariableState bean = new ExecContextVariableState();
+        bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
         bean.execContextId = execContextId;
-        bean = execContextTaskStateRepository.save(bean);
+        bean = execContextVariableStateRepository.save(bean);
         return bean.id;
     }
 }

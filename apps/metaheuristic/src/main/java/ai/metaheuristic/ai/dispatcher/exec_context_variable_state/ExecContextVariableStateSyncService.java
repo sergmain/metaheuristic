@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -44,32 +45,32 @@ public class ExecContextVariableStateSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long execContextId) {
-        if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
+    public void checkWriteLockPresent(Long execContextVariableStateId) {
+        if (!getWriteLock(execContextVariableStateId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#976.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long execContextId) {
-        if (getWriteLock(execContextId).isHeldByCurrentThread()) {
+    public void checkWriteLockNotPresent(Long execContextVariableStateId) {
+        if (getWriteLock(execContextVariableStateId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#976.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextTaskStateId) {
-        return commonSync.getWriteLock(execContextTaskStateId);
+    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextVariableStateId) {
+        return commonSync.getWriteLock(execContextVariableStateId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextTaskStateId) {
-        return commonSync.getReadLock(execContextTaskStateId);
+    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextVariableStateId) {
+        return commonSync.getReadLock(execContextVariableStateId);
     }
 
-    public <T> T getWithSync(Long execContextTaskStateId, Supplier<T> supplier) {
+    public <T> T getWithSync(Long execContextVariableStateId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
-        checkWriteLockNotPresent(execContextTaskStateId);
+        checkWriteLockNotPresent(execContextVariableStateId);
 
-        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextTaskStateId);
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextVariableStateId);
         try {
             lock.lock();
             return supplier.get();
@@ -80,10 +81,10 @@ public class ExecContextVariableStateSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long execContextTaskStateId, Supplier<T> supplier) {
-        checkWriteLockNotPresent(execContextTaskStateId);
+    public <T> T getWithSyncNullableForCreation(Long execContextVariableStateId, Supplier<T> supplier) {
+        checkWriteLockNotPresent(execContextVariableStateId);
 
-        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextTaskStateId);
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextVariableStateId);
         try {
             lock.lock();
             return supplier.get();
@@ -93,11 +94,11 @@ public class ExecContextVariableStateSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long execContextTaskStateId, Supplier<T> supplier) {
+    public <T> T getWithSyncNullable(Long execContextVariableStateId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
-        checkWriteLockNotPresent(execContextTaskStateId);
+        checkWriteLockNotPresent(execContextVariableStateId);
 
-        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextTaskStateId);
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextVariableStateId);
         try {
             lock.lock();
             return supplier.get();
@@ -106,11 +107,11 @@ public class ExecContextVariableStateSyncService {
         }
     }
 
-    public <T> T getWithSyncReadOnly(ExecContextTaskState execContextTaskState, Supplier<T> supplier) {
+    public <T> T getWithSyncReadOnly(ExecContextVariableState execContextVariableState, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
-        checkWriteLockNotPresent(execContextTaskState.id);
+        checkWriteLockNotPresent(execContextVariableState.id);
 
-        final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContextTaskState.id);
+        final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContextVariableState.id);
         try {
             lock.lock();
             return supplier.get();

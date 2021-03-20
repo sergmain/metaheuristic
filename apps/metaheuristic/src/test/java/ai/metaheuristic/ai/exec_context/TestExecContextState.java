@@ -39,13 +39,13 @@ public class TestExecContextState {
     @Test
     public void test() {
 
-        List<ExecContextApiData.TaskStateInfo> infos = List.of(
-                new ExecContextApiData.TaskStateInfo(100L, 1111L, 1001L, "ctx-1", "process-1", "function-1", null, null),
-                new ExecContextApiData.TaskStateInfo(120L, 1111L, 1001L, "ctx-1.1", "process-2", "function-2", null, null),
-                new ExecContextApiData.TaskStateInfo(140L, 1111L, 1001L, "ctx-1.1", "process-3", "function-3", null, null),
-                new ExecContextApiData.TaskStateInfo(160L, 1111L, 1001L, "ctx-1.2", "process-2", "function-2", null, null),
-                new ExecContextApiData.TaskStateInfo(180L, 1111L, 1001L, "ctx-1.2", "process-3", "function-3", null, null),
-                new ExecContextApiData.TaskStateInfo(190L, 1111L, 1001L, "ctx-1", "mh.finish", "mh.finish", null, null)
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(100L, 1111L, 1001L, "ctx-1", "process-1", "function-1", null, null),
+                new ExecContextApiData.VariableState(120L, 1111L, 1001L, "ctx-1.1", "process-2", "function-2", null, null),
+                new ExecContextApiData.VariableState(140L, 1111L, 1001L, "ctx-1.1", "process-3", "function-3", null, null),
+                new ExecContextApiData.VariableState(160L, 1111L, 1001L, "ctx-1.2", "process-2", "function-2", null, null),
+                new ExecContextApiData.VariableState(180L, 1111L, 1001L, "ctx-1.2", "process-3", "function-3", null, null),
+                new ExecContextApiData.VariableState(190L, 1111L, 1001L, "ctx-1", "mh.finish", "mh.finish", null, null)
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(

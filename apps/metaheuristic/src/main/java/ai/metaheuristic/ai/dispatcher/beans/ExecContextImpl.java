@@ -89,6 +89,10 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "CTX_TASK_STATE_ID")
     public Long execContextTaskStateId;
 
+    @Nullable
+    @Column(name = "CTX_VARIABLE_INFO_ID")
+    public Long execContextVariableStateId;
+
     @Transient
     @JsonIgnore
     @Nullable
