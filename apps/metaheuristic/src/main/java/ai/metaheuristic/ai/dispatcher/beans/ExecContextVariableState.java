@@ -36,7 +36,7 @@ import java.io.Serializable;
  * Time: 12:06 AM
  */
 @Entity
-@Table(name = "MH_EXEC_CONTEXT_VARIABLE_INFO")
+@Table(name = "MH_EXEC_CONTEXT_VARIABLE_STATE")
 @Data
 @NoArgsConstructor
 @Cacheable

@@ -7,7 +7,7 @@ alter table mh_exec_context
     add CTX_TASK_STATE_ID NUMERIC(10, 0) default NULL;
 
 alter table mh_exec_context
-    add CTX_VARIABLE_INFO_ID NUMERIC(10, 0) default NULL;
+    add CTX_VARIABLE_STATE_ID NUMERIC(10, 0) default NULL;
 
 CREATE TABLE mh_exec_context_graph
 (
@@ -25,7 +25,7 @@ CREATE TABLE mh_exec_context_task_state
     PARAMS            TEXT NOT NULL
 );
 
-CREATE TABLE mh_exec_context_variable_info
+CREATE TABLE mh_exec_context_variable_state
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,

@@ -274,7 +274,7 @@ CREATE TABLE mh_exec_context
     STATE                   smallint not null default 0,
     CTX_GRAPH_ID            INT UNSIGNED default NULL,
     CTX_TASK_STATE_ID       INT UNSIGNED default NULL,
-    CTX_VARIABLE_INFO_ID    INT UNSIGNED default NULL
+    CTX_VARIABLE_STATE_ID    INT UNSIGNED default NULL
 );
 
 CREATE INDEX mh_exec_context_state_idx
@@ -299,7 +299,7 @@ CREATE TABLE mh_exec_context_task_state
     PARAMS              LONGTEXT NOT NULL
 );
 
-CREATE TABLE mh_exec_context_variable_info
+CREATE TABLE mh_exec_context_variable_state
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,

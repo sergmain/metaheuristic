@@ -7,7 +7,7 @@ alter table mh_exec_context
     add CTX_TASK_STATE_ID       INT UNSIGNED default NULL;
 
 alter table mh_exec_context
-    add CTX_VARIABLE_INFO_ID    INT UNSIGNED default NULL;
+    add CTX_VARIABLE_STATE_ID   INT UNSIGNED default NULL;
 
 CREATE TABLE mh_exec_context_graph
 (
@@ -25,7 +25,7 @@ CREATE TABLE mh_exec_context_task_state
     PARAMS              LONGTEXT NOT NULL
 );
 
-CREATE TABLE mh_exec_context_variable_info
+CREATE TABLE mh_exec_context_variable_state
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
