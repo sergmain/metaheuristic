@@ -61,7 +61,7 @@ public class ExecContextVariableStateTopLevelService {
     }
 
     public void processFlushing() {
-        if (taskCreatedEvents.isEmpty() || variableUploadedEvents.isEmpty()) {
+        if (taskCreatedEvents.isEmpty() && variableUploadedEvents.isEmpty()) {
             return;
         }
 
