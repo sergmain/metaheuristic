@@ -186,7 +186,7 @@ public class Schedulers {
             DeadLockDetector.findDeadLocks();
         }
 
-        @Scheduled(initialDelay = 10_000, fixedDelay = 5_000 )
+        @Scheduled(initialDelay = 10_000, fixedDelay = 10_000 )
         public void processFlushing() {
             if (globals.isUnitTesting) {
                 return;
