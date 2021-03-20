@@ -259,17 +259,18 @@ CREATE UNIQUE INDEX MH_SOURCE_CODE_UID_UNQ_IDX
 
 CREATE TABLE MH_EXEC_CONTEXT
 (
-  ID                SERIAL PRIMARY KEY,
-  VERSION           NUMERIC(5, 0)  NOT NULL,
-  SOURCE_CODE_ID    NUMERIC(10, 0) NOT NULL,
-  COMPANY_ID        NUMERIC(10, 0) NOT NULL,
-  CREATED_ON        bigint NOT NULL,
-  COMPLETED_ON      bigint,
-  PARAMS            TEXT NOT NULL,
-  IS_VALID          BOOLEAN default false not null,
-  STATE             smallint not null default 0,
-  CTX_GRAPH_ID      NUMERIC(10, 0) default NULL,
-  CTX_TASK_STATE_ID NUMERIC(10, 0) default NULL
+  ID                    SERIAL PRIMARY KEY,
+  VERSION               NUMERIC(5, 0)  NOT NULL,
+  SOURCE_CODE_ID        NUMERIC(10, 0) NOT NULL,
+  COMPANY_ID            NUMERIC(10, 0) NOT NULL,
+  CREATED_ON            bigint NOT NULL,
+  COMPLETED_ON          bigint,
+  PARAMS                TEXT NOT NULL,
+  IS_VALID              BOOLEAN default false not null,
+  STATE                 smallint not null default 0,
+  CTX_GRAPH_ID          NUMERIC(10, 0) default NULL,
+  CTX_TASK_STATE_ID     NUMERIC(10, 0) default NULL,
+  CTX_VARIABLE_INFO_ID  NUMERIC(10, 0) default NULL
 );
 
 CREATE INDEX MH_EXEC_CONTEXT_STATE_IDX
@@ -278,7 +279,7 @@ CREATE INDEX MH_EXEC_CONTEXT_STATE_IDX
 CREATE INDEX MH_EXEC_CONTEXT_ID_SOURCE_CODE_ID_IDX
     ON MH_EXEC_CONTEXT (ID, SOURCE_CODE_ID);
 
-CREATE TABLE mh_exec_context_graph
+CREATE TABLE MH_EXEC_CONTEXT_GRAPH
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
@@ -286,7 +287,15 @@ CREATE TABLE mh_exec_context_graph
     PARAMS            TEXT NOT NULL
 );
 
-CREATE TABLE mh_exec_context_task_state
+CREATE TABLE MH_EXEC_CONTEXT_TASK_STATE
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0) NOT NULL,
+    PARAMS            TEXT NOT NULL
+);
+
+CREATE TABLE MH_EXEC_CONTEXT_VARIABLE_INFO
 (
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,

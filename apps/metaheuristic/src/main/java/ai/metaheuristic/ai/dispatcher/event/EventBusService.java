@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import lombok.RequiredArgsConstructor;
@@ -51,13 +52,14 @@ public class EventBusService {
     public final ExecContextSyncService execContextSyncService;
     public final DispatcherParamsService dispatcherParamsService;
     public final ExecContextTopLevelService execContextTopLevelService;
+    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     @Async
     @EventListener
     public void registerVariableState(VariableUploadedEvent event) {
         try {
             log.debug("call EventBusService.registerVariableState(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
-            execContextTopLevelService.registerVariableState(event);
+            execContextVariableStateTopLevelService.registerVariableState(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -67,7 +69,7 @@ public class EventBusService {
     @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
         try {
-            execContextTopLevelService.registerCreatedTask(event);
+            execContextVariableStateTopLevelService.registerCreatedTask(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

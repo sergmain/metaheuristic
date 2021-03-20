@@ -39,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml.*;
+
 /**
  * @author Serge
  * Date: 10/27/2020
@@ -51,15 +53,12 @@ import java.util.stream.Collectors;
 public class ExecContextStatusService {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextSyncService execContextSyncService;
-    private final ExecContextCache execContextCache;
-    private final ApplicationEventPublisher eventPublisher;
 
-    private KeepAliveResponseParamYaml.ExecContextStatus cachedStatus = null;
+    private ExecContextStatus cachedStatus = null;
     private long updatedOn = 0L;
     private static final long TTL_FOR_STATUS = TimeUnit.SECONDS.toMillis(10);
 
-    public synchronized KeepAliveResponseParamYaml.ExecContextStatus getExecContextStatuses() {
+    public synchronized ExecContextStatus getExecContextStatuses() {
         if (cachedStatus==null) {
             resetStatus();
         }
@@ -71,7 +70,7 @@ public class ExecContextStatusService {
 
     private void resetStatus() {
 
-        cachedStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
+        cachedStatus = new ExecContextStatus();
 
         execContextRepository.findAllExecStates()
                 .stream()
@@ -81,91 +80,7 @@ public class ExecContextStatusService {
         updatedOn = System.currentTimeMillis();
     }
 
-    private static KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
-        return new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
+    private static ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
+        return new ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
     }
-
-    @Transactional
-    public Void registerVariableState(VariableUploadedEvent event) {
-        eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(event.execContextId, event.taskId));
-        registerVariableStateInternal(event);
-        return null;
-    }
-
-    private Void registerVariableStateInternal(VariableUploadedEvent event) {
-        register(event.execContextId, (ecpy)-> {
-            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
-
-            for (ExecContextApiData.TaskStateInfo task : info.tasks) {
-                if (task.taskId.equals(event.taskId)) {
-                    if (task.outputs==null || task.outputs.isEmpty()) {
-                        log.warn(" (task.outputs==null || task.outputs.isEmpty()) can't process event {}", event);
-                    }
-                    else {
-                        for (ExecContextApiData.VariableInfo output : task.outputs) {
-                            if (output.id.equals(event.variableId)) {
-                                output.inited = true;
-                                output.nullified = event.nullified;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-            try {
-                ecpy.tasksVariablesInfo = JsonUtils.getMapper().writeValueAsString(info);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("error", e);
-            }
-        });
-        return null;
-    }
-
-    @Transactional
-    public Void registerCreatedTask(TaskCreatedEvent event) {
-        register(event.taskVariablesInfo.execContextId, (ecpy)-> {
-            ExecContextApiData.ExecContextTasksStatesInfo info = ExecContextUtils.getExecContextTasksStatesInfo(ecpy.tasksVariablesInfo);
-            boolean isNew = true;
-            for (ExecContextApiData.TaskStateInfo task : info.tasks) {
-                if (task.taskId.equals(event.taskVariablesInfo.taskId)) {
-                    isNew = false;
-                    if (task.inputs != null && !task.inputs.isEmpty()) {
-                        task.inputs.clear();
-                    }
-                    if (task.outputs != null && !task.outputs.isEmpty()) {
-                        task.outputs.clear();
-                    }
-                    task.inputs = event.taskVariablesInfo.inputs;
-                    task.outputs = event.taskVariablesInfo.outputs;
-                    break;
-                }
-            }
-            if (isNew) {
-                info.tasks.add(event.taskVariablesInfo);
-            }
-
-            try {
-                ecpy.tasksVariablesInfo = JsonUtils.getMapper().writeValueAsString(info);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("#211.100 error", e);
-            }
-        });
-        return null;
-    }
-
-    private Void register(Long execContextId, Consumer<ExecContextParamsYaml> supplier) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
-
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#211.120 ExecContext #{} wasn't found", execContextId);
-            return null;
-        }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-        supplier.accept(ecpy);
-        execContext.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(ecpy));
-
-        return null;
-    }
-
 }

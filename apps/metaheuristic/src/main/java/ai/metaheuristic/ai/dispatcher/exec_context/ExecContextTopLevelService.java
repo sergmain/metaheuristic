@@ -192,20 +192,6 @@ public class ExecContextTopLevelService {
         return null;
     }
 
-    public void registerCreatedTask(TaskCreatedEvent event) {
-        execContextSyncService.getWithSyncNullable(event.taskVariablesInfo.execContextId,
-                () -> execContextStatusService.registerCreatedTask(event));
-    }
-
-    public void registerVariableState(VariableUploadedEvent event) {
-        execContextSyncService.getWithSyncNullable(event.execContextId,
-                () -> registerVariableStateInternal(event));
-    }
-
-    private Void registerVariableStateInternal(VariableUploadedEvent event) {
-        return execContextStatusService.registerVariableState(event);
-    }
-
     public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
             log.info("210.140 Found orphan execContext #{}", execContextId);
