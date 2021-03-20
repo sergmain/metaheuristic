@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.processor.*;
@@ -59,6 +60,7 @@ public class Schedulers {
         private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
         private final ReplicationService replicationService;
         private final ExecContextTopLevelService execContextTopLevelService;
+        private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
         // Dispatcher schedulers
 
@@ -182,6 +184,17 @@ public class Schedulers {
                 return;
             }
             DeadLockDetector.findDeadLocks();
+        }
+
+        @Scheduled(initialDelay = 10_000, fixedDelay = 5_000 )
+        public void processFlushing() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            execContextVariableStateTopLevelService.processFlushing();
         }
     }
 

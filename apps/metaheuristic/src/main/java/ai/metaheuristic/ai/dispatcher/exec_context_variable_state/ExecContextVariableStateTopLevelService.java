@@ -21,12 +21,17 @@ import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -44,23 +49,51 @@ public class ExecContextVariableStateTopLevelService {
     public final ExecContextVariableStateService execContextVariableStateService;
     public final ExecContextCache execContextCache;
 
+    private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
+    private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();
+
     public void registerCreatedTask(TaskCreatedEvent event) {
-        TxUtils.checkTxNotExists();
-        Long execContextVariableStateId = getExecContextVariableStateId(event.taskVariablesInfo.execContextId);
-        if (execContextVariableStateId == null) {
-            return;
-        }
-        execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
-                () -> execContextVariableStateService.registerCreatedTask(execContextVariableStateId, event));
+        taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k->new ArrayList<>()).add(event.taskVariablesInfo);
     }
 
     public void registerVariableState(VariableUploadedEvent event) {
-        Long execContextVariableStateId = getExecContextVariableStateId(event.execContextId);
-        if (execContextVariableStateId == null) {
+        variableUploadedEvents.computeIfAbsent(event.execContextId, k->new ArrayList<>()).add(event);
+    }
+
+    public void processFlushing() {
+        if (taskCreatedEvents.isEmpty() || variableUploadedEvents.isEmpty()) {
             return;
         }
-        execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
-                () -> registerVariableStateInternal(execContextVariableStateId, event));
+
+        Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEventsTemp = taskCreatedEvents;
+        taskCreatedEvents = new HashMap<>();
+        processCreatedTasks(taskCreatedEventsTemp);
+
+        Map<Long, List<VariableUploadedEvent>> variableUploadedEventsTemp = variableUploadedEvents;
+        variableUploadedEvents = new HashMap<>();
+        processVariableStates(variableUploadedEventsTemp);
+    }
+
+    private void processCreatedTasks(Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents) {
+        for (Map.Entry<Long, List<ExecContextApiData.VariableState>> entry : taskCreatedEvents.entrySet()) {
+            Long execContextVariableStateId = getExecContextVariableStateId(entry.getKey());
+            if (execContextVariableStateId == null) {
+                return;
+            }
+            execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+                    () -> execContextVariableStateService.registerCreatedTasks(execContextVariableStateId, entry.getValue()));
+        }
+    }
+
+    private void processVariableStates(Map<Long, List<VariableUploadedEvent>> events) {
+        for (Map.Entry<Long, List<VariableUploadedEvent>> entry : events.entrySet()) {
+            Long execContextVariableStateId = getExecContextVariableStateId(entry.getKey());
+            if (execContextVariableStateId == null) {
+                return;
+            }
+            execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+                    () -> registerVariableStateInternal(entry.getKey(), execContextVariableStateId, entry.getValue()));
+        }
     }
 
     @Nullable
@@ -81,8 +114,8 @@ public class ExecContextVariableStateTopLevelService {
 
     // this method is here to work around some strange situation
     // about calling transactional method from lambda
-    private Void registerVariableStateInternal(Long execContextVariableStateId, VariableUploadedEvent event) {
-        return execContextVariableStateService.registerVariableState(execContextVariableStateId, event);
+    private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
+        return execContextVariableStateService.registerVariableStates(execContextId, execContextVariableStateId, event);
     }
 
 

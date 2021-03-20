@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
  * Time: 10:08 PM
  */
 @AllArgsConstructor
+@EqualsAndHashCode(of={"execContextId", "taskId", "variableId"})
 public class VariableUploadedEvent {
     public final Long execContextId;
     public final Long taskId;

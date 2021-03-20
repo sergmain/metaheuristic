@@ -58,7 +58,7 @@ public class EventBusService {
     @EventListener
     public void registerVariableState(VariableUploadedEvent event) {
         try {
-            log.debug("call EventBusService.registerVariableState(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
+            log.debug("call EventBusService.registerVariableStates(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
             execContextVariableStateTopLevelService.registerVariableState(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);

@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
@@ -32,6 +31,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -52,28 +52,30 @@ public class ExecContextVariableStateService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public Void registerVariableState(Long execContextVariableStateId, VariableUploadedEvent event) {
-        eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(event.execContextId, event.taskId));
-        registerVariableStateInternal(execContextVariableStateId, event);
+    public Void registerVariableStates(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
+        registerVariableStateInternal(execContextId, execContextVariableStateId, event);
         return null;
     }
 
-    private Void registerVariableStateInternal(Long execContextVariableStateId, VariableUploadedEvent event) {
+    private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
         register(execContextVariableStateId, (ecpy)-> {
-            for (ExecContextApiData.VariableState task : ecpy.tasks) {
-                if (task.taskId.equals(event.taskId)) {
-                    if (task.outputs==null || task.outputs.isEmpty()) {
-                        log.warn(" (task.outputs==null || task.outputs.isEmpty()) can't process event {}", event);
-                    }
-                    else {
-                        for (ExecContextApiData.VariableInfo output : task.outputs) {
-                            if (output.id.equals(event.variableId)) {
-                                output.inited = true;
-                                output.nullified = event.nullified;
+            for (VariableUploadedEvent event : events) {
+                eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
+                for (ExecContextApiData.VariableState task : ecpy.tasks) {
+                    if (task.taskId.equals(event.taskId)) {
+                        if (task.outputs==null || task.outputs.isEmpty()) {
+                            log.warn(" (task.outputs==null || task.outputs.isEmpty()) can't process event {}", event);
+                        }
+                        else {
+                            for (ExecContextApiData.VariableInfo output : task.outputs) {
+                                if (output.id.equals(event.variableId)) {
+                                    output.inited = true;
+                                    output.nullified = event.nullified;
+                                }
                             }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         });
@@ -81,25 +83,27 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
-    public Void registerCreatedTask(Long execContextVariableStateId, TaskCreatedEvent event) {
+    public Void registerCreatedTasks(Long execContextVariableStateId, List<ExecContextApiData.VariableState> events) {
         register(execContextVariableStateId, (ecpy)-> {
-            boolean isNew = true;
-            for (ExecContextApiData.VariableState task : ecpy.tasks) {
-                if (task.taskId.equals(event.taskVariablesInfo.taskId)) {
-                    isNew = false;
-                    if (task.inputs != null && !task.inputs.isEmpty()) {
-                        task.inputs.clear();
+            for (ExecContextApiData.VariableState event : events) {
+                boolean isNew = true;
+                for (ExecContextApiData.VariableState task : ecpy.tasks) {
+                    if (task.taskId.equals(event.taskId)) {
+                        isNew = false;
+                        if (task.inputs != null && !task.inputs.isEmpty()) {
+                            task.inputs.clear();
+                        }
+                        if (task.outputs != null && !task.outputs.isEmpty()) {
+                            task.outputs.clear();
+                        }
+                        task.inputs = event.inputs;
+                        task.outputs = event.outputs;
+                        break;
                     }
-                    if (task.outputs != null && !task.outputs.isEmpty()) {
-                        task.outputs.clear();
-                    }
-                    task.inputs = event.taskVariablesInfo.inputs;
-                    task.outputs = event.taskVariablesInfo.outputs;
-                    break;
                 }
-            }
-            if (isNew) {
-                ecpy.tasks.add(event.taskVariablesInfo);
+                if (isNew) {
+                    ecpy.tasks.add(event);
+                }
             }
         });
         return null;
