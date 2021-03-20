@@ -113,6 +113,16 @@ public class ExecContextGraphService {
         }
     }
 
+    public void saveState(ExecContextTaskState execContextTaskState) {
+        TxUtils.checkTxExists();
+        if (execContextTaskState.id==null) {
+            final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
+        }
+        else if (!em.contains(execContextTaskState) ) {
+            throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
+        }
+    }
+
     private void changeGraph(ExecContextGraph execContextGraph, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
@@ -168,7 +178,7 @@ public class ExecContextGraphService {
             callable.accept(graph, ectspy);
         } finally {
             execContextTaskState.updateParams(ectspy);
-            save(execContextGraph, execContextTaskState);
+            saveState(execContextTaskState);
         }
     }
 
@@ -251,7 +261,7 @@ public class ExecContextGraphService {
      */
     @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextImpl execContext, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-        ExecContextGraph execContextGraph = prepareExecContextGraph(execContext);
+        ExecContextGraph execContextGraph = prepareReadOnlyExecContextGraph(execContext);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContext);
         return updateTaskExecState(execContextGraph, execContextTaskState, taskId, execState, taskContextId);
     }

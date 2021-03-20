@@ -114,6 +114,7 @@ public class TaskCheckCachingService {
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
             log.info("#609.010 task #{} was already checked for cached variables", taskId);
+            return null;
         }
 
         ExecContextImpl execContext = execContextService.findById(execContextId);
