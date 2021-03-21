@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.permutation;
+package ai.metaheuristic.commons.permutation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,6 +90,8 @@ public class Permutation<T> {
         ArrayList<String> arr = new ArrayList<>(Arrays.asList("+1", "+2", "-3", "-4", "5!"));
 
         int r = 3;
+
+        // ###idea### why???
         Permutation<String> permutation = new Permutation<>();
         System.out.println("\nTotal number of combination: " + permutation.printCombination(arr, r, data ->
                 {

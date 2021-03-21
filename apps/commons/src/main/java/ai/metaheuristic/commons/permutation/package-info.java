@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.utils.permutation;
+package ai.metaheuristic.commons.permutation;
 
 import javax.annotation.ParametersAreNonnullByDefault;
