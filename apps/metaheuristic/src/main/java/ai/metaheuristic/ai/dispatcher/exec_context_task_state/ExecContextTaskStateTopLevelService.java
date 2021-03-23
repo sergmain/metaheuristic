@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -50,11 +50,12 @@ import org.springframework.stereotype.Service;
 public class ExecContextTaskStateTopLevelService {
 
     private final ExecContextTaskStateService execContextTaskStateService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Async
     @EventListener
@@ -100,8 +101,11 @@ public class ExecContextTaskStateTopLevelService {
             log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
             TaskQueue.TaskGroup taskGroup;
             int i = 1;
-            while ((taskGroup = execContextSyncService.getWithSync(event.execContextId,
-                    () -> transferStateFromTaskQueueToExecContext(event.execContextId)))!=null) {
+            while ((taskGroup =
+                    execContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
+                            execContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
+                                    transferStateFromTaskQueueToExecContext(
+                                            event.execContextId, event.execContextGraphId, event.execContextTaskStateId))))!=null) {
                 taskGroup.reset();
                 i++;
                 if (i>10_000) {
@@ -116,8 +120,8 @@ public class ExecContextTaskStateTopLevelService {
     }
 
     @Nullable
-    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
-        return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId);
+    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextGraphId, Long execContextTaskStateId) {
+        return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId, execContextGraphId, execContextTaskStateId);
     }
 
     private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, @Nullable String taskContextId) {

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Serge
@@ -49,8 +50,8 @@ public class ExecContextVariableStateTopLevelService {
     public final ExecContextVariableStateService execContextVariableStateService;
     public final ExecContextCache execContextCache;
 
-    private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
-    private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();
+    private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new ConcurrentHashMap<>();
+    private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new ConcurrentHashMap<>();
 
     public void registerCreatedTask(TaskCreatedEvent event) {
         taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k->new ArrayList<>()).add(event.taskVariablesInfo);

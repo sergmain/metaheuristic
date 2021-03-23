@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -54,6 +56,8 @@ public class ExecContextTaskProducingService {
     private final TaskProducingService taskProducingService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
@@ -134,8 +138,11 @@ public class ExecContextTaskProducingService {
                     .filter(Objects::nonNull)
                     .forEach(parentTaskIds::addAll);
 
-            TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
-                    p, execContextParamsYaml, execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
+            final ExecContextParamsYaml.Process process = p;
+            TaskData.ProduceTaskResult result =
+                    taskProducingService.produceTaskForProcess(
+                            process, execContextParamsYaml, execContext.id,
+                            execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
 
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;

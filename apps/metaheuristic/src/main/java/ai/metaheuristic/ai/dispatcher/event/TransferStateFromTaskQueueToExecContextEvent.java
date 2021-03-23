@@ -26,4 +26,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TransferStateFromTaskQueueToExecContextEvent {
     public final Long execContextId;
+    public final Long execContextGraphId;
+    public final Long execContextTaskStateId;
 }

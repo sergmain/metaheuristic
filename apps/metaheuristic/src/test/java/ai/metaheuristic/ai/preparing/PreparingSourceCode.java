@@ -24,8 +24,10 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
@@ -125,6 +127,12 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextSyncService execContextSyncService;
+
+    @Autowired
+    public ExecContextGraphSyncService execContextGraphSyncService;
+
+    @Autowired
+    public ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Autowired
     public TaskProducingService taskProducingService;
@@ -481,7 +489,11 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+            execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                    execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+                        return null;
+                    }));
 
             return null;
         });

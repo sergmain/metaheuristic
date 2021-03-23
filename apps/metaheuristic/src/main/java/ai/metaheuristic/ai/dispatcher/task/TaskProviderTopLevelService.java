@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -67,6 +69,7 @@ public class TaskProviderTopLevelService {
     private final ProcessorCache processorCache;
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ExecContextCache execContextCache;
 
     private static class TaskProviderServiceSync {}
 
@@ -188,11 +191,16 @@ public class TaskProviderTopLevelService {
 
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         log.debug("#393.020 set task #{} as {}", taskId, state);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
         synchronized (syncObj) {
             boolean b = taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
             log.debug("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
-                applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId));
+                applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                        execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
             }
         }
     }

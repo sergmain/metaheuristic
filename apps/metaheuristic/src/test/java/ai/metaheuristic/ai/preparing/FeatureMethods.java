@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -149,7 +148,11 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+            execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                    execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+                        return null;
+                    }));
 
             log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 

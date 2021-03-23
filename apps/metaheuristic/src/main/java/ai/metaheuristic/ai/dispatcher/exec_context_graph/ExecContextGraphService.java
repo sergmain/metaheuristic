@@ -175,7 +175,7 @@ public class ExecContextGraphService {
             BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml> callable) {
 
         TxUtils.checkTxExists();
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextGraph.id);
+        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         if (execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && !Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
             throw new IllegalStateException(
                     "(execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && " +

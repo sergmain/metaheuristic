@@ -64,8 +64,11 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         step_1_1_register_function_statuses(sessionId);
 
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
-        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        TaskQueue.TaskGroup taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask();
 

@@ -216,8 +216,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
 //        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 300);
-        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        TaskQueue.TaskGroup taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -267,8 +270,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 40);
-        taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
@@ -284,8 +290,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(finishTask.task.id, 40);
-        taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
@@ -319,8 +328,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask32);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id);
-        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        TaskQueue.TaskGroup taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
     }
 
     private void step_FitAndPredict() {
@@ -398,8 +410,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask20);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task3.id);
-        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        TaskQueue.TaskGroup taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -476,8 +491,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask);
 
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
-        TaskQueue.TaskGroup taskGroup = execContextSyncService.getWithSync(execContextForTest.id,
-                () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(execContextForTest.id));
+        TaskQueue.TaskGroup taskGroup =
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
+                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
     }
 
     @SneakyThrows

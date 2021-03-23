@@ -30,6 +30,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
@@ -39,7 +41,6 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -101,6 +102,8 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -308,9 +311,11 @@ public class BatchTopLevelService {
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = new FileInputStream(tempFile)) {
-                uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id,
-                        () -> batchService.createBatchForFile(
-                                is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext));
+                uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
+                        execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
+                                execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
+                                        batchService.createBatchForFile(
+                                                is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             }
             return uploadingStatus;
         }

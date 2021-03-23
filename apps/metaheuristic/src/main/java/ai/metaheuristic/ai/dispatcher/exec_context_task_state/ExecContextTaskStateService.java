@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -53,10 +54,11 @@ public class ExecContextTaskStateService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final TaskExecStateService taskExecStateService;
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
         return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
@@ -87,15 +89,12 @@ public class ExecContextTaskStateService {
 
     @Nullable
     @Transactional
-    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextGraphId, Long execContextTaskStateId) {
+        execContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
+        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskQueue.TaskGroup taskGroup = taskProviderTopLevelService.getFinishedTaskGroup(execContextId);
         if (taskGroup==null) {
-            return null;
-        }
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
             return null;
         }
         boolean found = false;
@@ -109,7 +108,7 @@ public class ExecContextTaskStateService {
             }
             String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
             final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContext.execContextGraphId, execContext.execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
+                    execContextGraphId, execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
 
             taskExecStateService.updateTasksStateInDb(status);
             found = true;
