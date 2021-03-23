@@ -102,14 +102,7 @@ public class ExecContextVariableStateTopLevelService {
         if (execContext==null) {
             return null;
         }
-        Long execContextVariableStateId = execContext.execContextVariableStateId;
-        if (execContextVariableStateId==null) {
-            execContextVariableStateId = execContextSyncService.getWithSync(execContext.id, ()->{
-                Long id = execContextVariableStateService.initExecContextVariableState(execContext.id);
-                return id;
-            });
-        }
-        return execContextVariableStateId;
+        return execContext.execContextVariableStateId;
     }
 
     // this method is here to work around some strange situation

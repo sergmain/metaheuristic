@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,15 +37,9 @@ import org.springframework.stereotype.Service;
 public class ExecContextGraphCache {
 
     private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextSyncService execContextSyncService;
 
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
-        // execContext.id is null for a newly created bean
-        if (execContextGraph.execContextId==null) {
-            throw new IllegalStateException(" (execContextGraph.execContextId==null)");
-        }
-        execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
         return execContextGraphRepository.save(execContextGraph);
     }
 

@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -53,18 +55,21 @@ public class TaskProducingService {
     private final FunctionTopLevelService functionTopLevelService;
     private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, ExecContextImpl execContext,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long execContextGraphId, Long execContextTaskStateId,
             List<Long> parentTaskIds) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        execContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
+        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
         // for external Functions internalContextId==process.internalContextId
-        TaskImpl t = createTaskInternal(execContext.id, execContextParamsYaml, process, process.internalContextId,
+        TaskImpl t = createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
                 execContextParamsYaml.variables.inline);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
@@ -78,7 +83,7 @@ public class TaskProducingService {
             log.info("(targetState.value!=t.execState)");
             throw new IllegalStateException("(targetState.value!=t.execState)");
         }
-        execContextGraphService.addNewTasksToGraph(execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, taskWithContexts, targetState);
+        execContextGraphService.addNewTasksToGraph(execContextGraphId, execContextTaskStateId, parentTaskIds, taskWithContexts, targetState);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,15 +37,10 @@ import org.springframework.stereotype.Service;
 public class ExecContextTaskStateCache {
 
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final ExecContextSyncService execContextSyncService;
 
     public ExecContextTaskState save(ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
-        // execContext.id is null for a newly created bean
-        if (execContextTaskState.execContextId==null) {
-            throw new IllegalStateException(" (execContextTaskState.execContextId==null)");
-        }
-        execContextSyncService.checkWriteLockPresent(execContextTaskState.execContextId);
+
         return execContextTaskStateRepository.save(execContextTaskState);
     }
 

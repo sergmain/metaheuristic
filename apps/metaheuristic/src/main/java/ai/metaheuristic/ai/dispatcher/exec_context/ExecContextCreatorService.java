@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -36,6 +34,7 @@ import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStatePara
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -73,6 +72,7 @@ public class ExecContextCreatorService {
     private final SourceCodeSyncService sourceCodeSyncService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextVariableStateCache execContextVariableStateCache;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -185,23 +185,24 @@ public class ExecContextCreatorService {
         ec.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy));
         ec.setValid(true);
 
-        ExecContextImpl execContext = execContextService.save(ec);
-
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();
-        execContextTaskState.execContextId = execContext.id;
         execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
         execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
-        execContext.execContextTaskStateId = execContextTaskState.id;
+        ec.execContextTaskStateId = execContextTaskState.id;
 
         ExecContextGraph execContextGraph = new ExecContextGraph();
-        execContextGraph.execContextId = execContext.id;
         execContextGraph.updateParams(new ExecContextGraphParamsYaml());
         execContextGraph = execContextGraphCache.save(execContextGraph);
-        execContext.execContextGraphId = execContextGraph.id;
+        ec.execContextGraphId = execContextGraph.id;
 
-        execContext = execContextService.save(execContext);
+        ExecContextVariableState bean = new ExecContextVariableState();
+        bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
+        bean = execContextVariableStateCache.save(bean);
+        ec.execContextVariableStateId = bean.id;
 
-        return execContext;
+        ec = execContextService.save(ec);
+
+        return ec;
     }
 
     private ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {

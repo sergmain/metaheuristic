@@ -49,6 +49,7 @@ public class ExecContextGraph implements Serializable {
     @Version
     public Integer version;
 
+    @Nullable
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

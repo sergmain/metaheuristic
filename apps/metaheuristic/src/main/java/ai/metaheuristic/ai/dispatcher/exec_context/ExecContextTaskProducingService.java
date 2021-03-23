@@ -134,7 +134,9 @@ public class ExecContextTaskProducingService {
                     .filter(Objects::nonNull)
                     .forEach(parentTaskIds::addAll);
 
-            TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(p, execContextParamsYaml, execContext, parentTaskIds);
+            TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
+                    p, execContextParamsYaml, execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
+
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
             }

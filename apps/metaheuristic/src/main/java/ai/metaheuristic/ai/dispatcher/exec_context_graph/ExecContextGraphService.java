@@ -74,7 +74,6 @@ public class ExecContextGraphService {
 
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextTaskStateCache execContextTaskStateCache;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final EntityManager em;
@@ -82,7 +81,7 @@ public class ExecContextGraphService {
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
+            execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
@@ -100,13 +99,17 @@ public class ExecContextGraphService {
     public void save(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
+            execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
         }
         else if (!em.contains(execContextGraph) ) {
             throw new IllegalStateException(S.f("#705.023 Bean %s isn't managed by EntityManager", execContextGraph));
+        }
+
+        if (execContextTaskState.id!=null) {
+            execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         }
         if (execContextTaskState.id==null) {
             final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
@@ -116,6 +119,7 @@ public class ExecContextGraphService {
         }
     }
 
+    @SuppressWarnings("unused")
     public void saveState(ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         if (execContextTaskState.id==null) {
@@ -146,7 +150,8 @@ public class ExecContextGraphService {
             BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml> callable) {
 
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextGraph.execContextId);
+        execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
+        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
 
         if (!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
             throw new IllegalStateException("(!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId))");
@@ -171,8 +176,10 @@ public class ExecContextGraphService {
 
         TxUtils.checkTxExists();
         execContextTaskStateSyncService.checkWriteLockPresent(execContextGraph.id);
-        if (!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
-            throw new IllegalStateException("(!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId))");
+        if (execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && !Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
+            throw new IllegalStateException(
+                    "(execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && " +
+                            "!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId))");
         }
 
         ExecContextGraphParamsYaml ecgpy = execContextGraph.getExecContextGraphParamsYaml();

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,15 +37,9 @@ import org.springframework.stereotype.Service;
 public class ExecContextVariableStateCache {
 
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
-    private final ExecContextSyncService execContextSyncService;
 
     public ExecContextVariableState save(ExecContextVariableState execContextVariableState) {
         TxUtils.checkTxExists();
-
-        if (execContextVariableState.execContextId==null) {
-            throw new IllegalStateException(" (execContextVariableState.execContextId==null)");
-        }
-        execContextSyncService.checkWriteLockPresent(execContextVariableState.execContextId);
         return execContextVariableStateRepository.save(execContextVariableState);
     }
 

@@ -365,6 +365,7 @@ CREATE TABLE mh_event
     -- company_id can be null
     COMPANY_ID      INT UNSIGNED,
     CREATED_ON      BIGINT UNSIGNED NOT NULL,
+    -- ###idea### why???
     PERIOD          INT UNSIGNED    not null,
     EVENT           VARCHAR(50)     not null,
     PARAMS          MEDIUMTEXT      not null
