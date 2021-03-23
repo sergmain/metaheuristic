@@ -81,7 +81,6 @@ public class Permutation<T> {
             array.add(null);
         }
 
-
         return combinationUtil(arr, array, 0, n - 1, 0, r, acceptor);
     }
 

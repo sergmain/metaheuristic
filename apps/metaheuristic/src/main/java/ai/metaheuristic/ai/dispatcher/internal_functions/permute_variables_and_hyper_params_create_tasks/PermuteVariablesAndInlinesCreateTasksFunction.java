@@ -136,7 +136,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext.execContextGraphId, task.id);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
@@ -167,6 +167,6 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
         }
 
-        execContextGraphService.createEdges(execContext, lastIds, descendants);
+        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, descendants);
     }
 }

@@ -183,7 +183,12 @@ public class ZipUtils {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
-                log.debug("'\t\tzip entry: {}, is directory: {}", zipEntry.getName(), zipEntry.isDirectory());
+                if (zipEntry.isDirectory()) {
+                    log.debug("'\t\tzip entry: {} is directory", zipEntry.getName());
+                }
+                else {
+                    log.debug("'\t\tzip entry: {} is file, size: {}", zipEntry.getName(), zipEntry.getSize());
+                }
 
                 ValidationResult validationResult = validateZip.apply(zipEntry);
                 if (validationResult.state==State.ERROR) {
@@ -227,7 +232,13 @@ public class ZipUtils {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
-                log.debug("'\t\tzip entry: {}, is directory: {}", zipEntry.getName(), zipEntry.isDirectory());
+                if (zipEntry.isDirectory()) {
+                    log.debug("'\t\tzip entry: {} is directory", zipEntry.getName());
+                }
+                else {
+                    log.debug("'\t\tzip entry: {} is file, size: {}", zipEntry.getName(), zipEntry.getSize());
+                }
+
 
                 String name = zipEntry.getName();
                 if (zipEntry.isDirectory()) {

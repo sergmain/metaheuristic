@@ -206,7 +206,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 throw new BatchResourceProcessingException(es);
             }
         });
-        execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, executionContextData.descendants);
     }
 
     private static class CustomLineIterator extends LineIterator {
@@ -227,7 +227,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
         }
     }
 
-    private static List<List<String>> stringToListOfList(String content, Long numberOfLines) throws IOException {
+    private static List<List<String>> stringToListOfList(String content, Long numberOfLines) {
         List<List<String>> allLines = new ArrayList<>();
         // new LineIterator(new InputStreamReader(input, Charsets.toCharset(encoding)))
 //        LineIterator it = IOUtils.lineIterator(new ByteArrayInputStream(content.getBytes()), StandardCharsets.UTF_8);

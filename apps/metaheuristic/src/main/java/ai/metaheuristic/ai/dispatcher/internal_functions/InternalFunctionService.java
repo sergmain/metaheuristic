@@ -59,7 +59,7 @@ public class InternalFunctionService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "#994.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId));
         }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(execContext, taskId);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(execContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,

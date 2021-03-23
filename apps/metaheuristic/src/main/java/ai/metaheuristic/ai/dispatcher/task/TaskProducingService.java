@@ -78,7 +78,7 @@ public class TaskProducingService {
             log.info("(targetState.value!=t.execState)");
             throw new IllegalStateException("(targetState.value!=t.execState)");
         }
-        execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskWithContexts, targetState);
+        execContextGraphService.addNewTasksToGraph(execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, taskWithContexts, targetState);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
@@ -135,7 +135,7 @@ public class TaskProducingService {
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, currTaskIds, targetState);
+            execContextGraphService.addNewTasksToGraph(execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, currTaskIds, targetState);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }

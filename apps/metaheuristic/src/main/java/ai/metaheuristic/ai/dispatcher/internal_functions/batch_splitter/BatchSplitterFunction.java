@@ -235,7 +235,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
-        execContextGraphService.createEdges(execContext, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, executionContextData.descendants);
     }
 
     @Nullable

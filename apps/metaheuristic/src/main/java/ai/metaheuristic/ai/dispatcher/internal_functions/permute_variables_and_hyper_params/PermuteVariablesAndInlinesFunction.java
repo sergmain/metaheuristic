@@ -110,7 +110,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
 
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext.execContextGraphId, task.id);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
@@ -215,6 +215,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
-        execContextGraphService.createEdges(execContext, lastIds, descendants);
+        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, descendants);
     }
 }

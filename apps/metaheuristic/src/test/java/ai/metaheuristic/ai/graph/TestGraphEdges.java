@@ -99,10 +99,10 @@ public class TestGraphEdges extends PreparingSourceCode {
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
-            Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
+            Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest.execContextGraphId, 1L);
             assertEquals(6, descendands.size());
 
-            descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 21L);
+            descendands = execContextGraphTopLevelService.findDescendants(execContextForTest.execContextGraphId, 21L);
             assertEquals(3, descendands.size());
 
             leafs = findLeafs(execContextForTest);

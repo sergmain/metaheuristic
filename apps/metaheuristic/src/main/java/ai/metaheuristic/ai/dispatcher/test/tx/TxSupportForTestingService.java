@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -79,7 +78,6 @@ public class TxSupportForTestingService {
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSyncService sourceCodeSyncService;
-    private final TaskSyncService taskSyncService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
 
@@ -156,39 +154,27 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            throw new IllegalStateException("Need better solution for this state");
-        }
-        return execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
+        return execContextGraphService.updateTaskExecState(execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
     }
 
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextId, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextGraphId, Long execContextTaskStateId, Long taskId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            throw new IllegalStateException("Need better solution for this state");
-        }
-        return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContext, taskId);
+        return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId);
     }
 
     @Transactional
-    public void setStateForAllChildrenTasksInternal(Long execContextId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+    public void setStateForAllChildrenTasksInternal(Long execContextGraphId, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            throw new IllegalStateException("Need better solution for this state");
-        }
-        execContextGraphService.setStateForAllChildrenTasks(execContext, taskId, withTaskList, state);
+        execContextGraphService.setStateForAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId, withTaskList, state);
     }
 
     @Transactional
@@ -249,19 +235,19 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public List<ExecContextData.TaskVertex> findAllWithTx(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAllWithTx(Long execContextGraphId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.findAll(execContext);
+        return execContextGraphService.findAll(execContextGraphId);
     }
 
     @Transactional
-    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.findAllForAssigning(execContext, true);
+        return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, true);
     }
 
     @Transactional
@@ -340,7 +326,8 @@ public class TxSupportForTestingService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         execContextSyncService.checkWriteLockPresent(execContext.id);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(
+                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
         return osr;
     }
 

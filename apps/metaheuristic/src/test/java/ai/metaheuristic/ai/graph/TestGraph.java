@@ -101,7 +101,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, leafs.size());
             assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
-            txSupportForTestingService.updateTaskExecState(execContextForTest.id, 1L, EnumsApi.TaskExecState.ERROR, null);
+            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, null);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             checkState(1L, EnumsApi.TaskExecState.ERROR);
             checkState(2L, EnumsApi.TaskExecState.SKIPPED);
@@ -122,8 +122,10 @@ public class TestGraph extends PreparingSourceCode {
 
 
             // reset all graph
-            txSupportForTestingService.updateTaskExecState(execContextForTest.id, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
-            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(execContextForTest.id, 1L);
+            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
+            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L);
+
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             // there is only 'NONE' exec state

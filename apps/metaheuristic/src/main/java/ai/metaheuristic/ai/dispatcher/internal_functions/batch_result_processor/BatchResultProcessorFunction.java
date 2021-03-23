@@ -192,7 +192,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir);
 
-        Map<String, List<ExecContextData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(execContext, prepared.keySet());
+        Map<String, List<ExecContextData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(
+                execContext.execContextGraphId, execContext.execContextTaskStateId, prepared.keySet());
         for (Map.Entry<String, List<ExecContextData.TaskWithState>> entry : vertices.entrySet()) {
             boolean isOK = entry.getValue().stream().noneMatch(o->o.state!= EnumsApi.TaskExecState.OK);
             if (isOK) {
@@ -477,7 +478,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.ok = true;
 
-        List<ExecContextData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(ec);
+        List<ExecContextData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(ec.execContextGraphId, ec.execContextTaskStateId);
         for (ExecContextData.TaskWithState taskVertex : taskVertices) {
             if (taskVertex.state==EnumsApi.TaskExecState.NONE || taskVertex.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                 continue;

@@ -71,7 +71,8 @@ public class ExecContextTaskAssigningService {
             return null;
         }
 
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext, true);
+        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
+                execContext.execContextGraphId, execContext.execContextTaskStateId, true);
         if (vertices.isEmpty()) {
             return null;
         }

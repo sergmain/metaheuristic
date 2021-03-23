@@ -53,6 +53,7 @@ public class ExecContextTaskStateService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final TaskExecStateService taskExecStateService;
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
@@ -73,15 +74,13 @@ public class ExecContextTaskStateService {
     }
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesInGraph( Long execContextId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+    public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
         taskSyncService.checkWriteLockPresent(taskId);
 
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
+                execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
+
         taskExecStateService.updateTasksStateInDb(status);
         return status.status;
     }
@@ -109,7 +108,9 @@ public class ExecContextTaskStateService {
                 throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
             }
             String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
-            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, task.queuedTask.taskId, task.state, taskContextId);
+            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
+                    execContext.execContextGraphId, execContext.execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
+
             taskExecStateService.updateTasksStateInDb(status);
             found = true;
         }

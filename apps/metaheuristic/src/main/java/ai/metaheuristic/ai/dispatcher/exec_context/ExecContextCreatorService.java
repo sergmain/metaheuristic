@@ -16,9 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -27,6 +31,8 @@ import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -65,6 +71,8 @@ public class ExecContextCreatorService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
     private final SourceCodeSyncService sourceCodeSyncService;
+    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextGraphCache execContextGraphCache;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -178,6 +186,21 @@ public class ExecContextCreatorService {
         ec.setValid(true);
 
         ExecContextImpl execContext = execContextService.save(ec);
+
+        ExecContextTaskState execContextTaskState = new ExecContextTaskState();
+        execContextTaskState.execContextId = execContext.id;
+        execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
+        execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
+        execContext.execContextTaskStateId = execContextTaskState.id;
+
+        ExecContextGraph execContextGraph = new ExecContextGraph();
+        execContextGraph.execContextId = execContext.id;
+        execContextGraph.updateParams(new ExecContextGraphParamsYaml());
+        execContextGraph = execContextGraphCache.save(execContextGraph);
+        execContext.execContextGraphId = execContextGraph.id;
+
+        execContext = execContextService.save(execContext);
+
         return execContext;
     }
 

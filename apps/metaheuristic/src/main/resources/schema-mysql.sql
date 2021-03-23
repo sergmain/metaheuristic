@@ -272,9 +272,9 @@ CREATE TABLE mh_exec_context
     PARAMS                  LONGTEXT NOT NULL,
     IS_VALID                BOOLEAN  default false not null,
     STATE                   smallint not null default 0,
-    CTX_GRAPH_ID            INT UNSIGNED default NULL,
-    CTX_TASK_STATE_ID       INT UNSIGNED default NULL,
-    CTX_VARIABLE_STATE_ID    INT UNSIGNED default NULL
+    CTX_GRAPH_ID            INT UNSIGNED NOT NULL,
+    CTX_TASK_STATE_ID       INT UNSIGNED NOT NULL,
+    CTX_VARIABLE_STATE_ID    INT UNSIGNED NOT NULL
 );
 
 CREATE INDEX mh_exec_context_state_idx
@@ -287,7 +287,7 @@ CREATE TABLE mh_exec_context_graph
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -295,7 +295,7 @@ CREATE TABLE mh_exec_context_task_state
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -303,7 +303,7 @@ CREATE TABLE mh_exec_context_variable_state
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    EXEC_CONTEXT_ID     INT UNSIGNED    NOT NULL,
+    EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
     PARAMS              LONGTEXT NOT NULL
 );
 

@@ -70,7 +70,7 @@ public class ExecContextReconciliationService {
         ExecContextData.ReconciliationStatus status = new ExecContextData.ReconciliationStatus(execContext.id);
 
         // Reconcile states in db and in graph
-        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext);
+        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext.execContextGraphId);
         if (rootVertices.size()>1) {
             log.error("#307.020 Too many root vertices, ill be used only first vertex, actual number: " + rootVertices.size());
         }
@@ -78,7 +78,8 @@ public class ExecContextReconciliationService {
         if (rootVertices.isEmpty()) {
             return status;
         }
-        Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(execContext, rootVertices.get(0).taskId);
+        Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
+                execContext.execContextGraphId, execContext.execContextTaskStateId, rootVertices.get(0).taskId);
 
         final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
 

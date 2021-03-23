@@ -40,24 +40,24 @@ public class ExecContextGraphTopLevelService {
 
     private final ExecContextGraphService execContextGraphService;
 
-    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
-        return execContextGraphService.findAll(execContext);
+    public List<ExecContextData.TaskVertex> findAll(Long execContextGraphId) {
+        return execContextGraphService.findAll(execContextGraphId);
     }
 
-    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
-        return execContextGraphService.findDescendants(execContext, taskId);
+    public Set<ExecContextData.TaskVertex> findDescendants(Long execContextGraphId, Long taskId) {
+        return execContextGraphService.findDescendants(execContextGraphId, taskId);
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
-        return execContextGraphService.findDirectDescendants(execContext, taskId);
+    public Set<ExecContextData.TaskVertex> findDirectDescendants(Long execContextGraphId, Long taskId) {
+        return execContextGraphService.findDirectDescendants(execContextGraphId, taskId);
     }
 
-    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
-        return findAllForAssigning(execContext, false);
+    public List<ExecContextData.TaskVertex> findAllForAssigning(Long execContextGraphId, Long execContextTaskStateId) {
+        return findAllForAssigning(execContextGraphId, execContextTaskStateId, false);
     }
 
-    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext, boolean includeForCaching) {
-        return execContextGraphService.findAllForAssigning(execContext, includeForCaching);
+    public List<ExecContextData.TaskVertex> findAllForAssigning(Long execContextGraphId, Long execContextTaskStateId, boolean includeForCaching) {
+        return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, includeForCaching);
     }
 
 }

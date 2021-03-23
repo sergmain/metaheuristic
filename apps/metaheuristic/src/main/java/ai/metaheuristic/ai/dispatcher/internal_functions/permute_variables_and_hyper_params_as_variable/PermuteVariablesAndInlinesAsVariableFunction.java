@@ -105,7 +105,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                 executionContextData.internalFunctionProcessingResult);
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext.execContextGraphId, task.id);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,

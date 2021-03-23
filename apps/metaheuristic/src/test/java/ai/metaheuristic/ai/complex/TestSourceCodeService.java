@@ -241,10 +241,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // and 1 'mh.finish' task
             assertEquals(14, taskIds.size());
 
-            Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.task.id);
+            Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest.execContextGraphId, permuteTask.task.id);
             assertEquals(14, descendants.size());
 
-            descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.task.id);
+            descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest.execContextGraphId, permuteTask.task.id);
             assertEquals(7, descendants.size());
             return null;
         });
@@ -525,7 +525,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
 
         execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest.execContextGraphId);
         assertEquals(tasks.size(), taskVertices.size());
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
