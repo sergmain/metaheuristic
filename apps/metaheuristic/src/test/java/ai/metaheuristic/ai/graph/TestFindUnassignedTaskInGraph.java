@@ -74,7 +74,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         execContextForTest = result.execContext;
         assertNotNull(execContextForTest);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
+        execContextSyncService.getWithSync(execContextForTest.id, ()->
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
 
 
             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id,
@@ -231,7 +233,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(4).taskId));
             assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(5).taskId));
             return null;
-        });
+        })));
     }
 
 }

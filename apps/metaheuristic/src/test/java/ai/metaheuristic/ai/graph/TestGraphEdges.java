@@ -67,9 +67,12 @@ public class TestGraphEdges extends PreparingSourceCode {
         execContextForTest = result.execContext;
 
         assertNotNull(execContextForTest);
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
-                    List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
+        execContextSyncService.getWithSync(execContextForTest.id, ()->
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+                                    List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
+
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -108,6 +111,6 @@ public class TestGraphEdges extends PreparingSourceCode {
             leafs = findLeafs(execContextForTest);
             assertEquals(5, leafs.size());
             return null;
-        });
+        })));
     }
 }

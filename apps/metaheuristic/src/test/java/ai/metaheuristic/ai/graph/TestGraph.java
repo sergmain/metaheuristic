@@ -72,9 +72,12 @@ public class TestGraph extends PreparingSourceCode {
         execContextForTest = result.execContext;
         assertNotNull(execContextForTest);
 
-        execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
-            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
-                    List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
+        execContextSyncService.getWithSync(execContextForTest.id, ()->
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+                                    List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
+
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -133,7 +136,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, states.size());
             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
             return null;
-        });
+        })));
     }
 
     private void checkState(Long id, EnumsApi.TaskExecState state) {
