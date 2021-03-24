@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
@@ -114,11 +115,11 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(ExecContextImpl execContext, TaskParamsYaml taskParamsYaml) {
-        Long experimentId = experimentRepository.findIdByExecContextId(execContext.id);
+    public OperationStatusRest storeExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
+        Long experimentId = experimentRepository.findIdByExecContextId(simpleExecContext.execContextId);
 
         if (experimentId==null ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + execContext.id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + simpleExecContext.execContextId);
         }
 
         Experiment experiment = experimentCache.findById(experimentId);
@@ -126,11 +127,11 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.040 can't find experiment for id: " + experimentId);
         }
 
-        StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(execContext, experiment);
+        StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(simpleExecContext, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
-        if (!execContext.id.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
+        if (!simpleExecContext.execContextId.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
         }
 
@@ -151,8 +152,7 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.147 Meta 'inline-permutation' must be defined and can't be empty");
         }
 
-        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
-        ExecContextParamsYaml.VariableDeclaration variableDeclaration = execContextParamsYaml.variables;
+        ExecContextParamsYaml.VariableDeclaration variableDeclaration = simpleExecContext.paramsYaml.variables;
 
         InlineVariableData.InlineVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(inlineVariableItem.inlineKey)) {
@@ -164,7 +164,7 @@ public class ExperimentResultService {
                     "#604.180 Inline variable '" + inlineVariableItem.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
-        List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
+        List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(simpleExecContext.execContextId);
         ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
         erpy.numberOfTask = ids.size();
 
@@ -180,7 +180,7 @@ public class ExperimentResultService {
         a.description = erpy.description;
         a.code = erpy.code;
         a.createdOn = System.currentTimeMillis();
-        a.companyId = execContext.companyId;
+        a.companyId = simpleExecContext.companyId;
 
         // ExperimentResult is created here because we need experimentResult.id for ExperimentTask
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
@@ -197,10 +197,10 @@ public class ExperimentResultService {
         final List<ExperimentFeature> features = new ArrayList<>();
         final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
 
-        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(execContext.id, metricsVariableName);
-        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(execContext.id, featureVariableName);
-        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(execContext.id, fittingVariableName);
-        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(execContext.id, inlineVariableName);
+        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, metricsVariableName);
+        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
+        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
+        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
         Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
         featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
         fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
@@ -222,19 +222,19 @@ public class ExperimentResultService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#604.210 Task inline wasn't found or empty.");
             }
-            VariableWithStatus metricsVar = getVariableWithStatus(metricsVariables, execContext.id, taskContextId, metricsVariableName);
+            VariableWithStatus metricsVar = getVariableWithStatus(metricsVariables, simpleExecContext.execContextId, taskContextId, metricsVariableName);
             if (metricsVar.status.status!= EnumsApi.OperationStatus.OK) {
                 return metricsVar.status;
             }
-            VariableWithStatus featureVar = getVariableWithStatus(featureVariables, execContext.id, taskContextId, featureVariableName);
+            VariableWithStatus featureVar = getVariableWithStatus(featureVariables, simpleExecContext.execContextId, taskContextId, featureVariableName);
             if (featureVar.status.status!= EnumsApi.OperationStatus.OK) {
                 return metricsVar.status;
             }
-            VariableWithStatus fittingVar = getVariableWithStatus(fittingVariables, execContext.id, taskContextId, fittingVariableName);
+            VariableWithStatus fittingVar = getVariableWithStatus(fittingVariables, simpleExecContext.execContextId, taskContextId, fittingVariableName);
             if (fittingVar.status.status!= EnumsApi.OperationStatus.OK) {
                 return metricsVar.status;
             }
-            VariableWithStatus inlineVar = getVariableWithStatus(inlineVariables, execContext.id, taskContextId, inlineVariableName);
+            VariableWithStatus inlineVar = getVariableWithStatus(inlineVariables, simpleExecContext.execContextId, taskContextId, inlineVariableName);
             if (inlineVar.status.status!= EnumsApi.OperationStatus.OK) {
                 return metricsVar.status;
             }
@@ -246,7 +246,7 @@ public class ExperimentResultService {
 
             ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy);
             taskFeatures.add(new ExperimentTaskFeature(
-                    taskFeatureId.getAndIncrement(), execContext.id, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
+                    taskFeatureId.getAndIncrement(), simpleExecContext.execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
                     new ExperimentResultParamsYaml.MetricValues(mvs.values)
             ));
 
@@ -365,12 +365,13 @@ public class ExperimentResultService {
         }
     }
 
-    public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
+    public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, Experiment experiment) {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
+        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(simpleExecContext.getParamsYaml());
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
-        erpy.execContext = new ExecContextWithParams(execContext.id, execContext.getParams());
+        erpy.execContext = new ExecContextWithParams(simpleExecContext.execContextId, s);
         erpy.code = experiment.code;
         erpy.name = epy.code;
         erpy.description = epy.description;

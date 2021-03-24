@@ -96,8 +96,9 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.020 There must be only one an input variable, the actual number: "+taskParamsYaml.task.inputs.size()+", process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         final String varName = taskParamsYaml.task.inputs.get(0).name;
-        List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(execContext.id, taskParamsYaml.task.taskContextId, varName);
+        List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskParamsYaml.task.taskContextId, varName);
         if (hs.size()!=1) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
@@ -124,7 +125,6 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
         String json = variableService.getVariableDataAsString(Long.valueOf(vapy.array.get(0).id));
 
-        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
@@ -137,11 +137,11 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext.execContextGraphId, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, task.id);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                            "#991.060 Graph for ExecContext #"+ execContext.id +" is broken"));
+                            "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken"));
         }
 
         final List<Long> lastIds = new ArrayList<>();
@@ -161,13 +161,13 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
             variableService.createInputVariablesForSubProcess(
-                    variableDataSource, execContext.id, p.permutedVariableName, currTaskContextId);
+                    variableDataSource, simpleExecContext.execContextId, p.permutedVariableName, currTaskContextId);
 
             taskProducingService.createTasksForSubProcesses(
                     simpleExecContext, executionContextData, currTaskContextId, task.id, lastIds);
 
         }
 
-        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, descendants);
+        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
     }
 }

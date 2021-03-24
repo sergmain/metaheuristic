@@ -68,7 +68,7 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
         execContextSyncService.checkWriteLockPresent(execContext.id);
 
         try {
-            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext, taskParamsYaml);
+            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext.asSimple(), taskParamsYaml);
             if (status.status!=EnumsApi.OperationStatus.OK) {
                 throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr()));

@@ -149,11 +149,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, zipDir, mapping, taskParamsYaml, task.id);
+                loadFilesFromDirAfterZip(execContext.asSimple(), zipDir, mapping, taskParamsYaml, task.id);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(execContext.sourceCodeId, execContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id);
+                loadFilesFromDirAfterZip(execContext.asSimple(), tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id);
             }
         }
         catch(UnzipArchiveException e) {
@@ -185,11 +185,9 @@ public class BatchSplitterFunction implements InternalFunction {
         }
     }
 
-    private void loadFilesFromDirAfterZip(
-            Long sourceCodeId, ExecContextImpl execContext, File srcDir,
+    private void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
-        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
@@ -224,7 +222,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         }
                         String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                         variableService.createInputVariablesForSubProcess(
-                                variableDataSource, execContext.id, variableName, currTaskContextId);
+                                variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
 
                         taskProducingService.createTasksForSubProcesses(
                                 simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
@@ -237,7 +235,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
-        execContextGraphService.createEdges(execContext.execContextGraphId, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
     }
 
     @Nullable
