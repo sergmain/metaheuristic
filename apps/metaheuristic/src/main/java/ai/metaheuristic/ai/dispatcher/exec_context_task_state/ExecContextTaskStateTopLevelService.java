@@ -74,21 +74,10 @@ public class ExecContextTaskStateTopLevelService {
             if (ec==null) {
                 return;
             }
-/*
-            final ExecContextImpl execContext;
-            if (ec.execContextGraphId==null || ec.execContextTaskStateId==null) {
-                execContext = execContextService.checkReferences(task.execContextId);
-            }
-            else {
-                execContext = ec;
-            }
-            if (execContext==null) {
-                return;
-            }
-*/
             execContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
                     () -> taskSyncService.getWithSyncNullable(event.taskId,
                             () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
+
         } catch (Throwable th) {
             log.error("#417.020 Error, need to investigate ", th);
         }

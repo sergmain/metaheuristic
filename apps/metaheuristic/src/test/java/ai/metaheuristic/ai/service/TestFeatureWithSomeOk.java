@@ -49,7 +49,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         long mills = System.currentTimeMillis();
         log.info("Start produceTasks()");
         produceTasks();
-        log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("produceTasks() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             txSupportForTestingService.toStarted(execContextForTest.id);

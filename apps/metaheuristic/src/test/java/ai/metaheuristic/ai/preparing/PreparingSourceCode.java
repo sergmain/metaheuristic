@@ -261,7 +261,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         // get a task for processing
         log.info("Start experimentService.getTaskAndAssignToProcessor()");
         DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
-        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         assertNotNull(task);
         return task;

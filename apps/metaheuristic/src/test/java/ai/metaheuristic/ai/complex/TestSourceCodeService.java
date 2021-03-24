@@ -534,7 +534,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             }
         }
         assertTrue(finished, "After "+secs+" seconds task #"+id+" still isn't finished ");
-        System.out.println(S.f("Task #%d was finished for %d", id, System.currentTimeMillis() - mills));
+        System.out.println(S.f("Task #%d was finished for %d milliseconds", id, System.currentTimeMillis() - mills));
 
     }
 

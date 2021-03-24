@@ -226,7 +226,7 @@ public class BatchTopLevelService {
                 execContextDeleted = true;
             }
             else {
-                filename = batchHelperService.findUploadedFilenameForBatchId(execContext, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                filename = batchHelperService.findUploadedFilenameForBatchId(execContext.id, execContext.getExecContextParamsYaml(), Consts.UNKNOWN_FILENAME_IN_BATCH);
             }
 
             BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);

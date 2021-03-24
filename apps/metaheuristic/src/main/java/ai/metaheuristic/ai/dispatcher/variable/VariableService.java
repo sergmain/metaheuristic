@@ -108,7 +108,7 @@ public class VariableService {
     @SneakyThrows
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
-            ExecContextImpl execContext, String inputVariableName,
+            Long execContextId, String inputVariableName,
             String currTaskContextId) {
 
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
@@ -126,7 +126,7 @@ public class VariableService {
 
                 FileInputStream fis = new FileInputStream(f.file);
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContext.id, currTaskContextId);
+                Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
 
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 variableHolders.add(new VariableUtils.VariableHolder(sv));
@@ -138,7 +138,7 @@ public class VariableService {
                 InputStream is = new ByteArrayInputStream(bytes);
                 // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
-                Variable v = createInitialized(is, bytes.length, variableName, variableName, execContext.id, currTaskContextId);
+                Variable v = createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
 
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
@@ -151,7 +151,7 @@ public class VariableService {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
             eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContext.id, currTaskContextId);
+            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
         }
 
         if (permutation!=null) {
@@ -162,7 +162,7 @@ public class VariableService {
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-                Variable v = createInitialized(bais, bytes.length, permutation.permutedVariableName, null, execContext.id, currTaskContextId);
+                Variable v = createInitialized(bais, bytes.length, permutation.permutedVariableName, null, execContextId, currTaskContextId);
             }
             {
                 Yaml yampUtil = YamlUtils.init(Map.class);
@@ -171,7 +171,7 @@ public class VariableService {
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-                Variable v = createInitialized(bais, bytes.length, permutation.inlineVariableName, null, execContext.id, currTaskContextId);
+                Variable v = createInitialized(bais, bytes.length, permutation.inlineVariableName, null, execContextId, currTaskContextId);
             }
         }
     }

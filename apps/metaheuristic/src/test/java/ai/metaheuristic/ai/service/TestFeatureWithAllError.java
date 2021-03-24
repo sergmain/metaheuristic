@@ -44,7 +44,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         long mills = System.currentTimeMillis();
         log.info("Start produceTasks()");
         produceTasks();
-        log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("produceTasks() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         toStarted();
 
@@ -56,7 +56,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
-        log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
         // there isn't a new task for processing
@@ -67,7 +67,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start storeConsoleResultAsError()");
         storeConsoleResultAsError();
-        log.info("storeConsoleResultAsError() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
@@ -75,7 +75,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         task = taskProviderService.findTask(processor.getId(), false);
         assertNull(task);
 
-        log.info("noNewTask() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("noNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
     }
 }

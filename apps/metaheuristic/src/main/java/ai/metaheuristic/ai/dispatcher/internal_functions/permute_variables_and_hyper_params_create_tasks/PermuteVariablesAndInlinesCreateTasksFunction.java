@@ -124,7 +124,8 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
         String json = variableService.getVariableDataAsString(Long.valueOf(vapy.array.get(0).id));
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(execContext.sourceCodeId, execContext, taskParamsYaml, task.id);
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
                 executionContextData.internalFunctionProcessingResult);
@@ -140,7 +141,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                            "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
+                            "#991.060 Graph for ExecContext #"+ execContext.id +" is broken"));
         }
 
         final List<Long> lastIds = new ArrayList<>();
@@ -160,10 +161,10 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
             variableService.createInputVariablesForSubProcess(
-                    variableDataSource, execContext, p.permutedVariableName, currTaskContextId);
+                    variableDataSource, execContext.id, p.permutedVariableName, currTaskContextId);
 
             taskProducingService.createTasksForSubProcesses(
-                    execContext, executionContextData, currTaskContextId, task.id, lastIds);
+                    simpleExecContext, executionContextData, currTaskContextId, task.id, lastIds);
 
         }
 

@@ -43,14 +43,13 @@ public class BatchHelperService {
 
     private final VariableService variableService;
 
-    public String findUploadedFilenameForBatchId(ExecContextImpl execContext, @Nullable String defaultName) {
+    public String findUploadedFilenameForBatchId(Long execContextId, ExecContextParamsYaml ecpy, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         String startInputVariableName = ecpy.variables.startInputAs;
         if (S.b(startInputVariableName)) {
             return defName;
         }
-        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContext.id, startInputVariableName);
+        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
         if (filenames.isEmpty()) {
             return defName;
         }

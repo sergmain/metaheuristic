@@ -17,14 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +34,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+
+import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 
 /**
  * @author Serge
@@ -52,34 +52,33 @@ public class InternalFunctionService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public InternalFunctionData.ExecutionContextData getSubProcesses(Long sourceCodeId, ExecContextImpl execContext, TaskParamsYaml taskParamsYaml, Long taskId) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+    public InternalFunctionData.ExecutionContextData getSubProcesses(SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
         if (sourceCode==null) {
             return new InternalFunctionData.ExecutionContextData(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "#994.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId));
+                    "#994.200 sourceCode wasn't found, sourceCodeId: " + simpleExecContext.sourceCodeId));
         }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(execContext.execContextGraphId, taskId);
+        Set<TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#994.240 Graph for ExecContext #"+execContext.id+" is broken"));
+                    "#994.240 Graph for ExecContext #"+simpleExecContext.execContextId+" is broken"));
         }
 
-        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
-        final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
+        final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
                     "#994.260 Process '"+taskParamsYaml.task.processCode+"'not found"));
         }
 
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
-        List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
+        DirectedAcyclicGraph<ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(simpleExecContext.paramsYaml);
+        List<ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
 
         return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok),
-                subProcesses, process, execContextParamsYaml, descendants);
+                subProcesses, process, simpleExecContext.paramsYaml, descendants);
     }
 
 }

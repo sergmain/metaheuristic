@@ -99,7 +99,8 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                     "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(execContext.sourceCodeId, execContext, taskParamsYaml, task.id);
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
                 executionContextData.internalFunctionProcessingResult);
@@ -109,7 +110,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
+                    "#991.060 Graph for ExecContext #"+ execContext.id +" is broken"));
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 

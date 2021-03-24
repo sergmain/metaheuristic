@@ -93,7 +93,7 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
         long mills = System.currentTimeMillis();
         log.info("Start experimentRepository.save()");
         experimentService.updateParamsAndSave(experiment, epy, epy.getName(), epy.description);
-        log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("experimentRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
     }
 
     @AfterEach
@@ -107,7 +107,7 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
                 throwable.printStackTrace();
             }
         }
-        log.info("afterPreparingExperiment() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("afterPreparingExperiment() was finished for {} milliseconds", System.currentTimeMillis() - mills);
     }
 
 }

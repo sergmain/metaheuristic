@@ -48,12 +48,12 @@ public class TestFeatures extends PreparingExperiment {
         log.info("Start experimentService.produceFeaturePermutations()");
 
         produceTasksForTest();
-        log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("experimentService.produceFeaturePermutations() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
         log.info("Start experimentFeatureRepository.findByExperimentId()");
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("experimentFeatureRepository.findByExperimentId() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         String s = "feature-per-task";
         // todo 2020-03-12 right now permutation is being created dynamically at runtime.

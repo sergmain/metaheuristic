@@ -688,20 +688,6 @@ public class ExecContextGraphService {
         return null;
     }
 
-    /*
-    public ExecContextGraph prepareExecContextGraph(ExecContextImpl execContext) {
-        ExecContextGraph execContextGraph;
-        if (execContext.execContextGraphId == null || (execContextGraph = execContextGraphCache.findById(execContext.execContextGraphId)) == null) {
-            execContextGraph = new ExecContextGraph();
-            execContextGraph.execContextId = execContext.id;
-            execContextGraph.updateParams(new ExecContextGraphParamsYaml());
-            execContextGraph = execContextGraphCache.save(execContextGraph);
-            execContext.execContextGraphId = execContextGraph.id;
-        }
-        return execContextGraph;
-    }
-*/
-
     private ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
         ExecContextGraph execContextGraph = execContextGraphCache.findById(execContextGraphId);
         if (execContextGraph==null) {

@@ -115,7 +115,7 @@ public class TestFunctionService {
             log.info("Start functionRepository.save() #2");
             f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
 
-            log.info("functionRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
+            log.info("functionRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
         }
         return f;
     }
@@ -137,7 +137,7 @@ public class TestFunctionService {
             }
         }
         System.out.println("Was finished correctly");
-        log.info("after() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
     }
 
 }

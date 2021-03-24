@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 
@@ -32,6 +33,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Time: 1:48 AM
  */
 public class ExecContextData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SimpleExecContext {
+        public Long sourceCodeId;
+        public Long execContextId;
+        public Long execContextGraphId;
+        public Long execContextTaskStateId;
+        public Long execContextVariableStateId;
+        public Long companyId;
+        public ExecContextParamsYaml paramsYaml;
+    }
 
     @Data
     @AllArgsConstructor

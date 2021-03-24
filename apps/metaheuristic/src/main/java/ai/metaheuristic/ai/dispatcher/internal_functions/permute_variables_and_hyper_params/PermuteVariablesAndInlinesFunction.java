@@ -97,7 +97,9 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(execContext.sourceCodeId, execContext, taskParamsYaml, task.id);
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
+
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
                 executionContextData.internalFunctionProcessingResult);
@@ -114,7 +116,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ execContext +" is broken"));
+                    "#991.060 Graph for ExecContext #"+ execContext.id +" is broken"));
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
@@ -186,10 +188,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                                     variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, execContext, variableName, currTaskContextId);
+                                            variableDataSource, execContext.id, variableName, currTaskContextId);
 
                                     taskProducingService.createTasksForSubProcesses(
-                                            execContext, executionContextData, currTaskContextId, task.id, lastIds);
+                                            simpleExecContext, executionContextData, currTaskContextId, task.id, lastIds);
                                 }
                             }
                             else {
@@ -201,10 +203,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                 String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                                 variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, execContext, variableName, currTaskContextId);
+                                        variableDataSource, execContext.id, variableName, currTaskContextId);
 
                                 taskProducingService.createTasksForSubProcesses(
-                                        execContext, executionContextData, currTaskContextId, task.id, lastIds);
+                                        simpleExecContext, executionContextData, currTaskContextId, task.id, lastIds);
                             }
                             return true;
                         }

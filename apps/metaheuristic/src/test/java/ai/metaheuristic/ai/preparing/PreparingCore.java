@@ -151,7 +151,7 @@ public abstract class PreparingCore {
 
             // Prepare processor
             processor = processorTransactionService.createProcessor(description, null, ss);
-            log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
+            log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
             processorIdAsStr =  Long.toString(processor.getId());
 
             // Prepare functions
@@ -160,7 +160,7 @@ public abstract class PreparingCore {
 
             log.info("Start findByCode.save()");
             Function function = functionRepository.findByCode(TEST_FIT_FUNCTION);
-            log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
+            log.info("findByCode() was finished for {} milliseconds", System.currentTimeMillis() - mills);
             if (function == null) {
 
                 FunctionConfigYaml sc = new FunctionConfigYaml();
@@ -173,7 +173,7 @@ public abstract class PreparingCore {
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #1");
                 function = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
-                log.info("functionRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
+                log.info("functionRepository.save() #1 was finished for {} milliseconds", System.currentTimeMillis() - mills);
             }
             fitFunction = function;
 
@@ -194,7 +194,7 @@ public abstract class PreparingCore {
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #2");
                 functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
-                log.info("processorRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
+                log.info("processorRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
             }
             this.predictFunction = predictFunction;
@@ -237,6 +237,6 @@ public abstract class PreparingCore {
             }
         }
         System.out.println("Was finished correctly");
-        log.info("after() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
     }
 }

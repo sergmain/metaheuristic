@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
@@ -188,7 +189,8 @@ public class BatchSplitterFunction implements InternalFunction {
             Long sourceCodeId, ExecContextImpl execContext, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(sourceCodeId, execContext, taskParamsYaml, taskId);
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
         }
@@ -222,10 +224,10 @@ public class BatchSplitterFunction implements InternalFunction {
                         }
                         String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                         variableService.createInputVariablesForSubProcess(
-                                variableDataSource, execContext, variableName, currTaskContextId);
+                                variableDataSource, execContext.id, variableName, currTaskContextId);
 
                         taskProducingService.createTasksForSubProcesses(
-                                execContext, executionContextData, currTaskContextId, taskId, lastIds);
+                                simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;

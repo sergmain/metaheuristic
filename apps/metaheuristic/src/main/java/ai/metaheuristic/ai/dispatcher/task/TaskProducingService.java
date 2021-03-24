@@ -90,13 +90,13 @@ public class TaskProducingService {
     }
 
     /**
-     * @param execContext
+     * @param simpleExecContext
      * @param currTaskContextId
      * @param parentTaskId
      * @param lastIds
      */
     public void createTasksForSubProcesses(
-            ExecContextImpl execContext, InternalFunctionData.ExecutionContextData executionContextData,
+            ExecContextData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
 
@@ -129,7 +129,7 @@ public class TaskProducingService {
                 throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
             }
 
-            t = createTaskInternal(execContext.id, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = createTaskInternal(simpleExecContext.execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
 
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
@@ -140,7 +140,7 @@ public class TaskProducingService {
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphService.addNewTasksToGraph(execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, currTaskIds, targetState);
+            execContextGraphService.addNewTasksToGraph(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, parentTaskIds, currTaskIds, targetState);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }

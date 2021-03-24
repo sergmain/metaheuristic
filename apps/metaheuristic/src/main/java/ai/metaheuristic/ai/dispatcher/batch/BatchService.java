@@ -337,7 +337,7 @@ public class BatchService {
                 return null;
             }
             return variableName;
-        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContext, "origin-file.zip"));
+        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContext.id, execContext.getExecContextParamsYaml(), "origin-file.zip"));
     }
 
     public CleanerInfo getVariable(
