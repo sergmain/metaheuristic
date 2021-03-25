@@ -19,13 +19,11 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -37,8 +35,6 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
-import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
@@ -98,12 +94,8 @@ public class BatchSplitterFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextImpl execContext, TaskImpl task, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
-
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
@@ -112,7 +104,7 @@ public class BatchSplitterFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#995.020 Meta 'variable-for-splitting' wasn't found"));
         }
 
-        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(execContext.id, taskContextId, inputVariableName);
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, inputVariableName);
         if (holders.size()>1) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));
@@ -149,11 +141,11 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
                 log.debug("Start loading .zip file data to db");
-                loadFilesFromDirAfterZip(execContext.asSimple(), zipDir, mapping, taskParamsYaml, task.id);
+                loadFilesFromDirAfterZip(simpleExecContext, zipDir, mapping, taskParamsYaml, taskId);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(execContext.asSimple(), tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, task.id);
+                loadFilesFromDirAfterZip(simpleExecContext, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
             }
         }
         catch(UnzipArchiveException e) {

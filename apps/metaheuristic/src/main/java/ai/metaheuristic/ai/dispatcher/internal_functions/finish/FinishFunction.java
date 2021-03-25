@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -58,12 +59,11 @@ public class FinishFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextImpl execContext, TaskImpl task, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
-        log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", task, Consts.MH_FINISH_FUNCTION));
-        execContextFSM.toFinished(execContext);
+        log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
+        execContextFSM.toFinished(simpleExecContext.execContextId);
     }
 }

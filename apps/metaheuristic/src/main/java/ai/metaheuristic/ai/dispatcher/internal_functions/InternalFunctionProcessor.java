@@ -17,13 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,19 +37,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
-    private final ExecContextSyncService execContextSyncService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public void process(ExecContextImpl execContext, TaskImpl task, String internalContextId, TaskParamsYaml taskParamsYaml) {
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+    public void process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
-        ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
         try {
-            internalFunction.process(execContext, task, internalContextId, expy.variables, taskParamsYaml);
+            internalFunction.process(simpleExecContext, taskId, internalContextId, taskParamsYaml);
         }
         catch(InternalFunctionException e) {
             throw e;

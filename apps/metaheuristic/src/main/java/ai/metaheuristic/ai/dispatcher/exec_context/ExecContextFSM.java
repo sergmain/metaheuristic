@@ -55,7 +55,17 @@ public class ExecContextFSM {
     private final ExecContextReconciliationService execContextReconciliationService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
+    public void toFinished(Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return;
+        }
+        toFinished(execContext);
+    }
+
     public void toFinished(ExecContextImpl execContext) {
+        TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.FINISHED);
     }
@@ -165,26 +175,6 @@ public class ExecContextFSM {
         if (needReconciliation) {
             ExecContextData.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
             execContextReconciliationService.finishReconciliation(status);
-        }
-        else {
-            // TODO 2020-11-02 should this commented code be deleted?
-            /*
-            long countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
-            if (countUnfinishedTasks == 0) {
-                // workaround for situation when states in graph and db are different
-                ExecContextReconciliationService.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
-                execContextSyncService.getWithSync(execContext.id,
-                        () -> execContextReconciliationService.finishReconciliation(status));
-                execContext = execContextCache.findById(execContextId);
-                if (execContext == null) {
-                    return null;
-                }
-                countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
-                if (countUnfinishedTasks==0) {
-                    log.info("ExecContext #{} was finished", execContextId);
-                    toFinished(execContext);
-                }
-*/
         }
         return null;
     }

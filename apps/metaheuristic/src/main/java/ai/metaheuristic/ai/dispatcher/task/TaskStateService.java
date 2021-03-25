@@ -31,9 +31,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -57,13 +55,12 @@ public class TaskStateService {
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final TaskExecStateService taskExecStateService;
-    private final ApplicationEventPublisher eventPublisher;
 
-    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
-        updateTaskExecStates(task, execState, taskContextId, false);
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
+        updateTaskExecStates(task, execState, false);
     }
 
-    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, @Nullable String taskContextId, boolean markAsCompleted) {
+    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         taskSyncService.checkWriteLockPresent(task.id);
         TaskImpl t = taskExecStateService.changeTaskState(task, execState);
@@ -86,7 +83,7 @@ public class TaskStateService {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
         updateTaskExecStates(
-                task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId, true);
+                task, EnumsApi.TaskExecState.OK, true);
 
         if (tpy.task.cache!=null && tpy.task.cache.enabled) {
             ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);

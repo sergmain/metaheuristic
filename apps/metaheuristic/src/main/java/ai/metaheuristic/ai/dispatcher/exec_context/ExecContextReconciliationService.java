@@ -206,7 +206,7 @@ public class ExecContextReconciliationService {
                     return null;
                 }
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, tpy.task.taskContextId);
+                taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
                 return null;
             });
         }

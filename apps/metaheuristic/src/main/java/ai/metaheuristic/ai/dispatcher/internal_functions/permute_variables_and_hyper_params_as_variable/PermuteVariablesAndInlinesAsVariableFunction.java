@@ -88,8 +88,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
     @SneakyThrows
     @Override
     public void process(
-            ExecContextImpl execContext, TaskImpl task, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
@@ -99,14 +98,13 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                     "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
-        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
                 executionContextData.internalFunctionProcessingResult);
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
@@ -131,7 +129,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
 
         boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE);
 
-        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
+        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(simpleExecContext.paramsYaml.variables, taskParamsYaml.task.metas);
         if (S.b(item.inlineKey)) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
@@ -140,7 +138,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
         if (item.inlines == null || item.inlines.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
-                    "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet()));
+                    "#991.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + simpleExecContext.paramsYaml.variables.inline.keySet()));
         }
 
         // each holder contains an input variable
@@ -169,7 +167,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                             log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
                             if (permuteInlines) {
                                 for (InlineVariable inlineVariable : inlineVariables) {
-                                    Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
+                                    Map<String, Map<String, String>> map = new HashMap<>(simpleExecContext.paramsYaml.variables.inline);
                                     map.put(item.inlineKey, inlineVariable.params);
 
                                     permutations.add(

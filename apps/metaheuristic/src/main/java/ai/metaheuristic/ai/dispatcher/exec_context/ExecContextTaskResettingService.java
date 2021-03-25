@@ -73,7 +73,7 @@ public class ExecContextTaskResettingService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        taskStateService.updateTaskExecStates(t, EnumsApi.TaskExecState.NONE, null);
+        taskStateService.updateTaskExecStates(t, EnumsApi.TaskExecState.NONE);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

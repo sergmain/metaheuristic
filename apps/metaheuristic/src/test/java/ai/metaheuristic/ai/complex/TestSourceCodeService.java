@@ -21,7 +21,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.TaskLastProcessingHelper;
+import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -500,7 +501,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @SneakyThrows
     private void waitForFinishing(Long id, int secs) {
-        TaskWithInternalContextService.resetLastTask();
+        TaskLastProcessingHelper.resetLastTask();
         long mills = System.currentTimeMillis();
         boolean processed = false;
         System.out.println("Start waiting for processing of task #"+ id);
@@ -508,7 +509,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         while(true) {
             if (!(System.currentTimeMillis() - mills < period)) break;
             TimeUnit.SECONDS.sleep(1);
-            processed = TaskWithInternalContextService.taskProcessed(id);
+            processed = TaskLastProcessingHelper.taskProcessed(id);
             if (processed) {
                 break;
             }

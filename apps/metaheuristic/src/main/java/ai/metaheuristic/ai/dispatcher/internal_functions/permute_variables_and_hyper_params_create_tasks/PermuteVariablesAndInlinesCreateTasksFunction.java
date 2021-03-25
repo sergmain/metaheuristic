@@ -85,8 +85,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
     @SneakyThrows
     @Override
     public void process(
-            ExecContextImpl execContext, TaskImpl task, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
@@ -96,7 +95,6 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.020 There must be only one an input variable, the actual number: "+taskParamsYaml.task.inputs.size()+", process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
-        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         final String varName = taskParamsYaml.task.inputs.get(0).name;
         List<VariableUtils.VariableHolder> hs = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskParamsYaml.task.taskContextId, varName);
         if (hs.size()!=1) {
@@ -125,7 +123,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
 
         String json = variableService.getVariableDataAsString(Long.valueOf(vapy.array.get(0).id));
 
-        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, task.id);
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(
                 executionContextData.internalFunctionProcessingResult);
@@ -137,7 +135,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, task.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
@@ -147,7 +145,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                task.id, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         StringReader sr = new StringReader(json);
         List<String> lines = IOUtils.readLines(sr);
@@ -164,7 +162,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                     variableDataSource, simpleExecContext.execContextId, p.permutedVariableName, currTaskContextId);
 
             taskProducingService.createTasksForSubProcesses(
-                    simpleExecContext, executionContextData, currTaskContextId, task.id, lastIds);
+                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
         }
 

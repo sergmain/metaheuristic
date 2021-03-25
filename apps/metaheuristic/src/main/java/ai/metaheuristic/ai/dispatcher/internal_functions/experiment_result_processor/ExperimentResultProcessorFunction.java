@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
@@ -61,14 +62,12 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextImpl execContext, TaskImpl task, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        TxUtils.checkTxNotExists();
 
         try {
-            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext.asSimple(), taskParamsYaml);
+            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(simpleExecContext, taskParamsYaml);
             if (status.status!=EnumsApi.OperationStatus.OK) {
                 throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr()));

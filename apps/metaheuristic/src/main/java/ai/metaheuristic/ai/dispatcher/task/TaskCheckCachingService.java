@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -100,7 +99,7 @@ public class TaskCheckCachingService {
 
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, null);
+        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
 
         return null;
     }
@@ -234,7 +233,7 @@ public class TaskCheckCachingService {
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
-            taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, null);
+            taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
         }
         return null;
     }
