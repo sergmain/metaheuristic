@@ -18,23 +18,19 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
@@ -46,10 +42,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -68,9 +62,10 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
     private final VariableService variableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExecContextGraphService execContextGraphService;
-    private final TaskProducingService taskProducingService;
+    private final PermuteVariablesAndInlinesCreateTasksTxService permuteVariablesAndInlinesCreateTasksTxService;
     private final InternalFunctionService internalFunctionService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -87,7 +82,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.inputs.size()!=1) {
             throw new InternalFunctionException(
@@ -142,30 +137,16 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
                             "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken"));
         }
 
-        final List<Long> lastIds = new ArrayList<>();
-        AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         StringReader sr = new StringReader(json);
-        List<String> lines = IOUtils.readLines(sr);
+        final List<String> lines = IOUtils.readLines(sr);
 
-        for (String line : lines) {
-            currTaskNumber.incrementAndGet();
-            VariableData.Permutation p = VariableUtils.asStringAsPermutation(line);
-
-            VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(p);
-
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
-            variableService.createInputVariablesForSubProcess(
-                    variableDataSource, simpleExecContext.execContextId, p.permutedVariableName, currTaskContextId);
-
-            taskProducingService.createTasksForSubProcesses(
-                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-
-        }
-
-        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
+        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                        permuteVariablesAndInlinesCreateTasksTxService.createTaskForPermutations(
+                                simpleExecContext, taskId, executionContextData, descendants, subProcessContextId, lines)));
     }
+
 }

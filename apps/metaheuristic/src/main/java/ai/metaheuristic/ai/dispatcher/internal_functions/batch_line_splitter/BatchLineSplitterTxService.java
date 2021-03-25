@@ -66,7 +66,7 @@ public class BatchLineSplitterTxService {
     private final ExecContextGraphService execContextGraphService;
 
     @Transactional
-    public void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
+    public Void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
         try {
             createTasks(simpleExecContext, content, taskParamsYaml, taskId, numberOfLines);
         }
@@ -91,6 +91,7 @@ public class BatchLineSplitterTxService {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
+        return null;
     }
 
     private void createTasks(ExecContextData.SimpleExecContext simpleExecContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {

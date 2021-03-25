@@ -26,6 +26,8 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -61,18 +63,19 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
  * Date: 2/1/2020
  * Time: 9:17 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
-    private final VariableService variableService;
+    private final PermuteVariablesAndInlinesTxService permuteVariablesAndInlinesTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExecContextGraphService execContextGraphService;
-    private final TaskProducingService taskProducingService;
     private final InternalFunctionService internalFunctionService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -88,7 +91,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             throw new InternalFunctionException(
@@ -161,59 +164,15 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'"));
         }
-        final List<Long> lastIds = new ArrayList<>();
         final List<InlineVariable> inlineVariables = permuteInlines ? InlineVariableUtils.getAllInlineVariants(item.inlines) : List.of();
-        AtomicInteger currTaskNumber = new AtomicInteger(0);
-        String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
+        final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
-        for (int i = 0; i < holders.size(); i++) {
-            try {
-                permutation.printCombination(holders, i+1,
-                        permutedVariables -> {
-                            log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
-                            if (permuteInlines) {
-                                for (InlineVariable inlineVariable : inlineVariables) {
-                                    currTaskNumber.incrementAndGet();
-                                    Map<String, Map<String, String>> map = new HashMap<>(simpleExecContext.paramsYaml.variables.inline);
-                                    map.put(item.inlineKey, inlineVariable.params);
-
-                                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                            new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
-
-                                    String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
-                                    variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
-
-                                    taskProducingService.createTasksForSubProcesses(
-                                            simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-                                }
-                            }
-                            else {
-                                currTaskNumber.incrementAndGet();
-
-                                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline, inlineVariableName,Map.of()));
-
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
-                                variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
-
-                                taskProducingService.createTasksForSubProcesses(
-                                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-                            }
-                            return true;
-                        }
-                );
-            } catch (BreakFromLambdaException e) {
-                log.error(e.getMessage());
-                throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
-            }
-        }
-        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
+        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                        permuteVariablesAndInlinesTxService.createTaskFroPermutations(
+                                simpleExecContext, taskId, executionContextData, descendants, permuteInlines,
+                                item, holders, variableName, inlineVariableName, inlineVariables, subProcessContextId)));
     }
+
 }

@@ -354,10 +354,9 @@ public class VariableService {
 
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         if (size==0) {
-            throw new IllegalStateException("#171.260 Variable can't be with zero length");
+            throw new IllegalStateException("#171.260 Variable can't be of zero length");
         }
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextId);
 
         Variable data = new Variable();
         data.inited = true;
@@ -379,7 +378,6 @@ public class VariableService {
 
     public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextId);
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;

@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -52,6 +54,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
     private final VariableService variableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -114,6 +118,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
 
-        batchLineSplitterTxService.createTasksTx(simpleExecContext, taskId, taskParamsYaml, numberOfLines, content);
+        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                        batchLineSplitterTxService.createTasksTx(simpleExecContext, taskId, taskParamsYaml, numberOfLines, content)));
     }
 }

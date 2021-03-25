@@ -65,10 +65,8 @@ import java.util.stream.Collectors;
 public class BatchSplitterTxService {
 
     private final ExecContextGraphService execContextGraphService;
-    private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
-    private final ExecContextSyncService execContextSyncService;
     private final VariableService variableService;
 
     @Transactional

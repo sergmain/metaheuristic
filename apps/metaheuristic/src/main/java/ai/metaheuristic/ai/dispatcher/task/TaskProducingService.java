@@ -99,6 +99,8 @@ public class TaskProducingService {
             ExecContextData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
+        execContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
+        execContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
