@@ -17,22 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -61,7 +55,7 @@ public class FinishFunction implements InternalFunction {
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
 
         log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
         execContextFSM.toFinished(simpleExecContext.execContextId);

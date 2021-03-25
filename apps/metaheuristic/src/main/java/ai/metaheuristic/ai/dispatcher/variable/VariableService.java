@@ -291,7 +291,7 @@ public class VariableService {
     }
 
     @Nullable
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
@@ -325,7 +325,6 @@ public class VariableService {
     }
 
     public Void storeToFile(Long variableId, File trgFile) {
-        TxUtils.checkTxExists();
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
