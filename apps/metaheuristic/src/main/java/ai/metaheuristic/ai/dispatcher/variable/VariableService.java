@@ -430,6 +430,18 @@ public class VariableService {
         return variableRepository.save(v);
     }
 
+    @Transactional
+    public Void updateWithTx(InputStream is, long size, Long variableId) {
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        if (v==null) {
+            String es = S.f("#171.293 Variable #%d wasn't found", variableId);
+            log.error(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        update(is, size, v);
+        return null;
+    }
+
     public void update(InputStream is, long size, Variable data) {
         if (size==0) {
             throw new IllegalStateException("#171.290 Variable can't be with zero length");

@@ -86,7 +86,7 @@ public class TestBinaryDataRepository {
         final byte[] bytes2 = "another one very short data".getBytes();
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
         execContextSyncService.getWithSyncNullable(10L,
-                ()-> txSupportForTestingService.updateWithTx(inputStream2, bytes2.length, d2.id));
+                ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2.id));
 
         final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());
 

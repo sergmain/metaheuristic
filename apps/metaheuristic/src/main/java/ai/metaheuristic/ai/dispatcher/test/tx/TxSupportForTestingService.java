@@ -202,19 +202,6 @@ public class TxSupportForTestingService {
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
 
-    @Transactional
-    public Void updateWithTx(InputStream is, long size, Long variableId) {
-        if (!globals.isUnitTesting) {
-            throw new IllegalStateException("Only for testing");
-        }
-        Variable v = variableRepository.findById(variableId).orElse(null);
-        if (v==null) {
-            throw new IllegalStateException("(v==null)");
-        }
-        variableService.update(is, size, v);
-        return null;
-    }
-
     public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");

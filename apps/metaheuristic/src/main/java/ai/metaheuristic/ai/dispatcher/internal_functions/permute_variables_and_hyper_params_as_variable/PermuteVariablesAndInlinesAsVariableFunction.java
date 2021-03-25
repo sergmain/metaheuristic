@@ -18,9 +18,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -29,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -38,11 +34,11 @@ import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.commons.permutation.Permutation;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.permutation.Permutation;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -72,7 +68,6 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
-    private final VariableRepository variableRepository;
 
     @Override
     public String getCode() {
@@ -90,7 +85,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
-        TxUtils.checkTxExists();
+        TxUtils.checkTxNotExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             throw new InternalFunctionException(
@@ -188,17 +183,8 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
             }
         }
 
-        Variable variable;
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        if (outputVariable.context== EnumsApi.VariableContext.local) {
-            variable = variableRepository.findById(outputVariable.id).orElse(null);
-            if (variable == null) {
-                throw new InternalFunctionException(
-                        new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                                "#992.040 Variable not found for code " + outputVariable));
-            }
-        }
-        else {
+        if (outputVariable.context != EnumsApi.VariableContext.local) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
                             "#992.060 Can't store data in a global variable " + outputVariable.name));
@@ -209,6 +195,6 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
             json.append(VariableUtils.permutationAsString(p)).append('\n');
         }
         byte[] bytes = json.toString().getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, outputVariable.id);
     }
 }

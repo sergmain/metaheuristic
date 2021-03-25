@@ -430,7 +430,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        txSupportForTestingService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id);
+        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id);
 
 
 
