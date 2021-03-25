@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
@@ -30,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -60,6 +62,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.math.BigDecimal;
@@ -115,7 +118,22 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
+    @Transactional
+    public Void storeExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
+        try {
+            OperationStatusRest status = internalStoreExperimentToExperimentResult(simpleExecContext, taskParamsYaml);
+            if (status.status!=EnumsApi.OperationStatus.OK) {
+                throw new InternalFunctionException(
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr()));
+            }
+        } catch (Throwable th) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, th.getMessage()));
+        }
+        return null;
+    }
+
+    private OperationStatusRest internalStoreExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
         Long experimentId = experimentRepository.findIdByExecContextId(simpleExecContext.execContextId);
 
         if (experimentId==null ) {

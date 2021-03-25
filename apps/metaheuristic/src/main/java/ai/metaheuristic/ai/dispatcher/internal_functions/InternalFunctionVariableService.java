@@ -62,7 +62,7 @@ public class InternalFunctionVariableService {
         }
     }
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String name) {
         return discoverVariables(execContextId, taskContextId, new String[]{name});
     }

@@ -80,8 +80,7 @@ public class TransferExperimentResult {
         if (true) {
             throw new IllegalStateException("experimentResultService.storeExperimentToExperimentResult must be in transaction");
         }
-        OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContext.asSimple(), taskParamsYaml);
-        System.out.println("status: " + status);
+        experimentResultService.storeExperimentToExperimentResult(execContext.asSimple(), taskParamsYaml);
 
     }
 }

@@ -17,19 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.experiment_result_processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +42,8 @@ import org.springframework.stereotype.Service;
 public class ExperimentResultProcessorFunction implements InternalFunction {
 
     private final ExperimentResultService experimentResultService;
-    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -66,15 +61,8 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        try {
-            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(simpleExecContext, taskParamsYaml);
-            if (status.status!=EnumsApi.OperationStatus.OK) {
-                throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr()));
-            }
-        } catch (Throwable th) {
-            throw new InternalFunctionException(
-                new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, th.getMessage()));
-        }
+        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                        experimentResultService.storeExperimentToExperimentResult(simpleExecContext, taskParamsYaml)));
     }
 }
