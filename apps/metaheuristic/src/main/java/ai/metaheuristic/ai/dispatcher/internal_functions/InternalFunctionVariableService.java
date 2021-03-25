@@ -55,10 +55,10 @@ public class InternalFunctionVariableService {
 
     public void storeToFile(VariableUtils.VariableHolder holder, File file) {
         if (holder.variable!=null) {
-            variableService.storeToFile(Objects.requireNonNull(holder.variable).id, file);
+            variableService.storeToFileWithTx(Objects.requireNonNull(holder.variable).id, file);
         }
         else {
-            globalVariableService.storeToFile(Objects.requireNonNull(holder.globalVariable).id, file);
+            globalVariableService.storeToFileWithTx(Objects.requireNonNull(holder.globalVariable).id, file);
         }
     }
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Service;
 public class FinishFunction implements InternalFunction {
 
     private final ExecContextFSM execContextFSM;
+    private final ExecContextSyncService execContextSyncService;
 
     @Override
     public String getCode() {
@@ -58,6 +60,7 @@ public class FinishFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
-        execContextFSM.toFinished(simpleExecContext.execContextId);
+        execContextSyncService.getWithSync(simpleExecContext.execContextId, ()->
+                execContextFSM.toFinished(simpleExecContext.execContextId));
     }
 }

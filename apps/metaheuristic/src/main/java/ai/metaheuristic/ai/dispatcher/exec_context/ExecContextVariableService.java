@@ -52,7 +52,7 @@ public class ExecContextVariableService {
             log.warn("#441.200.020 Task #{} is obsolete and was already deleted", taskId);
             return Enums.UploadVariableStatus.TASK_NOT_FOUND;
         }
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+//        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
             log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", taskId);

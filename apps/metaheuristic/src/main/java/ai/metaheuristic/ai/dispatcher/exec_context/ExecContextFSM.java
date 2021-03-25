@@ -56,12 +56,13 @@ public class ExecContextFSM {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void toFinished(Long execContextId) {
+    public Void toFinished(Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return;
+            return null;
         }
         toFinished(execContext);
+        return null;
     }
 
     public void toFinished(ExecContextImpl execContext) {

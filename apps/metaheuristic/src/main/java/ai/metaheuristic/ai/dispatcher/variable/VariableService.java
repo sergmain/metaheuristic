@@ -179,7 +179,7 @@ public class VariableService {
     @Nullable
     public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(task.execContextId);
+//        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 

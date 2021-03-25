@@ -4,10 +4,10 @@ source:
     globals:
       - global-test-variable
   processes:
-    - code: mh.variable-splitter
-      name: mh.variable-splitter
+    - code: mh.nop
+      name: mh.nop
       function:
-        code: mh.variable-splitter
+        code: mh.nop
         context: internal
       inputs:
         - name: global-test-variable

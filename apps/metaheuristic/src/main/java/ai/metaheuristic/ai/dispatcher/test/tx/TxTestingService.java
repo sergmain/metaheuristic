@@ -40,7 +40,6 @@ public class TxTestingService {
 
     private static final String AAA = "AAA";
     private static final String AAA2 = AAA+AAA;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
 
     @Transactional
