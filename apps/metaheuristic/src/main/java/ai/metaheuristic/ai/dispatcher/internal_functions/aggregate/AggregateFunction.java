@@ -126,7 +126,7 @@ public class AggregateFunction implements InternalFunction {
                                     }
                                     try {
                                         File varFile = new File(taskContextDir, v.variable);
-                                        variableService.storeToFile(v.id, varFile);
+                                        variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
                                         log.error("#992.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
                                         if (policy==ErrorControlPolicy.fail) {

@@ -54,6 +54,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
@@ -280,6 +281,7 @@ public class VariableService {
         return taskContextId.substring(0, taskContextId.lastIndexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)).strip();
     }
 
+    @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
@@ -291,8 +293,7 @@ public class VariableService {
     }
 
     @Nullable
-//    @Transactional(readOnly = true)
-    public String getVariableDataAsString(Long variableId, boolean nullable) {
+    private String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
