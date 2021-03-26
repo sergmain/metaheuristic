@@ -19,7 +19,9 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
@@ -73,6 +75,8 @@ public class ExecContextCreatorService {
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -117,18 +121,20 @@ public class ExecContextCreatorService {
             return creationResult;
         }
 
-        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () -> {
-            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
-            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
-                    sourceCode, creationResult.execContext, execContextParamsYaml);
-            if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
-                creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
-            }
-            if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
-                creationResult.addErrorMessage("#562.100 Error while producing new tasks " + result.taskProducingStatus);
-            }
-            return null;
-        });
+        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
+                execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
+                        execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()-> {
+                            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
+                            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
+                                    sourceCode, creationResult.execContext, execContextParamsYaml);
+                            if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
+                                creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
+                            }
+                            if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
+                                creationResult.addErrorMessage("#562.100 Error while producing new tasks " + result.taskProducingStatus);
+                            }
+                            return null;
+                        })));
         return creationResult;
     }
 

@@ -56,8 +56,6 @@ public class ExecContextTaskProducingService {
     private final TaskProducingService taskProducingService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
