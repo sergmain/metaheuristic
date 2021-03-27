@@ -90,17 +90,17 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
 
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
-                    List.of(new TaskApiData.TaskWithContext(21L, "12###1"), new TaskApiData.TaskWithContext(22L, "12###2")));
+                    List.of(new TaskApiData.TaskWithContext(21L, "12#1"), new TaskApiData.TaskWithContext(22L, "12#2")));
 
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
-                    List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
-                            new TaskApiData.TaskWithContext(312L, "123###2"),
-                            new TaskApiData.TaskWithContext(313L, "123###3")));
+                    List.of(new TaskApiData.TaskWithContext(311L, "123#1"),
+                            new TaskApiData.TaskWithContext(312L, "123#2"),
+                            new TaskApiData.TaskWithContext(313L, "123#3")));
 
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(22L),
-                    List.of(new TaskApiData.TaskWithContext(321L, "123###4"),
-                            new TaskApiData.TaskWithContext(322L, "123###5"),
-                            new TaskApiData.TaskWithContext(323L, "123###6")));
+                    List.of(new TaskApiData.TaskWithContext(321L, "123#4"),
+                            new TaskApiData.TaskWithContext(322L, "123#5"),
+                            new TaskApiData.TaskWithContext(323L, "123#6")));
 
             // 999L is mh.finish task
             osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L, 21L, 22L, 311L, 312L, 313L, 321L, 322L, 323L),
@@ -123,24 +123,24 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(ancestors.contains(new ExecContextData.TaskVertex(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 1L));
 
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(21L, "12###1")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(21L, "12#1")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 21L));
 
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(22L, "12###2")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(22L, "12#2")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 22L));
 
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(311L, "123###1")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(311L, "123#1")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 311L));
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(312L, "123###2")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(312L, "123#2")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 312L));
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(313L, "123###3")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(313L, "123#3")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 313L));
 
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(321L, "123###4")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(321L, "123#4")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 321L));
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(322L, "123###5")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(322L, "123#5")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 322L));
-            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(323L, "123###6")));
+            assertTrue(ancestors.contains(new ExecContextData.TaskVertex(323L, "123#6")));
             assertEquals(EnumsApi.TaskExecState.NONE, findTaskState(execContextForTest, 323L));
 
 
@@ -165,7 +165,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
             ExecContextOperationStatusWithTaskList status = txSupportForTestingService.updateTaskExecState(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,1L, EnumsApi.TaskExecState.OK, "123###1");
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,1L, EnumsApi.TaskExecState.OK, Consts.TOP_LEVEL_CONTEXT_ID);
 
             // !!! TODO 2020-10-06 need to rewrite with using real Tasks
 
@@ -180,7 +180,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
             status = txSupportForTestingService.updateTaskExecState(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,22L, EnumsApi.TaskExecState.IN_PROGRESS, null);
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,22L, EnumsApi.TaskExecState.IN_PROGRESS, "12#2");
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -191,7 +191,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
             txSupportForTestingService.updateTaskExecState(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 22L, EnumsApi.TaskExecState.ERROR, null);
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 22L, EnumsApi.TaskExecState.ERROR, "12#2");
 
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
@@ -202,7 +202,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
             assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
             status = txSupportForTestingService.updateTaskExecState(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,21L, EnumsApi.TaskExecState.OK, "123###1");
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,21L, EnumsApi.TaskExecState.OK, "123#1");
 
             vertices = txSupportForTestingService.findAllForAssigningWithTx(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId);
 
@@ -214,7 +214,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
             // in production code this will never happened, i.e. switching from ERROR state to OK state
             status = txSupportForTestingService.updateTaskExecState(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,22L, EnumsApi.TaskExecState.OK, "123###1");
+                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId,22L, EnumsApi.TaskExecState.OK, "123#1");
             // so we update children manually
             txSupportForTestingService.setStateForAllChildrenTasksInternal(
                     execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 22L, status, EnumsApi.TaskExecState.NONE);

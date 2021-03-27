@@ -104,7 +104,7 @@ public class TestGraph extends PreparingSourceCode {
             assertEquals(1, leafs.size());
             assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
-            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, null);
+            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             checkState(1L, EnumsApi.TaskExecState.ERROR);
             checkState(2L, EnumsApi.TaskExecState.SKIPPED);

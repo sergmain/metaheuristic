@@ -134,10 +134,9 @@ public class TaskStateService {
         taskSyncService.checkWriteLockPresent(task.id);
 
         finishTaskAsError(task, exitCode, console);
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         return null;
     }
-
 
     private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {

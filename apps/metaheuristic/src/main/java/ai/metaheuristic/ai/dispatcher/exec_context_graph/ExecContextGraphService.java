@@ -271,13 +271,13 @@ public class ExecContextGraphService {
      * !!! This method doesn't return the id of current Task and its new status. Must be changed by outside code.
      */
     @SuppressWarnings("StatementWithEmptyBody")
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);
         return updateTaskExecState(execContextGraph, execContextTaskState, taskId, execState, taskContextId);
     }
 
-    private ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    private ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
 
@@ -643,8 +643,10 @@ public class ExecContextGraphService {
 
         setFiltered.stream()
                 .peek( t-> stateParamsYaml.states.put(t.taskId, state))
-                .map(o->new ExecContextData.TaskWithState(taskId, state))
-                .collect(Collectors.toCollection(()->withTaskList.childrenTasks));;
+                .map(o->new ExecContextData.TaskWithState(o.taskId, state))
+                .collect(Collectors.toCollection(()->withTaskList.childrenTasks));
+
+        int i=1;
     }
 
     public OperationStatusRest addNewTasksToGraph(

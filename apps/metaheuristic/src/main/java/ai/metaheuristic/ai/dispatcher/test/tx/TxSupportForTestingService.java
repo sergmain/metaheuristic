@@ -154,7 +154,7 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("Only for testing");
         }
