@@ -207,6 +207,11 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
 
                             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
+                            assertTrue(status.childrenTasks.stream().noneMatch(o->o.taskId.equals(t1211.taskId)));
+                            assertTrue(status.childrenTasks.stream().anyMatch(o->o.taskId.equals(t1212.taskId)));
+                            assertTrue(status.childrenTasks.stream().anyMatch(o->o.taskId.equals(t1213.taskId)));
+
+
                             vertices = txSupportForTestingService.findAllForAssigningWithTx(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId);
 
                             assertEquals(2, vertices.size());
