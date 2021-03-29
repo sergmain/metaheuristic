@@ -1,5 +1,9 @@
 truncate table mh_exec_context;
 
+truncate table mh_variable;
+
+truncate table mh_task;
+
 alter table mh_exec_context
     add CTX_GRAPH_ID            INT UNSIGNED NOT NULL;
 

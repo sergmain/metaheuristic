@@ -118,6 +118,9 @@ public class ExecContextVariableTopLevelService {
         if (file==null) {
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.180 file in null");
         }
+        if (file.getSize()==0) {
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.182 file has zero length");
+        }
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "#440.200 name of uploaded file is blank");
