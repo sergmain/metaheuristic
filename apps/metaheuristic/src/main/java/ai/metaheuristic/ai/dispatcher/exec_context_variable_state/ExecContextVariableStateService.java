@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class ExecContextVariableStateService {
 
     private final ExecContextVariableStateSyncService execContextVariableStateSyncService;
     private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -117,4 +119,11 @@ public class ExecContextVariableStateService {
 
         return null;
     }
+
+    @Transactional
+    public Void deleteOrphanVariableStates(List<Long> ids) {
+        execContextVariableStateRepository.deleteAllByIdIn(ids);
+        return null;
+    }
+
 }

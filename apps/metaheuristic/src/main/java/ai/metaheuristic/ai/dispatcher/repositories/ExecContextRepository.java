@@ -18,14 +18,12 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
-import lombok.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,18 +32,12 @@ import java.util.List;
 
 @Repository
 @Profile("dispatcher")
-//@Transactional
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
     @Override
     @Modifying
     @Query(value="delete from ExecContextImpl t where t.id=:id")
     void deleteById(Long id);
-
-    @Nullable
-    @Query(value="select e from ExecContextImpl e where e.id=:id")
-////    @Transactional(readOnly = true)
-    ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
     @Query(value="select w.id, w.state from ExecContextImpl w ")
 //    @Transactional(readOnly = true)
@@ -55,7 +47,6 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     List<Object[]> findAllExecContextIdWithSourceCodeId();
 
     @Query(value="select w.id from ExecContextImpl w")
-//    @Transactional(readOnly = true)
     List<Long> findAllIds();
 
     // ai.metaheuristic.api.EnumsApi.ExecContextState
@@ -63,16 +54,6 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select w.id from ExecContextImpl w where w.state=3")
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     List<Long> findAllStartedIds();
-
-    @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
-//    @Transactional(readOnly = true)
-    List<Long> findByStateOrderByCreatedOnAsc(int execState);
-
-//    @Transactional(readOnly = true)
-    List<ExecContextImpl> findByState(int execState);
-
-//    @Transactional(readOnly = true)
-    List<Long> findIdByState(int execState);
 
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
     List<Long> findIdsByExecState(int execState);

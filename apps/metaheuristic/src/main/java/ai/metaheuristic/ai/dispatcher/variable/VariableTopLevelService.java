@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -28,12 +29,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
  * Date: 9/28/2020
  * Time: 11:00 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -44,27 +47,6 @@ public class VariableTopLevelService {
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
-
-    public void deleteOrphanVariables(List<Long> orphanExecContextIds) {
-        TxUtils.checkTxNotExists();
-        for (Long execContextId : orphanExecContextIds) {
-            if (execContextCache.findById(execContextId)!=null) {
-                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
-                continue;
-            }
-
-            List<Long> ids;
-            while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
-                for (List<Long> page : pages) {
-                    if (pages.isEmpty()) {
-                        continue;
-                    }
-                    log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
-                    execContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
-                }
-            }
-        }
-    }
+    private final ExecContextRepository execContextRepository;
 
 }

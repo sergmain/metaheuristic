@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -46,6 +47,7 @@ import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.StringReader;
@@ -72,6 +74,7 @@ public class ExecContextGraphService {
     private static final String TASK_CONTEXT_ID_ATTR = "ctxid";
 
     private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
@@ -704,4 +707,12 @@ public class ExecContextGraphService {
         }
         return execContextTaskState;
     }
+
+    @Transactional
+    public Void deleteOrphanGraphs(List<Long> ids) {
+        execContextGraphRepository.deleteAllByIdIn(ids);
+        return null;
+    }
+
+
 }

@@ -15,33 +15,42 @@
  */
 package ai.metaheuristic.ai.dispatcher.commons;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class ArtifactCleanerAtDispatcher {
 
-    private final TaskRepository taskRepository;
-    private final TaskTopLevelService taskTopLevelService;
-    private final VariableRepository variableRepository;
-    private final VariableTopLevelService variableTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
@@ -49,13 +58,38 @@ public class ArtifactCleanerAtDispatcher {
     private final CompanyRepository companyRepository;
     private final BatchTopLevelService batchTopLevelService;
     private final BatchCache batchCache;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextCache execContextCache;
+    private final TaskRepository taskRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final TaskTransactionalService taskTransactionalService;
+    private final VariableService variableService;
+    private final VariableRepository variableRepository;
+    private final ExecContextGraphRepository execContextGraphRepository;
+    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextTaskStateService execContextTaskStateService;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final ExecContextVariableStateService execContextVariableStateService;
 
     public void fixedDelay() {
+        TxUtils.checkTxNotExists();
+
         // do not change the order of calling
         deleteOrphanBatches();
         deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
+    }
+
+    public void fixedDelayExecContextRelatives() {
+/*
+        TxUtils.checkTxNotExists();
+
+        deleteOrphanExecContextGraphs();
+        deleteOrphanExecContextTaskState();
+        deleteOrphanExecContextVariableState();
+*/
     }
 
     private void deleteOrphanBatches() {
@@ -89,11 +123,139 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanTasks() {
-        taskTopLevelService.deleteOrphanTasks(taskRepository.findAllExecContextIdsForOrphanTasks());
+        TxUtils.checkTxNotExists();
+
+        List<Long> taskExecContextIds = taskRepository.getAllExecContextIds();
+        List<Long> execContextIds = execContextRepository.findAllIds();
+
+        List<Long> orphanExecContextIds = taskExecContextIds.stream()
+                .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
+
+        for (Long execContextId : orphanExecContextIds) {
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+            applicationEventPublisher.publishEvent(new ProcessDeletedExecContextEvent(execContextId));
+            applicationEventPublisher.publishEvent(new TaskQueueCleanByExecContextIdEvent(execContextId));
+
+            List<Long> ids;
+            while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
+                for (List<Long> page : pages) {
+                    log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
+                }
+            }
+        }
     }
 
     private void deleteOrphanVariables() {
-        variableTopLevelService.deleteOrphanVariables(variableRepository.findAllExecContextIdsForOrphanVariables());
+        List<Long> variableExecContextIds = variableRepository.getAllExecContextIds();
+        List<Long> execContextIds = execContextRepository.findAllIds();
+
+        List<Long> orphanExecContextIds = variableExecContextIds.stream()
+                .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
+
+        for (Long execContextId : orphanExecContextIds) {
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                for (List<Long> page : pages) {
+                    if (pages.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+                }
+            }
+        }
+    }
+
+    private void deleteOrphanExecContextGraphs() {
+        List<Long> execContextGraphIds = execContextGraphRepository.getAllExecContextIds();
+        List<Long> execContextIds = execContextRepository.findAllIds();
+
+        List<Long> orphanExecContextIds = execContextGraphIds.stream()
+                .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
+
+        for (Long execContextId : orphanExecContextIds) {
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = execContextGraphRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                for (List<Long> page : pages) {
+                    if (pages.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan execContextGraph, execContextId: #{}, execContextGraphs #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> execContextGraphService.deleteOrphanGraphs(page));
+                }
+            }
+        }
+    }
+
+    private void deleteOrphanExecContextTaskState() {
+        List<Long> execContextTaskStateIds = execContextTaskStateRepository.getAllExecContextIds();
+        List<Long> execContextIds = execContextRepository.findAllIds();
+
+        List<Long> orphanExecContextIds = execContextTaskStateIds.stream()
+                .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
+
+        for (Long execContextId : orphanExecContextIds) {
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = execContextTaskStateRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                for (List<Long> page : pages) {
+                    if (pages.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan execContextTaskState. execContextId: #{}, execContextTaskStates #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> execContextTaskStateService.deleteOrphanTaskStates(page));
+                }
+            }
+        }
+    }
+
+    private void deleteOrphanExecContextVariableState() {
+        List<Long> execContextVariableStateIds = execContextVariableStateRepository.getAllExecContextIds();
+        List<Long> execContextIds = execContextRepository.findAllIds();
+
+        List<Long> orphanExecContextIds = execContextVariableStateIds.stream()
+                .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
+
+        for (Long execContextId : orphanExecContextIds) {
+            if (execContextCache.findById(execContextId)!=null) {
+                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = execContextVariableStateRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                for (List<Long> page : pages) {
+                    if (pages.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan execContextVariableState. execContextId: #{}, execContextVariableStates #{}", execContextId, page);
+                    execContextSyncService.getWithSyncNullable(execContextId, () -> execContextVariableStateService.deleteOrphanVariableStates(page));
+                }
+            }
+        }
     }
 
 

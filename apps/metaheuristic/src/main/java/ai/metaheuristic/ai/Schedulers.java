@@ -149,6 +149,18 @@ public class Schedulers {
             artifactCleanerAtDispatcher.fixedDelay();
         }
 
+        @Scheduled(initialDelay = 120_000, fixedDelay = 600_000)
+        public void artifactCleanerForExecContextRelativesAtDispatcher() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            log.info("Invoking artifactCleanerAtDispatcher.fixedDelayExecContextRelatives()");
+            artifactCleanerAtDispatcher.fixedDelayExecContextRelatives();
+        }
+
         @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtDispatcher() {
             if (globals.isUnitTesting) {

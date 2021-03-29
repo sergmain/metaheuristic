@@ -39,7 +39,6 @@ import java.util.Set;
  * Time: 15:41
  */
 @Repository
-//@Transactional
 @Profile("dispatcher")
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
@@ -48,27 +47,15 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="delete from Variable t where t.id=:id")
     void deleteById(Long id);
 
-    //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query("SELECT v.taskContextId FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
-    Set<String> findTaskContextIdsByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
+    @Query(value="select distinct v.execContextId from Variable v")
+    List<Long> getAllExecContextIds();
 
-//    @Query("DELETE FROM Variable v where v.id in :ids")
     void deleteAllByIdIn(List<Long> ids);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(nativeQuery = true, value =
-            "select distinct d.EXEC_CONTEXT_ID from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
-    List<Long> findAllExecContextIdsForOrphanVariables();
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.name in :vars and v.execContextId=:execContextId")
     List<SimpleVariable> findByExecContextIdAndNames(Long execContextId, Collection<String> vars);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
-            "from Variable v where v.execContextId=:execContextId")
-    List<SimpleVariable> findByExecContextId(Long execContextId);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
@@ -87,10 +74,6 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     SimpleVariable findByIdAsSimple(Long variableId);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
-    List<Long> findIdByNameAndExecContextId(String name, Long execContextId);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(" +
             "b.id, b.name, b.params, b.filename, b.inited, b.nullified, b.taskContextId) " +
             "from Variable b where b.name in :vars")
@@ -99,8 +82,6 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select b.filename from Variable b where b.name=:variable and b.execContextId=:execContextId ")
     List<String> findFilenameByVariableAndExecContextId(Long execContextId, String variable);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
 
     @Query(value="select v.id from Variable v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
