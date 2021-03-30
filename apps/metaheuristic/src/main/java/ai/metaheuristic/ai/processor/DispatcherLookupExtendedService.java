@@ -125,6 +125,7 @@ public class DispatcherLookupExtendedService {
         }
     }
 
+    // TODO 2021-03-29 investigate why wthis service isn't using anymore
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
@@ -189,7 +190,8 @@ public class DispatcherLookupExtendedService {
             }
             dispatcherLookupExtendedMap = Collections.unmodifiableMap(map);
             dispatcherLookupConfig.assetManagers.forEach(asset -> assets.put(new ProcessorAndCoreData.AssetManagerUrl(asset.url), asset));
-        } finally {
+        }
+        finally {
             lookupExtendedMap = dispatcherLookupExtendedMap;
         }
     }
