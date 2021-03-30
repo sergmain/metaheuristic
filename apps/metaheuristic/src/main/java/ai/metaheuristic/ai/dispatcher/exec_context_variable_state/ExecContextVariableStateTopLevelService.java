@@ -29,7 +29,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,8 +49,8 @@ public class ExecContextVariableStateTopLevelService {
     public final ExecContextVariableStateService execContextVariableStateService;
     public final ExecContextCache execContextCache;
 
-    private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new ConcurrentHashMap<>();
-    private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Long, List<VariableUploadedEvent>> variableUploadedEvents = new ConcurrentHashMap<>();
 
     public void registerCreatedTask(TaskCreatedEvent event) {
         taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k->new ArrayList<>()).add(event.taskVariablesInfo);
@@ -67,11 +66,11 @@ public class ExecContextVariableStateTopLevelService {
         }
 
         Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEventsTemp = taskCreatedEvents;
-        taskCreatedEvents = new HashMap<>();
+        taskCreatedEvents = new ConcurrentHashMap<>();
         processCreatedTasks(taskCreatedEventsTemp);
 
         Map<Long, List<VariableUploadedEvent>> variableUploadedEventsTemp = variableUploadedEvents;
-        variableUploadedEvents = new HashMap<>();
+        variableUploadedEvents = new ConcurrentHashMap<>();
         processVariableStates(variableUploadedEventsTemp);
     }
 
