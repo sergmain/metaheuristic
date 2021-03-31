@@ -22,6 +22,7 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
@@ -34,6 +35,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
+@ToString(exclude = {"ecpy"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextImpl implements Serializable, ExecContext {

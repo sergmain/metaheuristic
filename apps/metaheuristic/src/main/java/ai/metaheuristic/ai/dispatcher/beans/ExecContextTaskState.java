@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStatePara
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
@@ -37,6 +38,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT_TASK_STATE")
 @Data
 @NoArgsConstructor
+@ToString(exclude = {"ecpy"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextTaskState implements Serializable {

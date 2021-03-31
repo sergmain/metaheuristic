@@ -208,6 +208,14 @@ CREATE UNIQUE INDEX mh_experiment_exec_context_id_unq_idx
 CREATE UNIQUE INDEX mh_experiment_code_unq_idx
   ON mh_experiment (CODE);
 
+CREATE TABLE mh_series
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    NAME            VARCHAR(255)    NOT NULL,
+    PARAMS          MEDIUMTEXT      not null
+);
+
 CREATE TABLE mh_task
 (
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUti
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
@@ -37,6 +38,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT_GRAPH")
 @Data
 @NoArgsConstructor
+@ToString(exclude = {"ecgpy"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextGraph implements Serializable {
@@ -60,7 +62,7 @@ public class ExecContextGraph implements Serializable {
     public void setParams(String params) {
         synchronized (this) {
             this.params = params;
-            this.ecpy =null;
+            this.ecgpy =null;
         }
     }
 
@@ -71,19 +73,19 @@ public class ExecContextGraph implements Serializable {
     @Transient
     @JsonIgnore
     @Nullable
-    private ExecContextGraphParamsYaml ecpy = null;
+    private ExecContextGraphParamsYaml ecgpy = null;
 
     @JsonIgnore
     public ExecContextGraphParamsYaml getExecContextGraphParamsYaml() {
-        if (ecpy ==null) {
+        if (ecgpy ==null) {
             synchronized (this) {
-                if (ecpy ==null) {
+                if (ecgpy ==null) {
                     ExecContextGraphParamsYaml temp = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
+                    ecgpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
                 }
             }
         }
-        return ecpy;
+        return ecgpy;
     }
 
     @JsonIgnore

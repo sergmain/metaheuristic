@@ -16,35 +16,34 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
-import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
+import ai.metaheuristic.ai.yaml.series.SeriesParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
  * @author Serge
- * Date: 3/20/2021
- * Time: 12:06 AM
+ * Date: 3/30/2021
+ * Time: 1:21 PM
  */
 @Entity
-@Table(name = "MH_EXEC_CONTEXT_VARIABLE_STATE")
+@Table(name = "MH_SERIES")
 @Data
+@ToString(exclude = {"epy"})
 @NoArgsConstructor
-@ToString(exclude = {"ecpy"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class ExecContextVariableState implements Serializable {
-    private static final long serialVersionUID = 6268316966739446701L;
+public class Series  implements Serializable, Cloneable {
+    private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,21 +52,20 @@ public class ExecContextVariableState implements Serializable {
     @Version
     public Integer version;
 
-    @Nullable
-    @Column(name = "EXEC_CONTEXT_ID")
-    public Long execContextId;
+    @Column(name = "NAME")
+    public String name;
 
-    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 
     public void setParams(String params) {
         synchronized (this) {
             this.params = params;
-            this.ecpy =null;
+            this.spy =null;
         }
     }
 
+    @NonNull
     public String getParams() {
         return params;
     }
@@ -75,25 +73,30 @@ public class ExecContextVariableState implements Serializable {
     @Transient
     @JsonIgnore
     @Nullable
-    private ExecContextApiData.ExecContextVariableStates ecpy = null;
+    private SeriesParamsYaml spy = null;
+
+    @SneakyThrows
+    public Experiment clone() {
+        return (Experiment) super.clone();
+    }
 
     @JsonIgnore
-    public ExecContextApiData.ExecContextVariableStates getExecContextVariableStateInfo() {
-        if (ecpy ==null) {
+    public @NonNull SeriesParamsYaml getSeriesParamsYaml() {
+        if (spy ==null) {
             synchronized (this) {
-                if (ecpy ==null) {
-                    ExecContextApiData.ExecContextVariableStates temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
-                    ecpy = temp==null ? new ExecContextApiData.ExecContextVariableStates() : temp;
+                if (spy ==null) {
+                    SeriesParamsYaml temp = SeriesParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    spy = temp==null ? new SeriesParamsYaml() : temp;
                 }
             }
         }
-        return ecpy;
+        return spy;
     }
 
     @JsonIgnore
-    @SneakyThrows
-    public void updateParams(ExecContextApiData.ExecContextVariableStates info) {
-        setParams(JsonUtils.getMapper().writeValueAsString(info));
+    public void updateParams(SeriesParamsYaml epy) {
+        params = SeriesParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
     }
+
 
 }

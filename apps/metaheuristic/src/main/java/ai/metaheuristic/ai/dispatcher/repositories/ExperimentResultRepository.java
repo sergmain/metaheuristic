@@ -28,6 +28,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Profile("dispatcher")
 @Transactional
@@ -47,4 +49,7 @@ public interface ExperimentResultRepository extends CrudRepository<ExperimentRes
     @Nullable
     @Query(value="select a.id from ExperimentResult a where a.id=:experimentResultId")
     Long findIdById(Long experimentResultId);
+
+    @Query(value="select b.id, b.name from ExperimentResult b order by b.id desc")
+    List<Object[]> getResultNames();
 }

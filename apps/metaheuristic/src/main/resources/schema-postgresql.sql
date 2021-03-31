@@ -191,11 +191,11 @@ CREATE UNIQUE INDEX MH_FUNCTION_DATA_FUNCTION_CODE_UNQ_IDX
 
 CREATE TABLE MH_EXPERIMENT
 (
-  ID            SERIAL PRIMARY KEY,
-  VERSION       NUMERIC(5, 0)  NOT NULL,
-  EXEC_CONTEXT_ID  NUMERIC(10, 0),
-  CODE          VARCHAR(255)   NOT NULL,
-  PARAMS        TEXT not null
+  ID                SERIAL PRIMARY KEY,
+  VERSION           NUMERIC(5, 0)  NOT NULL,
+  EXEC_CONTEXT_ID   NUMERIC(10, 0),
+  CODE              VARCHAR(255)   NOT NULL,
+  PARAMS            TEXT not null
 );
 
 CREATE UNIQUE INDEX mh_experiment_exec_context_id_unq_idx
@@ -203,6 +203,14 @@ CREATE UNIQUE INDEX mh_experiment_exec_context_id_unq_idx
 
 CREATE UNIQUE INDEX MH_EXPERIMENT_CODE_UNQ_IDX
   ON MH_EXPERIMENT (CODE);
+
+CREATE TABLE mh_series
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    NAME            VARCHAR(255)    NOT NULL,
+    PARAMS          TEXT      not null
+);
 
 CREATE TABLE MH_TASK
 (

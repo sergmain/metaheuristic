@@ -40,6 +40,13 @@ public class ExperimentResultData {
     public static final PlotData EMPTY_PLOT_DATA = new PlotData();
 
     @Data
+    @AllArgsConstructor
+    public static class SimpleExperimentResult {
+        public Long id;
+        public String name;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class PlotData extends BaseDataClass {
