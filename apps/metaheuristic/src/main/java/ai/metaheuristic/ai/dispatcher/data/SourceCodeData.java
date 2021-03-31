@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,6 +35,7 @@ import java.util.List;
  * Date: 1/18/2020
  * Time: 4:41 PM
  */
+@SuppressWarnings("unused")
 public class SourceCodeData {
 
     @Data

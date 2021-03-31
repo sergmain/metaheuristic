@@ -74,8 +74,7 @@ public class ProcessorTaskService {
      *             key - ProcessorTask.taskId,
      *             Value - ProcessorTask
      */
-    private final Map<String, Map<DispatcherUrl, Map<Long, ProcessorTask>>> map = new ConcurrentHashMap<>();
-//    private final Map<DispatcherUrl, Map<Long, ProcessorTask>> map = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorTask>>> map = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {

@@ -22,12 +22,7 @@ import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.IOUtils;
-
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
@@ -43,13 +38,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("SameParameterValue")
 public class TestYamlParser {
 
     private static Yaml init(Class<?> clazz) {
         return initWithTags(clazz, new Class[]{clazz}, null);
     }
 
-    private static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, @Nullable TypeDescription customTypeDescription) {
+    private static Yaml initWithTags(Class<?> clazz, @Nullable Class<?>[] clazzMap, @Nullable TypeDescription customTypeDescription) {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
@@ -66,14 +62,13 @@ public class TestYamlParser {
             constructor.addTypeDescription(customTypeDescription);
         }
 
-        //noinspection UnnecessaryLocalVariable
         Yaml yaml = new Yaml(constructor, representer, options);
         return yaml;
     }
 
     @Test
     public void testUrlAsKey() {
-        Map<String, String> mirror = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, String> mirror = new ConcurrentHashMap<>();
         final String key = "http://localhost:8080";
         final String value = "C:\\repo";
         mirror.put(key, value);
