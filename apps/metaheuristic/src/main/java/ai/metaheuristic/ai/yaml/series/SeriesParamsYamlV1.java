@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.series;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -43,15 +44,20 @@ public class SeriesParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class MetricValuesV1 {
         // key - name of metric, value - value of metric
-        public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+        public final LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
     }
 
-    public final Map<String, String> hyperParams = new HashMap<>();
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ExperimentPartV1 {
+        public String taskContextId;
+        public Map<String, String> hyperParams;
+        public EnumsApi.Fitting fitting;
+        public final MetricValuesV1 metrics = new MetricValuesV1();
+        public final List<String> variables = new ArrayList<>();
+    }
 
-    public EnumsApi.Fitting fitting;
-
-    public final MetricValuesV1 metrics = new MetricValuesV1();
-
-    public final List<String> variables = new ArrayList<>();
+    public final Map<String, ExperimentPartV1> parts = new HashMap<>();
 
 }

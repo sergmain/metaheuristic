@@ -91,7 +91,6 @@ public class SeriesTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-
     public SeriesData.SeriesResult getSeries(Long seriesId, DispatcherContext context) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
@@ -109,5 +108,21 @@ public class SeriesTopLevelService {
         }
         return new SeriesData.SeriesDetails(series.getSeriesParamsYaml());
 
+    }
+
+    public OperationStatusRest processSeriesImport(Long seriesId, Long experimentResultId) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#286.060 series wasn't found, seriesId: " + seriesId;
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
+        }
+        try {
+            return seriesService.processSeriesImport(seriesId, experimentResultId);
+        }
+        catch (Throwable th) {
+            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            log.error(es, th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
     }
 }

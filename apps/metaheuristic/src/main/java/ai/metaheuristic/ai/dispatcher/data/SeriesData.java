@@ -24,6 +24,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 3/30/2021
@@ -60,6 +62,21 @@ public class SeriesData {
     public static class SimpleSeries {
         public Long id;
         public String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleExperimentResult {
+        public Long id;
+        public String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class ExperimentResultList extends BaseDataClass{
+        public List<SimpleExperimentResult> list;
     }
 
     @Data

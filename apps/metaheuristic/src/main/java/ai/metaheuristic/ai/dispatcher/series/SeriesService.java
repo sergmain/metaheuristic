@@ -17,11 +17,15 @@
 package ai.metaheuristic.ai.dispatcher.series;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SeriesService {
 
     private final SeriesRepository seriesRepository;
+    private final ExperimentResultRepository experimentResultRepository;
 
     @Transactional
     public void addSeriesCommit(String name) {
@@ -68,14 +73,32 @@ public class SeriesService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         if (S.b(name)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Name of Series can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#354.020 Name of Series can't be empty");
         }
         Series series = seriesRepository.findById(id).orElse(null);
         if (series==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Series #"+id+" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#354.040 Series #"+id+" wasn't found");
         }
         series.name = name.strip();
         seriesRepository.save(series);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Transactional
+    public OperationStatusRest processSeriesImport(Long seriesId, Long experimentResultId) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#354.060 series wasn't found, seriesId: " + seriesId;
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
+        }
+        final ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
+        if (experimentResult == null) {
+            String errorMessage = "#354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
+        }
+        ExperimentResultParamsYaml params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+
+
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }

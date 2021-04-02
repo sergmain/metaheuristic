@@ -75,13 +75,30 @@ public class SeriesController {
     }
 
     @GetMapping("/series-details/{id}")
-    public String getExperiments(@PathVariable Long id, Model model,
+    public String getSeriesDetails(@PathVariable Long id, Model model,
                                  @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                                  @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
         SeriesData.SeriesDetails details = seriesTopLevelService.getSeriesDetails(id);
         ControllerUtils.addMessagesToModel(model, details);
         model.addAttribute("result", details);
         return "dispatcher/ai/series/series-details";
+    }
+
+    @GetMapping("/series-import/{seriesId}")
+    public String seriesImport(@PathVariable Long seriesId, Model model,
+                                 @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+                                 @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+        SeriesData.SeriesDetails details = seriesTopLevelService.getSeriesDetails(seriesId);
+        ControllerUtils.addMessagesToModel(model, details);
+        model.addAttribute("result", details);
+        return "dispatcher/ai/series/series-import";
+    }
+
+    @PostMapping("/series-import-commit/{seriesId}")
+    public String seriesImportCommit(@PathVariable Long seriesId, Long experimentResultId, Model model, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = seriesTopLevelService.processSeriesImport(seriesId, experimentResultId);
+        ControllerUtils.initRedirectAttributes(redirectAttributes, status);
+        return "redirect:/dispatcher/ai/series/series-import/"+seriesId;
     }
 
     @GetMapping(value = "/series-add")

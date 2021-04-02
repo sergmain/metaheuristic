@@ -46,12 +46,20 @@ public class SeriesParamsYamlUtilsV1
         src.checkIntegrity();
         SeriesParamsYaml trg = new SeriesParamsYaml();
 
+        src.parts.forEach((key, value) -> trg.parts.put(key, to(value)));
+
+        trg.checkIntegrity();
+        return trg;
+    }
+
+    private static SeriesParamsYaml.ExperimentPart to(SeriesParamsYamlV1.ExperimentPartV1 src) {
+        SeriesParamsYaml.ExperimentPart trg = new SeriesParamsYaml.ExperimentPart();
+        trg.taskContextId = src.taskContextId;
         trg.hyperParams.putAll(src.hyperParams);
         trg.fitting = src.fitting;
         trg.metrics.values.putAll(src.metrics.values);
         trg.variables.addAll(src.variables);
 
-        trg.checkIntegrity();
         return trg;
     }
 
