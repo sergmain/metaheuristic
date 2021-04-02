@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -63,14 +64,16 @@ public class SeriesData {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class SeriesEditResult extends BaseDataClass {
-        public SimpleSeries simpleSeries;
+    public static class SeriesDetails extends BaseDataClass {
+        public SeriesParamsYaml params;
 
-        public SeriesEditResult(String errorMessage) {
+        public SeriesDetails(String errorMessage) {
             addErrorMessage(errorMessage);
         }
-    }
 
+        public SeriesDetails(SeriesParamsYaml params) {
+            this.params = params;
+        }
+    }
 }

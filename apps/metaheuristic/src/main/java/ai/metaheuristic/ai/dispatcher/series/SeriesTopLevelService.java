@@ -101,4 +101,13 @@ public class SeriesTopLevelService {
         return new SeriesData.SeriesResult(new SeriesData.SimpleSeries(series.id, series.name));
     }
 
+    public SeriesData.SeriesDetails getSeriesDetails(Long seriesId) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
+            return new SeriesData.SeriesDetails(errorMessage);
+        }
+        return new SeriesData.SeriesDetails(series.getSeriesParamsYaml());
+
+    }
 }

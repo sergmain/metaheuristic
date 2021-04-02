@@ -18,13 +18,10 @@ package ai.metaheuristic.ai.dispatcher.series;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -75,6 +72,16 @@ public class SeriesController {
         SeriesData.SeriesesResult serieses = seriesTopLevelService.getSerieses(pageable);
         model.addAttribute("result", serieses);
         return "dispatcher/ai/series/series :: table";
+    }
+
+    @GetMapping("/series-details/{id}")
+    public String getExperiments(@PathVariable Long id, Model model,
+                                 @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+                                 @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+        SeriesData.SeriesDetails details = seriesTopLevelService.getSeriesDetails(id);
+        ControllerUtils.addMessagesToModel(model, details);
+        model.addAttribute("result", details);
+        return "dispatcher/ai/series/series-details";
     }
 
     @GetMapping(value = "/series-add")

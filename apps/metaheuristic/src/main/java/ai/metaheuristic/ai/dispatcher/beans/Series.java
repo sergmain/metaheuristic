@@ -38,12 +38,12 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_SERIES")
 @Data
-@ToString(exclude = {"epy"})
+@ToString(exclude = {"spy"})
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Series  implements Serializable, Cloneable {
-    private static final long serialVersionUID = -3509391644278818781L;
+    private static final long serialVersionUID = -3441017964712755108L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -80,8 +80,9 @@ public class Series  implements Serializable, Cloneable {
         return (Experiment) super.clone();
     }
 
+    @NonNull
     @JsonIgnore
-    public @NonNull SeriesParamsYaml getSeriesParamsYaml() {
+    public SeriesParamsYaml getSeriesParamsYaml() {
         if (spy ==null) {
             synchronized (this) {
                 if (spy ==null) {
