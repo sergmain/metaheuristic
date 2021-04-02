@@ -45,10 +45,11 @@ public class SeriesParamsYamlUtilsV1
     public SeriesParamsYaml upgradeTo(@NonNull SeriesParamsYamlV1 src) {
         src.checkIntegrity();
         SeriesParamsYaml trg = new SeriesParamsYaml();
-        trg.createdOn = src.createdOn;
-        trg.code=src.code;
-        trg.name=src.name;
-        trg.description=src.description;
+
+        trg.hyperParams.putAll(src.hyperParams);
+        trg.fitting = src.fitting;
+        trg.metrics.values.putAll(src.metrics.values);
+        trg.variables.addAll(src.variables);
 
         trg.checkIntegrity();
         return trg;

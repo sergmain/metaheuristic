@@ -1,39 +1,26 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-ai}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
-    <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Delete Experiment</h1>
+    <div>
+        <h1 class="widget-header">Delete Series</h1>
 
-        <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
-        <!--/*@thymesVar id="params" type="java.lang.String"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${experiment}">
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesResult"*/-->
+        <form class="pure-form pure-form-stacked">
             <fieldset>
-                <label for="code">Code</label>
-                <pre id="code" th:text="*{code}" ></pre>
-
                 <label for="name">Name</label>
-                <pre id="name" th:text="*{name}" ></pre>
-
-                <label for="description">Description</label>
-                <pre id="description" th:text="*{description}" ></pre>
-
-<!--
-                <label for="sourceCodeYamlAsStr">Parameters of experiment</label>
-                <pre id="sourceCodeYamlAsStr" th:text="${params}" ></pre>
--->
+                <pre id="name" th:text="${result.series.name}" ></pre>
             </fieldset>
         </form>
 
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post" th:action="@{/dispatcher/ai/experiment/experiment-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/ai/series/series-delete-commit}"
                           accept-charset="UTF-8"
-                          id="experiment-delete-commit"
+                          id="series-delete-commit"
                           name="f">
-                        <input type="hidden" th:field="*{id}"/>
+                        <input type="hidden" th:name="seriesId" th:value="${result.series.id}"/>
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Delete</button>
                         </fieldset>
@@ -43,7 +30,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/ai/experiment/experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/ai/series/series}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

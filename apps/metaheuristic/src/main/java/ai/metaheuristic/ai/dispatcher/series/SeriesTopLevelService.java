@@ -18,18 +18,14 @@ package ai.metaheuristic.ai.dispatcher.series;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Series;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.SeriesData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +37,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -55,7 +49,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SeriesTopLevelService {
 
-    private final Globals globals;
     private final SeriesService seriesService;
     private final SeriesRepository seriesRepository;
     private final ExperimentResultRepository experimentResultRepository;
@@ -98,5 +91,14 @@ public class SeriesTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+
+    public SeriesData.SeriesResult getSeries(Long seriesId, DispatcherContext context) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
+            return new SeriesData.SeriesResult(errorMessage);
+        }
+        return new SeriesData.SeriesResult(new SeriesData.SimpleSeries(series.id, series.name));
+    }
 
 }

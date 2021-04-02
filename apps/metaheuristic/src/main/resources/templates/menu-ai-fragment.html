@@ -11,5 +11,9 @@
             th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/experiment-result/experiment-result')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/ai/experiment-result/experiment-results.html" th:href="@{/dispatcher/ai/experiment-result/experiment-results}">Experiment results</a>
         </li>
+        <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/series/series')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="dispatcher/ai/series/series.html" th:href="@{/dispatcher/ai/series/series}">Series</a>
+        </li>
     </ul>
 </div>

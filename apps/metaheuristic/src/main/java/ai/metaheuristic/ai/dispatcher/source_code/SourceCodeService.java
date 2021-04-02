@@ -99,6 +99,11 @@ public class SourceCodeService {
     }
 
     @Transactional
+    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
+        return deleteSourceCodeById(sourceCodeId);
+    }
+
+    @Transactional
     public OperationStatusRest deleteSourceCodeById(@Nullable Long sourceCodeId) {
         return deleteSourceCodeById(sourceCodeId, true);
     }
@@ -225,11 +230,6 @@ public class SourceCodeService {
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
-    }
-
-    @Transactional
-    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
-        return deleteSourceCodeById(sourceCodeId);
     }
 
     @Transactional

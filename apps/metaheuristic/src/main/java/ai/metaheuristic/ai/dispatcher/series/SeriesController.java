@@ -21,7 +21,9 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -31,10 +33,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -56,15 +55,16 @@ public class SeriesController {
     private static final String REDIRECT_DISPATCHER_SERIES = "redirect:/dispatcher/ai/series/series";
 
     private final SeriesTopLevelService seriesTopLevelService;
+    private final SeriesService seriesService;
     private final UserContextService userContextService;
 
     @GetMapping("/series")
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable,
                                  @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                                  @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        SeriesData.SeriesesResult experiments = seriesTopLevelService.getSerieses(pageable);
-        ControllerUtils.addMessagesToModel(model, experiments);
-        model.addAttribute("result", experiments);
+        SeriesData.SeriesesResult serieses = seriesTopLevelService.getSerieses(pageable);
+        ControllerUtils.addMessagesToModel(model, serieses);
+        model.addAttribute("result", serieses);
         return "dispatcher/ai/series/series";
     }
 
@@ -95,4 +95,23 @@ public class SeriesController {
         return REDIRECT_DISPATCHER_SERIES;
     }
 
+    @GetMapping("/series-delete/{id}")
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        SeriesData.SeriesResult seriesResult = seriesTopLevelService.getSeries(id, context);
+        if (seriesResult.isErrorMessages()) {
+            ControllerUtils.initRedirectAttributes(redirectAttributes, seriesResult);
+            return REDIRECT_DISPATCHER_SERIES;
+        }
+        model.addAttribute("result", seriesResult);
+        return "dispatcher/ai/series/series-delete";
+    }
+
+    @PostMapping("/series-delete-commit")
+    public String deleteCommit(Long seriesId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = seriesService.deleteSeriesById(seriesId, context);
+        ControllerUtils.initRedirectAttributes(redirectAttributes, operationStatusRest);
+        return REDIRECT_DISPATCHER_SERIES;
+    }
 }

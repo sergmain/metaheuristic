@@ -16,16 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.series;
 
-import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,5 +51,12 @@ public class SeriesService {
         seriesRepository.save(e);
     }
 
-
+    @Transactional
+    public OperationStatusRest deleteSeriesById(Long seriesId, DispatcherContext context) {
+        if (seriesId==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        seriesRepository.deleteById(seriesId);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
 }

@@ -16,8 +16,13 @@
 
 package ai.metaheuristic.ai.yaml.series;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * @author Serge
@@ -33,5 +38,20 @@ public class SeriesParamsYaml implements BaseParams {
     public boolean checkIntegrity() {
         return true;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class MetricValues {
+        // key - name of metric, value - value of metric
+        public final LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+    }
+
+    public final Map<String, String> hyperParams = new HashMap<>();
+
+    public EnumsApi.Fitting fitting;
+
+    public final MetricValues metrics = new MetricValues();
+
+    public final List<String> variables = new ArrayList<>();
 
 }
