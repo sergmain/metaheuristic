@@ -3,31 +3,12 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
 
-    <script>
-        var table = function (html) {
-            $('#table').html(html).find('.ajax-elem').each(function () {
-                $(this).click(function () {
-                    $.post($(this).attr('href'), table);
-                    return false;
-                });
-            });
-        };
+    <!--/*@thymesVar id="simple" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesResult"*/-->
+    <h1 class="widget-header" th:text="${'Details of Series '+simple.series.name}">text</h1>
 
-        $(function () {
-            var token = $("meta[name='_csrf']").attr("content");
-            var header = $("meta[name='_csrf_header']").attr("content");
+    <h1 class="widget-header">Import Experiment result into Series</h1>
 
-            $(document).ajaxSend(function (e, xhr, options) {
-                xhr.setRequestHeader(header, token);
-            });
-            $.post('/dispatcher/ai/series/series-part', table);
-        });
-
-    </script>
-
-    <h1 class="widget-header">Experiments</h1>
-
-    <a class="pure-button pure-button-primary" href="series-add-form.html" th:href="@{/dispatcher/ai/series/series-add}">Add new series</a>
+    <a class="pure-button pure-button-primary" href="series-import.html" th:href="@{/dispatcher/ai/series/series-import}">Import</a>
     <p></p>
 
     <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData.SeriesesResult"*/-->
