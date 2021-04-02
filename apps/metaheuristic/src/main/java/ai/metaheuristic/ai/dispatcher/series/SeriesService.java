@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -57,6 +59,23 @@ public class SeriesService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         seriesRepository.deleteById(seriesId);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Transactional
+    public OperationStatusRest editCommit(Long id, String name, DispatcherContext context) {
+        if (id==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        if (S.b(name)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Name of Series can't be empty");
+        }
+        Series series = seriesRepository.findById(id).orElse(null);
+        if (series==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Series #"+id+" wasn't found");
+        }
+        series.name = name.strip();
+        seriesRepository.save(series);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }

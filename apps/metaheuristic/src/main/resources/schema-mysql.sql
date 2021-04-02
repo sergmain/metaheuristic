@@ -216,6 +216,9 @@ CREATE TABLE mh_series
     PARAMS          MEDIUMTEXT      not null
 );
 
+CREATE UNIQUE INDEX mh_series_name_unq_idx
+    ON mh_series (NAME);
+
 CREATE TABLE mh_task
 (
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

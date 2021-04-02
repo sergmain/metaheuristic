@@ -48,7 +48,7 @@
                 <td>
                     <div th:text="${r.series.name}">Name</div>
                 </td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-show/' + r.series.id}">Show</a></td>
+                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-details/' + r.series.id}">Details</a></td>
                 <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-edit/' + r.series.id}">Edit</a></td>
                 <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-delete/' + r.series.id}">Delete</a></td>
             </tr>

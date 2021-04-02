@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New Series</h1>
 
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/ai/series/series-add-form-commit}" accept-charset="UTF-8" id="series-add-form" name="f">
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/ai/series/series-add-commit}" accept-charset="UTF-8" id="series-add" name="f">
             <fieldset>
 
                 <label for="name">Name</label>

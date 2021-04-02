@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.series;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -81,10 +82,10 @@ public class SeriesController {
         DispatcherContext context = userContextService.getContext(authentication);
         List<ExperimentResultData.SimpleExperimentResult> results = seriesTopLevelService.getExperimentResults();
         model.addAttribute("result", results);
-        return "dispatcher/ai/series/series-add-form";
+        return "dispatcher/ai/series/series-add";
     }
 
-    @PostMapping("/series-add-form-commit")
+    @PostMapping("/series-add-commit")
     public String addFormCommit(String name, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest status = seriesTopLevelService.addSeriesCommit(name, context);
@@ -95,6 +96,26 @@ public class SeriesController {
         return REDIRECT_DISPATCHER_SERIES;
     }
 
+    @GetMapping(value = "/series-edit/{id}")
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication){
+        DispatcherContext context = userContextService.getContext(authentication);
+        SeriesData.SeriesResult seriesResult = seriesTopLevelService.getSeries(id, context);
+        if (seriesResult.isErrorMessages()) {
+            ControllerUtils.initRedirectAttributes(redirectAttributes, seriesResult);
+            return REDIRECT_DISPATCHER_SERIES;
+        }
+        model.addAttribute("result", seriesResult);
+        return "dispatcher/ai/series/series-edit";
+    }
+
+    @PostMapping("/series-edit-commit")
+    public String editCommit(Long id, String name,
+                                 final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest seriesResult = seriesService.editCommit(id, name, context);
+        ControllerUtils.initRedirectAttributes(redirectAttributes, seriesResult);
+        return REDIRECT_DISPATCHER_SERIES;
+    }
     @GetMapping("/series-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
