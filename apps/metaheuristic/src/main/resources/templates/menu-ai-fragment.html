@@ -4,7 +4,7 @@
     <a class="pure-menu-heading">AI</a>
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/ai/experiment/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/ai/experiment/experiment'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/ai/experiment/experiments.html" th:href="@{/dispatcher/ai/experiment/experiments}">Experiments</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"

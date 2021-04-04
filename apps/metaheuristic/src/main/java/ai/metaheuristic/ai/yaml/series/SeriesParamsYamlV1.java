@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -48,16 +49,23 @@ public class SeriesParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @EqualsAndHashCode
+    public static class KeyV1 {
+        public final TreeMap<String, String> hyperParams = new TreeMap<>();
+        public final List<String> variables = new ArrayList<>();
+    }
+
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ExperimentPartV1 {
         public String taskContextId;
-        public Map<String, String> hyperParams;
         public EnumsApi.Fitting fitting;
+        public final Map<String, String> hyperParams = new HashMap<>();
         public final MetricValuesV1 metrics = new MetricValuesV1();
         public final List<String> variables = new ArrayList<>();
     }
 
-    public final Map<String, ExperimentPartV1> parts = new HashMap<>();
+    public final Map<KeyV1, ExperimentPartV1> parts = new HashMap<>();
 
 }

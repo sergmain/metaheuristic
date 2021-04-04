@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +25,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -80,10 +84,21 @@ public class SeriesData {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SeriesDetail {
+        public Map<String, String> hyperParams;
+        public EnumsApi.Fitting fitting;
+        public final SeriesParamsYaml.MetricValues metrics = new SeriesParamsYaml.MetricValues();
+        public final List<String> variables = new ArrayList<>();
+    }
+
+    @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class SeriesDetails extends BaseDataClass {
         public SeriesParamsYaml params;
+        public final Map<EnumsApi.Fitting, List<SeriesDetail>> results = new HashMap<>();
 
         public SeriesDetails(String errorMessage) {
             addErrorMessage(errorMessage);

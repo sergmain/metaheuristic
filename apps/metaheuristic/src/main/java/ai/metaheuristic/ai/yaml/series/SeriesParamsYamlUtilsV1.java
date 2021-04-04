@@ -46,9 +46,16 @@ public class SeriesParamsYamlUtilsV1
         src.checkIntegrity();
         SeriesParamsYaml trg = new SeriesParamsYaml();
 
-        src.parts.forEach((key, value) -> trg.parts.put(key, to(value)));
+        src.parts.forEach((key, value) -> trg.parts.put( to(key), to(value)));
 
         trg.checkIntegrity();
+        return trg;
+    }
+
+    private static SeriesParamsYaml.Key to(SeriesParamsYamlV1.KeyV1 src) {
+        SeriesParamsYaml.Key trg = new SeriesParamsYaml.Key();
+        trg.hyperParams.putAll(src.hyperParams);
+        trg.variables.addAll(src.variables);
         return trg;
     }
 
