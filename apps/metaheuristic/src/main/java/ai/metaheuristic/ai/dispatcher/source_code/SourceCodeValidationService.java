@@ -131,7 +131,8 @@ public class SourceCodeValidationService {
                 }
             }
             else {
-                if (i + 1 < processes.size()) {
+                boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
+                if (!finish) {
                     if (process.outputs.isEmpty()) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR,

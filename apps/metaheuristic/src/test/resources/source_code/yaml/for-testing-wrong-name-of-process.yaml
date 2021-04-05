@@ -6,4 +6,8 @@ source:
       function:
         code: mh.nop
         context: internal
+      outputs:
+        - name: var-processed-file-1
+          type: processed-file-type-1
+          nullable: true
 version: 1
