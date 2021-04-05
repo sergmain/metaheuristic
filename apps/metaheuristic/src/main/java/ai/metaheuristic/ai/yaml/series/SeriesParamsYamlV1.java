@@ -48,12 +48,14 @@ public class SeriesParamsYamlV1 implements BaseParams {
         public final LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
     }
 
+/*
     @Data
     @EqualsAndHashCode
     public static class KeyV1 {
         public final TreeMap<String, String> hyperParams = new TreeMap<>();
         public final List<String> variables = new ArrayList<>();
     }
+*/
 
     @Data
     @AllArgsConstructor
@@ -66,6 +68,6 @@ public class SeriesParamsYamlV1 implements BaseParams {
         public final List<String> variables = new ArrayList<>();
     }
 
-    public final Map<KeyV1, ExperimentPartV1> parts = new HashMap<>();
+    public final Set<ExperimentPartV1> parts = new HashSet<>();
 
 }

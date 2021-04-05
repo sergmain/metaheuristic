@@ -16,6 +16,19 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code;
 
+import ai.metaheuristic.api.EnumsApi;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class SourceCodeUtils {
+
+    private static final Pattern VARIABLE_NAME_CHARS_PATTERN = Pattern.compile("^[A-Za-z_-][A-Za-z0-9._-]*$");
+
+    public static EnumsApi.SourceCodeValidateStatus isVariableNameOk(String name) {
+        Matcher m = VARIABLE_NAME_CHARS_PATTERN.matcher(name);
+        return m.matches() ? EnumsApi.SourceCodeValidateStatus.OK : EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR;
+    }
+
 
 }

@@ -16,10 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.SneakyThrows;
@@ -27,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -49,16 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("dispatcher")
 @DirtiesContext
 @AutoConfigureCache
-public class TestWrongNameOfProcess extends FeatureMethods {
-
-    @Autowired
-    public SouthbridgeService southbridgeService;
-
-    @Autowired
-    public TaskService taskService;
-
-    @Autowired
-    public ExecContextSchedulerService execContextSchedulerService;
+public class TestWrongNameOfProcess extends PreparingSourceCode {
 
     @Override
     @SneakyThrows

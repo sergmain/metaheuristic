@@ -4,6 +4,6 @@ source:
     - code: mh.finish
       name: mh.finish
       function:
-        code: mh.variable-splitter
+        code: mh.nop
         context: internal
 version: 1

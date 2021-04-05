@@ -16,11 +16,9 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -33,14 +31,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Serge
- * Date: 3/14/2020
- * Time: 8:53 PM
+ * Date: 4/4/2021
+ * Time: 4:23 PM
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -48,30 +45,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 @DirtiesContext
 @AutoConfigureCache
-public class TestSingleInternalFunction extends FeatureMethods {
+public class TestWrongNameOfVariables extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
     public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-single-internal-function.yaml", StandardCharsets.UTF_8);
+        return IOUtils.resourceToString("/source_code/yaml/for-testing-wrong-name-of-variables.yaml", StandardCharsets.UTF_8);
     }
 
     @Test
     public void test() {
-        produceTasks();
-        List<Object[]> list = taskRepository.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
-        assertEquals(2, list.size());
-
-        final List<String> codes = List.of(getFunctionCode(list.get(0)[0]), getFunctionCode(list.get(1)[0]));
-        assertTrue(codes.contains(Consts.MH_FINISH_FUNCTION));
-        assertTrue(codes.contains(Consts.MH_BATCH_SPLITTER_FUNCTION));
-    }
-
-    private String getFunctionCode(Object object) {
-        TaskImpl task = taskRepository.findById((Long) object).orElse(null);
-        assertNotNull(task);
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        return taskParamsYaml.task.function.code;
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, status.status);
     }
 }
 

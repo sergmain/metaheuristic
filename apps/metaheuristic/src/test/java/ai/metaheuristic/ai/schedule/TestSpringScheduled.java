@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.schedule;
 
 import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.annotation.PostConstruct;
 
@@ -37,6 +37,7 @@ import javax.annotation.PostConstruct;
 @DirtiesContext
 @AutoConfigureCache
 @DependsOn({"Globals"})
+@Disabled
 public class TestSpringScheduled {
 
     private static int loops = 0;

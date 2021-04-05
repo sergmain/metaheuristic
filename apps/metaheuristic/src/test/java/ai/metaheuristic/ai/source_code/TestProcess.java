@@ -36,11 +36,6 @@ import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceC
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@ActiveProfiles("dispatcher")
-@DirtiesContext
-@AutoConfigureCache
 public class TestProcess {
 
     @Test

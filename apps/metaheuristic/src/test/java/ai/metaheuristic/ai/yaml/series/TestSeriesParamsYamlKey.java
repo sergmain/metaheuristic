@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestSeriesParamsYamlKey {
 
+/*
     @Test
     public void test() {
         SeriesParamsYaml.Key key1;
@@ -121,7 +122,9 @@ public class TestSeriesParamsYamlKey {
         assertNotEquals(key2, key4);
         assertNotEquals(key3, key4);
     }
+*/
 
+/*
     private static SeriesParamsYaml.Key getKey(Map<String, String> map, List<String> list) {
         SeriesParamsYaml.Key key4;
         key4 = new SeriesParamsYaml.Key();
@@ -129,11 +132,13 @@ public class TestSeriesParamsYamlKey {
         key4.variables.addAll(list);
         return key4;
     }
+*/
 
     @Test
     public void test1() throws JsonProcessingException {
         SeriesParamsYaml params = new SeriesParamsYaml();
 
+/*
         SeriesParamsYaml.Key key1 = getKey(Map.of(
                 "key10", "v10",
                 "key1", "v1",
@@ -142,11 +147,15 @@ public class TestSeriesParamsYamlKey {
                 "key5", "v5"
         ), List.of("var10", "var1", "var6", "var3"));
 
+*/
         SeriesParamsYaml.ExperimentPart part = new SeriesParamsYaml.ExperimentPart();
         part.taskContextId = "1#1";
         part.hyperParams.putAll(Map.of("k1","v1","k2","v2","k3","v3","k4","v4"));
-        params.parts.put(key1, part);
+        part.variables.addAll(List.of("var10", "var1", "var6", "var3"));
 
+        params.parts.add(part);
+
+/*
         SeriesParamsYaml.Key key2 = getKey(Map.of(
                 "key210", "v210",
                 "key21", "v21",
@@ -154,10 +163,14 @@ public class TestSeriesParamsYamlKey {
                 "key27", "v27",
                 "key25", "v25"
         ), List.of("var210", "var21", "var26", "var23"));
+*/
+
         SeriesParamsYaml.ExperimentPart part2 = new SeriesParamsYaml.ExperimentPart();
         part2.taskContextId = "1#2";
         part2.hyperParams.putAll(Map.of("k21","v21","k22","v22","k23","v23","k24","v24"));
-        params.parts.put(key2, part2);
+        part.variables.addAll(List.of("var210", "var21", "var26", "var23"));
+
+        params.parts.add(part2);
 
         String yaml = SeriesParamsYamlUtils.BASE_YAML_UTILS.toString(params);
         System.out.println(yaml);
@@ -167,15 +180,15 @@ public class TestSeriesParamsYamlKey {
         System.out.println(json);
 
         SeriesParamsYaml params21 = JsonUtils.getMapper().readValue(json, SeriesParamsYaml.class);
-        assertTrue(params21.parts.containsKey(key1));
-        assertTrue(params21.parts.containsKey(key2));
+//        assertTrue(params21.parts.containsKey(key1));
+//        assertTrue(params21.parts.containsKey(key2));
 
 
 
 
         SeriesParamsYaml params1 = SeriesParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        assertTrue(params1.parts.containsKey(key1));
-        assertTrue(params1.parts.containsKey(key2));
+//        assertTrue(params1.parts.containsKey(key1));
+//        assertTrue(params1.parts.containsKey(key2));
 
         System.out.println(yaml);
 

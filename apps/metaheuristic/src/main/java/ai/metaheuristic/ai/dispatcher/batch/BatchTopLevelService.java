@@ -89,8 +89,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 public class BatchTopLevelService {
 
     private static final String SOURCE_CODE_NOT_FOUND = "Source code wasn't found";
-    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
-    private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
+    private static final Pattern ZIP_CHARS_PATTERN = Pattern.compile("^[/\\\\A-Za-z0-9._-]*$");
 
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
@@ -129,7 +128,7 @@ public class BatchTopLevelService {
     }
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {
-        Matcher m = zipCharsPattern.matcher(zipEntry.getName());
+        Matcher m = ZIP_CHARS_PATTERN.matcher(zipEntry.getName());
         return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("#981.010 Wrong name of file in zip file. Name: "+zipEntry.getName());
     }
 

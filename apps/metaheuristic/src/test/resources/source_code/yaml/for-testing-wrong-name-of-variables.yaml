@@ -1,0 +1,13 @@
+source:
+  uid: for-testing-name-of-variable
+  processes:
+    - code: mh.nop
+      name: mh.nop
+      function:
+        code: mh.nop
+        context: internal
+      outputs:
+        - name: 1var-processed-file-1
+          type: processed-file-type-1
+          nullable: true
+version: 1

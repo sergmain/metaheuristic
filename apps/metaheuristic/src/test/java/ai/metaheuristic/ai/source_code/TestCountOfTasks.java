@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -29,7 +27,6 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -53,11 +50,6 @@ public class TestCountOfTasks extends PreparingExperiment {
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
     }
-
-    @Autowired
-    public TaskService taskService;
-    @Autowired
-    public ExecContextService execContextService;
 
     @Test
     public void testCountNumberOfTasks() {

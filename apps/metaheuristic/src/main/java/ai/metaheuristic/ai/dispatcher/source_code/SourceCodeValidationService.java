@@ -49,6 +49,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
@@ -145,6 +147,25 @@ public class SourceCodeValidationService {
                             return new SourceCodeApiData.SourceCodeValidationResult(
                                     EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
                                     "#177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
+                        }
+                        EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
+                        if (status!=OK) {
+                            return new SourceCodeApiData.SourceCodeValidationResult(
+                                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
+                                    "#177.183 Output variable in process " + process.code + " has a wrong chars in name");
+                        }
+                    }
+                    for (SourceCodeParamsYaml.Variable variable : process.inputs) {
+                        if (S.b(variable.name)) {
+                            return new SourceCodeApiData.SourceCodeValidationResult(
+                                    EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLE_NOT_DEFINED_ERROR,
+                                    "#177.185 Output variable in process " + process.code + " must have a name");
+                        }
+                        EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
+                        if (status!=OK) {
+                            return new SourceCodeApiData.SourceCodeValidationResult(
+                                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
+                                    "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
                         }
                     }
                 }
