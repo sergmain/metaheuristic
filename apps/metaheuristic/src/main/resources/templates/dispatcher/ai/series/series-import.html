@@ -18,7 +18,7 @@
         </tr>
         </thead>
         <tbody>
-        <div th:remove="tag" th:each="r : ${result.importDetails}" >
+        <div th:remove="tag" th:each="r : ${result.importDetails}">
             <tr>
                 <td>
                     <div th:text="${'#'+r.experimentResult.id}">Id</div>
@@ -29,10 +29,16 @@
                 <td>
                     <div th:text="${r.imported}">Imported</div>
                 </td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-import-commit/' + result.seriesId+'/'+r.experimentResult.id}">Import</a></td>
+                <td>
+                    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+                          th:action="${'/dispatcher/ai/series/series-import-commit/' + result.seriesId+'/'+r.experimentResult.id}">
+                        <button type="submit" class="pure-button pure-button-primary">Import</button>
+                    </form>
+                </td>
             </tr>
         </div>
         </tbody>
     </table>
+    <p>&nbsp;</p>
 
 </div>

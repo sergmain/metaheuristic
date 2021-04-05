@@ -94,8 +94,9 @@ public class SeriesController {
         return "dispatcher/ai/series/series-import";
     }
 
-    @PostMapping("/series-import-commit/{seriesId}")
-    public String seriesImportCommit(@PathVariable Long seriesId, Long experimentResultId, Model model, final RedirectAttributes redirectAttributes) {
+    @PostMapping("/series-import-commit/{seriesId}/{experimentResultId}")
+    public String seriesImportCommit(@PathVariable Long seriesId, @PathVariable Long experimentResultId,
+                                     Model model, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = seriesTopLevelService.processSeriesImport(seriesId, experimentResultId);
         ControllerUtils.initRedirectAttributes(redirectAttributes, status);
         return "redirect:/dispatcher/ai/series/series-import/"+seriesId;

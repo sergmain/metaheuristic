@@ -97,8 +97,23 @@ public class SeriesService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
         ExperimentResultParamsYaml params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+        SeriesParamsYaml spy = series.getSeriesParamsYaml();
 
+        if (!spy.experimentResults.contains(params.name)) {
+            spy.experimentResults.add(params.name);
+        }
+        for (ExperimentResultParamsYaml.ExperimentPart part : params.parts) {
+
+        }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private static SeriesParamsYaml.ExperimentPart to(ExperimentResultParamsYaml.ExperimentPart part) {
+        SeriesParamsYaml.ExperimentPart r = new SeriesParamsYaml.ExperimentPart();
+        r.fitting = part.fitting;
+
+
+        return r;
     }
 }
