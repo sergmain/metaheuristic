@@ -106,8 +106,33 @@ public class SeriesTopLevelService {
             String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
             return new SeriesData.SeriesDetails(errorMessage);
         }
-        return new SeriesData.SeriesDetails(series.id, series.name, series.getSeriesParamsYaml());
+        final SeriesData.SeriesDetails seriesDetails = new SeriesData.SeriesDetails(series.id, series.name, series.getSeriesParamsYaml());
+        for (SeriesParamsYaml.ExperimentPart part : seriesDetails.params.parts) {
+            switch(part.fitting) {
+                case UNKNOWN:
+                    seriesDetails.unknownFitting.add(to(part));
+                    break;
+                case UNDERFITTING:
+                    seriesDetails.underFitting.add(to(part));
+                    break;
+                case NORMAL:
+                    seriesDetails.normalFitting.add(to(part));
+                    break;
+                case OVERFITTING:
+                    seriesDetails.overFitting.add(to(part));
+                    break;
+            }
+        }
+        return seriesDetails;
+    }
 
+    private static SeriesData.SeriesDetail to(SeriesParamsYaml.ExperimentPart part) {
+        SeriesData.SeriesDetail detail = new SeriesData.SeriesDetail();
+        detail.fitting = part.fitting;
+        detail.hyperParams = part.hyperParams;
+        detail.metrics.values.putAll(part.metrics.values);
+        detail.variables.addAll(part.variables);
+        return detail;
     }
 
     public OperationStatusRest processSeriesImport(Long seriesId, Long experimentResultId) {

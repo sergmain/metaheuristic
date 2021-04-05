@@ -129,7 +129,7 @@ public class TaskProcessor {
 
     private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
 
-        log.warn("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
+        log.debug("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);

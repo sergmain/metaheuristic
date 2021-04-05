@@ -9,9 +9,15 @@
     <h1 class="widget-header">Import Experiment result into Series</h1>
 
     <a class="pure-button pure-button-primary" href="series-import.html" th:href="${'/dispatcher/ai/series/series-import/'+result.seriesId}">Import</a>
-    <p></p>
 
-    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+    <p>&nbsp;</p>
+    <p>Count of fitting:</p>
+    <p th:text="${'unknown fitting: ' + result.unknownFitting.size() }">Count of unknown fitting</p>
+    <p th:text="${'under fitting: ' + result.underFitting.size() }">Count of under fitting</p>
+    <p th:text="${'normal fitting: ' + result.normalFitting.size() }">Count of normal fitting</p>
+    <p th:text="${'over fitting: ' + result.overFitting.size() }">Count of over fitting</p>
+
+<!--    <table class="pure-table pure-table-bordered">
         <thead>
         <tr>
             <th>Id</th>
@@ -33,30 +39,7 @@
                 <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-delete/' + r.series.id}">Delete</a></td>
             </tr>
         </div>
-        <tr>
-            <td colspan="5">
-                <div>
-                    <ul class='pagination pagination-centered'>
-                        <li class="table-nav-padding">
-                            <span th:if='${result.items.first}' class="table-nav-button">« First</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/dispatcher/ai/series/series-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
-                        </li>
-                        <li class="table-nav-padding">
-                            <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/dispatcher/ai/series/series-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
-                        </li>
-                        <li class="table-nav-padding">
-                            <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/dispatcher/ai/series/series-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
-                        </li>
-                    </ul>
-                </div>
-            </td>
-        </tr>
         </tbody>
-    </table>
+    </table>-->
 
 </div>

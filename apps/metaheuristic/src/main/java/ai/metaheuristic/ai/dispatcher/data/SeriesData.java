@@ -124,6 +124,7 @@ public class SeriesData {
         public String seriesName;
         public SeriesParamsYaml params;
 
+        public final List<SeriesDetail> unknownFitting = new ArrayList<>();
         public final List<SeriesDetail> underFitting = new ArrayList<>();
         public final List<SeriesDetail> normalFitting = new ArrayList<>();
         public final List<SeriesDetail> overFitting = new ArrayList<>();
