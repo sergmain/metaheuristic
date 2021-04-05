@@ -168,7 +168,7 @@ public class TestSeriesParamsYamlKey {
         SeriesParamsYaml.ExperimentPart part2 = new SeriesParamsYaml.ExperimentPart();
         part2.taskContextId = "1#2";
         part2.hyperParams.putAll(Map.of("k21","v21","k22","v22","k23","v23","k24","v24"));
-        part.variables.addAll(List.of("var210", "var21", "var26", "var23"));
+        part2.variables.addAll(List.of("var210", "var21", "var26", "var23"));
 
         params.parts.add(part2);
 
@@ -180,18 +180,20 @@ public class TestSeriesParamsYamlKey {
         System.out.println(json);
 
         SeriesParamsYaml params21 = JsonUtils.getMapper().readValue(json, SeriesParamsYaml.class);
-//        assertTrue(params21.parts.containsKey(key1));
-//        assertTrue(params21.parts.containsKey(key2));
-
-
 
 
         SeriesParamsYaml params1 = SeriesParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-//        assertTrue(params1.parts.containsKey(key1));
-//        assertTrue(params1.parts.containsKey(key2));
 
         System.out.println(yaml);
 
+        SeriesParamsYaml.ExperimentPart part3 = new SeriesParamsYaml.ExperimentPart();
+        part3.taskContextId = "1#2";
+        part3.hyperParams.putAll(Map.of("k21","v21","k22","v22","k23","v23","k24","v24"));
+        part3.variables.addAll(List.of("var210", "var21", "var26", "var23"));
+
+
+        assertTrue(params1.parts.contains(part3));
+        assertTrue(params21.parts.contains(part3));
 
     }
 }

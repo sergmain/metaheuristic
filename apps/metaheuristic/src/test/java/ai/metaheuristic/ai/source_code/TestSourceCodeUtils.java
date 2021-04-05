@@ -48,6 +48,7 @@ public class TestSourceCodeUtils {
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("aaa/aaa.1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk(" "));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a a"));
+        assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a,a"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a 1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk(".a1"));

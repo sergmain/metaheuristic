@@ -60,6 +60,7 @@ public class SeriesParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode(of={"hyperParams", "variables"})
     public static class ExperimentPart {
         public String taskContextId;
         public EnumsApi.Fitting fitting;
