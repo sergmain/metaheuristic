@@ -123,7 +123,10 @@ public class SeriesData {
         public Long seriesId;
         public String seriesName;
         public SeriesParamsYaml params;
-        public final Map<EnumsApi.Fitting, List<SeriesDetail>> results = new HashMap<>();
+
+        public final List<SeriesDetail> underFitting = new ArrayList<>();
+        public final List<SeriesDetail> normalFitting = new ArrayList<>();
+        public final List<SeriesDetail> overFitting = new ArrayList<>();
 
         public SeriesDetails(String errorMessage) {
             addErrorMessage(errorMessage);

@@ -3,7 +3,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesImportDetails"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesDetails"*/-->
     <h1 class="widget-header" th:text="${'Details of Series '+result.seriesName}">text</h1>
 
     <h1 class="widget-header">Import Experiment result into Series</h1>
