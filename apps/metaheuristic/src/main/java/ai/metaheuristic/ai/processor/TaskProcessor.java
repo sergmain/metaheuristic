@@ -129,7 +129,7 @@ public class TaskProcessor {
 
     private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
 
-        log.info("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
+        log.warn("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
@@ -162,7 +162,7 @@ public class TaskProcessor {
 
             if (dispatcher.schedule.isCurrentTimeInactive()) {
                 processorTaskService.delete(ref, task.taskId);
-                log.info("#100.025 Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, dispatcherUrl, new Date(), dispatcher.schedule.asString);
+                log.warn("#100.025 Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, dispatcherUrl, new Date(), dispatcher.schedule.asString);
                 return;
             }
 

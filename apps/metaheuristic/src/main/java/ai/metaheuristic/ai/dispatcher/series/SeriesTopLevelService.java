@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.series;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
@@ -24,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -106,7 +106,7 @@ public class SeriesTopLevelService {
             String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
             return new SeriesData.SeriesDetails(errorMessage);
         }
-        return new SeriesData.SeriesDetails(series.getSeriesParamsYaml());
+        return new SeriesData.SeriesDetails(series.id, series.name, series.getSeriesParamsYaml());
 
     }
 
@@ -123,6 +123,37 @@ public class SeriesTopLevelService {
             String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+    }
+
+    public SeriesData.SeriesImportDetails getSeriesImportDetails(Long seriesId) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#286.060 series wasn't found, seriesId: " + seriesId;
+            log.error(errorMessage);
+            return new SeriesData.SeriesImportDetails(errorMessage);
+        }
+        try {
+            SeriesData.SeriesImportDetails details = new SeriesData.SeriesImportDetails(seriesId, series.name);
+
+            SeriesParamsYaml spy = series.getSeriesParamsYaml();
+
+            List<Object[]> resultNames = experimentResultRepository.getResultNames();
+            for (Object[] obj : resultNames) {
+                long experimentResultId = ((Number) obj[0]).longValue();
+                String name = obj[1].toString();
+
+                details.importDetails.add(
+                        new SeriesData.ImportDetail(
+                                new ExperimentResultData.SimpleExperimentResult(experimentResultId, name),
+                                spy.experimentResults.contains(name)));
+            }
+            return details;
+        }
+        catch (Throwable th) {
+            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            log.error(es, th);
+            return new SeriesData.SeriesImportDetails(es);
         }
     }
 }

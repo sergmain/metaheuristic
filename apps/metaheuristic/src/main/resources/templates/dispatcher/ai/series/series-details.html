@@ -3,15 +3,14 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
 
-    <!--/*@thymesVar id="simple" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesResult"*/-->
-    <h1 class="widget-header" th:text="${'Details of Series '+simple.series.name}">text</h1>
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesImportDetails"*/-->
+    <h1 class="widget-header" th:text="${'Details of Series '+result.seriesName}">text</h1>
 
     <h1 class="widget-header">Import Experiment result into Series</h1>
 
-    <a class="pure-button pure-button-primary" href="series-import.html" th:href="@{/dispatcher/ai/series/series-import}">Import</a>
+    <a class="pure-button pure-button-primary" href="series-import.html" th:href="${'/dispatcher/ai/series/series-import/'+result.seriesId}">Import</a>
     <p></p>
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesesResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>

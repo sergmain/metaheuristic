@@ -1,0 +1,38 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-ai}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+>
+
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SeriesData$SeriesImportDetails"*/-->
+    <h1 class="widget-header" th:text="${'Import results into Series '+result.seriesName}">text</h1>
+
+    <p></p>
+
+    <table class="pure-table pure-table-bordered" >
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Is imported</th>
+            <th th:colspan="1">&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <div th:remove="tag" th:each="r : ${result.importDetails}" >
+            <tr>
+                <td>
+                    <div th:text="${'#'+r.experimentResult.id}">Id</div>
+                </td>
+                <td>
+                    <div th:text="${r.experimentResult.name}">Name</div>
+                </td>
+                <td>
+                    <div th:text="${r.imported}">Imported</div>
+                </td>
+                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-import-commit/' + result.seriesId+'/'+r.experimentResult.id}">Import</a></td>
+            </tr>
+        </div>
+        </tbody>
+    </table>
+
+</div>

@@ -88,7 +88,7 @@ public class SeriesController {
     public String seriesImport(@PathVariable Long seriesId, Model model,
                                  @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                                  @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        SeriesData.SeriesDetails details = seriesTopLevelService.getSeriesDetails(seriesId);
+        SeriesData.SeriesImportDetails details = seriesTopLevelService.getSeriesImportDetails(seriesId);
         ControllerUtils.addMessagesToModel(model, details);
         model.addAttribute("result", details);
         return "dispatcher/ai/series/series-import";

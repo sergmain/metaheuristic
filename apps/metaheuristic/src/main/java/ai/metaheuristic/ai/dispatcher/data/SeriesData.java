@@ -94,9 +94,34 @@ public class SeriesData {
     }
 
     @Data
+    @AllArgsConstructor
     @NoArgsConstructor
+    public static class ImportDetail {
+        public ExperimentResultData.SimpleExperimentResult experimentResult;
+        public boolean imported;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class SeriesImportDetails extends BaseDataClass {
+        public Long seriesId;
+        public String seriesName;
+        public final List<ImportDetail> importDetails = new ArrayList<>();
+
+        public SeriesImportDetails(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class SeriesDetails extends BaseDataClass {
+        public Long seriesId;
+        public String seriesName;
         public SeriesParamsYaml params;
         public final Map<EnumsApi.Fitting, List<SeriesDetail>> results = new HashMap<>();
 
@@ -104,8 +129,5 @@ public class SeriesData {
             addErrorMessage(errorMessage);
         }
 
-        public SeriesDetails(SeriesParamsYaml params) {
-            this.params = params;
-        }
     }
 }
