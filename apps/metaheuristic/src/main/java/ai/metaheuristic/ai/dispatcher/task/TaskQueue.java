@@ -396,9 +396,10 @@ public class TaskQueue {
             }
             else if (group.execContextId==null) {
                 taskGroup = group;
+                taskGroup.reset();
+                taskGroup.execContextId = task.execContextId;
                 taskGroup.priority = task.priority;
             }
-
         }
 
         if (taskGroup==null) {
