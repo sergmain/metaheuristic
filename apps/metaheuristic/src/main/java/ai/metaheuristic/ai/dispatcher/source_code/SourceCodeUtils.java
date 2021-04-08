@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class SourceCodeUtils {
 
-    private static final Pattern VARIABLE_NAME_CHARS_PATTERN = Pattern.compile("^[A-Za-z_-][A-Za-z0-9._-]*$");
+    private static final Pattern VARIABLE_NAME_CHARS_PATTERN = Pattern.compile("^[A-Za-z0-9_-][A-Za-z0-9._-]*$");
 
     public static EnumsApi.SourceCodeValidateStatus isVariableNameOk(String name) {
         Matcher m = VARIABLE_NAME_CHARS_PATTERN.matcher(name);

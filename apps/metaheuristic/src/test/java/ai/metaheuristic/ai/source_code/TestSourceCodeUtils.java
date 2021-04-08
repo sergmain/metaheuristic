@@ -41,6 +41,8 @@ public class TestSourceCodeUtils {
         assertEquals(OK, isVariableNameOk("_aaa"));
         assertEquals(OK, isVariableNameOk("_aaa."));
         assertEquals(OK, isVariableNameOk("_aaa.1"));
+        assertEquals(OK, isVariableNameOk("1"));
+        assertEquals(OK, isVariableNameOk("1a"));
 
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("\\aaa.1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("/aaa.1"));
@@ -50,10 +52,8 @@ public class TestSourceCodeUtils {
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a a"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a,a"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a 1"));
-        assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk(".a1"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("1 "));
-        assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("1a"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("!a"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a!"));
         assertEquals(WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, isVariableNameOk("a@"));
