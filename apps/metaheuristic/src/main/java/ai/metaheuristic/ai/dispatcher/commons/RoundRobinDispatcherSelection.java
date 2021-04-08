@@ -27,11 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 
 @Slf4j
-public class RoundRobinForDispatcher {
+public class RoundRobinDispatcherSelection {
 
     private final Map<DispatcherUrl, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
+    public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
         Map<DispatcherUrl, AtomicBoolean> map = new LinkedHashMap<>();
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
             DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;

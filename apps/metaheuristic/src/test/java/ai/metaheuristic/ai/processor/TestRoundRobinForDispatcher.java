@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
-import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +45,7 @@ public class TestRoundRobinForDispatcher {
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 
-        RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap, "RoundRobin for testing");
+        RoundRobinDispatcherSelection rr = new RoundRobinDispatcherSelection(lookupExtendedMap, "RoundRobin for testing");
 
         DispatcherUrl url = rr.next();
         assertEquals(new DispatcherUrl("url1"), url);

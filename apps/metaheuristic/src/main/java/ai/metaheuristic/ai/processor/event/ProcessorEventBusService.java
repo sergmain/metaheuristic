@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor.event;
 
-import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.DispatcherRequestorHolderService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
@@ -49,14 +49,14 @@ public class ProcessorEventBusService {
 
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private RoundRobinForDispatcher roundRobin;
+    private RoundRobinDispatcherSelection roundRobin;
 
     private ThreadPoolExecutor executor;
 
     @PostConstruct
     public void post() {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, dispatcherLookupExtendedService.lookupExtendedMap.size()));
-        this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive");
+        this.roundRobin = new RoundRobinDispatcherSelection(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive");
     }
 
     @Async

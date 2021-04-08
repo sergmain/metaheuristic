@@ -17,7 +17,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.commons.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.commons.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -233,14 +233,14 @@ public class Schedulers {
         private final ApplicationEventPublisher eventPublisher;
         private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
-        private RoundRobinForDispatcher roundRobin;
+        private RoundRobinDispatcherSelection roundRobin;
 
         @PostConstruct
         public void post() {
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for scheduler");
+            this.roundRobin = new RoundRobinDispatcherSelection(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for scheduler");
         }
 
         @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)

@@ -194,7 +194,8 @@ public class TestTaskQueue {
         assertEquals(2, taskQueue.groupCount());
 
         taskQueue.addNewTask(task_1_6);
-        assertEquals(2, taskQueue.groupCount());
+        // 3 because all task groups wwere locked already
+        assertEquals(3, taskQueue.groupCount());
 
         taskQueue.deleteByExecContextId(1L);
         assertEquals(1, taskQueue.groupCount());
@@ -324,6 +325,11 @@ public class TestTaskQueue {
         assertTrue(iter.hasNext());
         TaskQueue.AllocatedTask allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
+
+        assertTrue(iter.hasNext());
+        allocatedTask = iter.next();
+        assertFalse(allocatedTask.assigned);
         assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
 
         assertTrue(iter.hasNext());
@@ -335,7 +341,7 @@ public class TestTaskQueue {
             allocatedTask = iter.next();
         } while (iter.hasNext());
         assertFalse(allocatedTask.assigned);
-        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
+        assertEquals(task_1_6.taskId, allocatedTask.queuedTask.taskId);
 
         taskQueue.deRegisterTask(task_1_7_1.execContextId, task_1_7_1.taskId);
         taskQueue.shrink();

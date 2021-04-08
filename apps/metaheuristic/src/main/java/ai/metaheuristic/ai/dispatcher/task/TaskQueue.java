@@ -399,37 +399,44 @@ public class TaskQueue {
             if (group.locked) {
                 continue;
             }
-            if (group.execContextId == null || group.priority != task.priority || group.allocated == GROUP_SIZE) {
+            if (group.execContextId == null || group.priority != task.priority || group.allocated == GROUP_SIZE || !group.execContextId.equals(task.execContextId)) {
                 continue;
             }
             taskGroup = group;
             break;
         }
 
-        // there wasn't an initialized task group with a free slot
+        // there wasn't an initialized task group with a free slot but there is a task group with the same priority.
+        // so a new task task will be added right after the last task group with the same priority
         if (taskGroup==null) {
             for (int i = taskGroups.size(); i-->0; ) {
                 TaskGroup group = taskGroups.get(i);
                 if (group.locked) {
                     continue;
                 }
-                if (group.allocated > 0 && group.priority > task.priority) {
+                if (group.priority==task.priority) {
                     taskGroup = new TaskGroup(task.execContextId, task.priority);
-                    taskGroups.add(i, taskGroup);
+                    if (i+1==taskGroups.size()) {
+                        taskGroups.add(taskGroup);
+                    }
+                    else {
+                        taskGroups.add(i+1, taskGroup);
+                    }
                     break;
                 }
+            }
+        }
 
-                if (task.execContextId.equals(group.execContextId) && task.priority == group.priority) {
-                    if (group.allocated < GROUP_SIZE) {
-                        taskGroup = group;
-                    }
-                } else if (group.execContextId == null) {
-                    taskGroup = group;
-                    if (group.allocated != 0 || !group.noneTasks()) {
-                        throw new IllegalStateException("(group.allocated!=0 || !group.noneTasks())");
-                    }
-                    taskGroup.execContextId = task.execContextId;
-                    taskGroup.priority = task.priority;
+        // there isn't any task groups with the same priority as a priority of task
+        if (taskGroup==null) {
+            for (int i = 0; i<taskGroups.size(); i++) {
+                TaskGroup group = taskGroups.get(i);
+                if (group.locked) {
+                    continue;
+                }
+                if (group.priority < task.priority) {
+                    taskGroup = new TaskGroup(task.execContextId, task.priority);
+                    taskGroups.add(i, taskGroup);
                     break;
                 }
             }
