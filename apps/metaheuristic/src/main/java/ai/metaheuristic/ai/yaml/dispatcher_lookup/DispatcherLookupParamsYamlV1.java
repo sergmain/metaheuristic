@@ -69,9 +69,7 @@ public class DispatcherLookupParamsYamlV1 implements BaseParams {
         @Deprecated
         public boolean acceptOnlySignedFunctions = false;
 
-//        public ProcessorAndCoreData.DispatcherServerUrl getDispatcherUrl() {
-//            return new ProcessorAndCoreData.DispatcherServerUrl(url);
-//        }
+        public int priority=0;
     }
 
     public final List<DispatcherLookupV1> dispatchers = new ArrayList<>();
