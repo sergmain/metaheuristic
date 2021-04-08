@@ -68,6 +68,7 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
         public String restUsername;
         public String restPassword;
         public String assetManagerUrl;
+        public int priority=0;
     }
 
     public final List<DispatcherLookupV2> dispatchers = new ArrayList<>();

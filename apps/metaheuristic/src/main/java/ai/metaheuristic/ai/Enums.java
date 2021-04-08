@@ -17,7 +17,7 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum DispatcherSelectionStrategy { round_robin, priority }
+    public enum DispatcherSelectionStrategy { alphabet, priority }
 
     public enum InternalFunctionProcessing {
         ok, function_not_found, source_code_not_found, source_code_is_broken,

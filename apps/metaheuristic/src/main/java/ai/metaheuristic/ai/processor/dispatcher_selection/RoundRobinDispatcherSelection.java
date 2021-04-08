@@ -14,39 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.commons;
+package ai.metaheuristic.ai.processor.dispatcher_selection;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @Slf4j
 public class RoundRobinDispatcherSelection {
 
-    private final Map<DispatcherUrl, AtomicBoolean> urls;
+    private final ActiveDispatchers activeDispatchers;
 
     public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
-        Map<DispatcherUrl, AtomicBoolean> map = new LinkedHashMap<>();
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
-            DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
-            if (dispatcherLookup.disabled) {
-                log.info("{}, dispatcher {} is disabled", info, dispatcherLookup.url);
-                continue;
-            }
-            log.info("{}, dispatcher {} was added to round-robin", info, dispatcherLookup.url);
-            map.putIfAbsent(new DispatcherUrl(dispatcherLookup.url), new AtomicBoolean(true));
-        }
-        urls = Collections.unmodifiableMap(map);
-    }
-
-    public Set<DispatcherUrl> getActiveDispatchers() {
-        return urls.keySet();
+        activeDispatchers = new ActiveDispatchers(dispatchers, info, Enums.DispatcherSelectionStrategy.alphabet);
     }
 
     @Nullable
@@ -61,7 +47,7 @@ public class RoundRobinDispatcherSelection {
     }
 
     public void reset() {
-        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : urls.entrySet()) {
+        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
             entry.getValue().set(true);
         }
     }
@@ -69,7 +55,7 @@ public class RoundRobinDispatcherSelection {
     @Nullable
     private DispatcherUrl findNext() {
         DispatcherUrl url = null;
-        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : urls.entrySet()) {
+        for (Map.Entry<DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
             if (entry.getValue().get()) {
                 entry.getValue().set(false);
                 url = entry.getKey();

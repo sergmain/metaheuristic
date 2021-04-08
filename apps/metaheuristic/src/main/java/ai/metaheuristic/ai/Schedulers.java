@@ -17,7 +17,6 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.commons.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -28,6 +27,7 @@ import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
+import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.api.EnumsApi;
@@ -41,8 +41,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class Schedulers {
@@ -233,14 +234,14 @@ public class Schedulers {
         private final ApplicationEventPublisher eventPublisher;
         private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
-        private RoundRobinDispatcherSelection roundRobin;
+        private ActiveDispatchers activeDispatchers;
 
         @PostConstruct
         public void post() {
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.roundRobin = new RoundRobinDispatcherSelection(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for scheduler");
+            this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
         @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)
@@ -286,13 +287,13 @@ public class Schedulers {
                 return;
             }
 
-            Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
+            Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");
                 return;
             }
 
-            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
+            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();

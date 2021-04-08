@@ -69,7 +69,7 @@ public class DispatcherLookupParamsYamlUtilsV1
     private static DispatcherLookupParamsYamlV2.DispatcherLookupV2 toDispatcher(DispatcherLookupParamsYamlV1.DispatcherLookupV1 v1) {
         return new DispatcherLookupParamsYamlV2.DispatcherLookupV2(
                 v1.taskProcessingTime, v1.disabled, v1.url, v1.signatureRequired, v1.publicKey,
-                v1.lookupType, v1.authType, v1.restUsername, v1.restPassword, v1.asset==null ? v1.url : v1.asset.url);
+                v1.lookupType, v1.authType, v1.restUsername, v1.restPassword, v1.asset==null ? v1.url : v1.asset.url, 0);
     }
 
     @NonNull

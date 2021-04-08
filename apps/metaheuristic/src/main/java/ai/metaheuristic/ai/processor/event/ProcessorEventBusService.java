@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.processor.event;
 
-import ai.metaheuristic.ai.dispatcher.commons.RoundRobinDispatcherSelection;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.DispatcherRequestorHolderService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -29,9 +30,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Serge
@@ -49,14 +51,14 @@ public class ProcessorEventBusService {
 
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private RoundRobinDispatcherSelection roundRobin;
+    private ActiveDispatchers activeDispatchers;
 
     private ThreadPoolExecutor executor;
 
     @PostConstruct
     public void post() {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, dispatcherLookupExtendedService.lookupExtendedMap.size()));
-        this.roundRobin = new RoundRobinDispatcherSelection(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive");
+        this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
     }
 
     @Async
@@ -65,7 +67,7 @@ public class ProcessorEventBusService {
 
         try {
             // TODO 2020-11-22 do we need to convert Set to List and sort it?
-            Set<ProcessorAndCoreData.DispatcherUrl> dispatchers = roundRobin.getActiveDispatchers();
+            Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");
                 return;
@@ -74,7 +76,7 @@ public class ProcessorEventBusService {
             if (activeCount >0) {
                 log.error("#047.020 executor has a not finished tasks, count: {}", activeCount);
             }
-            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers) {
+            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 executor.submit(() -> {
                     log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);
                     try {

@@ -63,7 +63,8 @@ public class DispatcherLookupParamsYamlUtilsV2
 
     private static DispatcherLookupParamsYaml.DispatcherLookup toDispatcher(DispatcherLookupParamsYamlV2.DispatcherLookupV2 v2) {
         return new DispatcherLookupParamsYaml.DispatcherLookup(
-                v2.taskProcessingTime, v2.disabled, v2.url, v2.signatureRequired, v2.publicKey, v2.lookupType, v2.authType, v2.restUsername, v2.restPassword, v2.assetManagerUrl);
+                v2.taskProcessingTime, v2.disabled, v2.url, v2.signatureRequired, v2.publicKey, v2.lookupType,
+                v2.authType, v2.restUsername, v2.restPassword, v2.assetManagerUrl, v2.priority);
     }
 
     private static DispatcherLookupParamsYaml.AssetManager toAsset(DispatcherLookupParamsYamlV2.AssetManagerV2 v2) {
