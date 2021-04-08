@@ -184,6 +184,7 @@ public class TestTaskQueue {
 
         taskQueue.removeAll(List.of(task_1_6));
 
+        // it's 1 because taskQueue was created with minQueueSize==1
         assertEquals(1, taskQueue.groupCount());
 
         taskQueue.addNewTask(task_1_6);
@@ -323,12 +324,18 @@ public class TestTaskQueue {
         assertTrue(iter.hasNext());
         TaskQueue.AllocatedTask allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
-        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
+        assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
 
         assertTrue(iter.hasNext());
         allocatedTask = iter.next();
         assertFalse(allocatedTask.assigned);
-        assertEquals(task_1_1.taskId, allocatedTask.queuedTask.taskId);
+        assertEquals(task_1_2.taskId, allocatedTask.queuedTask.taskId);
+
+        do {
+            allocatedTask = iter.next();
+        } while (iter.hasNext());
+        assertFalse(allocatedTask.assigned);
+        assertEquals(task_1_7_1.taskId, allocatedTask.queuedTask.taskId);
 
         taskQueue.deRegisterTask(task_1_7_1.execContextId, task_1_7_1.taskId);
         taskQueue.shrink();

@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -63,7 +61,6 @@ public class ExecContextTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextStatusService execContextStatusService;
     private final TaskSyncService taskSyncService;
 
     private static boolean isManagerRole(String role) {

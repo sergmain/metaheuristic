@@ -102,8 +102,15 @@ public class TaskQueue {
                     tasks[i] = null;
                     --allocated;
                     if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
+                        if (allocated!=0) {
+                            throw new IllegalStateException("(allocated!=0)");
+                        }
                         execContextId = null;
                         priority = 0;
+                        locked = false;
+                    }
+                    else if (allocated==0) {
+                        throw new IllegalStateException("(allocated==0)");
                     }
                     return true;
                 }
@@ -302,6 +309,9 @@ public class TaskQueue {
             if (!execContextId.equals(taskGroup.execContextId)) {
                 continue;
             }
+            if (taskGroup.allocated==0) {
+                continue;
+            }
             for (AllocatedTask task : taskGroup.tasks) {
                 if (task==null) {
                     continue;
@@ -348,7 +358,13 @@ public class TaskQueue {
     }
 
     public void lock(Long execContextId) {
-        taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).forEach(TaskGroup::lock);
+        for (TaskGroup tg : taskGroups) {
+            if (execContextId.equals(tg.execContextId)) {
+                if (tg.allocated>0) {
+                    tg.lock();
+                }
+            }
+        }
         int i=0;
     }
 
@@ -378,27 +394,44 @@ public class TaskQueue {
             task.priority = MAX_PRIORITY;
         }
         TaskGroup taskGroup = null;
-        for (int i = 0; i < taskGroups.size(); i++) {
-            TaskGroup group = taskGroups.get(i);
+        // find an allocated task group with a free slot
+        for (TaskGroup group : taskGroups) {
             if (group.locked) {
                 continue;
             }
-            if (group.allocated>0 && group.priority < task.priority) {
-                taskGroup = new TaskGroup(task.execContextId, task.priority);
-                taskGroups.add(i, taskGroup);
-                break;
+            if (group.execContextId == null || group.priority != task.priority || group.allocated == GROUP_SIZE) {
+                continue;
             }
+            taskGroup = group;
+            break;
+        }
 
-            if (task.execContextId.equals(group.execContextId) && task.priority==group.priority) {
-                if (group.allocated<GROUP_SIZE) {
-                    taskGroup = group;
+        // there wasn't an initialized task group with a free slot
+        if (taskGroup==null) {
+            for (int i = taskGroups.size(); i-->0; ) {
+                TaskGroup group = taskGroups.get(i);
+                if (group.locked) {
+                    continue;
                 }
-            }
-            else if (group.execContextId==null) {
-                taskGroup = group;
-                taskGroup.reset();
-                taskGroup.execContextId = task.execContextId;
-                taskGroup.priority = task.priority;
+                if (group.allocated > 0 && group.priority > task.priority) {
+                    taskGroup = new TaskGroup(task.execContextId, task.priority);
+                    taskGroups.add(i, taskGroup);
+                    break;
+                }
+
+                if (task.execContextId.equals(group.execContextId) && task.priority == group.priority) {
+                    if (group.allocated < GROUP_SIZE) {
+                        taskGroup = group;
+                    }
+                } else if (group.execContextId == null) {
+                    taskGroup = group;
+                    if (group.allocated != 0 || !group.noneTasks()) {
+                        throw new IllegalStateException("(group.allocated!=0 || !group.noneTasks())");
+                    }
+                    taskGroup.execContextId = task.execContextId;
+                    taskGroup.priority = task.priority;
+                    break;
+                }
             }
         }
 
@@ -410,7 +443,7 @@ public class TaskQueue {
     }
 
     public void addNewInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
-        QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, 2_000_001);
+        QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, TaskQueue.MAX_PRIORITY + 1);
         addNewTask(task, false);
         lock(execContextId);
 
