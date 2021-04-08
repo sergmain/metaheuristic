@@ -133,11 +133,6 @@ public class SourceCodeValidationService {
             else {
                 boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
                 if (!finish) {
-                    if (process.outputs.isEmpty()) {
-                        return new SourceCodeApiData.SourceCodeValidationResult(
-                                EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR,
-                                "#177.140 At least one output variable must be defined in process " + process.code);
-                    }
                     for (SourceCodeParamsYaml.Variable variable : process.outputs) {
                         if (S.b(variable.name)) {
                             return new SourceCodeApiData.SourceCodeValidationResult(
