@@ -127,7 +127,7 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         public @Nullable RequestProcessorIdV1 requestProcessorId;
         public @Nullable RequestTaskV1 requestTask;
         public @Nullable ReportTaskProcessingResultV1 reportTaskProcessingResult;
-        public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
+        public @Nullable CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
         public @Nullable ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
 
 

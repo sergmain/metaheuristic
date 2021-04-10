@@ -128,7 +128,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         produceTasksForTest();
 
-        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(execContextForTest.getId());
 
         assertNotNull(execContextForTest);
         assertNotNull(tasks);
@@ -543,7 +543,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     private void verifyGraphIntegrity() {
 
-        List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(execContextForTest.id);
 
         execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest.execContextGraphId);

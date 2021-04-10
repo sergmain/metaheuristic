@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -78,7 +79,7 @@ public class TestCountOfTasks extends PreparingExperiment {
         assertNotNull(execContextForTest);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
-        List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
+        List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(execContextForTest.id);
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
@@ -95,8 +96,8 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        ExecContext execContext = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-        List<Object[]> tasks02 = taskCollector.getTasks(execContext);
+        ExecContextImpl execContext = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+        List<Object[]> tasks02 = taskRepositoryForTest.findByExecContextId(execContext.id);
         assertEquals(7, tasks02.size());
 
         mills = System.currentTimeMillis();
@@ -107,7 +108,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         experiment = Objects.requireNonNull(experimentCache.findById(experiment.getId()));
 
-        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(execContextForTest.id);
 
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());

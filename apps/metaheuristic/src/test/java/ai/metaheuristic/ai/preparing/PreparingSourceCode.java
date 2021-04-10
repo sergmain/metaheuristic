@@ -179,6 +179,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired
     public ExecContextTaskStateRepository execContextTaskStateRepository;
 
+    @Autowired
+    protected TaskRepositoryForTest taskRepositoryForTest;
+
     public SourceCodeImpl sourceCode = null;
     public Function f1 = null;
     public Function f2 = null;

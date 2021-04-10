@@ -33,7 +33,4 @@ public class TaskCollector {
         this.taskRepository = taskRepository;
     }
 
-    public List<Object[]> getTasks(ExecContext execContext) {
-        return taskRepository.findByExecContextId(execContext.getId());
-    }
 }

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dsl;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
@@ -109,7 +108,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
             }
             if (uploadingStatus.execContextId !=null) {
                 try {
-                    taskRepository.deleteByExecContextId(uploadingStatus.execContextId);
+                    taskRepositoryForTest.deleteByExecContextId(uploadingStatus.execContextId);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }

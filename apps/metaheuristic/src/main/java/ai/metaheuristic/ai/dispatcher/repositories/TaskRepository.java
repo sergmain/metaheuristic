@@ -52,9 +52,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Long> findAllTaskIdsByExecContextId(Long execContextId);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    List<TaskImpl> findByProcessorIdAndResultReceivedIsFalse(Long processorId);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
             "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
@@ -62,23 +59,8 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.processorId=:processorId")
     List<Object[]> findExecStateByProcessorId(Long processorId);
 
-    //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select t.id, t.execState, t.updatedOn, t.params from TaskImpl t where t.execContextId=:execContextId")
-    List<Object[]> findAllExecStateAndParamsByExecContextId(Long execContextId);
-
     @Query(value="select t.id, t.execState, t.updatedOn from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findExecStateByExecContextId(Long execContextId);
-
-    @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-    void deleteByExecContextId(Long execContextId);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")
-    List<Object[]> findByExecContextId(Long execContextId);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
-    List<TaskImpl> findByExecContextIdAsList(Long execContextId);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")

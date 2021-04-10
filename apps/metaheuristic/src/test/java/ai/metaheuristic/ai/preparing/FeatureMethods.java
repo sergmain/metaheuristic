@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -88,7 +89,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     }
 
     public long countTasks(@Nullable List<EnumsApi.ExecContextState> states) {
-        List<Object[]> list = taskRepository.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
         if (states==null) {
             return list.size();
         }
@@ -140,10 +141,10 @@ public abstract class FeatureMethods extends PreparingExperiment {
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
-            List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
+            List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(result.execContext.id);
             assertTrue(tasks01.isEmpty());
 
-            List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
+            List<Object[]> tasks02 = taskRepositoryForTest.findByExecContextId(result.execContext.id);
             assertTrue(tasks02.isEmpty());
 
             long mills = System.currentTimeMillis();
@@ -166,7 +167,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected void storeConsoleResultAsError() {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
@@ -183,7 +184,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     protected void storeConsoleResultAsOk() {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);

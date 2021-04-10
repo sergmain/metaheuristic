@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -44,7 +45,7 @@ public class TaskService {
     private final TaskSyncService taskSyncService;
     private final EntityManager em;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NEVER)
     public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(Long processorId) {
         List<Task> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();

@@ -67,6 +67,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class RequestProcessorId {
         // TODO 2020-11-22 what is this field about?
+        //  2021-04-09 it's just dummy field. do e need a dummy field or empty class is ok?
         public boolean keep = true;
     }
 
@@ -128,7 +129,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
         public @Nullable RequestProcessorId requestProcessorId;
         public @Nullable RequestTask requestTask;
         public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
-        public CheckForMissingOutputResources checkForMissingOutputResources;
+        public @Nullable CheckForMissingOutputResources checkForMissingOutputResources;
         public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
         public String processorCode;
