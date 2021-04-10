@@ -365,7 +365,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
                     log.error("Error while workbookRepository.deleteById()", th);
                 }
                 try {
-                    taskRepository.deleteByExecContextId(execContextId);
+                    taskRepositoryForTest.deleteByExecContextId(execContextId);
                 } catch (Throwable th) {
                     log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
                 }
@@ -461,7 +461,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
                     log.error("Error while execContextTaskStateRepository.deleteById()", th);
                 }
             }
-            taskRepository.deleteByExecContextId(execContextForTest.getId());
+            taskRepositoryForTest.deleteByExecContextId(execContextForTest.getId());
         }
         try {
             globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
