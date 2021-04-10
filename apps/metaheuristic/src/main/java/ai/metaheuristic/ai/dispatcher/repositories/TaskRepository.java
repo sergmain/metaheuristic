@@ -59,7 +59,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
             "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.processorId=:processorId")
+    List<Object[]> findExecStateByProcessorId(Long processorId);
+
+    //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.execState, t.updatedOn, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findAllExecStateAndParamsByExecContextId(Long execContextId);
 
@@ -80,18 +83,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
-
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
-    List<Long> findAnyActiveForProcessorId(Pageable limit, Long processorId);
-
-    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
-    List<Long> findActiveForProcessorId(Long processorId);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId")
-    List<TaskImpl> findForProcessorId(Long processorId);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +

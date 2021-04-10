@@ -323,16 +323,23 @@ public class TaskProviderTopLevelService {
                 List.of() :
                 Arrays.stream(StringUtils.split(psy.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
 
-        List<TaskImpl> tasks = taskRepository.findForProcessorId(processor.id);
-        for (TaskImpl task : tasks) {
-            if (!statuses.isStarted(task.execContextId)) {
+        List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processor.id);
+        for (Object[] obj : tasks) {
+            Long taskId = ((Number)obj[0]).longValue();
+            int execState = ((Number)obj[1]).intValue();
+            Long execContextId = ((Number)obj[2]).longValue();
+
+            if (!statuses.isStarted(execContextId)) {
                 continue;
             }
-            if (!taskIds.contains(task.id)) {
-                if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
+            if (!taskIds.contains(taskId)) {
+                if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
-                            processor.id, task.id, EnumsApi.TaskExecState.from(task.execState));
-                    return task;
+                            processor.id, taskId, EnumsApi.TaskExecState.from(execState));
+                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    if (task!=null) {
+                        return task;
+                    }
                 }
             }
         }

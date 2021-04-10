@@ -26,16 +26,17 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -186,7 +187,7 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
-                    // TODO 2021.03.14 this could happened when execContext as deleted while a task executing was active
+                    // TODO 2021.03.14 this could happened when execContext is deleted while executing of task was active
                     log.warn("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                             "assigned: {}, state: {}\n" +
                             "taskId: {}, queuedTask.execContext: {}\n" +
@@ -267,9 +268,13 @@ public class TaskProviderTransactionalService {
                 resultTask = allocatedTask;
                 // check that downgrading is being supported
                 try {
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
-                    //noinspection unused
-                    String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                    YamlVersion v = YamlForVersioning.getYamlVersion(queuedTask.task.getParams());
+                    if (v.getActualVersion()!=psy.taskParamsVersion) {
+                        log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
+                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
+                        //noinspection unused
+                        String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                    }
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#317.140 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             queuedTask.task.id, processor.id, psy.taskParamsVersion);
