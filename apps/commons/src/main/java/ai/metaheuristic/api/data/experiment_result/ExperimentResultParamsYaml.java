@@ -58,9 +58,18 @@ public class ExperimentResultParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class ExperimentPart {
         public String taskContextId;
+        @Nullable
         public Map<String, String> hyperParams;
+        @Nullable
         public EnumsApi.Fitting fitting;
-        public final MetricValues metrics = new MetricValues();
+        @Nullable
+        public MetricValues metrics;
+        @Nullable
+        public List<String> featureVariables;
+
+        public ExperimentPart(String taskContextId) {
+            this.taskContextId = taskContextId;
+        }
     }
 
     @Data

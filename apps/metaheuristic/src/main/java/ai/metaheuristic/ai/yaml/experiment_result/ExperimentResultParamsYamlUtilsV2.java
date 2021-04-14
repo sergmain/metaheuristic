@@ -60,8 +60,21 @@ public class ExperimentResultParamsYamlUtilsV2
         trg.hyperParams.addAll(src.hyperParams);
         src.features.stream().map(this::toFeature).collect(Collectors.toCollection(()->trg.features));
         src.taskFeatures.stream().map(this::toTaskFeature).collect(Collectors.toCollection(()->trg.taskFeatures));
+        src.parts.stream().map(this::toParts).collect(Collectors.toCollection(()->trg.parts));
 
         trg.checkIntegrity();
+        return trg;
+    }
+
+    private ExperimentResultParamsYaml.ExperimentPart toParts(ExperimentResultParamsYamlV2.ExperimentPartV2 src) {
+        ExperimentResultParamsYaml.ExperimentPart trg = new ExperimentResultParamsYaml.ExperimentPart();
+        trg.taskContextId = src.taskContextId;
+        trg.fitting = src.fitting;
+        if (src.metrics!=null) {
+            trg.metrics = new ExperimentResultParamsYaml.MetricValues(src.metrics.getValues());
+        }
+        trg.hyperParams = src.hyperParams;
+        trg.featureVariables = src.featureVariables;
         return trg;
     }
 

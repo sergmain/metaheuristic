@@ -85,11 +85,25 @@ public class ExecContextTaskAssigningService {
                 if (task==null) {
                     continue;
                 }
-                final TaskParamsYaml taskParamYaml;
                 if (task.execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.warn("#703.240 task #{} with IN_PROGRESS is there?", task.id);
+                    if (log.isDebugEnabled()) {
+                        try {
+                            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                            if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
+                                log.warn("#703.020 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
+                            }
+                        }
+                        catch (Throwable th) {
+                            log.warn("#703.040 Error parsing taskParamsYaml, error: " + th.getMessage());
+                            log.warn("#703.060 task #{} with IN_PROGRESS is there?", task.id);
+                        }
+                    }
+                    else {
+                        log.warn("#703.240 task #{} with IN_PROGRESS is there?", task.id);
+                    }
                     continue;
                 }
+                final TaskParamsYaml taskParamYaml;
                 try {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 }

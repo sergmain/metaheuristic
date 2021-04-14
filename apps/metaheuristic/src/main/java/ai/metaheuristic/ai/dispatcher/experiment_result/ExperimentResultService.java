@@ -149,7 +149,9 @@ public class ExperimentResultService {
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
-        if (!simpleExecContext.execContextId.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
+        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
+
+        if (!simpleExecContext.execContextId.equals(erpy.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
         }
 
@@ -183,7 +185,6 @@ public class ExperimentResultService {
         }
 
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(simpleExecContext.execContextId);
-        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
         erpy.numberOfTask = ids.size();
 
         ExperimentResult a = new ExperimentResult();
@@ -219,10 +220,14 @@ public class ExperimentResultService {
         List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
         List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
         List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
-        Set<String> taskContextIds = metricsVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
+        Set<String> taskContextIds = inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
         featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
         fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
         inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+
+        for (String taskContextId : taskContextIds) {
+            erpy.parts.add(new ExperimentPart(taskContextId));
+        }
 
         for (Long taskId : ids) {
 
@@ -240,29 +245,72 @@ public class ExperimentResultService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#604.210 Task inline wasn't found or empty.");
             }
-            VariableWithStatus metricsVar = getVariableWithStatus(metricsVariables, simpleExecContext.execContextId, taskContextId, metricsVariableName);
-            if (metricsVar.status.status!= EnumsApi.OperationStatus.OK) {
-                return metricsVar.status;
+
+            ExperimentPart currPart = erpy.parts.stream()
+                    .filter(o->o.taskContextId.equals(taskContextId))
+                    .findAny()
+                    .orElse(null);
+
+            if (currPart==null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.213 Task #"+taskId+" has unknown taskContextId #"+taskContextId);
             }
+
+            MetricValues mvs;
+            if (currPart.metrics!=null) {
+                mvs = new MetricValues(currPart.metrics.values);
+            }
+            else {
+                VariableWithStatus metricsVar = getVariableWithStatus(metricsVariables, simpleExecContext.execContextId, taskContextId, metricsVariableName);
+                if (metricsVar.status.status != EnumsApi.OperationStatus.OK) {
+                    return metricsVar.status;
+                }
+                String metrics = variableService.getVariableDataAsString(metricsVar.variable.id);
+                mvs = MetricsUtils.getMetricValues(metrics);
+                currPart.metrics = new ExperimentResultParamsYaml.MetricValues(mvs.values);
+            }
+
+            EnumsApi.Fitting fitting;
+            if (currPart.fitting!=null) {
+                fitting = currPart.fitting;
+            }
+            else {
+                VariableWithStatus fittingVar;
+                fittingVar = getVariableWithStatus(fittingVariables, simpleExecContext.execContextId, taskContextId, fittingVariableName);
+                if (fittingVar.status.status != EnumsApi.OperationStatus.OK) {
+                    return fittingVar.status;
+                }
+                String fittingStr = variableService.getVariableDataAsString(fittingVar.variable.id);
+                FittingYaml fittingYaml = FittingYamlUtils.BASE_YAML_UTILS.to(fittingStr);
+                fitting = fittingYaml.fitting;
+                currPart.fitting = fitting;
+            }
+
+            Map<String, String> currInline;
+            if (currPart.hyperParams!=null) {
+                currInline = currPart.hyperParams;
+            }
+            else {
+                VariableWithStatus inlineVar = getVariableWithStatus(inlineVariables, simpleExecContext.execContextId, taskContextId, inlineVariableName);
+                if (inlineVar.status.status != EnumsApi.OperationStatus.OK) {
+                    return inlineVar.status;
+                }
+                String inlineAsStr = variableService.getVariableDataAsString(inlineVar.variable.id);
+                currInline = YamlUtils.init(Map.class).load(inlineAsStr);
+                currPart.hyperParams = currInline;
+            }
+
             VariableWithStatus featureVar = getVariableWithStatus(featureVariables, simpleExecContext.execContextId, taskContextId, featureVariableName);
             if (featureVar.status.status!= EnumsApi.OperationStatus.OK) {
-                return metricsVar.status;
+                return featureVar.status;
             }
-            VariableWithStatus fittingVar = getVariableWithStatus(fittingVariables, simpleExecContext.execContextId, taskContextId, fittingVariableName);
-            if (fittingVar.status.status!= EnumsApi.OperationStatus.OK) {
-                return metricsVar.status;
-            }
-            VariableWithStatus inlineVar = getVariableWithStatus(inlineVariables, simpleExecContext.execContextId, taskContextId, inlineVariableName);
-            if (inlineVar.status.status!= EnumsApi.OperationStatus.OK) {
-                return metricsVar.status;
-            }
-
             VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(variableService.getVariableDataAsString(featureVar.variable.id));
 
-            String metrics = variableService.getVariableDataAsString(metricsVar.variable.id);
-            MetricValues mvs = MetricsUtils.getMetricValues(metrics);
 
             ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy);
+            if (currPart.featureVariables==null && feature.variables!=null && !feature.variables.isEmpty()) {
+                currPart.featureVariables = feature.variables;
+            }
+
             taskFeatures.add(new ExperimentTaskFeature(
                     taskFeatureId.getAndIncrement(), simpleExecContext.execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
                     new ExperimentResultParamsYaml.MetricValues(mvs.values)
@@ -275,8 +323,6 @@ public class ExperimentResultService {
             ertpy.execState = t.getExecState();
             ertpy.taskId = t.getId();
 
-            String inlineAsStr = variableService.getVariableDataAsString(inlineVar.variable.id);
-            Map<String, String> currInline = YamlUtils.init(Map.class).load(inlineAsStr);
             ertpy.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(inlineVariableItem.inlines, currInline);
 
             // typeAsString will have been initialized when ExperimentResultTaskParamsYaml will be requested
@@ -285,10 +331,7 @@ public class ExperimentResultService {
             ertpy.functionExecResults = t.getFunctionExecResults();
             ertpy.metrics.values.putAll(mvs.values);
             ertpy.metrics.status = EnumsApi.MetricsStatus.Ok;
-
-            String fitting = variableService.getVariableDataAsString(fittingVar.variable.id);
-            FittingYaml fittingYaml = FittingYamlUtils.BASE_YAML_UTILS.to(fitting);
-            ertpy.fitting = fittingYaml.fitting;
+            ertpy.fitting = fitting;
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
@@ -297,7 +340,7 @@ public class ExperimentResultService {
             experimentTaskRepository.save(at);
         }
 
-        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, inlineVariableItem, features, taskFeatures);
+        updateData(experimentResult, erpy, inlineVariableItem, features, taskFeatures);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

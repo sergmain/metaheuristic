@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -54,9 +55,18 @@ public class ExperimentResultParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     public static class ExperimentPartV2 {
         public String taskContextId;
-        public final Map<String, String> hyperParams = new HashMap<>();
+        @Nullable
+        public Map<String, String> hyperParams;
+        @Nullable
         public EnumsApi.Fitting fitting;
-        public final MetricValuesV2 metrics = new MetricValuesV2();
+        @Nullable
+        public MetricValuesV2 metrics;
+        @Nullable
+        public List<String> featureVariables;
+
+        public ExperimentPartV2(String taskContextId) {
+            this.taskContextId = taskContextId;
+        }
     }
 
     @Data

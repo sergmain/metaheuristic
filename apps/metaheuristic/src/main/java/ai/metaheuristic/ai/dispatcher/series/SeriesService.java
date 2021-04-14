@@ -33,6 +33,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 /**
  * @author Serge
  * Date: 3/30/2021
@@ -111,7 +113,7 @@ public class SeriesService {
 
     private static SeriesParamsYaml.ExperimentPart to(ExperimentResultParamsYaml.ExperimentPart part) {
         SeriesParamsYaml.ExperimentPart r = new SeriesParamsYaml.ExperimentPart();
-        r.fitting = part.fitting;
+        r.fitting = Objects.requireNonNull(part.fitting);
 
 
         return r;
