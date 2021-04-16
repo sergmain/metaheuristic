@@ -84,6 +84,16 @@ public class SeriesController {
         return "dispatcher/ai/series/series-details";
     }
 
+    @GetMapping("/series-fitting-details/{id}/{fitting}")
+    public String getSeriesFittingDetails(@PathVariable Long id, @PathVariable String fitting, Model model,
+                                 @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+                                 @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+        SeriesData.SeriesFittingDetails details = seriesTopLevelService.getSeriesFittingDetails(id, fitting);
+        ControllerUtils.addMessagesToModel(model, details);
+        model.addAttribute("result", details);
+        return "dispatcher/ai/series/series-fitting-details";
+    }
+
     @GetMapping("/series-import/{seriesId}")
     public String seriesImport(@PathVariable Long seriesId, Model model,
                                  @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,

@@ -134,4 +134,19 @@ public class SeriesData {
         }
 
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class SeriesFittingDetails extends BaseDataClass {
+        public Long seriesId;
+        public EnumsApi.Fitting fitting;
+        public final Map<String, Long> counts = new HashMap<>();
+
+        public SeriesFittingDetails(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+    }
 }

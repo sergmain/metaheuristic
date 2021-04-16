@@ -37,6 +37,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -179,6 +181,38 @@ public class SeriesTopLevelService {
             String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new SeriesData.SeriesImportDetails(es);
+        }
+    }
+
+    public SeriesData.SeriesFittingDetails getSeriesFittingDetails(Long seriesId, String fittingStr) {
+        final Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            String errorMessage = "#286.100 series wasn't found, seriesId: " + seriesId;
+            log.error(errorMessage);
+            return new SeriesData.SeriesFittingDetails(errorMessage);
+        }
+
+        try {
+            EnumsApi.Fitting fitting = EnumsApi.Fitting.of(fittingStr);
+
+            SeriesData.SeriesFittingDetails details = new SeriesData.SeriesFittingDetails(seriesId, fitting);
+
+            SeriesParamsYaml spy = series.getSeriesParamsYaml();
+            List<SeriesParamsYaml.ExperimentPart> parts = spy.parts.stream().filter(o->o.fitting==fitting).collect(Collectors.toList());
+
+            Set<String> hyperParams = parts.stream().flatMap(o->o.hyperParams.keySet().stream()).collect(Collectors.toSet());
+
+            for (String hyperParam : hyperParams) {
+                long count = parts.stream().flatMap(o->o.hyperParams.entrySet().stream()).filter(o->o.getKey().equals(hyperParam)).count();
+                details.counts.put(hyperParam, count);
+            }
+
+            return details;
+        }
+        catch (Throwable th) {
+            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            log.error(es, th);
+            return new SeriesData.SeriesFittingDetails(es);
         }
     }
 }
