@@ -104,9 +104,17 @@ public class SeriesService {
         if (!spy.experimentResults.contains(params.name)) {
             spy.experimentResults.add(params.name);
         }
-        for (ExperimentResultParamsYaml.ExperimentPart part : params.parts) {
-
+        for (ExperimentResultParamsYaml.ExperimentPart experimentPart : params.parts) {
+            SeriesParamsYaml.ExperimentPart part = to(experimentPart);
+            if (!spy.parts.contains(part)) {
+                spy.parts.add(part);
+            }
+            else {
+                int i = 0;
+            }
         }
+        series.updateParams(spy);
+        seriesRepository.save(series);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -114,8 +122,13 @@ public class SeriesService {
     private static SeriesParamsYaml.ExperimentPart to(ExperimentResultParamsYaml.ExperimentPart part) {
         SeriesParamsYaml.ExperimentPart r = new SeriesParamsYaml.ExperimentPart();
         r.fitting = Objects.requireNonNull(part.fitting);
-
+        r.taskContextId = part.taskContextId;
+        r.hyperParams.putAll(Objects.requireNonNull(part.hyperParams));
+        r.metrics.values.putAll(Objects.requireNonNull(part.metrics).values);
+        r.variables.addAll(Objects.requireNonNull(part.featureVariables));
 
         return r;
     }
+
+
 }

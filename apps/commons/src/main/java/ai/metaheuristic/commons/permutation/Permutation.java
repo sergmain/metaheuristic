@@ -36,7 +36,7 @@ public class Permutation<T> {
             if (data.size()!=r) {
                 throw new IllegalStateException("data.length!=r");
             }
-            acceptor.apply(data);
+            acceptor.apply(new ArrayList<>(data));
             return 1;
         }
 
