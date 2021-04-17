@@ -152,21 +152,21 @@ public class ExperimentResultTopLevelService {
             }
 
             String params = FileUtils.readFileToString(experimentFile, StandardCharsets.UTF_8);
+            ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(params);
 
             ExperimentResult experimentResult = new ExperimentResult();
             LocalDate date = LocalDate.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String dateAsStr = date.format(formatter);
 
-            experimentResult.name = "experiment uploaded on " + dateAsStr;
-            experimentResult.description = experimentResult.name;
-            experimentResult.code = experimentResult.name;
+            experimentResult.name = apy.name;
+            experimentResult.description = "experiment results "+apy.name+" uploaded on " + dateAsStr + " from file " + originFilename;
+            experimentResult.code = apy.code;
             experimentResult.params = params;
             experimentResult.companyId = context.getCompanyId();
             experimentResult.createdOn = System.currentTimeMillis();
             experimentResult = experimentResultRepository.save(experimentResult);
 
-            ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(params);
             int count = 0;
             for (ExperimentTaskFeature taskFeature : apy.taskFeatures) {
                 if (++count%100==0) {
