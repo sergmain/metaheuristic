@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -165,7 +165,7 @@ public class ExperimentResultTopLevelService {
             experimentResult.createdOn = System.currentTimeMillis();
             experimentResult = experimentResultRepository.save(experimentResult);
 
-            ExperimentResultParams apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(params);
             int count = 0;
             for (ExperimentTaskFeature taskFeature : apy.taskFeatures) {
                 if (++count%100==0) {
@@ -226,7 +226,7 @@ public class ExperimentResultTopLevelService {
             FileUtils.write(exportFile, experimentResult.params, StandardCharsets.UTF_8);
             Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
-            ExperimentResultParams apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+            ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
             if (experimentTaskIds.size() != apy.taskFeatures.size()) {
                 log.warn("numbers of tasks in params of stored experiment and in db are different, " +
                         "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
@@ -369,7 +369,7 @@ public class ExperimentResultTopLevelService {
                 break;
         }
 
-        final ExperimentResultParams experimentResult = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(newParams);
+        final ExperimentResultParams experimentResult = ExperimentResultParamsJsonUtils.BASE_UTILS.to(newParams);
         return experimentResult;
     }
 
@@ -401,7 +401,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             String es = "#422.240 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -627,7 +627,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);
@@ -755,7 +755,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
             final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);

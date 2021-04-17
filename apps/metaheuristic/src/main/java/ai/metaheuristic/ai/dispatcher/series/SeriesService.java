@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -98,7 +98,7 @@ public class SeriesService {
             String errorMessage = "#354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
-        ExperimentResultParams params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+        ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
         SeriesParamsYaml spy = series.getSeriesParamsYaml();
 
         if (!spy.experimentResults.contains(params.name)) {

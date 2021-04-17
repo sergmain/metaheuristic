@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.experiment_result;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,10 +57,10 @@ public class TestExperimentToJson extends PreparingExperiment {
         ExperimentResultService.StoredToExperimentResultWithStatus r = experimentResultService.toExperimentStoredToExperimentResult(execContextForTest.asSimple(), experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
-        String yaml = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(r.experimentResultParamsYamlWithCache.experimentResult);
+        String yaml = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(r.experimentResultParamsYamlWithCache.experimentResult);
 
         System.out.println("yaml =\n" + yaml);
-        ExperimentResultParamsYamlWithCache erpywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        ExperimentResultParamsYamlWithCache erpywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(yaml));
         System.out.println("erpywc = " + erpywc);
 
         // TODO 2019-07-13 add here comparisons of ExperimentResultParamsYamlWithCache and erpywc
