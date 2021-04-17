@@ -32,6 +32,7 @@ import java.io.IOException;
  */
 public class JsonForVersioning {
 
+    // https://stackoverflow.com/questions/38732849/how-to-read-single-json-field-with-jackson/38733637#38733637
     public static ParamsVersion getParamsVersion(String json) {
         try {
             String versionValue = null;
@@ -40,8 +41,8 @@ public class JsonForVersioning {
                 JsonToken startToken = parser.nextToken();
                 while (parser.nextToken() != JsonToken.END_OBJECT) {
                     String fieldName = parser.getCurrentName();
-                    if ("status".equals(fieldName)) {
-                        if (parser.nextToken() == JsonToken.VALUE_STRING) {
+                    if ("version".equals(fieldName)) {
+                        if (parser.nextToken() == JsonToken.VALUE_NUMBER_INT) {
                             versionValue = parser.getValueAsString();
                             break;
                         }

@@ -39,6 +39,7 @@ import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.json.versioning_json.JsonForVersioning;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -359,7 +360,7 @@ public class ExperimentResultTopLevelService {
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     private ExperimentResultParams checkVersionAndUpgrade(Long experimentResultId, String params) {
 
-        ParamsVersion v = YamlForVersioning.getParamsVersion(params);
+        ParamsVersion v = JsonForVersioning.getParamsVersion(params);
 
         final String newParams;
         switch(v.getActualVersion()) {
