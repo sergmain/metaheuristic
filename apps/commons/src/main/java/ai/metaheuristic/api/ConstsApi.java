@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.api;
 
-import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
@@ -59,7 +59,7 @@ public class ConstsApi {
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 
-    public static final YamlVersion YAML_VERSION_1 = new YamlVersion();
+    public static final ParamsVersion PARAMS_VERSION_1 = new ParamsVersion();
 
     public final static SourceCodeApiData.SourceCodeValidationResult SOURCE_CODE_VALIDATION_RESULT_OK = new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 

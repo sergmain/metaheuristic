@@ -41,7 +41,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -104,7 +104,7 @@ public class SourceCodeTopLevelService {
             try {
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
             }
-            catch (WrongVersionOfYamlFileException e) {
+            catch (WrongVersionOfParamsException e) {
                 String es = "#560.110 An error parsing yaml: " + e.getMessage();
                 log.error(es);
                 return new SourceCodeApiData.SourceCodeResult(es);
@@ -223,7 +223,7 @@ public class SourceCodeTopLevelService {
             try (InputStream is = file.getInputStream()) {
                 sourceCodeYamlAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
-            } catch (WrongVersionOfYamlFileException e) {
+            } catch (WrongVersionOfParamsException e) {
                 String es = "#560.340 An error parsing yaml: " + e.getMessage();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);

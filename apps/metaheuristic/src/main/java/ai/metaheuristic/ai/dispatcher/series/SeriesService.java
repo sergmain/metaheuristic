@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtil
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,13 +98,13 @@ public class SeriesService {
             String errorMessage = "#354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
-        ExperimentResultParamsYaml params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+        ExperimentResultParams params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
         SeriesParamsYaml spy = series.getSeriesParamsYaml();
 
         if (!spy.experimentResults.contains(params.name)) {
             spy.experimentResults.add(params.name);
         }
-        for (ExperimentResultParamsYaml.ExperimentPart experimentPart : params.parts) {
+        for (ExperimentResultParams.ExperimentPart experimentPart : params.parts) {
             SeriesParamsYaml.ExperimentPart part = to(experimentPart);
             if (!spy.parts.contains(part)) {
                 spy.parts.add(part);
@@ -119,7 +119,7 @@ public class SeriesService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private static SeriesParamsYaml.ExperimentPart to(ExperimentResultParamsYaml.ExperimentPart part) {
+    private static SeriesParamsYaml.ExperimentPart to(ExperimentResultParams.ExperimentPart part) {
         SeriesParamsYaml.ExperimentPart r = new SeriesParamsYaml.ExperimentPart();
         r.fitting = Objects.requireNonNull(part.fitting);
         r.taskContextId = part.taskContextId;

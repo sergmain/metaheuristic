@@ -35,9 +35,9 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.YamlVersion;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
+import ai.metaheuristic.api.data.ParamsVersion;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -74,8 +74,8 @@ import static ai.metaheuristic.ai.dispatcher.data.ExperimentResultData.*;
 import static ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentFeatureData;
 import static ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParam;
 import static ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData.ExperimentResultData;
-import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentFeature;
-import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentTaskFeature;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParams.ExperimentFeature;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParams.ExperimentTaskFeature;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
@@ -165,7 +165,7 @@ public class ExperimentResultTopLevelService {
             experimentResult.createdOn = System.currentTimeMillis();
             experimentResult = experimentResultRepository.save(experimentResult);
 
-            ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            ExperimentResultParams apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);
             int count = 0;
             for (ExperimentTaskFeature taskFeature : apy.taskFeatures) {
                 if (++count%100==0) {
@@ -226,7 +226,7 @@ public class ExperimentResultTopLevelService {
             FileUtils.write(exportFile, experimentResult.params, StandardCharsets.UTF_8);
             Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
-            ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+            ExperimentResultParams apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
             if (experimentTaskIds.size() != apy.taskFeatures.size()) {
                 log.warn("numbers of tasks in params of stored experiment and in db are different, " +
                         "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
@@ -295,7 +295,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            final ExperimentResultParamsYaml erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.params);
+            final ExperimentResultParams erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.params);
             if (erpy==null) {
                 String es = "#422.177 Can't prepare experimentResult #" + experimentResult.id;
                 log.error(es);
@@ -357,9 +357,9 @@ public class ExperimentResultTopLevelService {
     }
 
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
-    private ExperimentResultParamsYaml checkVersionAndUpgrade(Long experimentResultId, String params) {
+    private ExperimentResultParams checkVersionAndUpgrade(Long experimentResultId, String params) {
 
-        YamlVersion v = YamlForVersioning.getYamlVersion(params);
+        ParamsVersion v = YamlForVersioning.getParamsVersion(params);
 
         final String newParams;
         switch(v.getActualVersion()) {
@@ -369,7 +369,7 @@ public class ExperimentResultTopLevelService {
                 break;
         }
 
-        final ExperimentResultParamsYaml experimentResult = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(newParams);
+        final ExperimentResultParams experimentResult = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(newParams);
         return experimentResult;
     }
 
@@ -419,8 +419,8 @@ public class ExperimentResultTopLevelService {
     }
 
     public static ExperimentFeatureData asExperimentFeatureData(
-            @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
-            List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
+            @Nullable ExperimentResultParams.ExperimentFeature experimentFeature,
+            List<ExperimentResultParams.ExperimentTaskFeature> taskFeatures) {
 
         final ExperimentFeatureData featureData = new ExperimentFeatureData();
 
@@ -464,12 +464,12 @@ public class ExperimentResultTopLevelService {
         if (apywc.experimentResult.features.isEmpty() ) {
             return EMPTY_PLOT_DATA;
         }
-        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc.experimentResult, feature, params);
+        List<ExperimentResultTaskParams> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc.experimentResult, feature, params);
         return collectDataForPlotting(apywc, selected, paramsAxis);
     }
 
-    private List<ExperimentResultTaskParamsYaml> getTasksForFeatureIdAndParams(
-            Long experimentResultId, ExperimentResultParamsYaml experimentResult, ExperimentFeature feature, String[] params) {
+    private List<ExperimentResultTaskParams> getTasksForFeatureIdAndParams(
+            Long experimentResultId, ExperimentResultParams experimentResult, ExperimentFeature feature, String[] params) {
         final Map<Long, Integer> taskToTaskType = experimentResult.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
@@ -482,7 +482,7 @@ public class ExperimentResultTopLevelService {
         }
 
         List<ExperimentTask> experimentTasks = experimentTaskRepository.findTasksById(experimentResultId, taskIds);
-        List<ExperimentResultTaskParamsYaml> selected = experimentTasks.stream()
+        List<ExperimentResultTaskParams> selected = experimentTasks.stream()
                 .map(o-> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
                 .filter(atpy -> atpy.execState > 1)
                 .collect(Collectors.toList());
@@ -493,7 +493,7 @@ public class ExperimentResultTopLevelService {
         return selected;
     }
 
-    private static PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParamsYaml> selected, String[] paramsAxis) {
+    private static PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParams> selected, String[] paramsAxis) {
         final PlotData data = new PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -530,7 +530,7 @@ public class ExperimentResultTopLevelService {
         }
 
         String metricKey = null;
-        for (ExperimentResultTaskParamsYaml task : selected) {
+        for (ExperimentResultTaskParams task : selected) {
 
             if (metricKey==null) {
                 for (Map.Entry<String, BigDecimal> entry : task.metrics.values.entrySet()) {
@@ -551,7 +551,7 @@ public class ExperimentResultTopLevelService {
     }
 
 
-    private static List<ExperimentResultTaskParamsYaml> filterTasks(ExperimentResultParamsYaml epy, String[] params, List<ExperimentResultTaskParamsYaml> tasks) {
+    private static List<ExperimentResultTaskParams> filterTasks(ExperimentResultParams epy, String[] params, List<ExperimentResultTaskParams> tasks) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -563,8 +563,8 @@ public class ExperimentResultTopLevelService {
         }
         final Map<String, Map<String, Integer>> paramByIndex = ExperimentResultService.getHyperParamsAsMap(epy.hyperParams);
 
-        List<ExperimentResultTaskParamsYaml> selected = new ArrayList<>();
-        for (ExperimentResultTaskParamsYaml task : tasks) {
+        List<ExperimentResultTaskParams> selected = new ArrayList<>();
+        for (ExperimentResultTaskParams task : tasks) {
             if (task.taskParams.inline.isEmpty()) {
                 continue;
             }
@@ -659,7 +659,7 @@ public class ExperimentResultTopLevelService {
                 .map(o->o.taskId)
                 .collect(Collectors.toList());
 
-        Slice<ExperimentResultTaskParamsYaml> tasks = new SliceImpl<>(
+        Slice<ExperimentResultTaskParams> tasks = new SliceImpl<>(
                 taskWIthTypes.subList(0, Math.min(taskWIthTypes.size(), Consts.PAGE_REQUEST_10_REC.getPageSize()))
                         .stream()
                         .map(id-> experimentTaskRepository.findByExperimentResultIdAndTaskId(experimentResultId, id))
@@ -738,7 +738,7 @@ public class ExperimentResultTopLevelService {
         if (task==null ) {
             return new ConsoleResult("#422.310 Can't find a console output");
         }
-        ExperimentResultTaskParamsYaml atpy = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        ExperimentResultTaskParams atpy = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(atpy.functionExecResults);
         if (functionExec ==null ) {
@@ -778,14 +778,14 @@ public class ExperimentResultTopLevelService {
         return result;
     }
 
-    private Slice<ExperimentResultTaskParamsYaml> findTasks(Long experimentResultId, ExperimentResultParamsYamlWithCache estb, Pageable pageable, @Nullable ExperimentFeature feature, String[] params) {
+    private Slice<ExperimentResultTaskParams> findTasks(Long experimentResultId, ExperimentResultParamsYamlWithCache estb, Pageable pageable, @Nullable ExperimentFeature feature, String[] params) {
         if (feature == null) {
             return Page.empty();
         }
-        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, estb.experimentResult, feature, params);
-        List<ExperimentResultTaskParamsYaml> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+        List<ExperimentResultTaskParams> selected = getTasksForFeatureIdAndParams(experimentResultId, estb.experimentResult, feature, params);
+        List<ExperimentResultTaskParams> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
 
-        for (ExperimentResultTaskParamsYaml atpy : subList) {
+        for (ExperimentResultTaskParams atpy : subList) {
             atpy.typeAsString = estb.experimentResult.taskFeatures.stream()
                     .filter(tf->tf.taskId.equals(atpy.taskId))
                     .map(tf->EnumsApi.ExperimentTaskType.from(tf.taskType))
@@ -793,7 +793,7 @@ public class ExperimentResultTopLevelService {
                     .orElse(EnumsApi.ExperimentTaskType.UNKNOWN)
                     .toString();
         }
-        Slice<ExperimentResultTaskParamsYaml> slice = new PageImpl<>(subList, pageable, selected.size());
+        Slice<ExperimentResultTaskParams> slice = new PageImpl<>(subList, pageable, selected.size());
         return slice;
     }
 }

@@ -17,9 +17,9 @@
 package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.ParamsVersion;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -87,7 +87,7 @@ public class BaseYamlUtils<T extends BaseParams> {
 
     public T to(@NonNull String s) {
         try {
-            YamlVersion v = YamlForVersioning.getYamlVersion(s);
+            ParamsVersion v = YamlForVersioning.getParamsVersion(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
             if (yamlUtils==null) {
                 throw new IllegalStateException("Unsupported version: " + v.getActualVersion());
@@ -106,7 +106,7 @@ public class BaseYamlUtils<T extends BaseParams> {
 
             return p;
         } catch (YAMLException e) {
-            throw new WrongVersionOfYamlFileException("Error: " + e.getMessage(), e);
+            throw new WrongVersionOfParamsException("Error: " + e.getMessage(), e);
         }
     }
 

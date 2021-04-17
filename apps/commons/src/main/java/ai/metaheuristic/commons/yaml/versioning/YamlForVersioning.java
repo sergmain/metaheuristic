@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.ParamsVersion;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -30,20 +30,19 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class YamlForVersioning {
 
-    public static Yaml getYamlForVersion() {
-        Representer representer = new Representer();
-        representer.getPropertyUtils().setSkipMissingProperties(true);
-        representer.addClassTag(YamlVersion.class, Tag.MAP);
-
-        Constructor constructor = new Constructor(YamlVersion.class);
-
-        //noinspection UnnecessaryLocalVariable
-        Yaml yaml = new Yaml(constructor, representer);
-        return yaml;
+    public static ParamsVersion getParamsVersion(String s) {
+        ParamsVersion yamlVersion = getYamlForVersion().load(s);
+        return yamlVersion==null ? ConstsApi.PARAMS_VERSION_1 : yamlVersion;
     }
 
-    public static YamlVersion getYamlVersion(String s) {
-        YamlVersion yamlVersion = getYamlForVersion().load(s);
-        return yamlVersion==null ? ConstsApi.YAML_VERSION_1 : yamlVersion;
+    private static Yaml getYamlForVersion() {
+        Representer representer = new Representer();
+        representer.getPropertyUtils().setSkipMissingProperties(true);
+        representer.addClassTag(ParamsVersion.class, Tag.MAP);
+
+        Constructor constructor = new Constructor(ParamsVersion.class);
+
+        Yaml yaml = new Yaml(constructor, representer);
+        return yaml;
     }
 }

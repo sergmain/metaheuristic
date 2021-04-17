@@ -48,7 +48,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -363,7 +363,7 @@ public class BatchResultProcessorTxService {
                 catch (CommonErrorWithDataException e) {
                     log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
                 }
-                catch (WrongVersionOfYamlFileException e) {
+                catch (WrongVersionOfParamsException e) {
                     log.warn("#993.205 error parsing a mapping variable #{} {}:  #{}", sv.id, sv.variable, mapping);
                     throw e;
                 }

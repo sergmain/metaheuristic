@@ -44,8 +44,8 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -70,7 +70,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.*;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParams.*;
 
 @SuppressWarnings("DuplicatedCode")
 @Slf4j
@@ -149,7 +149,7 @@ public class ExperimentResultService {
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
-        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
+        ExperimentResultParams erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
 
         if (!simpleExecContext.execContextId.equals(erpy.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
@@ -266,7 +266,7 @@ public class ExperimentResultService {
                 }
                 String metrics = variableService.getVariableDataAsString(metricsVar.variable.id);
                 mvs = MetricsUtils.getMetricValues(metrics);
-                currPart.metrics = new ExperimentResultParamsYaml.MetricValues(mvs.values);
+                currPart.metrics = new ExperimentResultParams.MetricValues(mvs.values);
             }
 
             EnumsApi.Fitting fitting;
@@ -313,19 +313,19 @@ public class ExperimentResultService {
 
             taskFeatures.add(new ExperimentTaskFeature(
                     taskFeatureId.getAndIncrement(), simpleExecContext.execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
-                    new ExperimentResultParamsYaml.MetricValues(mvs.values)
+                    new ExperimentResultParams.MetricValues(mvs.values)
             ));
 
-            ExperimentResultTaskParamsYaml ertpy = new ExperimentResultTaskParamsYaml();
+            ExperimentResultTaskParams ertpy = new ExperimentResultTaskParams();
             ertpy.assignedOn = t.getAssignedOn();
             ertpy.completed = t.isCompleted();
             ertpy.completedOn = t.getCompletedOn();
             ertpy.execState = t.getExecState();
             ertpy.taskId = t.getId();
 
-            ertpy.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(inlineVariableItem.inlines, currInline);
+            ertpy.taskParams = new ExperimentResultTaskParams.TaskParams(inlineVariableItem.inlines, currInline);
 
-            // typeAsString will have been initialized when ExperimentResultTaskParamsYaml will be requested
+            // typeAsString will have been initialized when ExperimentResultTaskParams will be requested
             // see method ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.findTasks
             ertpy.typeAsString = null;
             ertpy.functionExecResults = t.getFunctionExecResults();
@@ -396,7 +396,7 @@ public class ExperimentResultService {
         return paramByIndex;
     }
 
-    private void updateData(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml,
+    private void updateData(ExperimentResult experimentResult, ExperimentResultParams experimentResultParamsYaml,
                             InlineVariableData.InlineVariableItem item, List<ExperimentFeature> features, List<ExperimentTaskFeature> taskFeatures) {
 
         item.inlines.entrySet().stream()
@@ -411,7 +411,7 @@ public class ExperimentResultService {
         experimentResultRepository.save(experimentResult);
     }
 
-    private static void updateMaxValueForExperimentResult(ExperimentResultParamsYaml erpy) {
+    private static void updateMaxValueForExperimentResult(ExperimentResultParams erpy) {
         log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : erpy.features) {
             erpy.taskFeatures.stream().filter(o->o.featureId.equals(feature.id)).forEach(o-> updateMax(feature, o.metrics));
@@ -419,7 +419,7 @@ public class ExperimentResultService {
         erpy.maxValueCalculated = true;
     }
 
-    private static void updateMax(ExperimentFeature feature, ExperimentResultParamsYaml.MetricValues metrics) {
+    private static void updateMax(ExperimentFeature feature, ExperimentResultParams.MetricValues metrics) {
         for (Map.Entry<String, BigDecimal> entry : metrics.values.entrySet()) {
             feature.maxValues.put(entry.getKey(),
                     Math.max(feature.maxValues.computeIfAbsent(entry.getKey(), o -> 0.0), entry.getValue().doubleValue()));
@@ -430,7 +430,7 @@ public class ExperimentResultService {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(simpleExecContext.getParamsYaml());
-        ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
+        ExperimentResultParams erpy = new ExperimentResultParams();
         erpy.createdOn = System.currentTimeMillis();
         erpy.execContext = new ExecContextWithParams(simpleExecContext.execContextId, s);
         erpy.code = experiment.code;

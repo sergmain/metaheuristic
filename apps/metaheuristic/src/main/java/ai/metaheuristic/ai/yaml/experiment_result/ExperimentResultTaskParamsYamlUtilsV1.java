@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYamlV1;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -30,7 +30,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 11:36 PM
  */
 public class ExperimentResultTaskParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExperimentResultTaskParamsYamlV1, ExperimentResultTaskParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExperimentResultTaskParamsV1, ExperimentResultTaskParams, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,22 +40,22 @@ public class ExperimentResultTaskParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExperimentResultTaskParamsYamlV1.class);
+        return YamlUtils.init(ExperimentResultTaskParamsV1.class);
     }
 
     @NonNull
     @Override
-    public ExperimentResultTaskParamsYaml upgradeTo(@NonNull ExperimentResultTaskParamsYamlV1 src) {
+    public ExperimentResultTaskParams upgradeTo(@NonNull ExperimentResultTaskParamsV1 src) {
         src.checkIntegrity();
 
-        ExperimentResultTaskParamsYaml trg = new ExperimentResultTaskParamsYaml();
+        ExperimentResultTaskParams trg = new ExperimentResultTaskParams();
         BeanUtils.copyProperties(src, trg);
 
         trg.metrics.error = src.metrics.error;
         trg.metrics.status = src.metrics.status;
         trg.metrics.values.putAll(src.metrics.values);
 
-        trg.taskParams = new ExperimentResultTaskParamsYaml.TaskParams(src.taskParams.allInline, src.taskParams.inline);
+        trg.taskParams = new ExperimentResultTaskParams.TaskParams(src.taskParams.allInline, src.taskParams.inline);
 
         trg.checkIntegrity();
         return trg;
@@ -78,14 +78,14 @@ public class ExperimentResultTaskParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExperimentResultTaskParamsYamlV1 paramsYaml) {
+    public String toString(@NonNull ExperimentResultTaskParamsV1 paramsYaml) {
         return getYaml().dump(paramsYaml);
     }
 
     @NonNull
     @Override
-    public ExperimentResultTaskParamsYamlV1 to(@NonNull String s) {
-        final ExperimentResultTaskParamsYamlV1 p = getYaml().load(s);
+    public ExperimentResultTaskParamsV1 to(@NonNull String s) {
+        final ExperimentResultTaskParamsV1 p = getYaml().load(s);
         return p;
     }
 

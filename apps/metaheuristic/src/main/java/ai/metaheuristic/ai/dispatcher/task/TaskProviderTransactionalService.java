@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -268,7 +268,7 @@ public class TaskProviderTransactionalService {
                 resultTask = allocatedTask;
                 // check that downgrading is being supported
                 try {
-                    YamlVersion v = YamlForVersioning.getYamlVersion(queuedTask.task.getParams());
+                    ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
                     if (v.getActualVersion()!=psy.taskParamsVersion) {
                         log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
                         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());

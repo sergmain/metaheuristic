@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,20 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data;
-
-import lombok.Data;
+package ai.metaheuristic.commons.exceptions;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:32 AM
+ * Date: 4/16/2021
+ * Time: 5:49 PM
  */
-@Data
-public class YamlVersion {
-    public Integer version;
+public class ParamsProcessingException extends RuntimeException {
 
-    public int getActualVersion() {
-        return version!=null ? version : 1;
+    public ParamsProcessingException() {
+    }
+
+    public ParamsProcessingException(String message) {
+        super(message);
+    }
+
+    public ParamsProcessingException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

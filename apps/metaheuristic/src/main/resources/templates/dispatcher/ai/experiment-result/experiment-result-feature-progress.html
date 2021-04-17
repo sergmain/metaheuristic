@@ -2,7 +2,7 @@
      layout:decorate="~{layout-ai}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
-    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml$TaskWithParams>"*/-->
+    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.experiment_result.ExperimentResultParams$TaskWithParams>"*/-->
     <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentFeatureData"*/-->
     <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$ConsoleResult"*/-->
     <!--/*@thymesVar id="params" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$HyperParamResult"*/-->

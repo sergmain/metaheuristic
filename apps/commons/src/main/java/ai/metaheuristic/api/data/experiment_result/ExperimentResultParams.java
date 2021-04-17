@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
-public class ExperimentResultParamsYaml implements BaseParams {
+public class ExperimentResultParams implements BaseParams {
 
     public final int version = 2;
 

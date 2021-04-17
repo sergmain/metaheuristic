@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.experiment_result;
 
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class TestExperimentResultUtils {
 
     @Test
     public void test() {
-        ExperimentResultParamsYaml.ExperimentFeature feature = new ExperimentResultParamsYaml.ExperimentFeature();
+        ExperimentResultParams.ExperimentFeature feature = new ExperimentResultParams.ExperimentFeature();
         feature.maxValues.put("a1", 1.0);
         feature.maxValues.put("a2", 2.0);
         feature.maxValues.put("a3", 3.0);

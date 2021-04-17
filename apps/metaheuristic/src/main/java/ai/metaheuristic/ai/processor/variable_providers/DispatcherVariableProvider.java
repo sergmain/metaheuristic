@@ -32,7 +32,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +97,7 @@ public class DispatcherVariableProvider implements VariableProvider {
                     throw new BreakFromLambdaException(es);
             }
         }
-        catch (WrongVersionOfYamlFileException e) {
+        catch (WrongVersionOfParamsException e) {
             String es = "#810.010 Error while processing task #"+task.getTaskId()+", variable #" + variable.id;
             log.error(es, e);
             throw new BreakFromLambdaException(e);

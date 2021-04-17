@@ -14,22 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.exceptions;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.commons.json.versioning_json;
 
-/**
- * @author Serge
- * Date: 7/1/2019
- * Time: 5:33 PM
- */
-public class WrongVersionOfYamlFileException extends RuntimeException{
-    public WrongVersionOfYamlFileException() {
-    }
-
-    public WrongVersionOfYamlFileException(String message) {
-        super(message);
-    }
-
-    public WrongVersionOfYamlFileException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
+import javax.annotation.ParametersAreNonnullByDefault;

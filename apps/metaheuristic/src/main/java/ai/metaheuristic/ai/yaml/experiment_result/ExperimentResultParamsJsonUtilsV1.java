@@ -19,29 +19,24 @@ package ai.metaheuristic.ai.yaml.experiment_result;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsV1;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsV2;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.lang.NonNull;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 6/22/2019
- * Time: 11:36 PM
+ * Date: 4/16/2021
+ * Time: 6:15 PM
  */
-public class ExperimentResultParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExperimentResultParamsV1, ExperimentResultParamsV2, Void, Void, Void, Void> {
+public class ExperimentResultParamsJsonUtilsV1
+        extends AbstractParamsJsonUtils<ExperimentResultParamsV1, ExperimentResultParamsV2, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
         return 1;
-    }
-
-    @NonNull
-    @Override
-    public Yaml getYaml() {
-        return YamlUtils.init(ExperimentResultParamsV1.class);
     }
 
     @NonNull
@@ -67,15 +62,24 @@ public class ExperimentResultParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExperimentResultParamsV1 yaml) {
-        return getYaml().dump(yaml);
+    public String toString(@NonNull ExperimentResultParamsV1 json) {
+        try {
+            return BaseJsonUtils.getMapper().writeValueAsString(json);
+        }
+        catch (JsonProcessingException e) {
+            throw new ParamsProcessingException("Error: " + e.getMessage(), e);
+        }
     }
 
     @NonNull
     @Override
     public ExperimentResultParamsV1 to(@NonNull String s) {
-        final ExperimentResultParamsV1 p = getYaml().load(s);
-        return p;
+        try {
+            final ExperimentResultParamsV1 p = BaseJsonUtils.getMapper().readValue(s, ExperimentResultParamsV1.class);
+            return p;
+        }
+        catch (JsonProcessingException e) {
+            throw new ParamsProcessingException("Error: " + e.getMessage(), e);
+        }
     }
-
 }

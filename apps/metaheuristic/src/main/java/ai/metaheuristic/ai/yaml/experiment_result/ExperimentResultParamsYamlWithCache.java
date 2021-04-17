@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -33,18 +33,18 @@ import java.util.Objects;
 @NoArgsConstructor
 public class ExperimentResultParamsYamlWithCache {
 
-    public ExperimentResultParamsYaml experimentResult = null;
+    public ExperimentResultParams experimentResult = null;
 
     // for caching
     private ExecContextParamsYaml execContextParamsYaml = null;
 
     @Nullable
-    public ExperimentResultParamsYaml.ExperimentFeature getFeature(Long featureId) {
+    public ExperimentResultParams.ExperimentFeature getFeature(Long featureId) {
         return experimentResult.features.stream().filter(o -> Objects.equals(o.id, featureId)).findFirst().orElse(null);
     }
 
     @Nullable
-    public ExperimentResultParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
+    public ExperimentResultParams.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
         return experimentResult.taskFeatures
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
@@ -78,7 +78,7 @@ public class ExperimentResultParamsYamlWithCache {
         return execContextParamsYaml;
     };
 
-    public ExperimentResultParamsYamlWithCache(ExperimentResultParamsYaml experimentResult) {
+    public ExperimentResultParamsYamlWithCache(ExperimentResultParams experimentResult) {
         this.experimentResult = experimentResult;
     }
 }

@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -36,7 +35,7 @@ import java.util.Map;
 
 @Data
 @NoArgsConstructor
-public class ExperimentResultTaskParamsYaml implements BaseParams {
+public class ExperimentResultTaskParamsV1 implements BaseParams {
 
     public final int version = 1;
 
@@ -51,35 +50,35 @@ public class ExperimentResultTaskParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Metrics {
+    public static class MetricsV1 {
         public EnumsApi.MetricsStatus status;
         public String error;
-        public final LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+        public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
     }
 
     @Data
     @NoArgsConstructor
-    public static class TaskParams {
+    public static class TaskParamsV1 {
         public final Map<String, String> allInline = new HashMap<>();
         public final Map<String, String> inline = new HashMap<>();
 
-        public TaskParams(final Map<String, String> allInline, final Map<String, String> inline) {
+        public TaskParamsV1(final Map<String, String> allInline, final Map<String, String> inline) {
             this.allInline.putAll(allInline);
             this.inline.putAll(inline);
         }
     }
 
-    public final Metrics metrics = new Metrics();
+    public final MetricsV1 metrics = new MetricsV1();
     public EnumsApi.Fitting fitting;
 
     public Long taskId;
-    public TaskParams taskParams;
+    public TaskParamsV1 taskParams;
     public int execState;
 
     public Long completedOn;
     public boolean completed;
     public Long assignedOn;
-    public @Nullable String typeAsString;
+    public String typeAsString;
 
     public String functionExecResults;
 }

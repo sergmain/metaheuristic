@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.versioning;
+package ai.metaheuristic.commons.json.versioning_json;
 
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import lombok.Data;
@@ -24,31 +24,34 @@ import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 9:24 PM
+ * Date: 4/16/2021
+ * Time: 5:17 PM
  */
-@SuppressWarnings("rawtypes")
 @Data
-public class ParamsYamlUtilsFactory {
+public class ParamsJsonUtilsFactory {
 
-    public @NonNull Map<Integer, AbstractParamsYamlUtils> map;
-    public @NonNull AbstractParamsYamlUtils defYamlUtils;
+    @NonNull
+    public Map<Integer, AbstractParamsJsonUtils> map;
 
-    public void ParamsYamlUtilsFactory(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
+    @NonNull
+    public AbstractParamsJsonUtils defJsonUtils;
+
+    public void ParamsYamlUtilsFactory(@NonNull Map<Integer, AbstractParamsJsonUtils> map, @NonNull AbstractParamsJsonUtils defJsonUtils) {
         this.map = map;
-        this.defYamlUtils = defYamlUtils;
+        this.defJsonUtils = defJsonUtils;
     }
 
-    public @NonNull AbstractParamsYamlUtils getForVersion(int version) {
-        AbstractParamsYamlUtils yamlUtils = map.get(version);
-        if (yamlUtils==null) {
+    @NonNull
+    public AbstractParamsJsonUtils getForVersion(int version) {
+        AbstractParamsJsonUtils jsonUtils = map.get(version);
+        if (jsonUtils==null) {
             throw new WrongVersionOfParamsException("Not supported version: " + version);
         }
-        return yamlUtils;
+        return jsonUtils;
     }
 
-
-    public @NonNull AbstractParamsYamlUtils getDefault() {
-        return defYamlUtils;
+    @NonNull
+    public AbstractParamsJsonUtils getDefault() {
+        return defJsonUtils;
     }
 }

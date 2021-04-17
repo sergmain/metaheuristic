@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
@@ -32,7 +32,7 @@ public class ExperimentResultParamsYamlUtils {
     private static final ExperimentResultParamsYamlUtilsV2 YAML_UTILS_V_2 = new ExperimentResultParamsYamlUtilsV2();
     private static final ExperimentResultParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    public static final BaseYamlUtils<ExperimentResultParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<ExperimentResultParams> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2

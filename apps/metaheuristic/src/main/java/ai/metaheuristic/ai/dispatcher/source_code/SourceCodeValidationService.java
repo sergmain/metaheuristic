@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -49,8 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
@@ -321,7 +319,7 @@ public class SourceCodeValidationService {
     }
 
     private SourceCodeApiData.SourceCodeValidationResult checkFunctions(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
-        YamlVersion v = YamlForVersioning.getYamlVersion(sourceCode.getParams());
+        ParamsVersion v = YamlForVersioning.getParamsVersion(sourceCode.getParams());
 
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;

@@ -16,27 +16,27 @@
 
 package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
+import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 
 import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/22/2019
- * Time: 11:36 PM
+ * Date: 4/16/2021
+ * Time: 6:14 PM
  */
-public class ExperimentResultTaskParamsYamlUtils {
+public class ExperimentResultParamsJsonUtils {
 
-    private static final ExperimentResultTaskParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExperimentResultTaskParamsYamlUtilsV1();
-    private static final ExperimentResultTaskParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ExperimentResultParamsJsonUtilsV1 UTILS_V_1 = new ExperimentResultParamsJsonUtilsV1();
+    private static final ExperimentResultParamsJsonUtilsV2 UTILS_V_2 = new ExperimentResultParamsJsonUtilsV2();
+    private static final ExperimentResultParamsJsonUtilsV2 DEFAULT_UTILS = UTILS_V_2;
 
-    public static final BaseYamlUtils<ExperimentResultTaskParams> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseJsonUtils<ExperimentResultParams> BASE_UTILS = new BaseJsonUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, UTILS_V_1,
+                    2, UTILS_V_2
             ),
             DEFAULT_UTILS
     );
-
-
 }

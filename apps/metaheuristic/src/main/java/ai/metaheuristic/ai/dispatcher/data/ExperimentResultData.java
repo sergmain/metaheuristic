@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.AllArgsConstructor;
@@ -32,7 +32,6 @@ import org.springframework.data.domain.Slice;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 public class ExperimentResultData {
@@ -195,7 +194,7 @@ public class ExperimentResultData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class TasksResult extends BaseDataClass {
-        public Slice<ExperimentResultTaskParamsYaml> items;
+        public Slice<ExperimentResultTaskParams> items;
     }
 
     @Data
@@ -204,7 +203,7 @@ public class ExperimentResultData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public Slice<ExperimentResultTaskParamsYaml> tasks;
+        public Slice<ExperimentResultTaskParams> tasks;
         public ExperimentApiData.ExperimentFeatureData experimentFeature;
         public ConsoleResult consoleResult;
 
