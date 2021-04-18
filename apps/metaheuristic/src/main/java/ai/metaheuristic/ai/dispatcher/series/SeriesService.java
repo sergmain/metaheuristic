@@ -103,11 +103,12 @@ public class SeriesService {
         }
         ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
         SeriesParamsYaml spy = series.getSeriesParamsYaml();
-        final Map<EnumsApi.Fitting, AtomicInteger> fittingCounts = new HashMap<>();
 
         if (!spy.experimentResults.contains(params.name)) {
             spy.experimentResults.add(params.name);
         }
+
+        final Map<EnumsApi.Fitting, AtomicInteger> fittingCounts = new HashMap<>();
         for (ExperimentResultParams.ExperimentPart experimentPart : params.parts) {
             SeriesParamsYaml.ExperimentPart part = to(experimentPart);
             if (!spy.parts.contains(part)) {
@@ -119,7 +120,7 @@ public class SeriesService {
             }
         }
 
-        fittingCounts.forEach((key, value) -> spy.fittingCounts.put(key, value.get()));
+        fittingCounts.forEach((key, value) -> spy.fittingCounts.put(key, spy.fittingCounts.computeIfAbsent(key, k -> 0) + value.get()));
         series.updateParams(spy);
         seriesRepository.save(series);
 

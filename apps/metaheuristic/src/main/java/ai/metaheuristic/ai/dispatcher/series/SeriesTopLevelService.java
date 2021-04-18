@@ -35,10 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -198,24 +195,36 @@ public class SeriesTopLevelService {
         }
 
         try {
-            EnumsApi.Fitting fitting = EnumsApi.Fitting.of(fittingStr);
+            EnumsApi.Fitting fitting = EnumsApi.Fitting.of(fittingStr.toUpperCase());
 
-            SeriesData.SeriesFittingDetails details = new SeriesData.SeriesFittingDetails(seriesId, fitting);
+            SeriesData.SeriesFittingDetails details = new SeriesData.SeriesFittingDetails(seriesId, series.name, fitting);
 
             SeriesParamsYaml spy = series.getSeriesParamsYaml();
             List<SeriesParamsYaml.ExperimentPart> parts = spy.parts.stream().filter(o->o.fitting==fitting).collect(Collectors.toList());
 
-            Set<String> hyperParams = parts.stream().flatMap(o->o.hyperParams.keySet().stream()).collect(Collectors.toSet());
-
-            for (String hyperParam : hyperParams) {
-                long count = parts.stream().flatMap(o->o.hyperParams.entrySet().stream()).filter(o->o.getKey().equals(hyperParam)).count();
-                details.counts.put(hyperParam, count);
+            Map<String, Map<String, AtomicInteger>> occurCount = new HashMap<>();
+            for (SeriesParamsYaml.ExperimentPart part : parts) {
+                for (Map.Entry<String, String> entry : part.hyperParams.entrySet()) {
+                    occurCount.computeIfAbsent(entry.getKey(), (k)->new HashMap<>())
+                            .computeIfAbsent(entry.getValue(), (k)->new AtomicInteger())
+                            .incrementAndGet();
+                }
+            }
+            for (Map.Entry<String, Map<String, AtomicInteger>> entry : occurCount.entrySet()) {
+                details.counts.add(
+                        new SeriesData.FittingCount(
+                                entry.getKey(),
+                                entry.getValue().entrySet().stream()
+                                        .sorted((o, o1)->Integer.compare(o1.getValue().get(), o.getValue().get()))
+                                        .map(o->""+o.getKey()+":"+o.getValue())
+                                        .collect(Collectors.joining(","))
+                        ));
             }
 
             return details;
         }
         catch (Throwable th) {
-            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            String es = "#286.120 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new SeriesData.SeriesFittingDetails(es);
         }

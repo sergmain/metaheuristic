@@ -163,11 +163,20 @@ public class SeriesData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class FittingCount {
+        public String hyperParam;
+        public String counts;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class SeriesFittingDetails extends BaseDataClass {
         public Long seriesId;
+        public String seriesName;
         public EnumsApi.Fitting fitting;
-        public final Map<String, Long> counts = new HashMap<>();
+        public final List<FittingCount> counts = new ArrayList<>();
 
         public SeriesFittingDetails(String errorMessage) {
             addErrorMessage(errorMessage);
