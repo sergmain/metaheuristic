@@ -100,7 +100,7 @@ public class Experiment implements Serializable, Cloneable {
 
     @JsonIgnore
     public void updateParams(ExperimentParamsYaml epy) {
-        params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+        setParams(ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy));
     }
 
 

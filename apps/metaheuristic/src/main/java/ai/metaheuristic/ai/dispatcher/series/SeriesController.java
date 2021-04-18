@@ -78,7 +78,7 @@ public class SeriesController {
     public String getSeriesDetails(@PathVariable Long id, Model model,
                                  @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                                  @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        SeriesData.SeriesDetails details = seriesTopLevelService.getSeriesDetails(id);
+        SeriesData.SeriesShortDetails details = seriesTopLevelService.getSeriesDetails(id);
         ControllerUtils.addMessagesToModel(model, details);
         model.addAttribute("result", details);
         return "dispatcher/ai/series/series-details";

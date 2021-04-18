@@ -33,7 +33,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -100,6 +103,7 @@ public class SeriesService {
         }
         ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
         SeriesParamsYaml spy = series.getSeriesParamsYaml();
+        final Map<EnumsApi.Fitting, AtomicInteger> fittingCounts = new HashMap<>();
 
         if (!spy.experimentResults.contains(params.name)) {
             spy.experimentResults.add(params.name);
@@ -107,12 +111,15 @@ public class SeriesService {
         for (ExperimentResultParams.ExperimentPart experimentPart : params.parts) {
             SeriesParamsYaml.ExperimentPart part = to(experimentPart);
             if (!spy.parts.contains(part)) {
+                fittingCounts.computeIfAbsent(experimentPart.fitting, (k)->new AtomicInteger()).incrementAndGet();
                 spy.parts.add(part);
             }
             else {
                 int i = 0;
             }
         }
+
+        fittingCounts.forEach((key, value) -> spy.fittingCounts.put(key, value.get()));
         series.updateParams(spy);
         seriesRepository.save(series);
 

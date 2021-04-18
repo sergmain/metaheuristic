@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -60,6 +61,8 @@ public class SeriesParamsYaml implements BaseParams {
 
     // it will actually be handled as Set. it's List for a compatibility with yaml
     public final List<ExperimentPart> parts = new ArrayList<>();
+
+    public final Map<EnumsApi.Fitting, Integer> fittingCounts = new HashMap<>();
 
     public final List<String> experimentResults = new ArrayList<>();
 

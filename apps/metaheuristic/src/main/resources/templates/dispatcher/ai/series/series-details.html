@@ -11,11 +11,6 @@
     <a class="pure-button pure-button-primary" href="series-import.html" th:href="${'/dispatcher/ai/series/series-import/'+result.seriesId}">Import</a>
 
     <p>&nbsp;</p>
-    <p>Count of fitting:</p>
-    <p th:text="${'unknown fitting: ' + result.unknownFitting.size() }">Count of unknown fitting</p>
-    <p th:text="${'under fitting: ' + result.underFitting.size() }">Count of under fitting</p>
-    <p th:text="${'normal fitting: ' + result.normalFitting.size() }">Count of normal fitting</p>
-    <p th:text="${'over fitting: ' + result.overFitting.size() }">Count of over fitting</p>
 
     <table class="pure-table pure-table-bordered">
         <thead>
@@ -28,25 +23,25 @@
         <tbody>
         <tr>
             <td>unknown</td>
-            <td th:text="${result.unknownFitting.size()}">Count</td>
+            <td th:text="${result.unknownFitting}">Count</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/ai/series/series-fitting-details/' + result.seriesId+'/unknown'}">Details</a></td>
         </tr>
         <tr>
             <td>under fitting</td>
-            <td th:text="${result.underFitting.size()}">Count</td>
+            <td th:text="${result.underFitting}">Count</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/ai/series/series-fitting-details/' + result.seriesId+'/underfitting'}">Details</a></td>
         </tr>
         <tr>
             <td>normal</td>
-            <td th:text="${result.normalFitting.size()}">Count</td>
+            <td th:text="${result.normalFitting}">Count</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/ai/series/series-fitting-details/' + result.seriesId+'/normal'}">Details</a></td>
         </tr>
         <tr>
             <td>overfitting</td>
-            <td th:text="${result.overFitting.size()}">Count</td>
+            <td th:text="${result.overFitting}">Count</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/dispatcher/ai/series/series-fitting-details/' + result.seriesId+'/overfitting'}">Details</a></td>
         </tr>

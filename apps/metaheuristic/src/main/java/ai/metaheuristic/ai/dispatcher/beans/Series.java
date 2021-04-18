@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.yaml.series.SeriesParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
@@ -43,7 +42,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Series  implements Serializable, Cloneable {
-    private static final long serialVersionUID = -3441017964712755108L;
+    private static final long serialVersionUID = -2232274612309877419L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,11 +74,6 @@ public class Series  implements Serializable, Cloneable {
     @Nullable
     private SeriesParamsYaml spy = null;
 
-    @SneakyThrows
-    public Experiment clone() {
-        return (Experiment) super.clone();
-    }
-
     @NonNull
     @JsonIgnore
     public SeriesParamsYaml getSeriesParamsYaml() {
@@ -96,7 +90,7 @@ public class Series  implements Serializable, Cloneable {
 
     @JsonIgnore
     public void updateParams(SeriesParamsYaml epy) {
-        params = SeriesParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+        setParams(SeriesParamsYamlUtils.BASE_YAML_UTILS.toString(epy));
     }
 
 

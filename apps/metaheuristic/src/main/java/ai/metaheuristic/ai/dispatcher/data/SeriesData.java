@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -130,6 +131,30 @@ public class SeriesData {
         public final List<SeriesDetail> overFitting = new ArrayList<>();
 
         public SeriesDetails(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class SeriesShortDetails extends BaseDataClass {
+        public Long seriesId;
+        public String seriesName;
+
+        public int unknownFitting = 0;
+        public int underFitting = 0;
+        public int normalFitting = 0;
+        public int overFitting = 0;
+
+        public SeriesShortDetails(Long seriesId, String seriesName) {
+            this.seriesId = seriesId;
+            this.seriesName = seriesName;
+        }
+
+        public SeriesShortDetails(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 

@@ -37,7 +37,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -102,29 +104,32 @@ public class SeriesTopLevelService {
         return new SeriesData.SeriesResult(new SeriesData.SimpleSeries(series.id, series.name));
     }
 
-    public SeriesData.SeriesDetails getSeriesDetails(Long seriesId) {
+    public SeriesData.SeriesShortDetails getSeriesDetails(Long seriesId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
             String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
-            return new SeriesData.SeriesDetails(errorMessage);
+            return new SeriesData.SeriesShortDetails(errorMessage);
         }
-        final SeriesData.SeriesDetails seriesDetails = new SeriesData.SeriesDetails(series.id, series.name, series.getSeriesParamsYaml());
-        for (SeriesParamsYaml.ExperimentPart part : seriesDetails.params.parts) {
-            switch(part.fitting) {
+        final SeriesData.SeriesShortDetails seriesDetails = new SeriesData.SeriesShortDetails(series.id, series.name);
+        for (Map.Entry<EnumsApi.Fitting, Integer> entry : series.getSeriesParamsYaml().fittingCounts.entrySet()) {
+            switch(entry.getKey()) {
                 case UNKNOWN:
-                    seriesDetails.unknownFitting.add(to(part));
+                    seriesDetails.unknownFitting = entry.getValue();
                     break;
                 case UNDERFITTING:
-                    seriesDetails.underFitting.add(to(part));
+                    seriesDetails.underFitting = entry.getValue();
                     break;
                 case NORMAL:
-                    seriesDetails.normalFitting.add(to(part));
+                    seriesDetails.normalFitting = entry.getValue();
                     break;
                 case OVERFITTING:
-                    seriesDetails.overFitting.add(to(part));
+                    seriesDetails.overFitting = entry.getValue();
                     break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + entry.getKey());
             }
         }
+
         return seriesDetails;
     }
 

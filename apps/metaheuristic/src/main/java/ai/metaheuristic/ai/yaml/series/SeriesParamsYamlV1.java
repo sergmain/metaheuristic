@@ -20,11 +20,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -51,7 +51,6 @@ public class SeriesParamsYamlV1 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    @EqualsAndHashCode(of={"hyperParams", "variables"})
     public static class ExperimentPartV1 {
         public String taskContextId;
         public EnumsApi.Fitting fitting;
@@ -60,7 +59,10 @@ public class SeriesParamsYamlV1 implements BaseParams {
         public final List<String> variables = new ArrayList<>();
     }
 
+    // it will actually be handled as Set. it's List for a compatibility with yaml
     public final List<ExperimentPartV1> parts = new ArrayList<>();
+
+    public final Map<EnumsApi.Fitting, Integer> fittingCounts = new HashMap<>();
 
     public final List<String> experimentResults = new ArrayList<>();
 

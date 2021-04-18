@@ -48,6 +48,7 @@ public class SeriesParamsYamlUtilsV1
 
         src.parts.forEach(value -> trg.parts.add( to(value)));
         trg.experimentResults.addAll(src.experimentResults);
+        trg.fittingCounts.putAll(src.fittingCounts);
         trg.checkIntegrity();
         return trg;
     }

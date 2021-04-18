@@ -52,7 +52,7 @@ public class Dispatcher implements Serializable {
     public Integer version;
 
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
 
     public void setParams(String params) {
         synchronized (this) {
