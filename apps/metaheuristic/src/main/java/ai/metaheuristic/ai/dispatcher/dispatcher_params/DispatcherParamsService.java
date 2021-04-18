@@ -75,7 +75,7 @@ public class DispatcherParamsService {
             Dispatcher entity = new Dispatcher();
             entity.code = Consts.DISPATCHERS_CACHE;
             dispatcherParamsYaml = new DispatcherParamsYaml();
-            entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
+            entity.setParams(DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml));
             dispatcherParamsRepository.save(entity);
         }
         List<Long> sourceCodeIds = sourceCodeRepository.findAllAsIds();
@@ -262,12 +262,12 @@ public class DispatcherParamsService {
             if (!Consts.DISPATCHERS_CACHE.equals(dispatcher.code)) {
                 throw new IllegalStateException("(!Consts.DISPATCHERS_CACHE.equals(dispatcher.code))");
             }
-            if (S.b(dispatcher.params)) {
+            if (S.b(dispatcher.getParams())) {
                 throw new IllegalStateException("(S.b(dispatcher.params))");
             }
             try {
                 dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
-                dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
+                dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.getParams());
             } catch (Throwable th) {
                 log.error("Error while saving DispatcherParams", th);
                 dispatcherCacheValue = null;
@@ -289,7 +289,7 @@ public class DispatcherParamsService {
                     return null;
                 }
                 else {
-                    dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
+                    dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.getParams());
                 }
             }
             return dispatcherCacheValue;
