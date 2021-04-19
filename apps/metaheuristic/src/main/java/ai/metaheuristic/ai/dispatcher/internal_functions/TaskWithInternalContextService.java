@@ -72,7 +72,7 @@ public class TaskWithInternalContextService {
         }
         preProcessInternalFunction(simpleExecContext, task);
 
-        eventPublisher.publishEvent(new LockByExecContextIdTxEvent(simpleExecContext.execContextId));
+//        eventPublisher.publishEvent(new LockByExecContextIdTxEvent(simpleExecContext.execContextId));
         return null;
     }
 

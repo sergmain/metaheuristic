@@ -84,6 +84,7 @@ public class TaskQueue {
             this.priority = priority;
         }
 
+        // we dont need execContextId because taskIds are unique across all database
         public boolean alreadyRegistered(Long taskId) {
             if (execContextId==null) {
                 return false;
@@ -389,7 +390,7 @@ public class TaskQueue {
         addNewTask(task, true);
     }
 
-    private void addNewTask(QueuedTask task, boolean fixPriority) {
+    private TaskGroup addNewTask(QueuedTask task, boolean fixPriority) {
         if (fixPriority && task.priority>MAX_PRIORITY) {
             task.priority = MAX_PRIORITY;
         }
@@ -447,13 +448,19 @@ public class TaskQueue {
             taskGroups.add(taskGroup);
         }
         taskGroup.addTask(task);
+        return taskGroup;
     }
 
     public void addNewInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, TaskQueue.MAX_PRIORITY + 1);
-        addNewTask(task, false);
-        lock(execContextId);
+        TaskGroup taskGroup = addNewTask(task, false);
+        if (taskGroup.assignTask(taskId)==null) {
+            throw new IllegalStateException("(taskGroup.assignTask(taskId)==null)");
+        }
+        taskGroup.lock();
 
+        /*
+//        lock(execContextId);
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextId.equals(taskGroup.execContextId)) {
                 if (taskGroup.assignTask(taskId)!=null) {
@@ -462,6 +469,7 @@ public class TaskQueue {
                 }
             }
         }
+*/
     }
 
     public void startTaskProcessing(Long execContextId, Long taskId) {

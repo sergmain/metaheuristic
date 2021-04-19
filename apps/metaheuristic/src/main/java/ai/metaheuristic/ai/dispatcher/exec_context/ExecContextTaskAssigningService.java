@@ -115,7 +115,7 @@ public class ExecContextTaskAssigningService {
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     // all tasks with internal function will be processed in a different thread after registering in TaskQueue
                     if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
-                        log.info("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                        log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                         taskProviderService.registerInternalTask(execContext.sourceCodeId, execContextId, taskId, taskParamYaml);
                     }
                     else {

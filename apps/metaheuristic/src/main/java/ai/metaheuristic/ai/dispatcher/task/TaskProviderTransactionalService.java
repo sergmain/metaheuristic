@@ -139,6 +139,9 @@ public class TaskProviderTransactionalService {
     }
 
     public void registerInternalTask(Long sourceCodeId, Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        if (taskQueue.alreadyRegistered(taskId)) {
+            return;
+        }
         taskQueue.addNewInternalTask(execContextId, taskId, taskParamYaml);
         eventPublisher.publishEvent(new TaskWithInternalContextEvent(sourceCodeId, execContextId, taskId));
     }
@@ -172,17 +175,17 @@ public class TaskProviderTransactionalService {
                 }
                 QueuedTask queuedTask = allocatedTask.queuedTask;
 
+                // tasks with internal function could not be processed at this point
+                // because internal tasks are processed by async events
+                // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService#registerInternalTask
+                if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
+                    continue;
+                }
+
                 final KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus simpleStatus = statuses.getStatus(queuedTask.execContextId);
                 if (simpleStatus!=null && (simpleStatus.getState() == EnumsApi.ExecContextState.STOPPED || simpleStatus.getState() == EnumsApi.ExecContextState.FINISHED)) {
                     log.warn("#317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, simpleStatus.getState());
                     forRemoving.add(queuedTask);
-                    continue;
-                }
-
-                // all tasks with internal function should be already called.
-                // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService.registerInternalTask
-                if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
-                    log.error("#317.055 this situation shouldn't be happened.");
                     continue;
                 }
 

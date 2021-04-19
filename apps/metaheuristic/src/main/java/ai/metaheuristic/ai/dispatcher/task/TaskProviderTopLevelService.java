@@ -77,8 +77,6 @@ public class TaskProviderTopLevelService {
     // so we don't want to have an opened TX with holding sync within it
     private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
-    // TODO 2021-04-06 do we still need this syncObj?
-    //  it looks like that registerTask() was called via event
     public void registerTask(Long execContextId, Long taskId) {
         synchronized (syncObj) {
             taskProviderTransactionalService.registerTask(execContextId, taskId);
