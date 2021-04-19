@@ -57,7 +57,7 @@ public class TaskQueue {
 
     public static class AllocatedTask {
         public final QueuedTask queuedTask;
-        public EnumsApi.TaskExecState state;
+        public EnumsApi.TaskExecState state = EnumsApi.TaskExecState.NONE;
         public boolean assigned;
 
         public AllocatedTask(QueuedTask queuedTask) {

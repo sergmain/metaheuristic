@@ -63,7 +63,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findExecStateByExecContextId(Long execContextId);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
+    @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)

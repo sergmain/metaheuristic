@@ -85,7 +85,8 @@ public class ExecContextTaskAssigningService {
                 if (task==null) {
                     continue;
                 }
-                if (task.execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    // this state is occured when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     if (log.isDebugEnabled()) {
                         try {
                             TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -97,9 +98,6 @@ public class ExecContextTaskAssigningService {
                             log.warn("#703.040 Error parsing taskParamsYaml, error: " + th.getMessage());
                             log.warn("#703.060 task #{} with IN_PROGRESS is there?", task.id);
                         }
-                    }
-                    else {
-                        log.warn("#703.240 task #{} with IN_PROGRESS is there?", task.id);
                     }
                     continue;
                 }
