@@ -19,8 +19,10 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
@@ -45,7 +47,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class Schedulers {
 
     @Service
@@ -62,6 +63,8 @@ public class Schedulers {
         private final ReplicationService replicationService;
         private final ExecContextTopLevelService execContextTopLevelService;
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+        private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+        private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
 
         // Dispatcher schedulers
 
@@ -208,6 +211,28 @@ public class Schedulers {
                 return;
             }
             execContextVariableStateTopLevelService.processFlushing();
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        public void processCheckCaching() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            taskCheckCachingTopLevelService.checkCaching();
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        public void processUpdateTaskExecStatesInGraph() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
         }
     }
 

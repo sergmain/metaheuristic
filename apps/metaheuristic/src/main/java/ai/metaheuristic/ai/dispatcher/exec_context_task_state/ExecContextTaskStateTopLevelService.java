@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -38,6 +38,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * @author Serge
  * Date: 12/18/2020
@@ -50,15 +54,47 @@ import org.springframework.stereotype.Service;
 public class ExecContextTaskStateTopLevelService {
 
     private final ExecContextTaskStateService execContextTaskStateService;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+    private final LinkedList<UpdateTaskExecStatesInGraphEvent> queue = new LinkedList<>();
+
     @Async
     @EventListener
+    public void handleUpdateTaskExecStatesInGraphEvent(UpdateTaskExecStatesInGraphEvent event) {
+        putToQueue(event);
+    }
+
+    public void putToQueue(final UpdateTaskExecStatesInGraphEvent event) {
+        synchronized (queue) {
+            if (queue.contains(event)) {
+                return;
+            }
+            queue.add(event);
+        }
+    }
+
+    @Nullable
+    private UpdateTaskExecStatesInGraphEvent pullFromQueue() {
+        synchronized (queue) {
+            return queue.pollFirst();
+        }
+    }
+
+    public void processUpdateTaskExecStatesInGraph() {
+        executor.submit(() -> {
+            UpdateTaskExecStatesInGraphEvent event;
+            while ((event = pullFromQueue())!=null) {
+                updateTaskExecStatesInGraph(event);
+            }
+        });
+    }
+
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);

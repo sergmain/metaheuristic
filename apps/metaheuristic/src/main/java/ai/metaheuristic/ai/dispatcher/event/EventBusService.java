@@ -47,7 +47,7 @@ import java.nio.file.Files;
 @RequiredArgsConstructor
 public class EventBusService {
 
-    public final TaskCheckCachingTopLevelService taskCheckCachingService;
+    public final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
     public final TaskFinishingTopLevelService taskFinishingTopLevelService;
     public final ExecContextSyncService execContextSyncService;
@@ -82,16 +82,6 @@ public class EventBusService {
         try {
             log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
             taskFinishingTopLevelService.checkTaskCanBeFinished(event.taskId);
-        } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
-        }
-    }
-
-    @Async
-    @EventListener
-    public void registerTask(RegisterTaskForCheckCachingEvent event) {
-        try {
-            taskCheckCachingService.checkCaching();
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

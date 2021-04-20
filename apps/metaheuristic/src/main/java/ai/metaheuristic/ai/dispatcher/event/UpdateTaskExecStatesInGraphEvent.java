@@ -17,13 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author Serge
  * Date: 12/18/2020
  * Time: 6:48 PM
  */
+@Data
 @AllArgsConstructor
+@EqualsAndHashCode(of = "taskId")
 public class UpdateTaskExecStatesInGraphEvent {
     public final Long execContextId;
     public final Long taskId;
