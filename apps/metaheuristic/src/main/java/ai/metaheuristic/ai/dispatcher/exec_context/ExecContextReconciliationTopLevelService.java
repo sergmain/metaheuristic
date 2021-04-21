@@ -70,10 +70,11 @@ public class ExecContextReconciliationTopLevelService {
         if (rootVertices.isEmpty()) {
             return status;
         }
-        Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
+        final Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, rootVertices.get(0).taskId);
 
         final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
+        final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = taskProviderTopLevelService.getTaskExecStates(execContext.id);
 
         for (ExecContextData.TaskWithState tv : vertices) {
 
@@ -82,7 +83,8 @@ public class ExecContextReconciliationTopLevelService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.state.value!=taskState.execState) {
-                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
+//                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
+                TaskQueue.AllocatedTask allocatedTask = allocatedTasks.get(tv.taskId);
                 if (allocatedTask==null) {
                     if (taskState.execState== EnumsApi.TaskExecState.IN_PROGRESS.value && tv.state== EnumsApi.TaskExecState.NONE) {
                         log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",

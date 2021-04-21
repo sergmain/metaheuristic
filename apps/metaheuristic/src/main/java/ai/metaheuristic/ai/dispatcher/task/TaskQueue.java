@@ -275,6 +275,22 @@ public class TaskQueue {
         return null;
     }
 
+    public Map<Long, AllocatedTask> getTaskExecStates(Long execContextId) {
+        Map<Long, AllocatedTask> map = new HashMap<>();
+        for (TaskGroup taskGroup : taskGroups) {
+            if (!execContextId.equals(taskGroup.execContextId)) {
+                continue;
+            }
+            for (AllocatedTask task : taskGroup.tasks) {
+                if (task==null) {
+                    continue;
+                }
+                map.put(task.queuedTask.taskId, task);
+            }
+        }
+        return map;
+    }
+
     @Nullable
     public AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
         for (TaskGroup taskGroup : taskGroups) {

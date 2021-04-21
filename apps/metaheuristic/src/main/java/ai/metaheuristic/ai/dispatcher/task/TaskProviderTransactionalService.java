@@ -366,6 +366,10 @@ public class TaskProviderTransactionalService {
         return taskQueue.getTaskExecState(execContextId, taskId);
     }
 
+    public Map<Long, AllocatedTask> getTaskExecStates(Long execContextId) {
+        return taskQueue.getTaskExecStates(execContextId);
+    }
+
     public void unAssignTask(UnAssignTaskEvent event) {
         taskQueue.deRegisterTask(event.execContextId, event.taskId);
     }
