@@ -126,7 +126,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         assertTrue(task.isCompleted);
 
-        execContextTopLevelService.updateExecContextStatus(execContextForTest.id,true);
+        execContextTopLevelService.updateExecContextStatus(execContextForTest.id);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
     }
 

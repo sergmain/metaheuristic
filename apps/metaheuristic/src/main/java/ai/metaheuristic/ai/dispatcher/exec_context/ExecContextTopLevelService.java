@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -62,6 +63,7 @@ public class ExecContextTopLevelService {
     private final ExecContextTaskAssigningService execContextTaskAssigningService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final TaskSyncService taskSyncService;
+    private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
 
     private static boolean isManagerRole(String role) {
         switch (role) {
@@ -143,8 +145,15 @@ public class ExecContextTopLevelService {
                 () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, companyUniqueId));
     }
 
-    public void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
-        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, needReconciliation));
+    public void updateExecContextStatus(Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        final ExecContextData.ReconciliationStatus status =
+                execContextReconciliationTopLevelService.reconcileStates(execContext);
+
+        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, status));
     }
 
     public OperationStatusRest resetTask(Long taskId) {

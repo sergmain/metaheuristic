@@ -44,7 +44,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Schedulers {
@@ -68,13 +67,10 @@ public class Schedulers {
 
         // Dispatcher schedulers
 
-        private static final long TIMEOUT_BETWEEN_RECONCILIATION = TimeUnit.MINUTES.toMillis(1);
-        private long prevReconciliationTime = 0L;
-
         /**
-         * update status of all execContexts which are in 'started' state. Also, if execContext is finished, ExperimentResult will be produced
+         * update status of all execContexts which are in 'started' state
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.process-exec-context'), 1, 40, 3)*1000 }")
+        @Scheduled(initialDelay = 63_000, fixedDelay = 63_0000 )
         public void updateExecContextStatuses() {
             if (globals.isUnitTesting) {
                 return;
@@ -89,21 +85,12 @@ public class Schedulers {
             }
 
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
-            boolean needReconciliation = false;
             try {
-                if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
-                    needReconciliation = true;
-                }
-                execContextSchedulerService.updateExecContextStatuses(needReconciliation);
+                execContextSchedulerService.updateExecContextStatuses();
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateExecContextStatuses()",e);
             } catch (Throwable th) {
                 log.error("Error while updateExecContextStatuses()", th);
-            }
-            finally {
-                if (needReconciliation) {
-                    prevReconciliationTime = System.currentTimeMillis();
-                }
             }
         }
 

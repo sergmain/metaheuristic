@@ -386,7 +386,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
         taskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId);
-        execContextSchedulerService.updateExecContextStatuses(true);
+        execContextSchedulerService.updateExecContextStatuses();
     }
 
     private void step_DatasetProcessing() {

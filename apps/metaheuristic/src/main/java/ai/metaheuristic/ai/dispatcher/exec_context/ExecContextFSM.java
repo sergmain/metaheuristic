@@ -166,17 +166,9 @@ public class ExecContextFSM {
         return null;
     }
 
-    public Void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
+    public Void updateExecContextStatus(Long execContextId, ExecContextData.ReconciliationStatus status) {
         execContextSyncService.checkWriteLockPresent(execContextId);
-
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return null;
-        }
-        if (needReconciliation) {
-            ExecContextData.ReconciliationStatus status = execContextReconciliationService.reconcileStates(execContext);
-            execContextReconciliationService.finishReconciliation(status);
-        }
+        execContextReconciliationService.finishReconciliation(status);
         return null;
     }
 

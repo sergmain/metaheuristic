@@ -140,7 +140,7 @@ public class TaskStateService {
 
     private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
         if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#319.200 (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
+            log.info("#319.200 (task.execState==EnumsApi.TaskExecState.ERROR && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
         task.setExecState(EnumsApi.TaskExecState.ERROR.value);

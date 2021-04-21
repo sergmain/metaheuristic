@@ -39,10 +39,10 @@ public class ExecContextSchedulerService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextTopLevelService execContextTopLevelService;
 
-    public void updateExecContextStatuses(boolean needReconciliation) {
+    public void updateExecContextStatuses() {
         List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         for (Long execContextId : execContextIds) {
-            execContextTopLevelService.updateExecContextStatus(execContextId, needReconciliation);
+            execContextTopLevelService.updateExecContextStatus(execContextId);
         }
     }
 
