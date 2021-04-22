@@ -16,15 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.event.*;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +27,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -54,7 +44,7 @@ public class TaskTopLevelService {
 
     @Async
     @EventListener
-    public void handleTaskResourceWasRequestedEvent(TaskResourceWasRequestedEvent event) {
+    public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
         taskService.updateAccessByProcessorOn(event.taskId);
     }
 

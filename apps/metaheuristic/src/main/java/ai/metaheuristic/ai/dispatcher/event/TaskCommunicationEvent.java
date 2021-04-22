@@ -24,6 +24,6 @@ import lombok.AllArgsConstructor;
  * Time: 12:47 AM
  */
 @AllArgsConstructor
-public class TaskResourceWasRequestedEvent {
+public class TaskCommunicationEvent {
     public Long taskId;
 }

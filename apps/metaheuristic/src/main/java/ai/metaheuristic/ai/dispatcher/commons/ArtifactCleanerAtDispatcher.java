@@ -167,7 +167,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
                 for (List<Long> page : pages) {
-                    if (pages.isEmpty()) {
+                    if (page.isEmpty()) {
                         continue;
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);

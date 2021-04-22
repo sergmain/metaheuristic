@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -64,6 +66,7 @@ public class ExecContextVariableTopLevelService {
     private final VariableRepository variableRepository;
     private final TaskSyncService taskSyncService;
     private final VariableSyncService variableSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
         TxUtils.checkTxNotExists();
@@ -81,6 +84,7 @@ public class ExecContextVariableTopLevelService {
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
 
+        eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
         try {
             final UploadResult uploadResult = taskSyncService.getWithSync(taskId,
                     () -> taskVariableService.setVariableAsNull(taskId, variableId));
@@ -137,6 +141,8 @@ public class ExecContextVariableTopLevelService {
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
+
+        eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
 
         File tempDir=null;
         final File variableFile;

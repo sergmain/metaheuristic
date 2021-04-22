@@ -115,7 +115,7 @@ public class SouthbridgeController {
             @Nullable Boolean nullified,
             @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart
     ) {
-        log.debug("uploadVariable(), variableId: {}", variableId);
+        log.debug("uploadVariable(), taskId: #{}, variableId: {}", taskId, variableId);
         if (Boolean.TRUE.equals(nullified)) {
             return execContextVariableTopLevelService.setVariableAsNull(taskId, variableId);
         }

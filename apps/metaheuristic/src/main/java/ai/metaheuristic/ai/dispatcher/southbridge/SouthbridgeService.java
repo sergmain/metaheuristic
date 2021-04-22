@@ -21,8 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskResourceWasRequestedEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -135,7 +134,7 @@ public class SouthbridgeService {
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
                 dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
-                eventPublisher.publishEvent(new TaskResourceWasRequestedEvent(taskId));
+                eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
                 break;
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
