@@ -91,4 +91,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")
     public long resultResourceScheduledOn;
 
+    @Column(name = "ACCESS_BY_PROCESSOR_ON")
+    public Long accessByProcessorOn;
+
 }

@@ -220,16 +220,17 @@ CREATE TABLE MH_TASK
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(10, 0)  NOT NULL,
   PARAMS        TEXT not null,
-  PROCESSOR_ID    NUMERIC(10, 0),
-  ASSIGNED_ON   bigint,
-  UPDATED_ON    bigint,
-  COMPLETED_ON  bigint,
-  IS_COMPLETED  BOOLEAN default false not null,
-  FUNCTION_EXEC_RESULTS  TEXT,
-  EXEC_CONTEXT_ID          NUMERIC(10, 0)   NOT NULL,
-  EXEC_STATE        smallint not null default 0,
-  IS_RESULT_RECEIVED  BOOLEAN not null default false,
-  RESULT_RESOURCE_SCHEDULED_ON  bigint
+  PROCESSOR_ID                  NUMERIC(10, 0),
+  ASSIGNED_ON                   bigint,
+  UPDATED_ON                    bigint,
+  COMPLETED_ON                  bigint,
+  IS_COMPLETED                  BOOLEAN default false not null,
+  FUNCTION_EXEC_RESULTS         TEXT,
+  EXEC_CONTEXT_ID               NUMERIC(10, 0)   NOT NULL,
+  EXEC_STATE                    smallint not null default 0,
+  IS_RESULT_RECEIVED            BOOLEAN not null default false,
+  RESULT_RESOURCE_SCHEDULED_ON  bigint,
+  ACCESS_BY_PROCESSOR_ON        bigint
 );
 
 CREATE INDEX MH_TASK_PROCESSOR_ID_IDX

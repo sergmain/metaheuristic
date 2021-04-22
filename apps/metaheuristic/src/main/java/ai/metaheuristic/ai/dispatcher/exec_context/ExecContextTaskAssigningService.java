@@ -86,7 +86,7 @@ public class ExecContextTaskAssigningService {
                     continue;
                 }
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // this state is occured when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
+                    // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     if (log.isDebugEnabled()) {
                         try {
                             TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());

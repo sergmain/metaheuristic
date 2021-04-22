@@ -69,4 +69,8 @@ public interface Task {
     Long getUpdatedOn();
 
     void setUpdatedOn(Long updatedOn);
+
+    Long getAssessByProcessorOn();
+
+    void setAssessByProcessorOn(Long assessByProcessorOn);
 }
