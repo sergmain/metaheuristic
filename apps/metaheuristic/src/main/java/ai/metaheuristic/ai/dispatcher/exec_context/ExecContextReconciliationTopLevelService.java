@@ -172,6 +172,19 @@ public class ExecContextReconciliationTopLevelService {
                                 status.taskForResettingIds.add(task.id);
                             }
                         }
+/*
+                        else if (task.assignedOn!=null && tpy.task.timeoutBeforeTerminate != null && tpy.task.timeoutBeforeTerminate!=0L) {
+                            // +2 is for waiting network communications at the last moment. i.e. wait for 4 seconds more
+                            final long multiplyBy2 = (tpy.task.timeoutBeforeTerminate + 2) * 2 * 1000;
+                            final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
+                            long timeout = Math.min(multiplyBy2, oneHourToMills);
+                            if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
+                                log.info("#307.170 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, multiplyBy2: {}, timeout: {}",
+                                        task.id, task.processorId, tpy.task.timeoutBeforeTerminate, multiplyBy2, timeout);
+                                status.taskForResettingIds.add(task.id);
+                            }
+                        }
+*/
                         else if (task.resultReceived && task.isCompleted) {
                             status.taskIsOkIds.add(task.id);
                         }

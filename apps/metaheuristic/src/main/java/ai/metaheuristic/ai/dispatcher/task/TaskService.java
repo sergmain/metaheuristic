@@ -79,4 +79,8 @@ public class TaskService {
     }
 
 
+    @Transactional
+    public void updateAccessByProcessorOn(Long taskId) {
+        taskRepository.updateAccessByProcessorOn(taskId, System.currentTimeMillis());
+    }
 }

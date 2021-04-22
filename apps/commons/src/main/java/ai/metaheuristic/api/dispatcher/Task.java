@@ -70,7 +70,7 @@ public interface Task {
 
     void setUpdatedOn(Long updatedOn);
 
-    Long getAssessByProcessorOn();
+    Long getAccessByProcessorOn();
 
-    void setAssessByProcessorOn(Long assessByProcessorOn);
+    void setAccessByProcessorOn(Long accessByProcessorOn);
 }

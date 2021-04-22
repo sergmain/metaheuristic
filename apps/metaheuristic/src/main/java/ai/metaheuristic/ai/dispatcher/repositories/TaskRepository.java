@@ -77,5 +77,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Modifying
     @Query(value="delete from TaskImpl t where t.id in (:ids)")
     void deleteByIds(List<Long> ids);
+
+    @Modifying
+    @Query("update TaskImpl t set t.accessByProcessorOn = :mills where t.id = :taskId")
+    void updateAccessByProcessorOn(Long taskId, long mills);
 }
 

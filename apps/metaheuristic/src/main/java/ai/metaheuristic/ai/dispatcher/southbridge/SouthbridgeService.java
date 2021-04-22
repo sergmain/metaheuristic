@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskResourceWasRequestedEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -48,6 +50,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.BoundedInputStream;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -79,6 +82,7 @@ public class SouthbridgeService {
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final KeepAliveCommandProcessor keepAliveCommandProcessor;
     private final ProcessorTopLevelService processorTopLevelService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -109,7 +113,7 @@ public class SouthbridgeService {
 
     // return a requested data to a processor
     // data can be Function or Variable
-    public CleanerInfo deliverData(final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
+    public CleanerInfo deliverData(@Nullable Long taskId, final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
 
         AssetFile assetFile;
         BiFunction<String, File, Void> dataSaver;
@@ -131,6 +135,7 @@ public class SouthbridgeService {
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
                 dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
+                eventPublisher.publishEvent(new TaskResourceWasRequestedEvent(taskId));
                 break;
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);

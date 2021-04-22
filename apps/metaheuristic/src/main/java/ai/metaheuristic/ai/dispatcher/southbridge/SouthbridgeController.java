@@ -83,10 +83,11 @@ public class SouthbridgeController {
         return serverService.keepAlive(data, request.getRemoteAddr());
     }
 
-    @GetMapping(value="/payload/resource/{variableType}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value="/payload/resource/{variableType}/{taskId}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
             @PathVariable("variableType") String variableType,
+            @PathVariable("taskId") Long taskId,
             @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart,
             @Nullable String id, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
@@ -96,7 +97,7 @@ public class SouthbridgeController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverData(EnumsApi.DataType.valueOf(variableType), id, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverData(taskId, EnumsApi.DataType.valueOf(variableType), id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {

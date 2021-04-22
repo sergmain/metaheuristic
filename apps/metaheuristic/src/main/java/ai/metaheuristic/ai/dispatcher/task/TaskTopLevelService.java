@@ -18,10 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -33,7 +30,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,12 +49,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskTopLevelService {
 
-    private final ExecContextSyncService execContextSyncService;
-    private final ExecContextRepository execContextRepository;
-    private final ExecContextCache execContextCache;
-    private final TaskRepository taskRepository;
+    private final TaskService taskService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final TaskTransactionalService taskTransactionalService;
+
+    @Async
+    @EventListener
+    public void handleTaskResourceWasRequestedEvent(TaskResourceWasRequestedEvent event) {
+        taskService.updateAccessByProcessorOn(event.taskId);
+    }
 
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         switch (status) {

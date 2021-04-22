@@ -119,11 +119,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 continue;
             }
 
-            log.info("Start processing the download task {}", task);
+            log.debug("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/"+type;
-                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' +
-                        task.ref.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
+                final String uri = task.dispatcher.url + "/rest/v1/payload/resource/"+type+'/'+task.taskId+'/'+
+                        UUID.randomUUID().toString().substring(0, 8) + '-' +task.ref.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {

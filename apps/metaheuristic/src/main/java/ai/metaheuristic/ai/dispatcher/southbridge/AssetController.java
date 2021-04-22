@@ -81,7 +81,7 @@ public class AssetController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverData(EnumsApi.DataType.function, code, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverData(null, EnumsApi.DataType.function, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {
