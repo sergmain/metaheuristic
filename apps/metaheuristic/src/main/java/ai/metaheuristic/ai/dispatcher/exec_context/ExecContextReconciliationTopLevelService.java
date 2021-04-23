@@ -178,7 +178,7 @@ public class ExecContextReconciliationTopLevelService {
                                     if (tpy.task.timeoutBeforeTerminate != null && tpy.task.timeoutBeforeTerminate != 0L) {
                                         // +4 is for waiting network communications at the last moment. i.e. wait for 4 seconds more
                                         // 180 second for finish uploading of results
-                                        // TODO 2021-04-22 need to rewrite with better decision formula
+                                        // TODO 2021-04-22 need to rewrite with better formula of decision
                                         final long timeoutForChecking = (tpy.task.timeoutBeforeTerminate + 184 ) * 1000;
                                         final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                                         long effectiveTimeout = Math.min(timeoutForChecking, oneHourToMills);
