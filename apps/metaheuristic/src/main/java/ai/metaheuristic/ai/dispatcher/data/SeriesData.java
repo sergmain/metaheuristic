@@ -26,10 +26,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -163,8 +161,8 @@ public class SeriesData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FittingCount {
-        public String hyperParam;
+    public static class OccurCount {
+        public String value;
         public String counts;
     }
 
@@ -176,7 +174,8 @@ public class SeriesData {
         public Long seriesId;
         public String seriesName;
         public EnumsApi.Fitting fitting;
-        public final List<FittingCount> counts = new ArrayList<>();
+        public final List<OccurCount> hyperParams = new ArrayList<>();
+        public final List<OccurCount> features = new ArrayList<>();
 
         public SeriesFittingDetails(String errorMessage) {
             addErrorMessage(errorMessage);

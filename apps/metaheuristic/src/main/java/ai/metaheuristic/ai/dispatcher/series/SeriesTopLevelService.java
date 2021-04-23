@@ -202,17 +202,21 @@ public class SeriesTopLevelService {
             SeriesParamsYaml spy = series.getSeriesParamsYaml();
             List<SeriesParamsYaml.ExperimentPart> parts = spy.parts.stream().filter(o->o.fitting==fitting).collect(Collectors.toList());
 
-            Map<String, Map<String, AtomicInteger>> occurCount = new HashMap<>();
+            Map<String, Map<String, AtomicInteger>> hyperParamsOccurCount = new HashMap<>();
+            Map<String, AtomicInteger> featureOccurCount = new HashMap<>();
             for (SeriesParamsYaml.ExperimentPart part : parts) {
                 for (Map.Entry<String, String> entry : part.hyperParams.entrySet()) {
-                    occurCount.computeIfAbsent(entry.getKey(), (k)->new HashMap<>())
+                    hyperParamsOccurCount.computeIfAbsent(entry.getKey(), (k)->new HashMap<>())
                             .computeIfAbsent(entry.getValue(), (k)->new AtomicInteger())
                             .incrementAndGet();
                 }
+                String f = String.join(", ", part.variables);
+                featureOccurCount.computeIfAbsent(f, (k)->new AtomicInteger()).incrementAndGet();
             }
-            for (Map.Entry<String, Map<String, AtomicInteger>> entry : occurCount.entrySet()) {
-                details.counts.add(
-                        new SeriesData.FittingCount(
+
+            for (Map.Entry<String, Map<String, AtomicInteger>> entry : hyperParamsOccurCount.entrySet()) {
+                details.hyperParams.add(
+                        new SeriesData.OccurCount(
                                 entry.getKey(),
                                 entry.getValue().entrySet().stream()
                                         .sorted((o, o1)->Integer.compare(o1.getValue().get(), o.getValue().get()))
@@ -220,6 +224,10 @@ public class SeriesTopLevelService {
                                         .collect(Collectors.joining(","))
                         ));
             }
+            featureOccurCount.entrySet().stream()
+                    .map(entry -> new SeriesData.OccurCount(entry.getKey(), entry.getValue().toString()))
+                    .sorted((o1, o2)->Integer.compare(Integer.parseInt(o2.counts), Integer.parseInt(o1.counts) ))
+                    .forEach(details.features::add);
 
             return details;
         }

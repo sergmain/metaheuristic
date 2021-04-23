@@ -14,10 +14,10 @@
         </tr>
         </thead>
         <tbody>
-        <div th:remove="tag" th:each="r : ${result.counts}" >
+        <div th:remove="tag" th:each="r : ${result.hyperParams}" >
             <tr>
                 <td>
-                    <div th:text="${r.hyperParam}">Name</div>
+                    <div th:text="${r.value}">Name</div>
                 </td>
                 <td>
                     <div th:text="${r.counts}">Value</div>
