@@ -10,7 +10,6 @@
         <tr>
             <th>Name</th>
             <th>Value</th>
-<!--            <th th:colspan="1">&nbsp;</th>-->
         </tr>
         </thead>
         <tbody>
@@ -22,11 +21,28 @@
                 <td>
                     <div th:text="${r.counts}">Value</div>
                 </td>
-<!--
-                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-show/' + r.series.id}">Show</a></td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-edit/' + r.series.id}">Edit</a></td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/series/series-delete/' + r.series.id}">Delete</a></td>
--->
+            </tr>
+        </div>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+    <table class="pure-table pure-table-bordered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        <div th:remove="tag" th:each="r : ${result.features}" >
+            <tr>
+                <td>
+                    <div th:text="${r.value}">Name</div>
+                </td>
+                <td>
+                    <div th:text="${r.counts}">Value</div>
+                </td>
             </tr>
         </div>
         </tbody>
