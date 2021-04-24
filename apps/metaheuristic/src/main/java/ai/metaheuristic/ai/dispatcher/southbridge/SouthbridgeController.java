@@ -106,6 +106,28 @@ public class SouthbridgeController {
         return entity;
     }
 
+    @GetMapping(value="/payload/resource/{variableType}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<AbstractResource> deliverResourceAuthOld(
+            HttpServletRequest request,
+            @PathVariable("variableType") String variableType,
+            @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart,
+            @Nullable String id, @Nullable String chunkSize, @Nullable Integer chunkNum) {
+        log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
+        if (S.b(id) || S.b(chunkSize) || chunkNum==null) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
+        }
+
+        final ResponseEntity<AbstractResource> entity;
+        try {
+            CleanerInfo resource = serverService.deliverData(null, EnumsApi.DataType.valueOf(variableType), id, chunkSize, chunkNum);
+            entity = resource.entity;
+            request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+        } catch (CommonErrorWithDataException e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+        return entity;
+    }
+
     @PostMapping("/upload/{random-part}")
     public UploadResult uploadVariable(
             @Nullable MultipartFile file,

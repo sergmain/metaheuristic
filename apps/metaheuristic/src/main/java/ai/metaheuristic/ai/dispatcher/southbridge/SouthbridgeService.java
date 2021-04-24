@@ -134,7 +134,9 @@ public class SouthbridgeService {
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
                 dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
-                eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
+                if (taskId!=null) {
+                    eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
+                }
                 break;
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
