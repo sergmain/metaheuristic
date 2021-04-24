@@ -39,7 +39,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -77,7 +76,7 @@ public class ExperimentTopLevelService {
         try {
             experimentService.deleteExperimentByExecContextId(event.execContextId);
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#285.020 Error, need to investigate ", th);
         }
     }
 
@@ -105,7 +104,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest changeExecContextState(String state, Long experimentId, DispatcherContext context) {
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.007 experiment wasn't found, experimentId: " + experimentId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.040 experiment wasn't found, experimentId: " + experimentId);
         }
         OperationStatusRest operationStatusRest = execContextTopLevelService.changeExecContextState(state, e.execContextId, context);
         return operationStatusRest;
@@ -114,7 +113,7 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(Long experimentId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
+            return new ExperimentApiData.ExperimentResult("#285.060 experiment wasn't found, experimentId: " + experimentId );
         }
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
@@ -127,18 +126,6 @@ public class ExperimentTopLevelService {
         ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
         result.simpleExperiment = asSimpleExperiment(experiment);
         return result;
-    }
-
-    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description) {
-        params.name = StringUtils.strip(name);
-        params.code = e.code;
-        params.description = StringUtils.strip(description);
-        params.createdOn = System.currentTimeMillis();
-
-        e.updateParams(params);
-
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public OperationStatusRest addExperimentCommit(String sourceCodeUid, String name, String code, String description, DispatcherContext context) {
@@ -154,41 +141,6 @@ public class ExperimentTopLevelService {
         }
 
         return experimentService.addExperimentCommit(execContextResultRest.execContext.id, name, code, description);
-    }
-
-    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
-        OperationStatusRest op = validate(simpleExperiment);
-        if (op.status!= EnumsApi.OperationStatus.OK) {
-            return op;
-        }
-
-        Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
-        if (e == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.110 experiment wasn't found, experimentId: " + simpleExperiment.id);
-        }
-        if (e.code.equals(StringUtils.strip(simpleExperiment.getCode()))) {
-            op.addInfoMessage("The code of experiment can't be changed. It will be remained as "+ e.code);
-        }
-
-        ExperimentParamsYaml params = e.getExperimentParamsYaml();
-        return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription());
-    }
-
-    private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
-        if (StringUtils.isBlank(se.getName())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.120 Name of experiment is blank.");
-        }
-        if (StringUtils.isBlank(se.getCode())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.130 Code of experiment is blank.");
-        }
-        if (StringUtils.isBlank(se.getDescription())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.140 Description of experiment is blank.");
-        }
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK);
     }
 
     /**
@@ -236,11 +188,11 @@ public class ExperimentTopLevelService {
 
     private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         if (S.b(experimentCode)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.120 experiment code is blank");
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
         if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.140 can't find an experiment for code: " + experimentCode);
         }
         OperationStatusRest status = execContextTopLevelService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
         if (status.isErrorMessages()) {
@@ -259,12 +211,12 @@ public class ExperimentTopLevelService {
         final Experiment e = experimentCache.findById(id);
         if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.270 An experiment wasn't found, experimentId: " + id);
+                    "#285.260 An experiment wasn't found, experimentId: " + id);
         }
         ExecContextImpl ec = execContextCache.findById(e.execContextId);
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.290 An associated execContext for experimentId #" + id +" wasn't found");
+                    "#285.280 An associated execContext for experimentId #" + id +" wasn't found");
         }
         String sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
 
@@ -274,11 +226,21 @@ public class ExperimentTopLevelService {
             newCode = StrUtils.incCopyNumber(newCode);
             if (i++>100) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.273 Can't find a new code for experiment with the code: " + e.getCode());
+                        "#285.300 Can't find a new code for experiment with the code: " + e.getCode());
             }
         }
 
         OperationStatusRest status = addExperimentCommit(sourceCodeUid, e.getExperimentParamsYaml().name, newCode, e.getExperimentParamsYaml().description, context);
         return status;
+    }
+
+    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
+        try {
+            return experimentService.editExperimentCommit(simpleExperiment);
+        } catch (Throwable th) {
+            String es = "#285.320 Error while updating an Experiment #"+simpleExperiment.id+", error: " + th.getMessage();
+            log.error(es, th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
     }
 }

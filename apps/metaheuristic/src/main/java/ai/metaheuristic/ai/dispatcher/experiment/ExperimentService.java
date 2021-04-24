@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
@@ -96,12 +95,61 @@ public class ExperimentService {
         return ed;
     }
 
+    @Transactional
+    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
+        OperationStatusRest op = validate(simpleExperiment);
+        if (op.status!= EnumsApi.OperationStatus.OK) {
+            return op;
+        }
+
+        Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
+        if (e == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#284.020 experiment wasn't found, experimentId: " + simpleExperiment.id);
+        }
+        if (e.code.equals(StringUtils.strip(simpleExperiment.getCode()))) {
+            op.addInfoMessage("#284.040 The code of experiment can't be changed. It will be remained as "+ e.code);
+        }
+
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
+        return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription());
+    }
+
+    @Transactional
+    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description) {
+        params.name = StringUtils.strip(name);
+        params.code = e.code;
+        params.description = StringUtils.strip(description);
+        params.createdOn = System.currentTimeMillis();
+
+        e.updateParams(params);
+
+        experimentCache.save(e);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
+        if (StringUtils.isBlank(se.getName())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#284.060 Name of experiment is blank.");
+        }
+        if (StringUtils.isBlank(se.getCode())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#284.080 Code of experiment is blank.");
+        }
+        if (StringUtils.isBlank(se.getDescription())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#284.100 Description of experiment is blank.");
+        }
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK);
+    }
+
     @Nullable
     public ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         ExecContextImpl ec = execContextCache.findById(e.execContextId);
         if (ec==null) {
-            log.warn("ExecContext wasn't found for id #"+e.execContextId);
+            log.warn("#284.120 ExecContext wasn't found for id #"+e.execContextId);
             return null;
         }
 
@@ -127,7 +175,7 @@ public class ExperimentService {
             Experiment experiment = experimentCache.findById(id);
             if (experiment == null) {
                 return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.260 experiment wasn't found, experimentId: " + id);
+                        "#284.140 experiment wasn't found, experimentId: " + id);
             }
             ExecContext ex = execContextCache.findById(experiment.execContextId);
             if (ex != null) {
@@ -140,7 +188,7 @@ public class ExperimentService {
         } catch (EmptyResultDataAccessException e) {
             // it's ok
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error {}", e.toString());
+            log.warn("#284.160 Error {}", e.toString());
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -162,16 +210,4 @@ public class ExperimentService {
         experimentCache.deleteById(id);
     }
 
-    @Transactional
-    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description) {
-        params.name = StringUtils.strip(name);
-        params.code = e.code;
-        params.description = StringUtils.strip(description);
-        params.createdOn = System.currentTimeMillis();
-
-        e.updateParams(params);
-
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
 }
