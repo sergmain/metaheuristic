@@ -189,7 +189,6 @@ public class SeriesData {
     public static class HyperParamsAndFeatures {
         public final List<OccurCount> hyperParams = new ArrayList<>();
         public final List<OccurCount> features = new ArrayList<>();
-        public final MetricsInfos metricsInfos = new MetricsInfos();
     }
 
     @Data
@@ -202,6 +201,7 @@ public class SeriesData {
         public EnumsApi.Fitting fitting;
         public HyperParamsAndFeatures all;
         public HyperParamsAndFeatures top20;
+        public final MetricsInfos metricsInfos = new MetricsInfos();
 
         public SeriesFittingDetails(String errorMessage) {
             addErrorMessage(errorMessage);

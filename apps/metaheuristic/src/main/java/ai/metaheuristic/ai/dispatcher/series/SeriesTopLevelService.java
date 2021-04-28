@@ -230,8 +230,18 @@ public class SeriesTopLevelService {
                     .limit(20)
                     .collect(Collectors.toList());
 
+            details.metricsInfos.metricsCode = metricsCode;
             details.all = get(parts, metricsCode);
             details.top20 = get(top20, metricsCode);
+
+            top20.stream()
+                    .map(p->new SeriesData.MetricsInfo(p.metrics.values.get(metricsCode).toString(),
+                            p.hyperParams.entrySet().stream()
+                                    .map(h->""+h.getKey()+":"+h.getValue())
+                                    .collect(Collectors.joining(", ")),
+                            String.join(", ", p.variables)
+                    ))
+                    .collect(Collectors.toCollection(() -> details.metricsInfos.metricsInfos));
 
             return details;
         }
@@ -244,7 +254,6 @@ public class SeriesTopLevelService {
 
     private SeriesData.HyperParamsAndFeatures get(List<SeriesParamsYaml.ExperimentPart> parts, String metricsCode) {
         SeriesData.HyperParamsAndFeatures hpaf = new SeriesData.HyperParamsAndFeatures();
-        hpaf.metricsInfos.metricsCode = metricsCode;
 
         Map<String, Map<String, AtomicInteger>> hyperParamsOccurCount = new HashMap<>();
         Map<String, AtomicInteger> featureOccurCount = new HashMap<>();
@@ -272,16 +281,6 @@ public class SeriesTopLevelService {
                 .map(entry -> new SeriesData.OccurCount(entry.getKey(), entry.getValue().toString()))
                 .sorted((o1, o2)->Integer.compare(Integer.parseInt(o2.counts), Integer.parseInt(o1.counts) ))
                 .forEach(hpaf.features::add);
-
-        parts.stream()
-                .limit(20)
-                .map(p->new SeriesData.MetricsInfo(p.metrics.values.get(metricsCode).toString(),
-                        p.hyperParams.entrySet().stream()
-                                .map(h->""+h.getKey()+":"+h.getValue())
-                                .collect(Collectors.joining(", ")),
-                        String.join(", ", p.variables)
-                ))
-                .collect(Collectors.toCollection(() -> hpaf.metricsInfos.metricsInfos));
 
         return hpaf;
 
