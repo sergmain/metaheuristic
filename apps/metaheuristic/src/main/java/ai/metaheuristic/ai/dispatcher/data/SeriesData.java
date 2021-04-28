@@ -166,6 +166,32 @@ public class SeriesData {
         public String counts;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MetricsInfo {
+        public String metrics;
+        public String hyperParams;
+        public String features;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MetricsInfos {
+        public final List<MetricsInfo> metricsInfos = new ArrayList<>();
+        public String metricsCode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class HyperParamsAndFeatures {
+        public final List<OccurCount> hyperParams = new ArrayList<>();
+        public final List<OccurCount> features = new ArrayList<>();
+        public final MetricsInfos metricsInfos = new MetricsInfos();
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -174,12 +200,17 @@ public class SeriesData {
         public Long seriesId;
         public String seriesName;
         public EnumsApi.Fitting fitting;
-        public final List<OccurCount> hyperParams = new ArrayList<>();
-        public final List<OccurCount> features = new ArrayList<>();
+        public HyperParamsAndFeatures all;
+        public HyperParamsAndFeatures top20;
 
         public SeriesFittingDetails(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
+        public SeriesFittingDetails(Long seriesId, String seriesName, EnumsApi.Fitting fitting) {
+            this.seriesId = seriesId;
+            this.seriesName = seriesName;
+            this.fitting = fitting;
+        }
     }
 }

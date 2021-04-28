@@ -34,6 +34,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,14 +103,17 @@ public class SeriesTopLevelService {
         return new SeriesData.SeriesResult(new SeriesData.SimpleSeries(series.id, series.name));
     }
 
+    private final Map<Long, SeriesParamsYaml> seriesParamsYamlMap = new HashMap<>();
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     public SeriesData.SeriesShortDetails getSeriesDetails(Long seriesId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
             String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
             return new SeriesData.SeriesShortDetails(errorMessage);
         }
+        final SeriesParamsYaml seriesParamsYaml = seriesParamsYamlMap.computeIfAbsent(seriesId, (id) -> series.getSeriesParamsYaml());
         final SeriesData.SeriesShortDetails seriesDetails = new SeriesData.SeriesShortDetails(series.id, series.name);
-        for (Map.Entry<EnumsApi.Fitting, Integer> entry : series.getSeriesParamsYaml().fittingCounts.entrySet()) {
+        for (Map.Entry<EnumsApi.Fitting, Integer> entry : seriesParamsYaml.fittingCounts.entrySet()) {
             switch(entry.getKey()) {
                 case UNKNOWN:
                     seriesDetails.unknownFitting = entry.getValue();
@@ -146,6 +151,7 @@ public class SeriesTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
         try {
+            seriesParamsYamlMap.remove(seriesId);
             return seriesService.processSeriesImport(seriesId, experimentResultId);
         }
         catch (Throwable th) {
@@ -165,7 +171,7 @@ public class SeriesTopLevelService {
         try {
             SeriesData.SeriesImportDetails details = new SeriesData.SeriesImportDetails(seriesId, series.name);
 
-            SeriesParamsYaml spy = series.getSeriesParamsYaml();
+            final SeriesParamsYaml spy = seriesParamsYamlMap.computeIfAbsent(seriesId, (id) -> series.getSeriesParamsYaml());
 
             List<Object[]> resultNames = experimentResultRepository.getResultNames();
             for (Object[] obj : resultNames) {
@@ -199,35 +205,33 @@ public class SeriesTopLevelService {
 
             SeriesData.SeriesFittingDetails details = new SeriesData.SeriesFittingDetails(seriesId, series.name, fitting);
 
-            SeriesParamsYaml spy = series.getSeriesParamsYaml();
-            List<SeriesParamsYaml.ExperimentPart> parts = spy.parts.stream().filter(o->o.fitting==fitting).collect(Collectors.toList());
+            final SeriesParamsYaml spy = seriesParamsYamlMap.computeIfAbsent(seriesId, (id) -> series.getSeriesParamsYaml());
 
-            Map<String, Map<String, AtomicInteger>> hyperParamsOccurCount = new HashMap<>();
-            Map<String, AtomicInteger> featureOccurCount = new HashMap<>();
-            for (SeriesParamsYaml.ExperimentPart part : parts) {
-                for (Map.Entry<String, String> entry : part.hyperParams.entrySet()) {
-                    hyperParamsOccurCount.computeIfAbsent(entry.getKey(), (k)->new HashMap<>())
-                            .computeIfAbsent(entry.getValue(), (k)->new AtomicInteger())
-                            .incrementAndGet();
-                }
-                String f = String.join(", ", part.variables);
-                featureOccurCount.computeIfAbsent(f, (k)->new AtomicInteger()).incrementAndGet();
+
+            String metricsCode = spy.parts.stream()
+                    .filter(o->!o.metrics.values.isEmpty())
+                    .map(o->o.metrics.values.entrySet().stream().findFirst().map(Map.Entry::getKey).orElse(null))
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+
+            if (metricsCode==null) {
+                String errorMessage = "#286.110 Code of metrics wasn't found";
+                log.error(errorMessage);
+                return new SeriesData.SeriesFittingDetails(errorMessage);
             }
 
-            for (Map.Entry<String, Map<String, AtomicInteger>> entry : hyperParamsOccurCount.entrySet()) {
-                details.hyperParams.add(
-                        new SeriesData.OccurCount(
-                                entry.getKey(),
-                                entry.getValue().entrySet().stream()
-                                        .sorted((o, o1)->Integer.compare(o1.getValue().get(), o.getValue().get()))
-                                        .map(o->""+o.getKey()+":"+o.getValue())
-                                        .collect(Collectors.joining(","))
-                        ));
-            }
-            featureOccurCount.entrySet().stream()
-                    .map(entry -> new SeriesData.OccurCount(entry.getKey(), entry.getValue().toString()))
-                    .sorted((o1, o2)->Integer.compare(Integer.parseInt(o2.counts), Integer.parseInt(o1.counts) ))
-                    .forEach(details.features::add);
+            List<SeriesParamsYaml.ExperimentPart> parts = spy.parts.stream().filter(o->o.fitting==fitting)
+                    .sorted((o1, o2) -> o2.metrics.values.get(metricsCode).compareTo(o1.metrics.values.get(metricsCode)))
+                    .collect(Collectors.toList());
+
+            final List<SeriesParamsYaml.ExperimentPart> top20 = parts.stream()
+                    .sorted((o1, o2) -> o2.metrics.values.get(metricsCode).compareTo(o1.metrics.values.get(metricsCode)))
+                    .limit(20)
+                    .collect(Collectors.toList());
+
+            details.all = get(parts, metricsCode);
+            details.top20 = get(top20, metricsCode);
 
             return details;
         }
@@ -236,5 +240,50 @@ public class SeriesTopLevelService {
             log.error(es, th);
             return new SeriesData.SeriesFittingDetails(es);
         }
+    }
+
+    private SeriesData.HyperParamsAndFeatures get(List<SeriesParamsYaml.ExperimentPart> parts, String metricsCode) {
+        SeriesData.HyperParamsAndFeatures hpaf = new SeriesData.HyperParamsAndFeatures();
+        hpaf.metricsInfos.metricsCode = metricsCode;
+
+        Map<String, Map<String, AtomicInteger>> hyperParamsOccurCount = new HashMap<>();
+        Map<String, AtomicInteger> featureOccurCount = new HashMap<>();
+        for (SeriesParamsYaml.ExperimentPart part : parts) {
+            for (Map.Entry<String, String> entry : part.hyperParams.entrySet()) {
+                hyperParamsOccurCount.computeIfAbsent(entry.getKey(), (k)->new HashMap<>())
+                        .computeIfAbsent(entry.getValue(), (k)->new AtomicInteger())
+                        .incrementAndGet();
+            }
+            String f = String.join(", ", part.variables);
+            featureOccurCount.computeIfAbsent(f, (k)->new AtomicInteger()).incrementAndGet();
+        }
+
+        for (Map.Entry<String, Map<String, AtomicInteger>> entry : hyperParamsOccurCount.entrySet()) {
+            hpaf.hyperParams.add(
+                    new SeriesData.OccurCount(
+                            entry.getKey(),
+                            entry.getValue().entrySet().stream()
+                                    .sorted((o, o1)->Integer.compare(o1.getValue().get(), o.getValue().get()))
+                                    .map(o->""+o.getKey()+":"+o.getValue())
+                                    .collect(Collectors.joining(","))
+                    ));
+        }
+        featureOccurCount.entrySet().stream()
+                .map(entry -> new SeriesData.OccurCount(entry.getKey(), entry.getValue().toString()))
+                .sorted((o1, o2)->Integer.compare(Integer.parseInt(o2.counts), Integer.parseInt(o1.counts) ))
+                .forEach(hpaf.features::add);
+
+        parts.stream()
+                .limit(20)
+                .map(p->new SeriesData.MetricsInfo(p.metrics.values.get(metricsCode).toString(),
+                        p.hyperParams.entrySet().stream()
+                                .map(h->""+h.getKey()+":"+h.getValue())
+                                .collect(Collectors.joining(", ")),
+                        String.join(", ", p.variables)
+                ))
+                .collect(Collectors.toCollection(() -> hpaf.metricsInfos.metricsInfos));
+
+        return hpaf;
+
     }
 }
