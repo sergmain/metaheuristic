@@ -64,6 +64,23 @@ public class TestCacheKey {
         assertNotEquals(key1.asString(), key2.asString());
     }
 
+    @Test
+    public void test_2() {
+        final CacheData.Key key1 = new CacheData.Key("function-01", "");
+        key1.inline.put("top-inline",Map.of("key-2","value-2", "key-1","value-1"));
+        key1.inputs.addAll(List.of(
+                new CacheData.Sha256PlusLength("sha256-1",42L),
+                new CacheData.Sha256PlusLength("sha256-2",11L)));
+
+        final CacheData.Key key2 = new CacheData.Key("function-01", "");
+        key2.inline.put("top-inline",Map.of("key-1","value-1", "key-2","value-2"));
+        key2.inputs.addAll(List.of(
+                new CacheData.Sha256PlusLength("sha256-1",42L),
+                new CacheData.Sha256PlusLength("sha256-2",11L)));
+
+        assertEquals(key1.asString(), key2.asString());
+    }
+
     public static void main(String[] args) {
         System.out.println(KEY.asString());
     }
