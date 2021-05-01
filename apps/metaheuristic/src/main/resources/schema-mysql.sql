@@ -370,6 +370,26 @@ CREATE INDEX mh_batch_company_id_idx
 CREATE INDEX mh_batch_exec_state_idx
     ON mh_batch (EXEC_STATE);
 
+create table mh_heuristic
+(
+    ID                      INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                 INT UNSIGNED    NOT NULL,
+    COMPANY_ID              INT UNSIGNED    NOT NULL,
+    CREATED_ON              bigint NOT NULL,
+    PARAMS                  LONGTEXT NOT NULL,
+    IS_DELETED              BOOLEAN not null default false
+);
+
+create table mh_evaluation
+(
+    ID                      INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                 INT UNSIGNED    NOT NULL,
+    heuristic_id            INT UNSIGNED    NOT NULL,
+    CREATED_ON              bigint NOT NULL,
+    PARAMS                  LONGTEXT NOT NULL,
+    IS_DELETED              BOOLEAN not null default false
+);
+
 CREATE TABLE mh_event
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
