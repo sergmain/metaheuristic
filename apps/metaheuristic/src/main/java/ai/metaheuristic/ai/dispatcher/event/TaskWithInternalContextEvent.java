@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author Serge
@@ -26,6 +27,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
+@EqualsAndHashCode(of={"taskId"})
 public class TaskWithInternalContextEvent {
     public final Long sourceCodeId;
     public final Long execContextId;

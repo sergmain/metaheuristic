@@ -91,7 +91,7 @@ public class EventBusService {
     @EventListener
     public void processInternalFunction(final TaskWithInternalContextEvent event) {
         try {
-            taskWithInternalContextEventService.processInternalFunction(event);
+            taskWithInternalContextEventService.putToQueue(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

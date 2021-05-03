@@ -32,10 +32,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -46,6 +43,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -77,10 +76,43 @@ public class TaskWithInternalContextEventService {
     private final VariableService variableService;
     private final ApplicationEventPublisher eventPublisher;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+    public static final int MAX_QUEUE_SIZE = 20;
+    public static final int MAX_ACTIVE_THREAD = 2;
 
-    public void processInternalFunction(final TaskWithInternalContextEvent event) {
-        executor.submit(() -> process(event));
+    private static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
+
+    public static final LinkedList<TaskWithInternalContextEvent> queue = new LinkedList<>();
+
+    public void putToQueue(final TaskWithInternalContextEvent event) {
+        putToQueueInternal(event);
+
+        if (executor.getQueue().size()>MAX_QUEUE_SIZE) {
+            return;
+        }
+
+        executor.submit(() -> {
+            TaskWithInternalContextEvent e;
+            while ((e = pullFromQueue())!=null) {
+                process(e);
+            }
+        });
+    }
+
+    public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
+        synchronized (queue) {
+            if (queue.contains(event)) {
+                return;
+            }
+            queue.add(event);
+            queue.sort(Comparator.comparingLong(o -> o.execContextId));
+        }
+    }
+
+    @Nullable
+    private TaskWithInternalContextEvent pullFromQueue() {
+        synchronized (queue) {
+            return queue.pollFirst();
+        }
     }
 
     private void process(final TaskWithInternalContextEvent event) {
