@@ -28,6 +28,26 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestMetricsYaml {
 
     @Test
+    public void testUnmarshalling() {
+        String yaml = "comment: 'The last draw. num_of_intersected[0]: 0, n_total_intersected.sum(): 380,\n" +
+                "  adjustTo: 0.14285714285714285, intersected_sum_as_int: 54'\n" +
+                "values:\n" +
+                "  sum: 54\n" +
+                "  sum_6: 112\n" +
+                "  sum_7: 122\n" +
+                "  sum_8: 147\n" +
+                "  sum_9: 160\n" +
+                "  sum_norm: 380\n" +
+                "  sum_norm_6: 79\n" +
+                "  sum_norm_7: 86\n" +
+                "  sum_norm_8: 103\n" +
+                "  sum_norm_9: 112\n";
+
+        MetricValues values = MetricsUtils.getMetricValues(yaml);
+
+    }
+
+    @Test
     public void testValueYaml() {
         String s = "values:\n  sum: 334\r\n  sum_0: 71\r\n  sum_1: 79\r\n  sum_2: 89\r\n  sum_3: 95\r\n";
         internalTestValueYaml(s);

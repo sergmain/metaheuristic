@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.task_ml.metrics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
@@ -26,6 +27,13 @@ import java.util.LinkedHashMap;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MetricValues {
+    @Nullable
+    public String comment;
+
     // key - name of metric, value - value of metric
     public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+
+    public MetricValues(LinkedHashMap<String, BigDecimal> values) {
+        this.values = values;
+    }
 }
