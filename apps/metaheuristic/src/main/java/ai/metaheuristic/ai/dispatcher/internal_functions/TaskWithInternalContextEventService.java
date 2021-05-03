@@ -104,7 +104,9 @@ public class TaskWithInternalContextEventService {
                 return;
             }
             queue.add(event);
-            queue.sort(Comparator.comparingLong(o -> o.execContextId));
+
+            // TODO 2021-05-02 add a param to Globals which will control a sorting logic
+//            queue.sort(Comparator.comparingLong(o -> o.execContextId));
         }
     }
 

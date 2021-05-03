@@ -50,17 +50,19 @@ public class TestTaskWithInternalContextEventService {
         TaskWithInternalContextEventService.putToQueueInternal(event2);
 
         assertEquals(2, TaskWithInternalContextEventService.queue.size());
-        assertEquals(event2, TaskWithInternalContextEventService.queue.get(0));
-        assertEquals(event1, TaskWithInternalContextEventService.queue.get(1));
+        // TODO 2021-05-02 sorting was turned off
+//        assertEquals(event2, TaskWithInternalContextEventService.queue.get(0));
+//        assertEquals(event1, TaskWithInternalContextEventService.queue.get(1));
 
         TaskWithInternalContextEvent event3 = new TaskWithInternalContextEvent(1L, 5L, 22L);
 
         TaskWithInternalContextEventService.putToQueueInternal(event3);
 
         assertEquals(3, TaskWithInternalContextEventService.queue.size());
-        assertEquals(5L, TaskWithInternalContextEventService.queue.get(0).execContextId);
-        assertEquals(5L, TaskWithInternalContextEventService.queue.get(1).execContextId);
-        assertEquals(10L, TaskWithInternalContextEventService.queue.get(2).execContextId);
+        // TODO 2021-05-02 sorting was turned off
+//        assertEquals(5L, TaskWithInternalContextEventService.queue.get(0).execContextId);
+//        assertEquals(5L, TaskWithInternalContextEventService.queue.get(1).execContextId);
+//        assertEquals(10L, TaskWithInternalContextEventService.queue.get(2).execContextId);
 
         TaskWithInternalContextEventService.putToQueueInternal(event3);
 
