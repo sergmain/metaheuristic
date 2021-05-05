@@ -14,23 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.heuristic;
+package ai.metaheuristic.ai.dispatcher.evaluation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * @author Serge
- * Date: 5/3/2021
- * Time: 11:47 PM
+ * Date: 5/4/2021
+ * Time: 11:35 PM
  */
-@Service
+@Controller
+@RequestMapping("/dispatcher/ai/evaluation")
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class HeuristicTopLevelService {
-
-    public final HeuristicService heuristicService;
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+public class EvaluationController {
 }

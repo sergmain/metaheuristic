@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.heuristic;
+package ai.metaheuristic.ai.dispatcher.evaluation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +23,15 @@ import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
- * Date: 5/3/2021
- * Time: 11:47 PM
+ * Date: 5/4/2021
+ * Time: 11:35 PM
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class HeuristicTopLevelService {
+public class EvaluationTopLevelService {
 
-    public final HeuristicService heuristicService;
+    public final EvaluationService evaluationService;
+
 }

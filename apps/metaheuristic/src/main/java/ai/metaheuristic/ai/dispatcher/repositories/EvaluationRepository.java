@@ -14,23 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.heuristic;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import ai.metaheuristic.ai.dispatcher.beans.Evaluation;
+import org.springframework.data.repository.CrudRepository;
 
 /**
  * @author Serge
- * Date: 5/3/2021
- * Time: 11:47 PM
+ * Date: 5/4/2021
+ * Time: 11:35 PM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
-public class HeuristicTopLevelService {
-
-    public final HeuristicService heuristicService;
+public interface EvaluationRepository extends CrudRepository<Evaluation, Long> {
 }
