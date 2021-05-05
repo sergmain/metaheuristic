@@ -366,6 +366,26 @@ CREATE INDEX MH_BATCH_EXEC_STATE_IDX
 CREATE INDEX MH_BATCH_COMPANY_ID_IDX
     ON MH_BATCH (COMPANY_ID);
 
+create table mh_heuristic
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(10, 0)  NOT NULL,
+    COMPANY_ID        NUMERIC(10, 0) NOT NULL,
+    CREATED_ON        bigint         NOT NULL,
+    PARAMS            TEXT,
+    IS_DELETED        BOOLEAN not null default false
+);
+
+create table mh_evaluation
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(10, 0)  NOT NULL,
+    HEURISTIC_ID      NUMERIC(10, 0) NOT NULL,
+    CREATED_ON        bigint         NOT NULL,
+    PARAMS            TEXT,
+    IS_DELETED        BOOLEAN not null default false
+);
+
 CREATE TABLE MH_EVENT
 (
     ID              SERIAL PRIMARY KEY,
