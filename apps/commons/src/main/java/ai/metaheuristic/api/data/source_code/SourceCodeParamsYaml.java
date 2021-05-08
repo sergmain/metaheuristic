@@ -137,6 +137,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class Cache {
         public boolean enabled;
+        public boolean omitInline;
     }
 
     @Data

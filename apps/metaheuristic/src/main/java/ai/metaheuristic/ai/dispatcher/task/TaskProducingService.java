@@ -189,7 +189,7 @@ public class TaskProducingService {
         taskParams.task.clean = execContextParamsYaml.clean;
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
         if (process.cache!=null) {
-            taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled);
+            taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline);
         }
 
         String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);

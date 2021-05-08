@@ -188,7 +188,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new ExecContextParamsYaml.Cache(o.cache.enabled);
+            pr.cache = new ExecContextParamsYaml.Cache(o.cache.enabled, o.cache.omitInline);
         }
         pr.tags = o.tags;
         pr.priority = o.priority;

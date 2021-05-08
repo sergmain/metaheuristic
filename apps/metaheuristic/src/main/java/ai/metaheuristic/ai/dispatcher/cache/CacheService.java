@@ -145,7 +145,9 @@ public class CacheService {
         }
         CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, params);
         if (tpy.task.inline!=null) {
-            fullKey.inline.putAll(tpy.task.inline);
+            if (tpy.task.cache == null || !tpy.task.cache.omitInline) {
+                fullKey.inline.putAll(tpy.task.inline);
+            }
         }
         for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
             if (input.context== EnumsApi.VariableContext.array) {

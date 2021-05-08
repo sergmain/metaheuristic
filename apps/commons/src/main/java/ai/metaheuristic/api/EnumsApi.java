@@ -300,7 +300,9 @@ public class EnumsApi {
         }
     }
 
-    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), NOT_USED_ANYMORE(4), SKIPPED(5), CHECK_CACHE(6);
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1),
+        ERROR(2), OK(3), NOT_USED_ANYMORE(4),
+        SKIPPED(5), CHECK_CACHE(6);
 
         public final int value;
         TaskExecState(int value) {

@@ -115,6 +115,7 @@ public class ExecContextParamsYamlV2 implements BaseParams {
     @AllArgsConstructor
     public static class CacheV2 {
         public boolean enabled;
+        public boolean omitInline;
     }
 
     /**

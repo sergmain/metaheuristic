@@ -199,6 +199,7 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class Cache {
         public boolean enabled;
+        public boolean omitInline;
     }
 
     @Data

@@ -117,6 +117,7 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     public static class CacheV2 {
         public boolean enabled;
+        public boolean omitInline;
     }
 
     @Data

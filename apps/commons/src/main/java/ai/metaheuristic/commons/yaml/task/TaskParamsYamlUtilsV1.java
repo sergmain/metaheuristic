@@ -63,7 +63,7 @@ public class TaskParamsYamlUtilsV1
         v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
         t.task.metas.addAll(v1.task.metas);
         if (v1.task.cache!=null) {
-            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled);
+            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline);
         }
 
         t.checkIntegrity();

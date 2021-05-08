@@ -87,7 +87,7 @@ public class SourceCodeParamsYamlUtilsV2
         pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled);
+            pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled, o.cache.omitInline);
         }
         pr.tags = o.tags;
         pr.priority = o.priority;

@@ -77,7 +77,7 @@ public class ExecContextParamsYamlUtilsV2
         p2.outputs.stream().map(ExecContextParamsYamlUtilsV2::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
-            p.cache = new ExecContextParamsYaml.Cache(p2.cache.enabled);
+            p.cache = new ExecContextParamsYaml.Cache(p2.cache.enabled, p2.cache.omitInline);
         }
         p.tags = p2.tags;
         p.priority = p2.priority;

@@ -203,6 +203,7 @@ public class TaskParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class CacheV1 {
         public boolean enabled;
+        public boolean omitInline;
     }
 
     @Data
