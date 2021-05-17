@@ -347,7 +347,7 @@ public class TaskQueue {
                     continue;
                 }
                 task.state = state;
-                // task was reset
+                // task was reset or checked with a cache and the cache was missed
                 if (task.state== EnumsApi.TaskExecState.NONE) {
                     task.assigned = false;
                 }
