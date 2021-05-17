@@ -145,7 +145,7 @@ public class ExecContextReconciliationTopLevelService {
         }
 
         if (status.isNullState.get()) {
-            log.info("#307.160 Found non-created task, graph consistency is failed");
+            log.info("#307.150 Found non-created task, graph consistency is failed");
             return status;
         }
 
@@ -168,8 +168,10 @@ public class ExecContextReconciliationTopLevelService {
                             if (task.assignedOn != null) {
                                 if (task.accessByProcessorOn == null) {
                                     // processor must start to download variables in 2 minutes
-                                    if ((System.currentTimeMillis() - task.assignedOn) > 120_000) {
-                                        log.info("#307.160 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minitues",
+                                    // only if there is any input variable and context of task is FunctionExecContext.external
+                                    // TODO 2021-05-17 check that internal function is setting task.accessByProcessorOn at all
+                                    if (tpy.task.context== EnumsApi.FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
+                                        log.info("#307.160 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
                                                 task.id, task.processorId);
                                         status.taskForResettingIds.add(task.id);
                                     }

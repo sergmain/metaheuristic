@@ -347,6 +347,10 @@ public class TaskQueue {
                     continue;
                 }
                 task.state = state;
+                // task was reset
+                if (task.state== EnumsApi.TaskExecState.NONE) {
+                    task.assigned = false;
+                }
                 ok = true;
                 break;
             }

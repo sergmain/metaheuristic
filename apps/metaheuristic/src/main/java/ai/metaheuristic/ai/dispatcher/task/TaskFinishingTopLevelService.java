@@ -97,7 +97,7 @@ public class TaskFinishingTopLevelService {
             if (state== EnumsApi.TaskExecState.OK || state== EnumsApi.TaskExecState.ERROR) {
             }
             else {
-                log.info("#318.020 Task {} already has a state neither IN_PROGRESS nor CHECK_CACHE state, actual: {}", task.id, state);
+                log.info("#318.030 Task {} already has a state neither IN_PROGRESS nor CHECK_CACHE state, actual: {}", task.id, state);
             }
             return;
         }
