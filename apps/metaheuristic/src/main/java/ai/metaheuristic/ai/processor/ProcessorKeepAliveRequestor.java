@@ -221,7 +221,7 @@ public class ProcessorKeepAliveRequestor {
                     if (errorCode==502) {
                         log.error("#776.105 Error accessing url: {}, error: 502 Bad Gateway", url);
                     }
-                    if (errorCode==503) {
+                    else if (errorCode==503) {
                         log.error("#776.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
                     else {
