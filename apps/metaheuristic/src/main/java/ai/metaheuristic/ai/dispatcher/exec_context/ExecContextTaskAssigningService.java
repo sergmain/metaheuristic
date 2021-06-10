@@ -111,13 +111,17 @@ public class ExecContextTaskAssigningService {
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
-                    // all tasks with internal function will be processed in a different thread after registering in TaskQueue
-                    if (taskParamYaml.task.context == EnumsApi.FunctionExecContext.internal) {
-                        log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                        taskProviderService.registerInternalTask(execContext.sourceCodeId, execContextId, taskId, taskParamYaml);
-                    }
-                    else {
-                        taskProviderService.registerTask(execContextId, taskId);
+                    switch(taskParamYaml.task.context) {
+                        case external:
+                            taskProviderService.registerTask(execContextId, taskId);
+                            break;
+                        case internal:
+                            // all tasks with internal function will be processed in a different thread after registering in TaskQueue
+                            log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                            taskProviderService.registerInternalTask(execContext.sourceCodeId, execContextId, taskId, taskParamYaml);
+                            break;
+                        case long_running:
+                            break;
                     }
                 }
                 else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {

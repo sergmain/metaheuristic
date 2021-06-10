@@ -39,7 +39,7 @@ public class EnumsApi {
         array
     }
 
-    public enum FunctionExecContext { external, internal }
+    public enum FunctionExecContext { external, internal, long_running }
 
     /**
      * local - all assets are managed locally
