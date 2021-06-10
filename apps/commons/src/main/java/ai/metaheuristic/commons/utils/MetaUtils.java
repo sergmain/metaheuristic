@@ -49,12 +49,14 @@ public class MetaUtils {
         return isFalse(getMeta(metas, keys));
     }
 
-    public static @Nullable String getValue(@Nullable List<Map<String, String>> metas, String... keys) {
+    @Nullable
+    public static String getValue(@Nullable List<Map<String, String>> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }
 
-    public static @Nullable Long getLong(@Nullable List<Map<String, String>> metas, String... keys) {
+    @Nullable
+    public static Long getLong(@Nullable List<Map<String, String>> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? Long.valueOf(m.getValue()) : null;
     }
@@ -79,7 +81,8 @@ public class MetaUtils {
         return result;
     }
 
-    public static @Nullable Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
+    @Nullable
+    public static Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
         if (metas==null) {
             return null;
         }

@@ -34,6 +34,10 @@ public interface InternalFunction {
 
     String getName();
 
+    default boolean isLongRunning() {
+        return false;
+    }
+
     /**
      * @param simpleExecContext
      * @param taskId

@@ -129,6 +129,7 @@ public class Consts {
     public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
     public static final String MH_BATCH_RESULT_PROCESSOR_FUNCTION = "mh.batch-result-processor";
+    public static final String MH_EXEC_SOURCE_CODE_FUNCTION = "mh.exec-source-code";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 

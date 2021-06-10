@@ -136,6 +136,10 @@ public class ExecContextTopLevelService {
         if (execState == EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
         }
+        return changeExecContextState(state, execContextId, context);
+    }
+
+    public OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, DispatcherContext context) {
         return execContextSyncService.getWithSync(execContextId,
                 () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
     }

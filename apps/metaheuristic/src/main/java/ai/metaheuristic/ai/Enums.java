@@ -27,6 +27,8 @@ public final class Enums {
         global_variable_is_immutable,
         variable_with_type_not_found,
         exec_context_not_found,
+        exec_context_creation_error,
+        exec_context_starting_error,
         process_not_found,
         sub_process_not_found,
         output_variable_not_defined, inline_not_found,
