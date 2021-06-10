@@ -182,9 +182,10 @@ public class TaskWithInternalContextEventService {
                 }
             }
 
-            internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
-
-            taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+            boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
+            if (!isLongRunning) {
+                taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+            }
         }
         finally {
             eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(simpleExecContext.execContextId, taskId));

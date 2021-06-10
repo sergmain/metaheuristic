@@ -39,14 +39,27 @@ public class InternalFunctionProcessor {
 
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public void process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    /**
+     *
+     * @param simpleExecContext
+     * @param taskId
+     * @param internalContextId
+     * @param taskParamsYaml
+     *
+     * @return boolean is that task a long-running task?
+     */
+    public boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
         try {
+            if (internalFunction.isLongRunning()) {
+                registerLongRunningTask(taskId);
+            }
             internalFunction.process(simpleExecContext, taskId, internalContextId, taskParamsYaml);
+            return internalFunction.isLongRunning();
         }
         catch(InternalFunctionException e) {
             throw e;
