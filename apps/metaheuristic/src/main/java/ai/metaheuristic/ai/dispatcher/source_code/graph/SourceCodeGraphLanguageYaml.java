@@ -53,7 +53,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
         scg.clean = sourceCodeParams.source.clean;
         scg.variables.globals = sourceCodeParams.source.variables.globals;
-        scg.variables.startInputAs = sourceCodeParams.source.variables.startInputAs;
+        sourceCodeParams.source.variables.inputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->scg.variables.inputs));
+        sourceCodeParams.source.variables.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->scg.variables.outputs));
         scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
 
         String currentInternalContextId = contextIdSupplier.get();

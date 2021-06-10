@@ -22,7 +22,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -30,10 +29,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+/**
+ * @author Serge
+ * Date: 06/10/2021
+ */
 @Data
-public class ExecContextParamsYaml implements BaseParams {
+public class ExecContextParamsYamlV3 implements BaseParams {
 
     public final int version = 3;
 
@@ -45,17 +47,17 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDeclaration {
+    public static class VariableDeclarationV3 {
         public List<String> globals;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV3> inputs = new ArrayList<>();
+        public final List<VariableV3> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Variable {
+    public static class VariableV3 {
         public String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -90,11 +92,11 @@ public class ExecContextParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public Variable(String name) {
+        public VariableV3(String name) {
             this.name = name;
         }
 
-        public Variable(EnumsApi.DataSourcing sourcing, String name) {
+        public VariableV3(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -103,17 +105,17 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefinition implements SimpleFunctionDefinition {
+    public static class FunctionDefinitionV3 implements SimpleFunctionDefinition {
         public String code;
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefinition(String code) {
+        public FunctionDefinitionV3(String code) {
             this.code = code;
         }
 
-        public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefinitionV3(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -123,7 +125,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Cache {
+    public static class CacheV3 {
         public boolean enabled;
         public boolean omitInline;
     }
@@ -131,26 +133,26 @@ public class ExecContextParamsYaml implements BaseParams {
     /**
      * !!!!!!!
      * after adding new field,
-     * add a new mapping in
-     * @see ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
+     * add new mapping in
+     * ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
      *
      */
     @Data
     @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Process {
+    public static class ProcessV3 {
 
         public String processName;
         public String processCode;
 
         public String internalContextId;
 
-        public FunctionDefinition function;
+        public FunctionDefinitionV3 function;
         @Nullable
-        public List<FunctionDefinition> preFunctions;
+        public List<FunctionDefinitionV3> preFunctions;
         @Nullable
-        public List<FunctionDefinition> postFunctions;
+        public List<FunctionDefinitionV3> postFunctions;
 
         @Nullable
         public EnumsApi.SourceCodeSubProcessLogic logic;
@@ -161,18 +163,17 @@ public class ExecContextParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV3> inputs = new ArrayList<>();
+        public final List<VariableV3> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
 
         @Nullable
-        public Cache cache;
-
+        public CacheV3 cache;
         @Nullable
         public String tags;
         public int priority;
 
-        public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
+        public ProcessV3(String processName, String processCode, String internalContextId, FunctionDefinitionV3 function) {
             this.processName = processName;
             this.processCode = processCode;
             this.internalContextId = internalContextId;
@@ -182,28 +183,9 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
-    public final List<Process> processes = new ArrayList<>();
-    public final VariableDeclaration variables = new VariableDeclaration();
+    public final List<ProcessV3> processes = new ArrayList<>();
+    public final VariableDeclarationV3 variables = new VariableDeclarationV3();
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
-
-    // key - processCode, value - Process
-    private HashMap<String, Process> processMap = null;
-
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    private HashMap<String, Process> getProcessMap() {
-        return processMap;
-    }
-
-    @Nullable
-    @JsonIgnore
-    public Process findProcess(String processCode) {
-        if (processMap==null) {
-            processMap = processes.stream().collect(Collectors.toMap(o->o.processCode, o->o, (a, b) -> b, HashMap::new));
-        }
-        return processMap.get(processCode);
-    }
-
 }

@@ -221,10 +221,11 @@ public class ExecContextCreatorService {
         return params;
     }
 
-    private void initVariables(ExecContextParamsYaml.VariableDeclaration v1, ExecContextParamsYaml.VariableDeclaration v) {
-        v.inline.putAll(v1.inline);
-        v.globals = v1.globals;
-        v.startInputAs = v1.startInputAs;
+    private void initVariables(ExecContextParamsYaml.VariableDeclaration src, ExecContextParamsYaml.VariableDeclaration trg) {
+        trg.inline.putAll(src.inline);
+        trg.globals = src.globals;
+        trg.inputs.addAll(src.inputs);
+        trg.outputs.addAll(src.outputs);
     }
 
 }

@@ -18,14 +18,10 @@ package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -36,25 +32,22 @@ import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 9:01 PM
+ * Date: 06/10/2021
  */
 @Data
-public class SourceCodeParamsYaml implements BaseParams {
+public class SourceCodeParamsYamlV3 implements BaseParams {
 
     public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
-        if (source == null || S.b(source.uid) || source.processes == null) {
-            throw new CheckIntegrityFailedException("#608.020 (source == null || S.b(source.uid) || source.processes == null)");
+        final boolean b = source != null && !S.b(source.uid) && source.processes != null;
+        if (!b) {
+            throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
-        if (source.uid.length()>50) {
-            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 50 chars");
-        }
-        for (Process process : source.processes) {
+        for (ProcessV3 process : source.processes) {
             if (process.function ==null) {
-                throw new CheckIntegrityFailedException("#608.060 (process.function==null)");
+                throw new CheckIntegrityFailedException("(process.function==null)");
             }
         }
         return true;
@@ -63,16 +56,16 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefForSourceCode implements SimpleFunctionDefinition {
+    public static class FunctionDefForSourceCodeV3 {
         public String code;
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefForSourceCode(String code) {
+        public FunctionDefForSourceCodeV3(String code) {
             this.code = code;
         }
 
-        public FunctionDefForSourceCode(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefForSourceCodeV3(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -81,7 +74,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Variable {
+    public static class VariableV3 {
         public String name;
         private EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
 
@@ -117,11 +110,7 @@ public class SourceCodeParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public Variable(String name) {
-            this.name = name;
-        }
-
-        public Variable(String name, EnumsApi.DataSourcing sourcing) {
+        public VariableV3(String name, EnumsApi.DataSourcing sourcing) {
             this.name = name;
             this.sourcing = sourcing;
         }
@@ -130,35 +119,35 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SubProcesses {
+    public static class SubProcessesV3 {
         public EnumsApi.SourceCodeSubProcessLogic logic;
-        public List<Process> processes;
+        public List<ProcessV3> processes;
     }
 
     @Data
     @ToString
-    @NoArgsConstructor
     @AllArgsConstructor
-    public static class Cache {
+    @NoArgsConstructor
+    public static class CacheV3 {
         public boolean enabled;
         public boolean omitInline;
     }
 
     @Data
     @ToString
-    public static class Process implements Cloneable {
+    public static class ProcessV3 implements Cloneable {
 
         @SneakyThrows
-        public Process clone() {
-            final Process clone = (Process) super.clone();
+        public ProcessV3 clone() {
+            final ProcessV3 clone = (ProcessV3) super.clone();
             return clone;
         }
 
         public String name;
         public String code;
-        public FunctionDefForSourceCode function;
-        public @Nullable List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
-        public @Nullable List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
+        public FunctionDefForSourceCodeV3 function;
+        public List<FunctionDefForSourceCodeV3> preFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCodeV3> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
@@ -166,19 +155,14 @@ public class SourceCodeParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV3> inputs = new ArrayList<>();
+        public final List<VariableV3> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
         @Nullable
-        public SubProcesses subProcesses;
-
-        @JsonIgnore
-        @Nullable public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
+        public SubProcessesV3 subProcesses;
 
         @Nullable
-        public Cache cache;
+        public CacheV3 cache;
         @Nullable
         public String tags;
         public int priority;
@@ -187,38 +171,33 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AccessControl {
+    public static class AccessControlV3 {
         public String groups;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDefinition {
+    public static class VariableDefinitionV3 {
         public List<String> globals;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV3> inputs = new ArrayList<>();
+        public final List<VariableV3> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @ToString
-    public static class SourceCodeYaml {
+    public static class SourceCodeV3 {
         @Nullable
         public Integer instances;
-        public VariableDefinition variables = new VariableDefinition();
-        public List<Process> processes = new ArrayList<>();
+        public VariableDefinitionV3 variables = new VariableDefinitionV3();
+        public List<ProcessV3> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
         public List<Map<String, String>> metas = new ArrayList<>();;
-        public AccessControl ac;
-
-        @JsonIgnore
-        @Nullable
-        public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
+        public AccessControlV3 ac;
     }
 
-    public SourceCodeYaml source = new SourceCodeYaml();
+    public SourceCodeV3 source = new SourceCodeV3();
+
 }

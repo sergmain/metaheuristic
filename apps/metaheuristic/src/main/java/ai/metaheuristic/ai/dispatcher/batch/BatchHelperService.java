@@ -17,9 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +43,13 @@ public class BatchHelperService {
 
     public String findUploadedFilenameForBatchId(Long execContextId, ExecContextParamsYaml ecpy, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
-        String startInputVariableName = ecpy.variables.startInputAs;
+        if (ecpy.variables.inputs.isEmpty()) {
+            return defName;
+        }
+        if (ecpy.variables.inputs.size()>1) {
+            log.error("#698.020 too many input variables for batch processing: " + ecpy.variables.inputs);
+        }
+        String startInputVariableName = ecpy.variables.inputs.get(0).name;
         if (S.b(startInputVariableName)) {
             return defName;
         }
@@ -54,7 +58,7 @@ public class BatchHelperService {
             return defName;
         }
         if (filenames.size()>1) {
-            log.warn("something wrong, too many startInputAs variables: " + filenames);
+            log.warn("#698.040 something wrong, too many startInputAs variables: " + filenames);
         }
         return filenames.get(0);
     }

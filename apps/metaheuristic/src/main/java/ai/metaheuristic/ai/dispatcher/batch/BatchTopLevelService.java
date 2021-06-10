@@ -26,10 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
@@ -103,6 +100,7 @@ public class BatchTopLevelService {
     private final BatchHelperService batchHelperService;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
+    private final ExecContextVariableService execContextVariableService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -308,14 +306,15 @@ public class BatchTopLevelService {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
-            final BatchData.UploadingStatus uploadingStatus;
             try(InputStream is = new FileInputStream(tempFile)) {
-                uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
-                        execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
-                                execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
-                                        batchService.createBatchForFile(
-                                                is, file.getSize(), originFilename, sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
+                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml);
             }
+            final BatchData.UploadingStatus uploadingStatus;
+            uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
+                    execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
+                            execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
+                                    batchService.createBatchForFile(
+                                            sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {

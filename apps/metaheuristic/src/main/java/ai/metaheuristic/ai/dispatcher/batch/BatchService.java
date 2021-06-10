@@ -68,7 +68,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -178,19 +177,14 @@ public class BatchService {
 
     @Transactional
     public BatchData.UploadingStatus createBatchForFile(
-            InputStream is, long size, String originFilename, SourceCodeImpl sourceCode, Long execContextId,
+            SourceCodeImpl sourceCode, Long execContextId,
             ExecContextParamsYaml execContextParamsYaml,
             final DispatcherContext dispatcherContext) {
 
-        String startInputAs = execContextParamsYaml.variables.startInputAs;
-        if (S.b(startInputAs)) {
-            return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
-        }
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             return new BatchData.UploadingStatus("#981.205 ExecContext was lost");
         }
-        variableService.createInitialized(is, size, startInputAs, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
 
         Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
 
@@ -318,7 +312,7 @@ public class BatchService {
 
     @Transactional(readOnly = true)
     public CleanerInfo getBatchOriginFile(Long batchId) {
-        Batch batch = batchCache.findById(batchId);
+        final Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
@@ -330,9 +324,14 @@ public class BatchService {
         }
 
         return getVariable(batch, null, true, (scpy)-> {
-            String variableName = scpy.source.variables.startInputAs;
+            if (scpy.source.variables.inputs.size()!=1) {
+                final String es = "#981.410 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+                log.warn(es);
+                return null;
+            }
+            String variableName = scpy.source.variables.inputs.get(0).name;
             if (S.b(variableName)) {
-                final String es = "#981.420 a start input variable '" + scpy.source.variables.startInputAs +"' wasn't found";
+                final String es = "#981.420 input variable in execContext #"+batch.execContextId+" is empty";
                 log.warn(es);
                 return null;
             }
@@ -404,7 +403,7 @@ public class BatchService {
     private CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
+            final String es = "#981.520 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new CleanerInfo();
         }
@@ -415,20 +414,32 @@ public class BatchService {
         return getVariable(batch, companyUniqueId, includeDeleted, (scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
-                final String es = "#981.360 variable with type '"+variableType+"' wasn't found";
+                final String es = "#981.540 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);
                 return null;
             }
             if (vars.size()>1) {
-                final String es = "#981.380 too many variables with type '"+variableType+"'. " + vars;
+                final String es = "#981.560 too many variables with type '"+variableType+"'. " + vars;
                 log.warn(es);
                 return null;
             }
             return vars.get(0).name;
         }, (execContextId, scpy) -> {
-            SimpleVariable inputVariable = variableService.getVariableAsSimple(execContextId, scpy.source.variables.startInputAs);
+            if (scpy.source.variables.inputs.size()!=1) {
+                final String es = "#981.580 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+                log.warn(es);
+                return null;
+            }
+            String variableName = scpy.source.variables.inputs.get(0).name;
+            if (S.b(variableName)) {
+                final String es = "#981.600 input variable in execContext #"+batch.execContextId+" is empty";
+                log.warn(es);
+                return null;
+            }
+
+            SimpleVariable inputVariable = variableService.getVariableAsSimple(execContextId, variableName);
             if (inputVariable==null) {
-                final String es = "#981.400 Can't find a start input variable '"+scpy.source.variables.startInputAs+"'";
+                final String es = "#981.620 Can't find a start input variable '"+variableName+"'";
                 log.warn(es);
                 return null;
 
