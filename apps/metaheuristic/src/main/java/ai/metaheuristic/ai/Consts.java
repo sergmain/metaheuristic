@@ -140,4 +140,5 @@ public class Consts {
     // Processor's version for communicating with dispatcher
     public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 
+    public static final String SOURCE_CODE_UID = "source-code-uid";
 }

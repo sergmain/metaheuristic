@@ -72,11 +72,11 @@ public class ExecSourceCodeFunction implements InternalFunction {
     public void process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, "source-code-uid");
+        String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
         if (S.b(scUid)) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(
-                            meta_not_found,"#508.020 meta 'source-code-uid' wasn't found"));
+                            meta_not_found,"#508.020 meta '"+ Consts.SOURCE_CODE_UID+"' wasn't found"));
         }
 
         SourceCodeImpl sc = sourceCodeRepository.findByUid(scUid);
