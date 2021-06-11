@@ -39,18 +39,18 @@ public class InternalFunctionRegisterService {
 
     public final List<InternalFunction> internalFunctions;
 
-    private final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
+    private static final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
 
     @PostConstruct
     public void postConstruct() {
         internalFunctions.forEach(o->internalFunctionMap.put(o.getCode(), o));
     }
 
-    public boolean isRegistered(String functionCode) {
+    public static boolean isRegistered(String functionCode) {
         return internalFunctionMap.containsKey(functionCode);
     }
 
-    public InternalFunction get(String functionCode) {
+    public static InternalFunction get(String functionCode) {
         return internalFunctionMap.get(functionCode);
     }
 }

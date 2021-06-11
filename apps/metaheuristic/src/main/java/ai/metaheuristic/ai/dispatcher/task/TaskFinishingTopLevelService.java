@@ -20,10 +20,10 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -56,7 +56,7 @@ public class TaskFinishingTopLevelService {
     private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void checkTaskCanBeFinished(Long taskId) {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
@@ -92,19 +92,6 @@ public class TaskFinishingTopLevelService {
                 throw new IllegalStateException("Must not happened");
         }
 
-/*
-        if (state != EnumsApi.TaskExecState.IN_PROGRESS && state != EnumsApi.TaskExecState.CHECK_CACHE) {
-            if (state== EnumsApi.TaskExecState.OK || state== EnumsApi.TaskExecState.ERROR) {
-            }
-            else {
-                log.info("#318.030 Task {} already has a state neither IN_PROGRESS nor CHECK_CACHE state, actual: {}", task.id, state);
-            }
-            return;
-        }
-*/
-
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-
         if (!S.b(task.functionExecResults)) {
             if (!task.resultReceived) {
                 throw new IllegalStateException("(!task.resultReceived)");
@@ -134,6 +121,7 @@ public class TaskFinishingTopLevelService {
             }
         }
 
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream()
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
                 .allMatch(o -> o.uploaded);
@@ -142,15 +130,18 @@ public class TaskFinishingTopLevelService {
 
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext==null) {
-                applicationEventPublisher.publishEvent( new DeregisterTasksByExecContextIdEvent(task.execContextId) );
+                eventPublisher.publishEvent( new DeregisterTasksByExecContextIdEvent(task.execContextId) );
                 return;
             }
+
+            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
 
             taskSyncService.getWithSyncNullable(task.id,
                     () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
         }
     }
 
+    // this method is here because there was a problem with transactional method called from lambda
     private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
         return taskStateService.finishAndStoreVariable(taskId, ecpy);
     }

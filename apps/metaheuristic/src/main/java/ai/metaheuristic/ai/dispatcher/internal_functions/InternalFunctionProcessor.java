@@ -37,8 +37,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
-    private final InternalFunctionRegisterService internalFunctionRegisterService;
-
     /**
      *
      * @param simpleExecContext
@@ -50,14 +48,16 @@ public class InternalFunctionProcessor {
      */
     public boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
-        InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
+        InternalFunction internalFunction = InternalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
         try {
+/*
             if (internalFunction.isLongRunning()) {
                 registerLongRunningTask(taskId);
             }
+*/
             internalFunction.process(simpleExecContext, taskId, internalContextId, taskParamsYaml);
             return internalFunction.isLongRunning();
         }

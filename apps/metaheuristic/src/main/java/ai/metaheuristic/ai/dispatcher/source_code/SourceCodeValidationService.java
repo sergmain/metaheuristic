@@ -67,7 +67,6 @@ public class SourceCodeValidationService {
     private final FunctionTopLevelService functionTopLevelService;
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
-    private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
@@ -324,7 +323,7 @@ public class SourceCodeValidationService {
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
             if (snDef.context== EnumsApi.FunctionExecContext.internal) {
-                if (!internalFunctionRegisterService.isRegistered(snDef.code)) {
+                if (!InternalFunctionRegisterService.isRegistered(snDef.code)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,
                             "#177.380 Unknown internal function '"+snDef.code+"'"

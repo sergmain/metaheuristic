@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
@@ -43,7 +42,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -155,6 +153,7 @@ public class TaskWithInternalContextEventService {
     }
 
     private Void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+        TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -188,8 +187,6 @@ public class TaskWithInternalContextEventService {
             }
         }
         finally {
-            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(simpleExecContext.execContextId, taskId));
-
             TaskLastProcessingHelper.lastTaskId = taskId;
         }
         return null;

@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.event.LockByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -38,7 +37,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +56,6 @@ public class TaskWithInternalContextService {
     private final TaskStateService taskStateService;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final ExecContextFSM execContextFSM;
     private final ExecContextVariableService execContextVariableService;
 
@@ -71,8 +68,6 @@ public class TaskWithInternalContextService {
             return null;
         }
         preProcessInternalFunction(simpleExecContext, task);
-
-//        eventPublisher.publishEvent(new LockByExecContextIdTxEvent(simpleExecContext.execContextId));
         return null;
     }
 
@@ -94,7 +89,6 @@ public class TaskWithInternalContextService {
 
         execContextFSM.storeExecResult(task, r);
     }
-
 
     private void preProcessInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, TaskImpl task) {
         if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
