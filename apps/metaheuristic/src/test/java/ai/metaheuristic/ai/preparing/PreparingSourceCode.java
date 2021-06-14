@@ -350,7 +350,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         assertFalse(isQueueEmpty);
     }
 
-    private void cleanUp(String sourceCodeUid) {
+    public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
         Company c = null;
         if (sc!=null) {

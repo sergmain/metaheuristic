@@ -1,0 +1,21 @@
+version: 3
+source:
+  uid: for-testing-exec-source-code-1.0
+  variables:
+    inputs:
+      - name: var-input-1
+    outputs:
+      - name: var-output-1
+  processes:
+    - code: mh.exec-source-code
+      name: mh.exec-source-code
+      function:
+        code: mh.exec-source-code
+        context: internal
+      inputs:
+        - name: var-input-1
+      outputs:
+        - name: var-output-1
+        - name: var-output-2
+      metas:
+        - source-code-uid: for-testing-exec-source-code-1.0

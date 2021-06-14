@@ -16,12 +16,10 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
-import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.lang.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -38,8 +37,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -60,52 +58,108 @@ public class TestExecSourceCode extends PreparingSourceCode {
     }
 
     @Test
-    public void testFeatures() throws IOException {
+    public void testOk() throws IOException {
+        SourceCodeApiData.SourceCodeResult scr = null;
+        SourceCodeApiData.SourceCodeResult scrSub = null;
+        try {
+            scrSub = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), company.uniqueId);
+            assertTrue(scrSub.isValid());
+            assertFalse(scrSub.isErrorMessages());
+            System.out.println(scrSub.getErrorMessagesAsStr());
+            assertEquals(scrSub.validationResult.status, EnumsApi.SourceCodeValidateStatus.OK);
 
-        String sc = IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8)
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), company.uniqueId);
+            assertTrue(scr.isValid());
+            assertFalse(scr.isErrorMessages());
+            System.out.println(scr.getErrorMessagesAsStr());
+            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.OK);
+        } finally {
+            finalize(scrSub);
+            finalize(scr);
+        }
+    }
 
-        String params = getSourceCodeYamlAsString();
+    @Test
+    public void testRecursionExecError() throws IOException {
+        SourceCodeApiData.SourceCodeResult scr = null;
+        try {
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), company.uniqueId);
+            assertFalse(scr.isValid());
+            assertTrue(scr.isErrorMessages());
+            System.out.println(scr.getErrorMessagesAsStr());
+
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR);
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
+            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_RECURSION_ERROR);
+        } finally {
+            finalize(scr);
+        }
+    }
+
+    @Test
+    public void testMetaNotFoundError() throws IOException {
+        SourceCodeApiData.SourceCodeResult scr = null;
+        try {
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), company.uniqueId);
+            assertFalse(scr.isValid());
+            assertTrue(scr.isErrorMessages());
+            System.out.println(scr.getErrorMessagesAsStr());
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
+            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR);
+        } finally {
+            finalize(scr);
+        }
+    }
+
+    @Test
+    public void testInputsCountMismatchError() throws IOException {
+        SourceCodeApiData.SourceCodeResult scr = null;
+        try {
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), company.uniqueId);
+            assertFalse(scr.isValid());
+            assertTrue(scr.isErrorMessages());
+            System.out.println(scr.getErrorMessagesAsStr());
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
+            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+        } finally {
+            finalize(scr);
+        }
+    }
+
+    @Test
+    public void testOutputssCountMismatchError() throws IOException {
+        SourceCodeApiData.SourceCodeResult scr = null;
+        try {
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), company.uniqueId);
+            assertFalse(scr.isValid());
+            assertTrue(scr.isErrorMessages());
+            System.out.println(scr.getErrorMessagesAsStr());
+            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
+            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+        } finally {
+            finalize(scr);
+        }
+    }
+
+    private void finalize(@Nullable SourceCodeApiData.SourceCodeResult scr) {
+        if (scr != null) {
+            SourceCodeImpl sc = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
+            try {
+                sourceCodeService.deleteSourceCodeById(sc.id);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
+        }
+    }
+
+    private String getParams(String name) throws IOException {
+        String params = IOUtils.resourceToString(name, StandardCharsets.UTF_8);
+
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
         sourceCodeParamsYaml.checkIntegrity();
 
         cleanUp(sourceCodeParamsYaml.source.uid);
-
-        company = new Company();
-        company.name = "Test company #2";
-        companyTopLevelService.addCompany(company);
-        company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(company.uniqueId));
-
-        assertNotNull(company.id);
-        assertNotNull(company.uniqueId);
-
-        // id==1L must be assigned only to master company
-        assertNotEquals(Consts.ID_1, company.id);
-
-        f1 = createFunction("function-01:1.1");
-        f2 = createFunction("function-02:1.1");
-        f3 = createFunction("function-03:1.1");
-        f4 = createFunction("function-04:1.1");
-        f5 = createFunction("function-05:1.1");
-
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeTopLevelService.createSourceCode(getSourceCodeYamlAsString(), company.uniqueId);
-        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
-        long mills = System.currentTimeMillis();
-        log.info("Start experimentService.produceFeaturePermutations()");
-
-        produceTasksForTest();
-        log.info("experimentService.produceFeaturePermutations() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentFeatureRepository.findByExperimentId()");
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        log.info("experimentFeatureRepository.findByExperimentId() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-
-        String s = "feature-per-task";
-        // todo 2020-03-12 right now permutation is being created dynamically at runtime.
-        //  so for calculation an actual number of permutation we need to process all tasks in current SourceCode/ExecContext
-/*
-        assertNotNull(epy.processing.features);
-        assertEquals(7, epy.processing.features.size());
-*/
+        return params;
     }
 }

@@ -184,6 +184,7 @@ public class SourceCodeService {
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml(), globals.assetMode);
+        result.validationResult = sourceCodeValidation.status;
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;

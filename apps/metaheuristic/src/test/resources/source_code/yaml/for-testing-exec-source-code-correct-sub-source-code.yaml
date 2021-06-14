@@ -1,0 +1,14 @@
+version: 3
+source:
+  uid: for-testing-exec-source-code-1.1
+  variables:
+    inputs:
+      - name: var-input-1
+    outputs:
+      - name: var-output-1
+  processes:
+    - code: mh.nop
+      name: mh.nop
+      function:
+        code: mh.nop
+        context: internal
