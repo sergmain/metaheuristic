@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Time: 1:48 AM
  */
 public class ExecContextData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class VariableInitialize {
+        public InputStream is;
+        public long size;
+        public String originFilename;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class VariableInitializeList {
+        public final List<VariableInitialize> vars = new ArrayList<>();
+        public Long execContextId;
+        public ExecContextParamsYaml execContextParamsYaml;
+    }
 
     @Data
     @AllArgsConstructor

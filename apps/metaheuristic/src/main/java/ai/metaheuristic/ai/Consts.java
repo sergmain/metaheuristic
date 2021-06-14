@@ -80,7 +80,6 @@ public class Consts {
     public static final String TASK_YAML = "task.yaml";
 
     public static final String MH_EXEC_CONTEXT_INPUT_VARIABLE = "mh.exec-context-input-variable";
-    public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
 
 

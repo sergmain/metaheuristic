@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -51,6 +52,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 public class ExecSourceCodeFunction implements InternalFunction {
 
     private final SourceCodeRepository sourceCodeRepository;
+    private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
 
@@ -96,8 +98,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "#508.060 execContext for sourceCode '"+scUid+"' wasn't created, error: " + execContextResultRest.getErrorMessagesAsStr()));
         }
 
-        /// copy variables
-        // ...
+        execContextVariableService.initInputVariables();
 
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
                 execContextResultRest.execContext.id, EnumsApi.ExecContextState.STARTED, simpleExecContext.companyId);

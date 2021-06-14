@@ -68,7 +68,6 @@ public class SourceCodeValidationService {
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
     private final DispatcherParamsService dispatcherParamsService;
-    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
