@@ -261,7 +261,7 @@ public class VariableService {
     }
 
     @Nullable
-    private SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+    public SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);

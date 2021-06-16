@@ -74,6 +74,11 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Transactional(readOnly = true)
     @Nullable
     SourceCodeImpl findByUid(String uid);
+
+    @Transactional(readOnly = true)
+    @Nullable
+    @Query(value="select p.id from SourceCodeImpl p where p.uid=:uid")
+    Long findIdByUid(String uid);
 }
 
 
