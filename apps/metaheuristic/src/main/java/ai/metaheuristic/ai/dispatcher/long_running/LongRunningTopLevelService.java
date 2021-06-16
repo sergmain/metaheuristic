@@ -51,9 +51,10 @@ public class LongRunningTopLevelService {
                 dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 continue;
             }
-            if (EnumsApi.TaskExecState.isFinishedState(execContext.state)) {
+            EnumsApi.ExecContextState state = EnumsApi.ExecContextState.fromCode(execContext.state);
+            if (EnumsApi.ExecContextState.isFinishedState(state)) {
                 try {
-                    execSourceCodeService.finishLongRunningTask(longRunningExecContext, execContext.state);
+                    execSourceCodeService.finishLongRunningTask(longRunningExecContext, state);
                     dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 } catch (Throwable th) {
                     log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId);

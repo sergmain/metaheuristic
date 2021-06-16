@@ -302,6 +302,19 @@ public class EnumsApi {
             ExecContextState state = toState(code);
             return state.toString();
         }
+
+        public static ExecContextState fromCode(int code) {
+            ExecContextState state = toState(code);
+            return state;
+        }
+
+        public static boolean isFinishedState(int state) {
+            return isFinishedState(fromCode(state));
+        }
+
+        public static boolean isFinishedState(ExecContextState state) {
+            return state==FINISHED || state==ERROR;
+        }
     }
 
     public enum TaskExecState { NONE(0), IN_PROGRESS(1),

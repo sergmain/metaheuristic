@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -35,7 +36,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecSourceCodeService {
 
     @Transactional
-    public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, int state) {
-
+    public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {
+        switch(state) {
+            case ERROR:
+                break;
+            case FINISHED:
+                break;
+            case UNKNOWN:
+            case DOESNT_EXIST:
+            case NONE:
+            case PRODUCING:
+            case NOT_USED_ANYMORE:
+            case STARTED:
+            case STOPPED:
+                throw new IllegalStateException("must be FINISHED or ERROR only");
+        }
     }
 }
