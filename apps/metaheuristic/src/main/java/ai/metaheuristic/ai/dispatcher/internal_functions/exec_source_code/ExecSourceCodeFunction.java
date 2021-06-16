@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -98,8 +99,16 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "#508.060 execContext for sourceCode '"+scUid+"' wasn't created, error: " + execContextResultRest.getErrorMessagesAsStr()));
         }
 
-        execContextVariableService.initInputVariables();
+        ExecContextData.VariableInitializeList list = null;
+        try {
+            list = bidVariables(simpleExecContext.execContextId, execContextResultRest.execContext);
+            execContextVariableService.initInputVariables(list);
+        }
+        finally {
+            if (list!=null) {
 
+            }
+        }
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
                 execContextResultRest.execContext.id, EnumsApi.ExecContextState.STARTED, simpleExecContext.companyId);
 
@@ -110,6 +119,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             exec_context_starting_error,
                             "#508.080 execContext #"+execContextResultRest.execContext.id+" for sourceCode '"+scUid+"' can't be started, error: " + operationStatusRest.getErrorMessagesAsStr()));
         }
+
+    }
+
+    private ExecContextData.VariableInitializeList bidVariables(Long execContextId, ExecContextImpl subExecContext) {
 
     }
 }

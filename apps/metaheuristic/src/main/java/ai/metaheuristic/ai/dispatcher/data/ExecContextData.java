@@ -21,6 +21,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,10 +48,20 @@ public class ExecContextData {
 
     @Data
     @NoArgsConstructor
-    public static class VariableInitializeList {
+    public static class VariableInitializeList implements Closeable {
         public final List<VariableInitialize> vars = new ArrayList<>();
         public Long execContextId;
         public ExecContextParamsYaml execContextParamsYaml;
+
+        @Override
+        public void close() throws IOException {
+            for (VariableInitialize var : vars) {
+                try {
+
+                }
+                ccatch()
+            }
+        }
     }
 
     @Data
