@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Date: 2/24/2020
  * Time: 1:48 AM
  */
+@Slf4j
 public class ExecContextData {
 
     @Data
@@ -57,9 +59,11 @@ public class ExecContextData {
         public void close() throws IOException {
             for (VariableInitialize var : vars) {
                 try {
-
+                    var.is.close();
                 }
-                ccatch()
+                catch(Throwable th) {
+                    log.error("#439.020 error while closing an input stream", th);
+                }
             }
         }
     }

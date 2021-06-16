@@ -99,9 +99,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "#508.060 execContext for sourceCode '"+scUid+"' wasn't created, error: " + execContextResultRest.getErrorMessagesAsStr()));
         }
 
-        ExecContextData.VariableInitializeList list = null;
-        try {
-            list = bidVariables(simpleExecContext.execContextId, execContextResultRest.execContext);
+/*
+        try(ExecContextData.VariableInitializeList list = bidVariables(simpleExecContext.execContextId, execContextResultRest.execContext) ) {
             execContextVariableService.initInputVariables(list);
         }
         finally {
@@ -109,6 +108,9 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
             }
         }
+*/
+        execContextVariableService.initInputVariable();
+
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
                 execContextResultRest.execContext.id, EnumsApi.ExecContextState.STARTED, simpleExecContext.companyId);
 
