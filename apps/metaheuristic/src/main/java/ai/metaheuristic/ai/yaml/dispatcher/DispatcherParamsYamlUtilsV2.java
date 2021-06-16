@@ -25,27 +25,27 @@ import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 4/19/2020
- * Time: 4:33 PM
+ * Date: 6/16/2021
+ * Time: 1:06 AM
  */
-public class DispatcherParamsYamlUtilsV1
-    extends AbstractParamsYamlUtils<DispatcherParamsYamlV1, DispatcherParamsYamlV2, DispatcherParamsYamlUtilsV2, Void, Void, Void> {
+public class DispatcherParamsYamlUtilsV2
+        extends AbstractParamsYamlUtils<DispatcherParamsYamlV2, DispatcherParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(DispatcherParamsYamlV1.class);
+        return YamlUtils.init(DispatcherParamsYamlV2.class);
     }
 
     @NonNull
     @Override
-    public DispatcherParamsYamlV2 upgradeTo(@NonNull DispatcherParamsYamlV1 v1) {
-        DispatcherParamsYamlV2 t = new DispatcherParamsYamlV2();
+    public DispatcherParamsYaml upgradeTo(@NonNull DispatcherParamsYamlV2 v1) {
+        DispatcherParamsYaml t = new DispatcherParamsYaml();
 
         // stream is being used for possible future extension
         v1.batches.stream().collect(Collectors.toCollection(()->t.batches));
@@ -61,8 +61,8 @@ public class DispatcherParamsYamlUtilsV1
     }
 
     @Override
-    public DispatcherParamsYamlUtilsV2 nextUtil() {
-        return (DispatcherParamsYamlUtilsV2) DispatcherParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -71,14 +71,14 @@ public class DispatcherParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull DispatcherParamsYamlV1 yaml) {
+    public String toString(@NonNull DispatcherParamsYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherParamsYamlV1 to(@NonNull String s) {
-        final DispatcherParamsYamlV1 p = getYaml().load(s);
+    public DispatcherParamsYamlV2 to(@NonNull String s) {
+        final DispatcherParamsYamlV2 p = getYaml().load(s);
         return p;
     }
 

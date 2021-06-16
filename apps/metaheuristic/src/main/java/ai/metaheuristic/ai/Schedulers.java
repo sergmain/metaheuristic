@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
@@ -64,6 +65,7 @@ public class Schedulers {
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
         private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+        private final LongRunningTopLevelService longRunningTopLevelService;
 
         // Dispatcher schedulers
 
@@ -220,6 +222,17 @@ public class Schedulers {
                 return;
             }
             execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+        }
+
+        @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
+        public void updateStateForLongRunning() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.dispatcherEnabled) {
+                return;
+            }
+            longRunningTopLevelService.updateStateForLongRunning();
         }
     }
 

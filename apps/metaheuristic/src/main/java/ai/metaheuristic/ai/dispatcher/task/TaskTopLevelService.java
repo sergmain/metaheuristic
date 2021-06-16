@@ -57,27 +57,12 @@ public class TaskTopLevelService {
             case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
-
                 applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId,
                         S.f("#303.390 Task #%s was finished while resending variable #%s with status %s", taskId, variableId, status)));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-
                 applicationEventPublisher.publishEvent(new SetVariableReceivedTxEvent(taskId, variableId, false));
-
-/*
-
-                taskSyncService.getWithSyncNullable(taskId, ()-> {
-                    UploadResult statusResult = taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId);
-                    if (statusResult.status == Enums.UploadVariableStatus.OK) {
-                        log.info("#303.400 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
-                    } else {
-                        log.info("#303.420 can't update isCompleted field for task #{}", taskId);
-                    }
-                    return null;
-                });
-*/
                 break;
         }
     }

@@ -17,9 +17,7 @@
 package ai.metaheuristic.ai.yaml.dispatcher;
 
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -27,19 +25,16 @@ import java.util.List;
 
 /**
  * @author Serge
- * Date: 4/19/2020
- * Time: 4:24 PM
+ * Date: 6/16/2021
+ * Time: 12:57 AM
  */
 @Data
 @NoArgsConstructor
-public class DispatcherParamsYaml implements BaseParams {
+public class DispatcherParamsYamlV2 implements BaseParams {
 
     public final int version=2;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class LongRunningExecContext {
+    public static class LongRunningExecContextV2 {
         public Long taskId;
         public Long execContextId;
     }
@@ -52,5 +47,5 @@ public class DispatcherParamsYaml implements BaseParams {
     // values of the follow lists are Uid of SourceCode
     public final List<String> batches = new ArrayList<>();
     public final List<String> experiments = new ArrayList<>();
-    public final List<LongRunningExecContext> longRunnings = new ArrayList<>();
+    public final List<LongRunningExecContextV2> longRunnings = new ArrayList<>();
 }

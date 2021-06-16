@@ -95,6 +95,43 @@ public class DispatcherParamsService {
     }
 
     @Transactional
+    public void registerLongRunningExecContext(Long taskId, Long subExecContextId) {
+        try {
+            writeLock.lock();
+            updateParams((dpy) -> {
+                if (dpy.longRunnings.stream().anyMatch(o->o.taskId.equals(taskId))) {
+                    return Boolean.FALSE;
+                }
+                dpy.longRunnings.add(new DispatcherParamsYaml.LongRunningExecContext(taskId, subExecContextId));
+                return Boolean.TRUE;
+            });
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Transactional
+    public void deRegisterLongRunningExecContext(Long taskId) {
+        try {
+            writeLock.lock();
+            updateParams((dpy) -> {
+                if (dpy.longRunnings.stream().anyMatch(o->o.taskId.equals(taskId))) {
+                    return Boolean.FALSE;
+                }
+                for (int i = 0; i < dpy.longRunnings.size(); i++) {
+                    if (dpy.longRunnings.get(i).taskId.equals(taskId)) {
+                        dpy.longRunnings.remove(i);
+                        return Boolean.TRUE;
+                    }
+                }
+                return Boolean.FALSE;
+            });
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Transactional
     public void registerSourceCodes(List<SourceCodeImpl> sourceCodes) {
         try {
             writeLock.lock();
@@ -235,6 +272,16 @@ public class DispatcherParamsService {
         try {
             readLock.lock();
             return dispatcherParamsYaml ==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.experiments);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public List<DispatcherParamsYaml.LongRunningExecContext> getLongRunningExecContexts() {
+        find();
+        try {
+            readLock.lock();
+            return dispatcherParamsYaml ==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.longRunnings);
         } finally {
             readLock.unlock();
         }

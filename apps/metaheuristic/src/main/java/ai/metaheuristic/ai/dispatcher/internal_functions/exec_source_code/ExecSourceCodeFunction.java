@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -66,6 +67,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     @Override
     public String getCode() {
@@ -139,11 +141,12 @@ public class ExecSourceCodeFunction implements InternalFunction {
             }
         }
 
+        dispatcherParamsService.registerLongRunningExecContext(taskId, execContextResultRest.execContext.id);
+
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
                 execContextResultRest.execContext.id, EnumsApi.ExecContextState.STARTED, simpleExecContext.companyId);
 
         if (operationStatusRest.isErrorMessages()) {
-
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(
                             exec_context_starting_error,
