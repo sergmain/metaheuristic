@@ -170,9 +170,6 @@ public class SourceCodeController {
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
-        if (sourceCodeResultRest.validationResult.status== EnumsApi.SourceCodeValidateStatus.OK ) {
-            sourceCodeResultRest.addInfoMessage("Validation result: OK");
-        }
         ControllerUtils.initRedirectAttributes(redirectAttributes, sourceCodeResultRest);
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }

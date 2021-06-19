@@ -57,6 +57,13 @@ public abstract class BaseDataClass {
         this.infoMessages.add(infoMessage);
     }
 
+    public void addInfoMessages(@NonNull List<String> infoMessages) {
+        if (this.infoMessages==null) {
+            this.infoMessages = new ArrayList<>();
+        }
+        this.infoMessages.addAll(infoMessages);
+    }
+
     @JsonIgnore
     public String getInfoMessagesAsStr() {
         if (!isNotEmpty(infoMessages)) {

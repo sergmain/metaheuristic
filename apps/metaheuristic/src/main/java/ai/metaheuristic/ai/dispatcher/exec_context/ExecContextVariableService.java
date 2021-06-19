@@ -97,18 +97,19 @@ public class ExecContextVariableService {
         }
     }
 
-    public Enums.UploadVariableStatus setResultReceivedForInternalFunction(Long taskId) {
+    public Enums.UploadVariableStatus setResultReceivedForInternalFunction(TaskImpl task) {
         TxUtils.checkTxExists();
 
+/*
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#441.200.020 Task #{} is obsolete and was already deleted", taskId);
             return Enums.UploadVariableStatus.TASK_NOT_FOUND;
         }
-//        execContextSyncService.checkWriteLockPresent(task.execContextId);
+*/
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", taskId);
+            log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);

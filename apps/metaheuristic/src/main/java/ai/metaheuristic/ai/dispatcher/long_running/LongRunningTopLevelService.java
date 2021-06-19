@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import static ai.metaheuristic.api.EnumsApi.*;
+
 /**
  * @author Serge
  * Date: 6/16/2021
@@ -51,13 +53,13 @@ public class LongRunningTopLevelService {
                 dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 continue;
             }
-            EnumsApi.ExecContextState state = EnumsApi.ExecContextState.fromCode(execContext.state);
-            if (EnumsApi.ExecContextState.isFinishedState(state)) {
+            ExecContextState state = ExecContextState.fromCode(execContext.state);
+            if (ExecContextState.isFinishedState(state)) {
                 try {
                     execSourceCodeService.finishLongRunningTask(longRunningExecContext, state);
                     dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 } catch (Throwable th) {
-                    log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId);
+                    log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId, th);
                 }
             }
         }

@@ -132,12 +132,11 @@ public class SourceCodeService {
             findVariableByType(process, type, list);
         }
         return list;
-
     }
 
     private static void findVariableByType(SourceCodeParamsYaml.Process process, String type, List<SourceCodeParamsYaml.Variable> list) {
         for (SourceCodeParamsYaml.Variable output : process.outputs) {
-            if (output.type.equals(type)) {
+            if (type.equals(output.type)) {
                 list.add(output);
             }
         }
@@ -185,8 +184,12 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml(), globals.assetMode);
         result.validationResult = sourceCodeValidation.status;
-        result.infoMessages = sourceCodeValidation.infoMessages;
-        result.errorMessages = sourceCodeValidation.errorMessages;
+        if (sourceCodeValidation.infoMessages!=null) {
+            result.addInfoMessages(sourceCodeValidation.infoMessages);
+        }
+        if (sourceCodeValidation.errorMessages!=null) {
+            result.addErrorMessages(sourceCodeValidation.errorMessages);
+        }
         return result;
     }
 

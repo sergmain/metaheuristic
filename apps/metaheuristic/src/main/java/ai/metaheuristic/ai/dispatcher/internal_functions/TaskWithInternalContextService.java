@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,14 +73,19 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml) {
-        execContextVariableService.setResultReceivedForInternalFunction(taskId);
-
+    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml, @Nullable Long subExecContextId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
             return;
         }
+
+/*
+        if (subExecContextId!=null) {
+            copyVariables()
+        }
+*/
+        execContextVariableService.setResultReceivedForInternalFunction(task);
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.taskId = task.id;
