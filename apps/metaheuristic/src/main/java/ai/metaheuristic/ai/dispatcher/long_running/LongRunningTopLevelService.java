@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code.ExecSourceCodeService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code.ExecSourceCodeTopLevelService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class LongRunningTopLevelService {
     public final DispatcherParamsService dispatcherParamsService;
     public final ExecContextCache execContextCache;
     public final LongRunningService longRunningService;
-    public final ExecSourceCodeService execSourceCodeService;
+    public final ExecSourceCodeTopLevelService execSourceCodeTopLevelService;
 
     public void updateStateForLongRunning() {
 
@@ -56,7 +57,7 @@ public class LongRunningTopLevelService {
             ExecContextState state = ExecContextState.fromCode(execContext.state);
             if (ExecContextState.isFinishedState(state)) {
                 try {
-                    execSourceCodeService.finishLongRunningTask(longRunningExecContext, state);
+                    execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
                     dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 } catch (Throwable th) {
                     log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId, th);

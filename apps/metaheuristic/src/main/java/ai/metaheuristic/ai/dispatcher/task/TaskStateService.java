@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -31,9 +32,10 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -56,6 +58,7 @@ public class TaskStateService {
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final TaskExecStateService taskExecStateService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
         updateTaskExecStates(task, execState, false);
@@ -72,7 +75,19 @@ public class TaskStateService {
     }
 
     @Transactional
-    public Void finishAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
+    public Void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
+        return finish(taskId, ecpy, true);
+    }
+
+    @Transactional
+    public Void finishAsOk(Long taskId) {
+        return finish(taskId, null, false);
+    }
+
+    private Void finish(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
+        if (store && ecpy==null) {
+            throw new IllegalStateException("(store && ecpy==null)");
+        }
         taskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -81,12 +96,14 @@ public class TaskStateService {
             return null;
         }
 
+        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
+
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
         updateTaskExecStates(
                 task, EnumsApi.TaskExecState.OK, true);
 
-        if (tpy.task.cache!=null && tpy.task.cache.enabled) {
+        if (store && tpy.task.cache!=null && tpy.task.cache.enabled) {
             ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
             if (p==null) {
                 log.warn("#319.120 Process {} wasn't found", tpy.task.processCode);

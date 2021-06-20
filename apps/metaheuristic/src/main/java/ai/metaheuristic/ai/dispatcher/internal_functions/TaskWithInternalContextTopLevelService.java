@@ -19,9 +19,11 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -29,6 +31,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -58,9 +61,17 @@ public class TaskWithInternalContextTopLevelService {
     private final VariableService variableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextCache execContextCache;
+    private final TaskRepository taskRepository;
 
-    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml, Long subExecContextId) {
+    public void storeResult(Long taskId, Long subExecContextId) {
         TxUtils.checkTxNotExists();
+        TaskImpl task = taskRepository.findById(taskId).orElseThrow(
+                ()-> new InternalFunctionException(
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.task_not_found,
+                        "Task not found #" + taskId)));
+
+        final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
         copyVariables(taskParamsYaml, subExecContextId);
         taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
     }

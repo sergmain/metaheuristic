@@ -134,8 +134,6 @@ public class TaskFinishingTopLevelService {
                 return;
             }
 
-            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
-
             taskSyncService.getWithSyncNullable(task.id,
                     () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
         }
@@ -143,7 +141,7 @@ public class TaskFinishingTopLevelService {
 
     // this method is here because there was a problem with transactional method called from lambda
     private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
-        return taskStateService.finishAndStoreVariable(taskId, ecpy);
+        return taskStateService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 
     private Void finishWithErrorWithInternal(Long taskId, String console) {

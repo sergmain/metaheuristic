@@ -31,6 +31,7 @@ public final class Enums {
         exec_context_starting_error,
         process_not_found,
         sub_process_not_found,
+        task_not_found,
         output_variable_not_defined, inline_not_found,
         number_of_metas_is_incorrect, meta_not_found,
         broken_graph_error,
