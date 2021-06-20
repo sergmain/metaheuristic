@@ -48,38 +48,4 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class AggregateTxService {
 
-    private final VariableRepository variableRepository;
-    private final VariableService variableService;
-    private final ApplicationEventPublisher eventPublisher;
-
-    @Transactional
-    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, File zipFile) {
-        Variable variable;
-        if (outputVariable.context== EnumsApi.VariableContext.local) {
-            variable = variableRepository.findById(outputVariable.id).orElse(null);
-            if (variable == null) {
-                throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                                "#992.040 Variable not found for code " + outputVariable));
-            }
-        }
-        else {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
-                            "#992.060 Can't store data in a global variable " + outputVariable.name));
-        }
-
-        final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
-        eventPublisher.publishEvent(resourceCloseTxEvent);
-        try {
-            InputStream is = new FileInputStream(zipFile);
-            resourceCloseTxEvent.add(is);
-            variableService.update(is, zipFile.length(), variable);
-        } catch (FileNotFoundException e) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                            "Can't open zipFile   "+ zipFile.getAbsolutePath()));
-        }
-    }
-
 }

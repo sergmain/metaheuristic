@@ -19,24 +19,28 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
-import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
@@ -50,10 +54,10 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class ExecContextVariableService {
 
-    private final TaskRepository taskRepository;
-    private final TaskService taskService;
     private final ExecContextService execContextService;
     private final VariableService variableService;
+    private final VariableRepository variableRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * this method is expecting only one input variable in execContext
@@ -91,35 +95,40 @@ public class ExecContextVariableService {
             ExecContextData.VariableInitialize var = list.vars.get(i);
             String inputVariable = list.execContextParamsYaml.variables.inputs.get(i).name;
             if (S.b(inputVariable)) {
-                throw new ExecContextCommonException("##697.120 Wrong format of sourceCode, input variable for source code isn't specified");
+                throw new ExecContextCommonException("#697.120 Wrong format of sourceCode, input variable for source code isn't specified");
             }
             variableService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
         }
     }
 
-    public Enums.UploadVariableStatus setResultReceivedForInternalFunction(TaskImpl task) {
-        TxUtils.checkTxExists();
-
-/*
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            log.warn("#441.200.020 Task #{} is obsolete and was already deleted", taskId);
-            return Enums.UploadVariableStatus.TASK_NOT_FOUND;
+    @Transactional
+    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, File file) {
+        Variable variable;
+        if (outputVariable.context== EnumsApi.VariableContext.local) {
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
+            if (variable == null) {
+                throw new InternalFunctionException(
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                                "#697.140 Variable not found for code " + outputVariable));
+            }
         }
-*/
-
-        if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", task.id);
-            return Enums.UploadVariableStatus.TASK_WAS_RESET;
+        else {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
+                            "#697.160 Can't store data in a global variable " + outputVariable.name));
         }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        tpy.task.outputs.forEach(o->o.uploaded = true);
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
-        task.setResultReceived(true);
-        taskService.save(task);
-        return Enums.UploadVariableStatus.OK;
+
+        final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
+        eventPublisher.publishEvent(resourceCloseTxEvent);
+        try {
+            InputStream is = new FileInputStream(file);
+            resourceCloseTxEvent.add(is);
+            variableService.update(is, file.length(), variable);
+        } catch (FileNotFoundException e) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                            "#697.180 Can't open file   "+ file.getAbsolutePath()));
+        }
     }
 
 

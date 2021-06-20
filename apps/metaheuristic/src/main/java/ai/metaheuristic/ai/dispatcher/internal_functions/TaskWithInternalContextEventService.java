@@ -59,6 +59,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class TaskWithInternalContextEventService {
 
     private final TaskWithInternalContextService taskWithInternalContextService;
+    private final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
@@ -183,7 +184,7 @@ public class TaskWithInternalContextEventService {
 
             boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
             if (!isLongRunning) {
-                taskWithInternalContextService.storeResult(taskId, taskParamsYaml, null);
+                taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
             }
         }
         finally {

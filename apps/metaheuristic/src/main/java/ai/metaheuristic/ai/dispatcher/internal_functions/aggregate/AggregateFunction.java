@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -58,7 +59,7 @@ public class AggregateFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
     private final VariableService variableService;
-    private final AggregateTxService aggregateTxService;
+    private final ExecContextVariableService execContextVariableService;
 
     private static final String META_ERROR_CONTROL = "error-control-policy";
     public enum ErrorControlPolicy { fail, ignore }
@@ -139,7 +140,7 @@ public class AggregateFunction implements InternalFunction {
             File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
             ZipUtils.createZip(outputDir, zipFile);
 
-            aggregateTxService.storeDataInVariable(outputVariable, zipFile);
+            execContextVariableService.storeDataInVariable(outputVariable, zipFile);
         }
         finally {
             if (tempDir!=null) {

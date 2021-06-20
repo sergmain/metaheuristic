@@ -22,12 +22,12 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,7 +38,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +57,6 @@ public class TaskWithInternalContextService {
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
-    private final ExecContextVariableService execContextVariableService;
 
     @Transactional
     public Void preProcessing(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
@@ -73,19 +71,14 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml, @Nullable Long subExecContextId) {
+    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
             return;
         }
 
-/*
-        if (subExecContextId!=null) {
-            copyVariables()
-        }
-*/
-        execContextVariableService.setResultReceivedForInternalFunction(task);
+        setResultReceivedForInternalFunction(task);
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.taskId = task.id;
@@ -94,6 +87,23 @@ public class TaskWithInternalContextService {
         r.result = FunctionExecUtils.toString(functionExec);
 
         execContextFSM.storeExecResult(task, r);
+    }
+
+    private Enums.UploadVariableStatus setResultReceivedForInternalFunction(TaskImpl task) {
+        TxUtils.checkTxExists();
+
+        if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
+            log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", task.id);
+            return Enums.UploadVariableStatus.TASK_WAS_RESET;
+        }
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        tpy.task.outputs.forEach(o->o.uploaded = true);
+        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        task.setCompleted(true);
+        task.setCompletedOn(System.currentTimeMillis());
+        task.setResultReceived(true);
+        taskService.save(task);
+        return Enums.UploadVariableStatus.OK;
     }
 
     private void preProcessInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, TaskImpl task) {
