@@ -111,24 +111,9 @@ public class TaskVariableService {
         variable.setData(null);
 
         eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, variableId, true));
-
         variableRepository.save(variable);
 
-/*
-        Enums.UploadVariableStatus status = setVariableReceived(task, variable.getId());
-        if (status==Enums.UploadVariableStatus.OK) {
-            eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id, true));
-            eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, true));
-
-            return OK_UPLOAD_RESULT;
-        }
-        else {
-            return new UploadResult(status, "#441.160 can't update resultReceived field for task #"+ taskId+", variable #" +variable.getId());
-        }
-
-*/
         return OK_UPLOAD_RESULT;
-
     }
 
     private Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {
