@@ -343,6 +343,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                         execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
+        processScheduledTasks();
     }
 
     private void processScheduledTasks() {
@@ -562,6 +563,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
+
+        processScheduledTasks();
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());

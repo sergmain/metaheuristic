@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 3/26/2021
  * Time: 4:15 PM
  */
+@SuppressWarnings("UnusedAssignment")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")

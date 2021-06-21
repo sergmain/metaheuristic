@@ -1,0 +1,16 @@
+version: 3
+source:
+  uid: exec-sub-source-code-main-nop-1.0
+  variables:
+    globals:
+      - global-test-variable
+  processes:
+    - code: mh.exec-source-code
+      name: mh.exec-source-code
+      function:
+        code: mh.exec-source-code
+        context: internal
+      inputs:
+        - name: global-test-variable
+      metas:
+        - source-code-uid: exec-sub-source-code-sub-nop-1.0

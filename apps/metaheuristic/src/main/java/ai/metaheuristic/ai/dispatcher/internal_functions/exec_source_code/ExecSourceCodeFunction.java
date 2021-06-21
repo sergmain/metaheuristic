@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -41,6 +42,8 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +67,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final VariableService variableService;
+    private final GlobalVariableService globalVariableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -126,18 +130,46 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         final ExecContextParamsYaml execContextParamsYaml = execContextResultRest.execContext.getExecContextParamsYaml();
 
-        for (TaskParamsYaml.InputVariable input : taskParamsYaml.task.inputs) {
-            File tempFile = DirUtils.createTempDir("mh-exec-source-code-");
-            if (tempFile==null) {
+
+        File tempDir = null;
+        try {
+            tempDir = DirUtils.createTempDir("mh-exec-source-code-");
+            if (tempDir == null) {
                 throw new InternalFunctionException(
                         new InternalFunctionData.InternalFunctionProcessingResult(
                                 system_error,
                                 "#508.070 can't create a temporary file"));
             }
-            variableService.storeToFileWithTx(input.id, tempFile);
-            try(InputStream is = new FileInputStream(tempFile)) {
-                execContextVariableService.initInputVariable(
-                        is, tempFile.length(), "variable-"+input.name, execContextResultRest.execContext.id, execContextParamsYaml);
+            for (TaskParamsYaml.InputVariable input : taskParamsYaml.task.inputs) {
+                File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                switch (input.context) {
+                    case global:
+                        globalVariableService.storeToFileWithTx(input.id, tempFile);
+                        break;
+                    case local:
+                        variableService.storeToFileWithTx(input.id, tempFile);
+                        break;
+                    case array:
+                        throw new NotImplementedException("Not yet");
+                }
+                try (InputStream is = new FileInputStream(tempFile)) {
+                    execContextVariableService.initInputVariable(
+                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml);
+                }
+            }
+        }
+        catch (InternalFunctionException e) {
+            throw e;
+        }
+        catch (Throwable th) {
+            final String es = "#508.075 error " + th.getMessage();
+            log.error(es, th);
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,es));
+        }
+        finally {
+            if (tempDir!=null) {
+                FileUtils.deleteQuietly(tempDir);
             }
         }
 

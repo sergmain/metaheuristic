@@ -346,8 +346,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
             Thread.sleep(2_000);
-//            isQueueEmpty = taskProviderService.allTaskGroupFinished(execContextId);
-            isQueueEmpty = taskProviderService.isQueueEmpty();
+            isQueueEmpty = taskProviderService.allTaskGroupFinished(execContextId);
+//            isQueueEmpty = taskProviderService.isQueueEmpty();
             if (!isQueueEmpty) {
                 break;
             }

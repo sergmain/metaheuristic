@@ -1,0 +1,12 @@
+version: 3
+source:
+  uid: exec-sub-source-code-sub-nop-1.0
+  variables:
+    inputs:
+      - name: start-input-1
+  processes:
+    - code: mh.nop
+      name: nop 1
+      function:
+        code: mh.nop
+        context: internal
