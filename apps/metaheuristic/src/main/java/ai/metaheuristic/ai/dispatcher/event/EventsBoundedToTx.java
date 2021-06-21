@@ -72,11 +72,6 @@ public class EventsBoundedToTx {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleLockByExecContextIdTxEvent(LockByExecContextIdTxEvent event) {
-        eventPublisher.publishEvent(event.to());
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStartTaskProcessingTxEvent(StartTaskProcessingTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }

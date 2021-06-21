@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventBusService;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -28,7 +30,6 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -53,7 +54,7 @@ public class ExecContextFSM {
     private final TaskRepository taskRepository;
     private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public Void toFinished(Long execContextId) {
@@ -162,7 +163,7 @@ public class ExecContextFSM {
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(true);
 
-        eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
         return null;
     }
 

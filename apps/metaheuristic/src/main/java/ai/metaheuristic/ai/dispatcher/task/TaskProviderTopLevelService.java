@@ -150,6 +150,12 @@ public class TaskProviderTopLevelService {
         }
     }
 
+    public boolean allTaskGroupFinished(Long execContextId) {
+        synchronized (syncObj) {
+            return taskProviderTransactionalService.allTaskGroupFinished(execContextId);
+        }
+    }
+
     @Nullable
     public TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
         synchronized (syncObj) {
@@ -160,16 +166,6 @@ public class TaskProviderTopLevelService {
     public Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
         synchronized (syncObj) {
             return taskProviderTransactionalService.getTaskExecStates(execContextId);
-        }
-    }
-
-    @Async
-    @EventListener
-    public void lock(LockByExecContextIdEvent event) {
-        try {
-            lock(event.execContextId);
-        } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
         }
     }
 

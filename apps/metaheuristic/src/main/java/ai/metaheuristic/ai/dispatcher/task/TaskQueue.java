@@ -275,6 +275,10 @@ public class TaskQueue {
         return null;
     }
 
+    public boolean allTaskGroupFinished(Long execContextId) {
+        return taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).allMatch(TaskQueue::groupFinished);
+    }
+
     public Map<Long, AllocatedTask> getTaskExecStates(Long execContextId) {
         Map<Long, AllocatedTask> map = new HashMap<>();
         for (TaskGroup taskGroup : taskGroups) {

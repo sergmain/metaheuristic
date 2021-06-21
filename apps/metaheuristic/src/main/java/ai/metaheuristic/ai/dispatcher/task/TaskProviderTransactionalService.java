@@ -69,6 +69,7 @@ public class TaskProviderTransactionalService {
     private final ExecContextStatusService execContextStatusService;
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     private final TaskQueue taskQueue = new TaskQueue();
 
@@ -321,8 +322,8 @@ public class TaskProviderTransactionalService {
 
         resultTask.assigned = true;
 
-        eventPublisher.publishEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
-        eventPublisher.publishEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
+        eventPublisherService.publishUnAssignTaskTxEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
+        eventPublisherService.publishStartTaskProcessingTxEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
 
         return t;
     }
@@ -372,5 +373,9 @@ public class TaskProviderTransactionalService {
 
     public void unAssignTask(UnAssignTaskEvent event) {
         taskQueue.deRegisterTask(event.execContextId, event.taskId);
+    }
+
+    public boolean allTaskGroupFinished(Long execContextId) {
+        return taskQueue.allTaskGroupFinished(execContextId);
     }
 }

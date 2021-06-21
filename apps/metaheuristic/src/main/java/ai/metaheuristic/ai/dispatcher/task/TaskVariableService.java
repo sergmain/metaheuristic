@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -30,7 +31,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +52,7 @@ public class TaskVariableService {
     private final TaskService taskService;
     private final VariableRepository variableRepository;
     private final TaskSyncService taskSyncService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     public static class UpdateStatusOfVariableException extends RuntimeException {
         public final UploadResult uploadResult;
@@ -73,7 +73,7 @@ public class TaskVariableService {
             throw new UpdateStatusOfVariableException(new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es));
         }
 
-        eventPublisher.publishEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, nullified));
+        eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, nullified));
 
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
 
@@ -110,7 +110,8 @@ public class TaskVariableService {
         variable.nullified = true;
         variable.setData(null);
 
-        eventPublisher.publishEvent(new SetVariableReceivedTxEvent(task.id, variableId, true));
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(task.id, variableId, true));
+
         variableRepository.save(variable);
 
         return OK_UPLOAD_RESULT;

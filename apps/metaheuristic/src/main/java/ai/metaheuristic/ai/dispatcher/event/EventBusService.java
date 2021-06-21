@@ -23,9 +23,11 @@ import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVar
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;

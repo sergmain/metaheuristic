@@ -23,8 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -76,6 +75,7 @@ public class TaskCheckCachingService {
     private final CacheVariableRepository cacheVariableRepository;
     private final TaskVariableService taskVariableService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     @Data
     @AllArgsConstructor
@@ -229,7 +229,7 @@ public class TaskCheckCachingService {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
-            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+            eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);

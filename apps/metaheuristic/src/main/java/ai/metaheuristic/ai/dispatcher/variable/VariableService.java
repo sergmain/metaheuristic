@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -54,7 +55,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
@@ -87,6 +87,7 @@ public class VariableService {
     private final ExecContextSyncService execContextSyncService;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
@@ -410,7 +411,7 @@ public class VariableService {
                         null,
                         taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));
 
-        eventPublisher.publishEvent(event);
+        eventPublisherService.publishTaskCreatedTxEvent(event);
 
         return task;
     }

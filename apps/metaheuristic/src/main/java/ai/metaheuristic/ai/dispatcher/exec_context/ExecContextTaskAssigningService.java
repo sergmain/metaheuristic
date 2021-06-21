@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -31,7 +32,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -58,7 +58,7 @@ public class ExecContextTaskAssigningService {
     private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
     @Nullable
@@ -134,14 +134,11 @@ public class ExecContextTaskAssigningService {
                     log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, state);
 
-                    eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
+                    eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
                 }
             }
         }
         taskProviderService.lock(execContextId);
         return null;
     }
-
-
-
 }

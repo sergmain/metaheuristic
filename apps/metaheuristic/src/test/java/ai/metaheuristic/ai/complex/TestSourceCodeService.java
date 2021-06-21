@@ -67,7 +67,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
@@ -330,12 +330,24 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
+        finishTask(task32);
+    }
+
+    private void finishTask(TaskImpl task32) {
         taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id);
+
+        processScheduledTasks();
+
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, () ->
+                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
+    }
+
+    private void processScheduledTasks() {
+        execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+        execContextVariableStateTopLevelService.processFlushing();
     }
 
     private void step_FitAndPredict() {
@@ -412,12 +424,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task3.id);
-        TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
+        finishTask(task3);
     }
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
@@ -493,12 +500,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
 
-        taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
-        TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
+        finishTask(task);
     }
 
     @SneakyThrows
@@ -560,7 +562,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
-//        verifyGraphIntegrity();
 
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
@@ -578,7 +579,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 
-//        verifyGraphIntegrity();
+        processScheduledTasks();
     }
 
     private String getOKExecResult() {

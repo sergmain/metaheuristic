@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -24,7 +25,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final TaskSyncService taskSyncService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
         updateTaskExecStates(task, execState, false);
@@ -111,7 +111,7 @@ public class TaskExecStateService {
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
 
-        eventPublisher.publishEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+        eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
         return task;
     }
 

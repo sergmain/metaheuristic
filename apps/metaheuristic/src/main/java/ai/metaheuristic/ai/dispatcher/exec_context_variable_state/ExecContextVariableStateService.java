@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +45,7 @@ public class ExecContextVariableStateService {
     private final ExecContextVariableStateSyncService execContextVariableStateSyncService;
     private final ExecContextVariableStateCache execContextVariableStateCache;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public Void registerVariableStates(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
@@ -56,7 +56,7 @@ public class ExecContextVariableStateService {
     private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
         register(execContextVariableStateId, (ecpy)-> {
             for (VariableUploadedEvent event : events) {
-                eventPublisher.publishEvent(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
+                eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
                 for (ExecContextApiData.VariableState task : ecpy.tasks) {
                     if (task.taskId.equals(event.taskId)) {
                         if (task.outputs==null || task.outputs.isEmpty()) {

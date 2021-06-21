@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -32,7 +33,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,6 @@ import org.yaml.snakeyaml.error.YAMLException;
 @RequiredArgsConstructor
 public class TaskStateService {
 
-
     private final DispatcherEventService dispatcherEventService;
     private final TaskService taskService;
     private final CacheService cacheService;
@@ -58,7 +57,7 @@ public class TaskStateService {
     private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final TaskExecStateService taskExecStateService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
         updateTaskExecStates(task, execState, false);
@@ -96,7 +95,7 @@ public class TaskStateService {
             return null;
         }
 
-        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
@@ -177,7 +176,5 @@ public class TaskStateService {
 
         taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
     }
-
-
 
 }

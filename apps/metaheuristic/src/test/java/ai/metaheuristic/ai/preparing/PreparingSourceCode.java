@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -181,6 +182,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     protected TaskRepositoryForTest taskRepositoryForTest;
+
+    @Autowired
+    protected ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     public SourceCodeImpl sourceCode = null;
     public Function f1 = null;
@@ -342,6 +346,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
             Thread.sleep(2_000);
+//            isQueueEmpty = taskProviderService.allTaskGroupFinished(execContextId);
             isQueueEmpty = taskProviderService.isQueueEmpty();
             if (!isQueueEmpty) {
                 break;
