@@ -71,6 +71,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final ExecContextCreatorService execContextCreatorService;
     private final DispatcherParamsService dispatcherParamsService;
 
     @Override
@@ -95,8 +96,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
         String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
         if (S.b(scUid)) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(
-                            meta_not_found,"#508.020 meta '"+ Consts.SOURCE_CODE_UID+"' wasn't found"));
+                    new InternalFunctionData.InternalFunctionProcessingResult( meta_not_found,
+                            "#508.020 meta '"+ Consts.SOURCE_CODE_UID+"' wasn't found"));
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
         if (sourceCode==null) {
@@ -108,14 +109,14 @@ public class ExecSourceCodeFunction implements InternalFunction {
         Long subScId = sourceCodeRepository.findIdByUid(scUid);
         if (subScId==null) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(
-                            source_code_not_found,"#508.040 sourceCode '"+scUid+"' wasn't found"));
+                    new InternalFunctionData.InternalFunctionProcessingResult(source_code_not_found,
+                            "#508.040 sourceCode '"+scUid+"' wasn't found"));
         }
         SourceCodeImpl subSc = sourceCodeCache.findById(subScId);
         if (subSc==null) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(
-                            source_code_not_found,"#508.050 sourceCode #"+subScId+" wasn't found"));
+                    new InternalFunctionData.InternalFunctionProcessingResult(source_code_not_found,
+                            "#508.050 sourceCode #"+subScId+" wasn't found"));
         }
 
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
@@ -123,8 +124,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(
-                            exec_context_creation_error,
+                    new InternalFunctionData.InternalFunctionProcessingResult(exec_context_creation_error,
                             "#508.060 execContext for sourceCode '"+scUid+"' wasn't created, error: " + execContextResultRest.getErrorMessagesAsStr()));
         }
 
@@ -173,6 +173,14 @@ public class ExecSourceCodeFunction implements InternalFunction {
             }
         }
 
+        execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest);
+        if (execContextResultRest.isErrorMessages()) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult( exec_context_starting_error,
+                            S.f("#508.077 tasks for execContext #%d, sourceCode '%s' can't be produced, error: %s",
+                                    execContextResultRest.execContext.id, scUid, execContextResultRest.getErrorMessagesAsStr())));
+        }
+
         dispatcherParamsService.registerLongRunningExecContext(taskId, execContextResultRest.execContext.id);
 
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
@@ -180,8 +188,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         if (operationStatusRest.isErrorMessages()) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(
-                            exec_context_starting_error,
+                    new InternalFunctionData.InternalFunctionProcessingResult( exec_context_starting_error,
                             "#508.080 execContext #"+execContextResultRest.execContext.id+" for sourceCode '"+scUid+"' can't be started, error: " + operationStatusRest.getErrorMessagesAsStr()));
         }
 

@@ -121,6 +121,12 @@ public class ExecContextCreatorService {
             return creationResult;
         }
 
+        produceTasksForExecContext(sourceCode, creationResult);
+        return creationResult;
+    }
+
+    @Transactional
+    public void produceTasksForExecContext(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
         execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
                 execContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
                         execContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, ()-> {
@@ -135,7 +141,6 @@ public class ExecContextCreatorService {
                             }
                             return null;
                         })));
-        return creationResult;
     }
 
     /**
