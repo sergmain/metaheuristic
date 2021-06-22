@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -112,12 +113,6 @@ public class DispatcherParamsService {
                 dpy.longRunnings.add(e);
                 return Boolean.TRUE;
             });
-/*
-            if (dispatcherParamsYaml==null) {
-                dispatcherParamsYaml = new DispatcherParamsYaml();
-            }
-            dispatcherParamsYaml.longRunnings.add(e);
-*/
         } finally {
             writeLock.unlock();
         }
@@ -228,6 +223,7 @@ public class DispatcherParamsService {
         });
     }
 
+    @Transactional
     public void unregisterSourceCode(String uid) {
         try {
             writeLock.lock();
@@ -308,6 +304,7 @@ public class DispatcherParamsService {
     }
 
     private void save(Dispatcher dispatcher) {
+        TxUtils.checkTxExists();
         try {
             writeLock.lock();
             if (!Consts.DISPATCHERS_CACHE.equals(dispatcher.code)) {
