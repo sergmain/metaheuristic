@@ -1,11 +1,11 @@
 version: 3
 source:
-  uid: exec-sub-source-code-sub-evaluation-1.0
+  uid: exec-sub-source-code-sub-evaluation-1.1
   variables:
     inputs:
-      - name: start-input-1
+      - name: startInput1
     outputs:
-      - name: result-output-1
+      - name: resultOutput1
   processes:
     - code: mh.evaluation
       name: mh.evaluation
@@ -13,4 +13,4 @@ source:
         code: mh.evaluation
         context: internal
       metas:
-        - expression: result-output-1 = start-input-1
+        - expression: resultOutput1 = startInput1

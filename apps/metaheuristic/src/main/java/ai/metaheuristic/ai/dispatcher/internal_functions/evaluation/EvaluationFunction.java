@@ -32,9 +32,11 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardOperatorOverloader;
@@ -66,6 +68,12 @@ public class EvaluationFunction implements InternalFunction {
 
     // https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions
 
+    @AllArgsConstructor
+    public static class MhContext {
+        public final String taskContextId;
+        public final Long execContextId;
+    }
+
     public static class MhEvalContext implements EvaluationContext {
         public final String taskContextId;
         public final Long execContextId;
@@ -79,28 +87,77 @@ public class EvaluationFunction implements InternalFunction {
 
         @Override
         public TypedValue getRootObject() {
-            return TypedValue.NULL;
+            return new TypedValue(new MhContext(taskContextId, execContextId));
         }
 
         @Override
         public List<PropertyAccessor> getPropertyAccessors() {
-            return List.of();
+            PropertyAccessor pa = new PropertyAccessor() {
+                @Nullable
+                @Override
+                public Class<?>[] getSpecificTargetClasses() {
+                    return null;
+                }
+
+                @Override
+                public boolean canRead(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                    return true;
+                }
+
+                @Override
+                public TypedValue read(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                    VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
+                    return new TypedValue(variableHolder);
+                }
+
+                @Override
+                public boolean canWrite(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                    return true;
+                }
+
+                @Override
+                public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) throws AccessException {
+                    VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
+
+                    int i=0;
+                }
+            };
+            return List.of(pa);
         }
 
         @Override
         public List<ConstructorResolver> getConstructorResolvers() {
-            return List.of();
+            ConstructorResolver cr = new ConstructorResolver() {
+                @Nullable
+                @Override
+                public ConstructorExecutor resolve(EvaluationContext context, String typeName, List<TypeDescriptor> argumentTypes) throws AccessException {
+                    return null;
+                }
+            };
+            return List.of(cr);
         }
 
         @Override
         public List<MethodResolver> getMethodResolvers() {
-            return List.of();
+            MethodResolver mr = new MethodResolver() {
+                @Nullable
+                @Override
+                public MethodExecutor resolve(EvaluationContext context, Object targetObject, String name, List<TypeDescriptor> argumentTypes) throws AccessException {
+                    return null;
+                }
+            };
+            return List.of(mr);
         }
 
         @Nullable
         @Override
         public BeanResolver getBeanResolver() {
-            return null;
+            return new BeanResolver() {
+                @Override
+                public Object resolve(EvaluationContext context, String beanName) throws AccessException {
+                    return null;
+                }
+            };
         }
 
         @Override
@@ -110,7 +167,19 @@ public class EvaluationFunction implements InternalFunction {
 
         @Override
         public TypeConverter getTypeConverter() {
-            return new StandardTypeConverter();
+            return new TypeConverter() {
+                @Override
+                public boolean canConvert(@Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
+                    return false;
+                }
+
+                @Nullable
+                @Override
+                public Object convertValue(@Nullable Object value, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
+                    return null;
+                }
+            };
+//            return new StandardTypeConverter();
         }
 
         @Override
@@ -146,7 +215,7 @@ public class EvaluationFunction implements InternalFunction {
             return variableHolder;
         }
 
-        private VariableUtils.VariableHolder getVariableHolder(String name) {
+        public VariableUtils.VariableHolder getVariableHolder(String name) {
             List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
                     execContextId, taskContextId, name);
             if (holders.size()>1) {
@@ -198,6 +267,8 @@ public class EvaluationFunction implements InternalFunction {
 
         Expression exp = parser.parseExpression(expression);
         Object obj = exp.getValue(mhEvalContext);
+
+        int i=0;
     }
 
 
