@@ -1,9 +1,9 @@
 version: 3
 source:
-  uid: exec-sub-source-code-main-evaluation-1.2
+  uid: exec-sub-source-code-main-evaluation-1.4
   variables:
     globals:
-      - global-variable-for-sub-source-code
+      - mh.int_0
   processes:
     - code: mh.exec-source-code
       name: mh.exec-source-code
@@ -11,8 +11,8 @@ source:
         code: mh.exec-source-code
         context: internal
       inputs:
-        - name: global-variable-for-sub-source-code
+        - name: mh.int_0
       outputs:
         - name: result-output
       metas:
-        - source-code-uid: exec-sub-source-code-sub-evaluation-1.1
+        - source-code-uid: exec-sub-source-code-sub-evaluation-1.4

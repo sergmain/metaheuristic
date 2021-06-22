@@ -48,6 +48,7 @@ import org.springframework.expression.spel.support.StandardOperatorOverloader;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -131,47 +132,76 @@ public class EvaluationFunction implements InternalFunction {
                     return true;
                 }
 
+                @SuppressWarnings("ConstantConditions")
                 @Override
                 public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) throws AccessException {
                     if (newValue==null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#503.045 can't create a temporary file"));
+                                        "#503.020 can't create a temporary file"));
                     }
-                    VariableUtils.VariableHolder variableHolderInput = (VariableUtils.VariableHolder) newValue;
+                    VariableUtils.VariableHolder variableHolderInput = null;
+                    Integer intValue = null;
+                    if (newValue instanceof VariableUtils.VariableHolder){
+                        variableHolderInput = (VariableUtils.VariableHolder) newValue;
+                    }
+                    else if (newValue instanceof Integer) {
+                        intValue = (Integer) newValue;
+                    }
+                    else {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.025 not supported type: " + newValue.getClass()));
+                    }
                     VariableUtils.VariableHolder variableHolderOutput = getVariableHolder(name);
                     if (variableHolderOutput.globalVariable!=null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#503.047 global variable '"+ name+"' can't be used as output variable"));
+                                        "#503.030 global variable '"+ name+"' can't be used as output variable"));
                     }
                     if (variableHolderOutput.variable==null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#503.048 variable '"+ name+"' wasn't found"));
+                                        "#503.035 variable '"+ name+"' wasn't found"));
                     }
-                    File tempDir = null;
                     try {
-                        tempDir = DirUtils.createTempDir("mh-evaluation-");
-                        if (tempDir == null) {
-                            throw new InternalFunctionException(
-                                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                            "#503.050 can't create a temporary file"));
+                        if (variableHolderInput!=null) {
+                            File tempDir = null;
+                            try {
+                                tempDir = DirUtils.createTempDir("mh-evaluation-");
+                                if (tempDir == null) {
+                                    throw new InternalFunctionException(
+                                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                                    "#503.050 can't create a temporary file"));
+                                }
+                                File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                                if (variableHolderInput.globalVariable != null) {
+                                    globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
+                                } else if (variableHolderInput.variable != null) {
+                                    variableService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
+                                } else {
+                                    throw new InternalFunctionException(
+                                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                                    "#503.052 both local and global variables are null"));
+                                }
+                                try (InputStream is = new FileInputStream(tempFile)) {
+                                    variableService.updateWithTx(is, tempFile.length(), variableHolderOutput.variable.id);
+                                }
+                            } finally {
+                                if (tempDir!=null) {
+                                    FileUtils.deleteQuietly(tempDir);
+                                }
+                            }
                         }
-                        File tempFile = File.createTempFile("input-", ".bin", tempDir);
-                        if (variableHolderInput.globalVariable!=null) {
-                            globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
-                        }
-                        else if (variableHolderInput.variable!=null) {
-                            variableService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
+                        else if (intValue!=null) {
+                            byte[] bytes = intValue.toString().getBytes();
+                            InputStream is = new ByteArrayInputStream(bytes);
+                            variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
                         }
                         else {
                             throw new InternalFunctionException(
                                     new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                            "#503.052 both local and global variables are null"));
-                        }
-                        try (InputStream is = new FileInputStream(tempFile)) {
-                            variableService.updateWithTx(is, tempFile.length(), variableHolderOutput.variable.id);
+                                            "#503.025 not supported type: " + newValue.getClass()));
                         }
                     }
                     catch (InternalFunctionException e) {
@@ -182,11 +212,6 @@ public class EvaluationFunction implements InternalFunction {
                         log.error(es, th);
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,es));
-                    }
-                    finally {
-                        if (tempDir!=null) {
-                            FileUtils.deleteQuietly(tempDir);
-                        }
                     }
                     int i=0;
                 }
@@ -268,7 +293,40 @@ public class EvaluationFunction implements InternalFunction {
 
         @Override
         public OperatorOverloader getOperatorOverloader() {
-            return new StandardOperatorOverloader();
+            OperatorOverloader ool = new OperatorOverloader() {
+                @Override
+                public boolean overridesOperation(Operation operation, @Nullable Object leftOperand, @Nullable Object rightOperand) throws EvaluationException {
+                    if (operation==Operation.ADD && leftOperand instanceof VariableUtils.VariableHolder && rightOperand instanceof Integer) {
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public Object operate(Operation operation, @Nullable Object leftOperand, @Nullable Object rightOperand) throws EvaluationException {
+                    if (leftOperand==null || rightOperand==null) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.100 can't create a temporary file"));
+                    }
+                    VariableUtils.VariableHolder variableHolderInput = (VariableUtils.VariableHolder) leftOperand;
+                    if (variableHolderInput.variable==null) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.120 variable is null"));
+                    }
+
+                    if (operation==Operation.ADD && rightOperand instanceof Integer) {
+                        String strValue = variableService.getVariableDataAsString(variableHolderInput.variable.id);
+                        int value = Integer.parseInt(strValue) + (Integer)rightOperand;
+                        return value;
+                    }
+                    throw new EvaluationException(S.f("Not supported operation %s, left: %, right: %s",
+                            operation, leftOperand.getClass(), rightOperand.getClass()));
+                }
+            };
+            return ool;
+//            new StandardOperatorOverloader();
         }
 
         @Override
@@ -290,14 +348,14 @@ public class EvaluationFunction implements InternalFunction {
             if (holders.size()>1) {
                 throw new InternalFunctionException(
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                                "#503.060 Too many variables with the same name at top-level context, name: "+ name));
+                                "#503.160 Too many variables with the same name at top-level context, name: "+ name));
             }
 
             VariableUtils.VariableHolder variableHolder = holders.get(0);
             if (variableHolder.variable==null) {
                 throw new InternalFunctionException(
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                                "#503.100 local variable with name: "+ name +" wasn't found"));
+                                "#503.200 local variable with name: "+ name +" wasn't found"));
             }
             return variableHolder;
         }
@@ -321,13 +379,13 @@ public class EvaluationFunction implements InternalFunction {
         if (S.b(expression)) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult( meta_not_found,
-                            "#503.200 meta '"+ EXPRESSION +"' wasn't found"));
+                            "#503.300 meta '"+ EXPRESSION +"' wasn't found"));
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
         if (sourceCode==null) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(
-                            source_code_not_found,"#503.220 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
+                            source_code_not_found,"#503.320 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
         }
 
         ExpressionParser parser = new SpelExpressionParser();

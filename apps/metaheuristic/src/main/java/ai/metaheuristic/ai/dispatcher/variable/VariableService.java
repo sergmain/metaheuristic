@@ -449,6 +449,7 @@ public class VariableService {
         variableRepository.save(data);
     }
 
+    @Transactional
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
         if (size==0) {
             throw new IllegalStateException("#171.295 Variable can't be with zero length");
