@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecSourceCodeTopLevelService {
 
+    public final TaskSyncService taskSyncService;
     public final TaskStateService taskStateService;
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
@@ -48,8 +50,12 @@ public class ExecSourceCodeTopLevelService {
                                 longRunningExecContext.execContextId));
                 break;
             case FINISHED:
-                taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
-                taskStateService.finishAsOk(longRunningExecContext.taskId);
+                taskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
+                        () -> {
+                            taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
+                            taskStateService.finishAsOk(longRunningExecContext.taskId);
+                            return null;
+                        });
                 break;
             case UNKNOWN:
             case DOESNT_EXIST:

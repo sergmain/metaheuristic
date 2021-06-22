@@ -1,0 +1,14 @@
+version: 2
+batches:
+  - source-code-for-size-of-files-v1.4
+  - source-code-for-size-of-files-v1.5
+  - source-code-for-size-of-files-v1.6
+experiments:
+  - source-code-for-simple-rnn-v1.2
+  - source-code-for-simple-rnn-v1.3
+  - source-code-for-simple-rnn-v1.3.1
+  - source-code-for-simple-rnn-v1.3.2
+  - source-code-for-simple-rnn-v1.3.3
+longRunnings:
+  - execContextId: 698
+    taskId: 21566

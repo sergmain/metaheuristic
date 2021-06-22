@@ -67,6 +67,12 @@ public class DispatcherParamsService {
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
+    @Nullable
+    private Dispatcher dispatcherCacheValue = null;
+
+    @Nullable
+    private DispatcherParamsYaml dispatcherParamsYaml = null;
+
     @PostConstruct
     @Transactional
     public void checkAndCreateNewDispatcher() {
@@ -97,14 +103,21 @@ public class DispatcherParamsService {
     @Transactional
     public void registerLongRunningExecContext(Long taskId, Long subExecContextId) {
         try {
+            final DispatcherParamsYaml.LongRunningExecContext e = new DispatcherParamsYaml.LongRunningExecContext(taskId, subExecContextId);
             writeLock.lock();
             updateParams((dpy) -> {
                 if (dpy.longRunnings.stream().anyMatch(o->o.taskId.equals(taskId))) {
                     return Boolean.FALSE;
                 }
-                dpy.longRunnings.add(new DispatcherParamsYaml.LongRunningExecContext(taskId, subExecContextId));
+                dpy.longRunnings.add(e);
                 return Boolean.TRUE;
             });
+/*
+            if (dispatcherParamsYaml==null) {
+                dispatcherParamsYaml = new DispatcherParamsYaml();
+            }
+            dispatcherParamsYaml.longRunnings.add(e);
+*/
         } finally {
             writeLock.unlock();
         }
@@ -115,9 +128,6 @@ public class DispatcherParamsService {
         try {
             writeLock.lock();
             updateParams((dpy) -> {
-                if (dpy.longRunnings.stream().anyMatch(o->o.taskId.equals(taskId))) {
-                    return Boolean.FALSE;
-                }
                 for (int i = 0; i < dpy.longRunnings.size(); i++) {
                     if (dpy.longRunnings.get(i).taskId.equals(taskId)) {
                         dpy.longRunnings.remove(i);
@@ -297,12 +307,6 @@ public class DispatcherParamsService {
         }
     }
 
-    @Nullable
-    private Dispatcher dispatcherCacheValue = null;
-
-    @Nullable
-    private DispatcherParamsYaml dispatcherParamsYaml = null;
-
     private void save(Dispatcher dispatcher) {
         try {
             writeLock.lock();
@@ -314,7 +318,7 @@ public class DispatcherParamsService {
             }
             try {
                 dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
-                dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.getParams());
+                dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcher.getParams());
             } catch (Throwable th) {
                 log.error("Error while saving DispatcherParams", th);
                 dispatcherCacheValue = null;

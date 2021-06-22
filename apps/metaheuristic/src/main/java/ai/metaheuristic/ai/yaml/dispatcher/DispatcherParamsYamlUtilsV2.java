@@ -50,8 +50,13 @@ public class DispatcherParamsYamlUtilsV2
         // stream is being used for possible future extension
         v1.batches.stream().collect(Collectors.toCollection(()->t.batches));
         v1.experiments.stream().collect(Collectors.toCollection(()->t.experiments));
+        v1.longRunnings.stream().map(DispatcherParamsYamlUtilsV2::toLongRunning).collect(Collectors.toCollection(()->t.longRunnings));
 
         return t;
+    }
+
+    private static DispatcherParamsYaml.LongRunningExecContext toLongRunning(DispatcherParamsYamlV2.LongRunningExecContextV2 o) {
+        return new DispatcherParamsYaml.LongRunningExecContext(o.taskId, o.execContextId);
     }
 
     @NonNull
