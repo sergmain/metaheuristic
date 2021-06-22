@@ -157,6 +157,9 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml);
                 }
             }
+            for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
+                execContextVariableService.initOutputVariable(execContextResultRest.execContext.id, output);
+            }
         }
         catch (InternalFunctionException e) {
             throw e;

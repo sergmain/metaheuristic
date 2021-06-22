@@ -22,28 +22,35 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardOperatorOverloader;
-import org.springframework.expression.spel.support.StandardTypeConverter;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.List;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
@@ -65,6 +72,9 @@ public class EvaluationFunction implements InternalFunction {
     public final SourceCodeCache sourceCodeCache;
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     public final SourceCodeRepository sourceCodeRepository;
+    public final GlobalVariableService globalVariableService;
+    public final VariableService variableService;
+    public final ExecContextVariableService execContextVariableService;
 
     // https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions
 
@@ -78,11 +88,17 @@ public class EvaluationFunction implements InternalFunction {
         public final String taskContextId;
         public final Long execContextId;
         public final InternalFunctionVariableService internalFunctionVariableService;
+        public final GlobalVariableService globalVariableService;
+        public final VariableService variableService;
+        public final ExecContextVariableService execContextVariableService;
 
-        public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService) {
+        public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService, GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
+            this.globalVariableService = globalVariableService;
+            this.variableService = variableService;
+            this.execContextVariableService = execContextVariableService;
         }
 
         @Override
@@ -117,8 +133,61 @@ public class EvaluationFunction implements InternalFunction {
 
                 @Override
                 public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) throws AccessException {
-                    VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
-
+                    if (newValue==null) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.045 can't create a temporary file"));
+                    }
+                    VariableUtils.VariableHolder variableHolderInput = (VariableUtils.VariableHolder) newValue;
+                    VariableUtils.VariableHolder variableHolderOutput = getVariableHolder(name);
+                    if (variableHolderOutput.globalVariable!=null) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.047 global variable '"+ name+"' can't be used as output variable"));
+                    }
+                    if (variableHolderOutput.variable==null) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                        "#503.048 variable '"+ name+"' wasn't found"));
+                    }
+                    File tempDir = null;
+                    try {
+                        tempDir = DirUtils.createTempDir("mh-evaluation-");
+                        if (tempDir == null) {
+                            throw new InternalFunctionException(
+                                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                            "#503.050 can't create a temporary file"));
+                        }
+                        File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                        if (variableHolderInput.globalVariable!=null) {
+                            globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
+                        }
+                        else if (variableHolderInput.variable!=null) {
+                            variableService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
+                        }
+                        else {
+                            throw new InternalFunctionException(
+                                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                            "#503.052 both local and global variables are null"));
+                        }
+                        try (InputStream is = new FileInputStream(tempFile)) {
+                            variableService.updateWithTx(is, tempFile.length(), variableHolderOutput.variable.id);
+                        }
+                    }
+                    catch (InternalFunctionException e) {
+                        throw e;
+                    }
+                    catch (Throwable th) {
+                        final String es = "#503.055 error " + th.getMessage();
+                        log.error(es, th);
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,es));
+                    }
+                    finally {
+                        if (tempDir!=null) {
+                            FileUtils.deleteQuietly(tempDir);
+                        }
+                    }
                     int i=0;
                 }
             };
@@ -263,7 +332,8 @@ public class EvaluationFunction implements InternalFunction {
 
         ExpressionParser parser = new SpelExpressionParser();
 
-        MhEvalContext mhEvalContext = new MhEvalContext(taskContextId, simpleExecContext.execContextId, internalFunctionVariableService);
+        MhEvalContext mhEvalContext = new MhEvalContext(
+                taskContextId, simpleExecContext.execContextId, internalFunctionVariableService, globalVariableService, variableService, execContextVariableService);
 
         Expression exp = parser.parseExpression(expression);
         Object obj = exp.getValue(mhEvalContext);

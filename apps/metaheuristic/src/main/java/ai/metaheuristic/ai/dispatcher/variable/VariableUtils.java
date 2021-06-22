@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -86,6 +87,14 @@ public class VariableUtils {
     public static VariableData.Permutation asStringAsPermutation(String json) throws JsonProcessingException {
         VariableData.Permutation p = JsonUtils.getMapper().readValue(json, VariableData.Permutation.class);
         return p;
+    }
+
+    @Nullable
+    public static String getParentContext(String taskContextId) {
+        if (!taskContextId.contains(",")) {
+            return null;
+        }
+        return taskContextId.substring(0, taskContextId.lastIndexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)).strip();
     }
 
     @Data

@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
-import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -202,7 +201,7 @@ public class VariableService {
     private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
-            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableService.getParentContext(taskContextId) : taskContextId;
+            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
             if (S.b(contextId)) {
                 throw new TaskCreationException(
                         S.f("#171.040 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
@@ -269,17 +268,9 @@ public class VariableService {
             if (v!=null) {
                 return v;
             }
-            currTaskContextId = getParentContext(currTaskContextId);
+            currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
         return null;
-    }
-
-    @Nullable
-    private static String getParentContext(String taskContextId) {
-        if (!taskContextId.contains(",")) {
-            return null;
-        }
-        return taskContextId.substring(0, taskContextId.lastIndexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)).strip();
     }
 
     @Transactional(readOnly = true)
@@ -382,7 +373,7 @@ public class VariableService {
         TxUtils.checkTxExists();
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
+            String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
                         S.f("#171.280 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
@@ -416,7 +407,7 @@ public class VariableService {
         return task;
     }
 
-    private Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
+    public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
         Variable v = new Variable();
         v.name = variable;
         v.execContextId = execContextId;

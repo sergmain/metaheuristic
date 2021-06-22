@@ -19,18 +19,26 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,6 +50,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -58,6 +68,7 @@ public class ExecContextVariableService {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     /**
      * this method is expecting only one input variable in execContext
@@ -129,6 +140,17 @@ public class ExecContextVariableService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                             "#697.180 Can't open file   "+ file.getAbsolutePath()));
         }
+    }
+
+    @Transactional
+    public Void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
+        TxUtils.checkTxExists();
+
+        SimpleVariable sv = variableService.findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
+        if (sv == null) {
+            Variable v = variableService.createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
+        }
+        return null;
     }
 
 
