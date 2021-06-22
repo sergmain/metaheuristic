@@ -1,6 +1,6 @@
 version: 3
 source:
-  uid: exec-sub-source-code-main-nop-1.1
+  uid: exec-sub-source-code-main-evaluation-1.1
   variables:
     globals:
       - global-variable-for-sub-source-code
@@ -12,5 +12,7 @@ source:
         context: internal
       inputs:
         - name: global-variable-for-sub-source-code
+      outputs:
+        - name: result-output
       metas:
-        - source-code-uid: exec-sub-source-code-sub-nop-1.0
+        - source-code-uid: exec-sub-source-code-sub-evaluation-1.0
