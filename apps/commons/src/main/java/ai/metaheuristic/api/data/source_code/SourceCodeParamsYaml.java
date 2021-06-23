@@ -182,6 +182,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         @Nullable
         public String tags;
         public int priority;
+        @Nullable
+        public String condition;
     }
 
     @Data

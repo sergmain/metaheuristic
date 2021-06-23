@@ -93,6 +93,7 @@ public class SourceCodeParamsYamlUtilsV3
         }
         pr.tags = o.tags;
         pr.priority = o.priority;
+        pr.condition = o.condition;
 
         pr.subProcesses = o.subProcesses!=null
                 ?  new SourceCodeParamsYaml.SubProcesses(
