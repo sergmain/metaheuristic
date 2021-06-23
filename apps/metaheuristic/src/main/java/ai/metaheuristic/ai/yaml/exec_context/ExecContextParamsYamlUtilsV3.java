@@ -83,6 +83,7 @@ public class ExecContextParamsYamlUtilsV3
         }
         p.tags = p2.tags;
         p.priority = p2.priority;
+        p.condition = p2.condition;
         return p;
     }
 

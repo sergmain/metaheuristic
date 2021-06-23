@@ -22,18 +22,23 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,12 +72,17 @@ public class TaskWithInternalContextEventService {
     private final ExecContextTaskFinishingService execContextTaskFinishingService;
     private final TaskStateService taskStateService;
     private final TaskSyncService taskSyncService;
-    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final TaskService taskService;
     private final ExecContextVariableService execContextVariableService;
     private final VariableService variableService;
+    public final InternalFunctionVariableService internalFunctionVariableService;
+    public final SourceCodeCache sourceCodeCache;
+    public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    public final SourceCodeRepository sourceCodeRepository;
+    public final GlobalVariableService globalVariableService;
+
     private final ApplicationEventPublisher eventPublisher;
 
     public static final int MAX_QUEUE_SIZE = 20;
@@ -182,9 +192,22 @@ public class TaskWithInternalContextEventService {
                 }
             }
 
-            boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
-            if (!isLongRunning) {
-                taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+            boolean notSkip = true;
+            if (!S.b(p.condition)) {
+                Object obj = EvaluateExpressionLanguage.evaluate(
+                        taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
+                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService);
+                notSkip = Boolean.TRUE.equals(obj);
+                int i=0;
+            }
+            if (notSkip) {
+                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
+                if (!isLongRunning) {
+                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+                }
+            }
+            else {
+                taskWithInternalContextService.skipTask(taskId);
             }
         }
         finally {

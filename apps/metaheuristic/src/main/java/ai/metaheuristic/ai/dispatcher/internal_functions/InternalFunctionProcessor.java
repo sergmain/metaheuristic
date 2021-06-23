@@ -53,11 +53,6 @@ public class InternalFunctionProcessor {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
         try {
-/*
-            if (internalFunction.isLongRunning()) {
-                registerLongRunningTask(taskId);
-            }
-*/
             internalFunction.process(simpleExecContext, taskId, internalContextId, taskParamsYaml);
             return internalFunction.isLongRunning();
         }

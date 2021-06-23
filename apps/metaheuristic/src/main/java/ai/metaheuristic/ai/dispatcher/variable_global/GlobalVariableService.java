@@ -20,13 +20,16 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
@@ -40,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -79,6 +83,44 @@ public class GlobalVariableService {
             return data;
         } catch (SQLException e) {
             throw new IllegalStateException("#089.020 SQL error", e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public String getVariableDataAsString(Long variableId) {
+        final String data = getVariableDataAsString(variableId, false);
+        if (S.b(data)) {
+            final String es = "#089.023 Variable data wasn't found, variableId: " + variableId;
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return data;
+    }
+
+    @Nullable
+    private String getVariableDataAsString(Long variableId, boolean nullable) {
+        try {
+            Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
+            if (blob==null) {
+                if (nullable) {
+                    log.info("#089.025 Variable #{} is nullable and current value is null", variableId);
+                    return null;
+                }
+                else {
+                    final String es = "#089.027 Variable data wasn't found, variableId: " + variableId;
+                    log.warn(es);
+                    throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+                }
+            }
+            try (InputStream is = blob.getBinaryStream()) {
+                String s = IOUtils.toString(is, StandardCharsets.UTF_8);
+                return s;
+            }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Throwable th) {
+            log.error("#089.028", th);
+            throw new VariableCommonException("#089.029 Error: " + th.getMessage(), variableId);
         }
     }
 

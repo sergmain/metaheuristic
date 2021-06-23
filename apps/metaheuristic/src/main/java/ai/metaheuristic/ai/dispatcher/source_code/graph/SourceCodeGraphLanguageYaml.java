@@ -193,6 +193,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         }
         pr.tags = o.tags;
         pr.priority = o.priority;
+        pr.condition = o.condition;
         return pr;
     }
 

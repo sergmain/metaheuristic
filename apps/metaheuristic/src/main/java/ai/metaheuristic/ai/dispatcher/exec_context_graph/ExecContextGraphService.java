@@ -270,7 +270,7 @@ public class ExecContextGraphService {
     }
 
     /**
-     * !!! This method doesn't return the id of current Task and its new status. Must be changed by outside code.
+     * !!! This method doesn't return the id of current Task and its new status. Must be changed by an outside code.
      */
     @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {

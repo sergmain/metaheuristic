@@ -1,0 +1,13 @@
+version: 3
+source:
+  uid: source-code-with-condition-1.3
+  variables:
+    globals:
+      - mh_int_0
+  processes:
+    - code: mh.nop
+      name: mh.nop
+      function:
+        code: mh.nop
+        context: internal
+      condition: mh_int_0 > 1

@@ -172,6 +172,8 @@ public class ExecContextParamsYamlV3 implements BaseParams {
         @Nullable
         public String tags;
         public int priority;
+        @Nullable
+        public String condition;
 
         public ProcessV3(String processName, String processCode, String internalContextId, FunctionDefinitionV3 function) {
             this.processName = processName;

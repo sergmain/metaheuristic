@@ -71,6 +71,16 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
+    public void skipTask(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+            return;
+        }
+        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
+    }
+
+    @Transactional
     public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
