@@ -214,6 +214,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String uid;
         public List<Map<String, String>> metas = new ArrayList<>();;
         public AccessControl ac;
+        @Nullable
+        public Boolean strictNaming;
 
         @JsonIgnore
         @Nullable

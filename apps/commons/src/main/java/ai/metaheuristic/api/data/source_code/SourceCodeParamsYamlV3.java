@@ -198,6 +198,8 @@ public class SourceCodeParamsYamlV3 implements BaseParams {
         public String uid;
         public List<Map<String, String>> metas = new ArrayList<>();;
         public AccessControlV3 ac;
+        @Nullable
+        public Boolean strictNaming;
     }
 
     public SourceCodeV3 source = new SourceCodeV3();

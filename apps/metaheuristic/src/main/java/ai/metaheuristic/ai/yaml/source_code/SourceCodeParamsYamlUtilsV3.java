@@ -72,6 +72,7 @@ public class SourceCodeParamsYamlUtilsV3
         if (v3.source.ac!=null) {
             p.source.ac = new SourceCodeParamsYaml.AccessControl(v3.source.ac.groups);
         }
+        p.source.strictNaming = v3.source.strictNaming;
         p.checkIntegrity();
         return p;
     }

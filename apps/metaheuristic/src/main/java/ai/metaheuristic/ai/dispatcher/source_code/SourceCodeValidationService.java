@@ -45,10 +45,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
@@ -77,9 +75,7 @@ public class SourceCodeValidationService {
 
     private SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCodeInternal(SourceCodeImpl sourceCode, List<String> checkedUids) {
         if (checkedUids.contains(sourceCode.uid)) {
-            return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_RECURSION_ERROR,
-                    "#177.020 A recursion execution of sourceCode isn't supported, uid '"+sourceCode.uid+"' was already checked");
+            return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         }
         checkedUids.add(sourceCode.uid);
         try {
@@ -106,6 +102,14 @@ public class SourceCodeValidationService {
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
+        }
+        SourceCodeApiData.SourceCodeValidationResult result = checkStrictNaming(sourceCodeYaml);
+        if (result.status!=OK) {
+            return result;
+        }
+        result = checkVariableNaming(sourceCodeYaml);
+        if (result.status!=OK) {
+            return result;
         }
 
         List<SourceCodeParamsYaml.Process> processes = sourceCodeYaml.getProcesses();
@@ -222,11 +226,67 @@ public class SourceCodeValidationService {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
                             S.f("#177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
-
                 }
             }
 
 
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
+        if (!Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
+            return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+        }
+        List<String> badNames = sourceCodeYaml.variables.inputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+        if (!badNames.isEmpty()) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                    S.f("#177.230 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
+        }
+        badNames = sourceCodeYaml.variables.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+        if (!badNames.isEmpty()) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                    S.f("#177.231 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+        }
+        for (SourceCodeParamsYaml.Process p : sourceCodeYaml.processes) {
+            SourceCodeApiData.SourceCodeValidationResult r = checkFunctionVariableNames(p);
+            if (r.status!=OK) {
+                return r;
+            }
+            if (p.subProcesses!=null) {
+                for (SourceCodeParamsYaml.Process subProcess : p.subProcesses.processes) {
+                    SourceCodeApiData.SourceCodeValidationResult r1 = checkFunctionVariableNames(subProcess);
+                    if (r1.status!=OK) {
+                        return r1;
+                    }
+                }
+            }
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private static SourceCodeApiData.SourceCodeValidationResult checkFunctionVariableNames(SourceCodeParamsYaml.Process process) {
+        List<String> badNames = process.inputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+        if (!badNames.isEmpty()) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                    S.f("#177.232 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
+        }
+        badNames = process.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+        if (!badNames.isEmpty()) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                    S.f("#177.233 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+        }
+        if (process.subProcesses!=null) {
+            for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
+                SourceCodeApiData.SourceCodeValidationResult r1 = checkFunctionVariableNames(p);
+                if (r1.status != OK) {
+                    return r1;
+                }
+            }
         }
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
@@ -265,6 +325,55 @@ public class SourceCodeValidationService {
             }
         }
         return null;
+    }
+
+    private static SourceCodeApiData.SourceCodeValidationResult checkStrictNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
+        Set<String> codes = new HashSet<>();
+        for (SourceCodeParamsYaml.Process process : sourceCodeYaml.processes) {
+            codes.add(process.function.code);
+            collectFunctionCodes(process, codes);
+        }
+        if (codes.contains(Consts.MH_EVALUATION_FUNCTION) && !Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.STRICT_NAMING_REQUIRED_ERROR,
+                    "#177.235 strictNaming must be true if the function 'mh.evaluation' is being used");
+        }
+        for (SourceCodeParamsYaml.Process process : sourceCodeYaml.processes) {
+            if (checkForCondition(process) && !Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.STRICT_NAMING_REQUIRED_ERROR,
+                        "#177.236 strictNaming must be true if the condition of process is being used");
+            }
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private static boolean checkForCondition(SourceCodeParamsYaml.Process process) {
+        if (!S.b(process.condition)) {
+            return true;
+        }
+        if (process.subProcesses!=null) {
+            for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
+                if (checkForCondition(p)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void collectFunctionCodes(SourceCodeParamsYaml.Process process, Set<String> codes) {
+        codes.add(process.function.code);
+
+        if (process.subProcesses==null) {
+            return;
+        }
+        if (!process.subProcesses.processes.isEmpty() && process.subProcesses.logic==null) {
+            return;
+        }
+        for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+            collectFunctionCodes(subProcess, codes);
+        }
     }
 
     @Nullable

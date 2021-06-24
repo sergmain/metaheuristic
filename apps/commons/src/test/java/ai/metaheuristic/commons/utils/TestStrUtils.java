@@ -37,4 +37,29 @@ public class TestStrUtils {
         assertFalse(StrUtils.isCodeOk("aaa\\aaaäöü.txt"));
         assertFalse(StrUtils.isCodeOk("aaa/aaaäöü.txt"));
     }
+
+    @Test
+    public void testVariableNames() {
+
+        assertTrue(StrUtils.isVarNameOk("aa1234567890"));
+        assertTrue(StrUtils.isVarNameOk("aa"));
+        assertTrue(StrUtils.isVarNameOk("aa_123"));
+        assertTrue(StrUtils.isVarNameOk("aa_123_"));
+        assertTrue(StrUtils.isVarNameOk("_aa_123_"));
+        assertTrue(StrUtils.isVarNameOk("AA_123_"));
+        assertTrue(StrUtils.isVarNameOk("AA_BB"));
+
+        assertFalse(StrUtils.isVarNameOk("1234567890"));
+        assertFalse(StrUtils.isVarNameOk("1234567890aaa"));
+        assertFalse(StrUtils.isVarNameOk("1234567890-abc_xyz:1.0"));
+        assertFalse(StrUtils.isVarNameOk("aaa.txt"));
+        assertFalse(StrUtils.isVarNameOk("aaa."));
+
+        assertFalse(StrUtils.isVarNameOk("1234567890-?#$%abc_xyz:1.0"));
+        assertFalse(StrUtils.isVarNameOk("aaa bbb.txt"));
+        assertFalse(StrUtils.isVarNameOk("aaa,bbb.txt"));
+        assertFalse(StrUtils.isVarNameOk("aaaäöü.txt"));
+        assertFalse(StrUtils.isVarNameOk("aaa\\aaaäöü.txt"));
+        assertFalse(StrUtils.isVarNameOk("aaa/aaaäöü.txt"));
+    }
 }

@@ -30,12 +30,18 @@ public class StrUtils {
 
     private static final String COPY_NUMBER_PREFIX = "Copy #";
     public static final String ALLOWED_CHARS_IN_CODE_REGEXP = "^[A-Za-z0-9.:_-]*$";
-
+    public static final String ALLOWED_CHARS_IN_VAR_NAME_REGEXP = "^[A-Za-z_][A-Za-z0-9_]*$";
 
     private static final Pattern codePattern = Pattern.compile(ALLOWED_CHARS_IN_CODE_REGEXP);
+    private static final Pattern varNamePattern = Pattern.compile(ALLOWED_CHARS_IN_VAR_NAME_REGEXP);
 
     public static boolean isCodeOk(String code) {
         Matcher m = codePattern.matcher(code);
+        return m.matches();
+    }
+
+    public static boolean isVarNameOk(String name) {
+        Matcher m = varNamePattern.matcher(name);
         return m.matches();
     }
 
