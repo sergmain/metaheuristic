@@ -21,13 +21,24 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.exceptions.BatchProcessingException;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -40,6 +51,10 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class NopFunction implements InternalFunction {
+
+    private final NopService nopService;
+    private final ExecContextGraphSyncService execContextGraphSyncService;
+    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -55,6 +70,10 @@ public class NopFunction implements InternalFunction {
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
+
+        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                    nopService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         log.debug("#055.020 Nop function was invoked");
     }

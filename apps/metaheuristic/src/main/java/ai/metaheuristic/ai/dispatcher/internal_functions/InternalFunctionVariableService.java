@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -70,7 +71,8 @@ public class InternalFunctionVariableService {
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names) {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
-            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
+            SimpleVariable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
+//            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
                 holders.add(new VariableUtils.VariableHolder(v));
             }
@@ -82,7 +84,7 @@ public class InternalFunctionVariableService {
                 else {
                     throw new InternalFunctionException(
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"' not found in local and global contexts, internal context #"+taskContextId));
+                            "Variable '"+name+"' not found in local and global contexts, internal context "+taskContextId));
                 }
             }
         }

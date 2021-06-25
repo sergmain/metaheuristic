@@ -21,10 +21,8 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
@@ -36,7 +34,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -70,7 +67,6 @@ public class BatchSplitterTxService {
     private final VariableService variableService;
 
     @Transactional
-    @SneakyThrows
     public Void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
@@ -97,30 +93,36 @@ public class BatchSplitterTxService {
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        Files.list(srcDir.toPath())
-                .forEach( dataFilePath ->  {
-                    File file = dataFilePath.toFile();
-                    currTaskNumber.incrementAndGet();
-                    try {
-                        VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
-                        if (variableDataSource == null) {
-                            return;
+        try {
+            Files.list(srcDir.toPath())
+                    .forEach( dataFilePath ->  {
+                        File file = dataFilePath.toFile();
+                        currTaskNumber.incrementAndGet();
+                        try {
+                            VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
+                            if (variableDataSource == null) {
+                                return;
+                            }
+                            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                            variableService.createInputVariablesForSubProcess(
+                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+
+                            taskProducingService.createTasksForSubProcesses(
+                                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+
+                        } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
+                            throw e;
+                        } catch (Throwable th) {
+                            String es = "#995.300 An error while saving data to file, " + th.getMessage();
+                            log.error(es, th);
+                            throw new BatchResourceProcessingException(es);
                         }
-                        String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-                        variableService.createInputVariablesForSubProcess(
-                                variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
-
-                        taskProducingService.createTasksForSubProcesses(
-                                simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-
-                    } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
-                        throw e;
-                    } catch (Throwable th) {
-                        String es = "#995.300 An error while saving data to file, " + th.toString();
-                        log.error(es, th);
-                        throw new BatchResourceProcessingException(es);
-                    }
-                });
+                    });
+        } catch (IOException e) {
+            String es = "#995.310 An error while saving data to file, " + e.getMessage();
+            log.error(es, e);
+            throw new BatchResourceProcessingException(es);
+        }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
         return null;
     }
