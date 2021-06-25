@@ -61,7 +61,6 @@ public class ExecContextVariableService {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final EventPublisherService eventPublisherService;
 
     /**
      * this method is expecting only one input variable in execContext

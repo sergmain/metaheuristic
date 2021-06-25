@@ -16,11 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
@@ -31,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -49,7 +46,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class InternalFunctionVariableService {
 
-    private final VariableRepository variableRepository;
     private final VariableService variableService;
     private final GlobalVariableRepository globalVariableRepository;
     private final GlobalVariableService globalVariableService;
@@ -63,7 +59,6 @@ public class InternalFunctionVariableService {
         }
     }
 
-//    @Transactional(readOnly = true)
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String name) {
         return discoverVariables(execContextId, taskContextId, new String[]{name});
     }
@@ -72,7 +67,6 @@ public class InternalFunctionVariableService {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             SimpleVariable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
-//            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
                 holders.add(new VariableUtils.VariableHolder(v));
             }

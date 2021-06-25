@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.nop;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
@@ -51,6 +52,7 @@ public class NopService {
 
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
+    private final ExecContextGraphService execContextGraphService;
 
     @Transactional
     public Void processSubProcesses(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
@@ -73,6 +75,8 @@ public class NopService {
 
             taskProducingService.createTasksForSubProcesses(
                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+
+            execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
 
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;

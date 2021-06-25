@@ -201,7 +201,8 @@ public class TaskWithInternalContextEventService {
                 int i=0;
             }
             if (notSkip) {
-                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
+//                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
+                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
                     taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
                 }
