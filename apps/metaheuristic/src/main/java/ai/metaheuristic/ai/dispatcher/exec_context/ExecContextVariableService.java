@@ -19,26 +19,21 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,8 +45,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -73,13 +66,17 @@ public class ExecContextVariableService {
     /**
      * this method is expecting only one input variable in execContext
      * for initializing more that one input variable the method initInputVariables has to be used
+     *
+     * varIndex - index of variable, start with 0
      */
     @Transactional
-    public void initInputVariable(InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        if (execContextParamsYaml.variables.inputs.size()!=1) {
-            throw new ExecContextCommonException("#697.020 expected only one input variable in execContext but actual count: " +execContextParamsYaml.variables.inputs.size());
+    public void initInputVariable(InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
+        if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
+            throw new ExecContextCommonException(
+                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                            varIndex, execContextParamsYaml.variables.inputs.size()));
         }
-        String inputVariable = execContextParamsYaml.variables.inputs.get(0).name;
+        String inputVariable = execContextParamsYaml.variables.inputs.get(varIndex).name;
         if (S.b(inputVariable)) {
             throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }

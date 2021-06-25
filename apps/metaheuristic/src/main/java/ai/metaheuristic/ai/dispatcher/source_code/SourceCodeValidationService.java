@@ -125,7 +125,7 @@ public class SourceCodeValidationService {
             if (code != null) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
-                        "#177.100 There are at least two processes with the same code '" + process.code + "'");
+                        "#177.100 There are at least two processes with the same code '" + code + "'");
             }
             code = validateProcessCode(process);
             if (code != null) {

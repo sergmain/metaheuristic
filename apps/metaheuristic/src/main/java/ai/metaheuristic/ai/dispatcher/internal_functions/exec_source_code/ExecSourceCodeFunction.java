@@ -140,7 +140,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
                                 system_error,
                                 "#508.070 can't create a temporary file"));
             }
-            for (TaskParamsYaml.InputVariable input : taskParamsYaml.task.inputs) {
+            for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
+                TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
                 File tempFile = File.createTempFile("input-", ".bin", tempDir);
                 switch (input.context) {
                     case global:
@@ -154,7 +155,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                 }
                 try (InputStream is = new FileInputStream(tempFile)) {
                     execContextVariableService.initInputVariable(
-                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml);
+                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
