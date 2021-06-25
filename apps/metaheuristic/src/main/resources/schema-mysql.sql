@@ -172,7 +172,7 @@ CREATE TABLE mh_variable_global
     VERSION         INT UNSIGNED    NOT NULL,
     NAME            VARCHAR(250) not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
-    DATA            LONGBLOB,
+    DATA            LONGBLOB        NOT NULL,
     FILENAME        VARCHAR(150),
     PARAMS          MEDIUMTEXT not null
 );

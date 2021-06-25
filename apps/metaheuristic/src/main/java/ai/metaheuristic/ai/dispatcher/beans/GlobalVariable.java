@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -53,6 +54,7 @@ public class GlobalVariable implements Serializable {
     @Lob
     private Blob data;
 
+    @Nullable
     @Column(name = "FILENAME")
     public String filename;
 

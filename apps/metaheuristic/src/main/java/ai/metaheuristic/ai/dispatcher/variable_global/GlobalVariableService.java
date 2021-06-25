@@ -156,7 +156,7 @@ public class GlobalVariableService {
     }
 
     @Transactional
-    public GlobalVariable save(InputStream is, long size, String variable, String filename) {
+    public GlobalVariable save(InputStream is, long size, String variable, @Nullable String filename) {
         GlobalVariable data = new GlobalVariable();
         data.setName(variable);
         data.setFilename(filename);

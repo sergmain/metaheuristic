@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -69,7 +70,7 @@ public class GlobalVariableController {
     @PostMapping(value = "/global-variable-upload-from-file")
     public String createGlobalVariableFromFile(
             MultipartFile file,
-            @RequestParam(name = "variable") String variable,
+            @Nullable @RequestParam(name = "variable") String variable,
             final RedirectAttributes redirectAttributes) {
 
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableFromFile(file, variable);
@@ -79,10 +80,23 @@ public class GlobalVariableController {
         return "redirect:/dispatcher/global-variable/global-variables";
     }
 
+    @PostMapping(value = "/global-variable-with-value")
+    public String createGlobalVariableWithValue(
+            @Nullable @RequestParam(name = "variable") String variable,
+            @Nullable @RequestParam(name = "value") String value,
+            final RedirectAttributes redirectAttributes) {
+
+        OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableWithValue(variable, value);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
+        }
+        return "redirect:/dispatcher/global-variable/global-variables";
+    }
+
     @PostMapping(value = "/global-variable-in-external-storage")
     public String registerGlobalVariableInExternalStorage(
-            @RequestParam(name = "variable") String variable,
-            @RequestParam(name = "params") String params,
+            @Nullable @RequestParam(name = "variable") String variable,
+            @Nullable @RequestParam(name = "params") String params,
             final RedirectAttributes redirectAttributes) {
 
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableWithExternalStorage(variable, params);

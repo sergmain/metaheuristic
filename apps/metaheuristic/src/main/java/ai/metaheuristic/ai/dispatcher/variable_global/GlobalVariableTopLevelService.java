@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 @Slf4j
 @Profile("dispatcher")
@@ -54,16 +52,19 @@ public class GlobalVariableTopLevelService {
         return new GlobalVariableData.GlobalVariablesResult(globalVariableService.getAllAsSimpleGlobalVariable(pageable));
     }
 
-    public OperationStatusRest createGlobalVariableFromFile(MultipartFile file, String variable) {
+    public OperationStatusRest createGlobalVariableFromFile(MultipartFile file, @Nullable String variable) {
         return storeInitialGlobalVariable(file, variable, file.getOriginalFilename());
     }
 
-    public OperationStatusRest storeInitialGlobalVariable(MultipartFile file, String variable, @Nullable String originFilename) {
+    public OperationStatusRest storeInitialGlobalVariable(MultipartFile file, @Nullable String variable, @Nullable String originFilename) {
+        if (S.b(variable)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of global variable is blank");
+        }
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.020 name of uploaded file is null");
         }
         if (file.getSize()==0) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 Global variables with size as 0, isn't supported");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 global variables with size as 0, isn't supported");
         }
         File tempFile = globals.createTempFileForDispatcher("temp-raw-file-");
         if (tempFile.exists()) {
@@ -76,10 +77,9 @@ public class GlobalVariableTopLevelService {
             try {
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
             } catch (IOException e) {
-                log.error("Error while storing data to temp file", e);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#172.040 can't persist uploaded file as " +
-                                tempFile.getAbsolutePath()+", error: " + e.toString());
+                String es = "#172.040 can't persist uploaded file as " + tempFile.getAbsolutePath()+", error: " + e.getMessage();
+                log.error(es, e);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
 
             try {
@@ -97,9 +97,34 @@ public class GlobalVariableTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest createGlobalVariableWithExternalStorage(String variable, String params ) {
+    public OperationStatusRest createGlobalVariableWithValue(@Nullable String variable, @Nullable String value ) {
+        if (S.b(variable)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.050 name of global variable is blank");
+        }
+        if (value==null || value.length()==0) {
+            String es = "#172.053 value is blank";
+            log.error(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
 
-        if (StringUtils.isBlank(params)) {
+        try {
+            byte[] bytes = value.getBytes();
+            try (InputStream is = new ByteArrayInputStream(bytes)) {
+                globalVariableService.save(is, bytes.length, variable, null);
+            }
+        } catch (Throwable e) {
+            String es = "#172.055 An error while saving data to file, " + e.toString();
+            log.error(es, e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest createGlobalVariableWithExternalStorage(@Nullable String variable, @Nullable String params ) {
+        if (S.b(variable)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.057 name of global variable is blank");
+        }
+        if (S.b(params)) {
             String es = "#172.060 GlobalVariable params is blank";
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
