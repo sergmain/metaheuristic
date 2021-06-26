@@ -2,8 +2,8 @@
   "spring.jpa.properties.hibernate.dialect": "org.hibernate.dialect.PostgreSQL95Dialect",
   "spring.jpa.hibernate.ddl-auto": "none",
   "spring.datasource.driver-class-name": "org.postgresql.Driver",
-  "spring.datasource.platform": "postgresql",
-  "spring.datasource.continue-on-error": false,
+  "spring.sql.init.platform": "postgresql",
+  "spring.sql.init.continue-on-error": false,
 
   "mh.thread-number": 4,
   "mh.dispatcher.is-ssl-required": true,

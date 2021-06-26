@@ -136,11 +136,11 @@ public class TaskAssetPreparer {
         if (task==null) {
             return null;
         }
-        if (StringUtils.isBlank(task.dispatcherUrl)) {
+        if (S.b(task.dispatcherUrl)) {
             log.error("#951.040 dispatcherUrl for task {} is blank", task.getTaskId());
             return null;
         }
-        if (StringUtils.isBlank(task.getParams())) {
+        if (S.b(task.getParams())) {
             log.error("#951.060 Params for task {} is blank", task.getTaskId());
             return null;
         }
