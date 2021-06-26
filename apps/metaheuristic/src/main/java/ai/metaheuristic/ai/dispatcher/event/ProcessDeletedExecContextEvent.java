@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 /**
  * @author Serge
@@ -27,4 +26,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ProcessDeletedExecContextEvent {
     public final Long execContextId;
+    public final Long execContextGraphId;
+    public final Long execContextTaskStateId;
+    public final Long execContextVariableStateId;
 }

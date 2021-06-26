@@ -41,6 +41,16 @@ public class EventPublisherService {
         eventPublisher.publishEvent(event);
     }
 
+    public void publishProcessDeletedExecContextTxEvent(ProcessDeletedExecContextTxEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
+
+    public void publishTaskQueueCleanByExecContextIdTxEvent(TaskQueueCleanByExecContextIdTxEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
+
     public void publishCheckTaskCanBeFinishedTxEvent(CheckTaskCanBeFinishedTxEvent event) {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);

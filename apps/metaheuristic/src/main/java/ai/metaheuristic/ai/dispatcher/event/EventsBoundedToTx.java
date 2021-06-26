@@ -81,6 +81,16 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(event.to());
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleProcessDeletedExecContextTxEvent(ProcessDeletedExecContextTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleTaskQueueCleanByExecContextIdTxEvent(TaskQueueCleanByExecContextIdTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
     // TransactionPhase.AFTER_ROLLBACK
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
