@@ -268,26 +268,9 @@ public class EvaluateExpressionLanguage {
                     if (firstObject==null || secondObject==null) {
                         throw new EvaluationException("(firstObject==null || secondObject==null)");
                     }
-                    VariableUtils.VariableHolder variableHolderInput = (VariableUtils.VariableHolder) firstObject;
-                    if (variableHolderInput.variable==null && variableHolderInput.globalVariable==null) {
-                        throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.120 (variableHolderInput.variable==null && variableHolderInput.globalVariable=null)"));
-                    }
-
-                    if (!(secondObject instanceof Integer)) {
-                        throw new EvaluationException("(!(secondObject instanceof Integer))");
-                    }
-                    String strValue;
-                    if (variableHolderInput.variable!=null) {
-                        strValue = variableService.getVariableDataAsString(variableHolderInput.variable.id);
-                    }
-                    else {
-                        strValue = globalVariableService.getVariableDataAsString(variableHolderInput.globalVariable.id);
-                    }
-                    int value = Integer.parseInt(strValue);
-
-                    final int compare = Integer.compare(value, (Integer) secondObject);
+                    Integer firstValue = getValue(firstObject);
+                    Integer secondValue = getValue(secondObject);
+                    final int compare = firstValue.compareTo(secondValue);
                     return compare;
                 }
             };
@@ -298,10 +281,7 @@ public class EvaluateExpressionLanguage {
             OperatorOverloader ool = new OperatorOverloader() {
                 @Override
                 public boolean overridesOperation(Operation operation, @Nullable Object leftOperand, @Nullable Object rightOperand) throws EvaluationException {
-                    if (operation==Operation.ADD && leftOperand instanceof VariableUtils.VariableHolder && rightOperand instanceof Integer) {
-                        return true;
-                    }
-                    return false;
+                    return isOkClass(leftOperand) && isOkClass(rightOperand);
                 }
 
                 @Override
@@ -309,26 +289,53 @@ public class EvaluateExpressionLanguage {
                     if (leftOperand==null || rightOperand==null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.100 can't create a temporary file"));
+                                        "#509.100 (leftOperand==null || rightOperand==null)"));
                     }
-                    VariableUtils.VariableHolder variableHolderInput = (VariableUtils.VariableHolder) leftOperand;
-                    if (variableHolderInput.variable==null) {
-                        throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.120 variable is null"));
-                    }
-
-                    if (operation==Operation.ADD && rightOperand instanceof Integer) {
-                        String strValue = variableService.getVariableDataAsString(variableHolderInput.variable.id);
-                        int value = Integer.parseInt(strValue) + (Integer)rightOperand;
-                        return value;
+                    Integer leftValue = getValue(leftOperand);
+                    Integer rightValue = getValue(rightOperand);
+                    switch (operation) {
+                        case ADD:
+                            return leftValue + rightValue;
+                        case SUBTRACT:
+                            return leftValue - rightValue;
+                        case DIVIDE:
+                            return leftValue / rightValue;
+                        case MULTIPLY:
+                            return leftValue * rightValue;
+                        case MODULUS:
+                            return leftValue % rightValue;
+                        case POWER:
+                            return leftValue ^ rightValue;
                     }
                     throw new EvaluationException(S.f("Not supported operation %s, left: %, right: %s",
                             operation, leftOperand.getClass(), rightOperand.getClass()));
                 }
             };
             return ool;
-//            new StandardOperatorOverloader();
+        }
+
+        private Integer getValue(Object operand) {
+            if (operand instanceof Integer) {
+                return (Integer)operand;
+            }
+            if (operand instanceof VariableUtils.VariableHolder) {
+                VariableUtils.VariableHolder variableHolder = (VariableUtils.VariableHolder) operand;
+                if (variableHolder.notInited()) {
+                    throw new EvaluationException("(variableHolder.notInited())");
+                }
+                String strValue;
+                if (variableHolder.variable!=null) {
+                    strValue = variableService.getVariableDataAsString(variableHolder.variable.id);
+                }
+                else if (variableHolder.globalVariable!=null) {
+                    strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+                }
+                else {
+                    throw new IllegalStateException("both are null");
+                }
+                return Integer.valueOf(strValue);
+            }
+            throw new EvaluationException("not supported type: " + operand.getClass());
         }
 
         @Override
@@ -342,6 +349,10 @@ public class EvaluateExpressionLanguage {
         public Object lookupVariable(String name) {
             VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
             return variableHolder;
+        }
+
+        private static boolean isOkClass(@Nullable Object op) {
+            return op instanceof VariableUtils.VariableHolder || op instanceof Integer;
         }
 
         public VariableUtils.VariableHolder getVariableHolder(String name) {
@@ -370,6 +381,26 @@ public class EvaluateExpressionLanguage {
         return obj;
     }
 
+/*
+org.springframework.expression.spel.SpelEvaluationException: EL1030E: The operator 'SUBTRACT' is not supported between objects of type 'ai.metaheuristic.ai.dispatcher.variable.VariableUtils$VariableHolder' and 'java.lang.Integer'
+	at org.springframework.expression.spel.ExpressionState.operate(ExpressionState.java:240) ~[spring-expression-5.3.6.jar:5.3.6]
+	at org.springframework.expression.spel.ast.OpMinus.getValueInternal(OpMinus.java:144) ~[spring-expression-5.3.6.jar:5.3.6]
+	at org.springframework.expression.spel.ast.OpGT.getValueInternal(OpGT.java:48) ~[spring-expression-5.3.6.jar:5.3.6]
+	at org.springframework.expression.spel.ast.OpGT.getValueInternal(OpGT.java:37) ~[spring-expression-5.3.6.jar:5.3.6]
+	at org.springframework.expression.spel.ast.SpelNodeImpl.getValue(SpelNodeImpl.java:112) ~[spring-expression-5.3.6.jar:5.3.6]
+	at org.springframework.expression.spel.standard.SpelExpression.getValue(SpelExpression.java:272) ~[spring-expression-5.3.6.jar:5.3.6]
+	at ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage.evaluate(EvaluateExpressionLanguage.java:369) ~[classes/:na]
+	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.processInternalFunction(TaskWithInternalContextEventService.java:197) ~[classes/:na]
+	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.lambda$process$1(TaskWithInternalContextEventService.java:141) ~[classes/:na]
+	at ai.metaheuristic.ai.dispatcher.task.TaskSyncService.getWithSyncNullable(TaskSyncService.java:112) ~[classes/:na]
+	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.process(TaskWithInternalContextEventService.java:138) ~[classes/:na]
+	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.lambda$putToQueue$0(TaskWithInternalContextEventService.java:105) ~[classes/:na]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) ~[na:na]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:829) ~[na:na]
 
+* * */
 
 }
