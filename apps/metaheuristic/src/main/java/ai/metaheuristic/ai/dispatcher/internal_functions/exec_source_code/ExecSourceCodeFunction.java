@@ -119,10 +119,11 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "#508.050 sourceCode #"+subScId+" wasn't found"));
         }
 
-        ExecContextData.RootAndParent rootAndParent =
-                simpleExecContext.getParamsYaml().execContextGraph!=null
-                        ? new ExecContextData.RootAndParent(simpleExecContext.getParamsYaml().execContextGraph.rootExecContextId, simpleExecContext.execContextId)
-                        : null;
+        Long rootExecContextId = simpleExecContext.getParamsYaml().execContextGraph!=null
+                ? simpleExecContext.getParamsYaml().execContextGraph.rootExecContextId
+                : simpleExecContext.execContextId;
+
+        ExecContextData.RootAndParent rootAndParent = new ExecContextData.RootAndParent(rootExecContextId, simpleExecContext.execContextId);
 
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
                 execContextCreatorTopLevelService.createExecContextAndStart(
