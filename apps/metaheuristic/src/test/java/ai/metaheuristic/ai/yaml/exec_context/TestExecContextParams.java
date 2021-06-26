@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,24 +37,36 @@ public class TestExecContextParams {
 
     @Test
     public void testMarshaling() {
-        ExecContextParamsYaml expy = new ExecContextParamsYaml();
+        ExecContextParamsYamlV3 expy = new ExecContextParamsYamlV3();
 
-        ExecContextParamsYaml.FunctionDefinition fd1 = new ExecContextParamsYaml.FunctionDefinition("function#1");
-        ExecContextParamsYaml.Process p1 = new ExecContextParamsYaml.Process("process #1", "process #1", Consts.TOP_LEVEL_CONTEXT_ID, fd1);
+        ExecContextParamsYamlV3.FunctionDefinitionV3 fd1 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#1");
+        ExecContextParamsYamlV3.ProcessV3 p1 = new ExecContextParamsYamlV3.ProcessV3("process #1", "process #1", Consts.TOP_LEVEL_CONTEXT_ID, fd1);
 
-        ExecContextParamsYaml.FunctionDefinition fd2 = new ExecContextParamsYaml.FunctionDefinition("function#2");
-        ExecContextParamsYaml.Process p2 = new ExecContextParamsYaml.Process("process #2", "process #2", Consts.TOP_LEVEL_CONTEXT_ID, fd2);
+        ExecContextParamsYamlV3.FunctionDefinitionV3 fd2 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#2");
+        ExecContextParamsYamlV3.ProcessV3 p2 = new ExecContextParamsYamlV3.ProcessV3("process #2", "process #2", Consts.TOP_LEVEL_CONTEXT_ID, fd2);
 
         expy.processes.add(p1);
         expy.processes.add(p2);
+        String sv3 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(expy, 3);
 
-        ExecContextParamsYaml.Process p = expy.findProcess("process#3");
+        ExecContextParamsYaml expy1 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(sv3);
+
+        expy1.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(13L, 42L, "aaa");
+
+        ExecContextParamsYaml.Process p = expy1.findProcess("process#3");
         assertNull(p);
 
-        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy);
+        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy1);
 
         System.out.println(s);
         assertFalse(s.contains("processMap"));
+
+        ExecContextParamsYaml expy2 = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(s);
+
+        assertNotNull(expy2.execContextGraph);
+        assertEquals(13L, expy2.execContextGraph.rootExecContextId);
+        assertEquals(42L, expy2.execContextGraph.parentExecContextId);
+        assertEquals("aaa", expy2.execContextGraph.graph);
 
     }
 }

@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -287,7 +288,9 @@ public class DispatcherParamsService {
         find();
         try {
             readLock.lock();
-            return dispatcherParamsYaml ==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.longRunnings);
+            return dispatcherParamsYaml ==null ? List.of() : dispatcherParamsYaml.longRunnings.stream()
+                    .sorted((o1, o2)->o2.execContextId.compareTo(o1.execContextId))
+                    .collect(Collectors.toList());
         } finally {
             readLock.unlock();
         }

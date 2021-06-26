@@ -22,19 +22,19 @@ import java.util.Map;
 
 public class ExecContextParamsYamlUtils {
 
-
     private static final ExecContextParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsYamlUtilsV1();
     private static final ExecContextParamsYamlUtilsV2 YAML_UTILS_V_2 = new ExecContextParamsYamlUtilsV2();
     private static final ExecContextParamsYamlUtilsV3 YAML_UTILS_V_3 = new ExecContextParamsYamlUtilsV3();
-    private static final ExecContextParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final ExecContextParamsYamlUtilsV4 YAML_UTILS_V_4 = new ExecContextParamsYamlUtilsV4();
+    private static final ExecContextParamsYamlUtilsV4 DEFAULT_UTILS = YAML_UTILS_V_4;
 
     public static final BaseYamlUtils<ExecContextParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3
+                    3, YAML_UTILS_V_3,
+                    4, YAML_UTILS_V_4
             ),
             DEFAULT_UTILS
     );
-
 }

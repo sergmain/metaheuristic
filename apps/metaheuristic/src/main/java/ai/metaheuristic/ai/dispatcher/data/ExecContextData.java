@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -38,6 +39,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class ExecContextData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RootAndParent {
+        public Long rootExecContextId;
+        public Long parentExecContextId;
+    }
 
     @Data
     @AllArgsConstructor

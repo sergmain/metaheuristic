@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -30,10 +29,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+/**
+ * @author Serge
+ * Date: 6/25/2021
+ * Time: 10:15 PM
+ */
 @Data
-public class ExecContextParamsYaml implements BaseParams {
+public class ExecContextParamsYamlV4 implements BaseParams {
 
     public final int version = 4;
 
@@ -45,17 +48,17 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDeclaration {
+    public static class VariableDeclarationV4 {
         public List<String> globals;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV4> inputs = new ArrayList<>();
+        public final List<VariableV4> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Variable {
+    public static class VariableV4 {
         public String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -90,11 +93,11 @@ public class ExecContextParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public Variable(String name) {
+        public VariableV4(String name) {
             this.name = name;
         }
 
-        public Variable(EnumsApi.DataSourcing sourcing, String name) {
+        public VariableV4(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -103,17 +106,17 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefinition implements SimpleFunctionDefinition {
+    public static class FunctionDefinitionV4 implements SimpleFunctionDefinition {
         public String code;
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefinition(String code) {
+        public FunctionDefinitionV4(String code) {
             this.code = code;
         }
 
-        public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefinitionV4(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -123,7 +126,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Cache {
+    public static class CacheV4 {
         public boolean enabled;
         public boolean omitInline;
     }
@@ -131,40 +134,35 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExecContextGraph {
+    public static class ExecContextGraphV4 {
         public Long rootExecContextId;
         public Long parentExecContextId;
         public String graph = ConstsApi.EMPTY_GRAPH;
-
-        public ExecContextGraph(Long rootExecContextId, Long parentExecContextId) {
-            this.rootExecContextId = rootExecContextId;
-            this.parentExecContextId = parentExecContextId;
-        }
     }
 
     /**
      * !!!!!!!
      * after adding new field,
-     * add a new mapping in
-     * @see ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
+     * add new mapping in
+     * ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
      *
      */
     @Data
     @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Process {
+    public static class ProcessV4 {
 
         public String processName;
         public String processCode;
 
         public String internalContextId;
 
-        public FunctionDefinition function;
+        public FunctionDefinitionV4 function;
         @Nullable
-        public List<FunctionDefinition> preFunctions;
+        public List<FunctionDefinitionV4> preFunctions;
         @Nullable
-        public List<FunctionDefinition> postFunctions;
+        public List<FunctionDefinitionV4> postFunctions;
 
         @Nullable
         public EnumsApi.SourceCodeSubProcessLogic logic;
@@ -175,20 +173,19 @@ public class ExecContextParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV4> inputs = new ArrayList<>();
+        public final List<VariableV4> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
 
         @Nullable
-        public Cache cache;
-
+        public CacheV4 cache;
         @Nullable
         public String tags;
         public int priority;
         @Nullable
         public String condition;
 
-        public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
+        public ProcessV4(String processName, String processCode, String internalContextId, FunctionDefinitionV4 function) {
             this.processName = processName;
             this.processCode = processCode;
             this.internalContextId = internalContextId;
@@ -198,31 +195,12 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
-    public final List<Process> processes = new ArrayList<>();
-    public final VariableDeclaration variables = new VariableDeclaration();
+    public final List<ProcessV4> processes = new ArrayList<>();
+    public final VariableDeclarationV4 variables = new VariableDeclarationV4();
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
 
     @Nullable
-    public ExecContextGraph execContextGraph;
-
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    private HashMap<String, Process> getProcessMap() {
-        return processMap;
-    }
-
-    // key - processCode, value - Process
-    private HashMap<String, Process> processMap = null;
-
-    @Nullable
-    @JsonIgnore
-    public Process findProcess(String processCode) {
-        if (processMap==null) {
-            processMap = processes.stream().collect(Collectors.toMap(o->o.processCode, o->o, (a, b) -> b, HashMap::new));
-        }
-        return processMap.get(processCode);
-    }
-
+    public ExecContextGraphV4 execContextGraph;
 }

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -26,6 +27,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -62,10 +64,16 @@ public class ExecContextCreatorTopLevelService {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId, boolean isStart) {
+        return createExecContextAndStart(sourceCodeId, companyUniqueId, isStart, null);
+    }
+
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
+            Long sourceCodeId, Long companyUniqueId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
         return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
                 () -> {
                     try {
-                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(sourceCodeId, companyUniqueId, isStart);
+                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
+                                sourceCodeId, companyUniqueId, isStart, rootAndParent);
                         return result;
                     }
                     catch (ExecContextTooManyInstancesException e) {

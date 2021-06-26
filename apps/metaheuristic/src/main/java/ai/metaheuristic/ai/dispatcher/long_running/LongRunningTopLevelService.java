@@ -26,9 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static ai.metaheuristic.api.EnumsApi.ExecContextState;
 
 /**
@@ -49,10 +46,7 @@ public class LongRunningTopLevelService {
 
     public void updateStateForLongRunning() {
 
-        List<DispatcherParamsYaml.LongRunningExecContext> list =
-                dispatcherParamsService.getLongRunningExecContexts().stream().sorted((o1, o2)->o2.execContextId.compareTo(o1.execContextId)).collect(Collectors.toList());
-
-        for (DispatcherParamsYaml.LongRunningExecContext longRunningExecContext : list) {
+        for (DispatcherParamsYaml.LongRunningExecContext longRunningExecContext : dispatcherParamsService.getLongRunningExecContexts()) {
             ExecContextImpl execContext = execContextCache.findById(longRunningExecContext.execContextId);
             if (execContext==null) {
                 dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);

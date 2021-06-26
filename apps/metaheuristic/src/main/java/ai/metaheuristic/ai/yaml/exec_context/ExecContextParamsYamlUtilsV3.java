@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV4;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
  */
 
 public class ExecContextParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<ExecContextParamsYamlV3, ExecContextParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV3, ExecContextParamsYamlV4, ExecContextParamsYamlUtilsV4,
+        Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -48,8 +49,8 @@ public class ExecContextParamsYamlUtilsV3
 
     @NonNull
     @Override
-    public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV3 v3) {
-        ExecContextParamsYaml t = new ExecContextParamsYaml();
+    public ExecContextParamsYamlV4 upgradeTo(@NonNull ExecContextParamsYamlV3 v3) {
+        ExecContextParamsYamlV4 t = new ExecContextParamsYamlV4();
 
         // right now we don't need to convert Graph because it has only one version of structure
         // so just copying of graph field is Ok
@@ -62,15 +63,15 @@ public class ExecContextParamsYamlUtilsV3
         return t;
     }
 
-    private void initVariables(ExecContextParamsYamlV3.VariableDeclarationV3 v3, ExecContextParamsYaml.VariableDeclaration v) {
+    private void initVariables(ExecContextParamsYamlV3.VariableDeclarationV3 v3, ExecContextParamsYamlV4.VariableDeclarationV4 v) {
         v.inline.putAll(v3.inline);
         v.globals = v3.globals;
         v3.inputs.forEach(o->v.inputs.add(toVariable(o)));
         v3.outputs.forEach(o->v.outputs.add(toVariable(o)));
     }
 
-    private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV3.ProcessV3 p2) {
-        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
+    private static ExecContextParamsYamlV4.ProcessV4 toProcess(ExecContextParamsYamlV3.ProcessV3 p2) {
+        ExecContextParamsYamlV4.ProcessV4 p = new ExecContextParamsYamlV4.ProcessV4();
         BeanUtils.copyProperties(p2, p, "function", "preFunctions", "postFunctions", "inputs", "outputs", "metas");
         p.function = toFunction(p2.function);
         p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV3::toFunction).collect(Collectors.toList()) : null;
@@ -79,7 +80,7 @@ public class ExecContextParamsYamlUtilsV3
         p2.outputs.stream().map(ExecContextParamsYamlUtilsV3::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
-            p.cache = new ExecContextParamsYaml.Cache(p2.cache.enabled, p2.cache.omitInline);
+            p.cache = new ExecContextParamsYamlV4.CacheV4(p2.cache.enabled, p2.cache.omitInline);
         }
         p.tags = p2.tags;
         p.priority = p2.priority;
@@ -87,13 +88,13 @@ public class ExecContextParamsYamlUtilsV3
         return p;
     }
 
-    private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV3.VariableV3 v) {
-        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext);
+    private static ExecContextParamsYamlV4.VariableV4 toVariable(ExecContextParamsYamlV3.VariableV3 v) {
+        return new ExecContextParamsYamlV4.VariableV4(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext);
     }
 
     @NonNull
-    private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV3.FunctionDefinitionV3 f1) {
-        return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context);
+    private static ExecContextParamsYamlV4.FunctionDefinitionV4 toFunction(ExecContextParamsYamlV3.FunctionDefinitionV3 f1) {
+        return new ExecContextParamsYamlV4.FunctionDefinitionV4(f1.code, f1.params, f1.context);
     }
 
     @NonNull
@@ -103,8 +104,8 @@ public class ExecContextParamsYamlUtilsV3
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ExecContextParamsYamlUtilsV4 nextUtil() {
+        return (ExecContextParamsYamlUtilsV4) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
     }
 
     @Override

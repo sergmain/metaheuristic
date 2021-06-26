@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -47,6 +48,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,7 +105,9 @@ public class ExecContextCreatorService {
     }
 
     @Transactional
-    public ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyId, boolean isStart) {
+    public ExecContextCreationResult createExecContextAndStart(
+            Long sourceCodeId, Long companyId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
+
         sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
@@ -116,7 +120,7 @@ public class ExecContextCreatorService {
             return new ExecContextCreationResult("#562.080 Error creating execContext: " +
                     "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
         }
-        final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId);
+        final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId, rootAndParent);
         if (!isStart || creationResult.isErrorMessages()) {
             return creationResult;
         }
@@ -149,7 +153,7 @@ public class ExecContextCreatorService {
      * @param companyId Long companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId, @Nullable ExecContextData.RootAndParent rootAndParent) {
         TxUtils.checkTxExists();
         sourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -177,13 +181,15 @@ public class ExecContextCreatorService {
             return new ExecContextCreationResult("#562.120 processGraph is broken");
         }
 
-        ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph);
+        ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph, rootAndParent);
         ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;
     }
 
-    private ExecContextImpl createExecContext(SourceCodeImpl sourceCode, Long companyId, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    private ExecContextImpl createExecContext(
+            SourceCodeImpl sourceCode, Long companyId, SourceCodeData.SourceCodeGraph sourceCodeGraph,
+            @Nullable ExecContextData.RootAndParent rootAndParent) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.companyId = companyId;
@@ -193,6 +199,9 @@ public class ExecContextCreatorService {
         ec.setCompletedOn(null);
         ExecContextParamsYaml expy = to(sourceCodeGraph);
         expy.sourceCodeUid = sourceCode.uid;
+        if (rootAndParent!=null) {
+            expy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
+        }
         ec.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy));
         ec.setValid(true);
 

@@ -87,7 +87,7 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("Only for testing");
         }
         return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                () -> execContextCreatorService.createExecContext(sourceCode, companyId));
+                () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
     }
 
     @Transactional

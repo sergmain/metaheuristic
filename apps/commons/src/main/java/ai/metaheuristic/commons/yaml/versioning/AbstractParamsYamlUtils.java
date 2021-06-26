@@ -21,9 +21,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 /**
  * @author Serge
  * Date: 6/17/2019

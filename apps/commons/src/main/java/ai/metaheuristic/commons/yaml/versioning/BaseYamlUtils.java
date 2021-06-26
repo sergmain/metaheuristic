@@ -59,6 +59,10 @@ public class BaseYamlUtils<T extends BaseParams> {
     }
 
     public @NonNull String toStringAsVersion(@NonNull BaseParams baseParamsYaml, int version) {
+        if (baseParamsYaml.getVersion()==version) {
+            return toString(baseParamsYaml);
+        }
+
         AbstractParamsYamlUtils utils = getForVersion(version);
         if (utils==null) {
             throw new IllegalStateException("Unsupported version: " + version);
