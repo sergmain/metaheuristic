@@ -1,0 +1,13 @@
+mapping:
+  - group: g1
+    name: n1
+    output: o1
+  - group: g2
+    name: n2
+    output: o2
+  - group: g3
+    name: n3
+    output: o3
+  - group: g4
+    name: n4
+    output: o4

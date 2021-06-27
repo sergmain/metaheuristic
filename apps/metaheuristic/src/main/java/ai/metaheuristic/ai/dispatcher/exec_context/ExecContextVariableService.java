@@ -17,12 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -41,10 +39,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
+
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
 /**
  * @author Serge
@@ -115,13 +112,13 @@ public class ExecContextVariableService {
             variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
                 throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                        new InternalFunctionData.InternalFunctionProcessingResult(variable_not_found,
                                 "#697.140 Variable not found for code " + outputVariable));
             }
         }
         else {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
+                    new InternalFunctionData.InternalFunctionProcessingResult(global_variable_is_immutable,
                             "#697.160 Can't store data in a global variable " + outputVariable.name));
         }
 
@@ -133,9 +130,27 @@ public class ExecContextVariableService {
             variableService.update(is, file.length(), variable);
         } catch (FileNotFoundException e) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
                             "#697.180 Can't open file   "+ file.getAbsolutePath()));
         }
+    }
+
+    @Transactional
+    public void storeStringInVariable(TaskParamsYaml.OutputVariable outputVariable, String value) {
+        Variable variable;
+        if (outputVariable.context== EnumsApi.VariableContext.local) {
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
+            if (variable == null) {
+                throw new InternalFunctionException(variable_not_found,"#697.140 Variable not found for code " + outputVariable);
+            }
+        }
+        else {
+            throw new InternalFunctionException(global_variable_is_immutable, "#697.160 Can't store data in a global variable " + outputVariable.name);
+        }
+
+        byte[] bytes = value.getBytes();
+        InputStream is = new ByteArrayInputStream(bytes);
+        variableService.update(is, bytes.length, variable);
     }
 
     @Transactional

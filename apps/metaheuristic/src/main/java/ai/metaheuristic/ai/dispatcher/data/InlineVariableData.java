@@ -18,7 +18,11 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,5 +37,21 @@ public class InlineVariableData {
     public static class InlineVariableItem {
         public final Map<String, String> inlines;
         public final String inlineKey;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class InlineAsVar {
+        public String group;
+        public String name;
+        public String output;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Mapping {
+        public final List<InlineAsVar> mapping = new ArrayList<>();
     }
 }
