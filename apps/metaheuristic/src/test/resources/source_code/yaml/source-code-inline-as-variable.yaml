@@ -1,0 +1,31 @@
+version: 3
+source:
+  uid: source-code-inline-as-variable-1.1
+  variables:
+    inline:
+      mh.hyper-params:
+        batch_size: '[10]'
+        activation: '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'
+        optimizer: '[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: batch_size
+                output: batchSize
+              - group: mh.hyper-params
+                name: activation
+                output: activation
+              - group: mh.hyper-params
+                name: optimizer
+                output: optimizer
+      outputs:
+        - name: batchSize
+        - name: activation
+        - name: optimizer
