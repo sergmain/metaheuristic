@@ -1,6 +1,7 @@
 version: 3
 source:
-  uid: source-code-inline-as-variable-1.1
+  strictNaming: true
+  uid: source-code-inline-as-variable-1.2
   variables:
     inline:
       mh.hyper-params:

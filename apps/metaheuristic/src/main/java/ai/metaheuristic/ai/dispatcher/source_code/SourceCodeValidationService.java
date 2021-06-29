@@ -272,13 +272,13 @@ public class SourceCodeValidationService {
         if (!badNames.isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.232 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
+                    S.f("#177.232 SourceCode-level input variables have wrong names: %s", String.join(", ", badNames)));
         }
         badNames = process.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
         if (!badNames.isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.233 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+                    S.f("#177.233 SourceCode-level output variables have wrong names: %s", String.join(", ", badNames)));
         }
         if (process.subProcesses!=null) {
             for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
