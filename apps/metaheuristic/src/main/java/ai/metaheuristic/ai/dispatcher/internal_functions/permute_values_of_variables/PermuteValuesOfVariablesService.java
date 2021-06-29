@@ -69,7 +69,7 @@ public class PermuteValuesOfVariablesService {
                 for (Map.Entry<String, String> entry : inlineVariable.params.entrySet()) {
                     VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(entry.getValue());
                     variableService.createInputVariablesForSubProcess(
-                            variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId);
+                            variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId, false);
                 }
                 taskProducingService.createTasksForSubProcesses(
                         simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);

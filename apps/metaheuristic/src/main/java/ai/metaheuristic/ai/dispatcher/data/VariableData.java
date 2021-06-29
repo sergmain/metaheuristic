@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -52,6 +53,9 @@ public class VariableData {
         }
 
         public VariableDataSource(String inputVariableContent) {
+            if (inputVariableContent.length()==0) {
+                throw new IllegalStateException("content of variable can't be of zero length, use nullable instead");
+            }
             this.inputVariableContent = inputVariableContent;
         }
 

@@ -1,13 +1,15 @@
 version: 3
 source:
   strictNaming: true
-  uid: sc-inline-as-variable-and-permute-values-1.0
+  uid: sc-inline-as-variable-and-permute-values-1.1
   variables:
     inline:
       mh.hyper-params:
         batch_size: '[10]'
-        activation: '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'
-        optimizer: '[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]'
+        activation: '[hard_sigmoid, softplus, softmax]'
+        optimizer: '[sgd, nadam, adagrad]'
+#        activation: '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'
+#        optimizer: '[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]'
   processes:
     - code: mh.inline-as-variable
       name: mh.inline-as-variable
@@ -46,36 +48,36 @@ source:
       subProcesses:
         logic: sequential
         processes:
-          - code: mh.evaluation
-            name: mh.evaluation
+          - code: mh.evaluation1
+            name: mh.evaluation1
             function:
               code: mh.evaluation
               context: internal
             inputs:
               - name: subBatchSizeVal
-            outpus:
+            outputs:
               - name: subBatchSizeVal1
             metas:
               - expression: subBatchSizeVal1 = subBatchSizeVal
-          - code: mh.evaluation
-            name: mh.evaluation
+          - code: mh.evaluation2
+            name: mh.evaluation2
             function:
               code: mh.evaluation
               context: internal
             inputs:
-              - name: subaActivationVal
-            outpus:
-              - name: subaActivationVal1
+              - name: subActivationVal
+            outputs:
+              - name: subActivationVal1
             metas:
-              - expression: subaActivationVal1 = subaActivationVal
-          - code: mh.evaluation
-            name: mh.evaluation
+              - expression: subActivationVal1 = subActivationVal
+          - code: mh.evaluation3
+            name: mh.evaluation3
             function:
               code: mh.evaluation
               context: internal
             inputs:
               - name: subOptimizerVal
-            outpus:
+            outputs:
               - name: subOptimizerVal1
             metas:
               - expression: subOptimizerVal1 = subOptimizerVal
@@ -85,7 +87,7 @@ source:
         code: mh.aggregate
         context: internal
       metas:
-        - variables: subBatchSizeVal1, subaActivationVal1, subOptimizerVal1
+        - variables: subBatchSizeVal1, subActivationVal1, subOptimizerVal1
       outputs:
         - name: aggregatedResult
           ext: .zip

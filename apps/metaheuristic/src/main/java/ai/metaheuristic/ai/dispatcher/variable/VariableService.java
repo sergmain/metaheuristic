@@ -106,11 +106,19 @@ public class VariableService {
         return OK_UPLOAD_RESULT;
     }
 
-    @SneakyThrows
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             Long execContextId, String inputVariableName,
             String currTaskContextId) {
+        createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, true);
+    }
+
+    @SneakyThrows
+    public void createInputVariablesForSubProcess(
+            VariableData.VariableDataSource variableDataSource,
+            Long execContextId, String inputVariableName,
+            String currTaskContextId, boolean contentAsArray) {
+        TxUtils.checkTxExists();
 
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
         String inputVariableContent = variableDataSource.inputVariableContent;
@@ -120,7 +128,7 @@ public class VariableService {
             throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null && permutation==null)");
         }
 
-        if (!files.isEmpty() || inputVariableContent!=null) {
+        if (!files.isEmpty() || (inputVariableContent!=null && contentAsArray)) {
             List<VariableUtils.VariableHolder> variableHolders = new ArrayList<>();
             for (BatchTopLevelService.FileWithMapping f : files) {
                 String variableName = VariableUtils.getNameForVariableInArray();
@@ -149,6 +157,14 @@ public class VariableService {
             VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
             String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
             byte[] bytes = yaml.getBytes();
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
+            eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
+            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+        }
+
+        if (inputVariableContent!=null && !contentAsArray) {
+            byte[] bytes = inputVariableContent.getBytes();
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
             eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
