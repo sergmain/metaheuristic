@@ -145,45 +145,37 @@ public class SourceCodeValidationService {
                         "#177.110 Caching isn't supported for internal functions. Process: " + process.code);
             }
 
-            if (MetaUtils.isTrue(process.metas, ConstsApi.META_MH_OUTPUT_IS_DYNAMIC)) {
-                if (process.function.context != EnumsApi.FunctionExecContext.internal) {
-                    return new SourceCodeApiData.SourceCodeValidationResult(
-                            EnumsApi.SourceCodeValidateStatus.DYNAMIC_OUTPUT_SUPPORTED_ONLY_FOR_INTERNAL_ERROR,
-                            "#177.120 Dynamic output variables are supported only for internal functions. Process: " + process.code);
-                }
-            } else {
-                boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
-                if (!finish) {
-                    for (SourceCodeParamsYaml.Variable variable : process.outputs) {
-                        if (S.b(variable.name)) {
-                            return new SourceCodeApiData.SourceCodeValidationResult(
-                                    EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                    "#177.160 Output variable in process " + process.code + " must have a name");
-                        }
-                        if (variable.getSourcing() == null) {
-                            return new SourceCodeApiData.SourceCodeValidationResult(
-                                    EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
-                                    "#177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
-                        }
-                        EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
-                        if (status != OK) {
-                            return new SourceCodeApiData.SourceCodeValidationResult(
-                                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
-                                    "#177.183 Output variable in process " + process.code + " has a wrong chars in name");
-                        }
+            boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
+            if (!finish) {
+                for (SourceCodeParamsYaml.Variable variable : process.outputs) {
+                    if (S.b(variable.name)) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
+                                "#177.160 Output variable in process " + process.code + " must have a name");
                     }
-                    for (SourceCodeParamsYaml.Variable variable : process.inputs) {
-                        if (S.b(variable.name)) {
-                            return new SourceCodeApiData.SourceCodeValidationResult(
-                                    EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                    "#177.185 Output variable in process " + process.code + " must have a name");
-                        }
-                        EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
-                        if (status != OK) {
-                            return new SourceCodeApiData.SourceCodeValidationResult(
-                                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
-                                    "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
-                        }
+                    if (variable.getSourcing() == null) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
+                                "#177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
+                    }
+                    EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
+                    if (status != OK) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
+                                "#177.183 Output variable in process " + process.code + " has a wrong chars in name");
+                    }
+                }
+                for (SourceCodeParamsYaml.Variable variable : process.inputs) {
+                    if (S.b(variable.name)) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLE_NOT_DEFINED_ERROR,
+                                "#177.185 Output variable in process " + process.code + " must have a name");
+                    }
+                    EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
+                    if (status != OK) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
+                                "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
                     }
                 }
             }

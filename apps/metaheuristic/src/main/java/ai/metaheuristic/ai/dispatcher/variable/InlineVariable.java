@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.LinkedHashMap;
@@ -23,13 +22,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
-@AllArgsConstructor
 public class InlineVariable {
-    public Map<String, String> params = new LinkedHashMap<>();
+    public LinkedHashMap<String, String> params = new LinkedHashMap<>();
     public String path;
 
     public InlineVariable() {
         this.path = "";
+    }
+
+    public InlineVariable(Map<String, String> params, String path) {
+        this.params = params instanceof LinkedHashMap ? (LinkedHashMap<String, String>) params : new LinkedHashMap<>(params);
+        this.path = path;
     }
 
     public InlineVariable asClone() {

@@ -53,8 +53,6 @@ public class ConstsApi {
 
     // === functions' specific metas
 
-    public static final String META_MH_OUTPUT_IS_DYNAMIC = "output-is-dynamic";
-
     // ===
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";

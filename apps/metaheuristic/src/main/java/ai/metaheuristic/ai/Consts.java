@@ -124,6 +124,7 @@ public class Consts {
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_CREATE_TASKS_FUNCTION = "mh.permute-variables-and-inlines-create-tasks";
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_AS_VARIABLE_FUNCTION = "mh.permute-variables-and-inlines-as-variable";
+    public static final String MH_PERMUTE_VALUES_OF_VARIABLES_FUNCTION = "mh.permute-values-of-variables";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
