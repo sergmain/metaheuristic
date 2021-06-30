@@ -72,7 +72,9 @@ public class EvaluateExpressionLanguage {
         public final VariableService variableService;
         public final ExecContextVariableService execContextVariableService;
 
-        public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService, GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService) {
+        public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
+                             GlobalVariableService globalVariableService, VariableService variableService,
+                             ExecContextVariableService execContextVariableService) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
@@ -114,24 +116,6 @@ public class EvaluateExpressionLanguage {
                 @SuppressWarnings("ConstantConditions")
                 @Override
                 public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) throws AccessException {
-                    if (newValue==null) {
-                        throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.020 can't create a temporary file"));
-                    }
-                    VariableUtils.VariableHolder variableHolderInput = null;
-                    Integer intValue = null;
-                    if (newValue instanceof VariableUtils.VariableHolder){
-                        variableHolderInput = (VariableUtils.VariableHolder) newValue;
-                    }
-                    else if (newValue instanceof Integer) {
-                        intValue = (Integer) newValue;
-                    }
-                    else {
-                        throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.025 not supported type: " + newValue.getClass()));
-                    }
                     VariableUtils.VariableHolder variableHolderOutput = getVariableHolder(name);
                     if (variableHolderOutput.globalVariable!=null) {
                         throw new InternalFunctionException(
@@ -142,6 +126,24 @@ public class EvaluateExpressionLanguage {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
                                         "#509.035 variable '"+ name+"' wasn't found"));
+                    }
+
+                    if (newValue==null) {
+                        // TODO 2021-06-30 add a check that a variable can be set as null. this check must be added outside of this code
+                        variableService.setVariableAsNull(variableHolderOutput.variable.id);
+                        return;
+                    }
+
+                    VariableUtils.VariableHolder variableHolderInput = null;
+                    Integer intValue = null;
+                    if (newValue instanceof VariableUtils.VariableHolder){
+                        variableHolderInput = (VariableUtils.VariableHolder) newValue;
+                    }
+                    else if (newValue instanceof Integer) {
+                        intValue = (Integer) newValue;
+                    }
+                    else {
+                        throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
                     }
                     try {
                         if (variableHolderInput!=null) {
@@ -228,6 +230,7 @@ public class EvaluateExpressionLanguage {
             return new BeanResolver() {
                 @Override
                 public Object resolve(EvaluationContext context, String beanName) throws AccessException {
+                    //noinspection ConstantConditions
                     return null;
                 }
             };
@@ -380,27 +383,4 @@ public class EvaluateExpressionLanguage {
         Object obj = exp.getValue(mhEvalContext);
         return obj;
     }
-
-/*
-org.springframework.expression.spel.SpelEvaluationException: EL1030E: The operator 'SUBTRACT' is not supported between objects of type 'ai.metaheuristic.ai.dispatcher.variable.VariableUtils$VariableHolder' and 'java.lang.Integer'
-	at org.springframework.expression.spel.ExpressionState.operate(ExpressionState.java:240) ~[spring-expression-5.3.6.jar:5.3.6]
-	at org.springframework.expression.spel.ast.OpMinus.getValueInternal(OpMinus.java:144) ~[spring-expression-5.3.6.jar:5.3.6]
-	at org.springframework.expression.spel.ast.OpGT.getValueInternal(OpGT.java:48) ~[spring-expression-5.3.6.jar:5.3.6]
-	at org.springframework.expression.spel.ast.OpGT.getValueInternal(OpGT.java:37) ~[spring-expression-5.3.6.jar:5.3.6]
-	at org.springframework.expression.spel.ast.SpelNodeImpl.getValue(SpelNodeImpl.java:112) ~[spring-expression-5.3.6.jar:5.3.6]
-	at org.springframework.expression.spel.standard.SpelExpression.getValue(SpelExpression.java:272) ~[spring-expression-5.3.6.jar:5.3.6]
-	at ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage.evaluate(EvaluateExpressionLanguage.java:369) ~[classes/:na]
-	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.processInternalFunction(TaskWithInternalContextEventService.java:197) ~[classes/:na]
-	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.lambda$process$1(TaskWithInternalContextEventService.java:141) ~[classes/:na]
-	at ai.metaheuristic.ai.dispatcher.task.TaskSyncService.getWithSyncNullable(TaskSyncService.java:112) ~[classes/:na]
-	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.process(TaskWithInternalContextEventService.java:138) ~[classes/:na]
-	at ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService.lambda$putToQueue$0(TaskWithInternalContextEventService.java:105) ~[classes/:na]
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) ~[na:na]
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264) ~[na:na]
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) ~[na:na]
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) ~[na:na]
-	at java.base/java.lang.Thread.run(Thread.java:829) ~[na:na]
-
-* * */
-
 }

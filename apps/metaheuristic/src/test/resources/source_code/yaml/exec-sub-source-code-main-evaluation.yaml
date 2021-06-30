@@ -1,18 +1,38 @@
 version: 3
 source:
-  uid: exec-sub-source-code-main-evaluation-1.4
+  strictNaming: true
+  uid: exec-sub-source-code-main-evaluation-1.6
   variables:
-    globals:
-      - mh.int_0
   processes:
+    - code: mh.evaluation1
+      name: mh.evaluation1
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: nullVar
+          nullable: true
+      metas:
+        - expression: nullVar = null
+    - code: mh.evaluation2
+      name: mh.evaluation2
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: indexVar
+      metas:
+        - expression: indexVar = 0
     - code: mh.exec-source-code
       name: mh.exec-source-code
       function:
         code: mh.exec-source-code
         context: internal
       inputs:
-        - name: mh.int_0
+        - name: indexVar
+        - name: nullVar
+          nullable: true
       outputs:
-        - name: result-output
+        - name: resultOutput
       metas:
-        - source-code-uid: exec-sub-source-code-sub-evaluation-1.4
+        - source-code-uid: exec-sub-source-code-sub-evaluation-1.5

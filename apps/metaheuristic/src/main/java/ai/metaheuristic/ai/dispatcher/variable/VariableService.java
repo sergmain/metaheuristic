@@ -106,6 +106,43 @@ public class VariableService {
         return OK_UPLOAD_RESULT;
     }
 
+    @Transactional
+    public void setVariableAsNull(Long variableId) {
+        Variable variable = variableRepository.findById(variableId).orElse(null);
+        if (variable ==null) {
+            String es = S.f("#611.063 variable #%d wasn't found", variableId);
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        if (variable.inited) {
+            String es = S.f("#611.065 variable #%d wasn't already inited", variableId);
+            log.warn(es);
+            throw new VariableCommonException(es, variableId);
+
+        }
+        variable.inited = true;
+        variable.nullified = true;
+        variable.setData(null);
+        variableRepository.save(variable);
+    }
+
+    @Transactional
+    public Variable createInitializedWithNull(String variable, Long execContextId, String taskContextId) {
+        Variable data = new Variable();
+        data.inited = true;
+        data.nullified = true;
+        data.name = variable;
+        data.filename = null;
+        data.setExecContextId(execContextId);
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        data.setTaskContextId(taskContextId);
+        data.setData(null);
+        variableRepository.save(data);
+
+        return data;
+    }
+
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             Long execContextId, String inputVariableName,
@@ -196,7 +233,6 @@ public class VariableService {
     @Nullable
     public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
         TxUtils.checkTxExists();
-//        execContextSyncService.checkWriteLockPresent(task.execContextId);
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 

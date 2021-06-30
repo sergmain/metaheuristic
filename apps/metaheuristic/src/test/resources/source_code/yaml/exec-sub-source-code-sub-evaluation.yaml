@@ -1,9 +1,12 @@
 version: 3
 source:
-  uid: exec-sub-source-code-sub-evaluation-1.4
+  strictNaming: true
+  uid: exec-sub-source-code-sub-evaluation-1.5
   variables:
     inputs:
       - name: startInput1
+      - name: nullVar
+        nullable: true
     outputs:
       - name: resultOutput1
   processes:

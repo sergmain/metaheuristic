@@ -59,6 +59,29 @@ public class ExecContextVariableService {
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
+    public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
+        if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
+            throw new ExecContextCommonException(
+                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                            varIndex, execContextParamsYaml.variables.inputs.size()));
+        }
+        final ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(varIndex);
+        if (!variable.getNullable()) {
+            throw new ExecContextCommonException(S.f("#697.025 sourceCode %s, input variable %s must be declared as nullable to be set as null",
+                    execContextParamsYaml.sourceCodeUid, variable.name));
+        }
+        String inputVariable = variable.name;
+        if (S.b(inputVariable)) {
+            throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+        }
+        ExecContextImpl execContext = execContextService.findById(execContextId);
+        if (execContext==null) {
+            log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
+        }
+        variableService.createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+    }
+
     /**
      * this method is expecting only one input variable in execContext
      * for initializing more that one input variable the method initInputVariables has to be used

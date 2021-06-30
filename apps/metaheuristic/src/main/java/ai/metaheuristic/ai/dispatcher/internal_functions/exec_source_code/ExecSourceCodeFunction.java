@@ -150,9 +150,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
                 if (input.getNullable()) {
-//                    execContextVariableService.initInputVariable(
-//                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
-
+                    execContextVariableService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
                     File tempFile = File.createTempFile("input-", ".bin", tempDir);
