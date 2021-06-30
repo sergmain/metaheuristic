@@ -149,20 +149,27 @@ public class ExecSourceCodeFunction implements InternalFunction {
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                File tempFile = File.createTempFile("input-", ".bin", tempDir);
-                switch (input.context) {
-                    case global:
-                        globalVariableService.storeToFileWithTx(input.id, tempFile);
-                        break;
-                    case local:
-                        variableService.storeToFileWithTx(input.id, tempFile);
-                        break;
-                    case array:
-                        throw new NotImplementedException("Not yet");
+                if (input.getNullable()) {
+//                    execContextVariableService.initInputVariable(
+//                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+
                 }
-                try (InputStream is = new FileInputStream(tempFile)) {
-                    execContextVariableService.initInputVariable(
-                            is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+                else {
+                    File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                    switch (input.context) {
+                        case global:
+                            globalVariableService.storeToFileWithTx(input.id, tempFile);
+                            break;
+                        case local:
+                            variableService.storeToFileWithTx(input.id, tempFile);
+                            break;
+                        case array:
+                            throw new NotImplementedException("Not yet");
+                    }
+                    try (InputStream is = new FileInputStream(tempFile)) {
+                        execContextVariableService.initInputVariable(
+                                is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+                    }
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
