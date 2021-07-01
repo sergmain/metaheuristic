@@ -28,10 +28,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -71,7 +69,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final InternalFunctionService internalFunctionService;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
-    private final VariableRepository variableRepository;
 
     @Override
     public String getCode() {
@@ -149,15 +146,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         List<VariableUtils.VariableHolder> holders;
         List<VariableUtils.VariableHolder> tempHolders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, names);
         if (skipNullVariables) {
-            for (VariableUtils.VariableHolder tempHolder : tempHolders) {
-                if (tempHolder.variable!=null) {
-                    SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(tempHolder.variable.variable, tempHolder.variable.taskContextId, simpleExecContext.execContextId);
-                    SimpleVariable v1 = variableRepository.findByIdAsSimple(tempHolder.variable.id);
-                    int i=0;
-                }
-
-            }
-
             holders = tempHolders.stream().filter(o->o.globalVariable!=null || (o.variable!=null && !o.variable.nullified)).collect(Collectors.toList());
         }
         else {

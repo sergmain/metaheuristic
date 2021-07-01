@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -183,10 +182,6 @@ public class EvaluateExpressionLanguage {
                             byte[] bytes = intValue.toString().getBytes();
                             try (InputStream is = new ByteArrayInputStream(bytes)) {
                                 variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
-                                SimpleVariable v1 = variableRepository.findByIdAsSimple(variableHolderOutput.variable.id);
-                                if (v1.nullified) {
-                                    throw new IllegalStateException("(v1.nullified)");
-                                }
                             }
                         }
                         else {
