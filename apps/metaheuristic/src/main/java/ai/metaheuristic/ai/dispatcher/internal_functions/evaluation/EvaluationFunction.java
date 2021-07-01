@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -62,6 +63,7 @@ public class EvaluationFunction implements InternalFunction {
     public final GlobalVariableService globalVariableService;
     public final VariableService variableService;
     public final ExecContextVariableService execContextVariableService;
+    public final VariableRepository variableRepository;
 
     @Override
     public String getCode() {
@@ -92,7 +94,7 @@ public class EvaluationFunction implements InternalFunction {
 
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
-                this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService);
+                this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository);
 
         System.out.println(obj);
         int i=0;

@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
@@ -82,6 +83,7 @@ public class TaskWithInternalContextEventService {
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     public final SourceCodeRepository sourceCodeRepository;
     public final GlobalVariableService globalVariableService;
+    public final VariableRepository variableRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -196,12 +198,11 @@ public class TaskWithInternalContextEventService {
             if (!S.b(p.condition)) {
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService);
+                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository);
                 notSkip = Boolean.TRUE.equals(obj);
                 int i=0;
             }
             if (notSkip) {
-//                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, p.internalContextId, taskParamsYaml);
                 boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
                     taskWithInternalContextService.storeResult(taskId, taskParamsYaml);

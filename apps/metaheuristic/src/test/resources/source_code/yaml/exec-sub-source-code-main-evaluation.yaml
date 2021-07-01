@@ -1,21 +1,11 @@
 version: 3
 source:
   strictNaming: true
-  uid: exec-sub-source-code-main-evaluation-1.6
+  uid: exec-sub-source-code-main-evaluation-1.8
   variables:
   processes:
-    - code: mh.evaluation1
-      name: mh.evaluation1
-      function:
-        code: mh.evaluation
-        context: internal
-      outputs:
-        - name: nullVar
-          nullable: true
-      metas:
-        - expression: nullVar = null
-    - code: mh.evaluation2
-      name: mh.evaluation2
+    - code: mh.evaluation0
+      name: mh.evaluation0
       function:
         code: mh.evaluation
         context: internal
@@ -23,6 +13,46 @@ source:
         - name: indexVar
       metas:
         - expression: indexVar = 0
+    - code: mh.evaluation1
+      name: mh.evaluation1
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: nullVar1
+          nullable: true
+      metas:
+        - expression: nullVar1 = 1
+    - code: mh.evaluation2
+      name: mh.evaluation2
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: nullVar2
+          nullable: true
+      metas:
+        - expression: nullVar2 = null
+    - code: mh.evaluation3
+      name: mh.evaluation3
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: nullVar3
+          nullable: true
+      metas:
+        - expression: nullVar3 = null
+    - code: mh.evaluation4
+      name: mh.evaluation4
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: nullVar4
+          nullable: true
+      metas:
+        - expression: nullVar4 = 1
     - code: mh.exec-source-code
       name: mh.exec-source-code
       function:
@@ -30,9 +60,15 @@ source:
         context: internal
       inputs:
         - name: indexVar
-        - name: nullVar
+        - name: nullVar1
+          nullable: true
+        - name: nullVar2
+          nullable: true
+        - name: nullVar3
+          nullable: true
+        - name: nullVar4
           nullable: true
       outputs:
         - name: resultOutput
       metas:
-        - source-code-uid: exec-sub-source-code-sub-evaluation-1.5
+        - source-code-uid: exec-sub-source-code-sub-evaluation-1.6

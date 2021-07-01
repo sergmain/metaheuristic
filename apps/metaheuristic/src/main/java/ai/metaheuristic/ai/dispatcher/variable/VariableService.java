@@ -116,7 +116,7 @@ public class VariableService {
         }
         if (variable.inited) {
             String es = S.f("#611.065 variable #%d wasn't already inited", variableId);
-            log.warn(es);
+            log.error(es);
             throw new VariableCommonException(es, variableId);
 
         }
@@ -218,7 +218,10 @@ public class VariableService {
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
                 Variable v = createInitialized(bais, bytes.length, permutation.permutedVariableName, null, execContextId, currTaskContextId);
             }
-            {
+            if (permutation.permuteInlines) {
+                if (permutation.inlineVariableName==null || permutation.inlinePermuted==null) {
+                    throw new IllegalStateException("(permutation.inlineVariableName==null || permutation.inlinePermuted==null)");
+                }
                 Yaml yampUtil = YamlUtils.init(Map.class);
                 String yaml = yampUtil.dumpAsMap(permutation.inlinePermuted);
                 byte[] bytes = yaml.getBytes();

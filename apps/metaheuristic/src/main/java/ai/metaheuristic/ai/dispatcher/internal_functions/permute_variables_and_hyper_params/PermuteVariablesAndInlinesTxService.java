@@ -17,10 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.data.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
@@ -33,6 +30,7 @@ import ai.metaheuristic.commons.permutation.Permutation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,9 +56,8 @@ public class PermuteVariablesAndInlinesTxService {
     @Transactional
     public Void createTaskFroPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
-            Set<ExecContextData.TaskVertex> descendants, boolean permuteInlines, InlineVariableData.InlineVariableItem item,
-            List<VariableUtils.VariableHolder> holders, String variableName, String inlineVariableName,
-            List<InlineVariable> inlineVariables, String subProcessContextId) {
+            Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
+            String subProcessContextId, @Nullable PermutationData.Inlines inlines) {
 
         final AtomicInteger currTaskNumber = new AtomicInteger(0);
         final List<Long> lastIds = new ArrayList<>();
@@ -70,14 +67,14 @@ public class PermuteVariablesAndInlinesTxService {
                 permutation.printCombination(holders, i+1,
                         permutedVariables -> {
                             log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
-                            if (permuteInlines) {
-                                for (InlineVariable inlineVariable : inlineVariables) {
+                            if (inlines!=null) {
+                                for (InlineVariable inlineVariable : inlines.inlineVariables) {
                                     currTaskNumber.incrementAndGet();
                                     Map<String, Map<String, String>> map = new HashMap<>(simpleExecContext.paramsYaml.variables.inline);
-                                    map.put(item.inlineKey, inlineVariable.params);
+                                    map.put(inlines.item.inlineKey, inlineVariable.params);
 
                                     VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                            new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
+                                            new VariableData.Permutation(permutedVariables, variableName, map, inlines.inlineVariableName, inlineVariable.params, true));
 
                                     String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
@@ -92,7 +89,8 @@ public class PermuteVariablesAndInlinesTxService {
                                 currTaskNumber.incrementAndGet();
 
                                 VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline, inlineVariableName,Map.of()));
+                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline,
+                                                null, null, false));
 
                                 String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 

@@ -1,15 +1,42 @@
 version: 3
 source:
   strictNaming: true
-  uid: exec-sub-source-code-sub-evaluation-1.5
+  uid: exec-sub-source-code-sub-evaluation-1.6
   variables:
     inputs:
       - name: startInput1
-      - name: nullVar
+      - name: nullVar1
+        nullable: true
+      - name: nullVar2
+        nullable: true
+      - name: nullVar3
+        nullable: true
+      - name: nullVar4
         nullable: true
     outputs:
       - name: resultOutput1
   processes:
+    - code: mh.permute-variables-and-inlines
+      name: permute variables and inlines
+      function:
+        code: mh.permute-variables-and-inlines
+        context: internal
+      metas:
+        - variables-for-permutation: nullVar1, nullVar2, nullVar3, nullVar4
+        - permute-inline: false
+        - output-variable: dataset
+        - skip-null: true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop
+            name: nop 1
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: dataset
+                array: true
     - code: mh.evaluation
       name: mh.evaluation
       function:

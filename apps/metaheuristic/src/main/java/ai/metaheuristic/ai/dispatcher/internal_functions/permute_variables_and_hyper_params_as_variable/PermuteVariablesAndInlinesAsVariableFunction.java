@@ -166,12 +166,12 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
                                     map.put(item.inlineKey, inlineVariable.params);
 
                                     permutations.add(
-                                            new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params));
+                                            new VariableData.Permutation(permutedVariables, variableName, map, inlineVariableName, inlineVariable.params, true));
                                 }
                             }
                             else {
                                 permutations.add(
-                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline, inlineVariableName, Map.of()));
+                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline, null, null, false));
                             }
                             return true;
                         }

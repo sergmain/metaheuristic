@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -77,11 +76,16 @@ public class VariableData {
         @JsonProperty("inls")
         public Map<String, Map<String, String>> inlines;
 
+        @Nullable
         @JsonProperty("ivn")
         public String inlineVariableName;
 
+        @Nullable
         @JsonProperty("ip")
         public Map<String, String> inlinePermuted;
+
+        @JsonProperty("pi")
+        public boolean permuteInlines;
     }
 
     @Data

@@ -108,7 +108,7 @@ public class CollectionUtils {
         return codes;
     }
 
-    public static boolean isMapEquals( Map<String, String> map1, Map<String, String> map2) {
+    public static boolean isMapEquals( @Nullable Map<String, String> map1, @Nullable Map<String, String> map2) {
         if (isEmpty(map1) && isEmpty(map2)) {
             return true;
         }

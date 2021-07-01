@@ -50,7 +50,8 @@ public class PermutationMappingTest {
                 "permutedVariableName1",
                 Map.of("inline1", Map.of("key1", "val1")),
                 "inlineVariableName1",
-                Map.of("key1", "val1")
+                Map.of("key1", "val1"),
+                true
         );
 
 
@@ -61,7 +62,8 @@ public class PermutationMappingTest {
                 "permutedVariableName2",
                 Map.of("inline2", Map.of("key2", "val2")),
                 "inlineVariableName2",
-                Map.of("key2", "val2")
+                Map.of("key2", "val2"),
+                true
         );
 
 

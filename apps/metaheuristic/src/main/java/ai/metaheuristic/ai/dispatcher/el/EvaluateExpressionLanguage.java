@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -70,17 +72,19 @@ public class EvaluateExpressionLanguage {
         public final InternalFunctionVariableService internalFunctionVariableService;
         public final GlobalVariableService globalVariableService;
         public final VariableService variableService;
+        public final VariableRepository variableRepository;
         public final ExecContextVariableService execContextVariableService;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableService variableService,
-                             ExecContextVariableService execContextVariableService) {
+                             ExecContextVariableService execContextVariableService, VariableRepository variableRepository) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
             this.globalVariableService = globalVariableService;
             this.variableService = variableService;
             this.execContextVariableService = execContextVariableService;
+            this.variableRepository = variableRepository;
         }
 
         @Override
@@ -131,6 +135,7 @@ public class EvaluateExpressionLanguage {
                     if (newValue==null) {
                         // TODO 2021-06-30 add a check that a variable can be set as null. this check must be added outside of this code
                         variableService.setVariableAsNull(variableHolderOutput.variable.id);
+                        int i=0;
                         return;
                     }
 
@@ -176,8 +181,13 @@ public class EvaluateExpressionLanguage {
                         }
                         else if (intValue!=null) {
                             byte[] bytes = intValue.toString().getBytes();
-                            InputStream is = new ByteArrayInputStream(bytes);
-                            variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
+                            try (InputStream is = new ByteArrayInputStream(bytes)) {
+                                variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
+                                SimpleVariable v1 = variableRepository.findByIdAsSimple(variableHolderOutput.variable.id);
+                                if (v1.nullified) {
+                                    throw new IllegalStateException("(v1.nullified)");
+                                }
+                            }
                         }
                         else {
                             throw new InternalFunctionException(
@@ -192,7 +202,7 @@ public class EvaluateExpressionLanguage {
                         final String es = "#509.055 error " + th.getMessage();
                         log.error(es, th);
                         throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,es));
+                                new InternalFunctionData.InternalFunctionProcessingResult(system_error, es));
                     }
                     int i=0;
                 }
@@ -373,11 +383,17 @@ public class EvaluateExpressionLanguage {
     }
 
     @Nullable
-    public static Object evaluate(String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService, GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService) {
+    public static Object evaluate(
+            String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
+            GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService,
+            VariableRepository variableRepository
+    ) {
+
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
-                taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService, execContextVariableService);
+                taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
+                execContextVariableService, variableRepository);
 
         Expression exp = parser.parseExpression(expression);
         Object obj = exp.getValue(mhEvalContext);
