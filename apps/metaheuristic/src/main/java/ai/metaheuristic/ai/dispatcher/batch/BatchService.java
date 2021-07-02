@@ -149,7 +149,7 @@ public class BatchService {
             if (ec==null) {
                 continue;
             }
-            if (ec.state != EnumsApi.ExecContextState.ERROR.code && ec.state != EnumsApi.ExecContextState.FINISHED.code) {
+            if (!EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                 continue;
             }
             if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {

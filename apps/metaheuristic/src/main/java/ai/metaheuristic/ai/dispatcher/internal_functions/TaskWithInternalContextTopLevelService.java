@@ -17,19 +17,19 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.system_error;
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
 /**
  * @author Serge
@@ -66,9 +66,7 @@ public class TaskWithInternalContextTopLevelService {
     public void storeResult(Long taskId, Long subExecContextId) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findById(taskId).orElseThrow(
-                ()-> new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.task_not_found,
-                        "Task not found #" + taskId)));
+                () -> new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId));
 
         final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
@@ -78,24 +76,19 @@ public class TaskWithInternalContextTopLevelService {
 
     private void copyVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
         ExecContextImpl execContext = execContextCache.findById(subExecContextId);
-        if (execContext==null) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
-                            "ExecContext Not found"));
+        if (execContext == null) {
+            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found");
         }
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-        if (ecpy.variables.outputs.size()!=taskParamsYaml.task.outputs.size()) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
-                            "number_of_outputs_is_incorrect"));
+        if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
+            throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
         }
         File tempDir = null;
         try {
             tempDir = DirUtils.createTempDir("mh-exec-source-code-result-");
-            if (tempDir==null) {
-                throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                                "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR));
+            if (tempDir == null) {
+                throw new InternalFunctionException(system_error,
+                                "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
             }
 
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
@@ -104,17 +97,15 @@ public class TaskWithInternalContextTopLevelService {
 
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
                         subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
-                if (holders.size()>1) {
-                    throw new InternalFunctionException(
-                            new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                                    "#992.110 Too many variables with the same name at top-level context, name: "+execContextOutput.name));
+                if (holders.size() > 1) {
+                    throw new InternalFunctionException(source_code_is_broken,
+                                    "#992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
                 }
 
                 VariableUtils.VariableHolder variableHolder = holders.get(0);
-                if (variableHolder.variable==null) {
-                    throw new InternalFunctionException(
-                            new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                                    "#992.120 local variable with name: "+execContextOutput.name+" wasn't found"));
+                if (variableHolder.variable == null) {
+                    throw new InternalFunctionException(variable_not_found,
+                                    "#992.120 local variable with name: " + execContextOutput.name + " wasn't found");
                 }
 
                 File tempFile = File.createTempFile("output-", ".bin", tempDir);
@@ -122,15 +113,11 @@ public class TaskWithInternalContextTopLevelService {
                 variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                 execContextVariableService.storeDataInVariable(output, tempFile);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("#992.220 Error", e);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                            "#992.240 error: " + e.getMessage()));
-        }
-        finally {
-            if (tempDir!=null) {
+            throw new InternalFunctionException(system_error, "#992.240 error: " + e.getMessage());
+        } finally {
+            if (tempDir != null) {
                 try {
                     FileUtils.deleteDirectory(tempDir);
                 } catch (Throwable th) {

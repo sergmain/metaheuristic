@@ -90,19 +90,19 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
         if (executionContextData.subProcesses.isEmpty()) {
             throw new InternalFunctionException(sub_process_not_found,
-                    "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+                    "#985.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
+                    "#985.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
         }
 
         final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             throw new InternalFunctionException(process_not_found,
-                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found");
+                    "#985.080 Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         boolean upperCaseFirstChar = MetaUtils.isTrue(taskParamsYaml.task.metas, "upper-case-first-char");
@@ -122,7 +122,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
                     break;
                 case array:
                 default:
-                    throw new NotImplementedException("variable context isn't supported yet - "+ input.context);
+                    throw new NotImplementedException("#985.100 variable context isn't supported yet - "+ input.context);
             }
 
             String var = (prefix!=null ? prefix : "") + (upperCaseFirstChar ? StringUtils.capitalize(input.name) : input.name) + (suffix!=null ? suffix : "");

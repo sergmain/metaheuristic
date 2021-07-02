@@ -21,7 +21,9 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ public class FinishFunction implements InternalFunction {
 
     private final ExecContextFSM execContextFSM;
     private final ExecContextSyncService execContextSyncService;
+    private final VariableTopLevelService variableTopLevelService;
 
     @Override
     public String getCode() {
@@ -59,8 +62,14 @@ public class FinishFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
-        execContextSyncService.getWithSync(simpleExecContext.execContextId, ()->
-                execContextFSM.toFinished(simpleExecContext.execContextId));
+        try {
+            variableTopLevelService.checkFinalOutputVariables(taskParamsYaml, simpleExecContext.execContextId);
+
+            log.info(S.f("#054.010 change state of task #%s with internal function %s to 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
+            execContextSyncService.getWithSync(simpleExecContext.execContextId,
+                    () -> execContextFSM.toFinished(simpleExecContext.execContextId));
+        } catch (Exception e) {
+            execContextFSM.changeExecContextStateWithTx(EnumsApi.ExecContextState.ERROR, simpleExecContext.execContextId, simpleExecContext.companyId);
+        }
     }
 }

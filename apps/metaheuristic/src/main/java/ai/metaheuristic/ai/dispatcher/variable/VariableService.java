@@ -304,6 +304,12 @@ public class VariableService {
         return vars.get(0);
     }
 
+    @Nullable
+    public SimpleVariable getVariableAsSimple(Long variableId) {
+        SimpleVariable var = variableRepository.findByIdAsSimple(variableId);
+        return var;
+    }
+
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
     public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {

@@ -83,14 +83,14 @@ public class AggregateFunction implements InternalFunction {
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
-                            "#992.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs));
+                            "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs));
         }
 
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
         if (names==null || names.length==0) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#992.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
+                    "#979.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
         }
 
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
@@ -104,7 +104,7 @@ public class AggregateFunction implements InternalFunction {
             if (tempDir==null) {
                 throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                        "#992.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR));
+                        "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR));
             }
 
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
@@ -112,7 +112,7 @@ public class AggregateFunction implements InternalFunction {
             if (!outputDir.mkdirs()) {
                 throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                        "#992.120 Can't create output directory  "+ outputDir.getAbsolutePath()));
+                        "#979.120 Can't create output directory  "+ outputDir.getAbsolutePath()));
             }
 
             list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
@@ -129,7 +129,7 @@ public class AggregateFunction implements InternalFunction {
                                         File varFile = new File(taskContextDir, v.variable);
                                         variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
-                                        log.error("#992.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
+                                        log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
                                         if (policy==ErrorControlPolicy.fail) {
                                             throw e;
                                         }

@@ -51,6 +51,7 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
@@ -88,37 +89,32 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
         TxUtils.checkTxNotExists();
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
-                    "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'"));
+            throw new InternalFunctionException(number_of_inputs_is_incorrect,
+                    "#991.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'");
         }
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
-            throw new InternalFunctionException(
-                executionContextData.internalFunctionProcessingResult);
+            throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
         }
 
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken"));
+            throw new InternalFunctionException(broken_graph_error,
+                    "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
         }
 
         final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
-                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found"));
+            throw new InternalFunctionException(process_not_found,
+                    "#991.080 Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         // variableNames contains a list of variables for permutation
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
         if (S.b(variableNames)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.100 Meta 'variables-for-permutation' must be defined and can't be empty"));
+            throw new InternalFunctionException(meta_not_found,
+                    "#991.100 Meta 'variables-for-permutation' must be defined and can't be empty");
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
@@ -126,9 +122,7 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
 
         InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(simpleExecContext.paramsYaml.variables, taskParamsYaml.task.metas);
         if (S.b(item.inlineKey)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.120 Meta 'inline-key' wasn't found or empty."));
+            throw new InternalFunctionException(meta_not_found, "#991.120 Meta 'inline-key' wasn't found or empty.");
         }
         if (item.inlines == null || item.inlines.isEmpty()) {
             throw new InternalFunctionException(
@@ -141,15 +135,13 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'"));
+            throw new InternalFunctionException(meta_not_found,
+                    "#991.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
         final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
         if (S.b(inlineVariableName)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'"));
+            throw new InternalFunctionException(meta_not_found,
+                    "#991.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
         }
         final List<InlineVariable> inlineVariables = permuteInlines ? InlineVariableUtils.getAllInlineVariants(item.inlines) : List.of();
         final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
@@ -185,9 +177,8 @@ public class PermuteVariablesAndInlinesAsVariableFunction implements InternalFun
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         if (outputVariable.context != EnumsApi.VariableContext.local) {
-            throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_is_immutable,
-                            "#992.060 Can't store data in a global variable " + outputVariable.name));
+            throw new InternalFunctionException(global_variable_is_immutable,
+                            "#991.200 Can't store data in a global variable " + outputVariable.name);
         }
 
         StringBuilder json = new StringBuilder();

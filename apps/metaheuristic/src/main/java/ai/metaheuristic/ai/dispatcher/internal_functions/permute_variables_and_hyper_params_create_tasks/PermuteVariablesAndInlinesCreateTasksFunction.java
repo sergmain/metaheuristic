@@ -87,7 +87,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         if (taskParamsYaml.task.inputs.size()!=1) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
-                    "#991.020 There must be only one an input variable, the actual number: "+taskParamsYaml.task.inputs.size()+", process code: '" + taskParamsYaml.task.processCode+"'"));
+                    "#986.020 There must be only one an input variable, the actual number: "+taskParamsYaml.task.inputs.size()+", process code: '" + taskParamsYaml.task.processCode+"'"));
         }
 
         final String varName = taskParamsYaml.task.inputs.get(0).name;
@@ -96,7 +96,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
                             Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
-                            "#991.030 There must be only one an input variable '"+varName+"', the actual number: " + hs.size()));
+                            "#986.030 There must be only one an input variable '"+varName+"', the actual number: " + hs.size()));
         }
 
         VariableUtils.VariableHolder variableHolder = hs.get(0);
@@ -104,7 +104,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
                             Enums.InternalFunctionProcessing.source_code_is_broken,
-                            "#991.035 An input variable '"+varName+"' must be local variable, not a global variable"));
+                            "#986.035 An input variable '"+varName+"' must be local variable, not a global variable"));
         }
 
         String arrayData = variableService.getVariableDataAsString(variableHolder.variable.id);
@@ -113,7 +113,7 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(
                             Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect,
-                            "#991.037 There must be only one an input variable in an array variable '"+varName+"', the actual number: " + vapy.array.size()));
+                            "#986.037 There must be only one an input variable in an array variable '"+varName+"', the actual number: " + vapy.array.size()));
         }
 
         String json = variableService.getVariableDataAsString(Long.valueOf(vapy.array.get(0).id));
@@ -127,14 +127,14 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         if (executionContextData.subProcesses.isEmpty()) {
             throw new InternalFunctionException(
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#991.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
+                    "#986.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                            "#991.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken"));
+                            "#986.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken"));
         }
 
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(

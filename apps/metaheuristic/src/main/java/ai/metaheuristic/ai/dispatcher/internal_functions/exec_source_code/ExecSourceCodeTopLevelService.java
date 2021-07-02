@@ -46,14 +46,19 @@ public class ExecSourceCodeTopLevelService {
         switch(state) {
             case ERROR:
                 taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId,
-                        S.f("#035.020 long-running execContext #%d was finished with an error",
-                                longRunningExecContext.execContextId));
+                        S.f("#035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
                 break;
             case FINISHED:
                 taskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
                         () -> {
-                            taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
-                            taskStateService.finishAsOk(longRunningExecContext.taskId);
+                            try {
+                                taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
+                                taskStateService.finishAsOk(longRunningExecContext.taskId);
+                            } catch (Throwable th) {
+                                String es = S.f("#035.040 error while finishing a long-running task with OK, error: " + th.getMessage());
+                                log.error(es, th);
+                                taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
+                            }
                             return null;
                         });
                 break;
