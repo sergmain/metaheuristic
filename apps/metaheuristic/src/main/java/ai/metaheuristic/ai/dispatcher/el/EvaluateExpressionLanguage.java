@@ -140,11 +140,15 @@ public class EvaluateExpressionLanguage {
 
                     VariableUtils.VariableHolder variableHolderInput = null;
                     Integer intValue = null;
+                    String strValue = null;
                     if (newValue instanceof VariableUtils.VariableHolder){
                         variableHolderInput = (VariableUtils.VariableHolder) newValue;
                     }
                     else if (newValue instanceof Integer) {
                         intValue = (Integer) newValue;
+                    }
+                    else if (newValue instanceof String) {
+                        strValue = (String)newValue;
                     }
                     else {
                         throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
@@ -180,6 +184,12 @@ public class EvaluateExpressionLanguage {
                         }
                         else if (intValue!=null) {
                             byte[] bytes = intValue.toString().getBytes();
+                            try (InputStream is = new ByteArrayInputStream(bytes)) {
+                                variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
+                            }
+                        }
+                        else if (strValue!=null) {
+                            byte[] bytes = strValue.getBytes();
                             try (InputStream is = new ByteArrayInputStream(bytes)) {
                                 variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
                             }
