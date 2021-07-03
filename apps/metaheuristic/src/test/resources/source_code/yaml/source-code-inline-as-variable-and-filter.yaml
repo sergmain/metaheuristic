@@ -1,0 +1,42 @@
+version: 3
+source:
+  strictNaming: true
+  uid: sc-inline-as-variable-and-permute-values
+  variables:
+    inline:
+      mh.hyper-params:
+        activation: '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: activation
+                output: activation
+      outputs:
+        - name: activation
+    - code: mh.evaluation1
+      name: mh.evaluation1
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: filter
+      metas:
+        - expression: filter = 'hard_sigmoid'
+    - code: mh.reduce-values
+      name: mh.reduce-values
+      function:
+        code: mh.reduce-values
+        context: internal
+      inputs:
+        - name: activation
+        - name: filter
+          type: 'filter'
+      outputs:
+        - name: newActivation
