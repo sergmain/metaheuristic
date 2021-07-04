@@ -25,12 +25,16 @@ CREATE TABLE mh_cache_process
     ID                  INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             NUMERIC(5, 0)  NOT NULL,
     CREATED_ON          bigint not null,
+    FUNCTION_CODE       VARCHAR(100) NOT NULL,
     KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
     KEY_VALUE           VARCHAR(512) NOT NULL
 );
 
 CREATE UNIQUE INDEX mh_cache_process_key_sha256_length_unq_idx
     ON mh_cache_process (KEY_SHA256_LENGTH);
+
+CREATE INDEX mh_cache_process_function_code_idx
+    ON mh_cache_process (FUNCTION_CODE);
 
 CREATE TABLE mh_cache_variable
 (

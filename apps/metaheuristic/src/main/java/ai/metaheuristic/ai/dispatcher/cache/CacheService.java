@@ -91,6 +91,7 @@ public class CacheService {
 
         cacheProcess = new CacheProcess();
         cacheProcess.createdOn = System.currentTimeMillis();
+        cacheProcess.functionCode = function.code;
         cacheProcess.keySha256Length = key;
         cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
         cacheProcess = cacheProcessRepository.save(cacheProcess);

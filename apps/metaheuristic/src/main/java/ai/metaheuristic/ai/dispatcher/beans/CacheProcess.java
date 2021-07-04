@@ -48,6 +48,11 @@ public class CacheProcess implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
+    @NotNull
+    @NotEmpty
+    @Column(name = "FUNCTION_CODE")
+    public String functionCode;
+
     /**
      * this field contains SHA256 checksum AND the length of data
      */
