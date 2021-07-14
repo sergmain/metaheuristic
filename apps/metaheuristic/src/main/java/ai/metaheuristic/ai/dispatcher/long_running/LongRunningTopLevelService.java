@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code.ExecSourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class LongRunningTopLevelService {
     public final ExecContextCache execContextCache;
     public final LongRunningService longRunningService;
     public final ExecSourceCodeTopLevelService execSourceCodeTopLevelService;
+    private final TaskSyncService taskSyncService;
 
     public void updateStateForLongRunning() {
 
@@ -55,8 +57,11 @@ public class LongRunningTopLevelService {
             ExecContextState state = ExecContextState.fromCode(execContext.state);
             if (ExecContextState.isFinishedState(state)) {
                 try {
-                    execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
-                    dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
+                    taskSyncService.getWithSync(longRunningExecContext.taskId, ()-> {
+                        execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
+                        dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
+                        return null;
+                    });
                 } catch (Throwable th) {
                     log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId, th);
                 }

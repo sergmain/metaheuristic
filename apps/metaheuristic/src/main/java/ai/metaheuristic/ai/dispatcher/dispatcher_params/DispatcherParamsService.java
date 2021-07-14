@@ -120,7 +120,7 @@ public class DispatcherParamsService {
     }
 
     @Transactional
-    public void deRegisterLongRunningExecContext(Long taskId) {
+    public Void deRegisterLongRunningExecContext(Long taskId) {
         try {
             writeLock.lock();
             updateParams((dpy) -> {
@@ -132,6 +132,7 @@ public class DispatcherParamsService {
                 }
                 return Boolean.FALSE;
             });
+            return null;
         } finally {
             writeLock.unlock();
         }

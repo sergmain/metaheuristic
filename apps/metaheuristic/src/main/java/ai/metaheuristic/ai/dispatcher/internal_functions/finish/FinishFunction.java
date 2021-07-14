@@ -69,7 +69,9 @@ public class FinishFunction implements InternalFunction {
             execContextSyncService.getWithSync(simpleExecContext.execContextId,
                     () -> execContextFSM.toFinished(simpleExecContext.execContextId));
         } catch (Exception e) {
-            execContextFSM.changeExecContextStateWithTx(EnumsApi.ExecContextState.ERROR, simpleExecContext.execContextId, simpleExecContext.companyId);
+            log.error("#054.040 error", e);
+            execContextSyncService.getWithSync(simpleExecContext.execContextId,
+                    () -> execContextFSM.changeExecContextStateWithTx(EnumsApi.ExecContextState.ERROR, simpleExecContext.execContextId, simpleExecContext.companyId));
         }
     }
 }
