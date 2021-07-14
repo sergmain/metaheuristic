@@ -55,7 +55,7 @@ public class PermuteValuesOfVariablesService {
     private final TaskProducingService taskProducingService;
 
     @Transactional
-    public Void createTaskFroPermutations(
+    public Void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, String subProcessContextId, List<InlineVariable> inlineVariables) {
 

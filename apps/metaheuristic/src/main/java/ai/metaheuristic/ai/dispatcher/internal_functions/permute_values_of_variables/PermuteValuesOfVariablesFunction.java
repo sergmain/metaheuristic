@@ -137,7 +137,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
         execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
                 execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                        permuteValuesOfVariablesService.createTaskFroPermutations(
+                        permuteValuesOfVariablesService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, subProcessContextId,
                                 inlineVariables)));
     }
