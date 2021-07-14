@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -62,7 +62,7 @@ public class BatchController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     @GetMapping("/index")
     public String index() {
@@ -101,7 +101,7 @@ public class BatchController {
         DispatcherContext context = userContextService.getContext(authentication);
 
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
-        List<String> uids = dispatcherParamsService.getBatches();
+        List<String> uids = dispatcherParamsTopLevelService.getBatches();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
 
         ControllerUtils.addMessagesToModel(model, codes);

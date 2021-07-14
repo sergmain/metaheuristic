@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.long_running;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code.ExecSourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -40,7 +40,7 @@ import static ai.metaheuristic.api.EnumsApi.ExecContextState;
 @RequiredArgsConstructor
 public class LongRunningTopLevelService {
 
-    public final DispatcherParamsService dispatcherParamsService;
+    public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     public final ExecContextCache execContextCache;
     public final LongRunningService longRunningService;
     public final ExecSourceCodeTopLevelService execSourceCodeTopLevelService;
@@ -48,18 +48,17 @@ public class LongRunningTopLevelService {
 
     public void updateStateForLongRunning() {
 
-        for (DispatcherParamsYaml.LongRunningExecContext longRunningExecContext : dispatcherParamsService.getLongRunningExecContexts()) {
+        for (DispatcherParamsYaml.LongRunningExecContext longRunningExecContext : dispatcherParamsTopLevelService.getLongRunningExecContexts()) {
             ExecContextImpl execContext = execContextCache.findById(longRunningExecContext.execContextId);
             if (execContext==null) {
-                dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
+                dispatcherParamsTopLevelService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 continue;
             }
             ExecContextState state = ExecContextState.fromCode(execContext.state);
             if (ExecContextState.isFinishedState(state)) {
                 try {
                     execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
-                    taskSyncService.getWithSync(longRunningExecContext.taskId,
-                            ()-> dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId));
+                    dispatcherParamsTopLevelService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 } catch (Throwable th) {
                     log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId, th);
                 }

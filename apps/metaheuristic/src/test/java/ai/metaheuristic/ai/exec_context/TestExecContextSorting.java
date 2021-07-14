@@ -44,16 +44,19 @@ public class TestExecContextSorting {
     private static final String CTX_1_2___50 = "1,2"+CONTEXT_SEPARATOR+"50";
     private static final String CTX_1_2___500 = "1,2"+CONTEXT_SEPARATOR+"500";
     private static final String CTX_1_2 = "1,2";
+    private static final String CTX_1_11 = "1,11";
+    private static final String CTX_2 = "2";
+    private static final String CTX_3 = "3";
 
     private static final List<String> ALL_CTXS = new ArrayList<>(
-            List.of(CTX_1_2___2, CTX_1_2___1, CTX_1_2___3, CTX_1_2___10, CTX_1_2___11,
-                    CTX_1_2___100, CTX_1_2___5, CTX_1_2___50, CTX_1_2___500, CTX_1, CTX_1_2
+            List.of(CTX_3, CTX_2, CTX_1_2___2, CTX_1_2___1, CTX_1_2___3, CTX_1_2___10, CTX_1_2___11,
+                    CTX_1_2___100, CTX_1_2___5, CTX_1_2___50, CTX_1_2___500, CTX_1, CTX_1_2, CTX_1_11
                     ));
 
     private static final List<String> EXPECTED = List.of(
             CTX_1, CTX_1_2, CTX_1_2___1, CTX_1_2___2, CTX_1_2___3, CTX_1_2___5,
             CTX_1_2___10, CTX_1_2___11, CTX_1_2___50,
-            CTX_1_2___100, CTX_1_2___500
+            CTX_1_2___100, CTX_1_2___500, CTX_1_11, CTX_2, CTX_3
     );
 
     @Test

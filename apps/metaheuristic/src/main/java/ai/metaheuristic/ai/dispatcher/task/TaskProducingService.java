@@ -112,12 +112,13 @@ public class TaskProducingService {
         Map<String, Map<String, String>> inlines = executionContextData.execContextParamsYaml.variables.inline;
         ExecContextParamsYaml.Process process = executionContextData.process;
 
-        if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential) {
-            throw new BreakFromLambdaException("#375.060 only the 'sequential' logic is supported");
+        if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential && process.logic!= EnumsApi.SourceCodeSubProcessLogic.and) {
+            throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
         }
 
         List<Long> parentTaskIds = List.of(parentTaskId);
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
+
 
         TaskImpl t = null;
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
@@ -126,12 +127,23 @@ public class TaskProducingService {
                 throw new BreakFromLambdaException("#375.080 Process '" + subProcess.process + "' wasn't found");
             }
 
-            // all subProcesses must have the same processContextId
-            if (!subProcessContextId.equals(subProcess.processContextId)) {
-                throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+            String actualProcessContextId;
+            switch (process.logic) {
+                case and:
+                    actualProcessContextId = subProcess.processContextId;
+                    break;
+                case sequential:
+                    // all subProcesses must have the same processContextId
+                    if (!subProcessContextId.equals(subProcess.processContextId)) {
+                        throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+                    }
+                    actualProcessContextId = currTaskContextId;
+                    break;
+                default:
+                    throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
             }
 
-            t = createTaskInternal(simpleExecContext.execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = createTaskInternal(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines);
 
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
@@ -141,7 +153,7 @@ public class TaskProducingService {
                 log.info("(targetState.value!=t.execState)");
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
-            List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
+            List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
             execContextGraphService.addNewTasksToGraph(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, parentTaskIds, currTaskIds, targetState);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;

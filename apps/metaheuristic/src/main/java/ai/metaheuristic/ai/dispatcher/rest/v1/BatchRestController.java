@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -44,7 +44,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,7 +63,7 @@ public class BatchRestController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping("/batches")
@@ -96,7 +95,7 @@ public class BatchRestController {
     public SourceCodeData.SourceCodeUidsForCompany batchAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
-        List<String> uids = dispatcherParamsService.getBatches();
+        List<String> uids = dispatcherParamsTopLevelService.getBatches();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
         return codes;
     }

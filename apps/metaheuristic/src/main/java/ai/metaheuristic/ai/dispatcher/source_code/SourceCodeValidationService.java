@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -65,7 +65,7 @@ public class SourceCodeValidationService {
     private final FunctionTopLevelService functionTopLevelService;
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
@@ -392,14 +392,14 @@ public class SourceCodeValidationService {
 
         sourceCodeStateService.setValidTo(sourceCode, sourceCode.companyId, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
-            dispatcherParamsService.registerSourceCode(sourceCode);
+            dispatcherParamsTopLevelService.registerSourceCode(sourceCode);
             if (sourceCode.isValid() && sourceCodeValidation.status.status!=OK) {
                 log.error("#177.240 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
             }
             sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            dispatcherParamsService.unregisterSourceCode(sourceCode.uid);
+            dispatcherParamsTopLevelService.unregisterSourceCode(sourceCode.uid);
             final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
             log.error(es);
             sourceCodeValidation.addErrorMessage(es);

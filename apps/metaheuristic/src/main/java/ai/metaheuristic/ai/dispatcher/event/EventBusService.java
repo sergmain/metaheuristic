@@ -16,18 +16,16 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
-import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -53,7 +51,7 @@ public class EventBusService {
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
     public final TaskFinishingTopLevelService taskFinishingTopLevelService;
     public final ExecContextSyncService execContextSyncService;
-    public final DispatcherParamsService dispatcherParamsService;
+    public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     public final ExecContextTopLevelService execContextTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
@@ -104,7 +102,7 @@ public class EventBusService {
     @EventListener
     public void checkAndCreateNewDispatcher(final DispatcherCacheCheckingEvent event) {
         try {
-            dispatcherParamsService.checkAndCreateNewDispatcher();
+            dispatcherParamsTopLevelService.checkAndCreateNewDispatcher();
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

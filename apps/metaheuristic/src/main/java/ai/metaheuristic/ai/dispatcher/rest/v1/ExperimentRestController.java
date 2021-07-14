@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.api.EnumsApi;
@@ -49,7 +49,7 @@ public class ExperimentRestController {
     private final ExperimentTopLevelService experimentTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     @GetMapping("/experiments")
     public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
@@ -65,7 +65,7 @@ public class ExperimentRestController {
     public SourceCodeData.SourceCodeUidsForCompany experimentAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
-        List<String> uids = dispatcherParamsService.getExperiments();
+        List<String> uids = dispatcherParamsTopLevelService.getExperiments();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
         return codes;
     }

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -56,7 +56,7 @@ public class ExperimentController {
 
     private static final String REDIRECT_DISPATCHER_EXPERIMENTS = "redirect:/dispatcher/ai/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
@@ -82,7 +82,7 @@ public class ExperimentController {
     public String add(Model model, @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication, final RedirectAttributes redirectAttributes) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
-        List<String> uids = dispatcherParamsService.getExperiments();
+        List<String> uids = dispatcherParamsTopLevelService.getExperiments();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
 
         model.addAttribute("result", codes);

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -73,7 +73,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final VariableRepository variableRepository;
 
     @Override
@@ -189,7 +189,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                                     execContextResultRest.execContext.id, scUid, execContextResultRest.getErrorMessagesAsStr()));
         }
 
-        dispatcherParamsService.registerLongRunningExecContext(taskId, execContextResultRest.execContext.id);
+        dispatcherParamsTopLevelService.registerLongRunningExecContext(taskId, execContextResultRest.execContext.id);
 
         OperationStatusRest operationStatusRest = execContextTopLevelService.execContextTargetState(
                 execContextResultRest.execContext.id, EnumsApi.ExecContextState.STARTED, simpleExecContext.companyId);

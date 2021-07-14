@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -52,7 +52,7 @@ public class ReplicationSourceCodeTopLevelService {
     public final SourceCodeRepository sourceCodeRepository;
     public final SourceCodeService sourceCodeService;
     public final SourceCodeCache sourceCodeCache;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     @Data
     @AllArgsConstructor
@@ -72,7 +72,7 @@ public class ReplicationSourceCodeTopLevelService {
                 .filter(Objects::nonNull)
                 .forEach(s-> {
                     sourceCodeService.deleteSourceCodeById(s.id, false);
-                    dispatcherParamsService.unregisterSourceCode(s.uid);
+                    dispatcherParamsTopLevelService.unregisterSourceCode(s.uid);
                 });
 
         List<String> currFunctions = sourceCodeRepository.findAllSourceCodeUids();
@@ -87,7 +87,7 @@ public class ReplicationSourceCodeTopLevelService {
                 });
 
         if (!newSourceCodes.isEmpty()) {
-            dispatcherParamsService.registerSourceCodes(newSourceCodes);
+            dispatcherParamsTopLevelService.registerSourceCodes(newSourceCodes);
         }
     }
 

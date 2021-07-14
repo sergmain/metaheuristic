@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
@@ -65,6 +65,7 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
@@ -80,7 +81,7 @@ public class ExecContextService {
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
     private final ExecContextSyncService execContextSyncService;
@@ -203,14 +204,18 @@ public class ExecContextService {
                 return 0;
             }
         }
-        if (i1==-1 && i2!=-1) {
-            return -1;
+        String[] sa1 = StringUtils.split(s1, ',');
+        String[] sa2 = StringUtils.split(s2, ',');
+        int minLen = Math.min(sa1.length, sa2.length);
+        for (int i = 0; i < minLen; i++) {
+            int v1 = Integer.parseInt(sa1[i]);
+            int v2 = Integer.parseInt(sa2[i]);
+            int compare = Integer.compare(v1, v2);
+            if (compare!=0) {
+                return compare;
+            }
         }
-
-        if (i1!=-1 && i2==-1) {
-            return 1;
-        }
-        return o1.compareTo(o2);
+        return sa1.length > sa2.length ? 1 : -1;
     }
 
     private static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
@@ -333,9 +338,9 @@ public class ExecContextService {
     }
 
     private EnumsApi.SourceCodeType getType(String uid) {
-        if (dispatcherParamsService.getBatches().contains(uid)) {
+        if (dispatcherParamsTopLevelService.getBatches().contains(uid)) {
             return EnumsApi.SourceCodeType.batch;
-        } else if (dispatcherParamsService.getExperiments().contains(uid)) {
+        } else if (dispatcherParamsTopLevelService.getExperiments().contains(uid)) {
             return EnumsApi.SourceCodeType.experiment;
         }
         return EnumsApi.SourceCodeType.common;

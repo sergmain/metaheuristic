@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -54,7 +54,7 @@ public class SourceCodeService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
-    private final DispatcherParamsService dispatcherParamsService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
 
@@ -92,8 +92,8 @@ public class SourceCodeService {
         SourceCodeApiData.SourceCodesResult sourceCodesResult = new SourceCodeApiData.SourceCodesResult();
         sourceCodesResult.items = new PageImpl<>(sourceCodes, pageable, count.get());
         sourceCodesResult.assetMode = globals.assetMode;
-        sourceCodesResult.batches = dispatcherParamsService.getBatches();
-        sourceCodesResult.experiments = dispatcherParamsService.getExperiments();
+        sourceCodesResult.batches = dispatcherParamsTopLevelService.getBatches();
+        sourceCodesResult.experiments = dispatcherParamsTopLevelService.getExperiments();
 
         return sourceCodesResult;
     }
