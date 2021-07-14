@@ -43,14 +43,14 @@ public class ExecSourceCodeTopLevelService {
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
     public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {
-        switch(state) {
-            case ERROR:
-                taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId,
-                        S.f("#035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
-                break;
-            case FINISHED:
-                taskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
-                        () -> {
+        taskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
+                () -> {
+                    switch (state) {
+                        case ERROR:
+                            taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId,
+                                    S.f("#035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
+                            break;
+                        case FINISHED:
                             try {
                                 taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
                                 taskStateService.finishAsOk(longRunningExecContext.taskId);
@@ -59,17 +59,11 @@ public class ExecSourceCodeTopLevelService {
                                 log.error(es, th);
                                 taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
                             }
-                            return null;
-                        });
-                break;
-            case UNKNOWN:
-            case DOESNT_EXIST:
-            case NONE:
-            case PRODUCING:
-            case NOT_USED_ANYMORE:
-            case STARTED:
-            case STOPPED:
-                throw new IllegalStateException("#035.100 must be FINISHED or ERROR only");
-        }
+                            break;
+                        default:
+                            throw new IllegalStateException("#035.100 must be FINISHED or ERROR only, actual: " + state);
+                    }
+                    return null;
+                });
     }
 }

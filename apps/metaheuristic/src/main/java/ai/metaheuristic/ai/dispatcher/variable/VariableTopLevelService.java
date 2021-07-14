@@ -55,9 +55,6 @@ public class VariableTopLevelService {
             throw new InternalFunctionException(exec_context_not_found, "#992.300 ExecContext Not found");
         }
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-        if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
-            throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.320 number_of_outputs_is_incorrect");
-        }
         try {
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
                 ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);

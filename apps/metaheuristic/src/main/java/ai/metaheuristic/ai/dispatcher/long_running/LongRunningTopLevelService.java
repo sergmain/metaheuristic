@@ -57,11 +57,9 @@ public class LongRunningTopLevelService {
             ExecContextState state = ExecContextState.fromCode(execContext.state);
             if (ExecContextState.isFinishedState(state)) {
                 try {
-                    taskSyncService.getWithSync(longRunningExecContext.taskId, ()-> {
-                        execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
-                        dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
-                        return null;
-                    });
+                    execSourceCodeTopLevelService.finishLongRunningTask(longRunningExecContext, state);
+                    taskSyncService.getWithSync(longRunningExecContext.taskId,
+                            ()-> dispatcherParamsService.deRegisterLongRunningExecContext(longRunningExecContext.taskId));
                 } catch (Throwable th) {
                     log.error("#018.020 Error while finishing a long-running task #"+ longRunningExecContext.taskId, th);
                 }

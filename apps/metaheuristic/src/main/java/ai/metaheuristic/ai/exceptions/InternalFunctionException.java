@@ -18,9 +18,6 @@ package ai.metaheuristic.ai.exceptions;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import lombok.AllArgsConstructor;
-
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.meta_not_found;
 
 /**
  * @author Serge
@@ -38,4 +35,8 @@ public class InternalFunctionException extends RuntimeException {
         this.result = new InternalFunctionData.InternalFunctionProcessingResult( processing, error);
     }
 
+    @Override
+    public String getMessage() {
+        return result.asString();
+    }
 }

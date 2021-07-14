@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,10 @@ public class InternalFunctionData {
         public InternalFunctionProcessingResult(List<InternalFunctionOutput> outputs) {
             this.processing = Enums.InternalFunctionProcessing.ok;
             this.outputs = outputs;
+        }
+
+        public String asString() {
+            return S.f("status: %s, error: %s", processing, error);
         }
     }
 
