@@ -146,17 +146,17 @@ CREATE TABLE mh_log_data
 
 CREATE TABLE mh_variable
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    IS_INITED       BOOLEAN not null default false,
-    IS_NULLIFIED    BOOLEAN not null default false,
-    NAME            VARCHAR(250) not null,
-    TASK_CONTEXT_ID      VARCHAR(250) not null,
-    EXEC_CONTEXT_ID NUMERIC(10, 0) not null,
-    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
-    DATA            LONGBLOB,
-    FILENAME        VARCHAR(150),
-    PARAMS          MEDIUMTEXT not null
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    IS_INITED           BOOLEAN not null default false,
+    IS_NULLIFIED        BOOLEAN not null default false,
+    NAME                VARCHAR(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
+    TASK_CONTEXT_ID     VARCHAR(250) not null,
+    EXEC_CONTEXT_ID     NUMERIC(10, 0) not null,
+    UPLOAD_TS           TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
+    DATA                LONGBLOB,
+    FILENAME            VARCHAR(150),
+    PARAMS              MEDIUMTEXT not null
 );
 
 CREATE INDEX mh_variable_exec_context_id_idx
@@ -174,7 +174,7 @@ CREATE TABLE mh_variable_global
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    NAME            VARCHAR(250) not null,
+    NAME            VARCHAR(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
     DATA            LONGBLOB        NOT NULL,
     FILENAME        VARCHAR(150),
@@ -251,7 +251,7 @@ CREATE TABLE mh_function
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    FUNCTION_CODE   VARCHAR(100)  not null,
+    FUNCTION_CODE   VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     FUNCTION_TYPE   VARCHAR(50) not null,
     PARAMS          MEDIUMTEXT not null
 );
@@ -264,7 +264,7 @@ CREATE TABLE mh_source_code
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
-    UID             varchar(50)  NOT NULL,
+    UID             varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     CREATED_ON      bigint NOT NULL,
     PARAMS          TEXT not null,
     IS_LOCKED       BOOLEAN not null default false,
