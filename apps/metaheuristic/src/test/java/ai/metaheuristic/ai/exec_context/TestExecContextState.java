@@ -40,12 +40,12 @@ public class TestExecContextState {
     public void test() {
 
         List<ExecContextApiData.VariableState> infos = List.of(
-                new ExecContextApiData.VariableState(100L, 1111L, 1001L, "ctx-1", "process-1", "function-1", null, null),
-                new ExecContextApiData.VariableState(120L, 1111L, 1001L, "ctx-1.1", "process-2", "function-2", null, null),
-                new ExecContextApiData.VariableState(140L, 1111L, 1001L, "ctx-1.1", "process-3", "function-3", null, null),
-                new ExecContextApiData.VariableState(160L, 1111L, 1001L, "ctx-1.2", "process-2", "function-2", null, null),
-                new ExecContextApiData.VariableState(180L, 1111L, 1001L, "ctx-1.2", "process-3", "function-3", null, null),
-                new ExecContextApiData.VariableState(190L, 1111L, 1001L, "ctx-1", "mh.finish", "mh.finish", null, null)
+                new ExecContextApiData.VariableState(100L, 1111L, 1001L, "1", "process-1", "function-1", null, null),
+                new ExecContextApiData.VariableState(120L, 1111L, 1001L, "1,1", "process-2", "function-2", null, null),
+                new ExecContextApiData.VariableState(140L, 1111L, 1001L, "1,1", "process-3", "function-3", null, null),
+                new ExecContextApiData.VariableState(160L, 1111L, 1001L, "1,2", "process-2", "function-2", null, null),
+                new ExecContextApiData.VariableState(180L, 1111L, 1001L, "1,2", "process-3", "function-3", null, null),
+                new ExecContextApiData.VariableState(190L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
@@ -72,9 +72,9 @@ public class TestExecContextState {
         assertEquals("process-3", r.header[2].process);
         assertEquals("mh.finish", r.header[3].process);
 
-        assertEquals("ctx-1", r.lines[0].context);
-        assertEquals("ctx-1.1", r.lines[1].context);
-        assertEquals("ctx-1.2", r.lines[2].context);
+        assertEquals("1", r.lines[0].context);
+        assertEquals("1,1", r.lines[1].context);
+        assertEquals("1,2", r.lines[2].context);
 
         assertFalse(r.lines[0].cells[0].empty);
         assertTrue(r.lines[0].cells[1].empty);
@@ -93,27 +93,27 @@ public class TestExecContextState {
 
         assertEquals(100L, r.lines[0].cells[0].taskId);
         assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[0].state);
-        assertEquals("ctx-1", r.lines[0].cells[0].context);
+        assertEquals("1", r.lines[0].cells[0].context);
 
         assertEquals(190L, r.lines[0].cells[3].taskId);
         assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[3].state);
-        assertEquals("ctx-1", r.lines[0].cells[3].context);
+        assertEquals("1", r.lines[0].cells[3].context);
 
         assertEquals(120L, r.lines[1].cells[1].taskId);
         assertEquals(TaskExecState.IN_PROGRESS.toString(), r.lines[1].cells[1].state);
-        assertEquals("ctx-1.1", r.lines[1].cells[1].context);
+        assertEquals("1,1", r.lines[1].cells[1].context);
 
         assertEquals(140L, r.lines[1].cells[2].taskId);
         assertEquals(TaskExecState.NONE.toString(), r.lines[1].cells[2].state);
-        assertEquals("ctx-1.1", r.lines[1].cells[2].context);
+        assertEquals("1,1", r.lines[1].cells[2].context);
 
         assertEquals(160L, r.lines[2].cells[1].taskId);
         assertEquals(TaskExecState.OK.toString(), r.lines[2].cells[1].state);
-        assertEquals("ctx-1.2", r.lines[2].cells[1].context);
+        assertEquals("1,2", r.lines[2].cells[1].context);
 
         assertEquals(180L, r.lines[2].cells[2].taskId);
         assertEquals(TaskExecState.ERROR.toString(), r.lines[2].cells[2].state);
-        assertEquals("ctx-1.2", r.lines[2].cells[2].context);
+        assertEquals("1,2", r.lines[2].cells[2].context);
 
 
         System.out.println(Arrays.toString(r.header));
