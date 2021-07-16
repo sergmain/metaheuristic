@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -39,6 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
+import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 
 /**
  * @author Serge
@@ -86,52 +88,62 @@ public class ExecContextReconciliationTopLevelService {
 //                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
                 TaskQueue.AllocatedTask allocatedTask = allocatedTasks.get(tv.taskId);
                 if (allocatedTask==null) {
-                    if (taskState.execState== EnumsApi.TaskExecState.IN_PROGRESS.value && tv.state== EnumsApi.TaskExecState.NONE) {
+                    if (taskState.execState== TaskExecState.IN_PROGRESS.value && tv.state== TaskExecState.NONE) {
                         log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state);
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
                         status.taskForResettingIds.add(tv.taskId);
                     }
-                    else if (taskState.execState==EnumsApi.TaskExecState.NONE.value && tv.state== EnumsApi.TaskExecState.CHECK_CACHE) {
+                    else if (taskState.execState== TaskExecState.NONE.value && tv.state== TaskExecState.CHECK_CACHE) {
                         // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state);
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                 }
                 else if (!allocatedTask.assigned) {
-                    if (taskState.execState==EnumsApi.TaskExecState.NONE.value &&  tv.state==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
+                    if (taskState.execState== TaskExecState.NONE.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state==null) {
+                        // #307.070 Found different states for task, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.070 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: null, trying to update a state of task in execContext",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                    }
+                    else if (taskState.execState== TaskExecState.NONE.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.NONE) {
                         // #307.080 Found different states for task, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
-                        // ---> This is a normal situation, will occur after restarting dispatcher
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContext",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                     else {
-                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
-                                tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                     }
                 }
-                else if ((taskState.execState==EnumsApi.TaskExecState.OK.value ||
-                        taskState.execState==EnumsApi.TaskExecState.ERROR.value ||
-                        taskState.execState==EnumsApi.TaskExecState.SKIPPED.value)
+                else if ((taskState.execState== TaskExecState.OK.value ||
+                        taskState.execState== TaskExecState.ERROR.value ||
+                        taskState.execState== TaskExecState.SKIPPED.value)
                         && taskState.execState==allocatedTask.state.value) {
                     // ---> This is a normal situation
                     // statuses of tasks are copying from taskQueue when all tasks in a group will be finished. so there is a period of time when the state is as this
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.state==EnumsApi.TaskExecState.CHECK_CACHE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (taskState.execState== TaskExecState.IN_PROGRESS.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.IN_PROGRESS) {
                     // Found different states for task , db: IN_PROGRESS, graph: CHECK_CACHE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.IN_PROGRESS.value &&  tv.state==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (taskState.execState== TaskExecState.IN_PROGRESS.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.IN_PROGRESS) {
                     // #307.120 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.OK.value &&  tv.state==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.NONE) {
+                else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
                     // #307.140 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
                     log.warn("#307.130 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: NONE, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
-                else if (taskState.execState==EnumsApi.TaskExecState.OK.value &&  tv.state==EnumsApi.TaskExecState.NONE && allocatedTask.state== EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.IN_PROGRESS) {
                     // #307.140 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.warn("#307.135 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: IN_PROGRESS, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
@@ -139,7 +151,7 @@ public class ExecContextReconciliationTopLevelService {
                 else {
                     // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
-                            tv.taskId, EnumsApi.TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                            tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                 }
             }
         }
@@ -153,7 +165,7 @@ public class ExecContextReconciliationTopLevelService {
         // fix IN_PROCESSING state
         // find and reset all hanging up tasks
         states.entrySet().stream()
-                .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue().execState)
+                .filter(e-> TaskExecState.IN_PROGRESS.value==e.getValue().execState)
                 .forEach(e->{
                     Long taskId = e.getKey();
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -170,7 +182,7 @@ public class ExecContextReconciliationTopLevelService {
                                     // processor must start to download variables in 2 minutes
                                     // only if there is any input variable and context of task is FunctionExecContext.external
                                     // TODO 2021-05-17 check that internal function is setting task.accessByProcessorOn at all
-                                    if (tpy.task.context== EnumsApi.FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
+                                    if (tpy.task.context== FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
                                         log.info("#307.160 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
                                                 task.id, task.processorId);
                                         status.taskForResettingIds.add(task.id);
