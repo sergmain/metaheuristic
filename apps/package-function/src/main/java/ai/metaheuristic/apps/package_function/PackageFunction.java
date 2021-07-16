@@ -151,7 +151,7 @@ public class PackageFunction implements CommandLineRunner {
                 }
             }
             else {
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("unknown functionConfig.sourcing: " + functionConfig.sourcing);
             }
 
             functionConfig.checksumMap = new HashMap<>();
