@@ -110,7 +110,12 @@ public class ArtifactCleanerAtDispatcher {
 
         for (Long execContextId : orphanExecContextIds) {
             if (execContextCache.findById(execContextId)!=null) {
-                log.warn("execContextId #{} wasn't deleted, actually", execContextId);
+                log.warn("execContextId #{} still here", execContextId);
+                Long id = execContextRepository.findIdById(execContextId);
+                if (id==null) {
+                    log.warn("execContextId #{} was deleted in db, clean up the cache", execContextId);
+                    execContextCache.deleteById(execContextId);
+                }
                 continue;
             }
 

@@ -24,6 +24,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,10 @@ import java.util.List;
 @Repository
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
+
+    @Nullable
+    @Query(value="select e.id from ExecContextImpl e where e.id=:execContextId")
+    Long findIdById(Long execContextId);
 
     @Override
     @Modifying
