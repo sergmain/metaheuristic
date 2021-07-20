@@ -1,0 +1,73 @@
+source:
+  uid: default-source-code-for-batch-testing-1.0
+  variables:
+    startInputAs: input-data
+  metas:
+    - mh.result-file-extension: .zip
+  processes:
+    - code: mh.batch-splitter
+      name: mh.batch-splitter
+      function:
+        code: mh.batch-splitter
+        context: internal
+      metas:
+        - variable-for-splitting: input-data
+        - output-is-dynamic: true
+        - output-variable: var-batch-item
+        - mh.result-file-extension: .zip
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-1
+            name: nop 1
+            function:
+              code: mh.nop
+              context: internal
+#          - code: batch-1
+#            name: batch 1
+#            function:
+#              code: batch-function:1.0
+#            inputs:
+#              - name: var-batch-item
+#                array: true
+#            outputs:
+#              - name: var-processed-file-1
+#                type: processed-file-type-1
+#                nullable: true
+#              - name: var-item-mapping
+#                type: mapping-type
+#                nullable: true
+#              - name: var-processed-file-2
+#                type: processed-file-type-2
+#              - name: var-processing-status
+#                type: processing-status-type
+#              - name: var-item-mapping
+#                type: mapping-type
+#            metas:
+#              - mh.result-file-extension: .zip
+          - code: mh.nop-2
+            name: nop 2
+            function:
+              code: mh.nop
+              context: internal
+          - code: mh.nop-3
+            name: nop 3
+            function:
+              code: mh.nop
+              context: internal
+    - code: mh.batch-result-processor
+      name: batch result processor
+      function:
+        code: mh.batch-result-processor
+        context: internal
+      outputs:
+        - name: var-batch-result
+          type: batch-result
+        - name: var-batch-status
+          type: batch-status
+      metas:
+        - batch-type-processed-file: processed-file-type-1, processed-file-type-2
+        - batch-type-processing-status: processing-status-type
+        - batch-type-mapping: mapping-type
+        - mh.result-file-extension: .zip
+version: 1

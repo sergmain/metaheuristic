@@ -136,7 +136,7 @@ public class DispatcherParamsTopLevelService {
     public List<String> getBatches() {
         try {
             readLock.lock();
-            return dispatcherParamsService.getExperiments();
+            return dispatcherParamsService.getBatches();
         } finally {
             readLock.unlock();
         }
