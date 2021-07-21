@@ -334,7 +334,9 @@ public class FunctionTopLevelService {
                         continue;
                     }
                     // ###idea### why?
-                    EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+                    EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(
+                            hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+
                     if (st!= EnumsApi.SignatureState.correct) {
                         if (!checksumWithSignature.checksum.equals(sum)) {
                             String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);

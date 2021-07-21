@@ -47,25 +47,4 @@ public class TestExperimentUtils {
         assertEquals("bbb", nov.values.get(1));
         assertEquals("ccc", nov.values.get(2));
     }
-
-    @Test
-    public void testSorting() {
-        Function es1 = new Function();
-        es1.setCode("function-1:1");
-        es1.setType(CommonConsts.PREDICT_TYPE);
-
-        Function es2 = new Function();
-        es2.setCode("function-2:1");
-        es2.setType(CommonConsts.FIT_TYPE);
-
-        Function es3 = new Function();
-        es3.setCode("function-3:1");
-        es3.setType(CommonConsts.CHECK_FITTING_TYPE);
-
-        List<Function> experimentFunctions = Arrays.asList( es1, es2, es3 );
-        FunctionService.sortExperimentFunctions(experimentFunctions);
-        assertEquals(CommonConsts.FIT_TYPE, experimentFunctions.get(0).getType());
-        assertEquals(CommonConsts.PREDICT_TYPE, experimentFunctions.get(1).getType());
-        assertEquals(CommonConsts.CHECK_FITTING_TYPE, experimentFunctions.get(2).getType());
-    }
 }

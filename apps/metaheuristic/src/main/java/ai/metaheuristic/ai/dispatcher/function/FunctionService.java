@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.function;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -44,26 +43,6 @@ public class FunctionService {
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
-
-    public static void sortExperimentFunctions(List<Function> functions) {
-        functions.sort(FunctionService::experimentFunctionComparator);
-    }
-
-    private static int experimentFunctionComparator(Function o1, Function o2) {
-        if (o1.getType().equals(o2.getType())) {
-            return 0;
-        }
-        switch (o1.getType().toLowerCase()) {
-            case CommonConsts.FIT_TYPE:
-                return -1;
-            case CommonConsts.PREDICT_TYPE:
-                return CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase()) ? 1 : -1;
-            case CommonConsts.CHECK_FITTING_TYPE:
-                return 1;
-            default:
-                return 0;
-        }
-    }
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
     private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = new ArrayList<>();
@@ -96,7 +75,7 @@ public class FunctionService {
     public Function persistFunction(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {
         Function function = new Function();
         function.code = functionConfig.code;
-        function.type = functionConfig.type;
+        function.type = functionConfig.type!=null ? functionConfig.type : "";
         function.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(functionConfig);
 
         String functionCode = function.getCode();
