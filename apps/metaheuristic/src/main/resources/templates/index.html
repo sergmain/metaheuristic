@@ -1,12 +1,23 @@
-<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" class='page-background'  layout:decorate="~{layout}">
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" class='page-background'  layout:decorate="~{layout}">
 
-    <h2 class="title">Project AiAi</h2>
+    <h2 class="title">Metaheuristic platform</h2>
     <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Metaheuristic is an application which implements (or intended to) a Turing complete machine.
+        The main use of MH is a management of distributed tasks. Right now there are two main areas where MH is being used:
     </p>
+
+    <ul>
+        <li>
+            <p>AI model’s hyper-parameter optimization purpose.</p>
+            Each optimization is presented as Experiment. An Experiment consists of some Tasks. Tasks are created at Dispatcher and distributed to Processor. For evaluating a performance of models, metrics and other data are collected and evaluated later by Metaheuristic.
+        </li>
+        <li>
+            <p>Batch processing.</p>
+            Common usage of batch processing - split data, create tasks for processing each part of data, process Tasks, aggregate results
+        </li>
+    </ul>
+
+    <a target="_blank" href="https://docs.metaheuristic.ai/p/concept-architecture-roadmap">Documentation on Metaheuristic</a>
 
 </div>
 
