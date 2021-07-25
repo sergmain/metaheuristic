@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -52,6 +53,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 public class BatchLineSplitterFunction implements InternalFunction {
 
     private final VariableService variableService;
+    private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;
     private final ExecContextGraphSyncService execContextGraphSyncService;
@@ -103,9 +105,12 @@ public class BatchLineSplitterFunction implements InternalFunction {
             if (variableHolder.variable!=null) {
                 content = variableService.getVariableDataAsString(variableHolder.variable.id);
             }
+            else if (variableHolder.globalVariable!=null) {
+                content = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+            }
             else {
                 throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable isn't supported at this time"));
+                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable and variable both are null"));
             }
         }
         catch (InternalFunctionException e) {
