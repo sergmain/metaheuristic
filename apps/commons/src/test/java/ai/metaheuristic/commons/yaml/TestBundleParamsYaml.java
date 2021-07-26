@@ -24,14 +24,17 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.bundle.FunctionConfigListYamlV1;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestFunctionConfig {
+public class TestBundleParamsYaml {
 
     @Test
     public void test() {
@@ -99,4 +102,34 @@ public class TestFunctionConfig {
 
     }
 
+    @Test
+    public void test_2() throws IOException {
+        String yaml = IOUtils.resourceToString("/yaml/bundle.yaml", StandardCharsets.UTF_8);
+
+        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        assertNotNull(fcy.functions);
+        assertEquals(2, fcy.functions.size());
+        {
+            BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
+            assertNotNull(fc);
+            assertEquals("fit:8.0", fc.code);
+            assertEquals("fit", fc.type);
+            assertEquals("lstm-fit.py", fc.file);
+            assertEquals(EnumsApi.FunctionSourcing.processor, fc.sourcing);
+            assertEquals("python-3", fc.env);
+            assertTrue(S.b(fc.params));
+            assertEquals("41", MetaUtils.getValue(fc.metas, "mh.task-params-version"));
+        }
+        {
+            BundleParamsYaml.FunctionConfig fc = fcy.functions.get(1);
+            assertNotNull(fc);
+            assertEquals("predict:8.0", fc.code);
+            assertEquals("predict", fc.type);
+            assertEquals("lstm-predict.py", fc.file);
+            assertEquals(EnumsApi.FunctionSourcing.dispatcher, fc.sourcing);
+            assertEquals("python-3", fc.env);
+            assertTrue(S.b(fc.params));
+            assertEquals("42", MetaUtils.getValue(fc.metas, "mh.task-params-version"));
+        }
+    }
 }

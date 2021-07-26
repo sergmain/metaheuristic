@@ -1,0 +1,23 @@
+version: 3
+functions:
+  - code: fit:8.0
+    type: fit
+    file: lstm-fit.py
+    sourcing: processor
+    env: python-3
+    metas:
+      - mh.task-params-version: 41
+  - code: predict:8.0
+    type: predict
+    file: lstm-predict.py
+    sourcing: dispatcher
+    env: python-3
+    metas:
+      - mh.task-params-version: 42
+sourceCodes:
+  - file: exp-v6.0-01-fit-and-predict-1.9.yaml
+    lang: yaml
+  - file: exp-v6.0-01-main-1.3.yaml
+  - file: sc-python.py
+    lang: python
+

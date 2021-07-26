@@ -125,10 +125,10 @@ public class BundleParamsYamlV3 implements BaseParams {
         public String file;
 
         @Setter
-        private EnumsApi.SourceCodeLang type = null;
+        private EnumsApi.SourceCodeLang lang = null;
 
-        public EnumsApi.SourceCodeLang getType() {
-            return type==null ? EnumsApi.SourceCodeLang.yaml : type;
+        public EnumsApi.SourceCodeLang getLang() {
+            return lang==null ? EnumsApi.SourceCodeLang.yaml : lang;
         }
     }
 
