@@ -21,9 +21,9 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlV1;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.bundle.FunctionConfigListYamlV1;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -35,10 +35,10 @@ public class TestFunctionConfig {
 
     @Test
     public void test() {
-        FunctionConfigListYaml scs = new FunctionConfigListYaml();
+        BundleParamsYaml scs = new BundleParamsYaml();
         scs.functions = new ArrayList<>();
 
-        FunctionConfigListYaml.FunctionConfig config = new FunctionConfigListYaml.FunctionConfig();
+        BundleParamsYaml.FunctionConfig config = new BundleParamsYaml.FunctionConfig();
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
@@ -48,16 +48,16 @@ public class TestFunctionConfig {
 
         scs.functions.add(config);
 
-        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
         System.out.println(yaml);
 
-        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yaml);
+        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         assertNotNull(fcy);
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+        BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertNotNull(fc.getChecksumMap());
         assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
@@ -81,16 +81,16 @@ public class TestFunctionConfig {
 
         scs.functions.add(config);
 
-        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
         System.out.println(yaml);
 
-        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yaml);
+        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(fcy);
-        assertEquals(2, fcy.version);
+        assertEquals(3, fcy.version);
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+        BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertEquals("content-of-file", fc.content);
         assertTrue(S.b(fc.params));

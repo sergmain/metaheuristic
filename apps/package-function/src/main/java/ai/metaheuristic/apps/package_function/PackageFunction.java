@@ -22,8 +22,8 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -93,12 +93,12 @@ public class PackageFunction implements CommandLineRunner {
             return;
         }
         String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
-        FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
+        BundleParamsYaml functionConfigList = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (FunctionConfigListYaml.FunctionConfig function : functionConfigList.getFunctions()) {
+        for (BundleParamsYaml.FunctionConfig function : functionConfigList.getFunctions()) {
             final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(function);
             if (!verify.isOk) {
                 System.out.println(verify.error);
@@ -128,7 +128,7 @@ public class PackageFunction implements CommandLineRunner {
             }
             else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
                 // we don't need any checks here because all checks
-                // have been made in ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml.checkIntegrity
+                // have been made in ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml.checkIntegrity
             }
         }
         if (isError) {
@@ -136,7 +136,7 @@ public class PackageFunction implements CommandLineRunner {
         }
 
         // Process
-        for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.getFunctions()) {
+        for (BundleParamsYaml.FunctionConfig functionConfig : functionConfigList.getFunctions()) {
             String sum;
             if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
                     functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
@@ -164,7 +164,7 @@ public class PackageFunction implements CommandLineRunner {
             }
         }
 
-        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(functionConfigList);
+        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(functionConfigList);
         final File file = new File(targetDir, FUNCTIONS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

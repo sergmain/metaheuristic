@@ -13,8 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -27,33 +26,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Serge
- * Date: 12/12/2020
- * Time: 5:23 PM
- */
 @Data
-public class FunctionConfigListYamlV2 implements BaseParams {
+public class FunctionConfigListYamlV1 implements BaseParams {
 
-    public final int version=2;
-
-    public List<FunctionConfigV2> functions = new ArrayList<>();
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
+    public List<FunctionConfigV1> functions;
+
+    @SuppressWarnings("DuplicatedCode")
     @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class FunctionConfigV2 implements Cloneable {
+    public static class FunctionConfigV1 implements Cloneable {
 
         @SneakyThrows
-        public FunctionConfigV2 clone() {
-            final FunctionConfigV2 clone = (FunctionConfigV2) super.clone();
+        public FunctionConfigV1 clone() {
+            final FunctionConfigV1 clone = (FunctionConfigV1) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -78,16 +73,12 @@ public class FunctionConfigListYamlV2 implements BaseParams {
          */
         @Nullable
         public String params;
-        @Nullable
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
-        @Nullable
         public Map<EnumsApi.HashAlgo, String> checksumMap;
         @Nullable
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();
-        @Nullable
-        public String content;
     }
 }

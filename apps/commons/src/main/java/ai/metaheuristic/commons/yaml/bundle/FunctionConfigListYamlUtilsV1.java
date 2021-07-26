@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
@@ -76,7 +76,7 @@ public class FunctionConfigListYamlUtilsV1
 
     @Override
     public FunctionConfigListYamlUtilsV2 nextUtil() {
-        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        return (FunctionConfigListYamlUtilsV2) BundleParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

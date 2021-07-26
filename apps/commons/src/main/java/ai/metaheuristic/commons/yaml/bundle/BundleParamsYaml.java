@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -31,11 +31,9 @@ import java.util.Map;
 
 @Data
 @Slf4j
-public class FunctionConfigListYaml implements BaseParams {
+public class BundleParamsYaml implements BaseParams {
 
-    public final int version=2;
-
-    public List<FunctionConfig> functions = new ArrayList<>();
+    public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
@@ -117,5 +115,25 @@ public class FunctionConfigListYaml implements BaseParams {
         @Nullable
         public String content;
     }
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SourceCodeConfig implements Cloneable {
+
+        public String file;
+
+        @Setter
+        private EnumsApi.SourceCodeLang type = null;
+
+        public EnumsApi.SourceCodeLang getType() {
+            return type==null ? EnumsApi.SourceCodeLang.yaml : type;
+        }
+    }
+
+    public List<FunctionConfig> functions = new ArrayList<>();
+    public List<SourceCodeConfig> sourceCodes = new ArrayList<>();
+
 
 }

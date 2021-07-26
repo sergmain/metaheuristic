@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.yaml;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
@@ -88,11 +88,11 @@ public class TestYamlParser {
     @Test
     public void loadFunctionYamlWithError_01() throws IOException {
 
-        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
+        BundleParamsYaml config = BundleParamsYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
         assertNotNull(config);
         assertNotNull(config.getFunctions());
         assertEquals(1, config.getFunctions().size());
-        FunctionConfigListYaml.FunctionConfig function = config.getFunctions().get(0);
+        BundleParamsYaml.FunctionConfig function = config.getFunctions().get(0);
         FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(function);
         assertFalse(status.isOk);
     }
@@ -100,8 +100,8 @@ public class TestYamlParser {
     @Test
     public void loadFunctionsFromYaml() throws IOException {
 
-        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
-        for (FunctionConfigListYaml.FunctionConfig function : config.functions) {
+        BundleParamsYaml config = BundleParamsYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
+        for (BundleParamsYaml.FunctionConfig function : config.functions) {
             FunctionCoreUtils.validate(function);
         }
 
@@ -109,7 +109,7 @@ public class TestYamlParser {
         assertNotNull(config.functions);
         assertEquals(3, config.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig sc;
+        BundleParamsYaml.FunctionConfig sc;
         sc = config.functions.get(0);
         assertEquals("aiai.fit.default.function:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.FIT_TYPE, sc.type);

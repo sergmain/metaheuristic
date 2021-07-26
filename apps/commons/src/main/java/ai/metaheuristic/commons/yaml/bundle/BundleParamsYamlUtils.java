@@ -13,22 +13,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
-public class FunctionConfigListYamlUtils {
+public class BundleParamsYamlUtils {
 
     private static final FunctionConfigListYamlUtilsV1 YAML_UTILS_V_1 = new FunctionConfigListYamlUtilsV1();
     private static final FunctionConfigListYamlUtilsV2 YAML_UTILS_V_2 = new FunctionConfigListYamlUtilsV2();
-    private static final FunctionConfigListYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final BundleParamsYamlUtilsV3 YAML_UTILS_V_3 = new BundleParamsYamlUtilsV3();
+    private static final BundleParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
-    public static final BaseYamlUtils<FunctionConfigListYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<BundleParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3
             ),
             DEFAULT_UTILS
     );

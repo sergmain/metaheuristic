@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.NonNull;
@@ -76,8 +76,8 @@ public class TestFunctionConfigSchemeValidation {
 
     @NonNull
     private String createYaml() {
-        FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
-        FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();
+        BundleParamsYaml cfgList = new BundleParamsYaml();
+        BundleParamsYaml.FunctionConfig cfg = new BundleParamsYaml.FunctionConfig();
         cfg.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "123");
         cfg.code = "code";
         cfg.type = "type";
@@ -90,6 +90,6 @@ public class TestFunctionConfigSchemeValidation {
         cfg.metas.add(Map.of("meta-key", "meta-value"));
         cfgList.functions = List.of(cfg);
 
-        return FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(cfgList);
+        return BundleParamsYamlUtils.BASE_YAML_UTILS.toString(cfgList);
     }
 }

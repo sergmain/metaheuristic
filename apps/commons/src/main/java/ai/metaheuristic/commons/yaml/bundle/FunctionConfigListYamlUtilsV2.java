@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.S;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * Time: 5:28 PM
  */
 public class FunctionConfigListYamlUtilsV2
-        extends AbstractParamsYamlUtils<FunctionConfigListYamlV2, FunctionConfigListYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<FunctionConfigListYamlV2, BundleParamsYamlV3, BundleParamsYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -51,11 +51,11 @@ public class FunctionConfigListYamlUtilsV2
 
     @NonNull
     @Override
-    public FunctionConfigListYaml upgradeTo(@NonNull FunctionConfigListYamlV2 src) {
+    public BundleParamsYamlV3 upgradeTo(@NonNull FunctionConfigListYamlV2 src) {
         src.checkIntegrity();
-        FunctionConfigListYaml trg = new FunctionConfigListYaml();
+        BundleParamsYamlV3 trg = new BundleParamsYamlV3();
         trg.functions = src.functions.stream().map(fnCfgSrc-> {
-            FunctionConfigListYaml.FunctionConfig fnCfgTrg = new FunctionConfigListYaml.FunctionConfig();
+            BundleParamsYamlV3.FunctionConfigV3 fnCfgTrg = new BundleParamsYamlV3.FunctionConfigV3();
             BeanUtils.copyProperties(fnCfgSrc, fnCfgTrg);
 
             if (fnCfgSrc.checksumMap!=null) {
@@ -83,8 +83,8 @@ public class FunctionConfigListYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public BundleParamsYamlUtilsV3 nextUtil() {
+        return (BundleParamsYamlUtilsV3) BundleParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     @Override
