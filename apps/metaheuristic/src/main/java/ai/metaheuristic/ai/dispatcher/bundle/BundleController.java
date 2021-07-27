@@ -17,9 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +58,7 @@ public class BundleController {
     @PostMapping(value = "/bundle-upload-from-file")
     public String uploadFile(final MultipartFile file, Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
+        BundleData.UploadingStatus uploadingStatus = bundleTopLevelService.uploadFromFile(file, sourceCodeId, context);
 
         ControllerUtils.initRedirectAttributes(redirectAttributes, uploadingStatus);
         return REDIRECT_BUNDLE_BUNDLE_ADD;

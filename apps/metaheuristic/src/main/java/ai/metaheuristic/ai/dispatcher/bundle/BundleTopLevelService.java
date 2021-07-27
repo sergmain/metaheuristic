@@ -90,7 +90,7 @@ public class BundleTopLevelService {
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextVariableService execContextVariableService;
 
-    public BundleData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
+    public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
             return new BundleData.UploadingStatus("#981.030 Batch can't be created in company #1");
         }
@@ -165,6 +165,7 @@ public class BundleTopLevelService {
             try(InputStream is = new FileInputStream(tempFile)) {
                 execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
             }
+/*
             final BundleData.UploadingStatus uploadingStatus;
             uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
                     execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
@@ -172,6 +173,8 @@ public class BundleTopLevelService {
                                     batchService.createBatchForFile(
                                             sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             return uploadingStatus;
+*/
+            return new BundleData.UploadingStatus();
         }
         catch (ExecContextTooManyInstancesException e) {
             String es = S.f("#981.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
