@@ -48,6 +48,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -276,7 +277,7 @@ public class BatchTopLevelService {
         try {
             // TODO 2021.03.13 add a support of
             //  CleanerInfo resource = new CleanerInfo();
-            tempFile = File.createTempFile("mh-temp-file-for-checking integrity-", ".bin");
+            tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin");
             file.transferTo(tempFile);
             if (file.getSize()!=tempFile.length()) {
                 return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
@@ -285,22 +286,22 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
         }
 
-        if (ext.equals(ZIP_EXT)) {
-            List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
-            if (!errors.isEmpty()) {
-                final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
-                status.addErrorMessages(errors);
-                return status;
-            }
-        }
-
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
-
-        final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
-        if (sc==null) {
-            return new BatchData.UploadingStatus("#981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
-        }
         try {
+            if (ext.equals(ZIP_EXT)) {
+                List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+                if (!errors.isEmpty()) {
+                    final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
+                    status.addErrorMessages(errors);
+                    return status;
+                }
+            }
+
+            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
+
+            final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
+            if (sc==null) {
+                return new BatchData.UploadingStatus("#981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            }
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContext(sourceCodeId, dispatcherContext);
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
@@ -328,6 +329,9 @@ public class BatchTopLevelService {
             String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             return new BatchData.UploadingStatus(es);
+        }
+        finally {
+            FileUtils.deleteQuietly(tempFile);
         }
     }
 

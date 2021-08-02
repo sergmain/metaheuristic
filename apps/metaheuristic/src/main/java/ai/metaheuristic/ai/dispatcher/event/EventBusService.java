@@ -108,7 +108,7 @@ public class EventBusService {
         }
     }
 
-
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void resourceCloseEvent(ResourceCloseEvent event) {
