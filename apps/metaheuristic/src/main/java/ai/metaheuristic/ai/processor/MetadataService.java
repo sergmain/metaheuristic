@@ -151,7 +151,7 @@ public class MetadataService {
         ;
     }
 
-    public ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
+    public static ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
 
         ChecksumWithSignatureInfo checksumWithSignatureInfo = new ChecksumWithSignatureInfo();
 

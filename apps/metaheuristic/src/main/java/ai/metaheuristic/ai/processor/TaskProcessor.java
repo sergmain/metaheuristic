@@ -59,6 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -500,10 +501,13 @@ public class TaskProcessor {
 
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
+            final Supplier<Boolean> execContextDeletionCheck =
+                    () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
+
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
                     cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                    globals.taskConsoleOutputMaxLines);
+                    globals.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
         catch (ScheduleInactivePeriodException e) {
@@ -523,7 +527,7 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
-    private FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
+    private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
         if (!signatureRequired) {
             return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
         }
@@ -572,7 +576,7 @@ public class TaskProcessor {
         return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
     }
 
-    private String toFilename(String functionCode) {
+    private static String toFilename(String functionCode) {
         return functionCode.replace(':', '_').replace(' ', '_');
     }
 

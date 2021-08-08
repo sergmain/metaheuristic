@@ -104,7 +104,7 @@ public class ProcessorService {
         return status;
     }
 
-    private KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
+    private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
         KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
         t.mirrors.putAll(envYaml.mirrors);
         t.envs.putAll(envYaml.envs);

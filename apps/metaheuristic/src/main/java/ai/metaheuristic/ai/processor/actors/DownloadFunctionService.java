@@ -291,7 +291,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.error("#811.180 assetManager file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
-            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = metadataService.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
+            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataService.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
 
             CheckSumAndSignatureStatus status;
             try {

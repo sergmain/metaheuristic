@@ -100,7 +100,7 @@ public class TestDestroyProcesses {
         assertEquals(0, numberOfAlive);
     }
 
-    private int getNumberOfAlive(LinkedList<ProcessHandle> handles) {
+    private static int getNumberOfAlive(LinkedList<ProcessHandle> handles) {
         int count=0;
         for (ProcessHandle handle : handles) {
             if (handle.isAlive()) {
