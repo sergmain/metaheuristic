@@ -153,9 +153,8 @@ public class BatchResultProcessorTxService {
 
         String statusFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_PROCESSING_STATUS);
         if (S.b(statusFileTypes)) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                            S.f("#993.027 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSING_STATUS, simpleExecContext.execContextId)));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
+                            S.f("#993.027 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSING_STATUS, simpleExecContext.execContextId));
         }
         final List<String> statusTypes = Stream.of(StringUtils.split(statusFileTypes, ", ")).collect(Collectors.toList());
 
@@ -174,6 +173,11 @@ public class BatchResultProcessorTxService {
                 outputTypes::contains, statusTypes::contains, mappingTypes::contains);
 
         File resultDir = DirUtils.createTempDir("batch-result-processing-");
+        if (resultDir == null) {
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#993.030 temp can't be created");
+        }
+        eventPublisher.publishEvent(new ResourceCloseTxEvent(resultDir));
+
         File zipDir = new File(resultDir, "zip");
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();

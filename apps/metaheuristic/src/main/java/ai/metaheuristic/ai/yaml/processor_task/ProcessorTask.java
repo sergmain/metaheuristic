@@ -94,6 +94,7 @@ public class ProcessorTask {
     public boolean clean;
 
     // TODO 2020-12-30 need to change it to DispatcherServerUrl when this class will be based on BaseClass
+    // TODO 2021-08-07 you mean ProcessorAndCoreData.DispatcherUrl()? and what the point of this change?
     public String dispatcherUrl;
 
     // when task was created

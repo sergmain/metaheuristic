@@ -1,7 +1,7 @@
 version: 3
 source:
   strictNaming: true
-  uid: sc-inline-as-variable-and-permute-values-1.0
+  uid: sc-inline-as-variable-and-filter-values-1.0
   variables:
     inline:
       mh.hyper-params:
@@ -28,7 +28,7 @@ source:
       outputs:
         - name: filter
       metas:
-        - expression: filter = '[hard_sigmoid, softplus]'
+        - expression: filter = '\aaa\'
     - code: mh.reduce-values
       name: mh.reduce-values
       function:

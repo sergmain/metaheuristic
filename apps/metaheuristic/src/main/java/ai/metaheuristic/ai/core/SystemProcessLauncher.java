@@ -23,12 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,6 +48,13 @@ public class SystemProcessLauncher {
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
+        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of());
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static FunctionApiData.SystemExecResult execCommand(
+            List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines, List<Supplier<Boolean>> outerInterrupters) throws IOException, InterruptedException {
 //        log.warn("Start executing a system process in dir {}", execDir.getAbsolutePath());
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
@@ -99,8 +108,23 @@ public class SystemProcessLauncher {
             });
             reader.start();
 
-            if (timeout.get()>0) {
-                final long terminateAt = System.currentTimeMillis() + timeout.get();
+            if (timeout.get()>0 || !outerInterrupters.isEmpty()) {
+                final List<Supplier<Boolean>> interrupters = new ArrayList<>();
+                if (!outerInterrupters.isEmpty()) {
+                    interrupters.addAll(outerInterrupters);
+                }
+                if (timeout.get()>0) {
+                    final long terminateAt = System.currentTimeMillis() + timeout.get();
+                    interrupters.add( ()-> System.currentTimeMillis() > terminateAt );
+                }
+                interrupters.add( () -> {
+                    if (schedule!=null && schedule.isCurrentTimeInactive()) {
+                        isInactivePeriod.set(true);
+                        return true;
+                    }
+                    return false;
+                });
+
                 timeoutThread = new Thread(() -> {
                     try {
                         while (!isRun.get()) {
@@ -110,12 +134,7 @@ public class SystemProcessLauncher {
                         log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
                         while (true) {
                             Thread.sleep(TimeUnit.SECONDS.toMillis(2));
-                            if (System.currentTimeMillis() > terminateAt) {
-                                break;
-                            }
-                            // case when SchedulePolicy is strict
-                            if (schedule!=null && schedule.isCurrentTimeInactive()) {
-                                isInactivePeriod.set(true);
+                            if (interrupters.stream().anyMatch(Supplier::get)) {
                                 break;
                             }
                             // normal termination of the reader thread. We don't need to terminate any application
