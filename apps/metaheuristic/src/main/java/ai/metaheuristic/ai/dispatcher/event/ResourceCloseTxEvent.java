@@ -39,12 +39,12 @@ public class ResourceCloseTxEvent {
     }
 
     public ResourceCloseTxEvent(File tempFile) {
-        this.files.add(tempFile);
+        add(tempFile);
     }
 
     public ResourceCloseTxEvent(InputStream is, File tempFile) {
         this.inputStreams.add(is);
-        this.files.add(tempFile);
+        add(tempFile);
     }
 
     public void add(InputStream inputStream) {
