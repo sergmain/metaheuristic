@@ -447,7 +447,8 @@ public class Globals {
     private static final Map<Character, Long> sizes = Map.of(
             'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
 
-    private @Nullable Long parseChunkSizeValue(@Nullable String str) {
+    @Nullable
+    private static Long parseChunkSizeValue(@Nullable String str) {
         if (str==null || str.isBlank()) {
             return null;
         }
@@ -518,7 +519,7 @@ public class Globals {
         }
     }
 
-    private void logSystemEnvs() {
+    private static void logSystemEnvs() {
         System.getProperties().forEach( (o, o2) -> log.info("{}: {}", o, o2));
     }
 
