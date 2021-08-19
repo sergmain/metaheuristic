@@ -72,7 +72,7 @@ public class Schedulers {
         /**
          * update status of all execContexts which are in 'started' state
          */
-        @Scheduled(initialDelay = 63_000, fixedDelay = 63_0000 )
+        @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
             if (globals.isUnitTesting) {
                 return;

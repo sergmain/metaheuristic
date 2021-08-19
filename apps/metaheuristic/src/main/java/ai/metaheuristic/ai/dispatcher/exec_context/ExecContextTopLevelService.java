@@ -127,6 +127,7 @@ public class ExecContextTopLevelService {
                 () -> findUnassignedTasksAndRegisterInQueueInternal(execContextId));
     }
 
+    // this method is here to handle situation when a method with @Transactional is being called from lambda
     private Void findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
         return execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId);
     }

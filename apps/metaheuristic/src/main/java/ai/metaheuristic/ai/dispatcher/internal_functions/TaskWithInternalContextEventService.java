@@ -48,9 +48,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Consumer;
 
 /**
  * @author Serge
@@ -88,43 +91,115 @@ public class TaskWithInternalContextEventService {
     private final ApplicationEventPublisher eventPublisher;
 
     public static final int MAX_QUEUE_SIZE = 20;
-    public static final int MAX_ACTIVE_THREAD = 2;
+    public static final int MAX_ACTIVE_THREAD = 1;
+    private static final int MAX_NUMBER_EXECUTORS = 10;
 
-    private static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
+    public static class QueueWithExecutor {
+        public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
+        public final LinkedList<TaskWithInternalContextEvent> queue = new LinkedList<>();
+    }
 
-    public static final LinkedList<TaskWithInternalContextEvent> queue = new LinkedList<>();
+    public static class ExecutorForExecContext {
+        public Long execContextId;
+        public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
+
+        public ExecutorForExecContext(Long execContextId) {
+            this.execContextId = execContextId;
+        }
+    }
+
+    public static final LinkedHashMap<Long, LinkedList<TaskWithInternalContextEvent>> QUEUE = new LinkedHashMap<>();
+    public static final ExecutorForExecContext[] POOL_EXECUTORS = new ExecutorForExecContext[MAX_NUMBER_EXECUTORS];
 
     public void putToQueue(final TaskWithInternalContextEvent event) {
         putToQueueInternal(event);
+        cleanPoolExecutors(event.execContextId, this::process);
+//        pokeExecutor(event.execContextId, this::process);
+    }
 
-        if (executor.getQueue().size()>MAX_QUEUE_SIZE) {
-            return;
-        }
-
-        executor.submit(() -> {
-            TaskWithInternalContextEvent e;
-            while ((e = pullFromQueue())!=null) {
-                process(e);
+    /**
+     *
+     * @param execContextId
+     * @return boolean is POOL_EXECUTORS full and execContextId wasn't allocated
+     */
+    public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
+        synchronized (POOL_EXECUTORS) {
+            for (ExecutorForExecContext poolExecutor : POOL_EXECUTORS) {
+                if (poolExecutor==null) {
+                    continue;
+                }
+                if (poolExecutor.execContextId.equals(execContextId)) {
+                    if (poolExecutor.executor.getActiveCount() == 0) {
+                        poolExecutor.executor.submit(() -> processTask(execContextId, taskProcessor, poolExecutor));
+                    }
+                    return false;
+                }
             }
-        });
+            for (int i = 0; i <POOL_EXECUTORS.length; i++) {
+                if (POOL_EXECUTORS[i]==null) {
+                    POOL_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
+
+                    final int idx = i;
+                    POOL_EXECUTORS[i].executor.submit(() -> processTask(execContextId, taskProcessor, POOL_EXECUTORS[idx]));
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private static void processTask(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor, ExecutorForExecContext poolExecutor) {
+        TaskWithInternalContextEvent e;
+        while ((e = pullFromQueue(poolExecutor.execContextId)) != null) {
+            taskProcessor.accept(e);
+        }
+    }
+
+    public static void cleanPoolExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
+        synchronized (POOL_EXECUTORS) {
+            for (int i = 0; i<POOL_EXECUTORS.length; i++) {
+                if (POOL_EXECUTORS[i] == null) {
+                    continue;
+                }
+                if (POOL_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_EXECUTORS[i].executor.getActiveCount()==0) {
+                    POOL_EXECUTORS[i] = null;
+                }
+            }
+            final LinkedHashSet<Long> ids;
+            synchronized (QUEUE) {
+                ids = new LinkedHashSet<>(QUEUE.keySet());
+            }
+            for (Long id : ids) {
+                if (pokeExecutor(id, taskProcessor)) {
+                    break;
+                }
+            }
+        }
     }
 
     public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
-        synchronized (queue) {
-            if (queue.contains(event)) {
+        synchronized (QUEUE) {
+            LinkedList<TaskWithInternalContextEvent> q = QUEUE.computeIfAbsent(event.execContextId, (o)->new LinkedList<>());
+
+            if (q.contains(event)) {
                 return;
             }
-            queue.add(event);
-
-            // TODO 2021-05-02 add a param to Globals which will control a sorting logic
-//            queue.sort(Comparator.comparingLong(o -> o.execContextId));
+            q.add(event);
         }
     }
 
     @Nullable
-    private TaskWithInternalContextEvent pullFromQueue() {
-        synchronized (queue) {
-            return queue.pollFirst();
+    private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
+        synchronized (QUEUE) {
+            final LinkedList<TaskWithInternalContextEvent> events = QUEUE.get(execContextId);
+            if (events==null) {
+                return null;
+            }
+            if (events.isEmpty()) {
+                QUEUE.remove(execContextId);
+                return null;
+            }
+            return events.pollFirst();
         }
     }
 
@@ -144,7 +219,7 @@ public class TaskWithInternalContextEventService {
                         return null;
                     });
         }
-        catch(InternalFunctionException e) {
+        catch (InternalFunctionException e) {
             if (e.result.processing != Enums.InternalFunctionProcessing.ok) {
                 log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
