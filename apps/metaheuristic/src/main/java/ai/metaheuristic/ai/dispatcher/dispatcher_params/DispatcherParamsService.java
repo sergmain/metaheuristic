@@ -127,7 +127,7 @@ class DispatcherParamsService {
         registerSpecific(sourceCode, scpy, Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION, this::registerBatch);
     }
 
-    private void registerSpecific(SourceCodeImpl sourceCode, SourceCodeParamsYaml scpy, String functionCode, Consumer<String> consumer) {
+    private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeParamsYaml scpy, String functionCode, Consumer<String> consumer) {
         SourceCodeParamsYaml.Process p = findProcessForFunction(scpy, functionCode);
         if (p==null) {
             return;
@@ -136,7 +136,7 @@ class DispatcherParamsService {
     }
 
     @Nullable
-    private SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml scpy, String functionCode) {
+    private static SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml scpy, String functionCode) {
         for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
             SourceCodeParamsYaml.Process result = findProcessForFunction(process, functionCode);
             if (result!=null) {
@@ -147,7 +147,7 @@ class DispatcherParamsService {
     }
 
     @Nullable
-    private SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml.Process process, String functionCode) {
+    private static SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml.Process process, String functionCode) {
         if (process.function.code.equals(functionCode)) {
             return process;
         }
@@ -222,6 +222,11 @@ class DispatcherParamsService {
         return dispatcherParamsYaml ==null ? List.of() : dispatcherParamsYaml.longRunnings.stream()
                 .sorted((o1, o2)->o2.execContextId.compareTo(o1.execContextId))
                 .collect(Collectors.toList());
+    }
+
+    public boolean isLongRunning(Long taskId) {
+        find();
+        return dispatcherParamsYaml != null && dispatcherParamsYaml.longRunnings.stream().anyMatch(o -> o.taskId.equals(taskId));
     }
 
     public List<String> getBatches() {

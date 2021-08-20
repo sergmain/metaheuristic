@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -57,6 +58,7 @@ public class ExecContextReconciliationTopLevelService {
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
@@ -85,13 +87,21 @@ public class ExecContextReconciliationTopLevelService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.state.value!=taskState.execState) {
-//                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
+
                 TaskQueue.AllocatedTask allocatedTask = allocatedTasks.get(tv.taskId);
                 if (allocatedTask==null) {
                     if (taskState.execState== TaskExecState.IN_PROGRESS.value && tv.state== TaskExecState.NONE) {
-                        log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
-                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
-                        status.taskForResettingIds.add(tv.taskId);
+                        if (dispatcherParamsTopLevelService.isLongRunning(tv.taskId)) {
+                            log.warn("#307.030 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, state of long-running task will be updated in graph",
+                                    tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                        }
+                        else{
+                            log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, non-long-running task will be reset",
+                                    tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                            status.taskForResettingIds.add(tv.taskId);
+                        }
+
                     }
                     else if (taskState.execState== TaskExecState.NONE.value && tv.state== TaskExecState.CHECK_CACHE) {
                         // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
