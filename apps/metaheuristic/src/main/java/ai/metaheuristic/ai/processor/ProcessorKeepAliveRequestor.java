@@ -224,6 +224,9 @@ public class ProcessorKeepAliveRequestor {
                     else if (errorCode==503) {
                         log.error("#776.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
+                    else if (errorCode==500) {
+                        log.error("#776.111 Error accessing url: {}, error: 500 Internal Server Error", url);
+                    }
                     else {
                         log.error("#776.113 Error accessing url: {}, error: {}", url, e.getMessage());
                     }

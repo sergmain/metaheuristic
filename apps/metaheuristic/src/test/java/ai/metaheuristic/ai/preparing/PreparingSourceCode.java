@@ -533,7 +533,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return 0;
         }
-        return execContextTaskStateService.getCountUnfinishedTasks(ects);
+        return ExecContextTaskStateService.getCountUnfinishedTasks(ects);
     }
 
     public List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {
@@ -544,7 +544,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return List.of();
         }
-        return execContextTaskStateService.getUnfinishedTaskVertices(ects);
+        return ExecContextTaskStateService.getUnfinishedTaskVertices(ects);
     }
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {

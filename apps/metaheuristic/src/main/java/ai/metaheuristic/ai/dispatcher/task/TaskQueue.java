@@ -497,7 +497,6 @@ public class TaskQueue {
     }
 
     public void shrink() {
-
         if (taskGroups.size()>minQueueSize) {
             int size = taskGroups.size();
             for (int i = 0; i < size; i++) {

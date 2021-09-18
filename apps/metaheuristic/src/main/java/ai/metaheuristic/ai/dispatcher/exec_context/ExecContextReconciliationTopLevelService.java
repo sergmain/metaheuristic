@@ -20,12 +20,15 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -35,6 +38,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,11 +58,35 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 @RequiredArgsConstructor
 public class ExecContextReconciliationTopLevelService {
     private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextRepository execContextRepository;
+
+    @PostConstruct
+    public void postConstruct() {
+        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+        for (Long execContextId : execContextIds) {
+            Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
+            for (Map.Entry<Long, TaskApiData.TaskState> entry : states.entrySet()) {
+                if (entry.getValue().execState==EnumsApi.TaskExecState.NONE.value ||entry.getValue().execState==EnumsApi.TaskExecState.CHECK_CACHE.value ||entry.getValue().execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    final Long taskId = entry.getKey();
+                    taskProviderTopLevelService.registerTask(execContextId, taskId);
+                    if (entry.getValue().execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                        taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
+                    }
+                }
+            }
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                continue;
+            }
+            reconcileStates(execContext);
+        }
+    }
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
@@ -97,15 +125,22 @@ public class ExecContextReconciliationTopLevelService {
                             eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                         }
                         else{
+                            // #307.040 Found different states for task #191791, db: IN_PROGRESS, graph: NONE, allocatedTask wasn't found, non-long-running task will be reset
                             log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, non-long-running task will be reset",
                                     tv.taskId, TaskExecState.from(taskState.execState), tv.state);
-                            status.taskForResettingIds.add(tv.taskId);
+                            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+//                            status.taskForResettingIds.add(tv.taskId);
                         }
-
                     }
                     else if (taskState.execState== TaskExecState.NONE.value && tv.state== TaskExecState.CHECK_CACHE) {
                         // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
                         // ---> This is a normal situation, will occur after restarting dispatcher
+                    }
+                    else if (taskState.execState== TaskExecState.OK.value && tv.state== TaskExecState.CHECK_CACHE) {
+                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. this situation is presumable a normal situation.",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                        // #307.060 Found different states for task #196546, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found, trying to update a state of task in execContext
+                        // ---> Is this a normal situation? need to monitor a situation
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
