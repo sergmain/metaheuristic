@@ -155,7 +155,7 @@ public class TaskCheckCachingService {
             log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
             // finish task with cached data
 
-            List<Object[]> vars = cacheVariableRepository.getIdsByCacheProcessId(cacheProcess.id);
+            List<Object[]> vars = cacheVariableRepository.getVarsByCacheProcessId(cacheProcess.id);
             if (vars.size()!=tpy.task.outputs.size()) {
                 log.warn("#609.080 cashProcess #{} is broken. Number of stored variable is {} but expected {}. CacheProcess will be invalidated", cacheProcess.id, vars.size(), tpy.task.outputs.size());
                 throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);

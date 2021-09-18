@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -25,6 +26,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Serge
@@ -36,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 public interface CacheProcessRepository extends CrudRepository<CacheProcess, Long> {
 
-    @Override
+    @Modifying
+    void deleteAllByIdIn(List<Long> ids);
+
     @Modifying
     @Query(value="delete from CacheProcess t where t.id=:id")
     void deleteById(Long id);
@@ -45,9 +51,12 @@ public interface CacheProcessRepository extends CrudRepository<CacheProcess, Lon
     @Query(value="select c from CacheProcess c where c.keySha256Length=:keySha256Length")
     CacheProcess findByKeySha256Length(String keySha256Length);
 
-    @Nullable
-    @Query(value="select c from CacheProcess c where c.functionCode=:functionCode")
-    CacheProcess findByFunctionCode(String functionCode);
+    @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
+    @Query(value="select c.id from CacheProcess c where c.functionCode=:functionCode")
+    List<Long> findByFunctionCode(Pageable pageable, String functionCode);
 
+    @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
+    @Query(value="select b.functionCode from CacheProcess b")
+    Set<String> findAllFunctionCodes();
 
 }

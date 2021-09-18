@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -58,6 +59,9 @@ public class ArtifactCleanerAtDispatcher {
     private final TaskTransactionalService taskTransactionalService;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
+    private final FunctionRepository functionRepository;
+    private final CacheProcessRepository cacheProcessRepository;
+    private final CacheService cacheService;
 
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
@@ -67,6 +71,7 @@ public class ArtifactCleanerAtDispatcher {
         deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
+        deleteOrphanCacheData();
     }
 
     private void deleteOrphanBatches() {
@@ -152,6 +157,30 @@ public class ArtifactCleanerAtDispatcher {
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
                     execContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+                }
+            }
+        }
+    }
+
+    private void deleteOrphanCacheData() {
+        List<String> funcCodes = functionRepository.findAllFunctionCodes();
+        Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
+
+        List<String> missingCodes = currFuncCodes.stream().filter(currFuncCode -> !funcCodes.contains(currFuncCode)).collect(Collectors.toList());
+
+        for (String funcCode : missingCodes) {
+            List<Long> ids;
+            while (!(ids = cacheProcessRepository.findByFunctionCode(Consts.PAGE_REQUEST_100_REC, funcCode)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                for (List<Long> page : pages) {
+                    if (page.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan cache entries, funcCode: #{}, cacheProcessIds #{}", funcCode, page);
+                    cacheService.deleteCacheProcesses(page);
+                    for (Long cacheProcessId : page) {
+                        cacheService.deleteCacheVariable(cacheProcessId);
+                    }
                 }
             }
         }

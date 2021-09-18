@@ -31,7 +31,7 @@ import java.io.Serializable;
  * Time: 9:13 PM
  */
 @Entity
-@Table(name = "mh_cache_process")
+@Table(name = "MH_CACHE_PROCESS")
 @Data
 @EqualsAndHashCode(of = {"keySha256Length"})
 @NoArgsConstructor
