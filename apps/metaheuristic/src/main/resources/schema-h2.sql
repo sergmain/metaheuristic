@@ -301,7 +301,8 @@ CREATE TABLE mh_exec_context
     STATE                   smallint       not null default 0,
     CTX_GRAPH_ID            bigint NOT NULL,
     CTX_TASK_STATE_ID       bigint NOT NULL,
-    CTX_VARIABLE_STATE_ID   bigint NOT NULL
+    CTX_VARIABLE_STATE_ID   bigint NOT NULL,
+    ROOT_EXEC_CONTEXT_ID    bigint
 );
 
 CREATE INDEX mh_exec_context_state_idx
@@ -309,6 +310,9 @@ CREATE INDEX mh_exec_context_state_idx
 
 CREATE INDEX mh_exec_context_id_source_code_id_idx
     ON mh_exec_context (ID, SOURCE_CODE_ID);
+
+CREATE INDEX mh_exec_context_root_exec_context_id_idx
+    ON mh_exec_context (ROOT_EXEC_CONTEXT_ID);
 
 CREATE TABLE mh_exec_context_graph
 (
