@@ -57,36 +57,13 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 @Slf4j
 @RequiredArgsConstructor
 public class ExecContextReconciliationTopLevelService {
+
     private final ExecContextService execContextService;
-    private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    private final ExecContextRepository execContextRepository;
-
-    @PostConstruct
-    public void postConstruct() {
-        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
-        for (Long execContextId : execContextIds) {
-            Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
-            for (Map.Entry<Long, TaskApiData.TaskState> entry : states.entrySet()) {
-                if (entry.getValue().execState==EnumsApi.TaskExecState.NONE.value ||entry.getValue().execState==EnumsApi.TaskExecState.CHECK_CACHE.value ||entry.getValue().execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    final Long taskId = entry.getKey();
-                    taskProviderTopLevelService.registerTask(execContextId, taskId);
-                    if (entry.getValue().execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
-                    }
-                }
-            }
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
-            if (execContext==null) {
-                continue;
-            }
-            reconcileStates(execContext);
-        }
-    }
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();

@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -70,6 +72,7 @@ public class TaskProviderTopLevelService {
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
+    private final ExecContextReadinessStateService execContextReadinessStateService;
 
     private static class TaskProviderServiceSync {}
 
@@ -329,7 +332,7 @@ public class TaskProviderTopLevelService {
             int execState = ((Number)obj[1]).intValue();
             Long execContextId = ((Number)obj[2]).longValue();
 
-            if (!statuses.isStarted(execContextId)) {
+            if (!statuses.isStarted(execContextId) || execContextReadinessStateService.isNotReady(execContextId)) {
                 continue;
             }
             if (!taskIds.contains(taskId)) {
