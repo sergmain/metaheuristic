@@ -24,10 +24,12 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -38,16 +40,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Serge
  * Date: 9/27/2021
  * Time: 11:52 AM
+ *
+ * order is 1000 to be sure that all other classes already prepared and instantiated
  */
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
+@Order(1000)
 public class ExecContextReadinessService {
 
     private final ExecContextService execContextService;
@@ -90,38 +96,34 @@ public class ExecContextReadinessService {
     @SuppressWarnings("unused")
     @Async
     @EventListener
+    @SneakyThrows
     public void checkCaching(StartProcessReadinessEvent event) {
+        TimeUnit.SECONDS.sleep(5);
         executor.submit(() -> {
             Long execContextId;
             while ((execContextId = pullFromQueue()) != null) {
                 prepare(execContextId);
+                execContextReadinessStateService.remove(execContextId);
             }
         });
     }
 
     public void prepare(Long execContextId) {
-        try {
-            Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
-            for (Map.Entry<Long, TaskApiData.TaskState> entry : states.entrySet()) {
-                if (entry.getValue().execState == EnumsApi.TaskExecState.NONE.value || entry.getValue().execState == EnumsApi.TaskExecState.CHECK_CACHE.value || entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    final Long taskId = entry.getKey();
-                    taskProviderTopLevelService.registerTask(execContextId, taskId);
-                    if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
-                    }
+        Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
+        for (Map.Entry<Long, TaskApiData.TaskState> entry : states.entrySet()) {
+            if (entry.getValue().execState == EnumsApi.TaskExecState.NONE.value || entry.getValue().execState == EnumsApi.TaskExecState.CHECK_CACHE.value || entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                final Long taskId = entry.getKey();
+                taskProviderTopLevelService.registerTask(execContextId, taskId);
+                if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
                 }
             }
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
-            if (execContext == null) {
-                return;
-            }
-            execContextReconciliationTopLevelService.reconcileStates(execContext);
         }
-        finally {
-            synchronized (queue) {
-                execContextReadinessStateService.remove(execContextId);
-            }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return;
         }
+        execContextReconciliationTopLevelService.reconcileStates(execContext);
     }
 
 }
