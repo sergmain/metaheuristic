@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
@@ -62,6 +63,7 @@ public class ArtifactCleanerAtDispatcher {
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheService cacheService;
+    private final ExecContextService execContextService;
 
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
@@ -121,7 +123,7 @@ public class ArtifactCleanerAtDispatcher {
                     continue;
                 }
                 log.warn("execContextId #{} was deleted in db, clean up the cache", execContextId);
-                execContextCache.deleteById(execContextId);
+                execContextService.deleteExecContextFromCache(execContextId);
             }
 
             List<Long> ids;

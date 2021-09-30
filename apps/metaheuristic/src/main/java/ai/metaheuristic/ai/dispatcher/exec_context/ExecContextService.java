@@ -345,6 +345,11 @@ public class ExecContextService {
     }
 
     @Transactional
+    public void deleteExecContextFromCache(Long execContextId) {
+        execContextCache.deleteById(execContextId);
+    }
+
+    @Transactional
     public Void deleteExecContext(Long execContextId) {
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
