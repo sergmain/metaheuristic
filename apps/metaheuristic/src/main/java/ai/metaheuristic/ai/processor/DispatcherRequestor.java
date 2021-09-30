@@ -269,7 +269,7 @@ public class DispatcherRequestor {
         }
     }
 
-    private boolean newRequest(ProcessorCommParamsYaml pcpy) {
+    private static boolean newRequest(ProcessorCommParamsYaml pcpy) {
         for (ProcessorCommParamsYaml.ProcessorRequest request : pcpy.requests) {
             boolean state = request.requestProcessorId!=null || request.requestTask!=null ||
                     request.reportTaskProcessingResult!=null || request.checkForMissingOutputResources!=null ||

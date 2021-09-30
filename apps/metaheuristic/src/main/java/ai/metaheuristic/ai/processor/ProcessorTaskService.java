@@ -455,9 +455,10 @@ public class ProcessorTaskService {
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
-                if (!taskDir.exists()) {
-                    taskDir.mkdirs();
+                if (taskDir.exists()) {
+                    FileUtils.deleteDirectory(taskDir);
                 }
+                taskDir.mkdirs();
                 //noinspection ResultOfMethodCallIgnored
                 taskDir.mkdirs();
                 File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
@@ -563,7 +564,7 @@ public class ProcessorTaskService {
         }
     }
 
-    private String getTaskPath(long taskId) {
+    private static String getTaskPath(long taskId) {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
         return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
@@ -582,7 +583,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    File prepareTaskSubDir(File taskDir, String subDir) {
+    public static File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
         //noinspection ResultOfMethodCallIgnored
         taskSubDir.mkdirs();
