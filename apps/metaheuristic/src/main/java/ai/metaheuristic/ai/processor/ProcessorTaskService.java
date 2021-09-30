@@ -456,7 +456,14 @@ public class ProcessorTaskService {
             File taskDir = new File(dispatcherDir, path);
             try {
                 if (taskDir.exists()) {
-                    FileUtils.deleteDirectory(taskDir);
+                    try {
+                        FileUtils.deleteDirectory(taskDir);
+                    }
+                    catch (IOException e) {
+                        String es = "#713.140 Error while deleting a task dir: " + taskDir.getAbsolutePath();
+                        log.error(es, e);
+                        throw new RuntimeException(es, e);
+                    }
                 }
                 taskDir.mkdirs();
                 //noinspection ResultOfMethodCallIgnored
