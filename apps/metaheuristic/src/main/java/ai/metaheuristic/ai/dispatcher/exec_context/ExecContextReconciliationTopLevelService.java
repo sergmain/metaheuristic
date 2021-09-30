@@ -64,11 +64,15 @@ public class ExecContextReconciliationTopLevelService {
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextReadinessStateService execContextReadinessStateService;
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
-
         ExecContextData.ReconciliationStatus status = new ExecContextData.ReconciliationStatus(execContext.id);
+
+        if (execContextReadinessStateService.isNotReady(execContext.id)) {
+            return status;
+        }
 
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext.execContextGraphId);
@@ -213,7 +217,7 @@ public class ExecContextReconciliationTopLevelService {
                                 else {
                                     if (tpy.task.timeoutBeforeTerminate != null && tpy.task.timeoutBeforeTerminate != 0L) {
                                         // +4 is for waiting network communications at the last moment. i.e. wait for 4 seconds more
-                                        // 180 second for finish uploading of results
+                                        // +180 second for finish uploading of results
                                         // TODO 2021-04-22 need to rewrite with better formula of decision
                                         final long timeoutForChecking = (tpy.task.timeoutBeforeTerminate + 184 ) * 1000;
                                         final long oneHourToMills = TimeUnit.HOURS.toMillis(1);

@@ -68,7 +68,7 @@ public class ExecContextReadinessService {
     private final LinkedList<Long> queue = new LinkedList<>();
 
     @PostConstruct
-    public void post() {
+    public void postConstruct() {
         final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         execContextReadinessStateService.addAll(ids);
         for (Long notReadyExecContextId : ids) {
@@ -97,7 +97,7 @@ public class ExecContextReadinessService {
     @Async
     @EventListener
     @SneakyThrows
-    public void checkCaching(StartProcessReadinessEvent event) {
+    public void checkReadiness(StartProcessReadinessEvent event) {
         TimeUnit.SECONDS.sleep(5);
         executor.submit(() -> {
             Long execContextId;
