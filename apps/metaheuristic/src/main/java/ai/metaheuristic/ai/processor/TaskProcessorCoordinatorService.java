@@ -50,7 +50,7 @@ public class TaskProcessorCoordinatorService {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
         log.info("#415.020 Start processing task by processors. taskProcessors.size(): {}", taskProcessors.size());

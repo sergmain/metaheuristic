@@ -106,7 +106,7 @@ public class TaskProcessor {
     }
 
     public void process(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
         if (processing.get()) {
@@ -507,7 +507,7 @@ public class TaskProcessor {
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
                     cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                    globals.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
+                    globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
         catch (ScheduleInactivePeriodException e) {

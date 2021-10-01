@@ -44,10 +44,10 @@ public class ArtifactCleanerAtProcessor {
     public void fixedDelay() {
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
 
-            File processorDir = new File(globals.processorDir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
-            if (!globals.processorEnabled || !currentExecState.isInited(ref.dispatcherUrl)) {
+            if (!globals.processor.enabled || !currentExecState.isInited(ref.dispatcherUrl)) {
                 // don't delete anything until the processor has received the list of actual ExecContexts
                 continue;
             }

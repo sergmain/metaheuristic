@@ -89,7 +89,7 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.dispatcherMasterUsername, complexUsername.getUsername())) {
+        if (StringUtils.equals(globals.dispatcher.masterUsername, complexUsername.getUsername())) {
 
             Account account = new Account();
 
@@ -99,12 +99,12 @@ public class CustomUserDetails implements UserDetailsService {
 
             // master admin will belong to companyUniqueId==1
             account.setCompanyId( 1L );
-            account.setUsername(globals.dispatcherMasterUsername);
+            account.setUsername(globals.dispatcher.masterUsername);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.dispatcherMasterPassword);
+            account.setPassword(globals.dispatcher.masterPassword);
 
             account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
             return account;

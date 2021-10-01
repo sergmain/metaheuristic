@@ -65,7 +65,7 @@ public class AccountService {
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         AccountData.AccountsResult result = new AccountData.AccountsResult();
         result.accounts = accountRepository.findAllByCompanyUniqueId(pageable, companyUniqueId);
-        result.assetMode = globals.assetMode;
+        result.assetMode = globals.dispatcher.asset.mode;
         return result;
     }
 

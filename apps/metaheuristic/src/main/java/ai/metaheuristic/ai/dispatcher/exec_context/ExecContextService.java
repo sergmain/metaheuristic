@@ -281,7 +281,7 @@ public class ExecContextService {
     public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         TxUtils.checkTxNotExists();
 
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -333,8 +333,8 @@ public class ExecContextService {
     }
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         return result;
     }

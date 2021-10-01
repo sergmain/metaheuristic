@@ -126,7 +126,7 @@ public class ProcessorTopLevelService {
 
     public ProcessorData.ProcessorsResult getProcessors(Pageable pageable) {
         TxUtils.checkTxNotExists();
-        pageable = ControllerUtils.fixPageSize(globals.processorRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.processor, pageable);
         ProcessorData.ProcessorsResult result = new ProcessorData.ProcessorsResult();
         Slice<Long> ids = processorRepository.findAllByOrderByUpdatedOnDescId(pageable);
         List<ProcessorData.ProcessorStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
@@ -159,7 +159,7 @@ public class ProcessorTopLevelService {
     }
 
     @Nullable
-    private String processorBlacklisted(ProcessorStatusYaml status) {
+    private static String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
             return "#808.080 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }

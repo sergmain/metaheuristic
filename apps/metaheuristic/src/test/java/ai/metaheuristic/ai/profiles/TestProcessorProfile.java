@@ -42,6 +42,6 @@ public class TestProcessorProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(11, globals.schedulerThreadNumber);
+        assertEquals(13, globals.threadNumber.scheduler);
     }
 }

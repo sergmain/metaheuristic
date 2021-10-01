@@ -82,7 +82,7 @@ public class ProcessorTaskService {
             return;
         }
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-            File processorDir = new File(globals.processorDir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             String dispatcherCode = MetadataService.asCode(ref.dispatcherUrl);
             File dispatcherDir = new File(processorTaskDir, dispatcherCode);
@@ -445,7 +445,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(globals.processorDir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             if (!processorDir.exists()) {
                 processorDir.mkdirs();
             }
@@ -551,7 +551,7 @@ public class ProcessorTaskService {
         MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            final File processorDir = new File(globals.processorDir, ref.processorCode);
+            final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
 
@@ -577,7 +577,7 @@ public class ProcessorTaskService {
     }
 
     public File prepareTaskDir(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        final File processorDir = new File(globals.processorDir, ref.processorCode);
+        final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
         final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(ref.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));

@@ -121,7 +121,7 @@ public class DispatcherRequestor {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {

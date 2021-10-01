@@ -77,7 +77,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

@@ -38,6 +38,6 @@ public class TestDispatcherProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(12, globals.schedulerThreadNumber);
+        assertEquals(12, globals.threadNumber.scheduler);
     }
 }

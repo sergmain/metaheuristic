@@ -20,27 +20,40 @@ import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.catalina.connector.Connector;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.ConfigurableWebServerFactory;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.context.annotation.*;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.annotation.PostConstruct;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -50,9 +63,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@EnableConfigurationProperties(Globals.class)
 public class Config {
 
     private final Globals globals;
+    @SuppressWarnings("unused")
+    private final SpringChecker springChecker;
 
     @Bean
     public LayoutDialect layoutDialect() {
@@ -84,9 +100,51 @@ public class Config {
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.schedulerThreadNumber);
-        threadPoolTaskScheduler.setPoolSize(globals.schedulerThreadNumber);
+        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.threadNumber.scheduler);
+        threadPoolTaskScheduler.setPoolSize(globals.threadNumber.scheduler);
         return threadPoolTaskScheduler;
+    }
+
+    @Component
+    @RequiredArgsConstructor
+    public static class SpringChecker {
+        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
+
+        private final ApplicationContext appCtx;
+
+        @Value("${spring.host:#{null}}")
+        public String serverHost;
+
+        @Value("${server.port:#{-1}}")
+        public Integer serverPort;
+
+        @Value("${spring.profiles.active}")
+        private String activeProfiles;
+
+        @PostConstruct
+        public void init() {
+            checkProfiles();
+            logSpring();
+        }
+
+        private void logSpring() {
+            log.warn("Spring properties:");
+            log.warn("'\tserver host:port: {}:{}", serverHost, serverPort);
+        }
+
+        private void checkProfiles() {
+            List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
+                    .filter(o-> !POSSIBLE_PROFILES.contains(o))
+                    .peek(o-> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
+                    .collect(Collectors.toList());
+
+            if (!profiles.isEmpty()) {
+                log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
+                        "Allowed profiles are: " + POSSIBLE_PROFILES);
+                System.exit(SpringApplication.exit(appCtx, () -> -500));
+            }
+        }
+
     }
 
     @Configuration
@@ -103,14 +161,13 @@ public class Config {
     @EnableAsync
     @RequiredArgsConstructor
     @Slf4j
-//    @DependsOn({"Globals"})
     public static class SpringAsyncConfig implements AsyncConfigurer {
 
         private final Globals globals;
 
         @Override
         public Executor getAsyncExecutor() {
-            Integer threads = globals.eventThreadNumber;
+            Integer threads = globals.threadNumber.event;
             if (threads==null) {
                 threads = Math.max(10, Runtime.getRuntime().availableProcessors()/2);
             }

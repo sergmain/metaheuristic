@@ -29,7 +29,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -48,7 +47,7 @@ public class GlobalVariableTopLevelService {
     private final GlobalVariableService globalVariableService;
 
     public GlobalVariableData.GlobalVariablesResult getGlobalVariables(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.globalVariableRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.globalVariableTable, pageable);
         return new GlobalVariableData.GlobalVariablesResult(globalVariableService.getAllAsSimpleGlobalVariable(pageable));
     }
 
@@ -87,7 +86,7 @@ public class GlobalVariableTopLevelService {
                     globalVariableService.save(is, tempFile.length(), variable, originFilename);
                 }
             } catch (Throwable e) {
-                String es = "#172.050 An error while saving data to file, " + e.toString();
+                String es = "#172.050 An error while saving data to file, " + e.getMessage();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
@@ -113,7 +112,7 @@ public class GlobalVariableTopLevelService {
                 globalVariableService.save(is, bytes.length, variable, null);
             }
         } catch (Throwable e) {
-            String es = "#172.055 An error while saving data to file, " + e.toString();
+            String es = "#172.055 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -141,7 +140,7 @@ public class GlobalVariableTopLevelService {
         try {
             globalVariableService.createGlobalVariableWithExternalStorage(variable, realParams);
         } catch (VariableSavingException e) {
-            String es = "#172.080 An error while saving variable to db, " + e.toString();
+            String es = "#172.080 An error while saving variable to db, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

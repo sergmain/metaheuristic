@@ -54,7 +54,7 @@ public class CompanyTopLevelService {
         pageable = ControllerUtils.fixPageSize(ROWS_IN_TABLE, pageable);
         CompanyData.SimpleCompaniesResult result = new CompanyData.SimpleCompaniesResult();
         result.companies = companyRepository.findAllAsSimple(pageable);
-        result.assetMode = globals.assetMode;
+        result.assetMode = globals.dispatcher.asset.mode;
         return result;
     }
 
@@ -65,7 +65,7 @@ public class CompanyTopLevelService {
 
     @Transactional
     public OperationStatusRest addCompany(Company company) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.010 Can't create a new company while 'replicated' mode of asset is active");
         }
@@ -142,7 +142,7 @@ public class CompanyTopLevelService {
      */
     @Transactional
     public OperationStatusRest editFormCommit(Long companyUniqueId, String name, String groups) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.055 Can't edit a company while 'replicated' mode of asset is active");
         }

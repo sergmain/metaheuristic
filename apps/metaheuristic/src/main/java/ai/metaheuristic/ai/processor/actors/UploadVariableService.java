@@ -90,7 +90,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

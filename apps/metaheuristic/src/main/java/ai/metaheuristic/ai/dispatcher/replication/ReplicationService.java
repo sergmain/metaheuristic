@@ -43,7 +43,7 @@ public class ReplicationService {
     public final ReplicationSourceCodeTopLevelService replicationSourceCodeTopLevelService;
 
     public void sync() {
-        if (globals.assetMode!= EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode!= EnumsApi.DispatcherAssetMode.replicated) {
             return;
         }
         ReplicationData.AssetStateResponse assetStateResponse = replicationCoreService.getAssetStates();

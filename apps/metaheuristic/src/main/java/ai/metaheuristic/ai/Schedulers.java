@@ -77,12 +77,12 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             // if this dispatcher is the source of assets then don't do any update of execContext
             // because this dispatcher isn't processing any tasks
-            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
+            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
 
@@ -104,10 +104,10 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
-            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
+            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");
@@ -119,10 +119,10 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
-            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
+            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
             MetaheuristicThreadLocal.setSchedule();
@@ -135,7 +135,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             log.info("Invoking artifactCleanerAtDispatcher.fixedDelay()");
@@ -147,7 +147,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             log.debug("Invoking System.gc()");
@@ -161,7 +161,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
@@ -173,7 +173,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             DeadLockDetector.findDeadLocks();
@@ -184,7 +184,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             execContextVariableStateTopLevelService.processFlushing();
@@ -195,7 +195,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             taskCheckCachingTopLevelService.checkCaching();
@@ -206,7 +206,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
@@ -217,7 +217,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.dispatcherEnabled) {
+            if (!globals.dispatcher.enabled) {
                 return;
             }
             longRunningTopLevelService.updateStateForLongRunning();
@@ -231,7 +231,6 @@ public class Schedulers {
     @Slf4j
     @Profile("processor")
     @RequiredArgsConstructor
-//    @DependsOn({"ai.metaheuristic.ai.processor.DispatcherLookupExtendedService"})
     public static class ProcessorSchedulers {
 
         private final Globals globals;
@@ -242,7 +241,6 @@ public class Schedulers {
         private final UploadVariableService uploadResourceActor;
         private final GetDispatcherContextInfoService getDispatcherContextInfoService;
         private final ArtifactCleanerAtProcessor artifactCleaner;
-        private final EnvService envService;
         private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
         private final ApplicationEventPublisher eventPublisher;
         private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
@@ -262,31 +260,12 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Send keepAliveEvent");
             eventPublisher.publishEvent(new KeepAliveEvent());
         }
-
-        // TODO 2020-11-20 need to decide to is a hot-deploy needed or not?
-        // TODO 2020-12-30 no need it any more. leave it here in case we need to restore hot deploy
-/*
-        @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
-        public void monitorHotDeployDir() {
-            if (true) {
-                return;
-            }
-            if (globals.isUnitTesting) {
-                return;
-            }
-            if (!globals.processorEnabled) {
-                return;
-            }
-            log.info("Run envHotDeployService.monitorHotDeployDir()");
-            envService.monitorHotDeployDir();
-        }
-*/
 
         /**
          * this scheduler is being run at the processor side
@@ -296,7 +275,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
 
@@ -324,7 +303,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run taskAssigner.fixedDelay()");
@@ -336,7 +315,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");
@@ -348,7 +327,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.process()");
@@ -360,7 +339,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
@@ -372,7 +351,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadResourceActor.process()");
@@ -384,7 +363,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run uploadResourceActor.process()");
@@ -396,7 +375,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run getDispatcherContextInfoService.process()");
@@ -408,7 +387,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.processorEnabled) {
+            if (!globals.processor.enabled) {
                 return;
             }
             log.info("Run artifactCleaner.fixedDelay()");

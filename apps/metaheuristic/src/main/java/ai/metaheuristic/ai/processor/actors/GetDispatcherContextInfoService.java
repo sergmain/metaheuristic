@@ -62,7 +62,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

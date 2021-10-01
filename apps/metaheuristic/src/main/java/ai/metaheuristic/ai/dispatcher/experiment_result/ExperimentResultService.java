@@ -112,7 +112,7 @@ public class ExperimentResultService {
     }
 
     public ExperimentResultData.ExperimentResultSimpleList getExperimentResultExperiments(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.experimentResultRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.experimentResult, pageable);
         ExperimentResultData.ExperimentResultSimpleList result = new ExperimentResultData.ExperimentResultSimpleList();
         result.items = experimentResultRepository.findAllAsSimple(pageable);
         return result;
@@ -192,7 +192,7 @@ public class ExperimentResultService {
             a.params = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#604.200 General error while storing experiment, " + e.toString());
+                    "#604.200 General error while storing experiment, " + e.getMessage());
         }
 
         a.name = erpy.name;
@@ -360,7 +360,7 @@ public class ExperimentResultService {
         return new VariableWithStatus(variables.get(0), OperationStatusRest.OPERATION_STATUS_OK);
     }
 
-    public static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy) {
+    private static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy) {
         List<String> variables = vapy.array.stream().map(v -> v.name).collect(Collectors.toList());
         for (ExperimentFeature feature : features) {
             if (CollectionUtils.isEquals(feature.variables, variables)) {
@@ -380,7 +380,7 @@ public class ExperimentResultService {
         return getHyperParamsAsMap(hyperParams, true);
     }
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> hyperParams, boolean isFull) {
+    private static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> hyperParams, boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
         for (ExperimentApiData.HyperParam hyperParam : hyperParams) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
@@ -426,7 +426,7 @@ public class ExperimentResultService {
         }
     }
 
-    public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, Experiment experiment) {
+    public static StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, Experiment experiment) {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(simpleExecContext.getParamsYaml());

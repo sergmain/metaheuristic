@@ -80,7 +80,7 @@ public class ProcessorService {
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
-        final File processorFile = new File(globals.processorDir, ref.processorCode);
+        final File processorFile = new File(globals.processor.dir.dir, ref.processorCode);
         KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
                 to(envService.getEnvParamsYaml(), envService.getTags(ref.processorCode)),
                 gitSourcingService.gitStatusInfo,

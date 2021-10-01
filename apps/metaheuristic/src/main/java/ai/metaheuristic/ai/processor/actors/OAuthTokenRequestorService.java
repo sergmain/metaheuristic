@@ -37,7 +37,7 @@ public class OAuthTokenRequestorService extends AbstractTaskQueue<OAuthTokenTask
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

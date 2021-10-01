@@ -225,7 +225,7 @@ public class BatchResultProcessorTxService {
         }
 
         String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, ecpy, "batch-result.zip");
-        String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
+        String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.dispatcher.defaultResultFileExtension);
         if (!S.b(ext)) {
             originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
         }

@@ -92,7 +92,7 @@ public class TaskAssetPreparer {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

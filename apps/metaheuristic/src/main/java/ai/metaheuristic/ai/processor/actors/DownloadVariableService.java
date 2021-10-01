@@ -62,7 +62,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

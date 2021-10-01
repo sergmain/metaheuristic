@@ -36,38 +36,37 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 @Profile("processor")
-//@DependsOn({"Globals"})
 public class EnvService {
 
     private final Globals globals;
 
-    private String env;
     private EnvParamsYaml envYaml;
 
     @PostConstruct
     public void init() {
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 
-        final File envYamlFile = new File(globals.processorDir, Consts.ENV_YAML_FILE_NAME);
+        final File envYamlFile = new File(globals.processor.dir.dir, Consts.ENV_YAML_FILE_NAME);
         if (!envYamlFile.exists()) {
-            if (globals.defaultEnvYamlFile == null) {
+            if (globals.processor.defaultEnvYamlFile == null) {
                 log.warn("#747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.getPath());
                 throw new IllegalStateException("#747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
-            if (!globals.defaultEnvYamlFile.exists()) {
-                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", globals.defaultEnvYamlFile.getAbsolutePath());
+            if (!globals.processor.defaultEnvYamlFile.exists()) {
+                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", globals.processor.defaultEnvYamlFile.getAbsolutePath());
                 throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             try {
-                FileUtils.copyFile(globals.defaultEnvYamlFile, envYamlFile);
+                FileUtils.copyFile(globals.processor.defaultEnvYamlFile, envYamlFile);
             } catch (IOException e) {
                 log.error("#747.035 Error", e);
-                throw new IllegalStateException("#747.040 Error while copying "+ globals.defaultEnvYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);
+                throw new IllegalStateException("#747.040 Error while copying "+ globals.processor.defaultEnvYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);
             }
         }
 
+        String env;
         try {
             env = FileUtils.readFileToString(envYamlFile, Charsets.UTF_8);
         } catch (IOException e) {
@@ -77,20 +76,8 @@ public class EnvService {
 
         envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
-            log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.processorDir, File.separatorChar );
+            log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.processor.dir.dir, File.separatorChar );
             throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
-        }
-    }
-
-    public String getEnv() {
-        synchronized (this) {
-            return env;
-        }
-    }
-
-    private void setEnv(String env) {
-        synchronized (this) {
-            this.env = env;
         }
     }
 
@@ -104,87 +91,4 @@ public class EnvService {
             return envYaml.processors.stream().filter(o->o.code.equals(processorCode)).findFirst().map(o->o.tags).orElse(null);
         }
     }
-
-    // TODO 2020-12-30 no need it any more. leave it here in case we need to restore hot deploy
-/*
-    public void monitorHotDeployDir() {
-        if (globals.isUnitTesting) {
-            return;
-        }
-        if (!globals.processorEnabled) {
-            return;
-        }
-        if (!globals.processorEnvHotDeploySupported) {
-            return;
-        }
-        synchronized (this) {
-            if (!globals.processorEnvHotDeployDir.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                globals.processorEnvHotDeployDir.mkdirs();
-            }
-            try {
-                AtomicBoolean changed = new AtomicBoolean(false);
-                Files.list(globals.processorEnvHotDeployDir.toPath())
-                        .map(Path::toFile)
-                        .filter(File::isFile)
-                        .filter(f -> {
-                            String ext = StrUtils.getExtension(f.getName());
-                            if (ext==null) {
-                                return false;
-                            }
-                            return StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT);
-                        })
-                        .forEach(file -> {
-                            try {
-                                if (file.isFile()) {
-                                    try (InputStream is = new FileInputStream(file)) {
-                                        EnvYaml env = EnvYamlUtils.to(is);
-                                        env.envs.forEach((key, value) -> {
-                                            if (envYaml.envs.containsKey(key)) {
-                                                log.warn("#747.070 Environment already has key {}", key);
-                                                return;
-                                            }
-                                            log.info("new env record was added, key: {}, value: {}", key, value);
-                                            envYaml.envs.put(key, value);
-                                            changed.set(true);
-                                        });
-                                    } catch (Throwable th) {
-                                        log.error("#747.080 Can't read file " + file.getAbsolutePath(), th);
-                                    }
-                                }
-                            }
-                            finally {
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    file.delete();
-                                } catch (Throwable th) {
-                                    log.error("#747.090 Can't delete dir " + file.getPath(), th);
-                                }
-                            }
-                        });
-
-                if (changed.get()) {
-                    final String newEnv = EnvYamlUtils.toString(envYaml);
-                    final File envYamlFile = new File(globals.processorDir, Consts.ENV_YAML_FILE_NAME);
-                    if (envYamlFile.exists()) {
-                        log.trace("env.yaml file exists. Make a backup.");
-                        File yamlFileBak = new File(globals.processorDir, Consts.ENV_YAML_FILE_NAME + ".bak");
-                        //noinspection ResultOfMethodCallIgnored
-                        yamlFileBak.delete();
-                        if (envYamlFile.exists()) {
-                            //noinspection ResultOfMethodCallIgnored
-                            envYamlFile.renameTo(yamlFileBak);
-                        }
-                    }
-
-                    FileUtils.writeStringToFile(envYamlFile, newEnv, StandardCharsets.UTF_8);
-                    setEnv(newEnv);
-                }
-            } catch (Throwable th) {
-                log.error("#747.100 Error", th);
-            }
-        }
-    }
-*/
-
 }

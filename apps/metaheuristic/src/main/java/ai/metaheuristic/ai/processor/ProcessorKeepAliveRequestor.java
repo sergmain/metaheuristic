@@ -118,7 +118,7 @@ public class ProcessorKeepAliveRequestor {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 
