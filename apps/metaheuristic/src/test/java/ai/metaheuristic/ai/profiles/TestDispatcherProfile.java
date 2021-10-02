@@ -25,7 +25,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static ai.metaheuristic.api.EnumsApi.DispatcherAssetMode.replicated;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -39,5 +40,23 @@ public class TestDispatcherProfile {
     @Test
     public void simpleTest() {
         assertEquals(12, globals.threadNumber.scheduler);
+
+        assertTrue(globals.dispatcher.enabled);
+        assertEquals("qwe321", globals.dispatcher.masterUsername);
+        assertEquals("123ewq", globals.dispatcher.masterPassword);
+        assertTrue(globals.dispatcher.functionSignatureRequired);
+        assertNotNull(globals.dispatcher.dir);
+        assertNotNull(globals.dispatcher.dir.dir);
+        assertEquals("aiai-dispatcher-123", globals.dispatcher.dir.dir.getName());
+        assertNotNull(globals.dispatcher.publicKey);
+        assertEquals(12347, globals.dispatcher.timeout.gc.toSeconds());
+        assertEquals(replicated, globals.dispatcher.asset.mode);
+        assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);
+        assertEquals("1277", globals.dispatcher.asset.password);
+        assertEquals("rest_user77", globals.dispatcher.asset.username);
+        assertEquals(27, globals.dispatcher.asset.syncTimeout.toSeconds());
+        assertEquals(913, globals.dispatcher.chunkSize.toMegabytes());
+
+
     }
 }

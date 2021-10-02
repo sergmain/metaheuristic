@@ -27,7 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -43,5 +43,13 @@ public class TestProcessorProfile {
     @Test
     public void simpleTest() {
         assertEquals(13, globals.threadNumber.scheduler);
+        assertFalse(globals.dispatcher.enabled);
+        assertTrue(globals.processor.enabled);
+
+        assertNotNull(globals.dispatcher.dir);
+        assertNotNull(globals.dispatcher.dir.dir);
+        assertEquals("aiai-dispatcher-321", globals.processor.dir.dir.getName());
+        assertEquals(1717, globals.processor.taskConsoleOutputMaxLines);
+
     }
 }

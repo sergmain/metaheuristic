@@ -139,7 +139,7 @@ public class Globals {
         public String password;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        private Duration syncTimeout = Duration.ofSeconds(20);
+        public Duration syncTimeout = Duration.ofSeconds(20);
     }
 
     @Getter
@@ -169,9 +169,20 @@ public class Globals {
 
     @Getter
     @Setter
+    public static class DispatcherTimeout {
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration gc = Duration.ofSeconds(3600);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration artifactCleaner = Duration.ofSeconds(60);
+    }
+
+    @Getter
+    @Setter
     public static class Dispatcher {
         public Asset asset = new Asset();
         public RowsLimit rowsLimit = new RowsLimit();
+        public DispatcherTimeout timeout = new DispatcherTimeout();
 
         @DurationUnit(ChronoUnit.DAYS)
         public Duration keepEventsInDb = Duration.ofDays(90);
@@ -179,7 +190,7 @@ public class Globals {
         public boolean isSslRequired = true;
 
         public boolean functionSignatureRequired = true;
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Nullable
         public String masterUsername;
@@ -266,7 +277,41 @@ public class Globals {
 
     @Getter
     @Setter
+    public static class ProcessorTimeout {
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration requestDispatcher = Duration.ofSeconds(6);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration taskAssigner = Duration.ofSeconds(5);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration taskProcessor = Duration.ofSeconds(9);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration downloadFunction = Duration.ofSeconds(11);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration prepareFunctionForDownloading = Duration.ofSeconds(31);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration downloadResource = Duration.ofSeconds(3);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration uploadResultResource = Duration.ofSeconds(3);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration getDispatcherContextInfo = Duration.ofSeconds(19);
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration artifactCleaner = Duration.ofSeconds(29);
+
+    }
+
+    @Getter
+    @Setter
     public static class Processor {
+        public ProcessorTimeout timeout = new ProcessorTimeout();
+
         public boolean enabled = false;
         public ProcessorDir dir = null;
 
