@@ -87,7 +87,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
     @SuppressWarnings("Duplicates")
     public void process() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
         if (!globals.processor.enabled) {

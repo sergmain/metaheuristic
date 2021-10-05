@@ -100,7 +100,7 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
 
-            if (globals.dispatcher.isSslRequired) {
+            if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }
@@ -145,7 +145,7 @@ public class MultiHttpSecurityConfig {
 //                    .and()
 //                    .antMatcher("/test/**/**").csrf().disable();
 
-            if (globals.dispatcher.isSslRequired) {
+            if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }

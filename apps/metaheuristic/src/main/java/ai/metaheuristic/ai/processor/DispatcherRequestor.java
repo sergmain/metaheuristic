@@ -118,7 +118,7 @@ public class DispatcherRequestor {
     }
 
     public void proceedWithRequest() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
         if (!globals.processor.enabled) {

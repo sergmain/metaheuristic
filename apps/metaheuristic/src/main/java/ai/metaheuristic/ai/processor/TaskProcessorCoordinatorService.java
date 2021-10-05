@@ -47,7 +47,7 @@ public class TaskProcessorCoordinatorService {
     private final Map<String, TaskProcessor> taskProcessors = new HashMap<>();
 
     public void fixedDelay() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
         if (!globals.processor.enabled) {

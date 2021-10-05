@@ -33,7 +33,6 @@ import org.springframework.boot.convert.DurationUnit;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
@@ -57,6 +56,17 @@ import java.util.*;
 @Slf4j
 @RequiredArgsConstructor
 public class Globals {
+    public static final Duration SECONDS_3 = Duration.ofSeconds(3);
+    public static final Duration SECONDS_5 = Duration.ofSeconds(5);
+    public static final Duration SECONDS_6 = Duration.ofSeconds(6);
+    public static final Duration SECONDS_9 = Duration.ofSeconds(9);
+    public static final Duration SECONDS_11 = Duration.ofSeconds(11);
+    public static final Duration SECONDS_19 = Duration.ofSeconds(19);
+    public static final Duration SECONDS_29 = Duration.ofSeconds(29);
+    public static final Duration SECONDS_31 = Duration.ofSeconds(31);
+    public static final Duration SECONDS_60 = Duration.ofSeconds(60);
+    public static final Duration SECONDS_120 = Duration.ofSeconds(120);
+    public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
 
     private final Environment env;
 
@@ -127,8 +137,6 @@ public class Globals {
     @Getter
     @Setter
     public static class Asset {
-        public static final Duration SECONDS_120 = Duration.ofSeconds(120);
-
         public EnumsApi.DispatcherAssetMode mode = EnumsApi.DispatcherAssetMode.local;
 
         @Nullable
@@ -176,15 +184,12 @@ public class Globals {
 
     @Setter
     public static class DispatcherTimeout {
-        public static final Duration SECONDS_5 = Duration.ofSeconds(5);
-        public static final Duration SECONDS_60 = Duration.ofSeconds(60);
-        public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
 
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration gc = Duration.ofSeconds(3600);
 
         @DurationUnit(ChronoUnit.SECONDS)
-        private Duration artifactCleaner = SECONDS_60;
+        public Duration artifactCleaner = SECONDS_60;
 
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration updateBatchStatuses = Duration.ofSeconds(5);
@@ -215,7 +220,7 @@ public class Globals {
         @DurationUnit(ChronoUnit.DAYS)
         public Duration keepEventsInDb = Duration.ofDays(90);
 
-        public boolean isSslRequired = true;
+        public boolean sslRequired = true;
 
         public boolean functionSignatureRequired = true;
         public boolean enabled = false;
@@ -306,15 +311,6 @@ public class Globals {
     @Getter
     @Setter
     public static class ProcessorTimeout {
-        public static final Duration SECONDS_3 = Duration.ofSeconds(3);
-        public static final Duration SECONDS_5 = Duration.ofSeconds(5);
-        public static final Duration SECONDS_6 = Duration.ofSeconds(6);
-        public static final Duration SECONDS_9 = Duration.ofSeconds(9);
-        public static final Duration SECONDS_11 = Duration.ofSeconds(11);
-        public static final Duration SECONDS_19 = Duration.ofSeconds(19);
-        public static final Duration SECONDS_29 = Duration.ofSeconds(29);
-        public static final Duration SECONDS_31 = Duration.ofSeconds(31);
-
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration requestDispatcher = SECONDS_6;
 
@@ -443,8 +439,6 @@ public class Globals {
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
 
-    public boolean testing = false;
-
     @Nullable
     public String systemOwner = null;
 
@@ -453,7 +447,7 @@ public class Globals {
     @Nullable
     public List<String> corsAllowedOrigins = new ArrayList<>(List.of("*"));
 
-    public boolean isUnitTesting = false;
+    public boolean testing = false;
     public boolean isEventEnabled = false;
 
 
@@ -650,8 +644,8 @@ public class Globals {
         log.info("'\teventThreadNumber: {}", threadNumber.event);
         log.info("'\tallowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
-        log.info("'\tisUnitTesting: {}", isUnitTesting);
-        log.info("'\tdispatcher.isSslRequired: {}", dispatcher.isSslRequired);
+        log.info("'\tisUnitTesting: {}", testing);
+        log.info("'\tdispatcher.isSslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
         log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.getAbsolutePath() : "<dispatcher dir is null>");

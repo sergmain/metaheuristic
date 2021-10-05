@@ -78,7 +78,7 @@ public class ProcessorTaskService {
 
     @PostConstruct
     public void postConstruct() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {

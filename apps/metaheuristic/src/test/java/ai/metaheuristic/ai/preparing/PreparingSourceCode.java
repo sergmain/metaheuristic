@@ -214,7 +214,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @BeforeEach
     public void beforePreparingSourceCode() {
-        assertTrue(globals.isUnitTesting);
+        assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
         String params = getSourceCodeYamlAsString();

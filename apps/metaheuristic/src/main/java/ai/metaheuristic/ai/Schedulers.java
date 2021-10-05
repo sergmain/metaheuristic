@@ -74,7 +74,7 @@ public class Schedulers {
         }
 
         public void artifactCleanerAtDispatcher() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             log.info("Invoking artifactCleanerAtDispatcher.fixedDelay()");
@@ -101,7 +101,7 @@ public class Schedulers {
         }
 
         public void updateBatchStatuses() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
@@ -130,7 +130,7 @@ public class Schedulers {
         }
 
         public void garbageCollectionAtDispatcher() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             log.debug("Invoking System.gc()");
@@ -159,7 +159,7 @@ public class Schedulers {
         }
 
         public void syncReplication() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
@@ -187,7 +187,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             // if this dispatcher is the source of assets then don't do any update of execContext
@@ -208,7 +208,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 5_000, fixedDelay = 10_000)
         public void processInternalTasks() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
@@ -221,7 +221,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 13_000, fixedDelay = 13_000 )
         public void deadlockDetector() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             DeadLockDetector.findDeadLocks();
@@ -229,7 +229,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 10_000, fixedDelay = 10_000 )
         public void processFlushing() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             execContextVariableStateTopLevelService.processFlushing();
@@ -237,7 +237,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             taskCheckCachingTopLevelService.checkCaching();
@@ -245,7 +245,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processUpdateTaskExecStatesInGraph() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
@@ -253,7 +253,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
         public void updateStateForLongRunning() {
-            if (globals.isUnitTesting || !globals.dispatcher.enabled) {
+            if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
             longRunningTopLevelService.updateStateForLongRunning();
@@ -290,7 +290,7 @@ public class Schedulers {
         }
 
         public void dispatcherRequester() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
 
@@ -332,7 +332,7 @@ public class Schedulers {
         // Prepare assets for tasks
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
         public void taskAssigner() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run taskAssigner.fixedDelay()");
@@ -360,7 +360,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
         public void taskProcessor() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");
@@ -388,7 +388,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
         public void downloadFunctionActor() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.process()");
@@ -416,7 +416,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
         public void prepareFunctionForDownloading() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
@@ -445,7 +445,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
         public void downloadResourceActor() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run downloadResourceActor.process()");
@@ -474,7 +474,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
         public void uploadResourceActor() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run uploadResourceActor.process()");
@@ -503,7 +503,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
         public void getDispatcherContextInfoActor() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run getDispatcherContextInfoService.process()");
@@ -532,7 +532,7 @@ public class Schedulers {
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
         public void artifactCleaner() {
-            if (globals.isUnitTesting || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled) {
                 return;
             }
             log.info("Run artifactCleaner.fixedDelay()");
@@ -556,7 +556,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)
         public void keepAlive() {
-            if (globals.isUnitTesting) {
+            if (globals.testing) {
                 return;
             }
             if (!globals.processor.enabled) {
