@@ -33,6 +33,7 @@ import org.springframework.boot.convert.DurationUnit;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
@@ -50,7 +51,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-@Component
 @ConfigurationProperties("mh")
 @Getter
 @Setter
@@ -127,6 +127,8 @@ public class Globals {
     @Getter
     @Setter
     public static class Asset {
+        public static final Duration SECONDS_120 = Duration.ofSeconds(120);
+
         public EnumsApi.DispatcherAssetMode mode = EnumsApi.DispatcherAssetMode.local;
 
         @Nullable
@@ -139,42 +141,68 @@ public class Globals {
         public String password;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration syncTimeout = Duration.ofSeconds(20);
+        public Duration syncTimeout = SECONDS_120;
+
+//        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.asset.syncTimeout.toSeconds(), 60, 3600)*1000 }")
+        public Duration getSyncTimeout() {
+            return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : SECONDS_120;
+        }
     }
 
     @Getter
     @Setter
     public static class RowsLimit {
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
-        public int globalVariableTable;
+        public int globalVariableTable = 20;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-table-rows-limit'), 5, 30, 10) }")
-        public int experiment;
+        public int experiment = 10;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-result-table-rows-limit'), 5, 100, 20) }")
-        public int experimentResult;
+        public int experimentResult = 20;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.source-code-table-rows-limit'), 5, 50, 25) }")
-        public int sourceCode;
+        public int sourceCode = 25;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.exec-context-table-rows-limit'), 5, 50, 20) }")
-        public int execContext;
+        public int execContext = 20;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.processor-table-rows-limit'), 5, 100, 50) }")
-        public int processor;
+        public int processor = 50;
 
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.account-table-rows-limit'), 5, 100, 20) }")
-        public int account;
+        public int account = 20;
     }
 
-    @Getter
     @Setter
     public static class DispatcherTimeout {
+        public static final Duration SECONDS_5 = Duration.ofSeconds(5);
+        public static final Duration SECONDS_60 = Duration.ofSeconds(60);
+        public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
+
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration gc = Duration.ofSeconds(3600);
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration artifactCleaner = Duration.ofSeconds(60);
+        private Duration artifactCleaner = SECONDS_60;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration updateBatchStatuses = Duration.ofSeconds(5);
+
+        //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
+        public Duration getArtifactCleaner() {
+            return artifactCleaner.toSeconds() >= 30 && artifactCleaner.toSeconds() <=300 ? artifactCleaner : SECONDS_60;
+        }
+
+//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.gc.toSeconds(), 600, 3600*24*7)*1000 }")
+        public Duration getGc() {
+            return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : SECONDS_3600;
+        }
+
+//        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
+        public Duration getUpdateBatchStatuses() {
+            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_5;
+        }
     }
 
     @Getter
@@ -278,32 +306,98 @@ public class Globals {
     @Getter
     @Setter
     public static class ProcessorTimeout {
-        @DurationUnit(ChronoUnit.SECONDS)
-        public Duration requestDispatcher = Duration.ofSeconds(6);
+        public static final Duration SECONDS_3 = Duration.ofSeconds(3);
+        public static final Duration SECONDS_5 = Duration.ofSeconds(5);
+        public static final Duration SECONDS_6 = Duration.ofSeconds(6);
+        public static final Duration SECONDS_9 = Duration.ofSeconds(9);
+        public static final Duration SECONDS_11 = Duration.ofSeconds(11);
+        public static final Duration SECONDS_19 = Duration.ofSeconds(19);
+        public static final Duration SECONDS_29 = Duration.ofSeconds(29);
+        public static final Duration SECONDS_31 = Duration.ofSeconds(31);
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration taskAssigner = Duration.ofSeconds(5);
+        public Duration requestDispatcher = SECONDS_6;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration taskProcessor = Duration.ofSeconds(9);
+        public Duration taskAssigner = SECONDS_5;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration downloadFunction = Duration.ofSeconds(11);
+        public Duration taskProcessor = SECONDS_9;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration prepareFunctionForDownloading = Duration.ofSeconds(31);
+        public Duration downloadFunction = SECONDS_11;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration downloadResource = Duration.ofSeconds(3);
+        public Duration prepareFunctionForDownloading = SECONDS_31;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration uploadResultResource = Duration.ofSeconds(3);
+        public Duration downloadResource = SECONDS_3;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration getDispatcherContextInfo = Duration.ofSeconds(19);
+        public Duration uploadResultResource = SECONDS_3;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration artifactCleaner = Duration.ofSeconds(29);
+        public Duration dispatcherContextInfo = SECONDS_19;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration artifactCleaner = SECONDS_29;
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 3, 20)*1000 }")
+        public Duration getRequestDispatcher() {
+            return requestDispatcher.toSeconds() >= 3 && requestDispatcher.toSeconds() <= 20 ? requestDispatcher : SECONDS_6;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
+        public Duration getTaskAssigner() {
+            return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : SECONDS_5;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
+        public Duration getTaskProcessor() {
+            return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : SECONDS_9;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
+        public Duration getDownloadFunction() {
+            return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : SECONDS_11;
+        }
+
+//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
+        public Duration getPrepareFunctionForDownloading() {
+            return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : SECONDS_31;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
+        public Duration getDownloadResource() {
+            return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : SECONDS_3;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
+        public Duration getUploadResultResource() {
+            return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : SECONDS_3;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
+        public Duration getDispatcherContextInfo() {
+            return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : SECONDS_19;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
+        public Duration getArtifactCleaner() {
+            return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : SECONDS_29;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.processor.timeout.dispatcher-context-info")
+        @Deprecated
+        public Duration getGetDispatcherContextInfo() {
+            return getDispatcherContextInfo();
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.processor.timeout.dispatcher-context-info")
+        @Deprecated
+        public void setGetDispatcherContextInfo(Duration getDispatcherContextInfo) {
+            this.dispatcherContextInfo = getDispatcherContextInfo;
+        }
 
     }
 

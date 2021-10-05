@@ -48,6 +48,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,7 +137,11 @@ public class DispatcherEventService {
         }
     }
 
-    private static int getPeriod(LocalDateTime createdOn) {
+    public static int getPeriod(LocalDateTime createdOn) {
+        return createdOn.getYear() * 100 + createdOn.getMonthValue();
+    }
+
+    public static int getPeriod(LocalDate createdOn) {
         return createdOn.getYear() * 100 + createdOn.getMonthValue();
     }
 

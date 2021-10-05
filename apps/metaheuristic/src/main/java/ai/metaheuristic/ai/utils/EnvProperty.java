@@ -64,6 +64,15 @@ public class EnvProperty {
         }
         return max;
     }
+    public static long minMax(long curr, int min, int max) {
+        if (curr >=min && curr <=max) {
+            return curr;
+        }
+        else if (curr <min) {
+            return min;
+        }
+        return max;
+    }
 
     public static @Nullable File toFile(@Nullable String dirAsString) {
         if (StringUtils.isBlank(dirAsString)) {

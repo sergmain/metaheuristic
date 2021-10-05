@@ -16,10 +16,12 @@
 package ai.metaheuristic.ai.dispatcher.commons;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +50,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArtifactCleanerAtDispatcher {
 
+    public final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
@@ -64,6 +68,7 @@ public class ArtifactCleanerAtDispatcher {
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheService cacheService;
     private final ExecContextService execContextService;
+    private final DispatcherEventRepository dispatcherEventRepository;
 
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
@@ -74,6 +79,31 @@ public class ArtifactCleanerAtDispatcher {
         deleteOrphanTasks();
         deleteOrphanVariables();
         deleteOrphanCacheData();
+        deleteObsoleteEvents();
+    }
+
+    private void deleteObsoleteEvents() {
+        final long keepValue = globals.dispatcher.keepEventsInDb.toDays();
+        if (keepValue >100000) {
+            final String es = "#510.100 globals.dispatcher.keepEventsInDb greater than 100000 days, actual: " + keepValue;
+            log.error(es);
+            throw new RuntimeException(es);
+        }
+
+        int keepPeriod = (int)keepValue;
+        LocalDate today = LocalDate.now();
+        LocalDate keepStartDate = today.minusDays(keepPeriod);
+        int period = DispatcherEventService.getPeriod(keepStartDate);
+
+        List<Long> periodsForDelete = dispatcherEventRepository.getPeriodIdsBefore(period);
+        List<List<Long>> pages = CollectionUtils.parseAsPages(periodsForDelete, 10);
+        for (List<Long> page : pages) {
+            if (page.isEmpty()) {
+                continue;
+            }
+            log.info("Found obsolete events #{}", page);
+            dispatcherEventRepository.deleteAllByIdIn(page);
+        }
     }
 
     private void deleteOrphanBatches() {
