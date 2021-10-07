@@ -67,6 +67,7 @@ public class Globals {
     public static final Duration SECONDS_60 = Duration.ofSeconds(60);
     public static final Duration SECONDS_120 = Duration.ofSeconds(120);
     public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
+    public static final Duration DAYS_14 = Duration.ofDays(14);
 
     private final Environment env;
 
@@ -194,6 +195,16 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration updateBatchStatuses = Duration.ofSeconds(5);
 
+        /**
+         * period of time after which a virtually deleted batch will be deleted from db
+         */
+        @DurationUnit(ChronoUnit.DAYS)
+        public Duration batchDeletion = DAYS_14;
+
+        public Duration getBatchDeletion() {
+            return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : DAYS_14;
+        }
+
         //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
         public Duration getArtifactCleaner() {
             return artifactCleaner.toSeconds() >= 30 && artifactCleaner.toSeconds() <=300 ? artifactCleaner : SECONDS_60;
@@ -207,6 +218,22 @@ public class Globals {
 //        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
         public Duration getUpdateBatchStatuses() {
             return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_5;
+        }
+
+        public void setGc(Duration gc) {
+            this.gc = gc;
+        }
+
+        public void setArtifactCleaner(Duration artifactCleaner) {
+            this.artifactCleaner = artifactCleaner;
+        }
+
+        public void setUpdateBatchStatuses(Duration updateBatchStatuses) {
+            this.updateBatchStatuses = updateBatchStatuses;
+        }
+
+        public void setBatchDeletion(Duration batchDeletion) {
+            this.batchDeletion = batchDeletion;
         }
     }
 
@@ -421,10 +448,17 @@ public class Globals {
         public int initCoreNumber = 1;
     }
 
-    @Getter
     public static class ThreadNumber {
-        public int scheduler = 10;
-        public int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+        private int scheduler = 10;
+        private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+
+        public int getScheduler() {
+            return scheduler;
+        }
+
+        public int getEvent() {
+            return event;
+        }
 
         public void setScheduler(int scheduler) {
             this.scheduler = EnvProperty.minMax( scheduler, 10, 32);
@@ -640,22 +674,28 @@ public class Globals {
         log.warn("Memory, free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
-        log.info("'\tschedulerThreadNumber: {}", threadNumber.scheduler);
-        log.info("'\teventThreadNumber: {}", threadNumber.event);
-        log.info("'\tallowedOrigins: {}", corsAllowedOrigins);
+        log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
-        log.info("'\tisUnitTesting: {}", testing);
-        log.info("'\tdispatcher.isSslRequired: {}", dispatcher.sslRequired);
+        log.info("'\ttesting: {}", testing);
+        log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
+        log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
+        log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
         log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.getAbsolutePath() : "<dispatcher dir is null>");
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
-        log.info("'\tdispatcher.asset.mode: {}", dispatcher.asset.mode);
-        log.info("'\tassetUsername: {}", dispatcher.asset.username);
-        log.info("'\tassetSourceUrl: {}", dispatcher.asset.sourceUrl);
-        log.info("'\tdispatcher.asset.syncTimeout: {}", dispatcher.asset.getSyncTimeout().toSeconds() +" seconds");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
+
+        log.info("'\tdispatcher.timeout.gc: {}", dispatcher.timeout.gc);
+        log.info("'\tdispatcher.timeout.artifactCleaner: {}", dispatcher.timeout.artifactCleaner);
+        log.info("'\tdispatcher.timeout.updateBatchStatuses: {}", dispatcher.timeout.updateBatchStatuses);
+
+        log.info("'\tdispatcher.asset.mode: {}", dispatcher.asset.mode);
+        log.info("'\tdispatcher.asset.username: {}", dispatcher.asset.username);
+        log.info("'\tdispatcher.asset.sourceUrl: {}", dispatcher.asset.sourceUrl);
+        log.info("'\tdispatcher.asset.syncTimeout: {}", dispatcher.asset.getSyncTimeout());
+
         log.info("'\tdispatcher.rowsLimit.globalVariableTable: {}", dispatcher.rowsLimit.globalVariableTable);
         log.info("'\tdispatcher.rowsLimit.experiment: {}", dispatcher.rowsLimit.experiment);
         log.info("'\tdispatcher.rowsLimit.sourceCode: {}", dispatcher.rowsLimit.sourceCode);
@@ -663,6 +703,17 @@ public class Globals {
         log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
         log.info("'\tdispatcher.rowsLimit.account: {}", dispatcher.rowsLimit.account);
         log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
+
+        log.info("'\tprocessor.enabled: {}", processor.enabled);
+        log.info("'\tprocessor.taskConsoleOutputMaxLines: {}", processor.taskConsoleOutputMaxLines);
+        log.info("'\tprocessor.timeout.artifactCleaner: {}", processor.timeout.artifactCleaner);
+        log.info("'\tprocessor.timeout.downloadFunction: {}", processor.timeout.downloadFunction);
+        log.info("'\tprocessor.timeout.downloadResource: {}", processor.timeout.downloadResource);
+        log.info("'\tprocessor.timeout.prepareFunctionForDownloading: {}", processor.timeout.prepareFunctionForDownloading);
+        log.info("'\tprocessor.timeout.requestDispatcher: {}", processor.timeout.requestDispatcher);
+        log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
+        log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
+        log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
         log.info("'\tprocessor.dir: {}", processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
     }
 

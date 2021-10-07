@@ -40,6 +40,9 @@ public interface BatchRepository extends CrudRepository<Batch, Long> {
     @Query(value="select b.id, b.execContextId, b.companyId from Batch b ")
     List<Object[]> findAllBatchedShort();
 
+    @Query(value="select b.id, b.createdOn, b.deleted from Batch b ")
+    List<Object[]> findAllIdAndCreatedOnAndDeleted();
+
     @Override
     @Modifying
     @Query(value="delete from Batch t where t.id=:id")

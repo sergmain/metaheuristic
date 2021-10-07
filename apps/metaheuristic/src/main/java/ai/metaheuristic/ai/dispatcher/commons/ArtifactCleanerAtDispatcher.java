@@ -74,7 +74,7 @@ public class ArtifactCleanerAtDispatcher {
         TxUtils.checkTxNotExists();
 
         // do not change the order of calling
-        deleteOrphanBatches();
+        deleteOrphanAndObsoletedBatches();
         deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
@@ -106,21 +106,30 @@ public class ArtifactCleanerAtDispatcher {
         }
     }
 
-    private void deleteOrphanBatches() {
+    private void deleteOrphanAndObsoletedBatches() {
         List<Long> execContextIds = execContextRepository.findAllIds();
         List<Long> companyUniqueIds = companyRepository.findAllUniqueIds();
         Set<Long> forDeletion = new HashSet<>();
-        List<Long> ids = batchRepository.findAllIds();
-        for (Long id : ids) {
-            Batch b = batchCache.findById(id);
-            if (b==null) {
-                continue;
+        List<Object[]> batches = batchRepository.findAllIdAndCreatedOnAndDeleted();
+        for (Object[] obj : batches) {
+            long batchId = ((Number)obj[0]).longValue();
+            long createdOn = ((Number)obj[1]).longValue();
+            boolean deleted = Boolean.TRUE.equals(obj[2]);
+
+            if (deleted && System.currentTimeMillis() > createdOn + globals.dispatcher.timeout.batchDeletion.toMillis()) {
+                forDeletion.add(batchId);
             }
-            if (!execContextIds.contains(b.execContextId) || !companyUniqueIds.contains(b.companyId)) {
-                forDeletion.add(b.id);
+            else {
+                Batch b = batchCache.findById(batchId);
+                if (b == null) {
+                    continue;
+                }
+                if (!execContextIds.contains(b.execContextId) || !companyUniqueIds.contains(b.companyId)) {
+                    forDeletion.add(b.id);
+                }
             }
         }
-        batchTopLevelService.deleteOrphanBatches(forDeletion);
+        batchTopLevelService.deleteOrphanOrObsoletedBatches(forDeletion);
     }
 
     private void deleteOrphanExecContexts() {

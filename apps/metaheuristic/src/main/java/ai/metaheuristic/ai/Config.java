@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
@@ -100,8 +99,8 @@ public class Config {
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.threadNumber.scheduler);
-        threadPoolTaskScheduler.setPoolSize(globals.threadNumber.scheduler);
+        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.threadNumber.getScheduler());
+        threadPoolTaskScheduler.setPoolSize(globals.threadNumber.getScheduler());
         return threadPoolTaskScheduler;
     }
 
@@ -167,7 +166,7 @@ public class Config {
 
         @Override
         public Executor getAsyncExecutor() {
-            Integer threads = globals.threadNumber.event;
+            Integer threads = globals.threadNumber.getEvent();
             if (threads==null) {
                 threads = Math.max(10, Runtime.getRuntime().availableProcessors()/2);
             }
@@ -184,7 +183,7 @@ public class Config {
     @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @Profile("dispatcher")
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToBatchRepositories.class} )
+    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class} )
     public static class DispatcherConfig {
     }
 

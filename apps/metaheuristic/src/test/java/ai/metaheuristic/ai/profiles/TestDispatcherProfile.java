@@ -20,14 +20,11 @@ import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static ai.metaheuristic.api.EnumsApi.DispatcherAssetMode.replicated;
@@ -44,7 +41,7 @@ public class TestDispatcherProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(12, globals.threadNumber.scheduler);
+        assertEquals(12, globals.threadNumber.getScheduler());
         assertEquals(List.of("http://localhost", "https://127.0.0.1", "http://192.168.0.1"), globals.corsAllowedOrigins);
 
         assertTrue(globals.dispatcher.enabled);
@@ -66,9 +63,11 @@ public class TestDispatcherProfile {
         assertEquals(12347, globals.dispatcher.timeout.gc.toSeconds());
         assertEquals(12345, globals.dispatcher.timeout.artifactCleaner.toSeconds());
         assertEquals(12343, globals.dispatcher.timeout.updateBatchStatuses.toSeconds());
+        assertEquals(12341, globals.dispatcher.timeout.batchDeletion.toSeconds());
 
         assertEquals(Globals.SECONDS_60.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
         assertEquals(Globals.SECONDS_5.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
+        assertEquals(Globals.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
 
     }
 }
