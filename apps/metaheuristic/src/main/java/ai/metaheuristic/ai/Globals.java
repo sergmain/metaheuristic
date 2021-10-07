@@ -482,7 +482,7 @@ public class Globals {
     public List<String> corsAllowedOrigins = new ArrayList<>(List.of("*"));
 
     public boolean testing = false;
-    public boolean isEventEnabled = false;
+    public boolean eventEnabled = false;
 
 
     // some fields

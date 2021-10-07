@@ -75,7 +75,7 @@ public class DispatcherEventService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishExecContextLockingEvent(EnumsApi.DispatcherEventType event, Long processorId, Long taskId, Long execContextId) {
-        if (!globals.isEventEnabled) {
+        if (!globals.eventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
@@ -88,7 +88,7 @@ public class DispatcherEventService {
     public void publishBatchEvent(
             EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String filename,
             @Nullable Long size, @Nullable Long batchId, @Nullable Long execContextId, @Nullable DispatcherContext dispatcherContext) {
-        if (!globals.isEventEnabled) {
+        if (!globals.eventEnabled) {
             return;
         }
         if (event==EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
@@ -109,7 +109,7 @@ public class DispatcherEventService {
     }
 
     public void publishTaskEvent(EnumsApi.DispatcherEventType event, @Nullable Long processorId, Long taskId, Long execContextId) {
-        if (!globals.isEventEnabled) {
+        if (!globals.eventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
@@ -123,7 +123,7 @@ public class DispatcherEventService {
     @EventListener
     public void handleAsync(DispatcherApplicationEvent event) {
         try {
-            if (!globals.isEventEnabled) {
+            if (!globals.eventEnabled) {
                 return;
             }
             DispatcherEvent le = new DispatcherEvent();
