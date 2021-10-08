@@ -439,7 +439,7 @@ public class Globals {
         public File defaultEnvYamlFile = null;
 
 //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
-        public int taskConsoleOutputMaxLines;
+        public int taskConsoleOutputMaxLines = 1000;
 
         public void setTaskConsoleOutputMaxLines(int taskConsoleOutputMaxLines) {
             this.taskConsoleOutputMaxLines = EnvProperty.minMax( taskConsoleOutputMaxLines, 1000, 100000);
