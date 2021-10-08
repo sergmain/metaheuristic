@@ -686,6 +686,7 @@ public class Globals {
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
+        log.info("'\tdispatcher.keepEventsInDb: {}", dispatcher.keepEventsInDb);
 
         log.info("'\tdispatcher.timeout.gc: {}", dispatcher.timeout.gc);
         log.info("'\tdispatcher.timeout.artifactCleaner: {}", dispatcher.timeout.artifactCleaner);
