@@ -83,14 +83,13 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteObsoleteEvents() {
-        final long keepValue = globals.dispatcher.keepEventsInDb.toDays();
-        if (keepValue >100000) {
-            final String es = "#510.100 globals.dispatcher.keepEventsInDb greater than 100000 days, actual: " + keepValue;
+        final int keepPeriod = globals.dispatcher.getKeepEventsInDb().getDays();
+        if (keepPeriod >100000) {
+            final String es = "#510.100 globals.dispatcher.keepEventsInDb greater than 100000 days, actual: " + keepPeriod;
             log.error(es);
             throw new RuntimeException(es);
         }
 
-        int keepPeriod = (int)keepValue;
         LocalDate today = LocalDate.now();
         LocalDate keepStartDate = today.minusDays(keepPeriod);
         int period = DispatcherEventService.getPeriod(keepStartDate);

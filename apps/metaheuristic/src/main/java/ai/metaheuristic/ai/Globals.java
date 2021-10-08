@@ -30,6 +30,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesBindin
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.convert.DataSizeUnit;
 import org.springframework.boot.convert.DurationUnit;
+import org.springframework.boot.convert.PeriodUnit;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
@@ -47,6 +48,7 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
 import java.time.Duration;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -68,6 +70,8 @@ public class Globals {
     public static final Duration SECONDS_120 = Duration.ofSeconds(120);
     public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
     public static final Duration DAYS_14 = Duration.ofDays(14);
+    public static final Period DAYS_90 = Period.ofDays(90);
+    public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
 
     private final Environment env;
 
@@ -244,8 +248,8 @@ public class Globals {
         public RowsLimit rowsLimit = new RowsLimit();
         public DispatcherTimeout timeout = new DispatcherTimeout();
 
-        @DurationUnit(ChronoUnit.DAYS)
-        public Duration keepEventsInDb = Duration.ofDays(90);
+        @PeriodUnit(ChronoUnit.DAYS)
+        public Period keepEventsInDb = Period.ofDays(90);
 
         public boolean sslRequired = true;
 
@@ -267,6 +271,10 @@ public class Globals {
 
         @DataSizeUnit(DataUnit.MEGABYTES)
         public DataSize chunkSize = DataSize.ofMegabytes(10);
+
+        public Period getKeepEventsInDb() {
+            return keepEventsInDb.getDays() >= 7 && keepEventsInDb.getDays() <= DAYS_IN_YEARS_3.getDays() ? keepEventsInDb : DAYS_90;
+        }
 
         @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.global-variable-table")
         @Deprecated
