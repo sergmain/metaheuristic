@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
@@ -69,6 +70,7 @@ public class Globals {
     public static final Duration SECONDS_60 = Duration.ofSeconds(60);
     public static final Duration SECONDS_120 = Duration.ofSeconds(120);
     public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
+    public static final Duration SECONDS_7200 = Duration.ofSeconds(7200);
     public static final Duration DAYS_14 = Duration.ofDays(14);
     public static final Period DAYS_90 = Period.ofDays(90);
     public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
@@ -77,17 +79,31 @@ public class Globals {
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
-    @Data
+    @lombok.Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class DispatcherDir {
         public File dir = new File("target"+ File.separatorChar + "mh-dispatcher");
     }
 
-    @Data
+    @lombok.Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ProcessorDir {
+        public File dir = null;
+    }
+
+    @lombok.Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DataDir {
+        public File dir = null;
+    }
+
+    @lombok.Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DataSourceDir {
         public File dir = null;
     }
 
@@ -101,6 +117,16 @@ public class Globals {
                 return null;
             }
             return SecUtils.getPublicKey(from);
+        }
+    }
+
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class DispatcherScheduleConverter implements Converter<String, DispatcherSchedule > {
+        @Nullable
+        @Override
+        public DispatcherSchedule convert(String from) {
+            return new DispatcherSchedule(from);
         }
     }
 
@@ -136,6 +162,24 @@ public class Globals {
         @Override
         public ProcessorDir convert(String from) {
             return new ProcessorDir(toFile(from));
+        }
+    }
+
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class DataDirConverter implements Converter<String, DataDir> {
+        @Override
+        public DataDir convert(String from) {
+            return new DataDir(toFile(from));
+        }
+    }
+
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class DataSourceDirConverter implements Converter<String, DataSourceDir> {
+        @Override
+        public DataSourceDir convert(String from) {
+            return new DataSourceDir(toFile(from));
         }
     }
 
@@ -477,6 +521,44 @@ public class Globals {
         }
     }
 
+    @lombok.Data
+    public static class Source {
+        public String url;
+        public String username;
+        public String password;
+    }
+
+    /**
+     * class which is defined data params at processor side
+     */
+    @lombok.Data
+    public static class Data {
+        public boolean enabled = false;
+        public boolean primary;
+        public Source source;
+        public DataDir dir;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration syncTimeout = SECONDS_7200;
+
+        public Duration getSyncTimeout() {
+            return syncTimeout.toSeconds() >= 3600 && syncTimeout.toSeconds() <= 3600*24 ? syncTimeout : SECONDS_7200;
+        }
+
+    }
+
+    /**
+     * class defined where data is located at data source and time for processing
+     */
+    @lombok.Data
+    public static class DataSource {
+        public boolean enabled = false;
+        public DataSourceDir dir;
+        public DispatcherSchedule schedule = new DispatcherSchedule("");
+    }
+
+    public final DataSource dataSource = new DataSource();
+    public final Data data = new Data();
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
@@ -599,25 +681,6 @@ public class Globals {
         if (isError) {
             throw new GlobalConfigurationException("there is some error in configuration of environment variable. sse log above");
         }
-    }
-
-    private static final Map<Character, Long> sizes = Map.of(
-            'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
-
-    @Nullable
-    private static Long parseChunkSizeValue(@Nullable String str) {
-        if (str==null || str.isBlank()) {
-            return null;
-        }
-
-        final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
-        if (Character.isLetter(ch)) {
-            if (str.length()==1 || !sizes.containsKey(ch)) {
-                throw new GlobalConfigurationException("Wrong value of chunkSize: " + str);
-            }
-            return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
-        }
-        return Long.parseLong(str);
     }
 
     private void initOperationSystem() {
