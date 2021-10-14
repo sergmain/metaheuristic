@@ -462,19 +462,19 @@ public class Globals {
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
 
         public int getScheduler() {
-            return scheduler;
+            return EnvProperty.minMax( scheduler, 10, 32);
         }
 
         public int getEvent() {
-            return event;
+            return EnvProperty.minMax( event, 10, 32);
         }
 
         public void setScheduler(int scheduler) {
-            this.scheduler = EnvProperty.minMax( scheduler, 10, 32);
+            this.scheduler = scheduler;
         }
 
         public void setEvent(int event) {
-            this.event = EnvProperty.minMax( event, 10, 32);
+            this.event = event;
         }
     }
 
@@ -600,25 +600,6 @@ public class Globals {
         if (isError) {
             throw new GlobalConfigurationException("there is some error in configuration of environment variable. sse log above");
         }
-    }
-
-    private static final Map<Character, Long> sizes = Map.of(
-            'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
-
-    @Nullable
-    private static Long parseChunkSizeValue(@Nullable String str) {
-        if (str==null || str.isBlank()) {
-            return null;
-        }
-
-        final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
-        if (Character.isLetter(ch)) {
-            if (str.length()==1 || !sizes.containsKey(ch)) {
-                throw new GlobalConfigurationException("Wrong value of chunkSize: " + str);
-            }
-            return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
-        }
-        return Long.parseLong(str);
     }
 
     private void initOperationSystem() {
