@@ -506,19 +506,19 @@ public class Globals {
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
 
         public int getScheduler() {
-            return EnvProperty.minMax( scheduler, 10, 32);
+            return scheduler;
         }
 
         public int getEvent() {
-            return EnvProperty.minMax( event, 10, 32);
+            return event;
         }
 
         public void setScheduler(int scheduler) {
-            this.scheduler = scheduler;
+            this.scheduler = EnvProperty.minMax( scheduler, 10, 32);
         }
 
         public void setEvent(int event) {
-            this.event = event;
+            this.event = EnvProperty.minMax( event, 10, 32);
         }
     }
 

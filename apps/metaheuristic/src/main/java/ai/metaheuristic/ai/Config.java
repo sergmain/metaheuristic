@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
+import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -165,7 +166,11 @@ public class Config {
 
         @Override
         public Executor getAsyncExecutor() {
-            int threads = globals.threadNumber.getEvent();
+            Integer threads = globals.threadNumber.getEvent();
+            if (threads==null) {
+                threads = Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+            }
+            threads = EnvProperty.minMax( threads, 10, 32);
             log.info("Config.SpringAsyncConfig will use {} as a number of threads for an event processing", threads);
 
             ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
