@@ -116,7 +116,7 @@ public class DispatcherSchedule {
         }
     }
 
-    private static void toLocalDate(DateTimeFormatter fmt, String datesAsStr, List<LocalDate> dates) throws ParseException {
+    private void toLocalDate(DateTimeFormatter fmt, String datesAsStr, List<LocalDate> dates) throws ParseException {
         if (StringUtils.isBlank(datesAsStr)) {
             return;
         }
@@ -129,7 +129,7 @@ public class DispatcherSchedule {
         }
     }
 
-    private static void toCalendars(String dayMask, String dates, List<Calendar> calendars) throws ParseException {
+    private void toCalendars(String dayMask, String dates, List<Calendar> calendars) throws ParseException {
         for (java.util.StringTokenizer st = new java.util.StringTokenizer(dates, ","); st.hasMoreTokens(); ) {
             String token = st.nextToken().trim();
             if (StringUtils.isBlank(token)) {

@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.data.DataSyncingService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
@@ -538,33 +537,6 @@ public class Schedulers {
             }
             log.info("Run artifactCleaner.fixedDelay()");
             artifactCleaner.fixedDelay();
-        }
-    }
-
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
-    @Profile("data")
-    public static class DataSyncingSchedulingConfig implements SchedulingConfigurer {
-        private final Globals globals;
-        private final DataSyncingService dataSyncingService;
-
-        @Override
-        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::dataSync,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.data.getSyncTimeout().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
-        }
-
-        public void dataSync() {
-            if (globals.testing || !globals.data.enabled) {
-                return;
-            }
-            log.info("Run dataSyncingService.sync()");
-            dataSyncingService.sync();
         }
     }
 

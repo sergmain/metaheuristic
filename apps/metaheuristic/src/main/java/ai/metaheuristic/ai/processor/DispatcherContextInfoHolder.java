@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.dispatcher.data.DispatcherData;
+import ai.metaheuristic.ai.data.DispatcherData;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;

@@ -16,26 +16,35 @@
 
 package ai.metaheuristic.ai.data;
 
-import ai.metaheuristic.ai.Globals;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
- * Date: 10/11/2021
- * Time: 12:59 AM
+ * Date: 1/2/2021
+ * Time: 10:26 PM
  */
-@Service
-@Profile("data")
-@Slf4j
-@RequiredArgsConstructor
-public class DataSyncingService {
-    private final Globals globals;
+public class DispatcherData {
 
-    public void sync() {
+    /**
+     * @author Serge
+     * Date: 5/29/2019
+     * Time: 12:45 AM
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DispatcherContextInfo {
 
+        // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing
+        public Long chunkSize;
 
+        public Integer maxVersionOfProcessor;
+
+        public void update(DispatcherContextInfo context) {
+            this.chunkSize = context.chunkSize;
+            this.maxVersionOfProcessor = context.maxVersionOfProcessor;
+        }
     }
 }
