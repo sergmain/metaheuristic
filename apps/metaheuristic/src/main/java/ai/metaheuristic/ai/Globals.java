@@ -521,13 +521,6 @@ public class Globals {
         }
     }
 
-    @lombok.Data
-    public static class Source {
-        public String url;
-        public String username;
-        public String password;
-    }
-
     /**
      * class which is defined data params at processor side
      */
@@ -535,7 +528,6 @@ public class Globals {
     public static class Data {
         public boolean enabled = false;
         public boolean primary;
-        public Source source;
         public DataDir dir;
 
         @DurationUnit(ChronoUnit.SECONDS)
@@ -548,13 +540,12 @@ public class Globals {
     }
 
     /**
-     * class defined where data is located at data source and time for processing
+     * class defined where data is located at data source dispatcher
      */
     @lombok.Data
     public static class DataSource {
         public boolean enabled = false;
         public DataSourceDir dir;
-        public DispatcherSchedule schedule = new DispatcherSchedule("");
     }
 
     public final DataSource dataSource = new DataSource();

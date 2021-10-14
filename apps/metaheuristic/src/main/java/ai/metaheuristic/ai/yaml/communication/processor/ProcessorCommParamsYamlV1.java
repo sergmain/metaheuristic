@@ -123,15 +123,24 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorRequestV1 {
-        public @Nullable ProcessorCommContextV1 processorCommContext;
-        public @Nullable RequestProcessorIdV1 requestProcessorId;
-        public @Nullable RequestTaskV1 requestTask;
-        public @Nullable ReportTaskProcessingResultV1 reportTaskProcessingResult;
-        public @Nullable CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
-        public @Nullable ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
-
+        @Nullable
+        public ProcessorCommContextV1 processorCommContext;
+        @Nullable
+        public RequestProcessorIdV1 requestProcessorId;
+        @Nullable
+        public RequestTaskV1 requestTask;
+        @Nullable
+        public ReportTaskProcessingResultV1 reportTaskProcessingResult;
+        @Nullable
+        public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
+        @Nullable
+        public ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
 
         public String processorCode;
+
+        public ProcessorRequestV1(String processorCode) {
+            this.processorCode = processorCode;
+        }
     }
 
     public final List<ProcessorRequestV1> requests = new ArrayList<>();

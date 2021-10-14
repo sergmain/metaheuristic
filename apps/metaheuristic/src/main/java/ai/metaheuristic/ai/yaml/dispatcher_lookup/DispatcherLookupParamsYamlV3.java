@@ -20,22 +20,28 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Serge
+ * Date: 12/31/2020
+ * Time: 9:12 AM
+ */
 @Data
 @NoArgsConstructor
-public class DispatcherLookupParamsYaml implements BaseParams {
+public class DispatcherLookupParamsYamlV3 implements BaseParams {
 
     public final int version=3;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssetManager {
+    @EqualsAndHashCode(of="url")
+    public static class AssetManagerV3 {
         public String url;
         public String username;
         public String password;
@@ -46,7 +52,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DispatcherLookup {
+    public static class DispatcherLookupV3 {
         // fields, which are specific to concrete installation
         // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
         public String taskProcessingTime;
@@ -56,7 +62,6 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public String url;
         public boolean signatureRequired;
         public String publicKey;
-        @Nullable
         public Enums.DispatcherLookupType lookupType;
         public Enums.AuthType authType;
 
@@ -67,7 +72,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public boolean dataSource;
     }
 
-    public final List<DispatcherLookup> dispatchers = new ArrayList<>();
-    public final List<AssetManager> assetManagers = new ArrayList<>();
+    public final List<DispatcherLookupV3> dispatchers = new ArrayList<>();
+    public final List<AssetManagerV3> assetManagers = new ArrayList<>();
 
 }

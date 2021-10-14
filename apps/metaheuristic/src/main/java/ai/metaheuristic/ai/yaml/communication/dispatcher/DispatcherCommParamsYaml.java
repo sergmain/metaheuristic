@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communication file which is transferred from a dispatcher to a Processor
+ * Communication file which is transferred from a Dispatcher to a Processor
  *
  * @author Serge
  * Date: 8/29/2019
@@ -112,15 +112,28 @@ public class DispatcherCommParamsYaml implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DataSource {
+        public int iteration;
+        public EnumsApi.DataSourceSyncStage syncStage;
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DispatcherResponse {
         public String processorCode;
-        public @Nullable AssignedTask assignedTask;
-        public @Nullable AssignedProcessorId assignedProcessorId;
-        public @Nullable ReAssignProcessorId reAssignedProcessorId;
-        public @Nullable ReportResultDelivering reportResultDelivering;
-        public @Nullable ResendTaskOutputs resendTaskOutputs;
+        @Nullable
+        public AssignedTask assignedTask;
+        @Nullable
+        public AssignedProcessorId assignedProcessorId;
+        @Nullable
+        public ReAssignProcessorId reAssignedProcessorId;
+        @Nullable
+        public ReportResultDelivering reportResultDelivering;
+        @Nullable
+        public ResendTaskOutputs resendTaskOutputs;
 
         public DispatcherResponse(String processorCode) {
             this.processorCode = processorCode;
@@ -128,7 +141,9 @@ public class DispatcherCommParamsYaml implements BaseParams {
     }
 
     public final List<DispatcherResponse> responses = new ArrayList<>();
-    public @Nullable RequestLogFile requestLogFile;
+
+    @Nullable
+    public RequestLogFile requestLogFile;
 
     public boolean success = true;
     public String msg;

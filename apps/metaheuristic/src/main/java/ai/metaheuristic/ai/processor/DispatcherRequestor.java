@@ -92,6 +92,7 @@ public class DispatcherRequestor {
 
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
+    private long lastRequestForData = 0;
 
     private static class DispatcherRequestorSync {}
     private static final DispatcherRequestorSync syncObj = new DispatcherRequestorSync();
@@ -178,6 +179,10 @@ public class DispatcherRequestor {
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
                 r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
+            }
+            if (System.currentTimeMillis() - lastRequestForData > globals.data.getSyncTimeout().toMillis()) {
+                pcpy.dataSource = new ProcessorCommParamsYaml.DataSource(globals.data.primary, null);
+                lastRequestForData = System.currentTimeMillis();
             }
             if (!newRequest(pcpy)) {
                 log.info("#775.045 no new requests");
@@ -278,7 +283,7 @@ public class DispatcherRequestor {
                 return true;
             }
         }
-        return false;
+        return pcpy.dataSource!=null;
     }
 
 }

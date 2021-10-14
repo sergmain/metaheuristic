@@ -16,17 +16,9 @@
 
 package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtilsV1;
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtilsV2;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.Map;
 
 @Slf4j
@@ -34,54 +26,15 @@ public class DispatcherLookupParamsYamlUtils {
 
     private static final DispatcherLookupParamsYamlUtilsV1 YAML_UTILS_V_1 = new DispatcherLookupParamsYamlUtilsV1();
     private static final DispatcherLookupParamsYamlUtilsV2 YAML_UTILS_V_2 = new DispatcherLookupParamsYamlUtilsV2();
-    private static final DispatcherLookupParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final DispatcherLookupParamsYamlUtilsV3 YAML_UTILS_V_3 = new DispatcherLookupParamsYamlUtilsV3();
+    private static final DispatcherLookupParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
     public static final BaseYamlUtils<DispatcherLookupParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3
             ),
             DEFAULT_UTILS
     );
-
-/*    private static Yaml getYaml() {
-        return YamlUtils.init(DispatcherLookupParamsYaml.class);
-    }
-
-    public static String toString(DispatcherLookupParamsYaml config) {
-        if (config.dispatchers ==null) {
-            throw new IllegalStateException("DispatcherLookupConfig is null");
-        }
-        for (DispatcherLookupParamsYaml.DispatcherLookup signatureConfig : config.dispatchers) {
-            if (signatureConfig.signatureRequired && S.b(signatureConfig.publicKey)) {
-                throw new IllegalStateException("signatureConfig.publicKey is blank");
-            }
-            if (signatureConfig.lookupType ==null) {
-                throw new IllegalStateException("signatureConfig.type is null");
-            }
-        }
-        return YamlUtils.toString(config, getYaml());
-    }
-
-    public static DispatcherLookupParamsYaml to(String s) {
-        return (DispatcherLookupParamsYaml) YamlUtils.to(s, getYaml());
-    }
-
-    public static DispatcherLookupParamsYaml to(InputStream is) {
-        return (DispatcherLookupParamsYaml) YamlUtils.to(is, getYaml());
-    }
-
-    public static DispatcherLookupParamsYaml to(File file) {
-        return (DispatcherLookupParamsYaml) YamlUtils.to(file, getYaml());
-    }
-
-    private void fix(DispatcherLookupParamsYaml cfg) {
-        if (cfg.dispatchers!=null ) {
-            for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : cfg.dispatchers) {
-                if (dispatcher.asset!=null && S.b(dispatcher.asset.publicKey)) {
-                    dispatcher.asset.publicKey = dispatcher.publicKey;
-                }
-            }
-        }
-    }*/
 }

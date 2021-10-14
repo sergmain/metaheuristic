@@ -32,12 +32,12 @@ import java.util.List;
  * Communication file which is transferred from a Processor to Dispatcher
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 11/13/2019
  * Time: 6:00 PM
  */
 @Data
 @NoArgsConstructor
-public class ProcessorCommParamsYaml implements BaseParams {
+public class ProcessorCommParamsYamlV2 implements BaseParams {
 
     public final int version=2;
 
@@ -46,7 +46,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
         if (requests.isEmpty()) {
             throw new CheckIntegrityFailedException("requests.isEmpty()");
         }
-        for (ProcessorRequest request : requests) {
+        for (ProcessorRequestV2 request : requests) {
             if (S.b(request.processorCode)) {
                 throw new CheckIntegrityFailedException("(S.b(request.processorCode))");
             }
@@ -57,7 +57,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorCommContext {
+    public static class ProcessorCommContextV2 {
         @Nullable public String processorId;
         @Nullable public String sessionId;
     }
@@ -65,23 +65,21 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class RequestProcessorId {
-        // TODO 2020-11-22 what is this field about?
-        //  2021-04-09 it's just dummy field. do we need a dummy field or empty class is ok?
+    public static class RequestProcessorIdV2 {
         public boolean keep = true;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CheckForMissingOutputResources {
+    public static class CheckForMissingOutputResourcesV2 {
         public boolean keep = true;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestTask {
+    public static class RequestTaskV2 {
         @Nullable
         public Boolean newTask;
         public boolean acceptOnlySigned;
@@ -90,7 +88,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportTaskProcessingResult {
+    public static class ReportTaskProcessingResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -107,7 +105,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResourceResult {
+    public static class ResendTaskOutputResourceResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -124,23 +122,23 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorRequest {
+    public static class ProcessorRequestV2 {
         @Nullable
-        public ProcessorCommContext processorCommContext;
+        public ProcessorCommContextV2 processorCommContext;
         @Nullable
-        public RequestProcessorId requestProcessorId;
+        public RequestProcessorIdV2 requestProcessorId;
         @Nullable
-        public RequestTask requestTask;
+        public RequestTaskV2 requestTask;
         @Nullable
-        public ReportTaskProcessingResult reportTaskProcessingResult;
+        public ReportTaskProcessingResultV2 reportTaskProcessingResult;
         @Nullable
-        public CheckForMissingOutputResources checkForMissingOutputResources;
+        public CheckForMissingOutputResourcesV2 checkForMissingOutputResources;
         @Nullable
-        public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+        public ResendTaskOutputResourceResultV2 resendTaskOutputResourceResult;
 
         public String processorCode;
 
-        public ProcessorRequest(String processorCode) {
+        public ProcessorRequestV2(String processorCode) {
             this.processorCode = processorCode;
         }
     }
@@ -148,7 +146,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DataSource {
+    public static class DataSourceV2 {
 
         @Data
         @AllArgsConstructor
@@ -162,9 +160,10 @@ public class ProcessorCommParamsYaml implements BaseParams {
         public Iteration iteration;
     }
 
-    public final List<ProcessorRequest> requests = new ArrayList<>();
+    public final List<ProcessorRequestV2> requests = new ArrayList<>();
 
     @Nullable
-    public DataSource dataSource;
+    public DataSourceV2 dataSource;
+
 
 }
