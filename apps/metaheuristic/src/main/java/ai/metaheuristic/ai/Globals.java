@@ -75,6 +75,7 @@ public class Globals {
     public static final Period DAYS_90 = Period.ofDays(90);
     public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
 
+
     private final Environment env;
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
