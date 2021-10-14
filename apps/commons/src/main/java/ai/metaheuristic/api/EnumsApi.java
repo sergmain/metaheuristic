@@ -22,8 +22,6 @@ import org.springframework.lang.Nullable;
 
 public class EnumsApi {
 
-    public enum DataSourceSyncStage { delete, add }
-
     public enum BatchMappingKey {id, name }
 
     public enum SourceCodeLang { yaml }

@@ -51,14 +51,13 @@ public class ExecContextParamsYamlUtilsV4
     public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV4 v4) {
         ExecContextParamsYaml t = new ExecContextParamsYaml();
 
+        // right now we don't need to convert Graph because it has only one version of structure
+        // so just copying of graph field is Ok
         t.clean = v4.clean;
         t.sourceCodeUid = v4.sourceCodeUid;
         t.processesGraph = v4.processesGraph;
         v4.processes.stream().map(ExecContextParamsYamlUtilsV4::toProcess).collect(Collectors.toCollection(()->t.processes));
         initVariables(v4.variables, t.variables);
-
-        // right now we don't need to convert Graph because it has only one version of structure
-        // so just copying of graph field is Ok
         if (v4.execContextGraph!=null) {
             t.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(
                     v4.execContextGraph.rootExecContextId, v4.execContextGraph.parentExecContextId, v4.execContextGraph.graph);
@@ -66,7 +65,7 @@ public class ExecContextParamsYamlUtilsV4
         return t;
     }
 
-    private static void initVariables(ExecContextParamsYamlV4.VariableDeclarationV4 v4, ExecContextParamsYaml.VariableDeclaration v) {
+    private void initVariables(ExecContextParamsYamlV4.VariableDeclarationV4 v4, ExecContextParamsYaml.VariableDeclaration v) {
         v.inline.putAll(v4.inline);
         v.globals = v4.globals;
         v4.inputs.forEach(o->v.inputs.add(toVariable(o)));

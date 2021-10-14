@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 8:05 AM
  */
 public class DispatcherLookupParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<DispatcherLookupParamsYamlV2, DispatcherLookupParamsYamlV3, DispatcherLookupParamsYamlUtilsV3, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<DispatcherLookupParamsYamlV2, DispatcherLookupParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,29 +46,29 @@ public class DispatcherLookupParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public DispatcherLookupParamsYamlV3 upgradeTo(@NonNull DispatcherLookupParamsYamlV2 src) {
+    public DispatcherLookupParamsYaml upgradeTo(@NonNull DispatcherLookupParamsYamlV2 src) {
         src.checkIntegrity();
 
-        DispatcherLookupParamsYamlV3 trg = new DispatcherLookupParamsYamlV3();
+        DispatcherLookupParamsYaml trg = new DispatcherLookupParamsYaml();
 
         src.dispatchers.stream().map(DispatcherLookupParamsYamlUtilsV2::toDispatcher).collect(Collectors.toCollection(() -> trg.dispatchers));
         src.assetManagers.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toCollection(() -> trg.assetManagers));
 
-        Set<DispatcherLookupParamsYamlV3.AssetManagerV3> assets = src.assetManagers.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toSet());
+        Set<DispatcherLookupParamsYaml.AssetManager> assets = src.assetManagers.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toSet());
         trg.assetManagers.addAll(assets);
 
         trg.checkIntegrity();
         return trg;
     }
 
-    private static DispatcherLookupParamsYamlV3.DispatcherLookupV3 toDispatcher(DispatcherLookupParamsYamlV2.DispatcherLookupV2 v2) {
-        return new DispatcherLookupParamsYamlV3.DispatcherLookupV3(
+    private static DispatcherLookupParamsYaml.DispatcherLookup toDispatcher(DispatcherLookupParamsYamlV2.DispatcherLookupV2 v2) {
+        return new DispatcherLookupParamsYaml.DispatcherLookup(
                 v2.taskProcessingTime, v2.disabled, v2.url, v2.signatureRequired, v2.publicKey, v2.lookupType,
-                v2.authType, v2.restUsername, v2.restPassword, v2.assetManagerUrl, v2.priority, false);
+                v2.authType, v2.restUsername, v2.restPassword, v2.assetManagerUrl, v2.priority);
     }
 
-    private static DispatcherLookupParamsYamlV3.AssetManagerV3 toAsset(DispatcherLookupParamsYamlV2.AssetManagerV2 v2) {
-        return new DispatcherLookupParamsYamlV3.AssetManagerV3(v2.url, v2.username, v2.password, v2.publicKey, v2.disabled);
+    private static DispatcherLookupParamsYaml.AssetManager toAsset(DispatcherLookupParamsYamlV2.AssetManagerV2 v2) {
+        return new DispatcherLookupParamsYaml.AssetManager(v2.url, v2.username, v2.password, v2.publicKey, v2.disabled);
     }
 
     @NonNull
@@ -78,8 +78,8 @@ public class DispatcherLookupParamsYamlUtilsV2
     }
 
     @Override
-    public DispatcherLookupParamsYamlUtilsV3 nextUtil() {
-        return (DispatcherLookupParamsYamlUtilsV3) DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

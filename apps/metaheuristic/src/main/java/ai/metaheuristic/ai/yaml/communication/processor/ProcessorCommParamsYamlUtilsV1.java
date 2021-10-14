@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.communication.processor;
 
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class ProcessorCommParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ProcessorCommParamsYamlV1, ProcessorCommParamsYamlV2, ProcessorCommParamsYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ProcessorCommParamsYamlV1, ProcessorCommParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -48,43 +46,43 @@ public class ProcessorCommParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public ProcessorCommParamsYamlV2 upgradeTo(@NonNull ProcessorCommParamsYamlV1 src) {
-        ProcessorCommParamsYamlV2 trg = new ProcessorCommParamsYamlV2();
+    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 src) {
+        ProcessorCommParamsYaml trg = new ProcessorCommParamsYaml();
 
         for (ProcessorCommParamsYamlV1.ProcessorRequestV1 v1 : src.requests) {
-            ProcessorCommParamsYamlV2.ProcessorRequestV2 t = new ProcessorCommParamsYamlV2.ProcessorRequestV2(v1.processorCode);
+            ProcessorCommParamsYaml.ProcessorRequest t = new ProcessorCommParamsYaml.ProcessorRequest(v1.processorCode);
             trg.requests.add(t);
 
             if (v1.processorCommContext !=null) {
-                t.processorCommContext = new ProcessorCommParamsYamlV2.ProcessorCommContextV2();
+                t.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext();
                 BeanUtils.copyProperties(v1.processorCommContext, t.processorCommContext);
             }
             if (v1.requestProcessorId !=null) {
-                t.requestProcessorId = new ProcessorCommParamsYamlV2.RequestProcessorIdV2(true);
+                t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
             }
             if (v1.requestTask!=null) {
-                t.requestTask = new ProcessorCommParamsYamlV2.RequestTaskV2(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);
+                t.requestTask = new ProcessorCommParamsYaml.RequestTask(v1.requestTask.newTask, v1.requestTask.acceptOnlySigned);
             }
             if (v1.reportTaskProcessingResult!=null) {
-                t.reportTaskProcessingResult = new ProcessorCommParamsYamlV2.ReportTaskProcessingResultV2();
+                t.reportTaskProcessingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
                 t.reportTaskProcessingResult.results =
                         v1.reportTaskProcessingResult.results!=null
                                 ? v1.reportTaskProcessingResult.results
                                 .stream()
-                                .map(o->new ProcessorCommParamsYamlV2.ReportTaskProcessingResultV2.SimpleTaskExecResult(o.taskId, o.result))
+                                .map(o->new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result))
                                 .collect(Collectors.toList())
                                 : new ArrayList<>();
             }
             if (v1.checkForMissingOutputResources!=null) {
-                t.checkForMissingOutputResources = new ProcessorCommParamsYamlV2.CheckForMissingOutputResourcesV2(true);
+                t.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources(true);
             }
             if (v1.resendTaskOutputResourceResult!=null) {
-                t.resendTaskOutputResourceResult = new ProcessorCommParamsYamlV2.ResendTaskOutputResourceResultV2();
+                t.resendTaskOutputResourceResult = new ProcessorCommParamsYaml.ResendTaskOutputResourceResult();
                 t.resendTaskOutputResourceResult.statuses =
                         v1.resendTaskOutputResourceResult.statuses!=null
                                 ? v1.resendTaskOutputResourceResult.statuses
                                 .stream()
-                                .map(o->new ProcessorCommParamsYamlV2.ResendTaskOutputResourceResultV2.SimpleStatus(o.taskId, o.variableId, o.status))
+                                .map(o->new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.variableId, o.status))
                                 .collect(Collectors.toList())
                                 : new ArrayList<>();
             }
@@ -156,8 +154,8 @@ public class ProcessorCommParamsYamlUtilsV1
     }
 
     @Override
-    public ProcessorCommParamsYamlUtilsV2 nextUtil() {
-        return (ProcessorCommParamsYamlUtilsV2) ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

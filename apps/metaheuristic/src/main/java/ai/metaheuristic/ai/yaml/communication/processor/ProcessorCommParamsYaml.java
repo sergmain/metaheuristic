@@ -39,7 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ProcessorCommParamsYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
@@ -67,7 +67,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class RequestProcessorId {
         // TODO 2020-11-22 what is this field about?
-        //  2021-04-09 it's just dummy field. do we need a dummy field or empty class is ok?
+        //  2021-04-09 it's just dummy field. do e need a dummy field or empty class is ok?
         public boolean keep = true;
     }
 
@@ -125,18 +125,12 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorRequest {
-        @Nullable
-        public ProcessorCommContext processorCommContext;
-        @Nullable
-        public RequestProcessorId requestProcessorId;
-        @Nullable
-        public RequestTask requestTask;
-        @Nullable
-        public ReportTaskProcessingResult reportTaskProcessingResult;
-        @Nullable
-        public CheckForMissingOutputResources checkForMissingOutputResources;
-        @Nullable
-        public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+        public @Nullable ProcessorCommContext processorCommContext;
+        public @Nullable RequestProcessorId requestProcessorId;
+        public @Nullable RequestTask requestTask;
+        public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
+        public @Nullable CheckForMissingOutputResources checkForMissingOutputResources;
+        public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
         public String processorCode;
 
@@ -145,26 +139,6 @@ public class ProcessorCommParamsYaml implements BaseParams {
         }
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DataSource {
-
-        @Data
-        @AllArgsConstructor
-        public static class Iteration {
-            public int number;
-            public boolean competed;
-        }
-
-        public boolean primary = false;
-        @Nullable
-        public Iteration iteration;
-    }
-
-    public final List<ProcessorRequest> requests = new ArrayList<>();
-
-    @Nullable
-    public DataSource dataSource;
+    public final List<ProcessorRequest > requests = new ArrayList<>();
 
 }

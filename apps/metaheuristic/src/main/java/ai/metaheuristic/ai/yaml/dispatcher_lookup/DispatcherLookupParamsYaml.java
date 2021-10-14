@@ -30,7 +30,7 @@ import java.util.List;
 @NoArgsConstructor
 public class DispatcherLookupParamsYaml implements BaseParams {
 
-    public final int version=3;
+    public final int version=2;
 
     @Data
     @NoArgsConstructor
@@ -64,7 +64,6 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public String restPassword;
         public String assetManagerUrl;
         public int priority=0;
-        public boolean dataSource;
     }
 
     public final List<DispatcherLookup> dispatchers = new ArrayList<>();

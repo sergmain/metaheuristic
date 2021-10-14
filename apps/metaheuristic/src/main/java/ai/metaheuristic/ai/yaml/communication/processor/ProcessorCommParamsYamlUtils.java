@@ -28,13 +28,11 @@ import java.util.Map;
 public class ProcessorCommParamsYamlUtils {
 
     private static final ProcessorCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new ProcessorCommParamsYamlUtilsV1();
-    private static final ProcessorCommParamsYamlUtilsV2 YAML_UTILS_V_2 = new ProcessorCommParamsYamlUtilsV2();
-    private static final ProcessorCommParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final ProcessorCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public static final BaseYamlUtils<ProcessorCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );
