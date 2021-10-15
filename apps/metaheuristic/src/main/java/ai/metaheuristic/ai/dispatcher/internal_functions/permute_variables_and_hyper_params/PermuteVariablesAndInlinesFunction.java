@@ -42,9 +42,11 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -142,11 +144,26 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             inlines = null;
         }
 
+        final boolean producePresentVariable = MetaUtils.isTrue(taskParamsYaml.task.metas, "produce-present-variable");
+        final String producePresentVariablePrefix = MetaUtils.getValue(process.metas, "produce-present-variable-prefix");
+        final boolean upperCaseFirstChar = MetaUtils.isTrue(process.metas, "produce-present-variable-upper-case-first-char");
+        final List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariables = new ArrayList<>();
+
         boolean skipNullVariables = MetaUtils.isTrue(taskParamsYaml.task.metas, "skip-null");
         List<VariableUtils.VariableHolder> holders;
         List<VariableUtils.VariableHolder> tempHolders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, names);
         if (skipNullVariables) {
-            holders = tempHolders.stream().filter(o->o.globalVariable!=null || (o.variable!=null && !o.variable.nullified)).collect(Collectors.toList());
+            List<VariableUtils.VariableHolder> list = new ArrayList<>();
+            for (VariableUtils.VariableHolder o : tempHolders) {
+                if (o.globalVariable != null || (o.variable != null && !o.variable.nullified)) {
+                    list.add(o);
+                    presentVariables.add(Pair.of(o, true));
+                }
+                else {
+                    presentVariables.add(Pair.of(o, false));
+                }
+            }
+            holders = list;
         }
         else {
             holders = tempHolders;
@@ -162,6 +179,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
                 execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
                         permuteVariablesAndInlinesTxService.createTaskFroPermutations(
-                                simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId, inlines)));
+                                simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId, inlines,
+                                producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables
+                        )));
     }
 }

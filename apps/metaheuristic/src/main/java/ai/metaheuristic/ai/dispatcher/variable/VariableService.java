@@ -48,6 +48,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -160,9 +161,10 @@ public class VariableService {
         List<BatchTopLevelService.FileWithMapping> files = variableDataSource.files;
         String inputVariableContent = variableDataSource.inputVariableContent;
         VariableData.Permutation permutation = variableDataSource.permutation;
+        List<Pair<String, Boolean>> booleanVariables = variableDataSource.booleanVariables;
 
-        if (files.isEmpty() && inputVariableContent==null && permutation==null) {
-            throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null && permutation==null)");
+        if (files.isEmpty() && inputVariableContent==null && permutation==null && booleanVariables.isEmpty()) {
+            throw new IllegalStateException("(files.isEmpty() && inputVariableContent==null && permutation==null && booleanVariables.isEmpty())");
         }
 
         if (!files.isEmpty() || (inputVariableContent!=null && contentAsArray)) {
@@ -180,11 +182,7 @@ public class VariableService {
 
             if (!S.b(inputVariableContent)) {
                 String variableName = VariableUtils.getNameForVariableInArray();
-                final byte[] bytes = inputVariableContent.getBytes();
-                InputStream is = new ByteArrayInputStream(bytes);
-                // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
-                Variable v = createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
+                Variable v = createInitialized(inputVariableContent, variableName, variableName, execContextId, currTaskContextId);
 
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
@@ -200,23 +198,19 @@ public class VariableService {
             Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
         }
 
+        for (Pair<String, Boolean> booleanVariable : booleanVariables) {
+            Variable v = createInitialized(""+booleanVariable.getValue(), booleanVariable.getKey(), null, execContextId, currTaskContextId);
+        }
+
         if (inputVariableContent!=null && !contentAsArray) {
-            byte[] bytes = inputVariableContent.getBytes();
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
-            eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+            Variable v = createInitialized(inputVariableContent, inputVariableName, null, execContextId, currTaskContextId);
         }
 
         if (permutation!=null) {
             {
                 VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutation.permutedVariables);
                 String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-                Variable v = createInitialized(bais, bytes.length, permutation.permutedVariableName, null, execContextId, currTaskContextId);
+                Variable v = createInitialized(yaml, permutation.permutedVariableName, null, execContextId, currTaskContextId);
             }
             if (permutation.permuteInlines) {
                 if (permutation.inlineVariableName==null || permutation.inlinePermuted==null) {
@@ -224,11 +218,7 @@ public class VariableService {
                 }
                 Yaml yampUtil = YamlUtils.init(Map.class);
                 String yaml = yampUtil.dumpAsMap(permutation.inlinePermuted);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-                Variable v = createInitialized(bais, bytes.length, permutation.inlineVariableName, null, execContextId, currTaskContextId);
+                Variable v = createInitialized(yaml, permutation.inlineVariableName, null, execContextId, currTaskContextId);
             }
         }
     }
@@ -404,6 +394,14 @@ public class VariableService {
             return List.of();
         }
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
+    }
+
+    public Variable createInitialized(String data, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+        final byte[] bytes = data.getBytes();
+        InputStream is = new ByteArrayInputStream(bytes);
+        // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
+        eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
+        return createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId);
     }
 
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {

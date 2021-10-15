@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -47,8 +48,15 @@ public class VariableData {
         @Nullable
         public String inputVariableContent = null;
 
+        public List<Pair<String, Boolean>> booleanVariables = List.of();
+
         public VariableDataSource(Permutation permutation) {
             this.permutation = permutation;
+        }
+
+        public VariableDataSource(Permutation permutation, List<Pair<String, Boolean>> booleanVariables) {
+            this.permutation = permutation;
+            this.booleanVariables = booleanVariables;
         }
 
         public VariableDataSource(String inputVariableContent) {
