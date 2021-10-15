@@ -76,15 +76,12 @@ public class PermuteVariablesAndInlinesTxService {
                             List<Pair<String, Boolean>> booleanVariables = new ArrayList<>();
                             if (producePresentVariable) {
                                 for (Pair<VariableUtils.VariableHolder, Boolean> pair : presentVariable) {
+                                    final String varName = producePresentVariablePrefix + (upperCaseFirstChar ? StringUtils.capitalize(pair.getLeft().getName()) : pair.getLeft().getName());
+                                    boolean present = false;
                                     if (pair.getRight()) {
-                                        boolean present = permutedVariables.stream().anyMatch(o -> o.getName().equals(pair.getLeft().getName()));
-                                        booleanVariables.add(Pair.of(
-                                                producePresentVariablePrefix +
-                                                        (upperCaseFirstChar ? StringUtils.capitalize(pair.getLeft().getName()) : pair.getLeft().getName()), present));
+                                        present = permutedVariables.stream().anyMatch(o -> o.getName().equals(pair.getLeft().getName()));
                                     }
-                                    else {
-                                        booleanVariables.add(Pair.of(pair.getLeft().getName(), false));
-                                    }
+                                    booleanVariables.add(Pair.of(varName, present));
                                 }
                             }
 

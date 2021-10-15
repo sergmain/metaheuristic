@@ -1,7 +1,7 @@
 version: 3
 source:
   strictNaming: true
-  uid: exec-sub-source-code-main-evaluation-1.8
+  uid: exec-sub-source-code-main-evaluation-1.10
   variables:
   processes:
     - code: mh.evaluation0
@@ -70,5 +70,7 @@ source:
           nullable: true
       outputs:
         - name: resultOutput
+        - name: aggregatedResult
+          ext: .zip
       metas:
-        - source-code-uid: exec-sub-source-code-sub-evaluation-1.6
+        - source-code-uid: exec-sub-source-code-sub-evaluation-1.8
