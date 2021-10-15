@@ -64,7 +64,7 @@ public class MultiHttpSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(globals.allowedOrigins);
+        configuration.setAllowedOrigins(globals.corsAllowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("authorization", "content-type", "x-auth-token"));
         configuration.setExposedHeaders(List.of("x-auth-token", "Content-Disposition"));
@@ -100,7 +100,7 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
 
-            if (globals.isSslRequired) {
+            if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }
@@ -145,7 +145,7 @@ public class MultiHttpSecurityConfig {
 //                    .and()
 //                    .antMatcher("/test/**/**").csrf().disable();
 
-            if (globals.isSslRequired) {
+            if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }

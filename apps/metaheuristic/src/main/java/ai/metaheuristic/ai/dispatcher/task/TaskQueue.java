@@ -84,7 +84,7 @@ public class TaskQueue {
             this.priority = priority;
         }
 
-        // we dont need execContextId because taskIds are unique across all database
+        // we dont need execContextId because taskIds are unique across entire database
         public boolean alreadyRegistered(Long taskId) {
             if (execContextId==null) {
                 return false;
@@ -482,18 +482,6 @@ public class TaskQueue {
             throw new IllegalStateException("(taskGroup.assignTask(taskId)==null)");
         }
         taskGroup.lock();
-
-        /*
-//        lock(execContextId);
-        for (TaskGroup taskGroup : taskGroups) {
-            if (execContextId.equals(taskGroup.execContextId)) {
-                if (taskGroup.assignTask(taskId)!=null) {
-                    taskGroup.lock();
-                    return;
-                }
-            }
-        }
-*/
     }
 
     public void startTaskProcessing(Long execContextId, Long taskId) {
@@ -509,7 +497,6 @@ public class TaskQueue {
     }
 
     public void shrink() {
-
         if (taskGroups.size()>minQueueSize) {
             int size = taskGroups.size();
             for (int i = 0; i < size; i++) {

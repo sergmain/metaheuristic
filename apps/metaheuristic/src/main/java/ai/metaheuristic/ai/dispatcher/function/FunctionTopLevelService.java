@@ -133,7 +133,7 @@ public class FunctionTopLevelService {
         ids.forEach(id -> result.functions.add(functionCache.findById(id)));
 
         result.functions.sort((o1, o2)->o2.getId().compareTo(o1.getId()));
-        result.assetMode = globals.assetMode;
+        result.assetMode = globals.dispatcher.asset.mode;
         return result;
     }
 
@@ -143,7 +143,7 @@ public class FunctionTopLevelService {
 
     public OperationStatusRest deleteFunctionById(Long id, boolean checkReplicationMode) {
         log.info("Start deleting function with id: {}", id );
-        if (checkReplicationMode  && globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (checkReplicationMode  && globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.005 Can't delete function while 'replicated' mode of asset is active");
         }
@@ -157,7 +157,7 @@ public class FunctionTopLevelService {
     }
 
     public OperationStatusRest uploadFunction(@Nullable final MultipartFile file) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.020 Can't upload function while 'replicated' mode of asset is active");
         }
@@ -273,7 +273,7 @@ public class FunctionTopLevelService {
                 }
                 String sum=null;
                 File file = null;
-                if (globals.isFunctionSignatureRequired) {
+                if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
@@ -335,7 +335,7 @@ public class FunctionTopLevelService {
                     }
                     // ###idea### why?
                     EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(
-                            hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey);
+                            hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcher.publicKey);
 
                     if (st!= EnumsApi.SignatureState.correct) {
                         if (!checksumWithSignature.checksum.equals(sum)) {

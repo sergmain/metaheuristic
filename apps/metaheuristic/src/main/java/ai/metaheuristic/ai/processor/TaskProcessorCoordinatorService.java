@@ -47,10 +47,10 @@ public class TaskProcessorCoordinatorService {
     private final Map<String, TaskProcessor> taskProcessors = new HashMap<>();
 
     public void fixedDelay() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
         log.info("#415.020 Start processing task by processors. taskProcessors.size(): {}", taskProcessors.size());

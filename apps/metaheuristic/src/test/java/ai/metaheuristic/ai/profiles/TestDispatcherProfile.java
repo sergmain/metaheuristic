@@ -25,7 +25,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.List;
+
+import static ai.metaheuristic.api.EnumsApi.DispatcherAssetMode.replicated;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -38,6 +41,33 @@ public class TestDispatcherProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(12, globals.schedulerThreadNumber);
+        assertEquals(12, globals.threadNumber.getScheduler());
+        assertEquals(List.of("http://localhost", "https://127.0.0.1", "http://192.168.0.1"), globals.corsAllowedOrigins);
+
+        assertTrue(globals.dispatcher.enabled);
+        assertFalse(globals.dispatcher.sslRequired);
+        assertEquals("qwe321", globals.dispatcher.masterUsername);
+        assertEquals("123ewq", globals.dispatcher.masterPassword);
+        assertTrue(globals.dispatcher.functionSignatureRequired);
+        assertNotNull(globals.dispatcher.dir);
+        assertNotNull(globals.dispatcher.dir.dir);
+        assertEquals("aiai-dispatcher-123", globals.dispatcher.dir.dir.getName());
+        assertNotNull(globals.dispatcher.publicKey);
+        assertEquals(replicated, globals.dispatcher.asset.mode);
+        assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);
+        assertEquals("1277", globals.dispatcher.asset.password);
+        assertEquals("rest_user77", globals.dispatcher.asset.username);
+        assertEquals(27, globals.dispatcher.asset.syncTimeout.toSeconds());
+        assertEquals(913, globals.dispatcher.chunkSize.toMegabytes());
+
+        assertEquals(12347, globals.dispatcher.timeout.gc.toSeconds());
+        assertEquals(12345, globals.dispatcher.timeout.artifactCleaner.toSeconds());
+        assertEquals(12343, globals.dispatcher.timeout.updateBatchStatuses.toSeconds());
+        assertEquals(12341, globals.dispatcher.timeout.batchDeletion.toSeconds());
+
+        assertEquals(Globals.SECONDS_60.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
+        assertEquals(Globals.SECONDS_5.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
+        assertEquals(Globals.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
+
     }
 }

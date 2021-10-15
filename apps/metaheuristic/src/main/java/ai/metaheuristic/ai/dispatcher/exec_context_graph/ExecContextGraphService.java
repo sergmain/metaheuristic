@@ -212,21 +212,21 @@ public class ExecContextGraphService {
     }
 
     @Nullable
-    private <T> T readOnlyGraphNullable(
+    private static <T> T readOnlyGraphNullable(
             ExecContextGraph execContextGraph,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
-    private <T> T readOnlyGraph(
+    private static <T> T readOnlyGraph(
             ExecContextGraph execContextGraph,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
-    private <T> T readOnlyGraphWithState(
+    private static <T> T readOnlyGraphWithState(
             ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState,
             BiFunction<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml, T> callable) {
 
@@ -235,12 +235,12 @@ public class ExecContextGraphService {
         return callable.apply(graph, ectspy);
     }
 
-    private long readOnlyGraphLong(ExecContextGraph execContextGraph, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
+    private static long readOnlyGraphLong(ExecContextGraph execContextGraph, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
 
-    private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextGraph execContextGraph) {
+    private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextGraph execContextGraph) {
         return importProcessGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
 
@@ -349,7 +349,7 @@ public class ExecContextGraphService {
         return withTaskList;
     }
 
-    public List<ExecContextData.TaskVertex> findLeafs(ExecContextGraph execContextGraph) {
+    public static List<ExecContextData.TaskVertex> findLeafs(ExecContextGraph execContextGraph) {
         return readOnlyGraph(execContextGraph, graph -> {
 
             try {
@@ -370,7 +370,7 @@ public class ExecContextGraphService {
         return findDescendants(execContextGraph, taskId);
     }
 
-    private Set<ExecContextData.TaskVertex> findDescendants(ExecContextGraph execContextGraph, Long taskId) {
+    private static Set<ExecContextData.TaskVertex> findDescendants(ExecContextGraph execContextGraph, Long taskId) {
         return readOnlyGraph(execContextGraph, graph -> {
             final Set<ExecContextData.TaskVertex> descendantsInternal = findDescendantsInternal(graph, taskId);
             return descendantsInternal;
@@ -383,7 +383,7 @@ public class ExecContextGraphService {
         return findDescendantsWithState(execContextGraph, execContextTaskState, taskId);
     }
 
-    private Set<ExecContextData.TaskWithState> findDescendantsWithState(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId) {
+    private static Set<ExecContextData.TaskWithState> findDescendantsWithState(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, Long taskId) {
         return readOnlyGraph(execContextGraph, graph -> {
             final Set<ExecContextData.TaskVertex> descendantsInternal = findDescendantsInternal(graph, taskId);
             Set<ExecContextData.TaskWithState> set = descendantsInternal.stream()
@@ -393,7 +393,7 @@ public class ExecContextGraphService {
         });
     }
 
-    private Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
+    private static Set<ExecContextData.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
         ExecContextData.TaskVertex vertex = graph.vertexSet()
                 .stream()
                 .filter(o -> taskId.equals(o.taskId))
@@ -430,11 +430,11 @@ public class ExecContextGraphService {
         });
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
+    public static Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
         return readOnlyGraph(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
     }
 
-    private Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
+    private static Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
         Set<ExecContextData.TaskVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
         return ancestors;
     }
@@ -445,7 +445,7 @@ public class ExecContextGraphService {
         return findAllForAssigning(execContextGraph, execContextTaskState, includeForCaching);
     }
 
-    private List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
+    private static List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
         return readOnlyGraphWithState(execContextGraph, execContextTaskState, (graph,stateParamsYaml) -> {
 
             log.debug("Start find a task for assigning");
@@ -571,7 +571,7 @@ public class ExecContextGraphService {
                         .collect(Collectors.toList()));
     }
 
-    private boolean isParentFullyProcessed(
+    private static boolean isParentFullyProcessed(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextTaskState execContextTaskState, ExecContextData.TaskVertex vertex) {
 
         // we don't need to get all ancestors, we need only direct.
@@ -591,7 +591,7 @@ public class ExecContextGraphService {
         return findAll(execContextGraph);
     }
 
-    private List<ExecContextData.TaskVertex> findAll(ExecContextGraph execContextGraph) {
+    private static List<ExecContextData.TaskVertex> findAll(ExecContextGraph execContextGraph) {
         return readOnlyGraph(execContextGraph, graph -> {
             List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
             return vertices;
@@ -624,13 +624,13 @@ public class ExecContextGraphService {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void setStateForAllChildrenTasksInternal(
+    private static void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextTaskStateParamsYaml stateParamsYaml,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, withTaskList, state, null);
     }
 
-    private void setStateForAllChildrenTasksInternal(
+    private static void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextTaskStateParamsYaml stateParamsYaml,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 

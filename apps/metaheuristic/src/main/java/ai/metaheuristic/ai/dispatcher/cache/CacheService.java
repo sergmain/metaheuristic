@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -28,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -42,9 +44,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.sql.Blob;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -65,9 +69,27 @@ public class CacheService {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
+    private final CacheVariableRepository cacheVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
+    public void deleteCacheProcessEntry(Long cacheProcessId) {
+        cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
+        cacheProcessRepository.deleteById(cacheProcessId);
+    }
+
+    @Transactional
+    public void deleteCacheVariable(Long cacheProcessId) {
+        cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
+    }
+
+    @Transactional
+    public void deleteCacheProcesses(List<Long> page) {
+        cacheProcessRepository.deleteAllByIdIn(page);
+    }
+
     public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+        TxUtils.checkTxExists();
 
         CacheData.Key fullKey = getKey(tpy, function);
 

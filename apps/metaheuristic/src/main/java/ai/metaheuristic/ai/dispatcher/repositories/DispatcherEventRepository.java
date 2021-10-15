@@ -37,6 +37,9 @@ import java.util.List;
 @Profile("dispatcher")
 public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
+    @Modifying
+    void deleteAllByIdIn(List<Long> ids);
+
     @Override
     @Modifying
     @Query(value="delete from DispatcherEvent t where t.id=:id")
@@ -49,4 +52,12 @@ public interface DispatcherEventRepository extends CrudRepository<DispatcherEven
     @Transactional(readOnly = true)
     @Query(value="select e from DispatcherEvent e where e.id in :ids ")
     List<DispatcherEvent> findByIds(List<Long> ids);
+
+    @Transactional(readOnly = true)
+    @Query(value="select e.period from DispatcherEvent e where e.period < :period ")
+    List<Integer> getPeriodsBefore(int period);
+
+    @Transactional(readOnly = true)
+    @Query(value="select e.id from DispatcherEvent e where e.period < :period ")
+    List<Long> getPeriodIdsBefore(int period);
 }

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -32,8 +33,10 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -127,6 +130,7 @@ public class ExecContextTopLevelService {
                 () -> findUnassignedTasksAndRegisterInQueueInternal(execContextId));
     }
 
+    // this method is here to handle situation when a method with @Transactional is being called from lambda
     private Void findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
         return execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId);
     }
@@ -209,6 +213,12 @@ public class ExecContextTopLevelService {
             execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
 
+    }
+
+    @Async
+    @EventListener
+    public void deleteExecContextById(DeleteExecContextEvent event) {
+        execContextSyncService.getWithSync(event.execContextId, ()-> execContextService.deleteExecContext(event.execContextId));
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {

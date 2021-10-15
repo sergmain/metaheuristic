@@ -64,7 +64,7 @@ public class GlobalVariableService {
     @Nullable
     @Transactional(readOnly = true)
     public GlobalVariable getBinaryData(Long id) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("#089.010 this method intended to be only for test cases");
         }
         return getBinaryData(id, true);

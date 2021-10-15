@@ -106,7 +106,7 @@ public class TaskProcessor {
     }
 
     public void process(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
         if (processing.get()) {
@@ -209,13 +209,13 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = processorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+            File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
-            File systemDir = processorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
+            File systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
                 processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
@@ -402,9 +402,9 @@ public class TaskProcessor {
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
-    private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
+    private static boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
 
-        File artifactDir = processorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+        File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
             return false;
         }
@@ -507,7 +507,7 @@ public class TaskProcessor {
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
                     cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                    globals.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
+                    globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
         catch (ScheduleInactivePeriodException e) {

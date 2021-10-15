@@ -20,14 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -65,7 +64,6 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
@@ -87,8 +85,8 @@ public class ExecContextService {
     private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
     private final VariableService variableService;
-    private final ExecContextVariableStateCache execContextVariableStateCache;
     private final EventPublisherService eventPublisherService;
+    private final ExecContextUtilsService execContextUtilsServices;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -283,7 +281,7 @@ public class ExecContextService {
     public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
         TxUtils.checkTxNotExists();
 
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -291,7 +289,7 @@ public class ExecContextService {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
-        ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(ec);
+        ExecContextApiData.ExecContextVariableStates info = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
@@ -299,18 +297,6 @@ public class ExecContextService {
                 sourceCodeId, info.tasks, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
                 getExecStateOfTasks(execContextId)
         );
-    }
-
-    private ExecContextApiData.ExecContextVariableStates getExecContextVariableStates(ExecContextImpl ec) {
-        ExecContextApiData.ExecContextVariableStates info;
-        if (ec.execContextVariableStateId==null) {
-            info = new ExecContextApiData.ExecContextVariableStates();
-        }
-        else {
-            ExecContextVariableState ecvs = execContextVariableStateCache.findById(ec.execContextVariableStateId);
-            info = ecvs!=null ? ecvs.getExecContextVariableStateInfo() : new ExecContextApiData.ExecContextVariableStates();
-        }
-        return info;
     }
 
     public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
@@ -347,8 +333,8 @@ public class ExecContextService {
     }
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
-        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.assetMode);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         return result;
     }
@@ -359,6 +345,11 @@ public class ExecContextService {
     }
 
     @Transactional
+    public void deleteExecContextFromCache(Long execContextId) {
+        execContextCache.deleteById(execContextId);
+    }
+
+    @Transactional
     public Void deleteExecContext(Long execContextId) {
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
@@ -366,6 +357,11 @@ public class ExecContextService {
         }
         eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(
                 execContextId, ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId));
+
+        List<Long> relatedIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
+        for (Long relatedExecContextId : relatedIds) {
+            eventPublisherService.publishDeleteExecContextTxEvent(new DeleteExecContextTxEvent(relatedExecContextId));
+        }
 
         eventPublisherService.publishTaskQueueCleanByExecContextIdTxEvent(new TaskQueueCleanByExecContextIdTxEvent(execContextId));
         execContextCache.deleteById(execContextId);
@@ -434,14 +430,7 @@ public class ExecContextService {
                 return resource;
             }
 
-            ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-            ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(execContext);
-            String ext = info.tasks.stream()
-                    .filter(o->o.outputs!=null)
-                    .flatMap(o->o.outputs.stream())
-                    .filter(o->o.id.equals(variableId) && !S.b(o.ext))
-                    .findFirst().map(o->o.ext)
-                    .orElse(".bin") ;
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
 
             String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
 
@@ -465,31 +454,4 @@ public class ExecContextService {
             return resource;
         }
     }
-
-/*
-    @Nullable
-    @Transactional
-    public ExecContextImpl checkReferences(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return null;
-        }
-
-        if (execContext.execContextGraphId == null) {
-            ExecContextGraph execContextGraph = new ExecContextGraph();
-            execContextGraph.execContextId = execContext.id;
-            execContextGraph = execContextGraphCache.save(execContextGraph);
-            execContext.execContextGraphId = execContextGraph.id;
-        }
-
-        if (execContext.execContextTaskStateId==null) {
-            ExecContextTaskState execContextTaskState = new ExecContextTaskState();
-            execContextTaskState.execContextId = execContext.id;
-            execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
-            execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
-            execContext.execContextTaskStateId = execContextTaskState.id;
-        }
-        return execContextCache.save(execContext);
-    }
-*/
 }

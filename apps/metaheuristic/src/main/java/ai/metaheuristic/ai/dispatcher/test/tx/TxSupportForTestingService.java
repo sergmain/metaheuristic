@@ -83,7 +83,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
@@ -92,7 +92,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void batchCacheDeleteById(Long batchId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         batchCache.deleteById(batchId);
@@ -100,7 +100,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void execContextCacheDeleteById(Long execContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         execContextCache.deleteById(execContextId);
@@ -108,7 +108,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void saveProcessor(Processor processor) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         processorCache.save(processor);
@@ -116,7 +116,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void deleteFunctionById(@Nullable Long functionId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         if (functionId != null) {
@@ -130,7 +130,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
@@ -155,7 +155,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return execContextGraphService.updateTaskExecState(execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
@@ -163,7 +163,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextGraphId, Long execContextTaskStateId, Long taskId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId);
@@ -171,7 +171,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void setStateForAllChildrenTasksInternal(Long execContextGraphId, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         execContextGraphService.setStateForAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId, withTaskList, state);
@@ -179,7 +179,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void deleteVariableByName(String name) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         variableRepository.deleteByName(name);
@@ -187,7 +187,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public Void deleteByExecContextId(Long execContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         variableRepository.deleteByExecContextId(execContextId);
@@ -196,14 +196,14 @@ public class TxSupportForTestingService {
 
     @Transactional
     public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
 
     public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId).status;
@@ -211,7 +211,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console, @Nullable String taskContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -223,7 +223,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public List<ExecContextData.TaskVertex> findAllWithTx(Long execContextGraphId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return execContextGraphService.findAll(execContextGraphId);
@@ -231,7 +231,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, true);
@@ -239,7 +239,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         ExecContextImpl execContext = execContextService.findById(execContextId);
@@ -254,7 +254,7 @@ public class TxSupportForTestingService {
      */
     @Transactional
     public void toStarted(Long execContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         execContextSyncService.checkWriteLockPresent(execContextId);
@@ -264,7 +264,7 @@ public class TxSupportForTestingService {
     @Nullable
     @Transactional(readOnly = true)
     public Variable getVariableWithData(Long id) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
 
@@ -283,7 +283,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         ExecContextImpl execContext = execContextService.findById(execContextId);
@@ -300,7 +300,7 @@ public class TxSupportForTestingService {
 
     @Transactional
     public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
-        if (!globals.isUnitTesting) {
+        if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);

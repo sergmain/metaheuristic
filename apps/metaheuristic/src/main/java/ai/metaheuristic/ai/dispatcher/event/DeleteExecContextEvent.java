@@ -17,34 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
-
-import java.util.function.Consumer;
 
 /**
  * @author Serge
- * Date: 1/24/2020
- * Time: 1:25 AM
+ * Date: 9/19/2021
+ * Time: 8:50 PM
  */
-public class DispatcherInternalEvent {
-
-    @Data
-    @AllArgsConstructor
-    public static class DeleteExperimentByExecContextIdEvent {
-        public Long execContextId;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class DeleteExperimentEvent {
-        public Long experimentId;
-    }
-
-    @AllArgsConstructor
-    public static class ExecContextDeletionEvent {
-        public final Long execContextId;
-    }
+@AllArgsConstructor
+public class DeleteExecContextEvent {
+    public final Long execContextId;
 }

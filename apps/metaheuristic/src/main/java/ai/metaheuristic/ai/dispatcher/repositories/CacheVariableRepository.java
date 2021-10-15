@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -51,7 +50,7 @@ public interface CacheVariableRepository extends CrudRepository<CacheVariable, L
     Blob getDataAsStreamById(Long id);
 
     @Query(value="select b.id, b.variableName, b.nullified from CacheVariable b where b.cacheProcessId=:cacheProcessId")
-    @Transactional(readOnly = true)
-    List<Object[]> getIdsByCacheProcessId(Long cacheProcessId);
+    @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
+    List<Object[]> getVarsByCacheProcessId(Long cacheProcessId);
 
 }

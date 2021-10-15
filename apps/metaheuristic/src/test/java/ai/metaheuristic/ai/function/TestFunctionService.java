@@ -93,7 +93,7 @@ public class TestFunctionService {
 
     @BeforeEach
     public void beforePreparingExperiment() {
-        assertTrue(globals.isUnitTesting);
+        assertTrue(globals.testing);
         function = initFunction();
     }
 

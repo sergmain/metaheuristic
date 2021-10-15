@@ -62,7 +62,7 @@ public class AssetController {
     public DispatcherData.DispatcherContextInfo contextInfo(
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
-        return new DispatcherData.DispatcherContextInfo(globals.chunkSize, Consts.PROCESSOR_COMM_VERSION);
+        return new DispatcherData.DispatcherContextInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -70,7 +70,7 @@ public class AssetController {
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             log.error("#105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_ENTITY);
         }

@@ -60,7 +60,7 @@ public class SourceCodeService {
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.sourceCode, pageable);
         List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
@@ -91,7 +91,7 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodesResult sourceCodesResult = new SourceCodeApiData.SourceCodesResult();
         sourceCodesResult.items = new PageImpl<>(sourceCodes, pageable, count.get());
-        sourceCodesResult.assetMode = globals.assetMode;
+        sourceCodesResult.assetMode = globals.dispatcher.asset.mode;
         sourceCodesResult.batches = dispatcherParamsTopLevelService.getBatches();
         sourceCodesResult.experiments = dispatcherParamsTopLevelService.getExperiments();
 
@@ -113,7 +113,7 @@ public class SourceCodeService {
         if (sourceCodeId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        if (checkReplicationMode && globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (checkReplicationMode && globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#565.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
@@ -158,7 +158,7 @@ public class SourceCodeService {
         }
 
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.dispatcher.asset.mode);
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -182,7 +182,7 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml(), globals.assetMode);
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml(), globals.dispatcher.asset.mode);
         result.validationResult = sourceCodeValidation.status;
         if (sourceCodeValidation.infoMessages!=null) {
             result.addInfoMessages(sourceCodeValidation.infoMessages);
@@ -195,7 +195,7 @@ public class SourceCodeService {
 
     @Transactional
     public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
@@ -230,7 +230,7 @@ public class SourceCodeService {
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy, globals.assetMode );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy, globals.dispatcher.asset.mode );
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
@@ -238,7 +238,7 @@ public class SourceCodeService {
 
     @Transactional
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#565.400 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }

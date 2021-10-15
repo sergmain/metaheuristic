@@ -115,6 +115,15 @@ public class DispatcherParamsTopLevelService {
         }
     }
 
+    public boolean isLongRunning(Long taskId) {
+        try {
+            readLock.lock();
+            return dispatcherParamsService.isLongRunning(taskId);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
     public List<String> getExperiments() {
         try {
             readLock.lock();

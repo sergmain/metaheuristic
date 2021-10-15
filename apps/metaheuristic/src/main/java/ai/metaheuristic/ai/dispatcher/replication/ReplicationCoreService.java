@@ -86,13 +86,13 @@ public class ReplicationCoreService {
     }
 
     public ReplicationData.ReplicationAsset getData(String uri, Class clazz, @Nullable List<NameValuePair> nvps, Function<URI, Request> requestFunc) {
-        if (S.b(globals.assetSourceUrl) || S.b(globals.assetUsername) || S.b(globals.assetPassword) ) {
+        if (S.b(globals.dispatcher.asset.sourceUrl) || S.b(globals.dispatcher.asset.username) || S.b(globals.dispatcher.asset.password) ) {
             return new ReplicationData.AssetAcquiringError(
                     S.f("Error in configuration of asset server, some parameter(s) is blank, assetSourceUrl: %s, assetUsername: %s, assetPassword is blank: %s",
-                    globals.assetSourceUrl, globals.assetUsername, S.b(globals.assetPassword)));
+                    globals.dispatcher.asset.sourceUrl, globals.dispatcher.asset.username, S.b(globals.dispatcher.asset.password)));
         }
         try {
-            final String url = globals.assetSourceUrl + uri;
+            final String url = globals.dispatcher.asset.sourceUrl + uri;
 
             final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
             if (nvps!=null) {
@@ -102,7 +102,7 @@ public class ReplicationCoreService {
             final Request request = requestFunc.apply(build);
 
             RestUtils.addHeaders(request);
-            Response response = getExecutor(globals.assetSourceUrl, globals.assetUsername, globals.assetPassword)
+            Response response = getExecutor(globals.dispatcher.asset.sourceUrl, globals.dispatcher.asset.username, globals.dispatcher.asset.password)
                     .execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
@@ -115,7 +115,7 @@ public class ReplicationCoreService {
 
                 log.error("Server response:\n" + baos.toString());
                 return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
-                        globals.assetSourceUrl, httpResponse.getStatusLine().getStatusCode()));
+                        globals.dispatcher.asset.sourceUrl, httpResponse.getStatusLine().getStatusCode()));
             }
             final HttpEntity entity = httpResponse.getEntity();
             if (entity != null) {
@@ -123,18 +123,18 @@ public class ReplicationCoreService {
             }
             else {
                 return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",
-                        globals.assetSourceUrl));
+                        globals.dispatcher.asset.sourceUrl));
             }
         }
         catch (ConnectTimeoutException | HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
             return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
-                    globals.assetSourceUrl, th.getMessage()));
+                    globals.dispatcher.asset.sourceUrl, th.getMessage()));
         }
         catch (Throwable th) {
             log.error("Error", th);
             return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
-                    globals.assetSourceUrl, th.getMessage()));
+                    globals.dispatcher.asset.sourceUrl, th.getMessage()));
         }
 
     }

@@ -183,7 +183,7 @@ public class SourceCodeController {
     @GetMapping("/source-code-delete/{id}")
     @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }

@@ -117,7 +117,7 @@ public class GitSourcingService {
             consoleLogFile = File.createTempFile("console-", ".log");
             FunctionApiData.SystemExecResult systemExecResult = SystemProcessLauncher.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null,
-                    globals.taskConsoleOutputMaxLines);
+                    globals.processor.taskConsoleOutputMaxLines);
             log.info("systemExecResult: {}" , systemExecResult);
             return new GitExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
         } catch (InterruptedException | IOException e) {

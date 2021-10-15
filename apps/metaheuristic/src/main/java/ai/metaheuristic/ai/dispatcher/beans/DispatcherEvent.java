@@ -56,6 +56,9 @@ public class DispatcherEvent implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn=0;
 
+    /**
+     * значения этого поля имеют формат yyyymm где: yyyy - год, mm - месяц
+     */
     @Column(name="PERIOD")
     public int period;
 

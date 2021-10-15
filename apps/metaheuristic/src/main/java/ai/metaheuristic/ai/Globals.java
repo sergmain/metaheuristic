@@ -20,17 +20,23 @@ import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
+import org.springframework.boot.convert.DataSizeUnit;
+import org.springframework.boot.convert.DurationUnit;
+import org.springframework.boot.convert.PeriodUnit;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.unit.DataSize;
+import org.springframework.util.unit.DataUnit;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -41,277 +47,488 @@ import java.nio.file.Path;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
+import java.time.Duration;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
-@Component
+@ConfigurationProperties("mh")
+@Getter
+@Setter
 @Slf4j
-@ToString
 @RequiredArgsConstructor
-//@DependsOn({"Environment", "ApplicationContext"})
 public class Globals {
+    public static final Duration SECONDS_3 = Duration.ofSeconds(3);
+    public static final Duration SECONDS_5 = Duration.ofSeconds(5);
+    public static final Duration SECONDS_6 = Duration.ofSeconds(6);
+    public static final Duration SECONDS_9 = Duration.ofSeconds(9);
+    public static final Duration SECONDS_11 = Duration.ofSeconds(11);
+    public static final Duration SECONDS_19 = Duration.ofSeconds(19);
+    public static final Duration SECONDS_29 = Duration.ofSeconds(29);
+    public static final Duration SECONDS_31 = Duration.ofSeconds(31);
+    public static final Duration SECONDS_60 = Duration.ofSeconds(60);
+    public static final Duration SECONDS_120 = Duration.ofSeconds(120);
+    public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
+    public static final Duration DAYS_14 = Duration.ofDays(14);
+    public static final Period DAYS_90 = Period.ofDays(90);
+    public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
 
-    private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
 
-    private final ApplicationContext appCtx;
     private final Environment env;
 
-    @Value("${spring.profiles.active}")
-    private String activeProfiles;
+    public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
-    @Value("${spring.host:#{null}}")
-    public String serverHost;
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DispatcherDir {
+        public File dir = new File("target"+ File.separatorChar + "mh-dispatcher");
+    }
 
-    @Value("${server.port:#{-1}}")
-    public Integer serverPort;
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ProcessorDir {
+        public File dir = null;
+    }
 
-    // Globals' globals
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class PublicKeyConverter implements Converter<String, PublicKey> {
+        @Nullable
+        @Override
+        public PublicKey convert(String from) {
+            if (S.b(from)) {
+                return null;
+            }
+            return SecUtils.getPublicKey(from);
+        }
+    }
 
-    @Value("${mh.thread-number:#{null}}")
-    public Integer oldThreadNumber;
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class AssetModeConverter implements Converter<String, EnumsApi.DispatcherAssetMode> {
+        @Override
+        public EnumsApi.DispatcherAssetMode convert(String from) {
+            try {
+                return EnumsApi.DispatcherAssetMode.valueOf(from);
+            } catch (Throwable th) {
+                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(EnumsApi.DispatcherAssetMode.values()) + ", " +
+                        "actual value: " + from);
+            }
+        }
+    }
 
-    @Value("${mh.thread-number.scheduler:#{null}}")
-    public Integer schedulerThreadNumber;
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class DispatcherDirConverter implements Converter<String, DispatcherDir> {
+        @Override
+        public DispatcherDir convert(String from) {
+            if (S.b(from)) {
+                return new DispatcherDir();
+            }
+            return new DispatcherDir(toFile(from));
+        }
+    }
 
-    @Value("${mh.thread-number.event:#{10}}")
-    public Integer eventThreadNumber;
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class ProcessorDirConverter implements Converter<String, ProcessorDir> {
+        @Override
+        public ProcessorDir convert(String from) {
+            return new ProcessorDir(toFile(from));
+        }
+    }
 
-    @Value("${mh.is-testing:#{false}}")
-    public boolean isUnitTesting = false;
+    @Getter
+    @Setter
+    public static class Asset {
+        public EnumsApi.DispatcherAssetMode mode = EnumsApi.DispatcherAssetMode.local;
 
-    @Value("${mh.system-owner:#{null}}")
-    public String systemOwner;
+        @Nullable
+        public String sourceUrl;
 
-    @Value("${mh.branding:#{'Metaheuristic project'}}")
-    public String branding;
+        @Nullable
+        public String username;
 
-    @Value("${mh.cors-allowed-origins:#{null}}")
-    public String allowedOriginsStr;
+        @Nullable
+        public String password;
 
-    @Value("${mh.is-event-enabled:#{false}}")
-    public boolean isEventEnabled = false;
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration syncTimeout = SECONDS_120;
 
-    // Globals of Dispatcher
+//        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.asset.syncTimeout.toSeconds(), 60, 3600)*1000 }")
+        public Duration getSyncTimeout() {
+            return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : SECONDS_120;
+        }
+    }
 
-    @Value("${mh.dispatcher.is-ssl-required:#{true}}")
-    public boolean isSslRequired = true;
+    @Getter
+    @Setter
+    public static class RowsLimit {
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
+        public int globalVariableTable = 20;
 
-    @Value("${mh.dispatcher.function-signature-required:#{true}}")
-    public boolean isFunctionSignatureRequired = true;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-table-rows-limit'), 5, 30, 10) }")
+        public int experiment = 10;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.master-username')) }")
-    public String dispatcherMasterUsername;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-result-table-rows-limit'), 5, 100, 20) }")
+        public int experimentResult = 20;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.master-password')) }")
-    public String dispatcherMasterPassword;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.source-code-table-rows-limit'), 5, 50, 25) }")
+        public int sourceCode = 25;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.public-key')) }")
-    public String dispatcherPublicKeyStr;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.exec-context-table-rows-limit'), 5, 50, 20) }")
+        public int execContext = 20;
 
-    @Value("${mh.dispatcher.enabled:#{false}}")
-    public boolean dispatcherEnabled = true;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.processor-table-rows-limit'), 5, 100, 50) }")
+        public int processor = 50;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.dispatcher.dir' )) }")
-    public File dispatcherDir;
+        //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.account-table-rows-limit'), 5, 100, 20) }")
+        public int account = 20;
+    }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.max-tasks-per-exec-context'), 1, 100000, 5000) }")
-    public int maxTasksPerExecContext;
+    @Setter
+    public static class DispatcherTimeout {
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
-    public int globalVariableRowsLimit;
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration gc = Duration.ofSeconds(3600);
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-table-rows-limit'), 5, 30, 10) }")
-    public int experimentRowsLimit;
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration artifactCleaner = SECONDS_60;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-result-table-rows-limit'), 5, 100, 20) }")
-    public int experimentResultRowsLimit;
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration updateBatchStatuses = Duration.ofSeconds(5);
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.source-code-table-rows-limit'), 5, 50, 25) }")
-    public int sourceCodeRowsLimit;
+        /**
+         * period of time after which a virtually deleted batch will be deleted from db
+         */
+        @DurationUnit(ChronoUnit.DAYS)
+        public Duration batchDeletion = DAYS_14;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.exec-context-table-rows-limit'), 5, 50, 20) }")
-    public int execContextRowsLimit;
+        public Duration getBatchDeletion() {
+            return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : DAYS_14;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.processor-table-rows-limit'), 5, 100, 50) }")
-    public int processorRowsLimit;
+        //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
+        public Duration getArtifactCleaner() {
+            return artifactCleaner.toSeconds() >= 30 && artifactCleaner.toSeconds() <=300 ? artifactCleaner : SECONDS_60;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.account-table-rows-limit'), 5, 100, 20) }")
-    public int accountRowsLimit;
+//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.gc.toSeconds(), 600, 3600*24*7)*1000 }")
+        public Duration getGc() {
+            return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : SECONDS_3600;
+        }
 
-    // left here for compatibility
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    @Value("${mh.dispatcher.is-replace-snapshot:#{null}}")
-    public Boolean isReplaceSnapshot;
+//        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
+        public Duration getUpdateBatchStatuses() {
+            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_5;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.default-result-file-extension')) }")
-    public String defaultResultFileExtension;
+        public void setGc(Duration gc) {
+            this.gc = gc;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.chunk-size')) }")
-    public String chunkSizeStr;
+        public void setArtifactCleaner(Duration artifactCleaner) {
+            this.artifactCleaner = artifactCleaner;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.mode')) }")
-    public @Nullable String assetModeStr;
+        public void setUpdateBatchStatuses(Duration updateBatchStatuses) {
+            this.updateBatchStatuses = updateBatchStatuses;
+        }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.source-url')) }")
-    public @Nullable String assetSourceUrl;
+        public void setBatchDeletion(Duration batchDeletion) {
+            this.batchDeletion = batchDeletion;
+        }
+    }
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.username')) }")
-    public @Nullable String assetUsername;
+    @Getter
+    @Setter
+    public static class Dispatcher {
+        public Asset asset = new Asset();
+        public RowsLimit rowsLimit = new RowsLimit();
+        public DispatcherTimeout timeout = new DispatcherTimeout();
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.password')) }")
-    public @Nullable String assetPassword;
+        @PeriodUnit(ChronoUnit.DAYS)
+        public Period keepEventsInDb = Period.ofDays(90);
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.sync-timeout')) }")
-    public @Nullable String assetSyncTimeout;
+        public boolean sslRequired = true;
 
-    // Processor's globals
+        public boolean functionSignatureRequired = true;
+        public boolean enabled = false;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.logging.file' )) }")
-    public File logFile;
+        @Nullable
+        public String masterUsername;
 
-    @Value("${mh.processor.enabled:#{false}}")
-    public boolean processorEnabled = false;
+        @Nullable
+        public String masterPassword;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.dir' )) }")
-    public File processorDir;
+        @Nullable
+        public PublicKey publicKey;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.default-dispatcher-yaml-file' )) }")
-    public File defaultDispatcherYamlFile;
+        public DispatcherDir dir = new DispatcherDir();
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.default-env-yaml-file' )) }")
-    public File defaultEnvYamlFile;
+        public String defaultResultFileExtension = ".bin";
 
-    @Value("${mh.processor.env-hot-deploy-supported:#{false}}")
-    public boolean processorEnvHotDeploySupported = false;
+        @DataSizeUnit(DataUnit.MEGABYTES)
+        public DataSize chunkSize = DataSize.ofMegabytes(10);
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
-    public int taskConsoleOutputMaxLines;
+        public Period getKeepEventsInDb() {
+            return keepEventsInDb.getDays() >= 7 && keepEventsInDb.getDays() <= DAYS_IN_YEARS_3.getDays() ? keepEventsInDb : DAYS_90;
+        }
 
-    @Value("${mh.processor.init-core-number:#{1}}")
-    public int initCoreNumber;
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.global-variable-table")
+        @Deprecated
+        public int getGlobalVariableRowsLimit() {
+            return rowsLimit.globalVariableTable;
+        }
+
+        public void setExperimentRowsLimit(int experimentRowsLimit) {
+            this.rowsLimit.experiment = experimentRowsLimit;
+        }
+
+        public void setExperimentResultRowsLimit(int experimentResultRowsLimit) {
+            this.rowsLimit.experimentResult = experimentResultRowsLimit;
+        }
+
+        public void setSourceCodeRowsLimit(int sourceCodeRowsLimit) {
+            this.rowsLimit.sourceCode = sourceCodeRowsLimit;
+        }
+
+        public void setExecContextRowsLimit(int execContextRowsLimit) {
+            this.rowsLimit.execContext = execContextRowsLimit;
+        }
+
+        public void setProcessorRowsLimit(int processorRowsLimit) {
+            this.rowsLimit.processor = processorRowsLimit;
+        }
+
+        public void setAccountRowsLimit(int accountRowsLimit) {
+            this.rowsLimit.account = accountRowsLimit;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.experiment")
+        @Deprecated
+        public int getExperimentRowsLimit() {
+            return rowsLimit.experiment;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.experiment-result")
+        @Deprecated
+        public int getExperimentResultRowsLimit() {
+            return rowsLimit.experimentResult;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.source-code")
+        @Deprecated
+        public int getSourceCodeRowsLimit() {
+            return rowsLimit.sourceCode;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.exec-context")
+        @Deprecated
+        public int getExecContextRowsLimit() {
+            return rowsLimit.execContext;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.processor")
+        @Deprecated
+        public int getProcessorRowsLimit() {
+            return rowsLimit.processor;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.account")
+        @Deprecated
+        public int getAccountRowsLimit() {
+            return rowsLimit.account;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class ProcessorTimeout {
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration requestDispatcher = SECONDS_6;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration taskAssigner = SECONDS_5;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration taskProcessor = SECONDS_9;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration downloadFunction = SECONDS_11;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration prepareFunctionForDownloading = SECONDS_31;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration downloadResource = SECONDS_3;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration uploadResultResource = SECONDS_3;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration dispatcherContextInfo = SECONDS_19;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration artifactCleaner = SECONDS_29;
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 3, 20)*1000 }")
+        public Duration getRequestDispatcher() {
+            return requestDispatcher.toSeconds() >= 3 && requestDispatcher.toSeconds() <= 20 ? requestDispatcher : SECONDS_6;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
+        public Duration getTaskAssigner() {
+            return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : SECONDS_5;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
+        public Duration getTaskProcessor() {
+            return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : SECONDS_9;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
+        public Duration getDownloadFunction() {
+            return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : SECONDS_11;
+        }
+
+//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
+        public Duration getPrepareFunctionForDownloading() {
+            return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : SECONDS_31;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
+        public Duration getDownloadResource() {
+            return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : SECONDS_3;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
+        public Duration getUploadResultResource() {
+            return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : SECONDS_3;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
+        public Duration getDispatcherContextInfo() {
+            return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : SECONDS_19;
+        }
+
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
+        public Duration getArtifactCleaner() {
+            return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : SECONDS_29;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.processor.timeout.dispatcher-context-info")
+        @Deprecated
+        public Duration getGetDispatcherContextInfo() {
+            return getDispatcherContextInfo();
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.processor.timeout.dispatcher-context-info")
+        @Deprecated
+        public void setGetDispatcherContextInfo(Duration getDispatcherContextInfo) {
+            this.dispatcherContextInfo = getDispatcherContextInfo;
+        }
+
+    }
+
+    @Getter
+    @Setter
+    public static class Processor {
+        public ProcessorTimeout timeout = new ProcessorTimeout();
+
+        public boolean enabled = false;
+        public ProcessorDir dir = null;
+
+        @Nullable
+        public File defaultDispatcherYamlFile = null;
+
+        @Nullable
+        public File defaultEnvYamlFile = null;
+
+//        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
+        public int taskConsoleOutputMaxLines = 1000;
+
+        public void setTaskConsoleOutputMaxLines(int taskConsoleOutputMaxLines) {
+            this.taskConsoleOutputMaxLines = EnvProperty.minMax( taskConsoleOutputMaxLines, 1000, 100000);
+        }
+
+        public int initCoreNumber = 1;
+    }
+
+    public static class ThreadNumber {
+        private int scheduler = 10;
+        private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+
+        public int getScheduler() {
+            return EnvProperty.minMax( scheduler, 10, 32);
+        }
+
+        public int getEvent() {
+            return EnvProperty.minMax( event, 10, 32);
+        }
+
+        public void setScheduler(int scheduler) {
+            this.scheduler = scheduler;
+        }
+
+        public void setEvent(int event) {
+            this.event = event;
+        }
+    }
+
+    public final Dispatcher dispatcher = new Dispatcher();
+    public final Processor processor = new Processor();
+    public final ThreadNumber threadNumber = new ThreadNumber();
+
+    @Nullable
+    public String systemOwner = null;
+
+    public String branding = METAHEURISTIC_PROJECT;
+
+    @Nullable
+    public List<String> corsAllowedOrigins = new ArrayList<>(List.of("*"));
+
+    public boolean testing = false;
+    public boolean eventEnabled = false;
 
 
     // some fields
     public File dispatcherTempDir;
     public File dispatcherResourcesDir;
-
     public File processorResourcesDir;
-//    public File processorTempDir;
-
-    public PublicKey dispatcherPublicKey = null;
-
-    public Long chunkSize = null;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
-    public List<String> allowedOrigins;
-    public EnumsApi.DispatcherAssetMode assetMode = EnumsApi.DispatcherAssetMode.local;
-
-    // TODO 2019-07-28 need to handle this case
-    //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
 
     @PostConstruct
-    public void init() {
-        checkProfiles();
-
-        String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
-        if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
-            dispatcherPublicKeyStr = publicKeyAsStr;
-        }
-
-        if (dispatcherPublicKeyStr !=null) {
-            dispatcherPublicKey = SecUtils.getPublicKey(dispatcherPublicKeyStr);
-        }
-        if (dispatcherEnabled && isFunctionSignatureRequired && dispatcherPublicKey==null ) {
+    public void postConstruct() {
+        if (dispatcher.enabled && dispatcher.functionSignatureRequired && dispatcher.publicKey==null ) {
             throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
-
-        initSchedulerThreadNumber();
-
-        String origins = env.getProperty("MH_CORS_ALLOWED_ORIGINS");
-        if (!S.b(origins)) {
-            allowedOriginsStr = origins;
-        }
-        if (S.b(allowedOriginsStr)) {
-            allowedOriginsStr = "*";
-        }
-        allowedOrigins = Arrays.stream(StringUtils.split(allowedOriginsStr, ','))
-                .map(String::strip)
-                .filter(String::isBlank)
-                .collect(Collectors.toList());
-
-        if (allowedOrigins.isEmpty()) {
-            allowedOrigins = List.of("*");
-        }
-
-        String size = env.getProperty("MH_CHUNK_SIZE");
-        Long tempChunkSize = parseChunkSizeValue(size);
-        if (tempChunkSize==null) {
-            tempChunkSize = parseChunkSizeValue(chunkSizeStr);
-        }
-        // we will use 10mb size of chunk by default
-        if (tempChunkSize==null) {
-            tempChunkSize = parseChunkSizeValue("10m");
-        }
-        chunkSize = Objects.requireNonNull(tempChunkSize);
-
-        if (!S.b(env.getProperty("MH_DISPATCHER_ASSET_MODE"))) {
-            assetModeStr = env.getProperty("MH_DISPATCHER_ASSET_MODE");
-        }
-        if (!S.b(assetModeStr)) {
-            try {
-                assetMode = EnumsApi.DispatcherAssetMode.valueOf(assetModeStr);
-            } catch (Throwable th) {
-                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(EnumsApi.DispatcherAssetMode.values()) + ", " +
-                        "actual value: " + assetModeStr);
-            }
-        }
-        if (!S.b(env.getProperty("MH_DISPATCHER_ASSET_SOURCE_URL"))) {
-            assetSourceUrl = env.getProperty("MH_DISPATCHER_ASSET_SOURCE_URL");
-        }
-        if (!S.b(env.getProperty("MH_DISPATCHER_ASSET_USERNAME"))) {
-            assetUsername = env.getProperty("MH_DISPATCHER_ASSET_USERNAME");
-        }
-        if (!S.b(env.getProperty("MH_DISPATCHER_ASSET_PASSWORD"))) {
-            assetPassword = env.getProperty("MH_DISPATCHER_ASSET_PASSWORD");
-        }
-
-        if (assetMode== EnumsApi.DispatcherAssetMode.replicated && S.b(assetSourceUrl)) {
+        if (dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated && S.b(dispatcher.asset.sourceUrl)) {
             throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when dispatcherAssetMode==EnumsApi.DispatcherAssetMode.replicate");
         }
-        if (!dispatcherEnabled) {
+        if (dispatcher.enabled) {
+            if (S.b(dispatcher.masterUsername) || S.b(dispatcher.masterPassword)) {
+                throw new GlobalConfigurationException(
+                        "if mh.secure-rest-url=true, then mh.dispatcher.master-username, " +
+                                "and mh.dispatcher.master-password have to be not null");
+            }
+        }
+
+        if (processor.dir.dir ==null) {
+            log.warn("Processor will be disabled, processorDir is null, processorEnabled: {}", processor.enabled);
+            processor.enabled = false;
+        }
+
+        if (!dispatcher.enabled) {
             log.warn("Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local");
-            assetMode = EnumsApi.DispatcherAssetMode.local;
+            dispatcher.asset.mode = EnumsApi.DispatcherAssetMode.local;
         }
 
-        String processorEnabledAsStr = env.getProperty("MH_IS_PROCESSOR_ENABLED");
-        if (!S.b(processorEnabledAsStr)) {
-            try {
-                processorEnabled = Boolean.parseBoolean(processorEnabledAsStr.toLowerCase());
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_IS_PROCESSOR_ENABLED, must be boolean (true/false), " +
-                        "actual: " + processorEnabledAsStr+". Will be used 'false' as value.");
-                processorEnabled = false;
-            }
-        }
-
-        String eventEnabledAsStr = env.getProperty("MH_IS_EVENT_ENABLED");
-        if (!S.b(eventEnabledAsStr)) {
-            try {
-                isEventEnabled = Boolean.parseBoolean(eventEnabledAsStr.toLowerCase());
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_IS_EVENT_ENABLED, must be boolean (true/false), " +
-                        "actual: " + eventEnabledAsStr+". Will be used 'false' as value.");
-                isEventEnabled = false;
-            }
-        }
-
-        if (processorDir ==null) {
-            log.warn("Processor is disabled, processorDir is null, processorEnabled: {}", processorEnabled);
-            processorEnabled = false;
-        }
-        if (processorEnabled) {
-            processorResourcesDir = new File(processorDir, Consts.RESOURCES_DIR);
+        if (processor.enabled) {
+            processorResourcesDir = new File(processor.dir.dir, Consts.RESOURCES_DIR);
             processorResourcesDir.mkdirs();
 
             // TODO 2019.04.26 right now the change of ownership is disabled
@@ -319,147 +536,70 @@ public class Globals {
 //            checkOwnership(processorEnvHotDeployDir);
         }
 
-        String tempBranding = env.getProperty("MH_BRANDING");
-        if (tempBranding!=null && !tempBranding.isBlank()) {
-            branding = tempBranding;
-        }
-        if (branding==null || branding.isBlank()) {
-            branding = "Metaheuristic project";
-        }
-
-        String dispatcherDirAsStr = env.getProperty("MH_DISPATCHER_DIR");
-        File dispatcherDirTemp = dispatcherDir;
-        if (!S.b(dispatcherDirAsStr)) {
-            try {
-                dispatcherDirTemp = new File(dispatcherDirAsStr);
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_DISPATCHER_DIR, must be a correct path to dir, " +
-                        "actual: " + dispatcherDirAsStr);
-            }
-        }
-        if (dispatcherDirTemp==null) {
-            dispatcherDirTemp = new File("target/mh-dispatcher");
-            log.warn("DispatcherDir in null. " +
-                    "Will be used a default value as: {}", dispatcherDirTemp.getAbsolutePath());
-        }
-        dispatcherDir = Objects.requireNonNull(dispatcherDirTemp);
-
-        if (dispatcherEnabled) {
-            if (dispatcherMasterUsername ==null || dispatcherMasterPassword ==null) {
-                throw new GlobalConfigurationException(
-                        "if mh.secure-rest-url=true, then mh.dispatcher.master-username, " +
-                                "and mh.dispatcher.master-password have to be not null");
-            }
-
-            dispatcherTempDir = new File(dispatcherDir, "temp");
+        if (dispatcher.enabled) {
+            dispatcherTempDir = new File(dispatcher.dir.dir, "temp");
             dispatcherTempDir.mkdirs();
 
-            dispatcherResourcesDir = new File(dispatcherDir, Consts.RESOURCES_DIR);
+            dispatcherResourcesDir = new File(dispatcher.dir.dir, Consts.RESOURCES_DIR);
             dispatcherResourcesDir.mkdirs();
-
-            String ext = env.getProperty("MH_DEFAULT_RESULT_FILE_EXTENSION");
-            if (ext!=null && !ext.isBlank()) {
-                defaultResultFileExtension = ext;
-            }
-            if (defaultResultFileExtension==null || defaultResultFileExtension.isBlank()) {
-                defaultResultFileExtension = ".bin";
-            }
-
-            String sslRequiredAsStr = env.getProperty("MH_IS_SSL_REQUIRED");
-            if (sslRequiredAsStr!=null && !sslRequiredAsStr.isBlank()) {
-                try {
-                    isSslRequired = Boolean.parseBoolean(sslRequiredAsStr);
-                } catch (Throwable th) {
-                    log.error("Wrong value in env MH_IS_SSL_REQUIRED, must be boolean (true/false), " +
-                            "actual: " + sslRequiredAsStr+". Will be used 'true' as value.");
-                    isSslRequired = true;
-                }
-            }
         }
         initOperationSystem();
 
-        logSpring();
         logGlobals();
         logSystemEnvs();
-        logDepricated();
+        logDeprecated();
     }
 
-    private void initSchedulerThreadNumber() {
-        String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
-        Integer oldValue = oldThreadNumber;
-        if (!S.b(threadNumberAsStr)) {
-            try {
-                oldThreadNumber = Integer.parseInt(threadNumberAsStr);
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_THREAD_NUMBER, must be digit, " +
-                        "actual: " + threadNumberAsStr+". Will be used "+oldValue+" as a value for number of threads.");
-                oldThreadNumber = oldValue;
-            }
-        }
-
-        String schedulerThreadNumberAsStr = env.getProperty("MH_THREAD_NUMBER_SCHEDULER");
-        Integer schedulerOldValue = schedulerThreadNumber;
-        if (!S.b(threadNumberAsStr)) {
-            try {
-                schedulerThreadNumber = Integer.parseInt(threadNumberAsStr);
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_THREAD_NUMBER_SCHEDULER, must be digit, " +
-                        "actual: " + schedulerThreadNumberAsStr+". Will be used "+schedulerOldValue+" as a value for number of threads.");
-                schedulerThreadNumber = schedulerOldValue;
-            }
-        }
-        if (schedulerThreadNumber==null) {
-            schedulerThreadNumber = oldThreadNumber;
-        }
-        if (schedulerThreadNumber==null) {
-            schedulerThreadNumber = 10;
-        }
-        else {
-            schedulerThreadNumber = EnvProperty.minMax( schedulerThreadNumber, 10, 32);
-        }
+    public void setBranding(String branding) {
+        this.branding = S.b(branding) ? METAHEURISTIC_PROJECT : branding;
     }
 
-    private void checkProfiles() {
-        List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
-                .filter(o-> !POSSIBLE_PROFILES.contains(o))
-                .peek(o-> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
-                .collect(Collectors.toList());
-
-        if (!profiles.isEmpty()) {
-            log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
-                    "Allowed profiles are: " + POSSIBLE_PROFILES);
-            System.exit(SpringApplication.exit(appCtx, () -> -500));
+    public void setCorsAllowedOrigins(List<String> corsAllowedOrigins) {
+        if (corsAllowedOrigins.isEmpty()) {
+            return;
         }
+        this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
-    private void logDepricated() {
-        if (isReplaceSnapshot!=null) {
-            log.warn("property 'mh.dispatcher.is-replace-snapshot' isn't supported any more and need to be deleted");
-        }
-        if (oldThreadNumber!=null) {
-            log.warn("property 'mh.thread-number' is deprecated, use 'mh.thread-number.scheduler' instead of. Or env 'MH_THREAD_NUMBER_SCHEDULER' instead of 'MH_THREAD_NUMBER' ");
-        }
-        if (processorEnvHotDeploySupported) {
-            log.warn("property 'mh.processor.env-hot-deploy-supported' not supported any more and must be deleted");
-        }
-    }
-
-    private static final Map<Character, Long> sizes = Map.of(
-            'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
-
-    private @Nullable Long parseChunkSizeValue(@Nullable String str) {
-        if (str==null || str.isBlank()) {
+    @Nullable
+    private static File toFile(@Nullable String dirAsString) {
+        if (StringUtils.isBlank(dirAsString)) {
             return null;
         }
 
-        final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
-        if (Character.isLetter(ch)) {
-            if (str.length()==1 || !sizes.containsKey(ch)) {
-                throw new GlobalConfigurationException("Wrong value of chunkSize: " + str);
-            }
-            return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
+        // special case for ./some-dir
+        if (dirAsString.charAt(0) == '.' && (dirAsString.charAt(1) == '\\' || dirAsString.charAt(1) == '/')) {
+            return new File(dirAsString.substring(2));
         }
-        return Long.parseLong(str);
+        return new File(dirAsString);
+    }
+
+
+    // TODO 2019-07-28 need to handle this case
+    //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
+
+    private static final List<Pair<String,String>> checkEnvs = List.of(
+            Pair.of("MH_CORS_ALLOWED_ORIGINS", "MH_CORSALLOWEDORIGINS"),
+            Pair.of("MH_THREAD_NUMBER_SCHEDULER", "MH_THREADNUMBER_SCHEDULER"),
+            Pair.of("MH_PUBLIC_KEY", "MH_DISPATCHER_PUBLICKEY"),
+            Pair.of("MH_IS_SSL_REQUIRED", "MH_DISPATCHER_ISSSLREQUIRED"),
+            Pair.of("MH_DEFAULT_RESULT_FILE_EXTENSION", "MH_DEFAULT_RESULTFILEEXTENSION"),
+            Pair.of("MH_IS_EVENT_ENABLED", "MH_ISEVENTENABLED"),
+            Pair.of("MH_CHUNK_SIZE", "MH_DISPATCHER_CHUNKSIZE"),
+            Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCE_URL")
+    );
+
+    private void logDeprecated() {
+        boolean isError = false;
+        for (Pair<String, String> checkEnv : checkEnvs) {
+            if (env.getProperty(checkEnv.getKey())!=null) {
+                isError = true;
+                log.warn("environment variable "+checkEnv.getKey()+" must be replaced with "+checkEnv.getValue());
+            }
+        }
+        if (isError) {
+            throw new GlobalConfigurationException("there is some error in configuration of environment variable. sse log above");
+        }
     }
 
     private void initOperationSystem() {
@@ -477,10 +617,7 @@ public class Globals {
         }
     }
 
-    private void checkOwnership(File file) {
-        if (!processorEnvHotDeploySupported) {
-            return;
-        }
+    private static void checkOwnership(File file, @Nullable String systemOwner) {
         try {
             Path path = file.toPath();
 
@@ -518,13 +655,8 @@ public class Globals {
         }
     }
 
-    private void logSystemEnvs() {
+    private static void logSystemEnvs() {
         System.getProperties().forEach( (o, o2) -> log.info("{}: {}", o, o2));
-    }
-
-    private void logSpring() {
-        log.warn("Spring properties:");
-        log.warn("'\tserver host:port: {}:{}", serverHost, serverPort);
     }
 
     private void logGlobals() {
@@ -532,31 +664,48 @@ public class Globals {
         log.warn("Memory, free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
-        log.info("'\toldThreadNumber: {}", oldThreadNumber);
-        log.info("'\tschedulerThreadNumber: {}", schedulerThreadNumber);
-        log.info("'\teventThreadNumber: {}", eventThreadNumber);
-        log.info("'\tallowedOrigins: {}", allowedOriginsStr);
+        log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
-        log.info("'\tisUnitTesting: {}", isUnitTesting);
-        log.info("'\tisSslRequired: {}", isSslRequired);
-        log.info("'\tdispatcherEnabled: {}", dispatcherEnabled);
-        log.info("'\tisFunctionSignatureRequired: {}", isFunctionSignatureRequired);
-        log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : "<dispatcher dir is null>");
-        log.info("'\tdispatcherMasterUsername: {}", dispatcherMasterUsername);
-        log.info("'\tdispatcherPublicKey: {}", dispatcherPublicKey!=null ? "provided" : "wasn't provided");
-        log.info("'\tassetMode: {}", assetMode);
-        log.info("'\tassetUsername: {}", assetUsername);
-        log.info("'\tassetSourceUrl: {}", assetSourceUrl);
-        log.info("'\tassetSyncTimeout: {}", assetSyncTimeout);
-        log.info("'\tchunkSize: {}", chunkSize);
-        log.info("'\tresourceRowsLimit: {}", globalVariableRowsLimit);
-        log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("'\tsourceCodeRowsLimit: {}", sourceCodeRowsLimit);
-        log.info("'\texecContextRowsLimit: {}", execContextRowsLimit);
-        log.info("'\tprocessorRowsLimit: {}", processorRowsLimit);
-        log.info("'\taccountRowsLimit: {}", accountRowsLimit);
-        log.info("'\tprocessorEnabled: {}", processorEnabled);
-        log.info("'\tprocessorDir: {}", processorDir !=null ? processorDir.getAbsolutePath() : "<processor dir is null>");
+        log.info("'\ttesting: {}", testing);
+        log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
+        log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
+        log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
+        log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
+        log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
+        log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.getAbsolutePath() : "<dispatcher dir is null>");
+        log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
+        log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
+        log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
+        log.info("'\tdispatcher.keepEventsInDb: {}", dispatcher.keepEventsInDb);
+
+        log.info("'\tdispatcher.timeout.gc: {}", dispatcher.timeout.gc);
+        log.info("'\tdispatcher.timeout.artifactCleaner: {}", dispatcher.timeout.artifactCleaner);
+        log.info("'\tdispatcher.timeout.updateBatchStatuses: {}", dispatcher.timeout.updateBatchStatuses);
+
+        log.info("'\tdispatcher.asset.mode: {}", dispatcher.asset.mode);
+        log.info("'\tdispatcher.asset.username: {}", dispatcher.asset.username);
+        log.info("'\tdispatcher.asset.sourceUrl: {}", dispatcher.asset.sourceUrl);
+        log.info("'\tdispatcher.asset.syncTimeout: {}", dispatcher.asset.getSyncTimeout());
+
+        log.info("'\tdispatcher.rowsLimit.globalVariableTable: {}", dispatcher.rowsLimit.globalVariableTable);
+        log.info("'\tdispatcher.rowsLimit.experiment: {}", dispatcher.rowsLimit.experiment);
+        log.info("'\tdispatcher.rowsLimit.sourceCode: {}", dispatcher.rowsLimit.sourceCode);
+        log.info("'\tdispatcher.rowsLimit.execContext: {}", dispatcher.rowsLimit.execContext);
+        log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
+        log.info("'\tdispatcher.rowsLimit.account: {}", dispatcher.rowsLimit.account);
+        log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
+
+        log.info("'\tprocessor.enabled: {}", processor.enabled);
+        log.info("'\tprocessor.taskConsoleOutputMaxLines: {}", processor.taskConsoleOutputMaxLines);
+        log.info("'\tprocessor.timeout.artifactCleaner: {}", processor.timeout.artifactCleaner);
+        log.info("'\tprocessor.timeout.downloadFunction: {}", processor.timeout.downloadFunction);
+        log.info("'\tprocessor.timeout.downloadResource: {}", processor.timeout.downloadResource);
+        log.info("'\tprocessor.timeout.prepareFunctionForDownloading: {}", processor.timeout.prepareFunctionForDownloading);
+        log.info("'\tprocessor.timeout.requestDispatcher: {}", processor.timeout.requestDispatcher);
+        log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
+        log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
+        log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
+        log.info("'\tprocessor.dir: {}", processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
     }
 
     // TODO 2019-07-20 should method createTempFileForDispatcher() be moved to other class/package?

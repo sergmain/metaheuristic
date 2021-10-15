@@ -112,7 +112,7 @@ public class BatchService {
                 : ext;
     }
 
-    private void changeStateToPreparing(Batch b) {
+    private static void changeStateToPreparing(Batch b) {
             if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
                     b.execState != Enums.BatchExecState.Preparing.code) {
                 throw new IllegalStateException("#990.020 Can't change state to Preparing, " +
@@ -444,7 +444,7 @@ public class BatchService {
                 return null;
 
             }
-            String filename = StrUtils.getName(inputVariable.filename) + BatchService.getActualExtension(scpy, globals.defaultResultFileExtension);
+            String filename = StrUtils.getName(inputVariable.filename) + BatchService.getActualExtension(scpy, globals.dispatcher.defaultResultFileExtension);
             return filename;
         });
     }

@@ -31,7 +31,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -89,10 +88,10 @@ public class TaskAssetPreparer {
     }
 
     public void fixedDelay() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

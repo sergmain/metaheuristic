@@ -201,6 +201,7 @@ public class ExecContextCreatorService {
         expy.sourceCodeUid = sourceCode.uid;
         if (rootAndParent!=null) {
             expy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
+            ec.rootExecContextId = rootAndParent.rootExecContextId;
         }
         ec.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy));
         ec.setValid(true);

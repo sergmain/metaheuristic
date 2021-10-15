@@ -78,11 +78,11 @@ public class ProcessorTaskService {
 
     @PostConstruct
     public void postConstruct() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-            File processorDir = new File(globals.processorDir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             String dispatcherCode = MetadataService.asCode(ref.dispatcherUrl);
             File dispatcherDir = new File(processorTaskDir, dispatcherCode);
@@ -445,7 +445,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(globals.processorDir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             if (!processorDir.exists()) {
                 processorDir.mkdirs();
             }
@@ -455,9 +455,17 @@ public class ProcessorTaskService {
             String path = getTaskPath(taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
-                if (!taskDir.exists()) {
-                    taskDir.mkdirs();
+                if (taskDir.exists()) {
+                    try {
+                        FileUtils.deleteDirectory(taskDir);
+                    }
+                    catch (IOException e) {
+                        String es = "#713.140 Error while deleting a task dir: " + taskDir.getAbsolutePath();
+                        log.error(es, e);
+                        throw new RuntimeException(es, e);
+                    }
                 }
+                taskDir.mkdirs();
                 //noinspection ResultOfMethodCallIgnored
                 taskDir.mkdirs();
                 File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
@@ -543,7 +551,7 @@ public class ProcessorTaskService {
         MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            final File processorDir = new File(globals.processorDir, ref.processorCode);
+            final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
 
@@ -563,13 +571,13 @@ public class ProcessorTaskService {
         }
     }
 
-    private String getTaskPath(long taskId) {
+    private static String getTaskPath(long taskId) {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
         return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
 
     public File prepareTaskDir(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        final File processorDir = new File(globals.processorDir, ref.processorCode);
+        final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
         final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(ref.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));
@@ -582,7 +590,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    File prepareTaskSubDir(File taskDir, String subDir) {
+    public static File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
         //noinspection ResultOfMethodCallIgnored
         taskSubDir.mkdirs();

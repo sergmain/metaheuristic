@@ -54,6 +54,9 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select w.id from ExecContextImpl w")
     List<Long> findAllIds();
 
+    @Query(value="select w.id from ExecContextImpl w where w.rootExecContextId=:rootExecContextId")
+    List<Long> findAllRelatedExecContextIds(Long rootExecContextId);
+
     // ai.metaheuristic.api.EnumsApi.ExecContextState
     // STARTED(3),         // started
     @Query(value="select w.id from ExecContextImpl w where w.state=3")

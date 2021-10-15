@@ -19,12 +19,16 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -34,6 +38,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,16 +57,22 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 @Slf4j
 @RequiredArgsConstructor
 public class ExecContextReconciliationTopLevelService {
+
     private final ExecContextService execContextService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextReadinessStateService execContextReadinessStateService;
 
     public ExecContextData.ReconciliationStatus reconcileStates(ExecContextImpl execContext) {
         TxUtils.checkTxNotExists();
-
         ExecContextData.ReconciliationStatus status = new ExecContextData.ReconciliationStatus(execContext.id);
+
+        if (execContextReadinessStateService.isNotReady(execContext.id)) {
+            return status;
+        }
 
         // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(execContext.execContextGraphId);
@@ -85,17 +96,32 @@ public class ExecContextReconciliationTopLevelService {
                 status.isNullState.set(true);
             }
             else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.state.value!=taskState.execState) {
-//                TaskQueue.AllocatedTask allocatedTask = taskProviderTopLevelService.getTaskExecState(execContext.id, tv.taskId);
+
                 TaskQueue.AllocatedTask allocatedTask = allocatedTasks.get(tv.taskId);
                 if (allocatedTask==null) {
                     if (taskState.execState== TaskExecState.IN_PROGRESS.value && tv.state== TaskExecState.NONE) {
-                        log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, task will be reset",
-                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
-                        status.taskForResettingIds.add(tv.taskId);
+                        if (dispatcherParamsTopLevelService.isLongRunning(tv.taskId)) {
+                            log.warn("#307.030 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, state of long-running task will be updated in graph",
+                                    tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                        }
+                        else{
+                            // #307.040 Found different states for task #191791, db: IN_PROGRESS, graph: NONE, allocatedTask wasn't found, non-long-running task will be reset
+                            log.warn("#307.040 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, non-long-running task will be reset",
+                                    tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                            eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+//                            status.taskForResettingIds.add(tv.taskId);
+                        }
                     }
                     else if (taskState.execState== TaskExecState.NONE.value && tv.state== TaskExecState.CHECK_CACHE) {
                         // #307.060 Found different states for task, db: NONE, graph: CHECK_CACHE, allocatedTask wasn't found
                         // ---> This is a normal situation, will occur after restarting dispatcher
+                    }
+                    else if (taskState.execState== TaskExecState.OK.value && tv.state== TaskExecState.CHECK_CACHE) {
+                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. this situation is presumable a normal situation.",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state);
+                        // #307.060 Found different states for task #196546, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found, trying to update a state of task in execContext
+                        // ---> Is this a normal situation? need to monitor a situation
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
@@ -191,7 +217,7 @@ public class ExecContextReconciliationTopLevelService {
                                 else {
                                     if (tpy.task.timeoutBeforeTerminate != null && tpy.task.timeoutBeforeTerminate != 0L) {
                                         // +4 is for waiting network communications at the last moment. i.e. wait for 4 seconds more
-                                        // 180 second for finish uploading of results
+                                        // +180 second for finish uploading of results
                                         // TODO 2021-04-22 need to rewrite with better formula of decision
                                         final long timeoutForChecking = (tpy.task.timeoutBeforeTerminate + 184 ) * 1000;
                                         final long oneHourToMills = TimeUnit.HOURS.toMillis(1);

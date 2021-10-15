@@ -59,10 +59,10 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     @Override
     public void process() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 

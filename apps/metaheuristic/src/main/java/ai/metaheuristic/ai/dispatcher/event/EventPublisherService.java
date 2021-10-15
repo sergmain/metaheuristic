@@ -90,4 +90,9 @@ public class EventPublisherService {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);
     }
+
+    public void publishDeleteExecContextTxEvent(DeleteExecContextTxEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
 }

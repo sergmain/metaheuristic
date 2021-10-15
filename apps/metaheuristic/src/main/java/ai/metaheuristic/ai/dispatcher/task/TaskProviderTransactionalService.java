@@ -328,7 +328,7 @@ public class TaskProviderTransactionalService {
         return t;
     }
 
-    private boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {
+    private static boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {
         AtomicBoolean result = new AtomicBoolean(false);
         notAllFunctionsReadyInternal(processorId, status, taskParamYaml.task.function, result);
         for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
@@ -340,7 +340,7 @@ public class TaskProviderTransactionalService {
         return result.get();
     }
 
-    private void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
+    private static void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
         ProcessorStatusYaml.DownloadStatus ds = status.downloadStatuses.stream().filter(o->o.functionCode.equals(functionConfig.code)).findFirst().orElse(null);
 
         if (ds==null || ds.functionState!= Enums.FunctionState.ready) {

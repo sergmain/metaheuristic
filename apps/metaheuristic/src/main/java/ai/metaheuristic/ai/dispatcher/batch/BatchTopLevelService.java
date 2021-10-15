@@ -111,11 +111,10 @@ public class BatchTopLevelService {
         return execStatuses;
     }
 
-    public void deleteOrphanBatches(Set<Long> batchIds) {
+    public void deleteOrphanOrObsoletedBatches(Set<Long> batchIds) {
         for (Long batchId : batchIds) {
-            log.info("210.140 Orphan batch #{} as deleted", batchId);
-
             batchService.deleteBatch(batchId);
+            log.info("210.140 Orphan or obsoleted batch #{} was deleted", batchId);
         }
     }
 

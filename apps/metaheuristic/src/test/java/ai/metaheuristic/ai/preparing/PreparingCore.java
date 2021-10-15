@@ -120,7 +120,7 @@ public abstract class PreparingCore {
 
     @BeforeEach
     public void beforePreparingCore() {
-        assertTrue(globals.isUnitTesting);
+        assertTrue(globals.testing);
 
         try {
             long mills;

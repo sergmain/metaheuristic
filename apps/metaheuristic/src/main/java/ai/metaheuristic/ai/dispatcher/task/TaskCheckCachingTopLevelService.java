@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
@@ -46,6 +47,7 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
     private final TaskSyncService taskSyncService;
+    private final ExecContextReadinessStateService execContextReadinessStateService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
@@ -77,11 +79,16 @@ public class TaskCheckCachingTopLevelService {
     }
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
+        if (execContextReadinessStateService.isNotReady(event.execContextId)) {
+            return;
+        }
+
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext == null) {
             log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
             return;
         }
+
         try {
             execContextSyncService.getWithSyncNullable(execContext.id,
                     () -> taskSyncService.getWithSyncNullable(event.taskId,

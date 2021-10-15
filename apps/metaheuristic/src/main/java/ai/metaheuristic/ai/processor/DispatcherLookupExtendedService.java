@@ -127,32 +127,32 @@ public class DispatcherLookupExtendedService {
         }
     }
 
-    // TODO 2021-03-29 investigate why wthis service isn't using anymore
+    // TODO 2021-03-29 investigate why this service isn't using anymore
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
-            final File dispatcherFile = new File(globals.processorDir, Consts.DISPATCHER_YAML_FILE_NAME);
+            final File dispatcherFile = new File(globals.processor.dir.dir, Consts.DISPATCHER_YAML_FILE_NAME);
             final String cfg;
             if (!dispatcherFile.exists()) {
-                if (globals.defaultDispatcherYamlFile == null) {
+                if (globals.processor.defaultDispatcherYamlFile == null) {
                     log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
                     return;
                 }
-                if (!globals.defaultDispatcherYamlFile.exists()) {
-                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
+                if (!globals.processor.defaultDispatcherYamlFile.exists()) {
+                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.processor.defaultDispatcherYamlFile.getAbsolutePath());
                     return;
                 }
                 try {
-                    FileUtils.copyFile(globals.defaultDispatcherYamlFile, dispatcherFile);
+                    FileUtils.copyFile(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
                 } catch (IOException e) {
                     log.error("Error", e);
-                    throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
+                    throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
                 }
             }
             if (!dispatcherFile.exists()) {
                 throw new IllegalStateException(
                         "File dispatcher.yaml wasn't found. " +
-                        "It must be configured in directory "+globals.processorDir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
+                        "It must be configured in directory "+globals.processor.dir.dir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
             }
 
             try {
@@ -180,7 +180,7 @@ public class DispatcherLookupExtendedService {
 
             if (dispatcherLookupConfig == null) {
                 log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processorDir,
+                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processor.dir.dir,
                         File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
                 throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
             }

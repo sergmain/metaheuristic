@@ -13,7 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.batch;
 
-public interface RefToBatchRepositories {
+package ai.metaheuristic.ai.dispatcher.event;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * @author Serge
+ * Date: 9/27/2021
+ * Time: 12:00 PM
+ */
+public class StartProcessReadinessEvent {
 }

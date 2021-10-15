@@ -86,7 +86,7 @@ public class ExperimentTopLevelService {
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.experiment, pageable);
         ExperimentApiData.ExperimentsResult result = new ExperimentApiData.ExperimentsResult();
         final Slice<Long> experimentIds = experimentRepository.findAllByOrderByIdDesc(pageable);
 

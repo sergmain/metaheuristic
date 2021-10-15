@@ -38,7 +38,7 @@ public class AccountTopLevelService {
     private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.account, pageable);
         return accountService.getAccounts(pageable, context.getCompanyId());
     }
 

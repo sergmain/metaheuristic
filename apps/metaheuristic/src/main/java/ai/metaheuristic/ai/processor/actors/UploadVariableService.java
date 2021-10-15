@@ -49,21 +49,16 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -92,10 +87,10 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
     @SuppressWarnings("Duplicates")
     public void process() {
-        if (globals.isUnitTesting) {
+        if (globals.testing) {
             return;
         }
-        if (!globals.processorEnabled) {
+        if (!globals.processor.enabled) {
             return;
         }
 
@@ -281,7 +276,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 return true;
             }
         }
-        catch (HttpHostConnectException | SocketTimeoutException th) {
+        catch (UnknownHostException | HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
             return true;
         }

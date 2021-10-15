@@ -51,7 +51,7 @@ public class KeepAliveCommandProcessor  {
     public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.addAll( functionService.getFunctionInfos() );
         keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
-        keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.chunkSize, Consts.PROCESSOR_COMM_VERSION);
+        keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 
     public void processLogRequest(Long processorId, KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse) {
@@ -82,7 +82,7 @@ public class KeepAliveCommandProcessor  {
                 processorRequest.processorCommContext.processorId, processorRequest.processor, functions);
     }
 
-    private void checkProcessorId(@Nullable KeepAliveRequestParamYaml.ProcessorCommContext commContext) {
+    private static void checkProcessorId(@Nullable KeepAliveRequestParamYaml.ProcessorCommContext commContext) {
         if (commContext ==null || commContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");

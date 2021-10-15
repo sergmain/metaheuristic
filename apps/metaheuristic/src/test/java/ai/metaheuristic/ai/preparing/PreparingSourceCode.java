@@ -214,8 +214,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @BeforeEach
     public void beforePreparingSourceCode() {
-        assertTrue(globals.isUnitTesting);
-        assertNotSame(globals.assetMode, EnumsApi.DispatcherAssetMode.replicated);
+        assertTrue(globals.testing);
+        assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
         String params = getSourceCodeYamlAsString();
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
@@ -533,7 +533,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return 0;
         }
-        return execContextTaskStateService.getCountUnfinishedTasks(ects);
+        return ExecContextTaskStateService.getCountUnfinishedTasks(ects);
     }
 
     public List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {
@@ -544,7 +544,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return List.of();
         }
-        return execContextTaskStateService.getUnfinishedTaskVertices(ects);
+        return ExecContextTaskStateService.getUnfinishedTaskVertices(ects);
     }
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {

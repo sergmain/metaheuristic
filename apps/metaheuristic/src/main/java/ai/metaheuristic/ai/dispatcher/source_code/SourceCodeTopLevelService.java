@@ -93,7 +93,7 @@ public class SourceCodeTopLevelService {
 
     public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
         try {
-            if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+            if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
                 return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
             }
             if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
@@ -144,7 +144,7 @@ public class SourceCodeTopLevelService {
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
         }
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
-        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.assetMode);
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.dispatcher.asset.mode);
     }
 
     public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, DispatcherContext context) {
@@ -197,7 +197,7 @@ public class SourceCodeTopLevelService {
     }
 
     public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
-        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
+        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.280 Can't upload sourceCode while 'replicated' mode of asset is active");
         }

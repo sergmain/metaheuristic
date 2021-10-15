@@ -57,14 +57,14 @@ public class ExecContextTaskStateService {
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
 
-    public long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
+    public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
         return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
                 .stream()
                 .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
                 .count();
     }
 
-    public List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
+    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
         return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
                 .stream()
                 .filter(o -> o.getValue()==EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)

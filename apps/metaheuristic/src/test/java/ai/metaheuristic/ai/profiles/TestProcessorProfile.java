@@ -27,7 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -42,6 +42,38 @@ public class TestProcessorProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(11, globals.schedulerThreadNumber);
+        assertEquals(13, globals.threadNumber.getScheduler());
+        assertFalse(globals.dispatcher.enabled);
+        assertTrue(globals.processor.enabled);
+
+        assertNotNull(globals.processor.dir);
+        assertNotNull(globals.processor.dir.dir);
+        assertEquals("aiai-processor", globals.processor.dir.dir.getName());
+        assertEquals(1717, globals.processor.taskConsoleOutputMaxLines);
+
+        assertEquals(1721, globals.processor.timeout.requestDispatcher.toSeconds());
+        assertEquals(1723, globals.processor.timeout.taskAssigner.toSeconds());
+        assertEquals(1725, globals.processor.timeout.taskProcessor.toSeconds());
+
+        assertEquals(1727, globals.processor.timeout.downloadFunction.toSeconds());
+        assertEquals(1729, globals.processor.timeout.prepareFunctionForDownloading.toSeconds());
+        assertEquals(1731, globals.processor.timeout.downloadResource.toSeconds());
+
+        assertEquals(1733, globals.processor.timeout.uploadResultResource.toSeconds());
+        assertEquals(1735, globals.processor.timeout.dispatcherContextInfo.toSeconds());
+        assertEquals(1737, globals.processor.timeout.artifactCleaner.toSeconds());
+
+        assertEquals(Globals.SECONDS_6.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
+        assertEquals(Globals.SECONDS_5.toSeconds(), globals.processor.timeout.getTaskAssigner().toSeconds());
+        assertEquals(Globals.SECONDS_9.toSeconds(), globals.processor.timeout.getTaskProcessor().toSeconds());
+        
+        assertEquals(Globals.SECONDS_11.toSeconds(), globals.processor.timeout.getDownloadFunction().toSeconds());
+        assertEquals(Globals.SECONDS_31.toSeconds(), globals.processor.timeout.getPrepareFunctionForDownloading().toSeconds());
+        assertEquals(Globals.SECONDS_3.toSeconds(), globals.processor.timeout.getDownloadResource().toSeconds());
+        
+        assertEquals(Globals.SECONDS_3.toSeconds(), globals.processor.timeout.getUploadResultResource().toSeconds());
+        assertEquals(Globals.SECONDS_19.toSeconds(), globals.processor.timeout.getDispatcherContextInfo().toSeconds());
+        assertEquals(Globals.SECONDS_29.toSeconds(), globals.processor.timeout.getArtifactCleaner().toSeconds());
+        
     }
 }

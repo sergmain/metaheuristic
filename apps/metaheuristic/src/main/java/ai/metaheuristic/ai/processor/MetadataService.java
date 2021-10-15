@@ -105,7 +105,7 @@ public class MetadataService {
 
     @PostConstruct
     public void init() {
-        final File metadataFile = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME);
+        final File metadataFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
             String yaml = null;
             try {
@@ -561,10 +561,10 @@ public class MetadataService {
     }
 
     private void updateMetadataFile() {
-        final File metadataFile =  new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME);
+        final File metadataFile =  new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
             log.trace("#815.420 Metadata file exists. Make backup");
-            File yamlFileBak = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
+            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
             //noinspection ResultOfMethodCallIgnored
@@ -589,9 +589,9 @@ public class MetadataService {
     private void restoreFromBackup() {
         log.info("#815.480 Trying to restore previous state of metadata.yaml");
         try {
-            File yamlFileBak = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
+            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             String content = FileUtils.readFileToString(yamlFileBak, StandardCharsets.UTF_8);
-            File yamlFile = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME);
+            File yamlFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
             FileUtils.writeStringToFile(yamlFile, content, StandardCharsets.UTF_8, false);
         } catch (IOException e) {
             log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
