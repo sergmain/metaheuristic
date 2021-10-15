@@ -179,10 +179,7 @@ public class TaskCheckCachingService {
             }
 
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElse(null);
-                if (obj==null) {
-                    throw new IllegalStateException("#609.120 ???? How???");
-                }
+                Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElseThrow(()->new IllegalStateException("#609.120 ???? How???"));
                 try {
                     StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
@@ -190,8 +187,11 @@ public class TaskCheckCachingService {
                     }
                     else {
                         final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
+                        InputStream is;
                         try {
+                            // TODO 2021-10-14 right now, an array variable isn't supported
                             cacheVariableService.storeToFile(storedVariable.id, tempFile);
+                            is = new FileInputStream(tempFile);
                         } catch (CommonErrorWithDataException e) {
                             eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
                             throw e;
@@ -201,10 +201,7 @@ public class TaskCheckCachingService {
                             log.error(es, e);
                             throw new IllegalStateException(es, e);
                         }
-
-                        InputStream is = new FileInputStream(tempFile);
                         eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-
                         variableService.storeData(is, tempFile.length(), output.id, output.filename);
                     }
 
