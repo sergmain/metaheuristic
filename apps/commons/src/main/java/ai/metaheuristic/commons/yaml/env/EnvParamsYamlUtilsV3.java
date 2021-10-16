@@ -27,33 +27,35 @@ import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 1/4/2021
- * Time: 5:15 AM
+ * Date: 10/15/2021
+ * Time: s5:15 AM
  */
-public class EnvParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<EnvParamsYamlV2, EnvParamsYamlV3, EnvParamsYamlUtilsV3, Void, Void, Void> {
+public class EnvParamsYamlUtilsV3
+        extends AbstractParamsYamlUtils<EnvParamsYamlV3, EnvParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(EnvParamsYamlV2.class);
+        return YamlUtils.init(EnvParamsYamlV3.class);
     }
 
     @NonNull
     @Override
-    public EnvParamsYamlV3 upgradeTo(@NonNull EnvParamsYamlV2 src) {
+    public EnvParamsYaml upgradeTo(@NonNull EnvParamsYamlV3 src) {
         src.checkIntegrity();
-        EnvParamsYamlV3 trg = new EnvParamsYamlV3();
+        EnvParamsYaml trg = new EnvParamsYaml();
 
         trg.mirrors.putAll(src.mirrors);
         trg.envs.putAll(src.envs);
-        src.disk.stream().map(o->new EnvParamsYamlV3.DiskStorageV3(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
-        src.processors.stream().map(o->new EnvParamsYamlV3.ProcessorV3(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
+        src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
+        src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->trg.quotas.values));
+        trg.quotas.limit = src.quotas.limit;
 
         trg.checkIntegrity();
         return trg;
@@ -66,8 +68,8 @@ public class EnvParamsYamlUtilsV2
     }
 
     @Override
-    public EnvParamsYamlUtilsV3 nextUtil() {
-        return (EnvParamsYamlUtilsV3) EnvParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -76,17 +78,17 @@ public class EnvParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull EnvParamsYamlV2 yaml) {
+    public String toString(@NonNull EnvParamsYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public EnvParamsYamlV2 to(@NonNull String yaml) {
+    public EnvParamsYamlV3 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final EnvParamsYamlV2 p = getYaml().load(yaml);
+        final EnvParamsYamlV3 p = getYaml().load(yaml);
         return p;
     }
 

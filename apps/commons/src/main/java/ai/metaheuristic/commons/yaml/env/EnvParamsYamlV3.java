@@ -27,15 +27,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @NoArgsConstructor
 @ToString
-public class EnvParamsYaml implements BaseParams {
+public class EnvParamsYamlV3 implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code","path"})
-    public static class DiskStorage {
+    public static class DiskStorageV3 {
         public String code;
         public String path;
     }
@@ -44,7 +44,7 @@ public class EnvParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code"})
-    public static class Processor {
+    public static class ProcessorV3 {
         public String code;
         @Nullable
         public String tags;
@@ -53,7 +53,7 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quota {
+    public static class QuotaV3 {
         public String tag;
         public int amount;
     }
@@ -61,15 +61,15 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quotas {
-        public List<Quota> values = new ArrayList<>();
+    public static class QuotasV3 {
+        public final List<QuotaV3> values = new ArrayList<>();
         public int limit;
     }
 
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
-    public final List<DiskStorage> disk = new ArrayList<>();
-    public final List<Processor> processors = new ArrayList<>();
-    public final Quotas quotas = new Quotas();
+    public final List<DiskStorageV3> disk = new ArrayList<>();
+    public final List<ProcessorV3> processors = new ArrayList<>();
+    public final QuotasV3 quotas = new QuotasV3();
 
 }

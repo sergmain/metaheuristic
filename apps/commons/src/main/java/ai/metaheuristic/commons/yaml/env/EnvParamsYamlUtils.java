@@ -24,12 +24,14 @@ import java.util.Map;
 public class EnvParamsYamlUtils {
     private static final EnvParamsYamlUtilsV1 YAML_UTILS_V_1 = new EnvParamsYamlUtilsV1();
     private static final EnvParamsYamlUtilsV2 YAML_UTILS_V_2 = new EnvParamsYamlUtilsV2();
-    private static final EnvParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final EnvParamsYamlUtilsV3 YAML_UTILS_V_3 = new EnvParamsYamlUtilsV3();
+    private static final EnvParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
     public static final BaseYamlUtils<EnvParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3
             ),
             DEFAULT_UTILS
     );
