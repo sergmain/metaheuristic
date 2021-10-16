@@ -224,6 +224,13 @@ class DispatcherParamsService {
                 .collect(Collectors.toList());
     }
 
+    public List<Long> getLongRunningTaskIds() {
+        find();
+        return dispatcherParamsYaml ==null ? List.of() : dispatcherParamsYaml.longRunnings.stream()
+                .map(o->o.taskId)
+                .collect(Collectors.toList());
+    }
+
     public boolean isLongRunning(Long taskId) {
         find();
         return dispatcherParamsYaml != null && dispatcherParamsYaml.longRunnings.stream().anyMatch(o -> o.taskId.equals(taskId));

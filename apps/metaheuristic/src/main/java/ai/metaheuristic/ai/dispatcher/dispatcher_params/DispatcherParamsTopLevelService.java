@@ -142,6 +142,15 @@ public class DispatcherParamsTopLevelService {
         }
     }
 
+    public List<Long> getLongRunningTaskIds() {
+        try {
+            readLock.lock();
+            return dispatcherParamsService.getLongRunningTaskIds();
+        } finally {
+            readLock.unlock();
+        }
+    }
+
     public List<String> getBatches() {
         try {
             readLock.lock();
