@@ -28,7 +28,15 @@ public class EnumsApi {
 
     public enum SourceCodeType { not_exist, common, experiment, batch }
 
-    public enum SourceCodeSubProcessLogic { and, or, sequential}
+    public enum SourceCodeSubProcessLogic {
+        // tasks will be evaluated in parallel order
+        and,
+        // tasks will be evaluated in parallel order with stop processing on first successful
+        // not implemented yet
+        or,
+        // tasks will be evaluated in sequence order
+        sequential
+    }
 
     public enum VariableContext {
         // this variable is global
