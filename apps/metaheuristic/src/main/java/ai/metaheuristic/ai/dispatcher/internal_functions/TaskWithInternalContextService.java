@@ -77,6 +77,7 @@ public class TaskWithInternalContextService {
             log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
             return;
         }
+        // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
     }
 

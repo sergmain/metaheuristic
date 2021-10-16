@@ -114,7 +114,7 @@ public class ExecContextTopLevelService {
 
         // https://stackoverflow.com/questions/31657036/getting-object-with-max-date-property-from-list-of-objects-java-8/31657274#31657274
         Object[] obj = simpleTaskInfos.stream()
-                .filter(o-> EnumsApi.TaskExecState.isFinishedState(((Number) o[1]).intValue()) && !longRunningIds.contains(((Number) o[0]).longValue()))
+                .filter(o-> o[2]!=null && EnumsApi.TaskExecState.isFinishedState(((Number) o[1]).intValue()) && !longRunningIds.contains(((Number) o[0]).longValue()))
                 .max(Comparator.comparing(o-> ((Number) o[2]).longValue()))
                 .orElse(null);
 

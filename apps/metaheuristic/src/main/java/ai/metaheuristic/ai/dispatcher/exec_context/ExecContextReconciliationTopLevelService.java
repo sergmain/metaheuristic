@@ -149,10 +149,7 @@ public class ExecContextReconciliationTopLevelService {
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                     }
                 }
-                else if ((taskState.execState== TaskExecState.OK.value ||
-                        taskState.execState== TaskExecState.ERROR.value ||
-                        taskState.execState== TaskExecState.SKIPPED.value)
-                        && taskState.execState==allocatedTask.state.value) {
+                else if (EnumsApi.TaskExecState.isFinishedState(taskState.execState) && taskState.execState==allocatedTask.state.value) {
                     // ---> This is a normal situation
                     // statuses of tasks are copying from taskQueue when all tasks in a group will be finished. so there is a period of time when the state is as this
                 }
