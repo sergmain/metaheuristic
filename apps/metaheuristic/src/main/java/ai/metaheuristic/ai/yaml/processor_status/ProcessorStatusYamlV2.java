@@ -32,9 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class ProcessorStatusYaml implements BaseParams {
+public class ProcessorStatusYamlV2 implements BaseParams {
 
-    public final int version=2;
+    public final int version = 2;
 
     @Override
     public boolean checkIntegrity() {
@@ -44,7 +44,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class DownloadStatus {
+    public static class DownloadStatusV2 {
         public Enums.FunctionState functionState;
         public String functionCode;
     }
@@ -52,7 +52,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Log {
+    public static class LogV2 {
         public boolean logRequested;
         public long requestedOn;
 
@@ -64,7 +64,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code","path"})
-    public static class DiskStorage {
+    public static class DiskStorageV2 {
         public String code;
         public String path;
     }
@@ -74,7 +74,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quota {
+    public static class QuotaV2 {
         public String tag;
         public int amount;
     }
@@ -82,38 +82,35 @@ public class ProcessorStatusYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quotas {
-        public List<Quota> values = new ArrayList<>();
+    public static class QuotasV2 {
+        public List<QuotaV2> values = new ArrayList<>();
         public int limit;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Env {
+    public static class EnvV2 {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
-        public final List<DiskStorage> disk = new ArrayList<>();
+        public final List<DiskStorageV2> disk = new ArrayList<>();
 
         @Nullable
         public String tags;
 
-        public final Quotas quotas = new Quotas();
+        public final QuotasV2 quotas = new QuotasV2();
     }
 
-    public List<DownloadStatus> downloadStatuses = new ArrayList<>();
+    public List<DownloadStatusV2> downloadStatuses = new ArrayList<>();
 
-    @Nullable
-    public Env env;
+    public EnvV2 env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
 
     // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-    //  it'll work but in some cases behaviour can be different
-    //  need to change to UTC, Coordinated Universal Time
-    // TODO 2020-10-11 actually, it's working in prod with multi-time-zoned.
-    //  So need to decide about implementing the support of UTC
+    // it'll work but in some cases behaviour can be different
+    // need to change to UTC, Coordinated Universal Time
     public long sessionCreatedOn;
     public String ip;
     public String host;
@@ -128,15 +125,8 @@ public class ProcessorStatusYaml implements BaseParams {
     public String currDir;
 
     @Nullable
-    public Log log;
+    public LogV2 log;
 
     @Nullable
     public String taskIds;
-
-    public void addError(String error) {
-        if (errors==null) {
-            errors = new ArrayList<>();
-        }
-        errors.add(error);
-    }
 }

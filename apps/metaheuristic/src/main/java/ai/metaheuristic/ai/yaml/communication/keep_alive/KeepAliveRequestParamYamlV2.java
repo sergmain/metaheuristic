@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 1:03 AM
  */
 @Data
-public class KeepAliveRequestParamYaml implements BaseParams {
+public class KeepAliveRequestParamYamlV2 implements BaseParams {
 
     public final int version=2;
 
@@ -50,7 +50,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code","path"})
-    public static class DiskStorage {
+    public static class DiskStorageV2 {
         public String code;
         public String path;
     }
@@ -60,7 +60,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quota {
+    public static class QuotaV2 {
         public String tag;
         public int amount;
     }
@@ -68,31 +68,31 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quotas {
-        public List<Quota> values = new ArrayList<>();
+    public static class QuotasV2 {
+        public List<QuotaV2> values = new ArrayList<>();
         public int limit;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Env {
+    public static class EnvV2 {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
-        public final List<DiskStorage> disk = new ArrayList<>();
+        public final List<DiskStorageV2> disk = new ArrayList<>();
 
-        // this field is specific for concrete processorCode
         @Nullable
         public String tags;
 
-        public final Quotas quotas = new Quotas();
+        public final QuotasV2 quotas = new QuotasV2();
+
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportProcessor {
-        public Env env;
+    public static class ReportProcessorV2 {
+        public EnvV2 env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String sessionId;
@@ -123,7 +123,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     }
 
     @Data
-    public static class FunctionDownloadStatuses {
+    public static class FunctionDownloadStatusesV2 {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -137,45 +137,40 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-//    @AllArgsConstructor
-    public static class RequestProcessorId {
+    @AllArgsConstructor
+    public static class RequestProcessorIdV2 {
+        public String processorCode;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorCommContext {
+    public static class ProcessorCommContextV2 {
         @Nullable public Long processorId;
         @Nullable public String sessionId;
-
-        public ProcessorCommContext(String processorId, @Nullable String sessionId) {
-            this.processorId = Long.valueOf(processorId);
-            this.sessionId = sessionId;
-        }
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorRequest {
-        public ReportProcessor processor;
+    public static class ProcessorRequestV2 {
+        public ReportProcessorV2 processor;
 
         @Nullable
-        public RequestProcessorId requestProcessorId;
-        public ProcessorCommContext processorCommContext;
+        public RequestProcessorIdV2 requestProcessorId;
+        public ProcessorCommContextV2 processorCommContext;
 
         @Nullable
         public String taskIds;
 
         public String processorCode;
 
-        public ProcessorRequest(String processorCode) {
+        public ProcessorRequestV2(String processorCode) {
             this.processorCode = processorCode;
         }
     }
 
-    public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
+    public final FunctionDownloadStatusesV2 functions = new FunctionDownloadStatusesV2();
 
-    public final List<ProcessorRequest> requests = new ArrayList<>();
-
+    public final List<ProcessorRequestV2> requests = new ArrayList<>();
 }

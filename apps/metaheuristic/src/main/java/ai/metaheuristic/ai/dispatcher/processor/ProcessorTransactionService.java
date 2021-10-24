@@ -276,7 +276,7 @@ public class ProcessorTransactionService {
         return null;
     }
 
-    private ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
+    private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
         ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
         env.envs.putAll(envYaml.envs);
