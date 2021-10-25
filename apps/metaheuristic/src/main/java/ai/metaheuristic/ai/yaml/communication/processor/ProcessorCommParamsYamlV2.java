@@ -32,21 +32,21 @@ import java.util.List;
  * Communication file which is transferred from a Processor to Dispatcher
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 11/13/2019
  * Time: 6:00 PM
  */
 @Data
 @NoArgsConstructor
-public class ProcessorCommParamsYaml implements BaseParams {
+public class ProcessorCommParamsYamlV2 implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
         if (requests.isEmpty()) {
             throw new CheckIntegrityFailedException("requests.isEmpty()");
         }
-        for (ProcessorRequest request : requests) {
+        for (ProcessorRequestV2 request : requests) {
             if (S.b(request.processorCode)) {
                 throw new CheckIntegrityFailedException("(S.b(request.processorCode))");
             }
@@ -57,7 +57,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorCommContext {
+    public static class ProcessorCommContextV2 {
         @Nullable public String processorId;
         @Nullable public String sessionId;
     }
@@ -65,23 +65,21 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class RequestProcessorId {
-        // TODO 2020-11-22 what is this field about?
-        //  2021-04-09 it's just dummy field. do e need a dummy field or empty class is ok?
+    public static class RequestProcessorIdV2 {
         public boolean keep = true;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CheckForMissingOutputResources {
+    public static class CheckForMissingOutputResourcesV2 {
         public boolean keep = true;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestTask {
+    public static class RequestTaskV2 {
         @Nullable
         public Boolean newTask;
         public boolean acceptOnlySigned;
@@ -90,7 +88,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportTaskProcessingResult {
+    public static class ReportTaskProcessingResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -107,7 +105,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResourceResult {
+    public static class ResendTaskOutputResourceResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -124,35 +122,30 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Quotas {
+    public static class QuotasV2 {
         public int current;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorRequest {
-        @Nullable
-        public ProcessorCommContext processorCommContext;
-        @Nullable
-        public RequestProcessorId requestProcessorId;
-        @Nullable
-        public RequestTask requestTask;
-        @Nullable
-        public ReportTaskProcessingResult reportTaskProcessingResult;
-        @Nullable
-        public CheckForMissingOutputResources checkForMissingOutputResources;
-        @Nullable
-        public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+    public static class ProcessorRequestV2 {
+        public @Nullable ProcessorCommContextV2 processorCommContext;
+        public @Nullable RequestProcessorIdV2 requestProcessorId;
+        public @Nullable RequestTaskV2 requestTask;
+        public @Nullable ReportTaskProcessingResultV2 reportTaskProcessingResult;
+        public @Nullable CheckForMissingOutputResourcesV2 checkForMissingOutputResources;
+        public @Nullable ResendTaskOutputResourceResultV2 resendTaskOutputResourceResult;
+
 
         public String processorCode;
 
-        public ProcessorRequest(String processorCode) {
+        public ProcessorRequestV2(String processorCode) {
             this.processorCode = processorCode;
         }
     }
 
-    public final List<ProcessorRequest > requests = new ArrayList<>();
-    public final Quotas quotas = new Quotas();
+    public final List<ProcessorRequestV2> requests = new ArrayList<>();
+    public final QuotasV2 quotas = new QuotasV2();
 
 }
