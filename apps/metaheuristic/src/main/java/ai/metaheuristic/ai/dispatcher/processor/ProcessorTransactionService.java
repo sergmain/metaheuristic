@@ -39,6 +39,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -66,7 +67,7 @@ public class ProcessorTransactionService {
     private static final long LOG_FILE_REQUEST_COOL_DOWN_TIMEOUT = TimeUnit.MINUTES.toMillis(COOL_DOWN_MINUTES);
 
     private static String createNewSessionId() {
-        return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
+        return UUID.randomUUID().toString() + '-' + UUID.randomUUID();
     }
 
     @Transactional
@@ -225,8 +226,10 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         if (status!=null) {
 
-            boolean isUpdated = false;
-            if (isProcessorStatusDifferent(psy, status)) {
+            final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
+            final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
+
+            if (processorStatusDifferent) {
                 psy.env = to(status.env);
                 psy.gitStatusInfo = status.gitStatusInfo;
                 psy.schedule = status.schedule;
@@ -248,17 +251,15 @@ public class ProcessorTransactionService {
 
                 processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
                 processor.updatedOn = System.currentTimeMillis();
-                isUpdated = true;
             }
-            if (isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus)) {
+            if (processorFunctionDownloadStatusDifferent) {
                 psy.downloadStatuses = functionDownloadStatus.statuses.stream()
                         .map(o -> new ProcessorStatusYaml.DownloadStatus(o.state, o.code))
                         .collect(Collectors.toList());
                 processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
                 processor.updatedOn = System.currentTimeMillis();
-                isUpdated = true;
             }
-            if (isUpdated) {
+            if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
                 try {
                     log.debug("#807.120 Save new processor status, processor: {}", processor);
                     processorCache.save(processor);
@@ -269,8 +270,10 @@ public class ProcessorTransactionService {
 
                     processorCache.clearCache();
                 }
-            } else {
-                log.debug("#807.160 Processor status is equal to the status stored in db");
+            }
+            else {
+                log.info("#807.160 Processor status is equal to the status stored in db");
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             }
         }
         return null;
@@ -279,6 +282,8 @@ public class ProcessorTransactionService {
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
         ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
+        envYaml.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->env.quotas.values));
+        env.quotas.limit = envYaml.quotas.limit;
         env.envs.putAll(envYaml.envs);
         env.mirrors.putAll(envYaml.mirrors);
         env.tags = envYaml.tags;
@@ -300,7 +305,7 @@ public class ProcessorTransactionService {
     }
 
     private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
-        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags) && CollectionUtils.isEmpty(env.quotas.values));
     }
 
     private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {
@@ -308,18 +313,27 @@ public class ProcessorTransactionService {
     }
 
     public static boolean envNotEquals(@Nullable ProcessorStatusYaml.Env env1, @Nullable KeepAliveRequestParamYaml.Env env2) {
-        if (isEnvEmpty(env1) && !isEnvEmpty(env2)) {
+        final boolean envEmpty1 = isEnvEmpty(env1);
+        final boolean envEmpty2 = isEnvEmpty(env2);
+        if (envEmpty1 && !envEmpty2) {
             return true;
         }
-        if (!isEnvEmpty(env1) && isEnvEmpty(env2)) {
+        if (!envEmpty1 && envEmpty2) {
             return true;
         }
 
-        if (isEnvEmpty(env1) && isEnvEmpty(env2)) {
+        //noinspection ConstantConditions
+        if (envEmpty1 && envEmpty2) {
             return false;
         }
-
-        // ###IDEA###, why?
+        if (env1.quotas.limit!=env2.quotas.limit) {
+            return true;
+        }
+        for (ProcessorStatusYaml.Quota quota : env1.quotas.values) {
+            if (!env2.quotas.values.contains(new KeepAliveRequestParamYaml.Quota(quota.tag, quota.amount))) {
+                return true;
+            }
+        }
         if (!CollectionUtils.isMapEquals(env1.envs, env2.envs)) {
             return true;
         }

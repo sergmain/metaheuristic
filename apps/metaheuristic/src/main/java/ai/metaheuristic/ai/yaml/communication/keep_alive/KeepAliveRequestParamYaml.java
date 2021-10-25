@@ -60,6 +60,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode( of={"tag","amount"})
     public static class Quota {
         public String tag;
         public int amount;

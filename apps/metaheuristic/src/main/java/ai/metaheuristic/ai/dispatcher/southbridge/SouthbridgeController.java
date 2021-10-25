@@ -49,7 +49,7 @@ import java.io.IOException;
 @RequestMapping("/rest/v1")
 @PreAuthorize("hasAnyRole('SERVER_REST_ACCESS')")
 @RequiredArgsConstructor
-// !!! __ Do not change the name to SouthBridgeController ___ !!!
+// !!! __ Do not change the name of class to SouthBridgeController ___ !!!
 public class SouthbridgeController {
 
     private final SouthbridgeService serverService;
