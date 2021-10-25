@@ -51,7 +51,7 @@ public class TaskQueue {
         public final TaskImpl task;
         public final TaskParamsYaml taskParamYaml;
         @Nullable
-        public final String tags;
+        public final String tag;
         public int priority;
     }
 

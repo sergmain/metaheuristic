@@ -272,7 +272,7 @@ public class ProcessorTransactionService {
                 }
             }
             else {
-                log.info("#807.160 Processor status is equal to the status stored in db");
+                log.debug("#807.160 Processor status is equal to the status stored in db");
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             }
         }
