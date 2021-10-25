@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -65,6 +67,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskProviderTopLevelService {
 
+    private final Globals globals;
     private final TaskProviderTransactionalService taskProviderTransactionalService;
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
@@ -211,7 +214,7 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         TaskImpl task;
@@ -219,7 +222,7 @@ public class TaskProviderTopLevelService {
             if (taskProviderTransactionalService.isQueueEmpty()) {
                 return null;
             }
-            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
+            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
         }
         if (task!=null) {
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
@@ -231,6 +234,14 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
+        if (!globals.isTesting()) {
+            throw new IllegalStateException("(!globals.isTesting())");
+        }
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000));
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         final Processor processor = processorCache.findById(processorId);
@@ -252,7 +263,7 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned);
+        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas);
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -280,10 +291,10 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        final TaskImpl task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned);
+        final TaskImpl task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas);
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -317,7 +328,7 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private TaskImpl getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskImpl getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
@@ -347,7 +358,7 @@ public class TaskProviderTopLevelService {
             }
         }
 
-        TaskImpl result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
+        TaskImpl result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
         return result;
     }
 

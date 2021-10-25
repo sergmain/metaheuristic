@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
@@ -260,6 +261,7 @@ public class SouthbridgeService {
 
     private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
+        DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.quotas.current);
         try {
             for (ProcessorCommParamsYaml.ProcessorRequest request : scpy.requests) {
                 DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse(request.processorCode);
@@ -277,7 +279,7 @@ public class SouthbridgeService {
                 }
 
                 log.debug("Start processing commands");
-                dispatcherCommandProcessor.process(request, response);
+                dispatcherCommandProcessor.process(request, response, quotas);
             }
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);

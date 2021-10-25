@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -149,7 +150,7 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
 
         if (isQueueEmpty()) {
             return null;
@@ -234,6 +235,9 @@ public class TaskProviderTransactionalService {
                     log.debug("#317.077 Check CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env==null ? null : psy.env.tags) was failed");
                     continue;
                 }
+
+                // TODO 2021-10-24 add a checking of quotas here
+                // checkQuotas(quotas);
 
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
                     String interpreter = psy.env!=null ? psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env) : null;
