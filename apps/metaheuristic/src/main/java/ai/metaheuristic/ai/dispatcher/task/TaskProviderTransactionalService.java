@@ -24,6 +24,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.quotas.QuotasService;
+import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -44,6 +46,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -71,6 +74,7 @@ public class TaskProviderTransactionalService {
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
+    private final QuotasService quotasService;
 
     private final TaskQueue taskQueue = new TaskQueue();
 
@@ -150,9 +154,15 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
 
         if (isQueueEmpty()) {
+            return null;
+        }
+
+        // Environment of Processor must be initialized before getting any task
+        if (psy.env==null) {
+            log.error("#317.070 Processor {} has empty env.yaml", processor.id);
             return null;
         }
 
@@ -226,21 +236,14 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
-                if (psy.env==null) {
-                    log.error("#317.070 Processor {} has empty env.yaml", processor.id);
-                }
-
                 // check of tag
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env==null ? null : psy.env.tags)) {
-                    log.debug("#317.077 Check CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env==null ? null : psy.env.tags) was failed");
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags)) {
+                    log.debug("#317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
                     continue;
                 }
 
-                // TODO 2021-10-24 add a checking of quotas here
-                // checkQuotas(quotas);
-
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
-                    String interpreter = psy.env!=null ? psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env) : null;
+                    String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#317.080 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 queuedTask.task.getId(), processor.id, queuedTask.taskParamYaml.task.function.env
@@ -270,6 +273,12 @@ public class TaskProviderTransactionalService {
 
                 if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
                     log.debug("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
+                    continue;
+                }
+
+                Integer quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
+
+                if (!QuotasUtils.isEnough(psy.env.quotas, currentQuotas, quota)) {
                     continue;
                 }
 

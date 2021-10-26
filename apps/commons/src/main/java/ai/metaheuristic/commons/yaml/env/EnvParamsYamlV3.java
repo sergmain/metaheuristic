@@ -64,6 +64,8 @@ public class EnvParamsYamlV3 implements BaseParams {
     public static class QuotasV3 {
         public final List<QuotaV3> values = new ArrayList<>();
         public int limit;
+        public int defaultValue;
+        public boolean disabled;
     }
 
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();

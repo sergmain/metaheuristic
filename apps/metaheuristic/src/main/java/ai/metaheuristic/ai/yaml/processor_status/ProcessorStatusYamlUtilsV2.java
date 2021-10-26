@@ -90,6 +90,8 @@ public class ProcessorStatusYamlUtilsV2
         }
         envSrc.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envSrc.quotas.limit;
+        env.quotas.disabled = envSrc.quotas.disabled;
+        env.quotas.defaultValue = envSrc.quotas.defaultValue;
         return env;
     }
 

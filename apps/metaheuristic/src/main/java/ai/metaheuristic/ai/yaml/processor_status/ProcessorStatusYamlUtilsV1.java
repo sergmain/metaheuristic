@@ -56,7 +56,7 @@ public class ProcessorStatusYamlUtilsV1
         if (src.env!=null) {
             trg.env = new ProcessorStatusYamlV2.EnvV2();
             trg.env.tags = src.env.tags;
-
+            trg.env.quotas.disabled = true;
             if (!src.env.envs.isEmpty()) {
                 final Map<String, String> envMap = src.env.envs.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));

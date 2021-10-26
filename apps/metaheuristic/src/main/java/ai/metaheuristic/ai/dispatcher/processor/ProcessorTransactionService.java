@@ -284,6 +284,8 @@ public class ProcessorTransactionService {
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
         envYaml.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envYaml.quotas.limit;
+        env.quotas.disabled = envYaml.quotas.disabled;
+        env.quotas.defaultValue = envYaml.quotas.defaultValue;
         env.envs.putAll(envYaml.envs);
         env.mirrors.putAll(envYaml.mirrors);
         env.tags = envYaml.tags;

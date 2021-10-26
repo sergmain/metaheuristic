@@ -16,6 +16,7 @@
 package ai.metaheuristic.commons.yaml.env;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -29,7 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class EnvParamsYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
+
+    public boolean checkIntegrity() {
+        if (!quotas.disabled && (quotas.defaultValue==0)) {
+            throw new CheckIntegrityFailedException("(!quotas.disabled && (quotas.defaultValue==0))");
+        }
+        return true;
+    }
 
     @Data
     @AllArgsConstructor
@@ -64,6 +72,8 @@ public class EnvParamsYaml implements BaseParams {
     public static class Quotas {
         public List<Quota> values = new ArrayList<>();
         public int limit;
+        public int defaultValue;
+        public boolean disabled;
     }
 
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();

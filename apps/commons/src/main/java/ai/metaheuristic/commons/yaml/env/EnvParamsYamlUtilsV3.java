@@ -56,6 +56,8 @@ public class EnvParamsYamlUtilsV3
         src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
         src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->trg.quotas.values));
         trg.quotas.limit = src.quotas.limit;
+        trg.quotas.disabled = src.quotas.disabled;
+        trg.quotas.defaultValue = src.quotas.defaultValue;
 
         trg.checkIntegrity();
         return trg;

@@ -63,6 +63,7 @@ public class KeepAliveRequestParamYamlUtilsV1 extends
                     r.processor.env = new KeepAliveRequestParamYamlV2.EnvV2(v1.processor.env.tags);
                     r.processor.env.mirrors.putAll(v1.processor.env.mirrors);
                     r.processor.env.envs.putAll(v1.processor.env.envs);
+                    r.processor.env.quotas.disabled = true;
                     v1.processor.env.disk.stream().map(o->new KeepAliveRequestParamYamlV2.DiskStorageV2(o.code, o.path)).collect(Collectors.toCollection(() -> r.processor.env.disk));
                 }
             }

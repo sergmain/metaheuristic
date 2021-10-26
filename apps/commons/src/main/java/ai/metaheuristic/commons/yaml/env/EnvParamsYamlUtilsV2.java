@@ -54,7 +54,7 @@ public class EnvParamsYamlUtilsV2
         trg.envs.putAll(src.envs);
         src.disk.stream().map(o->new EnvParamsYamlV3.DiskStorageV3(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
         src.processors.stream().map(o->new EnvParamsYamlV3.ProcessorV3(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
-
+        trg.quotas.disabled = true;
         trg.checkIntegrity();
         return trg;
     }

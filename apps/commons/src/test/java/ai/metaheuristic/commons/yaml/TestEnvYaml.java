@@ -37,6 +37,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TestEnvYaml {
 
     @Test
+    public void testVersion() {
+        assertEquals( new EnvParamsYaml().version, EnvParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    }
+
+    @Test
     public void testV2() throws IOException {
         String s = IOUtils.resourceToString("/yaml/env-v2.yaml", StandardCharsets.UTF_8);
         final EnvParamsYamlUtilsV2 forVersion = (EnvParamsYamlUtilsV2)EnvParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);

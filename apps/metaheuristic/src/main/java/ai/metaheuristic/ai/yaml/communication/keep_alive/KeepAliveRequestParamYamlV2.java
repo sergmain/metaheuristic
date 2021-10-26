@@ -71,6 +71,8 @@ public class KeepAliveRequestParamYamlV2 implements BaseParams {
     public static class QuotasV2 {
         public List<QuotaV2> values = new ArrayList<>();
         public int limit;
+        public int defaultValue;
+        public boolean disabled;
     }
 
     @Data

@@ -293,7 +293,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
     private Enums.VariableState setVariableWasntFound(DownloadVariableTask task) {
         String es;
-        es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished' with error.", task.variableId, task.getTaskId());
+        es = String.format("#810.200 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished' with error.", task.variableId, task.getTaskId());
         log.warn(es);
         processorTaskService.markAsFinishedWithError(task.ref, task.getTaskId(), es);
         return Enums.VariableState.variable_doesnt_exist;

@@ -109,6 +109,8 @@ public class ProcessorService {
         t.mirrors.putAll(envYaml.mirrors);
         t.envs.putAll(envYaml.envs);
         t.quotas.limit = envYaml.quotas.limit;
+        t.quotas.disabled = envYaml.quotas.disabled;
+        t.quotas.defaultValue = envYaml.quotas.defaultValue;
         envYaml.quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->t.quotas.values));
         envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
         return t;

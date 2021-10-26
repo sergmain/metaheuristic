@@ -130,6 +130,9 @@ public class DispatcherRequestor {
         }
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
+        // TODO 2021-10-24 add calculating of current quotas here
+//        pcpy.quotas.current = ...
+
         try {
             for (String processorCode : metadataService.getProcessorCodes()) {
 
