@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.quotas;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import org.springframework.lang.Nullable;
 
@@ -27,29 +29,27 @@ import org.springframework.lang.Nullable;
  */
 public class QuotasUtils {
 
-    @Nullable
-    public static Integer getQuotaAmount(ProcessorStatusYaml.Quotas processorQuotas, @Nullable String tag) {
+    public static QuotasData.ActualQuota getQuotaAmount(ProcessorStatusYaml.Quotas processorQuotas, @Nullable String tag) {
         if (processorQuotas.disabled) {
-            return null;
-        }
-        if (processorQuotas.defaultValue==0) {
-            throw new IllegalStateException("(processorQuotas.defaultValue==0)");
+            return new QuotasData.ActualQuota(Enums.QuotaAllocation.disabled, 0);
         }
         if (tag==null) {
-            return processorQuotas.defaultValue;
+            return new QuotasData.ActualQuota(Enums.QuotaAllocation.present, processorQuotas.defaultValue);
         }
-        return processorQuotas.values.stream().filter(o->o.tag.equals(tag)).findFirst().map(o->o.amount).orElse(processorQuotas.defaultValue);
+        return new QuotasData.ActualQuota(
+                Enums.QuotaAllocation.disabled,
+                processorQuotas.values.stream().filter(o->o.tag.equals(tag)).findFirst().map(o->o.amount).orElse(processorQuotas.defaultValue));
     }
 
-    public static boolean isEnough(ProcessorStatusYaml.Quotas processorQuotas, DispatcherData.TaskQuotas quotas, @Nullable Integer quota) {
+    public static boolean isEnough(ProcessorStatusYaml.Quotas processorQuotas, DispatcherData.TaskQuotas quotas, QuotasData.ActualQuota quota) {
         if (processorQuotas.disabled) {
             return true;
         }
 
-        if (quota==null) {
-            throw new IllegalStateException("(quota==null)");
+        if (quota.quotaAllocation== Enums.QuotaAllocation.disabled) {
+            throw new IllegalStateException("(quota.quotaAllocation== Enums.QuotaAllocation.disabled)");
         }
 
-        return processorQuotas.limit>= (quota + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
+        return processorQuotas.limit>= (quota.amount + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
     }
 }

@@ -21,10 +21,10 @@ import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.quotas.QuotasService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -46,8 +46,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
@@ -74,7 +75,6 @@ public class TaskProviderTransactionalService {
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
-    private final QuotasService quotasService;
 
     private final TaskQueue taskQueue = new TaskQueue();
 
@@ -154,7 +154,7 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
+    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
 
         if (isQueueEmpty()) {
             return null;
@@ -174,6 +174,7 @@ public class TaskProviderTransactionalService {
         AllocatedTask resultTask = null;
         List<QueuedTask> forRemoving = new ArrayList<>();
 
+        QuotasData.ActualQuota quota = null;
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
         try {
             GroupIterator iter = taskQueue.getIterator();
@@ -276,7 +277,7 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
-                Integer quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
+                quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
 
                 if (!QuotasUtils.isEnough(psy.env.quotas, currentQuotas, quota)) {
                     continue;
@@ -333,12 +334,26 @@ public class TaskProviderTransactionalService {
 
         taskRepository.save(t);
 
-        resultTask.assigned = true;
-
         eventPublisherService.publishUnAssignTaskTxEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
         eventPublisherService.publishStartTaskProcessingTxEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
 
+        final AllocatedTask finalResultTask = resultTask;
+        if (quota==null) {
+            throw new IllegalStateException("(quota==null)");
+        }
+        final QuotasData.ActualQuota finalQuota = quota;
+        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(()->{
+            finalResultTask.assigned = true;
+            currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount));
+        }));
+
         return t;
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleStartTaskProcessingTxEvent(PostTaskAssigningTxEvent event) {
+        event.runnable.run();
     }
 
     private static boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {
