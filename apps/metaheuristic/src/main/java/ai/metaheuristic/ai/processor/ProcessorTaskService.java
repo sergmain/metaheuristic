@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.utils.DigitUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -417,19 +418,20 @@ public class ProcessorTaskService {
         return getMapForDispatcherUrl(ref).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId, Long execContextId, String params, int quota, String tag) {
+    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask assignedTask) {
+
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            metadataService.registerTaskQuota(taskId, tag, quota);
+            metadataService.registerTaskQuota(assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
-            log.info("#713.150 Prepare new task #{}", taskId);
+            log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
-            ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(taskId, k -> new ProcessorTask());
+            ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorTask());
 
-            task.taskId = taskId;
-            task.execContextId = execContextId;
-            task.params = params;
+            task.taskId = assignedTask.taskId;
+            task.execContextId = assignedTask.execContextId;
+            task.params = assignedTask.params;
             task.functionExecResult = null;
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTask.params);
             task.clean = taskParamYaml.task.clean;
             task.dispatcherUrl = ref.dispatcherUrl.url;
             task.createdOn = System.currentTimeMillis();
@@ -440,7 +442,7 @@ public class ProcessorTaskService {
             task.reported = false;
             task.delivered = false;
             task.completed = false;
-            task.quotas.quota = quota;
+            task.quotas.quota = assignedTask.quota;
             taskParamYaml.task.outputs.stream()
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
@@ -452,7 +454,7 @@ public class ProcessorTaskService {
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
             File dispatcherDir = new File(processorTaskDir, metadataService.processorStateByDispatcherUrl(ref).dispatcherCode);
-            String path = getTaskPath(taskId);
+            String path = getTaskPath(assignedTask.taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
                 if (taskDir.exists()) {

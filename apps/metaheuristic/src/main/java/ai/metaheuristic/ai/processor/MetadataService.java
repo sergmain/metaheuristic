@@ -302,6 +302,17 @@ public class MetadataService {
         }
     }
 
+    public int currentQuota() {
+        synchronized (syncObj) {
+            int sum = 0;
+            for (MetadataParamsYaml.Quota o : metadata.quotas.quotas) {
+                int quota = o.quota;
+                sum += quota;
+            }
+            return sum;
+        }
+    }
+
     public List<String> getProcessorCodes() {
         synchronized (syncObj) {
             return new ArrayList<>(metadata.processors.keySet());
