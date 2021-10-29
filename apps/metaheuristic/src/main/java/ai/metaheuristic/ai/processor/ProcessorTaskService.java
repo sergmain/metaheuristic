@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -57,13 +56,11 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-//@DependsOn({"Globals", "MetadataService"})
 public class ProcessorTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
-    private final EnvService envService;
 
     /**key - processorCode
      * value:
@@ -420,8 +417,10 @@ public class ProcessorTaskService {
         return getMapForDispatcherUrl(ref).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId, Long execContextId, String params) {
+    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId, Long execContextId, String params, int quota, String tag) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            metadataService.registerTaskQuota(taskId, tag, quota);
+
             log.info("#713.150 Prepare new task #{}", taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
             ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(taskId, k -> new ProcessorTask());
@@ -441,6 +440,7 @@ public class ProcessorTaskService {
             task.reported = false;
             task.delivered = false;
             task.completed = false;
+            task.quotas.quota = quota;
             taskParamYaml.task.outputs.stream()
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));

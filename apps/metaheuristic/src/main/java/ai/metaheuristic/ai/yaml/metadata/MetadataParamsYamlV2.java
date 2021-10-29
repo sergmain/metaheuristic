@@ -70,8 +70,23 @@ public class MetadataParamsYamlV2 implements BaseParams {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QuotaV2 {
+        public Long taskId;
+        public String tag;
+        public int quota;
+    }
+
+    @Data
+    public static class QuotasV2 {
+        public final List<QuotaV2> quotas = new ArrayList<>();
+    }
+
     // key is a code of processor which is configured in env.yaml
     public final LinkedHashMap<String, ProcessorV2> processors = new LinkedHashMap<>();
     public final List<StatusV2> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public final QuotasV2 quotas = new QuotasV2();
 }

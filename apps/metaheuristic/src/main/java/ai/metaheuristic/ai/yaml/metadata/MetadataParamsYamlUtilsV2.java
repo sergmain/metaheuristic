@@ -67,6 +67,8 @@ public class MetadataParamsYamlUtilsV2
             }
         }
         src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));
+        src.quotas.quotas.stream().map(MetadataParamsYamlUtilsV2::toQuota).collect(Collectors.toCollection(()->trg.quotas.quotas));
+
         trg.checkIntegrity();
         return trg;
     }
@@ -74,6 +76,11 @@ public class MetadataParamsYamlUtilsV2
     private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {
         return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetManagerUrl, sV2.sourcing, sV2.checksum, sV2.signature);
     }
+
+    private static MetadataParamsYaml.Quota toQuota(MetadataParamsYamlV2.QuotaV2 sV2) {
+        return new MetadataParamsYaml.Quota(sV2.taskId, sV2.tag, sV2.quota);
+    }
+
 
     @NonNull
     @Override

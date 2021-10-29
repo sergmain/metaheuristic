@@ -328,13 +328,8 @@ public class ProcessorTransactionService {
         if (envEmpty1 && envEmpty2) {
             return false;
         }
-        if (env1.quotas.limit!=env2.quotas.limit) {
+        if (quotasNotEquals(env1.quotas, env2.quotas)) {
             return true;
-        }
-        for (ProcessorStatusYaml.Quota quota : env1.quotas.values) {
-            if (!env2.quotas.values.contains(new KeepAliveRequestParamYaml.Quota(quota.tag, quota.amount))) {
-                return true;
-            }
         }
         if (!CollectionUtils.isMapEquals(env1.envs, env2.envs)) {
             return true;
@@ -355,6 +350,24 @@ public class ProcessorTransactionService {
             }
         }
         return StringUtils.compare(env1.tags, env2.tags)!=0;
+    }
+
+    private static boolean quotasNotEquals(ProcessorStatusYaml.Quotas quotas, KeepAliveRequestParamYaml.Quotas quotas1) {
+        if (quotas.limit!=quotas1.limit) {
+            return true;
+        }
+        if (quotas.disabled!=quotas1.disabled) {
+            return true;
+        }
+        if (quotas.defaultValue!=quotas1.defaultValue) {
+            return true;
+        }
+        for (ProcessorStatusYaml.Quota quota : quotas.values) {
+            if (!quotas1.values.contains(new KeepAliveRequestParamYaml.Quota(quota.tag, quota.amount))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {

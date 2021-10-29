@@ -126,6 +126,7 @@ public class MetadataService {
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
             processorStateByDispatcherUrl(ref);
         }
+        resetQuotas();
         markAllAsUnverified();
         updateMetadataFile();
         //noinspection unused
@@ -280,6 +281,24 @@ public class MetadataService {
                 updateMetadataFile();
             }
             return processorState;
+        }
+    }
+
+    public void registerTaskQuota(Long taskId, String tag, int quota) {
+        synchronized (syncObj) {
+            metadata.quotas.quotas.stream().filter(o->o.taskId.equals(taskId)).findFirst()
+                    .ifPresentOrElse(
+                            (o)->{o.tag=tag;o.quota=quota;},
+                            ()->metadata.quotas.quotas.add(new MetadataParamsYaml.Quota(taskId, tag, quota)));
+
+            updateMetadataFile();
+        }
+    }
+
+    public void resetQuotas() {
+        synchronized (syncObj) {
+            metadata.quotas.quotas.clear();
+            updateMetadataFile();
         }
     }
 

@@ -16,10 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 
 /**
@@ -40,5 +42,12 @@ public class TaskData {
             this.status = status;
             this.error = error;
         }
+    }
+
+    @RequiredArgsConstructor
+    public static class AssignedTask {
+        public final TaskImpl task;
+        public final String tag;
+        public final int quota;
     }
 }

@@ -67,6 +67,20 @@ public class MetadataParamsYaml implements BaseParams {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Quota {
+        public Long taskId;
+        public String tag;
+        public int quota;
+    }
+
+    @Data
+    public static class Quotas {
+        public final List<Quota> quotas = new ArrayList<>();
+    }
+
     /**
      * key  - a code of processor which is configured in env.yaml
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.Processor
@@ -75,4 +89,5 @@ public class MetadataParamsYaml implements BaseParams {
 
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public final Quotas quotas = new Quotas();
 }
