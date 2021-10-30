@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.api.EnumsApi;
@@ -55,11 +56,11 @@ public class ExecContextTaskAssigningService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderService;
     private final EventPublisherService eventPublisherService;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskFinishingService taskFinishingService;
 
     @Nullable
     @Transactional
@@ -107,7 +108,7 @@ public class ExecContextTaskAssigningService {
                 }
                 catch (YAMLException e) {
                     log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskStateService.finishWithError(task, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
+                    taskFinishingService.finishWithError(task, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {

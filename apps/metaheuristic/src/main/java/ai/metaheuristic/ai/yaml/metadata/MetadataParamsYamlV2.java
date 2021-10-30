@@ -88,5 +88,6 @@ public class MetadataParamsYamlV2 implements BaseParams {
     public final LinkedHashMap<String, ProcessorV2> processors = new LinkedHashMap<>();
     public final List<StatusV2> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public final QuotasV2 quotas = new QuotasV2();
+    // key is url of dispatcher
+    public final LinkedHashMap<String, QuotasV2> quotas = new LinkedHashMap<>();
 }

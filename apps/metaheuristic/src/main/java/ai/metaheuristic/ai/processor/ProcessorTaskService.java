@@ -421,7 +421,7 @@ public class ProcessorTaskService {
     public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask assignedTask) {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            metadataService.registerTaskQuota(assignedTask.taskId, assignedTask.tag, assignedTask.quota);
+            metadataService.registerTaskQuota(ref.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
@@ -549,10 +549,11 @@ public class ProcessorTaskService {
         }
     }
 
-    public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final long taskId) {
+    public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final Long taskId) {
         MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
             final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);

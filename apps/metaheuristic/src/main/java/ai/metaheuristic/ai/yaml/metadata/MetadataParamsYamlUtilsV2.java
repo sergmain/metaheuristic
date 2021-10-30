@@ -67,7 +67,11 @@ public class MetadataParamsYamlUtilsV2
             }
         }
         src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));
-        src.quotas.quotas.stream().map(MetadataParamsYamlUtilsV2::toQuota).collect(Collectors.toCollection(()->trg.quotas.quotas));
+        for (Map.Entry<String, MetadataParamsYamlV2.QuotasV2> entry : src.quotas.entrySet()) {
+            MetadataParamsYaml.Quotas q = new MetadataParamsYaml.Quotas();
+            trg.quotas.put(entry.getKey(), q);
+            entry.getValue().quotas.stream().map(MetadataParamsYamlUtilsV2::toQuota).collect(Collectors.toCollection(()->q.quotas));
+        }
 
         trg.checkIntegrity();
         return trg;

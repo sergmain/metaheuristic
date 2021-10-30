@@ -18,10 +18,7 @@ package ai.metaheuristic.ai.yaml.metadata;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
@@ -49,7 +46,7 @@ public class MetadataParamsYaml implements BaseParams {
     @ToString
     public static class Processor {
         // key is url of dispatcher
-        public final Map<String, ProcessorState> states = new LinkedHashMap<>();
+        public final LinkedHashMap<String, ProcessorState> states = new LinkedHashMap<>();
     }
 
     @Data
@@ -70,6 +67,7 @@ public class MetadataParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode(of={"taskId"})
     public static class Quota {
         public Long taskId;
         public String tag;
@@ -89,5 +87,6 @@ public class MetadataParamsYaml implements BaseParams {
 
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public final Quotas quotas = new Quotas();
+    // key is url of dispatcher
+    public final LinkedHashMap<String, Quotas> quotas = new LinkedHashMap<>();
 }

@@ -391,7 +391,7 @@ public class TaskProviderTopLevelService {
                         QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tags);
 
                         if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
-                            taskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTask(ec, task.id));
+                            taskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTaskWithTx(ec.id, task.id));
                             continue;
                         }
 

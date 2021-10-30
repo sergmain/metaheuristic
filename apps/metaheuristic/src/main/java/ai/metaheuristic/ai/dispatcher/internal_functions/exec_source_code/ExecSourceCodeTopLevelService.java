@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecSourceCodeTopLevelService {
 
+    private final TaskFinishingService taskFinishingService;
     public final TaskSyncService taskSyncService;
     public final TaskStateService taskStateService;
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
@@ -47,17 +49,17 @@ public class ExecSourceCodeTopLevelService {
                 () -> {
                     switch (state) {
                         case ERROR:
-                            taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId,
+                            taskFinishingService.finishWithErrorWithTx(longRunningExecContext.taskId,
                                     S.f("#035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
                             break;
                         case FINISHED:
                             try {
                                 taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
-                                taskStateService.finishAsOk(longRunningExecContext.taskId);
+                                taskFinishingService.finishAsOk(longRunningExecContext.taskId);
                             } catch (Throwable th) {
                                 String es = S.f("#035.040 error while finishing a long-running task with OK, error: " + th.getMessage());
                                 log.error(es, th);
-                                taskStateService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
+                                taskFinishingService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
                             }
                             break;
                         default:
