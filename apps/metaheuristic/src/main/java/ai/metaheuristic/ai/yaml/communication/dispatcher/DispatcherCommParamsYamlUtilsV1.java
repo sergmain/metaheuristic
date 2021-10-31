@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -56,8 +55,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             t.responses.add(r);
 
             if (response.assignedTask!=null) {
-                r.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
-                BeanUtils.copyProperties(response.assignedTask, r.assignedTask);
+                r.assignedTask = to(response.assignedTask);
             }
             if (response.assignedProcessorId !=null) {
                 r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
@@ -79,10 +77,22 @@ public class DispatcherCommParamsYamlUtilsV1 extends
         if (v1.requestLogFile!=null) {
             t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v1.requestLogFile.requestedOn);
         }
+        t.success = v1.success;
+        t.msg = v1.msg;
 
-        BeanUtils.copyProperties(v1, t);
         t.checkIntegrity();
         return t;
+    }
+
+    private static DispatcherCommParamsYaml.AssignedTask to(DispatcherCommParamsYamlV1.AssignedTaskV1 src) {
+        DispatcherCommParamsYaml.AssignedTask trg = new DispatcherCommParamsYaml.AssignedTask();
+        trg.taskId = src.taskId;
+        trg.execContextId = src.execContextId;
+        trg.params = src.params;
+        trg.state = src.state;
+        trg.tag = src.tag;
+        trg.quota = src.quota;
+        return trg;
     }
 
     @NonNull

@@ -71,6 +71,7 @@ public class Consts {
     public static final String TASK_DIR = "task";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
+    public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
 

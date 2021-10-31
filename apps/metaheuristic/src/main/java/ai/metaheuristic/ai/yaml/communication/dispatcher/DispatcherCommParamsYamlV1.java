@@ -46,6 +46,8 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         public Long taskId;
         public Long execContextId;
         public EnumsApi.ExecContextState state;
+        public String tag;
+        public int quota;
     }
 
     @Data

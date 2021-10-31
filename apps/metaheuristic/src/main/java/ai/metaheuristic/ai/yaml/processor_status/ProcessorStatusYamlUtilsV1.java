@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ProcessorStatusYamlUtilsV1
-        extends AbstractParamsYamlUtils<ProcessorStatusYamlV1, ProcessorStatusYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ProcessorStatusYamlV1, ProcessorStatusYamlV2, ProcessorStatusYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -44,19 +44,19 @@ public class ProcessorStatusYamlUtilsV1
 
     @NonNull
     @Override
-    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV1 src) {
+    public ProcessorStatusYamlV2 upgradeTo(@NonNull ProcessorStatusYamlV1 src) {
         src.checkIntegrity();
-        ProcessorStatusYaml trg = new ProcessorStatusYaml();
+        ProcessorStatusYamlV2 trg = new ProcessorStatusYamlV2();
         trg.downloadStatuses = src.downloadStatuses.stream()
-                .map( source -> new ProcessorStatusYaml.DownloadStatus(source.functionState,source.functionCode))
+                .map( source -> new ProcessorStatusYamlV2.DownloadStatusV2(source.functionState,source.functionCode))
                 .collect(Collectors.toList());
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);
         }
         if (src.env!=null) {
-            trg.env = new ProcessorStatusYaml.Env();
+            trg.env = new ProcessorStatusYamlV2.EnvV2();
             trg.env.tags = src.env.tags;
-
+            trg.env.quotas.disabled = true;
             if (!src.env.envs.isEmpty()) {
                 final Map<String, String> envMap = src.env.envs.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
@@ -65,7 +65,7 @@ public class ProcessorStatusYamlUtilsV1
 
             if (!src.env.disk.isEmpty()) {
                 trg.env.disk.addAll(src.env.disk.stream()
-                        .map(d -> new ProcessorStatusYaml.DiskStorage(d.code, d.path))
+                        .map(d -> new ProcessorStatusYamlV2.DiskStorageV2(d.code, d.path))
                         .collect(Collectors.toList()));
             }
             if (!src.env.mirrors.isEmpty()) {
@@ -75,7 +75,7 @@ public class ProcessorStatusYamlUtilsV1
             }
         }
         if (src.log!=null) {
-            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
+            trg.log = new ProcessorStatusYamlV2.LogV2(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors");
         trg.checkIntegrity();
@@ -89,8 +89,8 @@ public class ProcessorStatusYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ProcessorStatusYamlUtilsV2 nextUtil() {
+        return (ProcessorStatusYamlUtilsV2) ProcessorStatusYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

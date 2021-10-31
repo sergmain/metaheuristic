@@ -108,6 +108,10 @@ public class ProcessorService {
         KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
         t.mirrors.putAll(envYaml.mirrors);
         t.envs.putAll(envYaml.envs);
+        t.quotas.limit = envYaml.quotas.limit;
+        t.quotas.disabled = envYaml.quotas.disabled;
+        t.quotas.defaultValue = envYaml.quotas.defaultValue;
+        envYaml.quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->t.quotas.values));
         envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
         return t;
     }
@@ -128,7 +132,7 @@ public class ProcessorService {
     public void assignTasks(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             currentExecState.registerDelta(ref.dispatcherUrl, List.of(new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(task.execContextId, task.state)));
-            processorTaskService.createTask(ref, task.taskId, task.execContextId, task.params);
+            processorTaskService.createTask(ref, task);
         }
     }
 
@@ -255,6 +259,7 @@ public class ProcessorService {
             result.isError = true;
             return result;
         }
+        //noinspection ConstantConditions
         result.isError = false;
         return result;
     }

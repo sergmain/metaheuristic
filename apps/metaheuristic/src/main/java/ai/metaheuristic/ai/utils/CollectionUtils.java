@@ -65,18 +65,18 @@ public class CollectionUtils {
         return result;
     }
 
-    public static boolean checkTagAllowed(@Nullable String taskTag, @Nullable String processorTag) {
+    public static boolean checkTagAllowed(@Nullable String taskTag, @Nullable String processorTags) {
         boolean taskTagEmpty = S.b(taskTag);
-        boolean processorTagEmpty = S.b(processorTag);
-
         if (taskTagEmpty) {
             return true;
         }
+
+        boolean processorTagEmpty = S.b(processorTags);
         if (processorTagEmpty) {
             return false;
         }
 
-        return org.springframework.util.CollectionUtils.containsAny(toSet(taskTag), toSet(processorTag));
+        return toSet(processorTags).contains(taskTag.strip());
     }
 
     private static Set<String> toSet(String tags) {

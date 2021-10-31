@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -70,7 +70,6 @@ public class TxSupportForTestingService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final FunctionCache functionCache;
@@ -80,6 +79,7 @@ public class TxSupportForTestingService {
     private final SourceCodeSyncService sourceCodeSyncService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
+    private final TaskFinishingService taskFinishingService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -218,7 +218,7 @@ public class TxSupportForTestingService {
         if (task==null) {
             throw new IllegalStateException("Reporting about non-existed task #" + taskId);
         }
-        return taskStateService.finishWithError(task, console);
+        return taskFinishingService.finishWithError(task, console);
     }
 
     @Transactional

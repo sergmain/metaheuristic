@@ -130,6 +130,8 @@ public class DispatcherRequestor {
         }
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
+        pcpy.quotas.current = metadataService.currentQuota(dispatcherUrl.url);
+
         try {
             for (String processorCode : metadataService.getProcessorCodes()) {
 

@@ -27,6 +27,7 @@ import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -55,6 +56,9 @@ public class SourceCodeParamsYaml implements BaseParams {
         for (Process process : source.processes) {
             if (process.function ==null) {
                 throw new CheckIntegrityFailedException("#608.060 (process.function==null)");
+            }
+            if (StringUtils.containsAny(process.tags, ',', ' ')) {
+                throw new CheckIntegrityFailedException("#608.080 process.tags can't contain comma or space and must be handled as single tag");
             }
         }
         return true;
@@ -179,6 +183,8 @@ public class SourceCodeParamsYaml implements BaseParams {
 
         @Nullable
         public Cache cache;
+
+        // TODO 2021-10-24 next time when version of SourceCodeParamsYaml will be increased, rename this field to 'tag'
         @Nullable
         public String tags;
         public int priority;

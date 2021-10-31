@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class ProcessorStatusYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -69,6 +69,26 @@ public class ProcessorStatusYaml implements BaseParams {
         public String path;
     }
 
+    // event though at processor side a quatas is placed in env.yaml above all processors level
+    // here it'll be placed at concrete processor
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Quota {
+        public String tag;
+        public int amount;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Quotas {
+        public List<Quota> values = new ArrayList<>();
+        public int limit;
+        public int defaultValue;
+        public boolean disabled;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -79,10 +99,13 @@ public class ProcessorStatusYaml implements BaseParams {
 
         @Nullable
         public String tags;
+
+        public final Quotas quotas = new Quotas();
     }
 
     public List<DownloadStatus> downloadStatuses = new ArrayList<>();
 
+    @Nullable
     public Env env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;

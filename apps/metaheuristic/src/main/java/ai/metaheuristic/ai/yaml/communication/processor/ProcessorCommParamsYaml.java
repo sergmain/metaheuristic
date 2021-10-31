@@ -39,7 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ProcessorCommParamsYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -124,13 +124,26 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class Quotas {
+        public int current;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ProcessorRequest {
-        public @Nullable ProcessorCommContext processorCommContext;
-        public @Nullable RequestProcessorId requestProcessorId;
-        public @Nullable RequestTask requestTask;
-        public @Nullable ReportTaskProcessingResult reportTaskProcessingResult;
-        public @Nullable CheckForMissingOutputResources checkForMissingOutputResources;
-        public @Nullable ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+        @Nullable
+        public ProcessorCommContext processorCommContext;
+        @Nullable
+        public RequestProcessorId requestProcessorId;
+        @Nullable
+        public RequestTask requestTask;
+        @Nullable
+        public ReportTaskProcessingResult reportTaskProcessingResult;
+        @Nullable
+        public CheckForMissingOutputResources checkForMissingOutputResources;
+        @Nullable
+        public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
         public String processorCode;
 
@@ -140,5 +153,6 @@ public class ProcessorCommParamsYaml implements BaseParams {
     }
 
     public final List<ProcessorRequest > requests = new ArrayList<>();
+    public final Quotas quotas = new Quotas();
 
 }

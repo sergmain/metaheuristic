@@ -16,15 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.QuotasData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -32,6 +34,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -45,6 +48,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,6 +69,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskProviderTopLevelService {
 
+    private final Globals globals;
     private final TaskProviderTransactionalService taskProviderTransactionalService;
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
@@ -73,6 +78,10 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
     private final ExecContextReadinessStateService execContextReadinessStateService;
+    private final ExecContextService execContextService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final TaskSyncService taskSyncService;
 
     private static class TaskProviderServiceSync {}
 
@@ -211,18 +220,18 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        TaskImpl task;
+        TaskData.AssignedTask task;
         synchronized (syncObj) {
             if (taskProviderTransactionalService.isQueueEmpty()) {
                 return null;
             }
-            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
+            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
         }
         if (task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.id, task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.task.id, task.task.execContextId);
         }
         return task;
     }
@@ -231,6 +240,14 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
+        if (!globals.isTesting()) {
+            throw new IllegalStateException("(!globals.isTesting())");
+        }
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000));
+    }
+
+    @Nullable
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         final Processor processor = processorCache.findById(processorId);
@@ -252,7 +269,7 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned);
+        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas);
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -280,10 +297,10 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        final TaskImpl task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned);
+        final TaskData.AssignedTask task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas);
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -291,9 +308,9 @@ public class TaskProviderTopLevelService {
         try {
             String params;
             try {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.task.getParams());
                 if (tpy.version == psy.taskParamsVersion) {
-                    params = task.params;
+                    params = task.task.params;
                 } else {
                     params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                 }
@@ -302,12 +319,12 @@ public class TaskProviderTopLevelService {
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
                 log.warn("#393.120 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.getId(), processor.id, psy.taskParamsVersion);
+                        task.task.getId(), processor.id, psy.taskParamsVersion);
                 return null;
             }
 
             // because we're already providing with task that means that execContext was started
-            return new DispatcherCommParamsYaml.AssignedTask(params, task.getId(), task.getExecContextId(), EnumsApi.ExecContextState.STARTED);
+            return new DispatcherCommParamsYaml.AssignedTask(params, task.task.getId(), task.task.getExecContextId(), EnumsApi.ExecContextState.STARTED, task.tag, task.quota);
 
         } catch (Throwable th) {
             String es = "#393.140 Something wrong";
@@ -317,7 +334,7 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private TaskImpl getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
@@ -341,13 +358,52 @@ public class TaskProviderTopLevelService {
                             processor.id, taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
-                        return task;
+                        if (psy.env==null) {
+                            log.error("#317.070 Processor {} has empty env.yaml", processor.id);
+                            return null;
+                        }
+                        ExecContextImpl ec =  execContextService.findById(execContextId);
+                        if (ec==null) {
+                            log.warn("#393.300 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
+
+                            continue;
+                        }
+                        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
+
+                        final TaskParamsYaml taskParamYaml;
+                        try {
+                            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                        } catch (YAMLException e) {
+                            String es = S.f("#393.340 Task #%s has broken params yaml and will be finished with error, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                            log.error(es, e.getMessage());
+                            eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+                            continue;
+                        }
+
+                        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+                        if (p==null) {
+                            String es = S.f("#317.025 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
+                            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
+                            eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+                            continue;
+                        }
+
+                        QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tags);
+
+                        if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
+                            taskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTaskWithTx(ec.id, task.id));
+                            continue;
+                        }
+
+                        quotas.allocated.add(new DispatcherData.AllocatedQuotas(task.id, p.tags, quota.amount));
+
+                        return new TaskData.AssignedTask(task, p.tags, quota.amount);
                     }
                 }
             }
         }
 
-        TaskImpl result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned);
+        TaskData.AssignedTask result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
         return result;
     }
 

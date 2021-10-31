@@ -34,6 +34,14 @@ import java.util.List;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
+    @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +
+            "where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId " +
+            "group by t.execState ")
+    List<Object[]> getTaskExecStates(Long execContextId);
+
+    @Query(value="select t.id, t.execState, t.completedOn from TaskImpl t, ExecContextImpl e where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId ")
+    List<Object[]> getSimpleTaskInfos(Long execContextId);
+
     @Override
     @Modifying
     @Query(value="delete from TaskImpl t where t.id=:id")

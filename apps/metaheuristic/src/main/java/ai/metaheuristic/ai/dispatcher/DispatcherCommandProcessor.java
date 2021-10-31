@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -49,14 +50,14 @@ public class DispatcherCommandProcessor {
     private final ProcessorTransactionService processorService;
     private final TaskProviderTopLevelService taskProviderService;
 
-    public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response) {
+    public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas) {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("(scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
         response.resendTaskOutputs = checkForMissingOutputResources(request);
         processResendTaskOutputResourceResult(request);
         response.reportResultDelivering = processReportTaskProcessingResult(request);
-        response.assignedTask = processRequestTask(request);
+        response.assignedTask = processRequestTask(request, quotas);
     }
 
     // processing at dispatcher side
@@ -98,7 +99,7 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.ProcessorRequest request) {
+    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas) {
         if (request.requestTask==null || Boolean.FALSE.equals(request.requestTask.newTask) ||
                 request.processorCommContext==null || S.b(request.processorCommContext.processorId)) {
             return null;
@@ -107,12 +108,12 @@ public class DispatcherCommandProcessor {
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
         try {
-            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.045 ObjectOptimisticLockingFailureException", e);
             log.error("#997.047 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned());
+                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
@@ -125,7 +126,7 @@ public class DispatcherCommandProcessor {
         return assignedTask;
     }
 
-    private void checkProcessorId(ProcessorCommParamsYaml.ProcessorRequest request) {
+    private static void checkProcessorId(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.processorCommContext ==null  || S.b(request.processorCommContext.processorId)) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("#997.070 processorId is null");

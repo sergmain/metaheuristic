@@ -19,6 +19,10 @@ package ai.metaheuristic.ai.data;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -46,5 +50,21 @@ public class DispatcherData {
             this.chunkSize = context.chunkSize;
             this.maxVersionOfProcessor = context.maxVersionOfProcessor;
         }
+    }
+
+    @Data
+    @RequiredArgsConstructor
+    public static class AllocatedQuotas {
+        public final Long taskId;
+        public final String tag;
+        public final int amount;
+    }
+
+    @Data
+    @RequiredArgsConstructor
+    public static class TaskQuotas {
+        public final int initial;
+
+        public final List<AllocatedQuotas> allocated = new ArrayList<>();
     }
 }

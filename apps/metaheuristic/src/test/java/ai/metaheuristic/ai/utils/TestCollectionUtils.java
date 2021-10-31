@@ -45,13 +45,14 @@ public class TestCollectionUtils {
         assertTrue(CollectionUtils.checkTagAllowed("", "aaa"));
         assertTrue(CollectionUtils.checkTagAllowed(null, "aaa"));
 
-        assertTrue(CollectionUtils.checkTagAllowed("aaa, bbb", "aaa, ccc"));
-        assertTrue(CollectionUtils.checkTagAllowed(" aaa, bbb ", " aaa, ccc "));
         assertTrue(CollectionUtils.checkTagAllowed(" aaa ", " aaa, ccc "));
         assertTrue(CollectionUtils.checkTagAllowed("aaa", " aaa, ccc "));
         assertTrue(CollectionUtils.checkTagAllowed("aaa", "aaa"));
         assertTrue(CollectionUtils.checkTagAllowed("aaa", "aaa,"));
         assertTrue(CollectionUtils.checkTagAllowed("aaa", " aaa, "));
+
+        assertFalse(CollectionUtils.checkTagAllowed("aaa, bbb", "aaa, ccc"));
+        assertFalse(CollectionUtils.checkTagAllowed(" aaa, bbb ", " aaa, ccc "));
 
         assertFalse(CollectionUtils.checkTagAllowed("ddd, bbb", "aaa, ccc"));
         assertFalse(CollectionUtils.checkTagAllowed(" ddd, bbb ", " aaa, ccc "));

@@ -107,16 +107,12 @@ public class MetadataService {
     public void init() {
         final File metadataFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
-            String yaml = null;
-            try {
-                yaml = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
-                metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-            } catch (org.yaml.snakeyaml.reader.ReaderException e) {
-                log.error("#815.020 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
-                System.exit(SpringApplication.exit(appCtx, () -> -500));
-            } catch (Throwable e) {
-                log.error("#815.040 Error", e);
-                System.exit(SpringApplication.exit(appCtx, () -> -500));
+            initMetadataFromFile(metadataFile);
+        }
+        else {
+            final File metadataBackupFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
+            if (metadataBackupFile.exists()) {
+                initMetadataFromFile(metadataBackupFile);
             }
         }
         if (metadata==null) {
@@ -126,10 +122,25 @@ public class MetadataService {
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
             processorStateByDispatcherUrl(ref);
         }
+        resetAllQuotas();
         markAllAsUnverified();
         updateMetadataFile();
         //noinspection unused
         int i=0;
+    }
+
+    private void initMetadataFromFile(File metadataFile) {
+        String yaml = null;
+        try {
+            yaml = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
+            metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        } catch (org.yaml.snakeyaml.reader.ReaderException e) {
+            log.error("#815.020 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
+            System.exit(SpringApplication.exit(appCtx, () -> -500));
+        } catch (Throwable e) {
+            log.error("#815.040 Error", e);
+            System.exit(SpringApplication.exit(appCtx, () -> -500));
+        }
     }
 
     private void fixProcessorCodes() {
@@ -280,6 +291,65 @@ public class MetadataService {
                 updateMetadataFile();
             }
             return processorState;
+        }
+    }
+
+    public void registerTaskQuota(String dispatcherUrl, Long taskId, @Nullable String tag, int quota) {
+        synchronized (syncObj) {
+            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.computeIfAbsent(dispatcherUrl, (o)->new MetadataParamsYaml.Quotas());
+            MetadataParamsYaml.Quota q = null;
+            for (MetadataParamsYaml.Quota o1 : quotaForDispatcher.quotas) {
+                if (o1.taskId.equals(taskId)) {
+                    q = o1;
+                    break;
+                }
+            }
+            if (q!=null) {
+                q.tag=tag;
+                q.quota=quota;
+            }
+            else {
+                quotaForDispatcher.quotas.add(new MetadataParamsYaml.Quota(taskId, tag, quota));
+            }
+            updateMetadataFile();
+        }
+    }
+
+    public void resetAllQuotas() {
+        synchronized (syncObj) {
+            metadata.quotas.forEach((k,v)->v.quotas.clear());
+            updateMetadataFile();
+        }
+    }
+
+    public int currentQuota(String dispatcherUrl) {
+        synchronized (syncObj) {
+            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.get(dispatcherUrl);
+            if (quotaForDispatcher==null) {
+                return 0;
+            }
+            int sum = 0;
+            for (MetadataParamsYaml.Quota o : quotaForDispatcher.quotas) {
+                int quota = o.quota;
+                sum += quota;
+            }
+            return sum;
+        }
+    }
+
+    public void removeQuota(String dispatcherUrl, Long taskId) {
+        synchronized (syncObj) {
+            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.get(dispatcherUrl);
+            if (quotaForDispatcher==null) {
+                return;
+            }
+            for (MetadataParamsYaml.Quota o : quotaForDispatcher.quotas) {
+                if (o.taskId.equals(taskId)) {
+                    quotaForDispatcher.quotas.remove(o);
+                    break;
+                }
+            }
+            updateMetadataFile();
         }
     }
 
@@ -564,7 +634,7 @@ public class MetadataService {
         final File metadataFile =  new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
             log.trace("#815.420 Metadata file exists. Make backup");
-            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME + ".bak");
+            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
             //noinspection ResultOfMethodCallIgnored
@@ -589,7 +659,7 @@ public class MetadataService {
     private void restoreFromBackup() {
         log.info("#815.480 Trying to restore previous state of metadata.yaml");
         try {
-            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME + ".bak");
+            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
             String content = FileUtils.readFileToString(yamlFileBak, StandardCharsets.UTF_8);
             File yamlFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
             FileUtils.writeStringToFile(yamlFile, content, StandardCharsets.UTF_8, false);

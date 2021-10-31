@@ -75,6 +75,15 @@ public class ProcessorTask {
         }
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Quotas {
+        public int quota;
+    }
+
+    public final Quotas quotas = new Quotas();
+
     public final Output output = new Output();
     public final Empty empty = new Empty();
 

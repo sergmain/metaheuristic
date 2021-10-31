@@ -17,12 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.QuotasData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -44,6 +48,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
@@ -149,9 +155,15 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskImpl findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned) {
+    public TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
 
         if (isQueueEmpty()) {
+            return null;
+        }
+
+        // Environment of Processor must be initialized before getting any task
+        if (psy.env==null) {
+            log.error("#317.070 Processor {} has empty env.yaml", processor.id);
             return null;
         }
 
@@ -163,6 +175,7 @@ public class TaskProviderTransactionalService {
         AllocatedTask resultTask = null;
         List<QueuedTask> forRemoving = new ArrayList<>();
 
+        QuotasData.ActualQuota quota = null;
         KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
         try {
             GroupIterator iter = taskQueue.getIterator();
@@ -225,18 +238,14 @@ public class TaskProviderTransactionalService {
                     continue;
                 }
 
-                if (psy.env==null) {
-                    log.error("#317.070 Processor {} has empty env.yaml", processor.id);
-                }
-
-                // check of tags
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env==null ? null : psy.env.tags)) {
-                    log.debug("#317.077 Check CollectionUtils.checkTagAllowed(queuedTask.tags, psy.env==null ? null : psy.env.tags) was failed");
+                // check of tag
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags)) {
+                    log.debug("#317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
                     continue;
                 }
 
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
-                    String interpreter = psy.env!=null ? psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env) : null;
+                    String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#317.080 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 queuedTask.task.getId(), processor.id, queuedTask.taskParamYaml.task.function.env
@@ -266,6 +275,12 @@ public class TaskProviderTransactionalService {
 
                 if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
                     log.debug("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
+                    continue;
+                }
+
+                quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
+
+                if (!QuotasUtils.isEnough(psy.env.quotas, currentQuotas, quota)) {
                     continue;
                 }
 
@@ -319,13 +334,36 @@ public class TaskProviderTransactionalService {
         t.setResultResourceScheduledOn(0);
 
         taskRepository.save(t);
-
         resultTask.assigned = true;
 
         eventPublisherService.publishUnAssignTaskTxEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
         eventPublisherService.publishStartTaskProcessingTxEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
 
-        return t;
+        final AllocatedTask finalResultTask = resultTask;
+        if (quota==null) {
+            throw new IllegalStateException("(quota==null)");
+        }
+        final QuotasData.ActualQuota finalQuota = quota;
+        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(()->{
+            currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount));
+        }));
+        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent (()->{
+            finalResultTask.assigned = false;
+        }));
+
+        return new TaskData.AssignedTask(t, resultTask.queuedTask.tag, quota.amount);
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleStartTaskProcessingTxEvent(PostTaskAssigningTxEvent event) {
+        event.runnable.run();
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleStartTaskProcessingRollbackTxEvent(PostTaskAssigningRollbackTxEvent event) {
+        event.runnable.run();
     }
 
     private static boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {

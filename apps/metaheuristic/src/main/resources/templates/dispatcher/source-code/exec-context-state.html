@@ -7,7 +7,27 @@
 
     <p th:text="${'Source code UID: ' + result.sourceCodeUid}"></p>
     <p th:text="${'Source code is valid: ' + result.sourceCodeValid}"></p>
-    <p th:text="${'Source code type: ' + result.sourceCodeType}"></p>
+    <div th:remove="tag" th:if="${result.taskStateInfos!=null}">
+        <table class="pure-table pure-table-bordered" id="exec-state-table">
+            <thead>
+            <tr>
+                <th><div class="no-wrap">ExecState of tasks</div></th>
+                <th><div class="no-wrap">Count of tasks</div></th>
+            <tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="l : ${result.taskStateInfos.taskInfos}">
+                <td th:text="${l.execState}">State</td>
+                <td th:text="${l.count}">State</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${result.taskStateInfos.nonLongRunning.lastTaskFinished!=null}" th:text="${'The last task was finished on: ' + #dates.format(result.taskStateInfos.nonLongRunning.lastTaskFinished, 'dd-MMM-yy HH:mm')}">lastTaskFinished</p>
+        <p th:if="${result.taskStateInfos.nonLongRunning.lastTaskFinished==null}">There isn't any finished task</p>
+        <p th:text="${'Non-long-running tasks in progress: ' + result.taskStateInfos.nonLongRunning.inProgressCount}"></p>
+    </div>
+    <p>&nbsp;</p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>

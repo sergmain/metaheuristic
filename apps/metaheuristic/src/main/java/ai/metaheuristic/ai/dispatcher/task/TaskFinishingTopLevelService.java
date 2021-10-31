@@ -54,6 +54,7 @@ public class TaskFinishingTopLevelService {
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
+    private final TaskFinishingService taskFinishingService;
     private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
@@ -141,11 +142,11 @@ public class TaskFinishingTopLevelService {
 
     // this method is here because there was a problem with transactional method called from lambda
     private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
-        return taskStateService.finishAsOkAndStoreVariable(taskId, ecpy);
+        return taskFinishingService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 
     private Void finishWithErrorWithInternal(Long taskId, String console) {
-        return taskStateService.finishWithErrorWithTx(taskId, console);
+        return taskFinishingService.finishWithErrorWithTx(taskId, console);
     }
 
 

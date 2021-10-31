@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -41,7 +40,6 @@ public class UserContextService {
 
     private final CompanyCache companyCache;
 
-    @Transactional(readOnly = true)
     public DispatcherContext getContext(Authentication authentication) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
@@ -50,7 +48,6 @@ public class UserContextService {
         return getContext(authentication, account.companyId);
     }
 
-    @Transactional(readOnly = true)
     public DispatcherContext getContext(Authentication authentication, Long companyUniqueId) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {

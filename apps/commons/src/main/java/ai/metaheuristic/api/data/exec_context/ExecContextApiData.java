@@ -172,6 +172,25 @@ public class ExecContextApiData {
     }
 
     @Data
+    public static class TaskStateInfo {
+        public final EnumsApi.TaskExecState execState;
+        public final int count;
+    }
+
+    @Data
+    public static class NonLongRunning {
+        @Nullable
+        public final Long lastTaskFinished;
+        public final int inProgressCount;
+    }
+
+    @Data
+    public static class TaskStateInfos {
+        public final List<TaskStateInfo> taskInfos = new ArrayList<>();
+        public NonLongRunning nonLongRunning;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExecContextStateResult extends BaseDataClass {
@@ -182,6 +201,8 @@ public class ExecContextApiData {
         public EnumsApi.SourceCodeType sourceCodeType;
         public ColumnHeader[] header;
         public LineWithState[] lines;
+        @Nullable
+        public TaskStateInfos taskStateInfos;
 
         public ExecContextStateResult(String error) {
             addErrorMessage(error);

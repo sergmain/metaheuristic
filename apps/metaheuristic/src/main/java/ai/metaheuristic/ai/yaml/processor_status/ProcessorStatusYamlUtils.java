@@ -22,11 +22,13 @@ import java.util.Map;
 public class ProcessorStatusYamlUtils {
 
     private static final ProcessorStatusYamlUtilsV1 YAML_UTILS_V_1 = new ProcessorStatusYamlUtilsV1();
-    private static final ProcessorStatusYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ProcessorStatusYamlUtilsV2 YAML_UTILS_V_2 = new ProcessorStatusYamlUtilsV2();
+    private static final ProcessorStatusYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
     public static final BaseYamlUtils<ProcessorStatusYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS
     );

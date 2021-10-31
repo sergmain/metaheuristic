@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -57,13 +57,11 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-//@DependsOn({"Globals", "MetadataService"})
 public class ProcessorTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
-    private final EnvService envService;
 
     /**key - processorCode
      * value:
@@ -315,6 +313,8 @@ public class ProcessorTaskService {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("markAsFinished({}, #{}, {})", ref.dispatcherUrl.url, taskId, functionExec);
+
+            metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
             ProcessorTask task = findById(ref, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
@@ -420,17 +420,20 @@ public class ProcessorTaskService {
         return getMapForDispatcherUrl(ref).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId, Long execContextId, String params) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("#713.150 Prepare new task #{}", taskId);
-            Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
-            ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(taskId, k -> new ProcessorTask());
+    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask assignedTask) {
 
-            task.taskId = taskId;
-            task.execContextId = execContextId;
-            task.params = params;
+        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            metadataService.registerTaskQuota(ref.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
+
+            log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
+            Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
+            ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorTask());
+
+            task.taskId = assignedTask.taskId;
+            task.execContextId = assignedTask.execContextId;
+            task.params = assignedTask.params;
             task.functionExecResult = null;
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTask.params);
             task.clean = taskParamYaml.task.clean;
             task.dispatcherUrl = ref.dispatcherUrl.url;
             task.createdOn = System.currentTimeMillis();
@@ -441,6 +444,7 @@ public class ProcessorTaskService {
             task.reported = false;
             task.delivered = false;
             task.completed = false;
+            task.quotas.quota = assignedTask.quota;
             taskParamYaml.task.outputs.stream()
                     .map(o->new ProcessorTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
@@ -452,7 +456,7 @@ public class ProcessorTaskService {
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
             File dispatcherDir = new File(processorTaskDir, metadataService.processorStateByDispatcherUrl(ref).dispatcherCode);
-            String path = getTaskPath(taskId);
+            String path = getTaskPath(assignedTask.taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
                 if (taskDir.exists()) {
@@ -547,10 +551,11 @@ public class ProcessorTaskService {
         }
     }
 
-    public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final long taskId) {
+    public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final Long taskId) {
         MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
             final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);

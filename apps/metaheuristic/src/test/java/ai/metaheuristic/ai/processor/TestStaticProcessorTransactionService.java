@@ -40,20 +40,38 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestStaticProcessorTransactionService {
 
     private static ProcessorStatusYaml.Env createProcessorStatusYamlEnvYaml(Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk, @Nullable String tags) {
+        return createProcessorStatusYamlEnvYaml(mirrors, envs, disk, tags, null);
+    }
+
+    private static ProcessorStatusYaml.Env createProcessorStatusYamlEnvYaml(
+            Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk, @Nullable String tags, @Nullable ProcessorStatusYaml.Quotas quotas) {
         ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
         envYaml.tags = tags;
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);
         envYaml.disk.addAll(disk);
+        if (quotas!=null) {
+            envYaml.quotas.limit = quotas.limit;
+            envYaml.quotas.values.addAll(quotas.values);
+        }
         return envYaml;
     }
 
     private static KeepAliveRequestParamYaml.Env createEnvYaml(Map<String, String> mirrors, Map<String, String> envs, List<KeepAliveRequestParamYaml.DiskStorage> disk, @Nullable String tags) {
+        return createEnvYaml(mirrors, envs, disk, tags, null);
+    }
+
+    private static KeepAliveRequestParamYaml.Env createEnvYaml(
+            Map<String, String> mirrors, Map<String, String> envs, List<KeepAliveRequestParamYaml.DiskStorage> disk, @Nullable String tags, @Nullable KeepAliveRequestParamYaml.Quotas quotas) {
         KeepAliveRequestParamYaml.Env envYaml = new KeepAliveRequestParamYaml.Env();
         envYaml.tags = tags;
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);
         envYaml.disk.addAll(disk);
+        if (quotas!=null) {
+            envYaml.quotas.limit = quotas.limit;
+            envYaml.quotas.values.addAll(quotas.values);
+        }
         return envYaml;
     }
 
@@ -115,6 +133,10 @@ public class TestStaticProcessorTransactionService {
                 createEnvYaml(Map.of(), Map.of(), List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p")), "aaa")));
 
         assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(Map.of(), Map.of(), List.of(new ProcessorStatusYaml.DiskStorage("c", "p")), "aaa1"),
+                createEnvYaml(Map.of(), Map.of(), List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new ProcessorStatusYaml.DiskStorage("c", "p")), "aaa"),
                 createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p")), "bbb")));
 
@@ -146,6 +168,63 @@ public class TestStaticProcessorTransactionService {
         assertTrue(ProcessorTransactionService.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa"),
                 createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p2")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        new ProcessorStatusYaml.Quotas(List.of(new ProcessorStatusYaml.Quota("t1", 11), new ProcessorStatusYaml.Quota("t2", 12)), 42, 3, false)),
+                createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa")));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        null),
+                createEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa",
+                        new KeepAliveRequestParamYaml.Quotas(List.of(new KeepAliveRequestParamYaml.Quota("t1", 11), new KeepAliveRequestParamYaml.Quota("t2", 12)), 42, 3, false))));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        new ProcessorStatusYaml.Quotas(List.of(new ProcessorStatusYaml.Quota("t1", 11), new ProcessorStatusYaml.Quota("t2", 12)), 42, 3, false)),
+                createEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa",
+                        new KeepAliveRequestParamYaml.Quotas(List.of(new KeepAliveRequestParamYaml.Quota("t1", 12), new KeepAliveRequestParamYaml.Quota("t2", 12)), 42, 3, false))));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        new ProcessorStatusYaml.Quotas(List.of(new ProcessorStatusYaml.Quota("t1", 11), new ProcessorStatusYaml.Quota("t2", 12)), 42, 3, false)),
+                createEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa",
+                        new KeepAliveRequestParamYaml.Quotas(List.of(new KeepAliveRequestParamYaml.Quota("t1", 11), new KeepAliveRequestParamYaml.Quota("t2", 14)), 42, 3, false))));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        new ProcessorStatusYaml.Quotas(List.of(new ProcessorStatusYaml.Quota("t1", 11), new ProcessorStatusYaml.Quota("t2", 12)), 42, 3, false)),
+                createEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa",
+                        new KeepAliveRequestParamYaml.Quotas(List.of(new KeepAliveRequestParamYaml.Quota("t1", 11), new KeepAliveRequestParamYaml.Quota("t2", 12)), 44, 3, false))));
+
+        assertTrue(ProcessorTransactionService.envNotEquals(
+                createProcessorStatusYamlEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new ProcessorStatusYaml.DiskStorage("c", "p1")), "aaa",
+                        new ProcessorStatusYaml.Quotas(List.of(new ProcessorStatusYaml.Quota("t1", 11), new ProcessorStatusYaml.Quota("t2", 12)), 42, 3, false)),
+                createEnvYaml(
+                        Map.of("q","1"), Map.of("w", "2"),
+                        List.of(new KeepAliveRequestParamYaml.DiskStorage("c", "p1")), "aaa",
+                        new KeepAliveRequestParamYaml.Quotas(List.of(new KeepAliveRequestParamYaml.Quota("t1", 11)), 44, 3, false))));
 
 
     }

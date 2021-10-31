@@ -132,6 +132,8 @@ public abstract class PreparingCore {
             }
 
             ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
+            envYaml.quotas.disabled = true;
+
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
             envYaml.getEnvs().put("env-function-01:1.1", "python.exe" );
             envYaml.getEnvs().put("env-function-02:1.1", "python.exe" );
@@ -140,7 +142,7 @@ public abstract class PreparingCore {
             envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
             ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
-                    ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
+                    ""+ UUID.randomUUID(), System.currentTimeMillis(),
                     Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
                     TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
             final String description = "Test processor. Must be deleted automatically";

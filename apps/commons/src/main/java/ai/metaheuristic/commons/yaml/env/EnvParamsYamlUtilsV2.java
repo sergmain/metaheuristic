@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 5:15 AM
  */
 public class EnvParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<EnvParamsYamlV2, EnvParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<EnvParamsYamlV2, EnvParamsYamlV3, EnvParamsYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,15 +46,15 @@ public class EnvParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public EnvParamsYaml upgradeTo(@NonNull EnvParamsYamlV2 src) {
+    public EnvParamsYamlV3 upgradeTo(@NonNull EnvParamsYamlV2 src) {
         src.checkIntegrity();
-        EnvParamsYaml trg = new EnvParamsYaml();
+        EnvParamsYamlV3 trg = new EnvParamsYamlV3();
 
         trg.mirrors.putAll(src.mirrors);
         trg.envs.putAll(src.envs);
-        src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
-        src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
-
+        src.disk.stream().map(o->new EnvParamsYamlV3.DiskStorageV3(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        src.processors.stream().map(o->new EnvParamsYamlV3.ProcessorV3(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
+        trg.quotas.disabled = true;
         trg.checkIntegrity();
         return trg;
     }
@@ -66,8 +66,8 @@ public class EnvParamsYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public EnvParamsYamlUtilsV3 nextUtil() {
+        return (EnvParamsYamlUtilsV3) EnvParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     @Override

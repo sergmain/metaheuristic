@@ -1,7 +1,7 @@
 version: 3
 source:
   strictNaming: true
-  uid: exec-sub-source-code-sub-evaluation-1.6
+  uid: exec-sub-source-code-sub-evaluation-1.8
   variables:
     inputs:
       - name: startInput1
@@ -15,6 +15,7 @@ source:
         nullable: true
     outputs:
       - name: resultOutput1
+      - name: aggregatedResult
   processes:
     - code: mh.permute-variables-and-inlines
       name: permute variables and inlines
@@ -25,6 +26,9 @@ source:
         - variables-for-permutation: nullVar1, nullVar2, nullVar3, nullVar4
         - permute-inline: false
         - output-variable: dataset
+        - produce-present-variable: true
+        - produce-present-variable-prefix: is
+        - produce-present-variable-upper-case-first-char: true
         - skip-null: true
       subProcesses:
         logic: sequential
@@ -35,8 +39,31 @@ source:
               code: mh.nop
               context: internal
             inputs:
+              - name: isNullVar1
+              - name: isNullVar2
+              - name: isNullVar3
+              - name: isNullVar4
               - name: dataset
                 array: true
+    - code: mh.aggregate
+      name: mh.aggregate
+      function:
+        code: mh.aggregate
+        context: internal
+      metas:
+        - variables: isNullVar1, isNullVar2, isNullVar3, isNullVar4
+      outputs:
+        - name: _aggregatedResult
+          ext: .zip
+      tags: ai-common
+      priority: -2
+    - code: mh.evaluation6
+      name: mh.evaluation6
+      function:
+        code: mh.evaluation
+        context: internal
+      metas:
+        - expression: aggregatedResult = _aggregatedResult
     - code: mh.evaluation
       name: mh.evaluation
       function:

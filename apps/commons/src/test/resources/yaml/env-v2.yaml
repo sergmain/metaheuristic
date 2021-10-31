@@ -1,0 +1,16 @@
+version: 2
+processors:
+  - code: proc-01
+    tags: stat, ai, ai-common, pc9
+  - code: proc-02
+    tags: stat, ai-common
+  - code: proc-03
+    tags: ai-common
+disk:
+- code: test-files
+  path: /test-files-edition
+envs:
+  python-3: python
+mirrors:
+  https://github.com/sergmain/metaheuristic.git: /git-probe/mh-01/mh.git
+

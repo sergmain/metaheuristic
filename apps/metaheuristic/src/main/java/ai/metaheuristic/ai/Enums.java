@@ -17,6 +17,8 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
+    public enum QuotaAllocation { disabled, present }
+
     public enum DispatcherSelectionStrategy { alphabet, priority }
 
     public enum InternalFunctionProcessing {

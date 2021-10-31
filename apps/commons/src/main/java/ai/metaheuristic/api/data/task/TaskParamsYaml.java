@@ -31,7 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * class TaskParamsYaml is for storing parameters of task internally at Processor side
+ * class TaskParamsYaml is for storing parameters of task in db table MH_TASK AND
+ *  for storing parameters internally at Processor side
  *
  * class TaskFileParamsYaml is being used for storing a parameters of task for function in a file, ie params-v1.yaml
  *

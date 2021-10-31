@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public class KeepAliveRequestParamYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -55,6 +55,27 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public String path;
     }
 
+    // event though at processor side a quatas is placed in env.yaml above all processors level
+    // here it'll be placed at concrete processor
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode( of={"tag","amount"})
+    public static class Quota {
+        public String tag;
+        public int amount;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Quotas {
+        public List<Quota> values = new ArrayList<>();
+        public int limit;
+        public int defaultValue;
+        public boolean disabled;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -67,6 +88,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         @Nullable
         public String tags;
 
+        public final Quotas quotas = new Quotas();
     }
 
     @Data
