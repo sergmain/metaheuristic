@@ -313,6 +313,8 @@ public class ProcessorTaskService {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("markAsFinished({}, #{}, {})", ref.dispatcherUrl.url, taskId, functionExec);
+
+            metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
             ProcessorTask task = findById(ref, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
