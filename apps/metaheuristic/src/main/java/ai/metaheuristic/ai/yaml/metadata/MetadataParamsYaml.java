@@ -70,6 +70,7 @@ public class MetadataParamsYaml implements BaseParams {
     @EqualsAndHashCode(of={"taskId"})
     public static class Quota {
         public Long taskId;
+        @Nullable
         public String tag;
         public int quota;
     }

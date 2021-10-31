@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 
@@ -75,6 +76,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     public static class QuotaV2 {
         public Long taskId;
+        @Nullable
         public String tag;
         public int quota;
     }

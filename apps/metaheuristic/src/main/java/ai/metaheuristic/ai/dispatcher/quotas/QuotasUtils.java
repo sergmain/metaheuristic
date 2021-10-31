@@ -37,10 +37,17 @@ public class QuotasUtils {
             return new QuotasData.ActualQuota(Enums.QuotaAllocation.present, processorQuotas.defaultValue);
         }
         return new QuotasData.ActualQuota(
-                Enums.QuotaAllocation.disabled,
+                Enums.QuotaAllocation.present,
                 processorQuotas.values.stream().filter(o->o.tag.equals(tag)).findFirst().map(o->o.amount).orElse(processorQuotas.defaultValue));
     }
 
+    /**
+     *
+     * @param processorQuotas
+     * @param quotas
+     * @param quota calculated quota for concrete tag
+     * @return
+     */
     public static boolean isEnough(ProcessorStatusYaml.Quotas processorQuotas, DispatcherData.TaskQuotas quotas, QuotasData.ActualQuota quota) {
         if (processorQuotas.disabled) {
             return true;
@@ -50,6 +57,6 @@ public class QuotasUtils {
             throw new IllegalStateException("(quota.quotaAllocation== Enums.QuotaAllocation.disabled)");
         }
 
-        return processorQuotas.limit>= (quota.amount + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
+        return processorQuotas.limit >= (quota.amount + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
     }
 }

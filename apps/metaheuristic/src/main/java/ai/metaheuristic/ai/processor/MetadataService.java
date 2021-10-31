@@ -294,7 +294,7 @@ public class MetadataService {
         }
     }
 
-    public void registerTaskQuota(String dispatcherUrl, Long taskId, String tag, int quota) {
+    public void registerTaskQuota(String dispatcherUrl, Long taskId, @Nullable String tag, int quota) {
         synchronized (syncObj) {
             MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.computeIfAbsent(dispatcherUrl, (o)->new MetadataParamsYaml.Quotas());
             MetadataParamsYaml.Quota q = null;

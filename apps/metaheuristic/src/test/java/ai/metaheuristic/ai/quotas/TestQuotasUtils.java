@@ -17,17 +17,16 @@
 package ai.metaheuristic.ai.quotas;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.Nullable;
 
 import java.util.List;
 
-import static ai.metaheuristic.ai.data.DispatcherData.*;
-import static ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml.*;
+import static ai.metaheuristic.ai.data.DispatcherData.AllocatedQuotas;
+import static ai.metaheuristic.ai.data.DispatcherData.TaskQuotas;
+import static ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml.Quota;
+import static ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml.Quotas;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -115,6 +114,11 @@ public class TestQuotasUtils {
                 get(false, 100, 42),
                 get(10, List.of(new AllocatedQuotas(1L, "a", 5), new AllocatedQuotas(2L, "b", 55))),
                 getAQ(100)));
+
+        assertFalse(QuotasUtils.isEnough(
+                get(false, 2, 1),
+                get(0, List.of(new AllocatedQuotas(1L, "a", 1), new AllocatedQuotas(2L, "b", 1))),
+                getAQ(1)));
 
     }
 }
