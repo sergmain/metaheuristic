@@ -72,6 +72,7 @@ public class TestEnvYaml {
         EnvParamsYaml env = EnvParamsYamlUtils.BASE_YAML_UTILS.to(s);
 
         assertEquals(777, env.quotas.limit);
+        assertEquals(11, env.quotas.defaultValue);
         assertEquals(4, env.quotas.values.size());
         assertEquals("stat", env.quotas.values.get(0).tag);
         assertEquals(111, env.quotas.values.get(0).amount);

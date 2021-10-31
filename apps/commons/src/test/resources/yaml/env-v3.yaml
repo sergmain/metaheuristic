@@ -17,6 +17,8 @@ quotas:
     - tag: pc9
       amount: 444
   limit: 777
+  disabled: false
+  defaultValue: 11
 disk:
 - code: test-files
   path: /test-files-edition
