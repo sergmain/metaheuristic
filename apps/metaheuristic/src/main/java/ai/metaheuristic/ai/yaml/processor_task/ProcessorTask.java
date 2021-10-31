@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.yaml.processor_task;
 
-import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;

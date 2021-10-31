@@ -87,6 +87,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     private static DispatcherCommParamsYaml.AssignedTask to(DispatcherCommParamsYamlV1.AssignedTaskV1 src) {
         DispatcherCommParamsYaml.AssignedTask trg = new DispatcherCommParamsYaml.AssignedTask();
         trg.taskId = src.taskId;
+        trg.execContextId = src.execContextId;
         trg.params = src.params;
         trg.state = src.state;
         trg.tag = src.tag;

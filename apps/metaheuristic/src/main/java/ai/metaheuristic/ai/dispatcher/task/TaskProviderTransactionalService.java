@@ -334,6 +334,7 @@ public class TaskProviderTransactionalService {
         t.setResultResourceScheduledOn(0);
 
         taskRepository.save(t);
+        resultTask.assigned = true;
 
         eventPublisherService.publishUnAssignTaskTxEvent(new UnAssignTaskTxEvent(t.execContextId, t.id));
         eventPublisherService.publishStartTaskProcessingTxEvent(new StartTaskProcessingTxEvent(t.execContextId, t.id));
@@ -344,8 +345,10 @@ public class TaskProviderTransactionalService {
         }
         final QuotasData.ActualQuota finalQuota = quota;
         eventPublisher.publishEvent(new PostTaskAssigningTxEvent(()->{
-            finalResultTask.assigned = true;
             currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount));
+        }));
+        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent (()->{
+            finalResultTask.assigned = false;
         }));
 
         return new TaskData.AssignedTask(t, resultTask.queuedTask.tag, quota.amount);
@@ -354,6 +357,12 @@ public class TaskProviderTransactionalService {
     @SuppressWarnings("MethodMayBeStatic")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStartTaskProcessingTxEvent(PostTaskAssigningTxEvent event) {
+        event.runnable.run();
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleStartTaskProcessingRollbackTxEvent(PostTaskAssigningRollbackTxEvent event) {
         event.runnable.run();
     }
 

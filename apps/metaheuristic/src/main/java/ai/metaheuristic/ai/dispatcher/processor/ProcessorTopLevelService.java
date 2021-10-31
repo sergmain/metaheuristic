@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -193,7 +192,6 @@ public class ProcessorTopLevelService {
                 log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
-//                OperationStatusRest result = execContextTopLevelService.resetTask(taskId);
                 OperationStatusRest result = execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#808.220 Resetting of task #{} was failed. See log for more info.", taskId);
