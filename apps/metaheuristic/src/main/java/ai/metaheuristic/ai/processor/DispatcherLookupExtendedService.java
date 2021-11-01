@@ -26,7 +26,6 @@ import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
@@ -36,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashMap;
@@ -156,7 +156,7 @@ public class DispatcherLookupExtendedService {
             }
 
             try {
-                cfg = FileUtils.readFileToString(dispatcherFile, Charsets.UTF_8);
+                cfg = FileUtils.readFileToString(dispatcherFile, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.error("Error", e);
                 throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);

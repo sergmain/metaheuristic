@@ -49,8 +49,6 @@ import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
-import com.github.difflib.text.DiffRow;
-import com.github.difflib.text.DiffRowGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -247,46 +245,6 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    public void diff(Long sourceCodeId1, Long sourceCodeId2) {
-        SourceCodeImpl sc1 = sourceCodeCache.findById(sourceCodeId1);
-        if (sc1==null) {
-            return;
-        }
-        SourceCodeImpl sc2 = sourceCodeCache.findById(sourceCodeId2);
-        if (sc2==null) {
-            return;
-        }
-
-        SourceCodeStoredParamsYaml scspy = sc1.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-
-        DiffRowGenerator generator = DiffRowGenerator.create()
-                .showInlineDiffs(true)
-                .mergeOriginalRevised(false)
-                .inlineDiffByWord(true)
-                .reportLinesUnchanged(true)
-                .oldTag(f -> "~")      //introduce markdown style for strikethrough
-                .newTag(f -> "**")     //introduce markdown style for bold
-                .build();
-
-        //compute the differences for two sourceCodes.
-        List<DiffRow> rows = generator.generateDiffRows(
-                List.of(sc1.getSourceCodeStoredParamsYaml().source),
-                List.of(sc2.getSourceCodeStoredParamsYaml().source));
-
-        for (DiffRow row : rows) {
-            final String oldLine = row.getOldLine();
-            final String newLine = row.getNewLine();
-            if (!oldLine.equals(newLine)) {
-                System.out.println("- " + oldLine);
-                System.out.println("+ " + newLine);
-            }
-            else {
-                System.out.println("  " + oldLine);
-            }
-        }
-    }
-
     public CleanerInfo generateDirsForDev(Long sourceCodeId, String processCode, Long companyId) {
         CleanerInfo resource = new CleanerInfo();
         try {
@@ -409,7 +367,7 @@ public class SourceCodeTopLevelService {
     /**
      * @return boolean - true if error
      */
-    private boolean createArtifactsDir(File outputDir, TaskParamsYaml tpy) {
+    private static boolean createArtifactsDir(File outputDir, TaskParamsYaml tpy) {
         File artifactsDir = new File(outputDir, ConstsApi.ARTIFACTS_DIR);
         artifactsDir.mkdirs();
         if (createEnvParamsFile(artifactsDir)) {
@@ -420,7 +378,7 @@ public class SourceCodeTopLevelService {
                 Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
-    private boolean createEnvParamsFile(File artefactsDir) {
+    private static boolean createEnvParamsFile(File artefactsDir) {
         EnvParamsYaml epy = new EnvParamsYaml();
 
         epy.envs.putAll(Map.of("python-3", "/path-to-python/python", "java-11", "/path-to-java/java -Dfile.encoding=UTF-8 -jar"));
@@ -434,13 +392,13 @@ public class SourceCodeTopLevelService {
         return false;
     }
 
-    private void createSystemDir(File outputDir) throws IOException {
+    private static void createSystemDir(File outputDir) throws IOException {
         File systemDir = new File(outputDir, Consts.SYSTEM_DIR);
         systemDir.mkdirs();
         FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for log file "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
     }
 
-    private void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
+    private static void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
         boolean isLocalVars = process.inputs.stream().anyMatch(o->o.context!=EnumsApi.VariableContext.global);
         if (isLocalVars) {
             File localVarDir = new File(outputDir, EnumsApi.DataType.variable.toString());
@@ -470,7 +428,7 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    private void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
+    private static void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
         boolean isGlobalVars = process.inputs.stream().anyMatch(o->o.context== EnumsApi.VariableContext.global);
         if (isGlobalVars) {
             File globalVarDir = new File(outputDir, EnumsApi.DataType.global_variable.toString());

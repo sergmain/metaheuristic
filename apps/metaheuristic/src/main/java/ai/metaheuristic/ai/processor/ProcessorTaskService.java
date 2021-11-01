@@ -32,7 +32,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -43,6 +42,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -473,7 +473,7 @@ public class ProcessorTaskService {
                 //noinspection ResultOfMethodCallIgnored
                 taskDir.mkdirs();
                 File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
-                FileUtils.write(taskYamlFile, ProcessorTaskUtils.toString(task), Charsets.UTF_8, false);
+                FileUtils.write(taskYamlFile, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, false);
             } catch (Throwable th) {
                 String es = "#713.160 Error";
                 log.error(es, th);
@@ -522,7 +522,7 @@ public class ProcessorTaskService {
         }
 
         try {
-            FileUtils.write(taskYaml, ProcessorTaskUtils.toString(task), Charsets.UTF_8, false);
+            FileUtils.write(taskYaml, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, false);
         } catch (IOException e) {
             String es = "#713.200 Error while writing to file: " + taskYaml.getPath();
             log.error(es, e);
