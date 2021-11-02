@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -36,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.List;
@@ -50,7 +48,7 @@ import java.util.List;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextTaskAssigningService {
+public class ExecContextTaskAssigningTopLevelService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
@@ -63,7 +61,6 @@ public class ExecContextTaskAssigningService {
     private final TaskFinishingService taskFinishingService;
 
     @Nullable
-    @Transactional
     public Void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -108,7 +105,7 @@ public class ExecContextTaskAssigningService {
                 }
                 catch (YAMLException e) {
                     log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskFinishingService.finishWithError(task, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
+                    taskFinishingService.finishWithErrorWithTx(task.id, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {

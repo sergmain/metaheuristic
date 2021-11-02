@@ -56,7 +56,6 @@ public class TaskFinishingService {
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final EventPublisherService eventPublisherService;
-    private final TaskSyncService taskSyncService;
     private final TaskStateService taskStateService;
 
     @Transactional
@@ -73,7 +72,7 @@ public class TaskFinishingService {
         if (store && ecpy==null) {
             throw new IllegalStateException("(store && ecpy==null)");
         }
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -101,7 +100,6 @@ public class TaskFinishingService {
     @Transactional
     public Void finishWithErrorWithTx(Long taskId, String console) {
         try {
-            taskSyncService.checkWriteLockPresent(taskId);
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#319.140 task #{} wasn't found", taskId);
@@ -133,7 +131,7 @@ public class TaskFinishingService {
     public Void finishWithError(TaskImpl task, String console, int exitCode) {
         TxUtils.checkTxExists();
 
-        taskSyncService.checkWriteLockPresent(task.id);
+        TaskSyncService.checkWriteLockPresent(task.id);
 
         finishTaskAsError(task, exitCode, console);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);

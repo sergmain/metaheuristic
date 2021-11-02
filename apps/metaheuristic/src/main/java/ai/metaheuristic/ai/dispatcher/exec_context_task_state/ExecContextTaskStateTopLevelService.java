@@ -54,7 +54,6 @@ public class ExecContextTaskStateTopLevelService {
 
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskRepository taskRepository;
-    private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
@@ -110,7 +109,7 @@ public class ExecContextTaskStateTopLevelService {
                 return;
             }
             execContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
-                    () -> taskSyncService.getWithSyncNullable(event.taskId,
+                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
 
         } catch (Throwable th) {

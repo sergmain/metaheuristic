@@ -64,7 +64,6 @@ public class ExecContextVariableTopLevelService {
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
-    private final TaskSyncService taskSyncService;
     private final VariableSyncService variableSyncService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -86,7 +85,7 @@ public class ExecContextVariableTopLevelService {
 
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
         try {
-            final UploadResult uploadResult = taskSyncService.getWithSync(taskId,
+            final UploadResult uploadResult = TaskSyncService.getWithSync(taskId,
                     () -> taskVariableService.setVariableAsNull(taskId, variableId));
             return uploadResult;
         }
@@ -179,11 +178,11 @@ public class ExecContextVariableTopLevelService {
                 return uploadResult;
             }
             try {
-                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
+                uploadResult = TaskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             catch (ObjectOptimisticLockingFailureException th) {
                 log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
-                uploadResult = taskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
+                uploadResult = TaskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findById(taskId).orElse(null);

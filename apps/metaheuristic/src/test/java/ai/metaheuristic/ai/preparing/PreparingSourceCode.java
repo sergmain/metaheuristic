@@ -157,9 +157,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public ExecContextGraphCache execContextGraphCache;
 
     @Autowired
-    public ExecContextTaskFinishingService execContextTaskFinishingService;
-
-    @Autowired
     public VariableRepository variableRepository;
 
     @Autowired

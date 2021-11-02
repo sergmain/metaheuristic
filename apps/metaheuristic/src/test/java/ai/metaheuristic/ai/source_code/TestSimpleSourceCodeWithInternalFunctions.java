@@ -117,7 +117,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(t.taskId,
+            Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(t.taskId,
                     ()-> txSupportForTestingService.setVariableReceivedWithTx(t.taskId, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }

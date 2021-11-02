@@ -64,9 +64,8 @@ public class ExecContextTopLevelService {
     private final ExecContextFSM execContextFSM;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskAssigningService execContextTaskAssigningService;
+    private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final TaskSyncService taskSyncService;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
@@ -88,7 +87,7 @@ public class ExecContextTopLevelService {
             return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
         }
         boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
-        ExecContextApiData.ExecContextStateResult r = ExecContextService.getExecContextStateResult(execContextId, raw, managerRole);
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(execContextId, raw, managerRole);
 
         // we'll calculate an info only for rootExecContext
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -171,7 +170,7 @@ public class ExecContextTopLevelService {
 
     // this method is here to handle situation when a method with @Transactional is being called from lambda
     private Void findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
-        return execContextTaskAssigningService.findUnassignedTasksAndRegisterInQueue(execContextId);
+        return execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
@@ -230,11 +229,11 @@ public class ExecContextTopLevelService {
             return task.id;
         }
         try {
-            taskSyncService.getWithSyncNullable(task.id,
+            TaskSyncService.getWithSyncNullable(task.id,
                     () -> storeExecResultInternal(result));
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("#210.115 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
-            taskSyncService.getWithSyncNullable(task.id,
+            TaskSyncService.getWithSyncNullable(task.id,
                     () -> storeExecResultInternal(result));
         }
         return task.id;

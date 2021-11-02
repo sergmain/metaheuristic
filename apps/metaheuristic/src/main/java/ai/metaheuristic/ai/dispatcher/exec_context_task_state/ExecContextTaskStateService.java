@@ -51,7 +51,6 @@ public class ExecContextTaskStateService {
 
     private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
-    private final TaskSyncService taskSyncService;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ExecContextGraphSyncService execContextGraphSyncService;
     private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
@@ -75,7 +74,7 @@ public class ExecContextTaskStateService {
     @Transactional
     public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
                 execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
@@ -90,7 +89,7 @@ public class ExecContextTaskStateService {
         execContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
         execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
-        TaskQueue.TaskGroup taskGroup = taskProviderTopLevelService.getFinishedTaskGroup(execContextId);
+        TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getFinishedTaskGroup(execContextId);
         if (taskGroup==null) {
             return null;
         }

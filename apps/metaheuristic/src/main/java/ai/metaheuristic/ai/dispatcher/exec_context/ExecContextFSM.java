@@ -173,7 +173,7 @@ public class ExecContextFSM {
     }
 
     public List<Long> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
-        final List<Long> idsForSearch = ExecContextService.getIdsForSearch(vertices, page, 20);
+        final List<Long> idsForSearch = ExecContextUtils.getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
         }

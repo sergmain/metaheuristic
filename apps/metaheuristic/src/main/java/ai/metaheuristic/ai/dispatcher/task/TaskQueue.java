@@ -65,8 +65,8 @@ public class TaskQueue {
         }
     }
 
-    private static final int GROUP_SIZE = 5;
-    private static final int MIN_QUEUE_SIZE_DEFAULT = 25;
+    private static final int GROUP_SIZE = 10;
+    private static final int MIN_QUEUE_SIZE_DEFAULT = 200;
 
     @Slf4j
     public static class TaskGroup {

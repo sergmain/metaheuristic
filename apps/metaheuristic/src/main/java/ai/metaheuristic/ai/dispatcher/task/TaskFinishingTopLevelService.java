@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -53,9 +52,7 @@ public class TaskFinishingTopLevelService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
-    private final TaskStateService taskStateService;
     private final TaskFinishingService taskFinishingService;
-    private final TaskSyncService taskSyncService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -113,7 +110,7 @@ public class TaskFinishingTopLevelService {
 
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
-                taskSyncService.getWithSyncNullable(task.id,
+                TaskSyncService.getWithSyncNullable(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
@@ -135,7 +132,7 @@ public class TaskFinishingTopLevelService {
                 return;
             }
 
-            taskSyncService.getWithSyncNullable(task.id,
+            TaskSyncService.getWithSyncNullable(task.id,
                     () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
         }
     }

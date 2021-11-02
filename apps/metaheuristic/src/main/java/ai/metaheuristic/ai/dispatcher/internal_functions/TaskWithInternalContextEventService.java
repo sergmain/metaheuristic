@@ -73,8 +73,6 @@ public class TaskWithInternalContextEventService {
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskFinishingService execContextTaskFinishingService;
-    private final TaskSyncService taskSyncService;
 
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final TaskService taskService;
@@ -212,7 +210,7 @@ public class TaskWithInternalContextEventService {
         }
         final ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         try {
-            taskSyncService.getWithSyncNullable(event.taskId,
+            TaskSyncService.getWithSyncNullable(event.taskId,
                     () -> {
                         taskWithInternalContextService.preProcessing(simpleExecContext, event.taskId);
                         processInternalFunction(simpleExecContext, event.taskId);
@@ -225,7 +223,7 @@ public class TaskWithInternalContextEventService {
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
                 final String console = "#707.180 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 execContextSyncService.getWithSyncNullable(event.execContextId,
-                        () -> taskSyncService.getWithSyncNullable(event.taskId,
+                        () -> TaskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
@@ -235,7 +233,7 @@ public class TaskWithInternalContextEventService {
 
             log.error(es, th);
             execContextSyncService.getWithSyncNullable(event.execContextId,
-                    () -> taskSyncService.getWithSyncNullable(event.taskId,
+                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }
     }

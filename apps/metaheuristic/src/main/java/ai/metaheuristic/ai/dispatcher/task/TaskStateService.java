@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TaskStateService {
 
-    private final TaskSyncService taskSyncService;
     private final TaskExecStateService taskExecStateService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
@@ -44,7 +43,7 @@ public class TaskStateService {
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
         TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
+        TaskSyncService.checkWriteLockPresent(task.id);
         TaskImpl t = taskExecStateService.changeTaskState(task, execState);
         if (markAsCompleted) {
             t.setCompleted(true);

@@ -42,7 +42,6 @@ public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
     private final TaskService taskService;
-    private final TaskSyncService taskSyncService;
     private final EventPublisherService eventPublisherService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
@@ -51,7 +50,7 @@ public class TaskExecStateService {
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
         TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
+        TaskSyncService.checkWriteLockPresent(task.id);
         TaskImpl t = changeTaskState(task, execState);
         if (markAsCompleted) {
             t.setCompleted(true);
@@ -62,7 +61,7 @@ public class TaskExecStateService {
     @Nullable
     public TaskImpl resetTask(final Long taskId) {
         TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("#305.025 Start re-setting task #{}", taskId);
         if (task==null) {
@@ -86,7 +85,7 @@ public class TaskExecStateService {
 
     public TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
-        taskSyncService.checkWriteLockPresent(task.id);
+        TaskSyncService.checkWriteLockPresent(task.id);
 
         log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.processorId);
         switch (state) {
@@ -119,7 +118,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
 
         status.childrenTasks.forEach(
-                t -> taskSyncService.getWithSyncNullable(t.taskId, () -> {
+                t -> TaskSyncService.getWithSyncNullable(t.taskId, () -> {
                     TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                     if (task != null) {
                         changeTaskState(task, t.state);
