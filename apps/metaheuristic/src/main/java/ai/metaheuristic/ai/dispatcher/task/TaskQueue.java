@@ -481,7 +481,6 @@ public class TaskQueue {
         if (taskGroup.assignTask(taskId)==null) {
             throw new IllegalStateException("(taskGroup.assignTask(taskId)==null)");
         }
-        taskGroup.lock();
     }
 
     public void startTaskProcessing(Long execContextId, Long taskId) {

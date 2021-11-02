@@ -105,6 +105,19 @@ public class ExecContextSyncService {
         }
     }
 
+    public <T> void getWithSyncVoid(Long execContextId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContext.id);

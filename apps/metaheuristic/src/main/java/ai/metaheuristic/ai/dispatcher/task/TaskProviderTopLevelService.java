@@ -83,43 +83,53 @@ public class TaskProviderTopLevelService {
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     public void registerTask(Long execContextId, Long taskId) {
-        TaskQueueSyncStaticService.getWithSyncVoid(()-> registerTaskInternal(execContextId, taskId));
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
+                return;
+            }
+            if (TaskQueueService.alreadyRegistered(taskId)) {
+                return;
+            }
+            final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task == null) {
+                log.warn("#317.015 Can't register task #{}, task doesn't exist", taskId);
+                return;
+            }
+            final TaskParamsYaml taskParamYaml;
+            try {
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            } catch (YAMLException e) {
+                String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                log.error(es, e.getMessage());
+                eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+                return;
+            }
+            registerTaskInternal(ec, task, taskParamYaml);
+        });
+
     }
 
-    private void registerTaskInternal(Long execContextId, Long taskId) {
-        if (TaskQueueService.alreadyRegistered(taskId)) {
-            return;
-        }
+    public static void registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            if (TaskQueueService.alreadyRegistered(task.id)) {
+                return;
+            }
+            registerTaskInternal(execContext, task, taskParamYaml);
+        });
+    }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec==null) {
-            log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
-            return;
-        }
+    private static void registerTaskInternal(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            log.warn("#317.015 Can't register task #{}, task doesn't exist", taskId);
-            return;
-        }
-        final TaskParamsYaml taskParamYaml;
-        try {
-            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        } catch (YAMLException e) {
-            String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
-            log.error(es, e.getMessage());
-            eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
-            return;
-        }
 
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
         if (p==null) {
-            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
+            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
             return;
         }
 
-        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, taskId, task, taskParamYaml, p.tags, p.priority);
+        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tags, p.priority);
         TaskQueueService.addNewTask(queuedTask);
     }
 
@@ -193,13 +203,12 @@ public class TaskProviderTopLevelService {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.lock(execContextId));
     }
 
-    public void registerInternalTask(Long sourceCodeId, Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+    public static void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
             }
             TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
-            eventPublisher.publishEvent(new TaskWithInternalContextEvent(sourceCodeId, execContextId, taskId));
         });
     }
 
