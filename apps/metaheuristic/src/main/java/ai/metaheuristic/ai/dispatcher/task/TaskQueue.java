@@ -65,23 +65,26 @@ public class TaskQueue {
         }
     }
 
-    private static final int GROUP_SIZE = 10;
+    private static final int GROUP_SIZE_DEFAULT = 10;
     private static final int MIN_QUEUE_SIZE_DEFAULT = 200;
 
     @Slf4j
     public static class TaskGroup {
 
+        public final int groupSize;
         @Nullable
         public Long execContextId;
 
-        public final AllocatedTask[] tasks = new AllocatedTask[GROUP_SIZE];
+        public final AllocatedTask[] tasks;
         public int allocated = 0;
         public int priority;
         public boolean locked;
 
-        public TaskGroup(Long execContextId, int priority) {
+        public TaskGroup(Long execContextId, int priority, int groupSize) {
             this.execContextId = execContextId;
             this.priority = priority;
+            this.groupSize = groupSize;
+            this.tasks = new AllocatedTask[groupSize];
         }
 
         // we dont need execContextId because taskIds are unique across entire database
@@ -146,7 +149,7 @@ public class TaskQueue {
             if (execContextId!=null && !execContextId.equals(task.execContextId)) {
                 throw new IllegalStateException("wrong execContextId");
             }
-            if (allocated==GROUP_SIZE) {
+            if (allocated==groupSize) {
                 throw new IllegalStateException("already allocated");
             }
             if (execContextId==null) {
@@ -198,12 +201,14 @@ public class TaskQueue {
 
     public static class GroupIterator implements Iterator<AllocatedTask> {
 
+        public final int groupSize;
         private int groupPtr = 0;
         private int taskPtr = 0;
         private final CopyOnWriteArrayList<TaskGroup> taskGroups;
 
-        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups) {
+        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, int groupSize) {
             this.taskGroups = taskGroups;
+            this.groupSize = groupSize;
         }
 
         @Override
@@ -214,7 +219,7 @@ public class TaskQueue {
                 if (!taskGroup.locked) {
                     continue;
                 }
-                for (int j = idx; j < GROUP_SIZE; j++) {
+                for (int j = idx; j < groupSize; j++) {
                     AllocatedTask task = taskGroup.tasks[j];
                     if (task!=null && !task.assigned) {
                         return true;
@@ -232,11 +237,11 @@ public class TaskQueue {
                 if (!taskGroup.locked) {
                     continue;
                 }
-                for (; taskPtr < GROUP_SIZE; taskPtr++) {
+                for (; taskPtr < groupSize; taskPtr++) {
                     AllocatedTask task = taskGroup.tasks[taskPtr];
                     if (task!=null && !task.assigned) {
                         ++taskPtr;
-                        if (taskPtr==GROUP_SIZE) {
+                        if (taskPtr==groupSize) {
                             taskPtr = 0;
                             ++groupPtr;
                         }
@@ -251,18 +256,20 @@ public class TaskQueue {
     }
 
     public GroupIterator getIterator() {
-        return new GroupIterator(taskGroups);
+        return new GroupIterator(taskGroups, groupSize);
     }
 
     private final int minQueueSize;
+    private final int groupSize;
     private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
 
     public TaskQueue() {
-        this(MIN_QUEUE_SIZE_DEFAULT);
+        this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);
     }
 
-    public TaskQueue(int minQueueSize) {
+    public TaskQueue(int minQueueSize, int groupSize) {
         this.minQueueSize = minQueueSize;
+        this.groupSize = groupSize;
     }
 
     @Nullable
@@ -424,7 +431,7 @@ public class TaskQueue {
             if (group.locked) {
                 continue;
             }
-            if (group.execContextId == null || group.priority != task.priority || group.allocated == GROUP_SIZE || !group.execContextId.equals(task.execContextId)) {
+            if (group.execContextId == null || group.priority != task.priority || group.allocated == groupSize || !group.execContextId.equals(task.execContextId)) {
                 continue;
             }
             taskGroup = group;
@@ -440,7 +447,7 @@ public class TaskQueue {
                     continue;
                 }
                 if (group.priority==task.priority) {
-                    taskGroup = new TaskGroup(task.execContextId, task.priority);
+                    taskGroup = new TaskGroup(task.execContextId, task.priority, groupSize);
                     if (i+1==taskGroups.size()) {
                         taskGroups.add(taskGroup);
                     }
@@ -460,7 +467,7 @@ public class TaskQueue {
                     continue;
                 }
                 if (group.priority < task.priority) {
-                    taskGroup = new TaskGroup(task.execContextId, task.priority);
+                    taskGroup = new TaskGroup(task.execContextId, task.priority, groupSize);
                     taskGroups.add(i, taskGroup);
                     break;
                 }
@@ -468,7 +475,7 @@ public class TaskQueue {
         }
 
         if (taskGroup==null) {
-            taskGroup = new TaskGroup(task.execContextId, task.priority);
+            taskGroup = new TaskGroup(task.execContextId, task.priority, groupSize);
             taskGroups.add(taskGroup);
         }
         taskGroup.addTask(task);

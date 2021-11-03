@@ -52,7 +52,7 @@ public class TestTaskQueue {
     @Test
     public void test_1() {
 
-        final TaskQueue.TaskGroup taskGroup = new TaskQueue.TaskGroup(1L, 0);
+        final TaskQueue.TaskGroup taskGroup = new TaskQueue.TaskGroup(1L, 0, 5);
 
         assertFalse(taskGroup.alreadyRegistered(15L));
         assertFalse(taskGroup.deRegisterTask(15L));
@@ -154,7 +154,7 @@ public class TestTaskQueue {
 
     @Test
     public void test_2() {
-        final TaskQueue taskQueue = new TaskQueue(1);
+        final TaskQueue taskQueue = new TaskQueue(1, 5);
 
         assertTrue(taskQueue.isQueueEmpty());
         taskQueue.shrink();
@@ -283,7 +283,7 @@ public class TestTaskQueue {
 
     @Test
     public void test_2_1() {
-        final TaskQueue taskQueue = new TaskQueue(1);
+        final TaskQueue taskQueue = new TaskQueue(1, 5);
 
         assertTrue(taskQueue.isQueueEmpty());
         taskQueue.shrink();
