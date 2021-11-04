@@ -40,7 +40,6 @@ public class TaskVariableTopLevelService {
     public static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK);
 
     private final TaskVariableService taskVariableService;
-    private final TaskSyncService taskSyncService;
 
     @Async
     @EventListener
@@ -48,7 +47,7 @@ public class TaskVariableTopLevelService {
         try {
             log.debug("call TaskVariableTopLevelService.setVariableReceived({},{}, {})", event.variableId, event.variableId, event.nullified);
             try {
-                taskSyncService.getWithSync(event.taskId,
+                TaskSyncService.getWithSync(event.taskId,
                         () -> updateStatusOfVariable(event.taskId, event.variableId, event.nullified));
 
             } catch (TaskVariableService.UpdateStatusOfVariableException e) {

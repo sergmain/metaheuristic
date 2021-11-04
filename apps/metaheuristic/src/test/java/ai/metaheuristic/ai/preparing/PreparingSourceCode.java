@@ -157,9 +157,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public ExecContextGraphCache execContextGraphCache;
 
     @Autowired
-    public ExecContextTaskFinishingService execContextTaskFinishingService;
-
-    @Autowired
     public VariableRepository variableRepository;
 
     @Autowired
@@ -206,7 +203,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8);
     }
 
-    public String getSourceParamsYamlAsString_Simple() {
+    public static String getSourceParamsYamlAsString_Simple() {
         return getSourceCodeV1();
     }
 
@@ -330,7 +327,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         int i =0;
     }
 
-    private List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
+    private static List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
         List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> list = new ArrayList<>();
         for (Function function : f) {
             list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, Enums.FunctionState.ready));
@@ -346,8 +343,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
             Thread.sleep(2_000);
-            isQueueEmpty = taskProviderService.allTaskGroupFinished(execContextId);
-//            isQueueEmpty = taskProviderService.isQueueEmpty();
+            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
             if (!isQueueEmpty) {
                 break;
             }

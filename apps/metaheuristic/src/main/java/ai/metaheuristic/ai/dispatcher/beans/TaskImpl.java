@@ -35,9 +35,11 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class TaskImpl implements Serializable, Task {
-    private static final long serialVersionUID = 268796211406267810L;
+    private static final long serialVersionUID = 5618845653823904624L;
 
     public static class LastUpdateListener {
+
+        @SuppressWarnings("MethodMayBeStatic")
         @PrePersist
         public void setLastUpdate(TaskImpl o) {
             o.setUpdatedOn( System.currentTimeMillis() );

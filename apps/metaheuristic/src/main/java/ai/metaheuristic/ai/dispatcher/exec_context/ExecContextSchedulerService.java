@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,7 @@ public class ExecContextSchedulerService {
         for (Long execContextId : execContextIds) {
             execContextTopLevelService.updateExecContextStatus(execContextId);
         }
+        TaskQueueSyncStaticService.getWithSyncVoid(TaskQueueService::shrink);
     }
 
 }

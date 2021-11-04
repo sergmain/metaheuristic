@@ -51,7 +51,6 @@ public class TaskVariableService {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final VariableRepository variableRepository;
-    private final TaskSyncService taskSyncService;
     private final EventPublisherService eventPublisherService;
 
     public static class UpdateStatusOfVariableException extends RuntimeException {
@@ -64,7 +63,7 @@ public class TaskVariableService {
 
     @Transactional
     public Void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -86,7 +85,7 @@ public class TaskVariableService {
 
     @Transactional
     public UploadResult setVariableAsNull(Long taskId, Long variableId) {
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {

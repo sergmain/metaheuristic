@@ -84,12 +84,12 @@ public class ProcessorSyncService {
         }
     }
 
-    public void getWithSyncVoid(Long taskId, Supplier<Void> supplier) {
+    public void getWithSyncVoid(Long taskId, Runnable runnable) {
         TxUtils.checkTxNotExists();
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();
-            supplier.get();
+            runnable.run();
         } finally {
             lock.unlock();
         }

@@ -19,24 +19,21 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
-import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.List;
@@ -50,32 +47,31 @@ import java.util.List;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextTaskAssigningService {
+public class ExecContextTaskAssigningTopLevelService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
-    private final TaskProviderTopLevelService taskProviderService;
-    private final EventPublisherService eventPublisherService;
+//    private final TaskProviderTopLevelService taskProviderService;
+//    private final EventPublisherService eventPublisherService;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingService taskFinishingService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Nullable
-    @Transactional
-    public Void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
+    public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         execContextSyncService.checkWriteLockPresent(execContextId);
 
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return null;
+            return;
         }
 
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
         if (vertices.isEmpty()) {
-            return null;
+            return;
         }
 
         int page = 0;
@@ -107,19 +103,20 @@ public class ExecContextTaskAssigningService {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 }
                 catch (YAMLException e) {
-                    log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskFinishingService.finishWithError(task, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
+                    log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
+                    taskFinishingService.finishWithErrorWithTx(task.id, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
                     continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     switch(taskParamYaml.task.context) {
                         case external:
-                            taskProviderService.registerTask(execContextId, taskId);
+                            TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml);
                             break;
                         case internal:
                             // all tasks with internal function will be processed in a different thread after registering in TaskQueue
                             log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                            taskProviderService.registerInternalTask(execContext.sourceCodeId, execContextId, taskId, taskParamYaml);
+                            TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml);
+                            eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContextId, taskId));
                             break;
                         case long_running:
                             break;
@@ -134,12 +131,11 @@ public class ExecContextTaskAssigningService {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
                     log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, state);
-
-                    eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
+                    // TODO 2021-11-01 actually, this situation must be handled while reconciliation stage
+//                    eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
                 }
             }
         }
-        taskProviderService.lock(execContextId);
-        return null;
+        TaskProviderTopLevelService.lock(execContextId);
     }
 }

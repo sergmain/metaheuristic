@@ -394,7 +394,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         storeExecResult(simpleTask32);
 
         for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
-            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(simpleTask32.taskId,
+            Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(simpleTask32.taskId,
                     () -> txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
@@ -577,7 +577,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            Enums.UploadVariableStatus status = taskSyncService.getWithSyncNullable(task.id,
+            Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(task.id,
                     () -> txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id));
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }

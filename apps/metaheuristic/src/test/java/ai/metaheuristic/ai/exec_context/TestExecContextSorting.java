@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ public class TestExecContextSorting {
     public void test() {
 
         List<String> sorted = ALL_CTXS.stream()
-                .sorted(ExecContextService::compare).collect(Collectors.toList());
+                .sorted(ExecContextUtils::compare).collect(Collectors.toList());
 
         System.out.println(sorted);
 

@@ -62,7 +62,6 @@ public class TaskTopLevelService {
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-//                applicationEventPublisher.publishEvent(new SetVariableReceivedTxEvent(taskId, variableId, false));
                 applicationEventPublisher.publishEvent(new SetVariableReceivedTxEvent(taskId, variableId, false).to());
                 break;
         }

@@ -105,29 +105,28 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public Void setTaskIds(Long processorId, @Nullable String taskIds) {
+    public void setTaskIds(Long processorId, @Nullable String taskIds) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
             log.warn("#807.045 Can't find Processor #{}", processorId);
-            return null;
+            return;
         }
         ProcessorStatusYaml psy = S.b(processor.status) ? new ProcessorStatusYaml() : ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         psy.taskIds = taskIds;
         processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
         processorCache.save(processor);
-        return null;
     }
 
     @Transactional
-    public Void setLogFileReceived(Long processorId) {
+    public void setLogFileReceived(Long processorId) {
         processorSyncService.checkWriteLockPresent(processorId);
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
             log.warn("#807.045 Can't find Processor #{}", processorId);
-            return null;
+            return;
         }
         ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         if (psy.log==null) {
@@ -136,7 +135,6 @@ public class ProcessorTransactionService {
         psy.log.logReceivedOn = System.currentTimeMillis();
         processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
         processorCache.save(processor);
-        return null;
 
     }
 
@@ -212,7 +210,7 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
-    public Void storeProcessorStatuses(
+    public void storeProcessorStatuses(
             Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
             KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
@@ -276,7 +274,6 @@ public class ProcessorTransactionService {
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             }
         }
-        return null;
     }
 
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {

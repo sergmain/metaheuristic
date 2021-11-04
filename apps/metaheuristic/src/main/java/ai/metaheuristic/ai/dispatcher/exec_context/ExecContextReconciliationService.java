@@ -47,7 +47,6 @@ public class ExecContextReconciliationService {
     private final TaskStateService taskStateService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final TaskSyncService taskSyncService;
 
     @Transactional
     public Void finishReconciliation(ExecContextData.ReconciliationStatus status) {
@@ -68,10 +67,10 @@ public class ExecContextReconciliationService {
         }
 
         for (Long taskForResettingId : status.taskForResettingIds) {
-            taskSyncService.getWithSyncForCreation(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
+            TaskSyncService.getWithSyncForCreation(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
         }
         for (Long taskIsOkId : status.taskIsOkIds) {
-            taskSyncService.getWithSyncNullable(taskIsOkId, ()-> {
+            TaskSyncService.getWithSyncNullable(taskIsOkId, ()-> {
                 TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);
                 if (task==null) {
                     log.error("#307.200 task is null");

@@ -46,7 +46,6 @@ public class ExecContextTaskResettingService {
     private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
     private final TaskStateService taskStateService;
-    private final TaskSyncService taskSyncService;
 
     @Transactional
     public OperationStatusRest resetTaskWithTx(Long execContextId, Long taskId) {
@@ -54,13 +53,13 @@ public class ExecContextTaskResettingService {
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
         }
-        return taskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
+        return TaskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
     }
 
     public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
         TxUtils.checkTxExists();
         execContextSyncService.checkWriteLockPresent(execContext.id);
-        taskSyncService.checkWriteLockPresent(taskId);
+        TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl t = taskExecStateService.resetTask(taskId);
         if (t == null) {

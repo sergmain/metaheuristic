@@ -46,7 +46,6 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
-    private final TaskSyncService taskSyncService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
@@ -91,12 +90,12 @@ public class TaskCheckCachingTopLevelService {
 
         try {
             execContextSyncService.getWithSyncNullable(execContext.id,
-                    () -> taskSyncService.getWithSyncNullable(event.taskId,
+                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId)));
         } catch (InvalidateCacheProcessException e) {
             try {
                 execContextSyncService.getWithSyncNullable(execContext.id,
-                        () -> taskSyncService.getWithSyncNullable(e.taskId,
+                        () -> TaskSyncService.getWithSyncNullable(e.taskId,
                                 () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
             } catch (Throwable th) {
                 log.error("#610.020 error while invalidating task #"+e.taskId, th);

@@ -115,7 +115,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        taskSyncService.getWithSyncNullable(task.id, () -> {
+        TaskSyncService.getWithSyncNullable(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
                 assertEquals(Enums.UploadVariableStatus.OK, status);

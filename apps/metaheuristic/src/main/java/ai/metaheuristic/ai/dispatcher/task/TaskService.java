@@ -42,7 +42,6 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final TaskSyncService taskSyncService;
     private final EntityManager em;
 
     @Transactional(readOnly = true, propagation = Propagation.NEVER)
@@ -69,7 +68,7 @@ public class TaskService {
             final TaskImpl t = taskRepository.save(task);
             return t;
         }
-        taskSyncService.checkWriteLockPresent(task.id);
+        TaskSyncService.checkWriteLockPresent(task.id);
 
         if (!em.contains(task) ) {
 //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate

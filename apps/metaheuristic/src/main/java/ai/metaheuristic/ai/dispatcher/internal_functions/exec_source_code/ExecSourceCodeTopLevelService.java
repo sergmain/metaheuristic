@@ -45,7 +45,7 @@ public class ExecSourceCodeTopLevelService {
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
     public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {
-        taskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
+        TaskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
                 () -> {
                     switch (state) {
                         case ERROR:

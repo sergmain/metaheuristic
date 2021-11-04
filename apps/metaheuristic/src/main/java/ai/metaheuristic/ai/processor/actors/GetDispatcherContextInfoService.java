@@ -104,6 +104,9 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
                 else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
                     log.warn("#806.210 Functions are broken and need to be recreated");
                 }
+                else if (e.getStatusCode()== HttpServletResponse.SC_SERVICE_UNAVAILABLE) {
+                    log.warn("#806.210 Service Unavailable for url {}", assetManager.url);
+                }
                 else {
                     log.error("#806.220 HttpResponseException", e);
                 }

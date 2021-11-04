@@ -41,28 +41,28 @@ public class TaskSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long taskId) {
+    public static void checkWriteLockPresent(Long taskId) {
         if (!getWriteLock(taskId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long taskId) {
+    public static void checkWriteLockNotPresent(Long taskId) {
         if (getWriteLock(taskId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
+    public static ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
         return commonSync.getWriteLock(taskId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
+    private static ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
         return commonSync.getReadLock(taskId);
     }
 
-    public <T> T getWithSync(Long taskId, Supplier<T> supplier) {
+    public static <T> T getWithSync(Long taskId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(taskId);
 
@@ -76,7 +76,7 @@ public class TaskSyncService {
     }
 
     // ForCreation means that the presence of TX won't be checked
-    public <T> T getWithSyncForCreation(Long taskId, Supplier<T> supplier) {
+    public static <T> T getWithSyncForCreation(Long taskId, Supplier<T> supplier) {
         checkWriteLockNotPresent(taskId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
@@ -90,7 +90,7 @@ public class TaskSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long taskId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullableForCreation(Long taskId, Supplier<T> supplier) {
         checkWriteLockNotPresent(taskId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
@@ -103,7 +103,7 @@ public class TaskSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long taskId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Long taskId, Supplier<T> supplier) {
         checkWriteLockNotPresent(taskId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);

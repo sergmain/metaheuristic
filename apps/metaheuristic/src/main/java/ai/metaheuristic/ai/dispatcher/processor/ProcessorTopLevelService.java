@@ -169,7 +169,7 @@ public class ProcessorTopLevelService {
         return null;
     }
 
-    private Void reconcileProcessorTasks(final Long processorId, List<Long> taskIds) {
+    private void reconcileProcessorTasks(final Long processorId, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
@@ -198,7 +198,6 @@ public class ProcessorTopLevelService {
                 }
             }
         }
-        return null;
     }
 
     public ProcessorData.BulkOperations processProcessorBulkDeleteCommit(String processorIdsStr) {

@@ -81,116 +81,135 @@ public class TaskProviderTopLevelService {
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final TaskSyncService taskSyncService;
-
-    private static class TaskProviderServiceSync {}
-
-    // this sync is here because of the presence of @Transactional in TaskProviderTransactionalService
-    // so we don't want to have an opened TX with holding sync within it
-    private static final TaskProviderServiceSync syncObj = new TaskProviderServiceSync();
 
     public void registerTask(Long execContextId, Long taskId) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.registerTask(execContextId, taskId);
-        }
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
+                return;
+            }
+            if (TaskQueueService.alreadyRegistered(taskId)) {
+                return;
+            }
+            final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task == null) {
+                log.warn("#317.015 Can't register task #{}, task doesn't exist", taskId);
+                return;
+            }
+            final TaskParamsYaml taskParamYaml;
+            try {
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            } catch (YAMLException e) {
+                String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                log.error(es, e.getMessage());
+                eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
+                return;
+            }
+            registerTaskInternal(ec, task, taskParamYaml);
+        });
+
     }
 
+    public static void registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            if (TaskQueueService.alreadyRegistered(task.id)) {
+                return;
+            }
+            registerTaskInternal(execContext, task, taskParamYaml);
+        });
+    }
+
+    private static void registerTaskInternal(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
+
+        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+        if (p==null) {
+            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
+            return;
+        }
+
+        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tags, p.priority);
+        TaskQueueService.addNewTask(queuedTask);
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processDeletedExecContext(TaskQueueCleanByExecContextIdEvent event) {
         try {
-            synchronized (syncObj) {
-                taskProviderTransactionalService.processDeletedExecContext(event);
-            }
+            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
     }
 
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processStartTaskProcessing(StartTaskProcessingEvent event) {
         try {
-            synchronized (syncObj) {
-                taskProviderTransactionalService.startTaskProcessing(event);
-            }
+            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.startTaskProcessing(event));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
     }
 
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processUnAssignTaskEvent(UnAssignTaskEvent event) {
         try {
-            synchronized (syncObj) {
-                taskProviderTransactionalService.unAssignTask(event);
-            }
+            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.unAssignTask(event));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
     }
 
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
         try {
-            synchronized (syncObj) {
-                taskProviderTransactionalService.deregisterTasksByExecContextId(event.execContextId);
-            }
+            TaskQueueSyncStaticService.getWithSyncVoid(()->TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
     }
 
-    public void deregisterTask(Long execContextId, Long taskId) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.deRegisterTask(execContextId, taskId);
-        }
+    public static void deregisterTask(Long execContextId, Long taskId) {
+        TaskQueueSyncStaticService.getWithSyncVoid(()->TaskQueueService.deRegisterTask(execContextId, taskId));
     }
 
     @Nullable
-    public TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.getFinishedTaskGroup(execContextId);
-        }
+    public static TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getFinishedTaskGroup(execContextId));
     }
 
-    public boolean isQueueEmpty() {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.isQueueEmpty();
-        }
-    }
-
-    public boolean allTaskGroupFinished(Long execContextId) {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.allTaskGroupFinished(execContextId);
-        }
+    public static boolean allTaskGroupFinished(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.allTaskGroupFinished(execContextId));
     }
 
     @Nullable
-    public TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.getTaskExecState(execContextId, taskId);
-        }
+    public static TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
+        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskExecState(execContextId, taskId));
     }
 
-    public Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
-        synchronized (syncObj) {
-            return taskProviderTransactionalService.getTaskExecStates(execContextId);
-        }
+    public static Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskExecStates(execContextId));
     }
 
-    public void lock(Long execContextId) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.lock(execContextId);
-        }
+    public static void lock(Long execContextId) {
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.lock(execContextId));
     }
 
-    public void registerInternalTask(Long sourceCodeId, Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
-        synchronized (syncObj) {
-            taskProviderTransactionalService.registerInternalTask(sourceCodeId, execContextId, taskId, taskParamYaml);
-        }
+    public static void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            if (TaskQueueService.alreadyRegistered(taskId)) {
+                return;
+            }
+            TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
+        });
     }
 
     @Async
@@ -209,27 +228,27 @@ public class TaskProviderTopLevelService {
         if (execContext==null) {
             return;
         }
-        synchronized (syncObj) {
-            boolean b = taskProviderTransactionalService.setTaskExecState(execContextId, taskId, state);
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+            boolean b = TaskQueueService.setTaskExecState(execContextId, taskId, state);
             log.debug("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
                 applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                         execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
             }
-        }
+        });
     }
 
     @Nullable
     private TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        TaskData.AssignedTask task;
-        synchronized (syncObj) {
-            if (taskProviderTransactionalService.isQueueEmpty()) {
+        TaskData.AssignedTask task = TaskQueueSyncStaticService.getWithSync(()-> {
+            if (TaskQueueService.isQueueEmpty()) {
                 return null;
             }
-            task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
-        }
+            return taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
+        });
+
         if (task!=null) {
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.task.id, task.task.execContextId);
         }
@@ -256,7 +275,7 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        if (taskProviderTransactionalService.isQueueEmpty()) {
+        if (TaskQueueService.isQueueEmptyWithSync()) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
             if (System.currentTimeMillis()-mills.get() < 60_000 ) {
                 return null;
@@ -391,7 +410,7 @@ public class TaskProviderTopLevelService {
                         QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tags);
 
                         if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
-                            taskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTaskWithTx(ec.id, task.id));
+                            TaskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTaskWithTx(ec.id, task.id));
                             continue;
                         }
 

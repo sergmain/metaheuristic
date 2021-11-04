@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * Date: 9/27/2021
  * Time: 11:52 AM
  *
- * order is 1000 to be sure that all other classes already prepared and instantiated
+ * order is 1000 to be sure that all other classes were already prepared and instantiated
  */
 @Service
 @Profile("dispatcher")
