@@ -56,8 +56,6 @@ public class BatchLineSplitterFunction implements InternalFunction {
     private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -123,8 +121,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
                         batchLineSplitterTxService.createTasksTx(simpleExecContext, taskId, taskParamsYaml, numberOfLines, content)));
     }
 }

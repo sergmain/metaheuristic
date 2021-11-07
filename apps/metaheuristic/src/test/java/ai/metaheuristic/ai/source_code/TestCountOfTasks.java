@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -85,8 +87,8 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                    execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
                         return null;
                     }));

@@ -99,8 +99,6 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextVariableService execContextVariableService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -311,8 +309,8 @@ public class BatchTopLevelService {
             }
             final BatchData.UploadingStatus uploadingStatus;
             uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
-                    execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
-                            execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
+                    ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
+                            ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchService.createBatchForFile(
                                             sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             return uploadingStatus;

@@ -372,7 +372,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = S.f("#171.220 Variable #%d wasn't found", variableId);
+                String es = "#171.220 Variable #"+variableId+" wasn't found";
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }

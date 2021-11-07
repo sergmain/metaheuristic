@@ -51,9 +51,6 @@ public class ExecContextTaskStateService {
 
     private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
-    private final TaskProviderTopLevelService taskProviderTopLevelService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
 
     public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
@@ -73,7 +70,7 @@ public class ExecContextTaskStateService {
 
     @Transactional
     public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
         TaskSyncService.checkWriteLockPresent(taskId);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
@@ -86,8 +83,8 @@ public class ExecContextTaskStateService {
     @Nullable
     @Transactional
     public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextGraphId, Long execContextTaskStateId) {
-        execContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getFinishedTaskGroup(execContextId);
         if (taskGroup==null) {

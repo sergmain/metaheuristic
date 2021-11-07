@@ -64,8 +64,6 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final PermuteVariablesAndInlinesCreateTasksTxService permuteVariablesAndInlinesCreateTasksTxService;
     private final InternalFunctionService internalFunctionService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -143,8 +141,8 @@ public class PermuteVariablesAndInlinesCreateTasksFunction implements InternalFu
         StringReader sr = new StringReader(json);
         final List<String> lines = IOUtils.readLines(sr);
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
                         permuteVariablesAndInlinesCreateTasksTxService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, subProcessContextId, lines)));
     }

@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
@@ -77,8 +79,8 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         execContextSyncService.getWithSync(execContextForTest.id, ()->
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
 
 
                             final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);

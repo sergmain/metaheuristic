@@ -62,8 +62,6 @@ public class BatchSplitterFunction implements InternalFunction {
 
     private final BatchSplitterTxService batchSplitterTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -133,8 +131,8 @@ public class BatchSplitterFunction implements InternalFunction {
                 workingDir = tempDir;
                 mapping = Map.of(dataFile.getName(), originFilename);
             }
-            execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                    execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+            ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
                             batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId)));
         }
         catch(UnzipArchiveException e) {

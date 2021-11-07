@@ -49,7 +49,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -69,8 +68,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -176,8 +173,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
                         permuteVariablesAndInlinesTxService.createTaskFroPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId, inlines,
                                 producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables

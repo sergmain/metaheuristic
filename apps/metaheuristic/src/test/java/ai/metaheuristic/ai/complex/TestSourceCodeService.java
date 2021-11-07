@@ -25,6 +25,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskLastProcessingHelper;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -220,8 +222,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 300);
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
@@ -274,8 +276,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 40);
         taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
@@ -294,8 +296,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNull(t);
         waitForFinishing(finishTask.task.id, 40);
         taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
@@ -339,8 +341,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         processScheduledTasks();
 
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, () ->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, () ->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
         processScheduledTasks();

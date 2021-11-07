@@ -56,7 +56,7 @@ public class PermuteVariablesAndInlinesTxService {
     private final TaskProducingService taskProducingService;
 
     @Transactional
-    public Void createTaskFroPermutations(
+    public void createTaskFroPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
             String subProcessContextId, @Nullable PermutationData.Inlines inlines,
@@ -131,8 +131,6 @@ public class PermuteVariablesAndInlinesTxService {
             }
         }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
-
-        return null;
     }
 
 }

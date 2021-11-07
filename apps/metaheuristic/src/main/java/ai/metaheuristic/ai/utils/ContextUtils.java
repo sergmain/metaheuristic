@@ -55,7 +55,7 @@ public class ContextUtils {
             subProcessContextId = subProcessContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + subContext;
         }
         else {
-            log.warn("#971.020 subContext wasn't found for task #{}, taskContextId: {}", taskId, currTaskContextId);
+            log.warn("#971.020 subContext wasn't found for task #{}, taskContextId: {}. Resulted processContextId: {}", taskId, currTaskContextId, processContextId);
         }
         return subProcessContextId;
     }

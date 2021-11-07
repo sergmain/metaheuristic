@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -148,8 +150,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                    execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
                         return null;
                     }));
