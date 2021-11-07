@@ -80,7 +80,6 @@ public class ExecContextService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
-    private final ExecContextSyncService execContextSyncService;
     private final EntityManager em;
     private final VariableService variableService;
     private final EventPublisherService eventPublisherService;
@@ -111,7 +110,7 @@ public class ExecContextService {
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         if (execContext.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContext.id);
+            ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
         if (execContext.id==null) {
             final ExecContextImpl ec = execContextCache.save(execContext);

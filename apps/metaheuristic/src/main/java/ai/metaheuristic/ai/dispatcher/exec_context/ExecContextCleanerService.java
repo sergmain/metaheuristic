@@ -40,7 +40,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExecContextCleanerService {
 
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextTaskStateService execContextTaskStateService;
     private final ExecContextVariableStateService execContextVariableStateService;
@@ -54,17 +53,17 @@ public class ExecContextCleanerService {
     }
 
     private void deleteOrphanExecContextGraphs(ProcessDeletedExecContextEvent event) {
-        execContextSyncService.getWithSyncNullable(event.execContextId,
+        ExecContextSyncService.getWithSyncNullable(event.execContextId,
                 () -> execContextGraphService.deleteOrphanGraphs(List.of(event.execContextGraphId)));
     }
 
     private void deleteOrphanExecContextTaskState(ProcessDeletedExecContextEvent event) {
-        execContextSyncService.getWithSyncNullable(event.execContextId,
+        ExecContextSyncService.getWithSyncNullable(event.execContextId,
                 () -> execContextTaskStateService.deleteOrphanTaskStates(List.of(event.execContextTaskStateId)));
     }
 
     private void deleteOrphanExecContextVariableState(ProcessDeletedExecContextEvent event) {
-        execContextSyncService.getWithSyncNullable(event.execContextId,
+        ExecContextSyncService.getWithSyncNullable(event.execContextId,
                 () -> execContextVariableStateService.deleteOrphanVariableStates(List.of(event.execContextVariableStateId)));
     }
 }

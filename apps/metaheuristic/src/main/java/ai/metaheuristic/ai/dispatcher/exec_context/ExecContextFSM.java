@@ -49,7 +49,6 @@ import java.util.List;
 public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskRepository taskRepository;
     private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
@@ -67,19 +66,19 @@ public class ExecContextFSM {
 
     public void toFinished(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.FINISHED);
     }
 
     public void toError(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
         toStateWithCompletion(execContext, EnumsApi.ExecContextState.ERROR);
     }
 
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return;
@@ -96,7 +95,7 @@ public class ExecContextFSM {
     }
 
     private OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         OperationStatusRest status = checkExecContext(execContextId);
         if (status != null) {
@@ -108,7 +107,7 @@ public class ExecContextFSM {
 
     public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
         execContext.setState(execState.code);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -167,7 +166,7 @@ public class ExecContextFSM {
     }
 
     public Void updateExecContextStatus(Long execContextId, ExecContextData.ReconciliationStatus status) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
         execContextReconciliationService.finishReconciliation(status);
         return null;
     }

@@ -1,7 +1,7 @@
 version: 3
 source:
   strictNaming: true
-  uid: sc-inline-as-variable-and-permute-values-1.1
+  uid: sc-inline-as-variable-and-permute-values-1.2
   variables:
     inline:
       mh.hyper-params:
@@ -48,6 +48,20 @@ source:
       subProcesses:
         logic: sequential
         processes:
+          - code: mh.nop-1
+            name: nop 1
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: subBatchSizeVal
+          - code: mh.nop-2
+            name: nop 1
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: subBatchSizeVal
           - code: mh.evaluation1
             name: mh.evaluation1
             function:

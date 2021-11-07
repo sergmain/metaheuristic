@@ -11,6 +11,31 @@ source:
         time_steps: '7'
         RNN: LSTM
   processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: seed
+                output: seed
+              - group: mh.hyper-params
+                name: batches
+                output: batches
+              - group: mh.hyper-params
+                name: time_steps
+                output: timeSteps
+              - group: mh.hyper-params
+                name: RNN
+                output: RNN
+      outputs:
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
     - code: assembly-raw-file
       name: assembly raw file
       function:
@@ -52,46 +77,66 @@ source:
             outputs:
               - name: feature-output-2
                 parentContext: true
-    - code: mh.permute-variables-and-inlines
-      name: permute variables and inlines
+    - code: mh.permute-values-of-variables
+      name: permute values of variables
       function:
-        code: mh.permute-variables-and-inlines
+        code: mh.permute-values-of-variables
         context: internal
+      inputs:
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
+        - name: epoch
+        - name: activation
+        - name: optimizer
       metas:
-        - output-is-dynamic: true
-        - variables-for-permutation: feature-output-1, feature-output-2
-        - inline-key: mh.hyper-params
-        - permute-inline: true
-        - output-variable: feature-item
-        - inline-permutation: inline-permutation
+        - prefix: sub
+        - suffix: Val
+        - upper-case-first-char: true
       subProcesses:
         logic: sequential
         processes:
-          - code: fit-dataset
-            name: fit-dataset
+          - code: mh.permute-variables
+            name: permute variables
             function:
-              code: test.fit.function:1.0
-              context: external
-            inputs:
-              - name: dataset-processing-output
-              - name: inline-permutation
-              - name: feature-item
-                array: true
-            outputs:
-              - name: model
-          - code: predict-dataset
-            name: predict-dataset
-            function:
-              code: test.predict.function:1.0
-              context: external
-            inputs:
-              - name: dataset-processing-output
-              - name: model
-              - name: feature-item
-                array: true
-            outputs:
-              - name: metrics
-              - name: predicted
+              code: mh.permute-variables-and-inlines
+              context: internal
+            metas:
+              - output-is-dynamic: true
+              - variables-for-permutation: feature-output-1, feature-output-2
+              - inline-key: mh.hyper-params
+              - permute-inline: true
+              - output-variable: feature-item
+              - inline-permutation: inline-permutation
+            subProcesses:
+              logic: sequential
+              processes:
+                - code: fit-dataset
+                  name: fit-dataset
+                  function:
+                    code: test.fit.function:1.0
+                    context: external
+                  inputs:
+                    - name: dataset-processing-output
+                    - name: inline-permutation
+                    - name: feature-item
+                      array: true
+                  outputs:
+                    - name: model
+                - code: predict-dataset
+                  name: predict-dataset
+                  function:
+                    code: test.predict.function:1.0
+                    context: external
+                  inputs:
+                    - name: dataset-processing-output
+                    - name: model
+                    - name: feature-item
+                      array: true
+                  outputs:
+                    - name: metrics
+                    - name: predicted
     - code: mh.aggregate
       name: mh.aggregate
       function:

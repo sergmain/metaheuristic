@@ -72,7 +72,6 @@ public class ExecContextCreatorService {
     private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextSyncService execContextSyncService;
     private final SourceCodeSyncService sourceCodeSyncService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
@@ -129,7 +128,7 @@ public class ExecContextCreatorService {
 
     @Transactional
     public void produceTasksForExecContext(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
-        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
+        ExecContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
                 ExecContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
                         ExecContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, ()-> {
                             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();

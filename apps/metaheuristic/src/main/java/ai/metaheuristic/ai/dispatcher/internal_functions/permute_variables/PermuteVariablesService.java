@@ -14,13 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
+package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -32,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,17 +47,17 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class PermuteVariablesAndInlinesTxService {
+public class PermuteVariablesService {
 
     private final VariableService variableService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
 
     @Transactional
-    public void createTaskFroPermutations(
+    public void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
-            String subProcessContextId, @Nullable PermutationData.Inlines inlines,
+            String subProcessContextId,
             final boolean producePresentVariable, final String producePresentVariablePrefix, boolean upperCaseFirstChar,
             final List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable
     ) {
@@ -85,42 +83,21 @@ public class PermuteVariablesAndInlinesTxService {
                                 }
                             }
 
-                            if (inlines!=null) {
-                                for (InlineVariable inlineVariable : inlines.inlineVariables) {
-                                    currTaskNumber.incrementAndGet();
-                                    Map<String, Map<String, String>> map = new HashMap<>(simpleExecContext.paramsYaml.variables.inline);
-                                    map.put(inlines.item.inlineKey, inlineVariable.params);
+                            currTaskNumber.incrementAndGet();
 
-                                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                            new VariableData.Permutation(permutedVariables, variableName, map, inlines.inlineVariableName, inlineVariable.params, true),
-                                            booleanVariables);
+                            // TODO 2021-10-14 it's not clear why we need to send simpleExecContext.paramsYaml.variables.inline here
+                            VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                                    new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline,
+                                            null, null, false),
+                                    booleanVariables);
 
-                                    String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
-                                    variableService.createInputVariablesForSubProcess(
-                                            variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+                            variableService.createInputVariablesForSubProcess(
+                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
 
-                                    taskProducingService.createTasksForSubProcesses(
-                                            simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-                                }
-                            }
-                            else {
-                                currTaskNumber.incrementAndGet();
-
-                                // TODO 2021-10-14 it's not clear why we need to send simpleExecContext.paramsYaml.variables.inline here
-                                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                        new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline,
-                                                null, null, false),
-                                        booleanVariables);
-
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
-                                variableService.createInputVariablesForSubProcess(
-                                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
-
-                                taskProducingService.createTasksForSubProcesses(
-                                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-                            }
+                            taskProducingService.createTasksForSubProcesses(
+                                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
                             return true;
                         }
                 );

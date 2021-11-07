@@ -55,7 +55,7 @@ public class PermuteValuesOfVariablesService {
     private final TaskProducingService taskProducingService;
 
     @Transactional
-    public Void createTaskForPermutations(
+    public void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, String subProcessContextId, List<InlineVariable> inlineVariables) {
 
@@ -81,8 +81,6 @@ public class PermuteValuesOfVariablesService {
             }
         }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
-
-        return null;
     }
 
 

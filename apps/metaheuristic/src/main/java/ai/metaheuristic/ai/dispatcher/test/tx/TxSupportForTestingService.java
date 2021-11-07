@@ -67,7 +67,6 @@ public class TxSupportForTestingService {
     private final VariableService variableService;
     private final ExecContextService execContextService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
@@ -257,7 +256,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
         execContextFSM.toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
@@ -312,7 +311,7 @@ public class TxSupportForTestingService {
         if (execContext==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
         OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
         return osr;

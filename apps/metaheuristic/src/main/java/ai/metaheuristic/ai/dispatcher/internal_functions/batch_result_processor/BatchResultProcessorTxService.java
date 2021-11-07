@@ -109,7 +109,6 @@ public class BatchResultProcessorTxService {
     private final ProcessorCache processorCache;
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -131,7 +130,7 @@ public class BatchResultProcessorTxService {
             ExecContextData.SimpleExecContext simpleExecContext, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
-        execContextSyncService.checkWriteLockPresent(simpleExecContext.execContextId);
+        ExecContextSyncService.checkWriteLockPresent(simpleExecContext.execContextId);
 
         ExecContextImpl execContext = execContextCache.findById(simpleExecContext.execContextId);
         if (execContext==null) {
@@ -275,7 +274,7 @@ public class BatchResultProcessorTxService {
      * @param excludeContextIds - list of taskContextIds to exclude
      * @return Map<String, ItemWithStatusWithMapping> - key is taskContextId, value - variables to store as batch item
      */
-    private Map<String, ItemWithStatusWithMapping> groupByTaskContextId(
+    private static Map<String, ItemWithStatusWithMapping> groupByTaskContextId(
             List<SimpleVariable> vars, Map<String, ExecContextParamsYaml.Variable> nameToVar, List<String> excludeContextIds,
             Function<String, Boolean> outputTypeFunc, Function<String, Boolean> statusTypeFunc, Function<String, Boolean> mappingTypeFunc) {
         Map<String, ItemWithStatusWithMapping> map = new HashMap<>();
@@ -330,7 +329,7 @@ public class BatchResultProcessorTxService {
         return map;
     }
 
-    private Map<String, ExecContextParamsYaml.Variable> gatherVars(ExecContextParamsYaml ecpy) {
+    private static Map<String, ExecContextParamsYaml.Variable> gatherVars(ExecContextParamsYaml ecpy) {
         Map<String, ExecContextParamsYaml.Variable> map = ecpy.processes.stream()
                 .flatMap(o->o.outputs.stream())
                 .collect(Collectors.toMap(o->o.name, o->o, (a, b) -> b, HashMap::new));
@@ -435,7 +434,7 @@ public class BatchResultProcessorTxService {
         }
     }
 
-    private String getResultDirNameFromTaskContextId(String taskContextId) {
+    private static String getResultDirNameFromTaskContextId(String taskContextId) {
         return S.f("result-dir-%s", StringUtils.replaceEach(taskContextId, new String[]{",", "#"}, new String[]{"_", "-"}));
     }
 
@@ -561,7 +560,7 @@ public class BatchResultProcessorTxService {
         bs.ok = true;
     }
 
-    private String getProcessorIpAndHost(@Nullable Processor processor) {
+    private static String getProcessorIpAndHost(@Nullable Processor processor) {
         if (processor ==null) {
             return String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
         }

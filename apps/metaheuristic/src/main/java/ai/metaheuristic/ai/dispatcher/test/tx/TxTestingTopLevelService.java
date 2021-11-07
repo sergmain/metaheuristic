@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -37,16 +36,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class TxTestingTopLevelService {
 
     private final TxTestingService txTestingService;
-    private final ExecContextSyncService execContextSyncService;
-    private final TaskRepository taskRepository;
 
     @Transactional(propagation = Propagation.NEVER)
     public String updateWithSyncSingle(Long execContextId, Long taskId) {
-        return execContextSyncService.getWithSync(execContextId, () -> txTestingService.updateSingle(execContextId, taskId));
+        return ExecContextSyncService.getWithSync(execContextId, () -> txTestingService.updateSingle(execContextId, taskId));
     }
 
     @Transactional(propagation = Propagation.NEVER)
     public String updateWithSyncDouble(Long execContextId, Long taskId) {
-        return execContextSyncService.getWithSync(execContextId, () -> txTestingService.updateDouble(execContextId, taskId));
+        return ExecContextSyncService.getWithSync(execContextId, () -> txTestingService.updateDouble(execContextId, taskId));
     }
 }

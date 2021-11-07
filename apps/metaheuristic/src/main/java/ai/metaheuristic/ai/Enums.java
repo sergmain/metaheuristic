@@ -37,7 +37,8 @@ public final class Enums {
         output_variable_not_defined, inline_not_found,
         number_of_metas_is_incorrect, meta_not_found,
         broken_graph_error,
-        input_variable_isnt_file
+        input_variable_isnt_file,
+        not_supported_anymore
     }
 
     public enum AssetType { company, account, function, source}

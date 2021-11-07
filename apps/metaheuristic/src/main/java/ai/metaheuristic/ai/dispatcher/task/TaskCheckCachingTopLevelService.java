@@ -43,7 +43,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RequiredArgsConstructor
 public class TaskCheckCachingTopLevelService {
 
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
@@ -89,12 +88,12 @@ public class TaskCheckCachingTopLevelService {
         }
 
         try {
-            execContextSyncService.getWithSyncNullable(execContext.id,
+            ExecContextSyncService.getWithSyncNullable(execContext.id,
                     () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId)));
         } catch (InvalidateCacheProcessException e) {
             try {
-                execContextSyncService.getWithSyncNullable(execContext.id,
+                ExecContextSyncService.getWithSyncNullable(execContext.id,
                         () -> TaskSyncService.getWithSyncNullable(e.taskId,
                                 () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
             } catch (Throwable th) {

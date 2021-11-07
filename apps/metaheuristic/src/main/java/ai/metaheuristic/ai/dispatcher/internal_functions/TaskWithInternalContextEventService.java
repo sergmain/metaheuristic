@@ -69,7 +69,6 @@ public class TaskWithInternalContextEventService {
 
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
@@ -220,7 +219,7 @@ public class TaskWithInternalContextEventService {
                 log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
                 final String console = "#707.180 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
-                execContextSyncService.getWithSyncVoid(event.execContextId,
+                ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
@@ -230,7 +229,7 @@ public class TaskWithInternalContextEventService {
                     ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
-            execContextSyncService.getWithSyncVoid(event.execContextId,
+            ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }

@@ -30,7 +30,7 @@ public class Permutation<T> {
         index  ---> Current index in data[]
         r ---> Size of a combination to be printed
     */
-    public int combinationUtil(ArrayList<T> arr, List<T> data, int start, int end, int index, int r, Function<List<T>, Boolean> acceptor) {
+    private int combinationUtil(ArrayList<T> arr, List<T> data, int start, int end, int index, int r, Function<List<T>, Boolean> acceptor) {
         // Current combination is ready to be printed, print it
         if (index == r) {
             if (data.size()!=r) {
@@ -90,7 +90,6 @@ public class Permutation<T> {
 
         int r = 3;
 
-        // ###idea### why???
         Permutation<String> permutation = new Permutation<>();
         System.out.println("\nTotal number of combination: " + permutation.printCombination(arr, r, data ->
                 {
