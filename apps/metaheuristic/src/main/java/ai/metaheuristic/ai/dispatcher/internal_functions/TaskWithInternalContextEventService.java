@@ -89,7 +89,8 @@ public class TaskWithInternalContextEventService {
 
     public static final int MAX_QUEUE_SIZE = 20;
     public static final int MAX_ACTIVE_THREAD = 1;
-    private static final int MAX_NUMBER_EXECUTORS = 10;
+    // number of active executers with different execContextId
+    private static final int MAX_NUMBER_EXECUTORS = 2;
 
     public static class QueueWithExecutor {
         public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
