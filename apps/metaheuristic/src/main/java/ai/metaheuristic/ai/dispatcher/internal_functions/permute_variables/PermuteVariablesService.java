@@ -53,6 +53,20 @@ public class PermuteVariablesService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
 
+    /**
+     *
+     * @param simpleExecContext
+     * @param taskId
+     * @param executionContextData
+     * @param descendants
+     * @param holders
+     * @param variableName
+     * @param subProcessContextId
+     * @param producePresentVariable do we need to produce ariable which has boolean value of present variable or not
+     * @param producePresentVariablePrefix
+     * @param upperCaseFirstChar
+     * @param presentVariable
+     */
     @Transactional
     public void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
@@ -69,7 +83,9 @@ public class PermuteVariablesService {
             try {
                 permutation.printCombination(holders, i+1,
                         permutedVariables -> {
-                            log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
+                            if (log.isInfoEnabled()) {
+                                log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
+                            }
 
                             List<Pair<String, Boolean>> booleanVariables = new ArrayList<>();
                             if (producePresentVariable) {
@@ -84,14 +100,12 @@ public class PermuteVariablesService {
                             }
 
                             currTaskNumber.incrementAndGet();
+                            final String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
-                            // TODO 2021-10-14 it's not clear why we need to send simpleExecContext.paramsYaml.variables.inline here
                             VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                    new VariableData.Permutation(permutedVariables, variableName, simpleExecContext.paramsYaml.variables.inline,
+                                    new VariableData.Permutation(permutedVariables, variableName, Map.of(),
                                             null, null, false),
                                     booleanVariables);
-
-                            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                             variableService.createInputVariablesForSubProcess(
                                     variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
