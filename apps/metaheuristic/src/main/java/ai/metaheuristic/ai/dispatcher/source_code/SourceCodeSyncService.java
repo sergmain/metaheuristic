@@ -32,36 +32,33 @@ import java.util.function.Supplier;
  * Date: 11/13/2020
  * Time: 5:45 PM
  */
-@Service
-@RequiredArgsConstructor
-@Profile("dispatcher")
 @Slf4j
 public class SourceCodeSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long sourceCodeId) {
+    public static void checkWriteLockPresent(Long sourceCodeId) {
         if (!getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long sourceCodeId) {
+    public static void checkWriteLockNotPresent(Long sourceCodeId) {
         if (getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#978.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long sourceCodeId) {
+    public static ReentrantReadWriteLock.WriteLock getWriteLock(Long sourceCodeId) {
         return commonSync.getWriteLock(sourceCodeId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long sourceCodeId) {
+    private static ReentrantReadWriteLock.ReadLock getReadLock(Long sourceCodeId) {
         return commonSync.getReadLock(sourceCodeId);
     }
 
-    public <T> T getWithSync(Long sourceCodeId, Supplier<T> supplier) {
+    public static <T> T getWithSync(Long sourceCodeId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(sourceCodeId);
 
@@ -75,7 +72,7 @@ public class SourceCodeSyncService {
     }
 
     // ForCreation means that the presence of TX won't be checked
-    public <T> T getWithSyncForCreation(Long sourceCodeId, Supplier<T> supplier) {
+    public static <T> T getWithSyncForCreation(Long sourceCodeId, Supplier<T> supplier) {
         checkWriteLockNotPresent(sourceCodeId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(sourceCodeId);
@@ -89,7 +86,7 @@ public class SourceCodeSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long sourceCodeId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullableForCreation(Long sourceCodeId, Supplier<T> supplier) {
         checkWriteLockNotPresent(sourceCodeId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(sourceCodeId);
@@ -102,7 +99,7 @@ public class SourceCodeSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long sourceCodeId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Long sourceCodeId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(sourceCodeId);
 

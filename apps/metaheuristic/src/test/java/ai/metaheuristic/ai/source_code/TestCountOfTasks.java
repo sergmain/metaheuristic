@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
@@ -71,7 +72,7 @@ public class TestCountOfTasks extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-        EnumsApi.TaskProducingStatus producingStatus = execContextSyncService.getWithSync(execContextForTest.id,
+        EnumsApi.TaskProducingStatus producingStatus = ExecContextSyncService.getWithSync(execContextForTest.id,
                 () -> txSupportForTestingService.toProducing(execContextForTest.id));
 
         assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
@@ -85,7 +86,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         long mills = System.currentTimeMillis();
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
             ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
                     ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {

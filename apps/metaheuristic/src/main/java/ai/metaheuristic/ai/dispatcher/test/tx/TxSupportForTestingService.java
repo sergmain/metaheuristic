@@ -75,7 +75,6 @@ public class TxSupportForTestingService {
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
-    private final SourceCodeSyncService sourceCodeSyncService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
     private final TaskFinishingService taskFinishingService;
@@ -85,7 +84,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
+        return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
                 () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
     }
 

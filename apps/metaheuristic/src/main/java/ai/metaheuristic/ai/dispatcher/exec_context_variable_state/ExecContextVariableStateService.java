@@ -42,7 +42,6 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class ExecContextVariableStateService {
 
-    private final ExecContextVariableStateSyncService execContextVariableStateSyncService;
     private final ExecContextVariableStateCache execContextVariableStateCache;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final EventPublisherService eventPublisherService;
@@ -106,7 +105,7 @@ public class ExecContextVariableStateService {
     }
 
     private Void register(Long execContextVariableStateId, Consumer<ExecContextApiData.ExecContextVariableStates> supplier) {
-        execContextVariableStateSyncService.checkWriteLockPresent(execContextVariableStateId);
+        ExecContextVariableStateSyncService.checkWriteLockPresent(execContextVariableStateId);
 
         ExecContextVariableState execContextVariableState = execContextVariableStateCache.findById(execContextVariableStateId);
         if (execContextVariableState==null) {

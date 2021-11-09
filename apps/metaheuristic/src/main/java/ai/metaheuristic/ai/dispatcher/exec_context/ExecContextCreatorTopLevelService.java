@@ -43,7 +43,6 @@ public class ExecContextCreatorTopLevelService {
 
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
-    private final SourceCodeSyncService sourceCodeSyncService;
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         return createExecContextAndStart(sourceCodeId, context.getCompanyId(), false);
@@ -69,7 +68,7 @@ public class ExecContextCreatorTopLevelService {
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, Long companyUniqueId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
-        return sourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
+        return SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
                 () -> {
                     try {
                         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(

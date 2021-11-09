@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProcessorTopLevelService {
 
-    private final ProcessorSyncService processorSyncService;
     private final ProcessorTransactionService processorTransactionService;
     private final TaskRepository taskRepository;
     private final Globals globals;
@@ -81,17 +80,17 @@ public class ProcessorTopLevelService {
     }
 
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
-        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
+        return ProcessorSyncService.getWithSync(processorId, ()-> processorTransactionService.updateDescription(processorId, desc));
     }
 
     public OperationStatusRest deleteProcessorById(Long processorId) {
-        return processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
+        return ProcessorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
     public void processProcessorStatuses(
             final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
-        processorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
+        ProcessorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
     }
 
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<Long> taskIds) {
@@ -99,18 +98,18 @@ public class ProcessorTopLevelService {
             return;
         }
         final Long processorId = Long.valueOf(processorIdAsStr);
-        processorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
+        ProcessorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
     }
 
     @Nullable
     public DispatcherApiData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        DispatcherApiData.ProcessorSessionId processorSessionId = processorSyncService.getWithSyncNullable( processorId,
+        DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSyncNullable( processorId,
                 ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress));
         return processorSessionId;
     }
 
     public OperationStatusRest requestLogFile(final Long processorId) {
-        return processorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
+        return ProcessorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
     }
 
     public void setTaskIds(@Nullable Long processorId, @Nullable String taskIds) {
@@ -118,11 +117,11 @@ public class ProcessorTopLevelService {
             log.warn("#808.060 setTaskIds() was called with processorId==null");
             return;
         }
-        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setTaskIds(processorId, taskIds));
+        ProcessorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setTaskIds(processorId, taskIds));
     }
 
     public void setLogFileReceived(final long processorId) {
-        processorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setLogFileReceived(processorId));
+        ProcessorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setLogFileReceived(processorId));
     }
 
     public ProcessorData.ProcessorsResult getProcessors(Pageable pageable) {
@@ -203,7 +202,7 @@ public class ProcessorTopLevelService {
         String[] processorIds = StringUtils.split(processorIdsStr, ", ");
         for (String processorIdStr : processorIds) {
             Long processorId = Long.parseLong(processorIdStr);
-            OperationStatusRest statusRest = processorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
+            OperationStatusRest statusRest = ProcessorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
             bulkOperations.operations.add(new ProcessorData.BulkOperation(processorId, statusRest));
         }
         return bulkOperations;

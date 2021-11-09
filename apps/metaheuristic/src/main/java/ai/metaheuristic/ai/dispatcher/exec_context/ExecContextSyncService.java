@@ -35,10 +35,6 @@ import java.util.function.Supplier;
  * Date: 8/11/2019
  * Time: 10:56 AM
  */
-@Service
-@RequiredArgsConstructor
-@Profile("dispatcher")
-@Slf4j
 public class ExecContextSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();

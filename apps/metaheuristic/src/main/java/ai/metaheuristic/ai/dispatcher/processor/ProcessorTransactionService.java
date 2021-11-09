@@ -61,7 +61,6 @@ public class ProcessorTransactionService {
 
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorSyncService processorSyncService;
 
     private static final int COOL_DOWN_MINUTES = 2;
     private static final long LOG_FILE_REQUEST_COOL_DOWN_TIMEOUT = TimeUnit.MINUTES.toMillis(COOL_DOWN_MINUTES);
@@ -72,7 +71,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public OperationStatusRest requestLogFile(Long processorId) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
@@ -106,7 +105,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public void setTaskIds(Long processorId, @Nullable String taskIds) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
@@ -121,7 +120,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public void setLogFileReceived(Long processorId) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
@@ -141,7 +140,7 @@ public class ProcessorTransactionService {
     @Nullable
     @Transactional
     public DispatcherApiData.ProcessorSessionId assignNewSessionIdWithTx(Long processorId, ProcessorStatusYaml ss) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
             log.warn("#807.040 Can't find Processor #{}", processorId);
@@ -153,7 +152,7 @@ public class ProcessorTransactionService {
 
     private DispatcherApiData.ProcessorSessionId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
         TxUtils.checkTxExists();
-        processorSyncService.checkWriteLockPresent(processor.id);
+        ProcessorSyncService.checkWriteLockPresent(processor.id);
 
         ss.sessionId = createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
@@ -188,7 +187,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
         Processor s = processorCache.findById(processorId);
         if (s==null) {
             return new ProcessorData.ProcessorResult("#807.060 processor wasn't found, processorId: " + processorId);
@@ -200,7 +199,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public OperationStatusRest deleteProcessorById(Long id) {
-        processorSyncService.checkWriteLockPresent(id);
+        ProcessorSyncService.checkWriteLockPresent(id);
         Processor processor = processorCache.findById(id);
         if (processor == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
@@ -214,7 +213,7 @@ public class ProcessorTransactionService {
             Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status,
             KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
@@ -262,9 +261,12 @@ public class ProcessorTransactionService {
                     log.debug("#807.120 Save new processor status, processor: {}", processor);
                     processorCache.save(processor);
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#807.140 ObjectOptimisticLockingFailureException was encountered\n" +
-                            "new processor:\n{}\n" +
-                            "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
+                    log.warn("""
+                            #807.140 ObjectOptimisticLockingFailureException was encountered
+                            new processor:
+                            {}
+                            db processor
+                            {}""", processor, processorRepository.findById(processorId).orElse(null));
 
                     processorCache.clearCache();
                 }
@@ -403,10 +405,12 @@ public class ProcessorTransactionService {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
-            log.debug("#807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
-                            "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
-                            "'    processor.status:\n{},\n" +
-                            "'    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.",
+            log.debug("""
+                            #807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),
+                            '    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},
+                            '    processor.status:
+                            {},
+                            '    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.""",
                     processor.version, millis, ss.sessionCreatedOn, diff, Consts.SESSION_UPDATE_TIMEOUT, processor.status);
             // the same processor, with the same sessionId
             // so we just need to refresh sessionId timestamp
@@ -427,7 +431,7 @@ public class ProcessorTransactionService {
     @Nullable
     @Transactional
     public DispatcherApiData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        processorSyncService.checkWriteLockPresent(processorId);
+        ProcessorSyncService.checkWriteLockPresent(processorId);
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {

@@ -64,7 +64,6 @@ public class ExecContextVariableTopLevelService {
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
-    private final VariableSyncService variableSyncService;
     private final ApplicationEventPublisher eventPublisher;
 
     public UploadResult setVariableAsNull(@Nullable Long taskId, @Nullable Long variableId) {
@@ -157,7 +156,7 @@ public class ExecContextVariableTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
 
-            UploadResult uploadResult = variableSyncService.getWithSync(variableId, () -> {
+            UploadResult uploadResult = VariableSyncService.getWithSync(variableId, () -> {
                 SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
                 if (v == null) {
                     return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #" + variableId + " wasn't found");
@@ -234,7 +233,7 @@ public class ExecContextVariableTopLevelService {
      * @return
      */
     public String getVariableStatus(Long variableId) {
-        return variableSyncService.getWithSync(variableId,
+        return VariableSyncService.getWithSync(variableId,
                 () -> {
                     SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
                     if (v==null) {

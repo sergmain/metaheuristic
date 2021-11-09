@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 public class ExecSourceCodeTopLevelService {
 
     private final TaskFinishingService taskFinishingService;
-    public final TaskSyncService taskSyncService;
     public final TaskStateService taskStateService;
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
