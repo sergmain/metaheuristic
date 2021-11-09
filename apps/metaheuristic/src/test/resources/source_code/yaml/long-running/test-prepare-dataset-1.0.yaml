@@ -1,0 +1,168 @@
+version: 3
+source:
+  strictNaming: true
+  instances: 1
+  uid: test-prepare-dataset-1.1
+  variables:
+    outputs:
+      - name: assembledRaw
+      - name: datasetProcessing
+      - name: clusterSize1
+      - name: clusterCount1
+      - name: binaryClusters1
+      - name: binaryDrawWithFrequency
+      - name: distribOfFreqFull
+      - name: matrixOfWinning
+  processes:
+  - code: mh.nop0
+    name: mh.nop0
+    function:
+      code: mh.nop
+      context: internal
+    subProcesses:
+      logic: and
+      processes:
+        - code: mh.evaluation001
+          name: mh.evaluation001
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _assembledRaw
+              parentContext: true
+          metas:
+            - expression: _assembledRaw = 1
+        - code: mh.evaluation002
+          name: mh.evaluation002
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _datasetProcessing
+              parentContext: true
+          metas:
+            - expression: _datasetProcessing = 2
+        - code: mh.evaluation01
+          name: mh.evaluation01
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _clusterSize1
+              parentContext: true
+          metas:
+            - expression: _clusterSize1 = 3
+        - code: mh.evaluation02
+          name: mh.evaluation02
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _clusterCount1
+              parentContext: true
+          metas:
+            - expression: _clusterCount1 = 4
+        - code: mh.evaluation03
+          name: mh.evaluation03
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _binaryClusters1
+              parentContext: true
+          metas:
+            - expression: _binaryClusters1 = 5
+        - code: mh.evaluation04
+          name: mh.evaluation04
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _binaryDrawWithFrequency
+              parentContext: true
+          metas:
+            - expression: _binaryDrawWithFrequency = 6
+        - code: mh.evaluation05
+          name: mh.evaluation05
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _distribOfFreqFull
+              parentContext: true
+          metas:
+            - expression: _distribOfFreqFull = 7
+        - code: mh.evaluation06
+          name: mh.evaluation06
+          function:
+            code: mh.evaluation
+            context: internal
+          outputs:
+            - name: _matrixOfWinning
+              parentContext: true
+          metas:
+            - expression: _matrixOfWinning = 8
+  - code: mh.nop1
+    name: mh.nop1
+    function:
+      code: mh.nop
+      context: internal
+    subProcesses:
+      logic: and
+      processes:
+        - code: mh.evaluation101
+          name: mh.evaluation101
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: assembledRaw = _assembledRaw
+        - code: mh.evaluation102
+          name: mh.evaluation102
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: datasetProcessing = _datasetProcessing
+        - code: mh.evaluation11
+          name: mh.evaluation11
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: clusterSize1 = _clusterSize1
+        - code: mh.evaluation12
+          name: mh.evaluation12
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: clusterCount1 = _clusterCount1
+        - code: mh.evaluation13
+          name: mh.evaluation13
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: binaryClusters1 = _binaryClusters1
+        - code: mh.evaluation14
+          name: mh.evaluation14
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: binaryDrawWithFrequency = _binaryDrawWithFrequency
+        - code: mh.evaluation15
+          name: mh.evaluation15
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: distribOfFreqFull = _distribOfFreqFull
+        - code: mh.evaluation16
+          name: mh.evaluation16
+          function:
+            code: mh.evaluation
+            context: internal
+          metas:
+            - expression: matrixOfWinning = _matrixOfWinning

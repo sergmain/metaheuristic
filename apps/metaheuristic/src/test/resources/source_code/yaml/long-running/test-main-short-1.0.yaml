@@ -1,0 +1,146 @@
+version: 3
+source:
+  clean: true
+  strictNaming: true
+  instances: 1
+  uid: test-main-short-1.1
+  variables:
+    inline:
+      mh.hyper-params:
+        seed: '42'
+        batch_size: '[20]'
+        time_steps: '[30]'
+        RNN: '[GRU]'
+        epoch: '100'
+        activation: '[hard_sigmoid]'
+        optimizer: '[sgd, nadam]'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: seed
+                output: seed
+              - group: mh.hyper-params
+                name: batch_size
+                output: batchSize
+              - group: mh.hyper-params
+                name: time_steps
+                output: timeSteps
+              - group: mh.hyper-params
+                name: RNN
+                output: RNN
+              - group: mh.hyper-params
+                name: epoch
+                output: epoch
+              - group: mh.hyper-params
+                name: activation
+                output: activation
+              - group: mh.hyper-params
+                name: optimizer
+                output: optimizer
+      outputs:
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
+        - name: epoch
+        - name: activation
+        - name: optimizer
+    - code: mh.exec-source-code1
+      name: mh.exec-source-code1
+      function:
+        code: mh.exec-source-code
+        context: internal
+      outputs:
+        - name: assembledRaw
+          ext: .txt
+        - name: datasetProcessing
+          ext: .txt
+        - name: clusterSize1
+          ext: .txt
+        - name: clusterCount1
+        # подчеркивание это сделано для того, чтобы ниже присвоить null
+        - name: _binaryClusters1
+        - name: _binaryDrawWithFrequency
+        - name: _distribOfFreqFull
+        - name: _matrixOfWinning
+      metas:
+        - source-code-uid: test-prepare-dataset-1.1
+    - code: mh.evaluation1
+      name: mh.evaluation1
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: binaryDrawWithFrequency
+          nullable: true
+      metas:
+        - expression: binaryDrawWithFrequency = null
+    - code: mh.evaluation2
+      name: mh.evaluation2
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: distribOfFreqFull
+          nullable: true
+      metas:
+        - expression: distribOfFreqFull = null
+    - code: mh.evaluation3
+      name: mh.evaluation3
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: matrixOfWinning
+          nullable: true
+      metas:
+        - expression: matrixOfWinning = null
+    - code: mh.evaluation4
+      name: mh.evaluation4
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: binaryClusters1
+          nullable: true
+      metas:
+        - expression: binaryClusters1 = null
+    - code: mh.exec-source-code2
+      name: mh.exec-source-code2
+      function:
+        code: mh.exec-source-code
+        context: internal
+      inputs:
+        - name: assembledRaw
+        - name: datasetProcessing
+        - name: clusterSize1
+          nullable: true
+        - name: clusterCount1
+          nullable: true
+        - name: binaryClusters1
+          nullable: true
+        - name: binaryDrawWithFrequency
+          nullable: true
+        - name: distribOfFreqFull
+          nullable: true
+        - name: matrixOfWinning
+          nullable: true
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
+        - name: epoch
+        - name: activation
+        - name: optimizer
+      outputs:
+        - name: aggregatedResult
+          ext: .zip
+      metas:
+        - source-code-uid: test-permute-variables-and-fit-1.0
