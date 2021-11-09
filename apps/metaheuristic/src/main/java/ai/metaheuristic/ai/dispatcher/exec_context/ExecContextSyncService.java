@@ -43,28 +43,28 @@ public class ExecContextSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long execContextId) {
+    public static void checkWriteLockPresent(Long execContextId) {
         if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#977.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long execContextId) {
+    public static void checkWriteLockNotPresent(Long execContextId) {
         if (getWriteLock(execContextId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#977.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
+    public static ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
         return commonSync.getWriteLock(execContextId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
+    private static ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
         return commonSync.getReadLock(execContextId);
     }
 
-    public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
+    public static <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
@@ -79,7 +79,7 @@ public class ExecContextSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long execContextId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullableForCreation(Long execContextId, Supplier<T> supplier) {
         checkWriteLockNotPresent(execContextId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
@@ -92,7 +92,7 @@ public class ExecContextSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
@@ -105,7 +105,7 @@ public class ExecContextSyncService {
         }
     }
 
-    public <T> void getWithSyncVoid(Long execContextId, Runnable runnable) {
+    public static void getWithSyncVoid(Long execContextId, Runnable runnable) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextId);
 
@@ -118,7 +118,7 @@ public class ExecContextSyncService {
         }
     }
 
-    public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
+    public static <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContext.id);
 

@@ -114,4 +114,16 @@ public class TaskSyncService {
             lock.unlock();
         }
     }
+
+    public static void getWithSyncVoid(Long taskId, Runnable runnable) {
+        checkWriteLockNotPresent(taskId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(taskId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
 }

@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -65,8 +67,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 

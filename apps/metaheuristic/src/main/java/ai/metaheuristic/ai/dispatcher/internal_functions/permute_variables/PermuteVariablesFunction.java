@@ -14,21 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
+package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.PermutationData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -49,7 +46,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -63,23 +59,21 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class PermuteVariablesAndInlinesFunction implements InternalFunction {
+public class PermuteVariablesFunction implements InternalFunction {
 
-    private final PermuteVariablesAndInlinesTxService permuteVariablesAndInlinesTxService;
+    private final PermuteVariablesService permuteVariablesAndInlinesTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_FUNCTION;
     }
 
     @Override
@@ -88,9 +82,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
+        if (MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE)) {
+            throw new InternalFunctionException(not_supported_anymore, "#987.120 permutation of inline variables isn't supported anymore");
+        }
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             throw new InternalFunctionException(
-                    number_of_inputs_is_incorrect, "#987.020 The function 'mh.permute-variables-and-inlines' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'");
+                    number_of_inputs_is_incorrect, "#987.020 The function 'mh.permute-variables' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'");
         }
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
@@ -120,29 +117,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             throw new InternalFunctionException(meta_not_found, "#987.100 Meta 'variables-for-permutation' must be defined and can't be empty");
         }
         String[] names = StringUtils.split(variableNames, ", ");
-
-        final boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE);
-        final PermutationData.Inlines inlines;
-        if (permuteInlines) {
-            final InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(simpleExecContext.paramsYaml.variables, taskParamsYaml.task.metas);
-            if (S.b(item.inlineKey)) {
-                throw new InternalFunctionException(meta_not_found, "#987.120 Meta 'inline-key' wasn't found or empty.");
-            }
-            if (item.inlines == null || item.inlines.isEmpty()) {
-                throw new InternalFunctionException(
-                        inline_not_found,
-                        "#987.140 Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + simpleExecContext.paramsYaml.variables.inline.keySet());
-            }
-            final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(item.inlines);
-            final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
-            if (S.b(inlineVariableName)) {
-                throw new InternalFunctionException(meta_not_found, "#987.180 Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
-            }
-            inlines = new PermutationData.Inlines(item, inlineVariables, inlineVariableName);
-        }
-        else {
-            inlines = null;
-        }
 
         final boolean producePresentVariable = MetaUtils.isTrue(taskParamsYaml.task.metas, "produce-present-variable");
         final String producePresentVariablePrefix = MetaUtils.getValue(process.metas, "produce-present-variable-prefix");
@@ -176,10 +150,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                        permuteVariablesAndInlinesTxService.createTaskFroPermutations(
-                                simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId, inlines,
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
+                        permuteVariablesAndInlinesTxService.createTaskForPermutations(
+                                simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId,
                                 producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables
                         )));
     }

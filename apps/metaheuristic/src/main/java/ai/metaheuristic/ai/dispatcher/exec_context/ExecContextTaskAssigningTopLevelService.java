@@ -50,18 +50,18 @@ import java.util.List;
 public class ExecContextTaskAssigningTopLevelService {
 
     private final ExecContextCache execContextCache;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
-//    private final TaskProviderTopLevelService taskProviderService;
-//    private final EventPublisherService eventPublisherService;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
+    // TODO 2021-11-10 see TODO below
+//    private final TaskProviderTopLevelService taskProviderService;
+//    private final EventPublisherService eventPublisherService;
 
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {

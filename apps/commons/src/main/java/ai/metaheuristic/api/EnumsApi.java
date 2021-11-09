@@ -87,21 +87,15 @@ public class EnumsApi {
             this.value = value;
         }
 
-        @SuppressWarnings("Duplicates")
+        @SuppressWarnings({"Duplicates", "DuplicateBranchesInSwitch"})
         public static DataSourcing to(int value) {
-            switch (value) {
-                case 1:
-                    //noinspection
-                    return dispatcher;
-                case 2:
-                    return disk;
-                case 3:
-                    return git;
-                case 4:
-                    return inline;
-                default:
-                    return dispatcher;
-            }
+            return switch (value) {
+                case 1 -> dispatcher;
+                case 2 -> disk;
+                case 3 -> git;
+                case 4 -> inline;
+                default -> dispatcher;
+            };
         }
 
         public static String from(int value) {
@@ -243,14 +237,11 @@ public class EnumsApi {
         }
 
         public static ExperimentTaskType from(int type) {
-            switch(type) {
-                case 1:
-                    return FIT;
-                case 2:
-                    return PREDICT;
-                default:
-                    return UNKNOWN;
-            }
+            return switch (type) {
+                case 1 -> FIT;
+                case 2 -> PREDICT;
+                default -> UNKNOWN;
+            };
         }
     }
 
@@ -272,29 +263,20 @@ public class EnumsApi {
         }
 
         public static ExecContextState toState(int code) {
-            switch (code) {
-                case -2:
-                    return ERROR;
-                case -1:
-                    //noinspection
-                    return UNKNOWN;
-                case 0:
-                    return NONE;
-                case 1:
-                    return PRODUCING;
-                case 2:
-                    return NOT_USED_ANYMORE;
-                case 3:
-                    return STARTED;
-                case 4:
-                    return STOPPED;
-                case 5:
-                    return FINISHED;
-                case 6:
-                    return DOESNT_EXIST;
-                default:
-                    return UNKNOWN;
-            }
+            return switch (code) {
+                case -2 -> ERROR;
+                case -1 ->
+                        //noinspection
+                        UNKNOWN;
+                case 0 -> NONE;
+                case 1 -> PRODUCING;
+                case 2 -> NOT_USED_ANYMORE;
+                case 3 -> STARTED;
+                case 4 -> STOPPED;
+                case 5 -> FINISHED;
+                case 6 -> DOESNT_EXIST;
+                default -> UNKNOWN;
+            };
         }
 
         public static ExecContextState from(String state) {
@@ -336,25 +318,15 @@ public class EnumsApi {
         }
 
         public static TaskExecState from(int type) {
-            switch(type) {
-                case 0:
-                    return NONE;
-                case 1:
-                    return IN_PROGRESS;
-                case 2:
-                    return ERROR;
-                case 3:
-                    return OK;
-                case 4:
-                    //noinspection
-                    return ERROR;
-                case 5:
-                    return SKIPPED;
-                case 6:
-                    return CHECK_CACHE;
-                default:
-                    throw new IllegalStateException("Unknown type : " + type);
-            }
+            return switch (type) {
+                case 0 -> NONE;
+                case 1 -> IN_PROGRESS;
+                case 2, 4 -> ERROR;
+                case 3 -> OK;
+                case 5 -> SKIPPED;
+                case 6 -> CHECK_CACHE;
+                default -> throw new IllegalStateException("Unknown type : " + type);
+            };
         }
 
         public static boolean isFinishedState(int state) {

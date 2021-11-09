@@ -122,12 +122,13 @@ public class Consts {
     public static final String MH_NOP_FUNCTION = "mh.nop";
     public static final String MH_BATCH_SPLITTER_FUNCTION = "mh.batch-splitter";
     public static final String MH_BATCH_LINE_SPLITTER_FUNCTION = "mh.batch-line-splitter";
-    public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
-    public static final String MH_PERMUTE_VARIABLES_AND_INLINES_CREATE_TASKS_FUNCTION = "mh.permute-variables-and-inlines-create-tasks";
-    public static final String MH_PERMUTE_VARIABLES_AND_INLINES_AS_VARIABLE_FUNCTION = "mh.permute-variables-and-inlines-as-variable";
+
+    public static final String MH_PERMUTE_VARIABLES_FUNCTION = "mh.permute-variables";
     public static final String MH_PERMUTE_VALUES_OF_VARIABLES_FUNCTION = "mh.permute-values-of-variables";
+
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
+    public static final String MH_EXPERIMENT_REDUCE_VARIABLES = "mh.experiment-reduce-variables";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
     public static final String MH_BATCH_RESULT_PROCESSOR_FUNCTION = "mh.batch-result-processor";
     public static final String MH_EXEC_SOURCE_CODE_FUNCTION = "mh.exec-source-code";
@@ -137,7 +138,6 @@ public class Consts {
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
-    public static final InternalFunctionData.InternalFunctionProcessingResult INTERNAL_FUNCTION_PROCESSING_RESULT_OK = new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     public static final String UNKNOWN_FILENAME_IN_BATCH = Consts.UNKNOWN_INFO;
     public static final String TOP_LEVEL_CONTEXT_ID = "1";
 

@@ -50,14 +50,13 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ExecContextTaskProducingService {
 
-    private final ExecContextSyncService execContextSyncService;
     private final TaskProducingService taskProducingService;
     private final SourceCodeValidationService sourceCodeValidationService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         long mills = System.currentTimeMillis();

@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
@@ -73,8 +75,8 @@ public class TestGraph extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         execContextSyncService.getWithSync(execContextForTest.id, ()->
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
 

@@ -69,7 +69,6 @@ public class TaskWithInternalContextEventService {
 
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
@@ -85,12 +84,12 @@ public class TaskWithInternalContextEventService {
     public final GlobalVariableService globalVariableService;
     public final VariableRepository variableRepository;
     private final TaskFinishingService taskFinishingService;
-
     private final ApplicationEventPublisher eventPublisher;
 
     public static final int MAX_QUEUE_SIZE = 20;
     public static final int MAX_ACTIVE_THREAD = 1;
-    private static final int MAX_NUMBER_EXECUTORS = 10;
+    // number of active executers with different execContextId
+    private static final int MAX_NUMBER_EXECUTORS = 2;
 
     public static class QueueWithExecutor {
         public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
@@ -209,11 +208,10 @@ public class TaskWithInternalContextEventService {
         }
         final ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
         try {
-            TaskSyncService.getWithSyncNullable(event.taskId,
+            TaskSyncService.getWithSyncVoid(event.taskId,
                     () -> {
                         taskWithInternalContextService.preProcessing(simpleExecContext, event.taskId);
                         processInternalFunction(simpleExecContext, event.taskId);
-                        return null;
                     });
         }
         catch (InternalFunctionException e) {
@@ -221,7 +219,7 @@ public class TaskWithInternalContextEventService {
                 log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
                 final String console = "#707.180 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
-                execContextSyncService.getWithSyncNullable(event.execContextId,
+                ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
@@ -231,7 +229,7 @@ public class TaskWithInternalContextEventService {
                     ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
-            execContextSyncService.getWithSyncNullable(event.execContextId,
+            ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }

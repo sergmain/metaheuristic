@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
+package ai.metaheuristic.ai.dispatcher.internal_functions.experiment_reduce_variables;
 
 import javax.annotation.ParametersAreNonnullByDefault;

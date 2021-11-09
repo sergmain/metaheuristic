@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
@@ -53,18 +51,15 @@ public class TaskProducingService {
     private final VariableService variableService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskService taskService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long execContextGraphId, Long execContextTaskStateId,
             List<Long> parentTaskIds) {
         TxUtils.checkTxExists();
-        execContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
@@ -99,8 +94,8 @@ public class TaskProducingService {
             ExecContextData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
-        execContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
-        execContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
+        ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;

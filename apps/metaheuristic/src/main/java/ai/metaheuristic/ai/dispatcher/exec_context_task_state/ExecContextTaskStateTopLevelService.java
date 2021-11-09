@@ -55,8 +55,6 @@ public class ExecContextTaskStateTopLevelService {
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
@@ -108,7 +106,7 @@ public class ExecContextTaskStateTopLevelService {
             if (ec==null) {
                 return;
             }
-            execContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
+            ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
                     () -> TaskSyncService.getWithSyncNullable(event.taskId,
                             () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
 
@@ -125,8 +123,8 @@ public class ExecContextTaskStateTopLevelService {
             TaskQueue.TaskGroup taskGroup;
             int i = 1;
             while ((taskGroup =
-                    execContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
-                            execContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
+                    ExecContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
+                            ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
                                     transferStateFromTaskQueueToExecContext(
                                             event.execContextId, event.execContextGraphId, event.execContextTaskStateId))))!=null) {
                 taskGroup.reset();

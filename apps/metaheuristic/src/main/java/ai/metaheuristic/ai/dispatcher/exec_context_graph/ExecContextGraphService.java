@@ -76,14 +76,12 @@ public class ExecContextGraphService {
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateCache execContextTaskStateCache;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final EntityManager em;
 
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
+            ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
@@ -101,7 +99,7 @@ public class ExecContextGraphService {
     public void save(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
-            execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
+            ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
         if (execContextGraph.id==null) {
             final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
@@ -111,7 +109,7 @@ public class ExecContextGraphService {
         }
 
         if (execContextTaskState.id!=null) {
-            execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
+            ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         }
         if (execContextTaskState.id==null) {
             final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
@@ -134,7 +132,7 @@ public class ExecContextGraphService {
 
     private void changeGraph(ExecContextGraph execContextGraph, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
         TxUtils.checkTxExists();
-        execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
 
         ExecContextGraphParamsYaml ecpy = execContextGraph.getExecContextGraphParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importProcessGraph(ecpy);
@@ -152,8 +150,8 @@ public class ExecContextGraphService {
             BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml> callable) {
 
         TxUtils.checkTxExists();
-        execContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
+        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
 
         if (!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
             throw new IllegalStateException("(!Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId))");
@@ -177,7 +175,7 @@ public class ExecContextGraphService {
             BiConsumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextTaskStateParamsYaml> callable) {
 
         TxUtils.checkTxExists();
-        execContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         if (execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && !Objects.equals(execContextGraph.execContextId, execContextTaskState.execContextId)) {
             throw new IllegalStateException(
                     "(execContextGraph.execContextId!=null && execContextTaskState.execContextId!=null && " +
@@ -344,7 +342,7 @@ public class ExecContextGraphService {
             set.stream()
                     .peek( t-> stateParamsYaml.states.put(t.taskId, EnumsApi.TaskExecState.NONE))
                     .map(o->new ExecContextData.TaskWithState(taskId, EnumsApi.TaskExecState.NONE))
-                    .collect(Collectors.toCollection(()->withTaskList.childrenTasks));;
+                    .collect(Collectors.toCollection(()->withTaskList.childrenTasks));
         });
         return withTaskList;
     }
@@ -508,9 +506,9 @@ public class ExecContextGraphService {
             if (!vertices.isEmpty()) {
                 if (log.isDebugEnabled()) {
                     log.debug("\tfound tasks for assigning:");
-                    StringBuilder sb = new StringBuilder();
+                    StringBuilder sb = new StringBuilder("\t\t");
                     vertices.forEach(o->sb.append(S.f("#%s: %s, ", o.taskId, stateParamsYaml.states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE))));
-                    log.debug("\t\t" + sb.toString());
+                    log.debug(sb.toString());
                 }
                 return vertices;
             }

@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
-    private final ExecContextSyncService execContextSyncService;
 
 //    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
@@ -51,7 +50,7 @@ public class ExecContextCache {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
         if (execContext.id!=null) {
-            execContextSyncService.checkWriteLockPresent(execContext.id);
+            ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
 /*
         if (log.isDebugEnabled()) {

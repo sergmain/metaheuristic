@@ -60,7 +60,6 @@ public class ExecContextTopLevelService {
 
     private final ExecContextService execContextService;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -70,15 +69,10 @@ public class ExecContextTopLevelService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     private static boolean isManagerRole(String role) {
-        switch (role) {
-            case "ROLE_ADMIN":
-            case "ROLE_DATA":
-            case "MANAGER":
-            case "OPERATOR":
-                return true;
-            default:
-                return false;
-        }
+        return switch (role) {
+            case "ROLE_ADMIN", "ROLE_DATA", "MANAGER", "OPERATOR" -> true;
+            default -> false;
+        };
     }
 
     public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
@@ -147,7 +141,7 @@ public class ExecContextTopLevelService {
         }
 
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
-            execContextSyncService.getWithSyncNullable(execContextId,
+            ExecContextSyncService.getWithSyncNullable(execContextId,
                     () -> execContextService.changeValidStatus(execContextId, false));
             return new SourceCodeApiData.ExecContextResult("#210.020 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
@@ -164,7 +158,7 @@ public class ExecContextTopLevelService {
     }
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
-        execContextSyncService.getWithSyncVoid(execContextId,
+        ExecContextSyncService.getWithSyncVoid(execContextId,
                 () -> findUnassignedTasksAndRegisterInQueueInternal(execContextId));
     }
 
@@ -182,12 +176,12 @@ public class ExecContextTopLevelService {
     }
 
     public OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, DispatcherContext context) {
-        return execContextSyncService.getWithSync(execContextId,
+        return ExecContextSyncService.getWithSync(execContextId,
                 () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
     }
 
     public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
-        return execContextSyncService.getWithSync(execContextId,
+        return ExecContextSyncService.getWithSync(execContextId,
                 () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, companyUniqueId));
     }
 
@@ -199,7 +193,7 @@ public class ExecContextTopLevelService {
         final ExecContextData.ReconciliationStatus status =
                 execContextReconciliationTopLevelService.reconcileStates(execContext);
 
-        execContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, status));
+        ExecContextSyncService.getWithSyncNullable(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, status));
     }
 
     public OperationStatusRest resetTask(Long taskId) {
@@ -209,7 +203,7 @@ public class ExecContextTopLevelService {
                     "#210.080 Can't re-run task " + taskId + ", task with such taskId wasn't found");
         }
 
-        return execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
+        return ExecContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
     }
 
     @Nullable
@@ -248,7 +242,7 @@ public class ExecContextTopLevelService {
         for (Long execContextId : execContextIds) {
             log.info("210.140 Found orphan execContext #{}", execContextId);
 
-            execContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            ExecContextSyncService.getWithSyncNullable(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
 
     }
@@ -256,11 +250,11 @@ public class ExecContextTopLevelService {
     @Async
     @EventListener
     public void deleteExecContextById(DeleteExecContextEvent event) {
-        execContextSyncService.getWithSync(event.execContextId, ()-> execContextService.deleteExecContext(event.execContextId));
+        ExecContextSyncService.getWithSync(event.execContextId, ()-> execContextService.deleteExecContext(event.execContextId));
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
-        return execContextSyncService.getWithSync(execContextId, ()-> execContextService.deleteExecContextById(execContextId, context));
+        return ExecContextSyncService.getWithSync(execContextId, ()-> execContextService.deleteExecContextById(execContextId, context));
     }
 
     public ExecContextApiData.TaskExecInfo getTaskExecInfo(Long sourceCodeId, Long execContextId, Long taskId) {

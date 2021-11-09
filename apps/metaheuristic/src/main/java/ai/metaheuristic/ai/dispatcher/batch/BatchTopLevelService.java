@@ -97,10 +97,7 @@ public class BatchTopLevelService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextSyncService execContextSyncService;
     private final BatchHelperService batchHelperService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextVariableService execContextVariableService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -310,9 +307,9 @@ public class BatchTopLevelService {
                 execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
             }
             final BatchData.UploadingStatus uploadingStatus;
-            uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
-                    execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
-                            execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
+            uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
+                    ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
+                            ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchService.createBatchForFile(
                                             sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             return uploadingStatus;
@@ -362,10 +359,10 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return execContextSyncService.getWithSync(execContextId, () ->  batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, () ->  batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
         }
         else {
-            return execContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 

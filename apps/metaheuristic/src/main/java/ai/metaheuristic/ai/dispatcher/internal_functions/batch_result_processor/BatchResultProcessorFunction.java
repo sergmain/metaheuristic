@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 public class BatchResultProcessorFunction implements InternalFunction {
 
     private final BatchResultProcessorTxService batchResultProcessorTxService;
-    private final ExecContextSyncService execContextSyncService;
 
     @Override
     public String getCode() {
@@ -64,7 +63,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        execContextSyncService.getWithSyncNullable(simpleExecContext.execContextId,
+        ExecContextSyncService.getWithSyncNullable(simpleExecContext.execContextId,
                 () -> batchResultProcessorTxService.process(simpleExecContext, taskContextId, taskParamsYaml));
 
     }

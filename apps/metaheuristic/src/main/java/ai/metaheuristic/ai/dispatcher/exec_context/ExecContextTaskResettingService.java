@@ -43,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
-    private final ExecContextSyncService execContextSyncService;
     private final TaskExecStateService taskExecStateService;
     private final TaskStateService taskStateService;
 
@@ -58,7 +57,7 @@ public class ExecContextTaskResettingService {
 
     public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
         TxUtils.checkTxExists();
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl t = taskExecStateService.resetTask(taskId);

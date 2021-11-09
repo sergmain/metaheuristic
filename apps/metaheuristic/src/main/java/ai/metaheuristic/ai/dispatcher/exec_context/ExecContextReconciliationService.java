@@ -45,12 +45,11 @@ public class ExecContextReconciliationService {
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     @Transactional
     public Void finishReconciliation(ExecContextData.ReconciliationStatus status) {
-        execContextSyncService.checkWriteLockPresent(status.execContextId);
+        ExecContextSyncService.checkWriteLockPresent(status.execContextId);
 
         if (!status.isNullState.get() && status.taskIsOkIds.isEmpty() && status.taskForResettingIds.isEmpty()) {
             return null;

@@ -493,8 +493,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                    execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
                         return null;
                     }));

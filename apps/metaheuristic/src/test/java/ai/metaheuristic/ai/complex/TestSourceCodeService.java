@@ -21,10 +21,9 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskLastProcessingHelper;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -99,9 +98,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
 
-    @Autowired
-    private TaskSyncService taskSyncService;
-
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -111,7 +107,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     public void afterTestSourceCodeService() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
         if (execContextForTest!=null) {
-            execContextSyncService.getWithSyncNullable(execContextForTest.id,
+            ExecContextSyncService.getWithSyncNullable(execContextForTest.id,
                     () -> txSupportForTestingService.deleteByExecContextId(execContextForTest.id));
         }
     }
@@ -143,7 +139,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         assertNull(simpleTask0);
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
 
             txSupportForTestingService.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
@@ -183,12 +179,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
             TaskImpl tempTask = taskRepository.findById(taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
+            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
 
             switch (tpy.task.function.code) {
-                case Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION:
+                case Consts.MH_PERMUTE_VARIABLES_FUNCTION:
                     permuteTask.task = tempTask;
                     break;
                 case Consts.MH_AGGREGATE_FUNCTION:
@@ -220,12 +216,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
         waitForFinishing(permuteTask.task.id, 300);
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
@@ -274,18 +270,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 40);
         taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSyncVoid(execContextForTest.id, () -> {
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             verifyGraphIntegrity();
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
             assertEquals(1, taskIds.size());
-            return null;
         });
 
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
@@ -294,12 +289,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNull(t);
         waitForFinishing(finishTask.task.id, 40);
         taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(execContextForTest));
@@ -339,8 +334,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         processScheduledTasks();
 
         TaskQueue.TaskGroup taskGroup =
-                execContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, () ->
-                        execContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
+                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, () ->
+                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, () ->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         execContextForTest.id, execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId)));
         processScheduledTasks();
@@ -570,7 +565,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        execContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
@@ -585,7 +580,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         processScheduledTasks();
     }
 
-    private String getOKExecResult() {
+    private static String getOKExecResult() {
         FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(
                 new FunctionApiData.SystemExecResult("output-of-a-function",true, 0, "Everything is Ok."),
                 null, null, null);

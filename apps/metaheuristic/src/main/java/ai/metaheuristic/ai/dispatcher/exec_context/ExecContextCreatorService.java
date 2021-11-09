@@ -72,13 +72,10 @@ public class ExecContextCreatorService {
     private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextSyncService execContextSyncService;
     private final SourceCodeSyncService sourceCodeSyncService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateCache execContextVariableStateCache;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -131,9 +128,9 @@ public class ExecContextCreatorService {
 
     @Transactional
     public void produceTasksForExecContext(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
-        execContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
-                execContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
-                        execContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, ()-> {
+        ExecContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
+                ExecContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, ()-> {
                             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
                             SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
                                     sourceCode, creationResult.execContext, execContextParamsYaml);
@@ -226,7 +223,7 @@ public class ExecContextCreatorService {
         return ec;
     }
 
-    private ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    private static ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);
@@ -236,7 +233,7 @@ public class ExecContextCreatorService {
         return params;
     }
 
-    private void initVariables(ExecContextParamsYaml.VariableDeclaration src, ExecContextParamsYaml.VariableDeclaration trg) {
+    private static void initVariables(ExecContextParamsYaml.VariableDeclaration src, ExecContextParamsYaml.VariableDeclaration trg) {
         trg.inline.putAll(src.inline);
         trg.globals = src.globals;
         trg.inputs.addAll(src.inputs);

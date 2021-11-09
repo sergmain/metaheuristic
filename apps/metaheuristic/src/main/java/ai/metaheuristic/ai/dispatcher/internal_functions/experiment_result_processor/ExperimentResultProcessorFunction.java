@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.experiment_result_proc
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
@@ -42,8 +41,6 @@ import org.springframework.stereotype.Service;
 public class ExperimentResultProcessorFunction implements InternalFunction {
 
     private final ExperimentResultService experimentResultService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
 
     @Override
     public String getCode() {
@@ -61,8 +58,8 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
                         experimentResultService.storeExperimentToExperimentResult(simpleExecContext, taskParamsYaml)));
     }
 }

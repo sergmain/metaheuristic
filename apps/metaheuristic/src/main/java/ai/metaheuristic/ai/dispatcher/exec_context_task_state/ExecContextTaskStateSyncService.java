@@ -41,27 +41,27 @@ public class ExecContextTaskStateSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long execContextTaskStateId) {
+    public static void checkWriteLockPresent(Long execContextTaskStateId) {
         if (!getWriteLock(execContextTaskStateId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#972.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long execContextTaskStateId) {
+    public static void checkWriteLockNotPresent(Long execContextTaskStateId) {
         if (getWriteLock(execContextTaskStateId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#972.025 The thread was already locked by WriteLock");
         }
     }
 
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextTaskStateId) {
+    public static ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextTaskStateId) {
         return commonSync.getWriteLock(execContextTaskStateId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextTaskStateId) {
+    private static ReentrantReadWriteLock.ReadLock getReadLock(Long execContextTaskStateId) {
         return commonSync.getReadLock(execContextTaskStateId);
     }
 
-    public <T> T getWithSync(Long execContextTaskStateId, Supplier<T> supplier) {
+    public static <T> T getWithSync(Long execContextTaskStateId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextTaskStateId);
 
@@ -76,7 +76,7 @@ public class ExecContextTaskStateSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long execContextTaskStateId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullableForCreation(Long execContextTaskStateId, Supplier<T> supplier) {
         checkWriteLockNotPresent(execContextTaskStateId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextTaskStateId);
@@ -89,7 +89,7 @@ public class ExecContextTaskStateSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long execContextTaskStateId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Long execContextTaskStateId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextTaskStateId);
 
@@ -102,7 +102,20 @@ public class ExecContextTaskStateSyncService {
         }
     }
 
-    public <T> T getWithSyncReadOnly(ExecContextVariableState execContextVariableState, Supplier<T> supplier) {
+    public static void getWithSyncVoid(Long execContextTaskStateId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextTaskStateId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextTaskStateId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static <T> T getWithSyncReadOnly(ExecContextVariableState execContextVariableState, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextVariableState.id);
 

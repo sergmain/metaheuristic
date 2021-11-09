@@ -58,7 +58,6 @@ public class ArtifactCleanerAtDispatcher {
     private final CompanyRepository companyRepository;
     private final BatchTopLevelService batchTopLevelService;
     private final BatchCache batchCache;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskTransactionalService taskTransactionalService;
@@ -169,7 +168,7 @@ public class ArtifactCleanerAtDispatcher {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
-                    execContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
+                    ExecContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
                 }
             }
         }
@@ -196,7 +195,7 @@ public class ArtifactCleanerAtDispatcher {
                         continue;
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
-                    execContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+                    ExecContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
                 }
             }
         }

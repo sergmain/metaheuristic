@@ -97,7 +97,6 @@ public class BatchService {
     private final ExecContextCache execContextCache;
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextSyncService execContextSyncService;
     private final ApplicationEventPublisher eventPublisher;
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
@@ -229,7 +228,7 @@ public class BatchService {
 
     @Transactional
     public OperationStatusRest deleteBatchVirtually(Long execContextId, Long companyUniqueId, Long batchId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId)) {
@@ -254,7 +253,7 @@ public class BatchService {
 
     @Transactional
     public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId) {
-        execContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         execContextService.deleteExecContext(execContextId, companyUniqueId);
         batchCache.deleteById(batchId);

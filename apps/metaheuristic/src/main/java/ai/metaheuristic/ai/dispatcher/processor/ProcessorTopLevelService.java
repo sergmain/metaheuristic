@@ -60,11 +60,9 @@ public class ProcessorTopLevelService {
     private final ProcessorSyncService processorSyncService;
     private final ProcessorTransactionService processorTransactionService;
     private final TaskRepository taskRepository;
-//    private final ExecContextTopLevelService execContextTopLevelService;
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ExecContextSyncService execContextSyncService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     // Attention, this value must be greater than
@@ -192,7 +190,7 @@ public class ProcessorTopLevelService {
                 log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
-                OperationStatusRest result = execContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
+                OperationStatusRest result = ExecContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#808.220 Resetting of task #{} was failed. See log for more info.", taskId);
                 }

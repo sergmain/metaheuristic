@@ -61,8 +61,6 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
     private final PermuteValuesOfVariablesService permuteValuesOfVariablesService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final VariableService variableService;
     private final GlobalVariableService globalVariableService;
 
@@ -135,8 +133,8 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
-        execContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                execContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+        ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
                         permuteValuesOfVariablesService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, subProcessContextId,
                                 inlineVariables)));
