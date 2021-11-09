@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Serge
@@ -77,9 +76,13 @@ public class ExecContextVariableStateTopLevelService {
                 return;
             }
             variableUploadedEventsTemp = variableUploadedEvents;
-            variableUploadedEvents = new ConcurrentHashMap<>();
+            variableUploadedEvents = new HashMap<>();
         }
         processVariableStates(variableUploadedEventsTemp);
+        for (Map.Entry<Long, List<VariableUploadedEvent>> entry : variableUploadedEventsTemp.entrySet()) {
+            entry.getValue().clear();
+        }
+        variableUploadedEventsTemp.clear();
     }
 
     private void processFlushingTaskCreatedEvents() {
@@ -90,9 +93,13 @@ public class ExecContextVariableStateTopLevelService {
             }
 
             taskCreatedEventsTemp = taskCreatedEvents;
-            taskCreatedEvents = new ConcurrentHashMap<>();
+            taskCreatedEvents = new HashMap<>();
         }
         processCreatedTasks(taskCreatedEventsTemp);
+        for (Map.Entry<Long, List<ExecContextApiData.VariableState>> entry : taskCreatedEventsTemp.entrySet()) {
+            entry.getValue().clear();
+        }
+        taskCreatedEventsTemp.clear();
     }
 
     private void processCreatedTasks(Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents) {
