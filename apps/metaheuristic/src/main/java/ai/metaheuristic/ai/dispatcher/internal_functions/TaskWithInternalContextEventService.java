@@ -84,7 +84,6 @@ public class TaskWithInternalContextEventService {
     public final GlobalVariableService globalVariableService;
     public final VariableRepository variableRepository;
     private final TaskFinishingService taskFinishingService;
-
     private final ApplicationEventPublisher eventPublisher;
 
     public static final int MAX_QUEUE_SIZE = 20;
