@@ -351,7 +351,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
         });
     }
 
-    private void logError(String functionCode, HttpResponseException e) {
+    private static void logError(String functionCode, HttpResponseException e) {
         if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
             log.warn("#811.200 Function with code {} wasn't found", functionCode);
         }

@@ -34,6 +34,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -244,6 +245,9 @@ public class DispatcherRequestor {
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
                     log.error("#775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else if (cause instanceof SSLException) {
+                    log.error("#775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#775.100 Error, url: " + url, e);

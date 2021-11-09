@@ -140,7 +140,7 @@ public class ExecContextReconciliationTopLevelService {
                     else if (taskState.execState== TaskExecState.NONE.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.NONE) {
                         // #307.080 Found different states for task, db: NONE, graph: CHECK_CACHE, assigned: false, state in queue: null
                         // ---> This is a normal situation, will occur after restarting a dispatcher
-                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContext",
+                        log.warn("#307.080 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
