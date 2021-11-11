@@ -47,6 +47,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.*;
 import java.util.Arrays;
@@ -126,6 +127,7 @@ public class TaskCheckCachingService {
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return;
         }
 
@@ -133,7 +135,8 @@ public class TaskCheckCachingService {
         try {
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
-            log.info("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
+            log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return;
         }
 

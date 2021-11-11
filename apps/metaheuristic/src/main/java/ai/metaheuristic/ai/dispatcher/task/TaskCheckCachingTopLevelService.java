@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateServ
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -75,7 +76,9 @@ public class TaskCheckCachingTopLevelService {
     }
 
     public void checkCaching() {
-        if (executor.getActiveCount()>0) {
+        final int activeCount = executor.getActiveCount();
+        log.info("checkCaching, active task in executor: {}", activeCount);
+        if (activeCount>0) {
             return;
         }
         executor.submit(() -> {
@@ -87,13 +90,15 @@ public class TaskCheckCachingTopLevelService {
     }
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
-        if (execContextReadinessStateService.isNotReady(event.execContextId)) {
+        final boolean notReady = execContextReadinessStateService.isNotReady(event.execContextId);
+        log.info("execContextId: {}, notReady: {}", event.execContextId, notReady);
+        if (notReady) {
             return;
         }
 
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext == null) {
-            log.info("#610.020 ExecContext #{} doesn't exists", event.execContextId);
+            log.info("#610.100 ExecContext #{} doesn't exists", event.execContextId);
             return;
         }
 
@@ -102,12 +107,13 @@ public class TaskCheckCachingTopLevelService {
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId)));
         } catch (InvalidateCacheProcessException e) {
+            log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
                 ExecContextSyncService.getWithSyncVoid(execContext.id,
                         () -> TaskSyncService.getWithSyncVoid(e.taskId,
                                 () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
             } catch (Throwable th) {
-                log.error("#610.020 error while invalidating task #"+e.taskId, th);
+                log.error("#610.300 error while invalidating task #"+e.taskId, th);
             }
         }
     }
