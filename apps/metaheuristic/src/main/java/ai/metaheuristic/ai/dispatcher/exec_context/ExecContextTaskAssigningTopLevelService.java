@@ -105,6 +105,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     continue;
                 }
+
                 final TaskParamsYaml taskParamYaml;
                 try {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
