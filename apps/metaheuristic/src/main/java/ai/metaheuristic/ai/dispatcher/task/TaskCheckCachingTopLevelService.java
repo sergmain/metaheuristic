@@ -77,7 +77,7 @@ public class TaskCheckCachingTopLevelService {
 
     public void checkCaching() {
         final int activeCount = executor.getActiveCount();
-        log.info("checkCaching, active task in executor: {}", activeCount);
+//        log.info("checkCaching, active task in executor: {}", activeCount);
         if (activeCount>0) {
             return;
         }
@@ -91,14 +91,14 @@ public class TaskCheckCachingTopLevelService {
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
         final boolean notReady = execContextReadinessStateService.isNotReady(event.execContextId);
-        log.info("execContextId: {}, notReady: {}", event.execContextId, notReady);
+//        log.info("execContextId: {}, notReady: {}", event.execContextId, notReady);
         if (notReady) {
             return;
         }
 
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext == null) {
-            log.info("#610.100 ExecContext #{} doesn't exists", event.execContextId);
+//            log.info("#610.100 ExecContext #{} doesn't exists", event.execContextId);
             return;
         }
 

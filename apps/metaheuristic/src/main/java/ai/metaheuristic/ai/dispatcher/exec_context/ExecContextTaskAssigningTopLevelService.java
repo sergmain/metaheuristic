@@ -88,7 +88,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task==null) {
                     continue;
                 }
-                log.info("task: {}, execState: {}", taskId, EnumsApi.TaskExecState.from(task.execState));
+//                log.info("task: {}, execState: {}", taskId, EnumsApi.TaskExecState.from(task.execState));
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
                     taskCheckCachingTopLevelService.putToQueue(event);
