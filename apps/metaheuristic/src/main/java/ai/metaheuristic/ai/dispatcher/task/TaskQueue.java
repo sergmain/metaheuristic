@@ -328,7 +328,7 @@ public class TaskQueue {
      *
      * @return true is all tasks in group were finished
      */
-    public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+    public boolean setTaskExecState(Long execContextId, Long taskId, final EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
             log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
@@ -347,7 +347,8 @@ public class TaskQueue {
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
-                if (!task.assigned) {
+                // state from CHECK_CASHE to NONE is being changing without assigning
+                if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
                     log.warn("#029.022 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
                     try {
                         throw new RuntimeException("for stacktrace");
