@@ -63,7 +63,7 @@ public class ExecContextTaskAssigningTopLevelService {
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
-        log.info("findUnassignedTasksAndRegisterInQueue({})", execContextId);
+//        log.info("findUnassignedTasksAndRegisterInQueue({})", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return;
@@ -72,7 +72,7 @@ public class ExecContextTaskAssigningTopLevelService {
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
 
-        log.info("Number of founded vertices: {}", vertices.size());
+//        log.info("Number of founded vertices: {}", vertices.size());
 
         if (vertices.isEmpty()) {
             return;
@@ -81,7 +81,7 @@ public class ExecContextTaskAssigningTopLevelService {
         int page = 0;
         List<Long> taskIds;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
-            log.info("Founded task Ids: {}", taskIds);
+//            log.info("Founded task Ids: {}", taskIds);
 
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
