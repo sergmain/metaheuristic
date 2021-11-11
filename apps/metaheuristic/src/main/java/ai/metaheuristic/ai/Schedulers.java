@@ -241,6 +241,14 @@ public class Schedulers {
             taskCheckCachingTopLevelService.checkCaching();
         }
 
+        @Scheduled(initialDelay = 31_000, fixedDelay = 31_000 )
+        public void pushCheckingOfCachedTasks() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            taskCheckCachingTopLevelService.checkCaching();
+        }
+
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processUpdateTaskExecStatesInGraph() {
             if (globals.testing || !globals.dispatcher.enabled) {

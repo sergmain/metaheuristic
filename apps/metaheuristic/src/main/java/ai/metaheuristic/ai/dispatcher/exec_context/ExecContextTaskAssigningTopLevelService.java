@@ -82,6 +82,13 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task==null) {
                     continue;
                 }
+                if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
+                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
+                    taskCheckCachingTopLevelService.putToQueue(event);
+                    // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
+                    continue;
+                }
+
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     if (log.isDebugEnabled()) {
@@ -121,11 +128,6 @@ public class ExecContextTaskAssigningTopLevelService {
                         case long_running:
                             break;
                     }
-                }
-                else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
-                    taskCheckCachingTopLevelService.putToQueue(event);
-                    // cache will be checked via Scheduler.processCheckCaching()
                 }
                 else {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);

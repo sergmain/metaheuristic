@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class ActiveDispatchers {
 
+    // key - , value - true if this DispatcherUrl is active
     private final Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> urls;
 
     public ActiveDispatchers(Map<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers,

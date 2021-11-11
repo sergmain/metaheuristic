@@ -83,6 +83,9 @@ public class ExecContextTaskStateTopLevelService {
     }
 
     public void processUpdateTaskExecStatesInGraph() {
+        if (executor.getActiveCount()>0) {
+            return;
+        }
         executor.submit(() -> {
             UpdateTaskExecStatesInGraphEvent event;
             while ((event = pullFromQueue())!=null) {

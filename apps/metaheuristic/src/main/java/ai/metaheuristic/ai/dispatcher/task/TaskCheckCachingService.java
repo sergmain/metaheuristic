@@ -86,40 +86,38 @@ public class TaskCheckCachingService {
     }
 
     @Transactional
-    public Void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
+    public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
-            return null;
+            return;
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return null;
+            return;
         }
 
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
-
-        return null;
     }
 
     @Transactional
-    public Void checkCaching(Long execContextId, Long taskId) {
+    public void checkCaching(Long execContextId, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return null;
+            return;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
             log.info("#609.010 task #{} was already checked for cached variables", taskId);
-            return null;
+            return;
         }
 
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
-            return null;
+            return;
         }
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -128,7 +126,7 @@ public class TaskCheckCachingService {
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            return null;
+            return;
         }
 
         CacheData.Key fullKey;
@@ -136,7 +134,7 @@ public class TaskCheckCachingService {
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
             log.info("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
-            return null;
+            return;
         }
 
         String keyAsStr = fullKey.asString();
@@ -232,6 +230,5 @@ public class TaskCheckCachingService {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
         }
-        return null;
     }
 }
