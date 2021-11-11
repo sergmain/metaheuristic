@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -33,6 +34,7 @@ import java.sql.Timestamp;
 @ToString(exclude={"data", "bytes"})
 @NoArgsConstructor
 public class FunctionData implements Serializable {
+    @Serial
     private static final long serialVersionUID = 7768428475142175426L;
 
     @Id

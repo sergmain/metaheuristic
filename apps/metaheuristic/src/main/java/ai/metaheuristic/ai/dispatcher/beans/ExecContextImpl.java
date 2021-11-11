@@ -29,6 +29,7 @@ import org.springframework.lang.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serial;
 import java.io.Serializable;
 
 @Entity
@@ -39,6 +40,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextImpl implements Serializable, ExecContext {
+    @Serial
     private static final long serialVersionUID = -8687758209537096490L;
 
     @Id

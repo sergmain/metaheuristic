@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -41,6 +42,7 @@ import java.io.Serializable;
 )
 @NoArgsConstructor
 public class Ids implements Serializable {
+    @Serial
     private static final long serialVersionUID = 8697932300220763332L;
 
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)

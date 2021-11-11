@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -36,6 +37,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(of = {"keySha256Length"})
 @NoArgsConstructor
 public class CacheProcess implements Serializable {
+    @Serial
     private static final long serialVersionUID = -1541017259044013865L;
 
     @Id

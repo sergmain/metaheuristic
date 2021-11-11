@@ -111,7 +111,7 @@ public class ExecContextReadinessService {
     public void prepare(Long execContextId) {
         Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
         for (Map.Entry<Long, TaskApiData.TaskState> entry : states.entrySet()) {
-            if (entry.getValue().execState == EnumsApi.TaskExecState.NONE.value || entry.getValue().execState == EnumsApi.TaskExecState.CHECK_CACHE.value || entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+            if (!EnumsApi.TaskExecState.isFinishedState(entry.getValue().execState)) {
                 final Long taskId = entry.getKey();
                 taskProviderTopLevelService.registerTask(execContextId, taskId);
                 if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {

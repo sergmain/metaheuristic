@@ -23,6 +23,7 @@ import lombok.ToString;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -37,6 +38,7 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 public class Evaluation implements Serializable {
+    @Serial
     private static final long serialVersionUID = 964853638400128485L;
 
     @Id

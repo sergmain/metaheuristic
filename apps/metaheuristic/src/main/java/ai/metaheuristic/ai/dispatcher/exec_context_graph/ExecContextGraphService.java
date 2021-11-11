@@ -443,7 +443,7 @@ public class ExecContextGraphService {
         return findAllForAssigning(execContextGraph, execContextTaskState, includeForCaching);
     }
 
-    private static List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
+    public static List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
         return readOnlyGraphWithState(execContextGraph, execContextTaskState, (graph,stateParamsYaml) -> {
 
             log.debug("Start find a task for assigning");
