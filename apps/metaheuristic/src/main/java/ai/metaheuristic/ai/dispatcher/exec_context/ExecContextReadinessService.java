@@ -35,6 +35,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class ExecContextReadinessService {
     @PostConstruct
     public void postConstruct() {
         final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+        log.info("Started execContextIds: " + ids);
         execContextReadinessStateService.addAll(ids);
         for (Long notReadyExecContextId : ids) {
             putToQueue(notReadyExecContextId);
@@ -93,12 +95,19 @@ public class ExecContextReadinessService {
         }
     }
 
+    private List<Long> getIdsFromQueue() {
+        synchronized (queue) {
+            return new ArrayList<>(queue);
+        }
+    }
+
     @SuppressWarnings("unused")
     @Async
     @EventListener
     @SneakyThrows
     public void checkReadiness(StartProcessReadinessEvent event) {
         TimeUnit.SECONDS.sleep(5);
+        log.info("checkReadiness() here, queue: {}", getIdsFromQueue());
         executor.submit(() -> {
             Long execContextId;
             while ((execContextId = pullFromQueue()) != null) {
