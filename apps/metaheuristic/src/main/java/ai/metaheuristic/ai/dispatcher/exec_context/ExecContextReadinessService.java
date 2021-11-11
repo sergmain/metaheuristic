@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Serge
@@ -63,7 +62,6 @@ public class ExecContextReadinessService {
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-    private final ApplicationEventPublisher eventPublisher;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     private final LinkedList<Long> queue = new LinkedList<>();
@@ -76,7 +74,7 @@ public class ExecContextReadinessService {
         for (Long notReadyExecContextId : ids) {
             putToQueue(notReadyExecContextId);
         }
-        eventPublisher.publishEvent(new StartProcessReadinessEvent());
+        log.info("postConstruct(), queue: {}", getIdsFromQueue());
     }
 
     private void putToQueue(final Long execContextId) {
@@ -101,12 +99,11 @@ public class ExecContextReadinessService {
         }
     }
 
-    @SuppressWarnings("unused")
     @Async
     @EventListener
     @SneakyThrows
     public void checkReadiness(StartProcessReadinessEvent event) {
-        TimeUnit.SECONDS.sleep(5);
+//        TimeUnit.SECONDS.sleep(5);
         log.info("checkReadiness() here, queue: {}", getIdsFromQueue());
         executor.submit(() -> {
             Long execContextId;

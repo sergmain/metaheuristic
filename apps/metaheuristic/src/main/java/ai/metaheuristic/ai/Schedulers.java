@@ -17,6 +17,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
@@ -181,6 +182,7 @@ public class Schedulers {
         private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
+        private final ApplicationEventPublisher eventPublisher;
 
         // Dispatcher schedulers with fixed delay
 
@@ -205,6 +207,8 @@ public class Schedulers {
             }
         }
 
+        boolean needToInitializeReadyness = true;
+
         @Scheduled(initialDelay = 5_000, fixedDelay = 10_000)
         public void processInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -212,6 +216,10 @@ public class Schedulers {
             }
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
+            }
+            if (needToInitializeReadyness) {
+                eventPublisher.publishEvent(new StartProcessReadinessEvent());
+                needToInitializeReadyness = false;
             }
             execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
         }
