@@ -150,6 +150,7 @@ public class ExecContextTopLevelService {
     }
 
     public void findUnassignedTasksAndRegisterInQueue() {
+        log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         execContextIds.sort((Comparator.naturalOrder()));
         for (Long execContextId : execContextIds) {

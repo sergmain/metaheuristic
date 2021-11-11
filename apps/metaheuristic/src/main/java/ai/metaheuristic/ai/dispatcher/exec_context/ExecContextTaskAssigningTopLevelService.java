@@ -63,6 +63,7 @@ public class ExecContextTaskAssigningTopLevelService {
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
+        log.info("findUnassignedTasksAndRegisterInQueue({})", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return;
@@ -70,6 +71,9 @@ public class ExecContextTaskAssigningTopLevelService {
 
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
+
+        log.info("Number of founded vertices: {}", vertices.size());
+
         if (vertices.isEmpty()) {
             return;
         }
@@ -77,11 +81,14 @@ public class ExecContextTaskAssigningTopLevelService {
         int page = 0;
         List<Long> taskIds;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+            log.info("Founded task Ids: {}", taskIds);
+
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
                     continue;
                 }
+                log.info("task: {}, execState: {}", taskId, task.execState);
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
                     taskCheckCachingTopLevelService.putToQueue(event);

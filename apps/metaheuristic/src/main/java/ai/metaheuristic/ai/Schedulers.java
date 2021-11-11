@@ -213,7 +213,6 @@ public class Schedulers {
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
-            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
         }
 
