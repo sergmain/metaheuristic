@@ -347,8 +347,13 @@ public class TaskQueue {
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
+                if (state==EnumsApi.TaskExecState.OK && !task.assigned) {
+                    log.warn("#029.021 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
+                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it as OK
+                    startTaskProcessing(task.queuedTask.execContextId, task.queuedTask.taskId);
+                }
                 // state from CHECK_CASHE to NONE is being changing without assigning
-                if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
+                else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
                     log.warn("#029.022 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
                     try {
                         throw new RuntimeException("for stacktrace");
