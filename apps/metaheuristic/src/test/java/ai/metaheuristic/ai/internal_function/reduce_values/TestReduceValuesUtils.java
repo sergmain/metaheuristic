@@ -23,8 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.net.URL;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -35,11 +34,13 @@ public class TestReduceValuesUtils {
 
     @Test
     public void test() {
-        final URL url = TestReduceValuesUtils.class.getResource("/bin/variable-75323-aggregatedResult.zip");
+        final URL url = TestReduceValuesUtils.class.getResource("/bin/variable-75492-aggregatedResult.zip");
         assertNotNull(url);
         File zip = new File(url.getFile());
         assertTrue(zip.exists());
 
         ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip);
+
+        assertFalse(data.permutedVariables.isEmpty());
     }
 }
