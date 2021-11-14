@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
+import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -38,11 +40,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
@@ -88,6 +95,8 @@ public class AggregateFunction implements InternalFunction {
                             "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs));
         }
 
+        final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, "produce-metadata");
+
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
         if (names==null || names.length==0) {
             throw new InternalFunctionException(
@@ -102,7 +111,7 @@ public class AggregateFunction implements InternalFunction {
 
         File tempDir = null;
         try {
-            tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
+            tempDir = DirUtils.createMhTempDir("mh-aggregate-internal-context-");
             if (tempDir==null) {
                 throw new InternalFunctionException(
                     new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
@@ -120,6 +129,7 @@ public class AggregateFunction implements InternalFunction {
             list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
                     .forEach(contextId->{
                         File taskContextDir = new File(outputDir, contextId);
+                        MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
                         //noinspection ResultOfMethodCallIgnored
                         taskContextDir.mkdirs();
                         list.stream().filter(t-> contextId.equals(t.taskContextId))
@@ -130,7 +140,9 @@ public class AggregateFunction implements InternalFunction {
                                     try {
                                         String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
                                         File varFile = new File(taskContextDir, v.variable+ext);
-
+                                        if (produceMetadata) {
+                                            mafpy.mapping.add(Map.of(v.variable, varFile.getName()));
+                                        }
                                         variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
                                         log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
@@ -139,6 +151,19 @@ public class AggregateFunction implements InternalFunction {
                                         }
                                     }
                                 });
+                        if (produceMetadata) {
+                            File metadataFile = new File(taskContextDir, Consts.MH_METADATA_YAML_FILE_NAME);
+                            try {
+                                FileUtils.writeStringToFile(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy), StandardCharsets.UTF_8);
+                            } catch (IOException e) {
+                                final String es = "#979.200 error";
+                                log.error(es, e);
+                                if (policy==ErrorControlPolicy.fail) {
+                                    throw new RuntimeException(es, e);
+                                }
+                            }
+                        }
+
                     });
 
             File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");

@@ -145,7 +145,7 @@ public class ExecContextVariableTopLevelService {
         File tempDir=null;
         final File variableFile;
         try {
-            tempDir = DirUtils.createTempDir("upload-variable-");
+            tempDir = DirUtils.createMhTempDir("upload-variable-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
                 return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.280 can't create temporary directory in " + location);

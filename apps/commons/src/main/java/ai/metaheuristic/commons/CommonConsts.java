@@ -27,4 +27,5 @@ public class CommonConsts {
     public static final String REST_V1_URL = "/rest/v1";
     public final static DateTimeFormatter EVENT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     public static final String MULTI_LANG_STRING = "ИИИ, 日本語, natürlich";
+    public static final String METAHEURISTIC_TEMP = "metaheuristic-temp";
 }

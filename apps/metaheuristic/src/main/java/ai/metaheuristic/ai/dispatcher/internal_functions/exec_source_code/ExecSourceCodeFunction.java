@@ -133,7 +133,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         File tempDir = null;
         try {
-            tempDir = DirUtils.createTempDir("mh-exec-source-code-");
+            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error, "#508.070 can't create a temporary file");
             }

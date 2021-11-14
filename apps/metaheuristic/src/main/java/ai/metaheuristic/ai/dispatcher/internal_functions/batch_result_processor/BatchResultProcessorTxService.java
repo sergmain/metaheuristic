@@ -171,7 +171,7 @@ public class BatchResultProcessorTxService {
         Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(Consts.TOP_LEVEL_CONTEXT_ID),
                 outputTypes::contains, statusTypes::contains, mappingTypes::contains);
 
-        File resultDir = DirUtils.createTempDir("batch-result-processing-");
+        File resultDir = DirUtils.createMhTempDir("batch-result-processing-");
         if (resultDir == null) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#993.030 temp can't be created");
         }

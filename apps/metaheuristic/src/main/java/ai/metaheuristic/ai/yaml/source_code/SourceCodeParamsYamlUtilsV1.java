@@ -57,7 +57,7 @@ public class SourceCodeParamsYamlUtilsV1
         }
         if (v1.source.variables!=null) {
             p.source.variables = new SourceCodeParamsYamlV2.VariableDefinitionV2(v1.source.variables.globals, v1.source.variables.startInputAs);
-            v1.source.variables.inline.forEach(p.source.variables.inline::put);
+            p.source.variables.inline.putAll(v1.source.variables.inline);
         }
         p.source.clean = v1.source.clean;
         p.source.processes = v1.source.processes.stream().map(SourceCodeParamsYamlUtilsV1::toProcess).collect(Collectors.toList());

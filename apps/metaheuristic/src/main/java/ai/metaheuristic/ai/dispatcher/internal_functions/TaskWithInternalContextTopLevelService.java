@@ -85,7 +85,7 @@ public class TaskWithInternalContextTopLevelService {
         }
         File tempDir = null;
         try {
-            tempDir = DirUtils.createTempDir("mh-exec-source-code-result-");
+            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-result-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error,
                                 "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);

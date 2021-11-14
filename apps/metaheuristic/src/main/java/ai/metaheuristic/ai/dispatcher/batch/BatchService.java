@@ -344,7 +344,7 @@ public class BatchService {
 
         CleanerInfo resource = new CleanerInfo();
         try {
-            File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+            File resultDir = DirUtils.createMhTempDir("prepare-file-processing-result-");
             resource.toClean.add(resultDir);
 
             File zipDir = new File(resultDir, "zip");

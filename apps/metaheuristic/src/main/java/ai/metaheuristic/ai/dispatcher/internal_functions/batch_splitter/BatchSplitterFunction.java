@@ -100,7 +100,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
         String ext = StrUtils.getExtension(originFilename);
 
-        File tempDir=DirUtils.createTempDir("batch-file-upload-");
+        File tempDir=DirUtils.createMhTempDir("batch-file-upload-");
         try {
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");

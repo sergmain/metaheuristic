@@ -88,7 +88,7 @@ public class TestBinaryDataSaveAndLoad {
         byte[] bytes = new byte[ARRAY_SIZE];
         r.nextBytes(bytes);
 
-        File tempDir = DirUtils.createTempDir("test-binary-data-");
+        File tempDir = DirUtils.createMhTempDir("test-binary-data-");
         File dataFile = new File(tempDir, DATA_FILE_BIN);
         FileUtils.writeByteArrayToFile(dataFile, bytes);
 

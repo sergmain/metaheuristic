@@ -74,6 +74,7 @@ public class Consts {
     public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
+    public static final String MH_METADATA_YAML_FILE_NAME = "mh-metadata.yaml";
 
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 

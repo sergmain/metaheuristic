@@ -157,7 +157,7 @@ public class EvaluateExpressionLanguage {
                         if (variableHolderInput!=null) {
                             File tempDir = null;
                             try {
-                                tempDir = DirUtils.createTempDir("mh-evaluation-");
+                                tempDir = DirUtils.createMhTempDir("mh-evaluation-");
                                 if (tempDir == null) {
                                     throw new InternalFunctionException(
                                             new InternalFunctionData.InternalFunctionProcessingResult(system_error,

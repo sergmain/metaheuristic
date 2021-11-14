@@ -122,7 +122,7 @@ public class ExperimentResultTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.030 only '.zip' file is supported, filename: " + originFilename);
         }
-        File resultDir = DirUtils.createTempDir("import-result-to-experiment-result-");
+        File resultDir = DirUtils.createMhTempDir("import-result-to-experiment-result-");
         if (resultDir==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.033 Error, can't create temporary dir");
@@ -195,7 +195,7 @@ public class ExperimentResultTopLevelService {
     public CleanerInfo exportExperimentResultToFile(Long experimentResultId) {
         CleanerInfo resource = new CleanerInfo();
         try {
-            File resultDir = DirUtils.createTempDir("prepare-file-export-result-");
+            File resultDir = DirUtils.createMhTempDir("prepare-file-export-result-");
             resource.toClean.add(resultDir);
 
             File zipDir = new File(resultDir, ZIP_DIR);

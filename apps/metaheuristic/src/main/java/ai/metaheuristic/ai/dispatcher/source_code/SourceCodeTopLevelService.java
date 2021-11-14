@@ -267,7 +267,7 @@ public class SourceCodeTopLevelService {
                 return resource;
             }
 
-            File tempDir = DirUtils.createTempDir("generate-dirs-for-dev-");
+            File tempDir = DirUtils.createMhTempDir("generate-dirs-for-dev-");
             resource.toClean.add(tempDir);
 
             final String processCodeDirName = process.processCode.replace(':', '_');

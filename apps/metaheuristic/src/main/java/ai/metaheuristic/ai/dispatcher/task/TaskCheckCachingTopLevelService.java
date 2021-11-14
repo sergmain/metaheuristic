@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateServ
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
-import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -47,13 +46,6 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-//    private final ExecContextCache execContextCache;
-//    private final ExecContextFSM execContextFSM;
-//    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-//    private final TaskRepository taskRepository;
-//    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-//    private final TaskFinishingService taskFinishingService;
-//    private final ApplicationEventPublisher eventPublisher;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
@@ -98,7 +90,6 @@ public class TaskCheckCachingTopLevelService {
 
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext == null) {
-//            log.info("#610.100 ExecContext #{} doesn't exists", event.execContextId);
             return;
         }
 
@@ -118,83 +109,4 @@ public class TaskCheckCachingTopLevelService {
         }
     }
 
-/*
-    public void pushCheckingOfCachedTasks() {
-
-        final ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            return;
-        }
-
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
-                execContext.execContextGraphId, execContext.execContextTaskStateId, true);
-        if (vertices.isEmpty()) {
-            return;
-        }
-
-        int page = 0;
-        List<Long> taskIds;
-        while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
-            for (Long taskId : taskIds) {
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                if (task==null) {
-                    continue;
-                }
-                if (task.execState== EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
-                    if (log.isDebugEnabled()) {
-                        try {
-                            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                            if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
-                                log.warn("#703.020 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
-                            }
-                        }
-                        catch (Throwable th) {
-                            log.warn("#703.040 Error parsing taskParamsYaml, error: " + th.getMessage());
-                            log.warn("#703.060 task #{} with IN_PROGRESS is there?", task.id);
-                        }
-                    }
-                    continue;
-                }
-                final TaskParamsYaml taskParamYaml;
-                try {
-                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                }
-                catch (YAMLException e) {
-                    log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
-                    taskFinishingService.finishWithErrorWithTx(task.id, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
-                    continue;
-                }
-                if (task.execState == EnumsApi.TaskExecState.NONE.value) {
-                    switch(taskParamYaml.task.context) {
-                        case external:
-                            TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml);
-                            break;
-                        case internal:
-                            // all tasks with internal function will be processed in a different thread after registering in TaskQueue
-                            log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                            TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml);
-                            eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContextId, taskId));
-                            break;
-                        case long_running:
-                            break;
-                    }
-                }
-                else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
-                    taskCheckCachingTopLevelService.putToQueue(event);
-                    // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
-                }
-                else {
-                    EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
-                    log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
-                            task.getId(), taskParamYaml.task.function.code, state);
-                    // TODO 2021-11-01 actually, this situation must be handled while reconciliation stage
-//                    eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
-                }
-            }
-        }
-
-    }
-*/
 }
