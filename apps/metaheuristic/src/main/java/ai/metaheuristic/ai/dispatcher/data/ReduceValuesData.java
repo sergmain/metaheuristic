@@ -14,27 +14,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.metadata_aggregate_function;
+package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Serge
  * Date: 11/13/2021
- * Time: 5:09 PM
+ * Time: 6:28 PM
  */
-@Data
-@NoArgsConstructor
-public class MetadataAggregateFunctionParamsYamlV1 implements BaseParams {
+public class ReduceValuesData {
 
-    public final int version=1;
+    public static class PermutedVariables {
+        public final Map<String, String> values = new HashMap<>();
+        @Nullable
+        public List<PermutedVariables> subPermutedVariables;
+    }
 
-    public final List<Map<String, String>> mapping = new ArrayList<>();
-
+    public static class VariablesData {
+        public final List<PermutedVariables> permutedVariables = new ArrayList<>();
+    }
 }

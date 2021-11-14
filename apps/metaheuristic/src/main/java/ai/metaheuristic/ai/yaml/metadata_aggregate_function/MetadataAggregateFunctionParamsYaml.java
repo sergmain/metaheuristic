@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.yaml.metadata_aggregate_function;
 
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -36,6 +35,6 @@ public class MetadataAggregateFunctionParamsYaml implements BaseParams {
 
     public final int version=1;
 
-    public final List<Map<String, String>> mapping = new ArrayList<>();;
+    public final List<Map<String, String>> mapping = new ArrayList<>();
 
 }

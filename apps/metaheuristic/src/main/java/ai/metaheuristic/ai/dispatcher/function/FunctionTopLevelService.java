@@ -222,11 +222,11 @@ public class FunctionTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private List<String> toErrorMessages(List<FunctionApiData.FunctionConfigStatus> statuses) {
+    private static List<String> toErrorMessages(List<FunctionApiData.FunctionConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
     }
 
-    private boolean isError(List<FunctionApiData.FunctionConfigStatus> statuses) {
+    private static boolean isError(List<FunctionApiData.FunctionConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 

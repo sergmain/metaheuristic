@@ -18,15 +18,15 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.ReduceValuesData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -34,10 +34,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.stream.Collectors;
+import java.io.File;
 
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect;
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect;
 
 /**
  * @author Serge
@@ -70,22 +70,26 @@ public class ReduceValuesFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        if (taskParamsYaml.task.inputs.size()!=2) {
-            throw new InternalFunctionException(number_of_inputs_is_incorrect, "#983.020 there must be only two input variables, actual count: " + taskParamsYaml.task.inputs.size());
+        if (taskParamsYaml.task.inputs.size()!=1) {
+            throw new InternalFunctionException(number_of_inputs_is_incorrect, "#961.040 there must be only one input variable, actual count: " + taskParamsYaml.task.inputs.size());
         }
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "#983.040 only one output variable is supported, actual count: " + taskParamsYaml.task.outputs.size());
         }
 
-        LinkedHashMap<String, String> params = new LinkedHashMap<>();
-        TaskParamsYaml.InputVariable filter = taskParamsYaml.task.inputs.stream().filter(o->"filter".equals(o.type)).findFirst().orElseThrow(
-                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "#983.060 input variable with 'filter' type wasn't found"));
+        TaskParamsYaml.InputVariable filter = taskParamsYaml.task.inputs.get(0);
 
-        TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.stream().filter(o->!"filter".equals(o.type)).findFirst().orElseThrow(
-                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "#983.080 input variable with actual values wasn't found"));
+        File tempDir = DirUtils.createMhTempDir("reduce-variables");
+        File zipFile = new File(tempDir, "zip.zip");
+        variableService.storeToFile(filter.id, zipFile);
 
+        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zipFile);
+
+
+/*
         String filterValue = getValue(filter);
+
         if (S.b(filterValue)) {
             throw new InternalFunctionException(variable_not_found, "#983.085 value of filter variable is blank");
         }
@@ -101,6 +105,7 @@ public class ReduceValuesFunction implements InternalFunction {
 
         final TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         execContextVariableService.storeStringInVariable(outputVariable, newValues);
+*/
     }
 
     @Nullable

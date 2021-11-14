@@ -77,7 +77,7 @@ public class DirUtils {
         return createTempDir(SystemUtils.getJavaIoTmpDir(), prefix);
     }
 
-    private static @Nullable File createTempDir(File trgDir, String prefix) {
+    public static @Nullable File createTempDir(File trgDir, String prefix) {
 
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
