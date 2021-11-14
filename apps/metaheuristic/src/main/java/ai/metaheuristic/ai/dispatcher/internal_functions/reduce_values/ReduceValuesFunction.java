@@ -80,7 +80,7 @@ public class ReduceValuesFunction implements InternalFunction {
 
         TaskParamsYaml.InputVariable filter = taskParamsYaml.task.inputs.get(0);
 
-        File tempDir = DirUtils.createMhTempDir("reduce-variables");
+        File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         File zipFile = new File(tempDir, "zip.zip");
         variableService.storeToFile(filter.id, zipFile);
 

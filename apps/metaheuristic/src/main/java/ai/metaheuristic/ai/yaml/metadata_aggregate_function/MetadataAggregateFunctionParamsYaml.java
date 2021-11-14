@@ -35,6 +35,9 @@ public class MetadataAggregateFunctionParamsYaml implements BaseParams {
 
     public final int version=1;
 
+    /**
+     * Map: key - fileName, value - varName
+     */
     public final List<Map<String, String>> mapping = new ArrayList<>();
 
 }

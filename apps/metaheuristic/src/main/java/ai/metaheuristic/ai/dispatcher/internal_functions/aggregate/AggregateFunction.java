@@ -40,14 +40,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -141,7 +139,7 @@ public class AggregateFunction implements InternalFunction {
                                         String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
                                         File varFile = new File(taskContextDir, v.variable+ext);
                                         if (produceMetadata) {
-                                            mafpy.mapping.add(Map.of(v.variable, varFile.getName()));
+                                            mafpy.mapping.add(Map.of(varFile.getName(), v.variable));
                                         }
                                         variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
