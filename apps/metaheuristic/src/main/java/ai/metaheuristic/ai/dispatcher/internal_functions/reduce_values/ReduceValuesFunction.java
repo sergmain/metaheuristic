@@ -84,7 +84,7 @@ public class ReduceValuesFunction implements InternalFunction {
         File zipFile = new File(tempDir, "zip.zip");
         variableService.storeToFile(filter.id, zipFile);
 
-        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zipFile);
+        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zipFile, true);
 
 
 /*

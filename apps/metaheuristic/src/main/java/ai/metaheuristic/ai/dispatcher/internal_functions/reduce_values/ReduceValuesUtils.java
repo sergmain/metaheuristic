@@ -41,7 +41,7 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
 public class ReduceValuesUtils {
 
     @SneakyThrows
-    public static ReduceValuesData.VariablesData loadData(File zipFile) {
+    public static ReduceValuesData.VariablesData loadData(File zipFile, boolean fixVarName) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -50,9 +50,7 @@ public class ReduceValuesUtils {
         File zipDir = new File(tempDir, "zip");
         ZipUtils.unzipFolder(zipFile, zipDir);
 
-
         ReduceValuesData.VariablesData data = new ReduceValuesData.VariablesData();
-
 
         Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
         for (File f : files) {
@@ -70,14 +68,20 @@ public class ReduceValuesUtils {
                 throw new RuntimeException("can't read content od dir " + top[0].getAbsolutePath());
             }
 
-            ReduceValuesData.PermutedVariables pvs = new ReduceValuesData.PermutedVariables();
+            ReduceValuesData.TopPermutedVariables pvs = new ReduceValuesData.TopPermutedVariables();
             data.permutedVariables.add(pvs);
 
             pvs.subPermutedVariables = new ArrayList<>();
             for (File ctxDir : ctxDirs) {
                 File metadata = new File(ctxDir, MH_METADATA_YAML_FILE_NAME);
-                String yaml = FileUtils.readFileToString(metadata, StandardCharsets.UTF_8);
-                MetadataAggregateFunctionParamsYaml mafpy = MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+                MetadataAggregateFunctionParamsYaml mafpy;
+                if (metadata.exists()) {
+                    String yaml = FileUtils.readFileToString(metadata, StandardCharsets.UTF_8);
+                    mafpy = MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+                }
+                else {
+                    mafpy = new MetadataAggregateFunctionParamsYaml();
+                }
 
                 Map<String, String> values = new HashMap<>();
                 for (File file : FileUtils.listFiles(ctxDir, null, false)) {
@@ -86,7 +90,11 @@ public class ReduceValuesUtils {
                         continue;
                     }
                     String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-                    String varName = mafpy.mapping.stream().filter(o->o.get(fileName)!=null).findFirst().map(o->o.get(fileName)).orElse(fileName);
+                    String varName = mafpy.mapping.stream()
+                            .filter(o->o.get(fileName)!=null)
+                            .findFirst()
+                            .map(o->o.get(fileName))
+                            .orElse( fixVarName(fileName, fixVarName) );
                     values.put(varName, content);
                 }
 
@@ -104,5 +112,17 @@ public class ReduceValuesUtils {
         }
 
         return data;
+    }
+
+    private static String fixVarName(String name, boolean fix) {
+        if (fix) {
+            int idx = name.lastIndexOf('.');
+            if (idx==-1) {
+                return name;
+            }
+            return name.substring(0, idx);
+        }
+        return name;
+
     }
 }

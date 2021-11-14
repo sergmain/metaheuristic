@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -32,11 +34,16 @@ public class ReduceValuesData {
 
     public static class PermutedVariables {
         public final Map<String, String> values = new HashMap<>();
-        @Nullable
+        public EnumsApi.Fitting fitting;
+        public MetricValues metricValues;
+    }
+
+    public static class TopPermutedVariables {
+        public final Map<String, String> values = new HashMap<>();
         public List<PermutedVariables> subPermutedVariables;
     }
 
     public static class VariablesData {
-        public final List<PermutedVariables> permutedVariables = new ArrayList<>();
+        public final List<TopPermutedVariables> permutedVariables = new ArrayList<>();
     }
 }

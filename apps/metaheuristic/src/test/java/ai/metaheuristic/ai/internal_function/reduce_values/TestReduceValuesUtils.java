@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.internal_function.reduce_values;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceValuesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceValuesUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -39,7 +40,19 @@ public class TestReduceValuesUtils {
         File zip = new File(url.getFile());
         assertTrue(zip.exists());
 
-        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip);
+        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip, true);
+
+        assertFalse(data.permutedVariables.isEmpty());
+    }
+
+
+    @Disabled
+    @Test
+    public void testExternal() {
+        File zip = new File("variable-2653425-aggregatedResult1.zip");
+        assertTrue(zip.exists());
+
+        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip, true);
 
         assertFalse(data.permutedVariables.isEmpty());
     }
