@@ -40,9 +40,14 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
  */
 public class ReduceVariablesUtils {
 
-    public static void reduceVariables(File zipFile, ReduceVariablesData.Config config) {
+    public static ReduceVariablesData.ReduceVariablesResult  reduceVariables(File zipFile, ReduceVariablesData.Config config) {
 
         ReduceVariablesData.VariablesData data = loadData(zipFile, config.fixName);
+
+        ReduceVariablesData.ReduceVariablesResult result = new ReduceVariablesData.ReduceVariablesResult();
+
+
+        return result;
     }
 
     @SneakyThrows

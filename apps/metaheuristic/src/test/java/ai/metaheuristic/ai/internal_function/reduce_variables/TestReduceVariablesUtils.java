@@ -17,12 +17,14 @@
 package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
+import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesEnums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,12 +47,21 @@ public class TestReduceVariablesUtils {
         assertFalse(data.permutedVariables.isEmpty());
     }
 
-
     @Disabled
     @Test
     public void testExternal() {
         File zip = new File("variable-2653425-aggregatedResult1.zip");
         assertTrue(zip.exists());
+
+        ReduceVariablesData.Config config = new ReduceVariablesData.Config();
+        config.policy = ReduceVariablesEnums.Policy.reduce_instance;
+        config.fixName = true;
+        config.fittingVar = "fitting";
+        config.metricsVar = "metrics";
+        config.metricsName = "sum";
+        config.reduceByValue = List.of("activation", "batchSize", "epoch", "optimizer", "RNN", "seed", "timeSteps");
+        config.reduceByInstance = List.of("binaryClusters1", "binaryDrawWithFrequency", "clusterCount1", "clusterSize1", "distribOfFreqFull", "matrixOfWinning");
+
 
         ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, true);
 
