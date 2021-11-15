@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 
-import ai.metaheuristic.ai.dispatcher.data.ReduceValuesData;
+import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -38,10 +38,15 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
  * Date: 11/13/2021
  * Time: 6:27 PM
  */
-public class ReduceValuesUtils {
+public class ReduceVariablesUtils {
+
+    public static void reduceVariables(File zipFile, ReduceVariablesData.Config config) {
+
+        ReduceVariablesData.VariablesData data = loadData(zipFile, config.fixName);
+    }
 
     @SneakyThrows
-    public static ReduceValuesData.VariablesData loadData(File zipFile, boolean fixVarName) {
+    public static ReduceVariablesData.VariablesData loadData(File zipFile, boolean fixVarName) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -50,7 +55,7 @@ public class ReduceValuesUtils {
         File zipDir = new File(tempDir, "zip");
         ZipUtils.unzipFolder(zipFile, zipDir);
 
-        ReduceValuesData.VariablesData data = new ReduceValuesData.VariablesData();
+        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
 
         Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
         for (File f : files) {
@@ -68,7 +73,7 @@ public class ReduceValuesUtils {
                 throw new RuntimeException("can't read content od dir " + top[0].getAbsolutePath());
             }
 
-            ReduceValuesData.TopPermutedVariables pvs = new ReduceValuesData.TopPermutedVariables();
+            ReduceVariablesData.TopPermutedVariables pvs = new ReduceVariablesData.TopPermutedVariables();
             data.permutedVariables.add(pvs);
 
             pvs.subPermutedVariables = new ArrayList<>();
@@ -102,7 +107,7 @@ public class ReduceValuesUtils {
                     pvs.values.putAll(values);
                 }
                 else {
-                    final ReduceValuesData.PermutedVariables permutedVariables = new ReduceValuesData.PermutedVariables();
+                    final ReduceVariablesData.PermutedVariables permutedVariables = new ReduceVariablesData.PermutedVariables();
                     permutedVariables.values.putAll(values);
                     pvs.subPermutedVariables.add(permutedVariables);
                 }

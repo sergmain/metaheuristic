@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.internal_function.reduce_values;
+package ai.metaheuristic.ai.internal_function.reduce_variables;
 
-import ai.metaheuristic.ai.dispatcher.data.ReduceValuesData;
-import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceValuesUtils;
+import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
+import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -31,16 +31,16 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/13/2021
  * Time: 6:53 PM
  */
-public class TestReduceValuesUtils {
+public class TestReduceVariablesUtils {
 
     @Test
     public void test() {
-        final URL url = TestReduceValuesUtils.class.getResource("/bin/variable-75492-aggregatedResult.zip");
+        final URL url = TestReduceVariablesUtils.class.getResource("/bin/variable-75492-aggregatedResult.zip");
         assertNotNull(url);
         File zip = new File(url.getFile());
         assertTrue(zip.exists());
 
-        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip, true);
+        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, true);
 
         assertFalse(data.permutedVariables.isEmpty());
     }
@@ -52,7 +52,7 @@ public class TestReduceValuesUtils {
         File zip = new File("variable-2653425-aggregatedResult1.zip");
         assertTrue(zip.exists());
 
-        ReduceValuesData.VariablesData data = ReduceValuesUtils.loadData(zip, true);
+        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, true);
 
         assertFalse(data.permutedVariables.isEmpty());
     }

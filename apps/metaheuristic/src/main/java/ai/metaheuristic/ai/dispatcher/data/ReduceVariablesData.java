@@ -30,7 +30,15 @@ import java.util.Map;
  * Date: 11/13/2021
  * Time: 6:28 PM
  */
-public class ReduceValuesData {
+public class ReduceVariablesData {
+
+    public static class Config {
+        public boolean fixName;
+        public String fittingVar;
+        public String metricsVar;
+        public final List<String> reduceByValue = new ArrayList<>();
+        public final List<String> reduceByInstance = new ArrayList<>();
+    }
 
     public static class PermutedVariables {
         public final Map<String, String> values = new HashMap<>();
