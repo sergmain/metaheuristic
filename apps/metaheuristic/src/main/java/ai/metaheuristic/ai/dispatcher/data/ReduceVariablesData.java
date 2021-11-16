@@ -19,6 +19,9 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesEnums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -33,8 +36,18 @@ import java.util.Map;
  */
 public class ReduceVariablesData {
 
-    public static class Config {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Reduce {
         public ReduceVariablesEnums.Policy policy;
+        public int reducePercent;
+        public String variable;
+    }
+
+    public static class Config {
+        public List<Reduce> reduces;
+
         public boolean fixName;
         public String fittingVar;
         public String metricsVar;

@@ -32,11 +32,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
 
@@ -78,10 +76,36 @@ public class ReduceVariablesUtils {
             }
         }
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
-            System.out.println(""+entry.getKey());
+            System.out.println(entry.getKey());
             for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : entry.getValue().entrySet()) {
                 System.out.printf("\t%-15s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
             }
+        }
+
+
+        for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
+
+            String key = entry.getKey();
+            if (!config.reduceByValue.contains(key)) {
+                continue;
+            }
+
+            List<Pair<String, Integer>> values = new ArrayList<>();
+            for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : entry.getValue().entrySet()) {
+                values.add(Pair.of(en.getKey(), en.getValue().getRight().get()));
+            }
+
+            ReduceVariablesData.Reduce reduce = config.reduces.stream().filter(o->o.variable.equals(key)).findFirst().orElse(null);
+
+            long skip = 0;
+            if (reduce!=null) {
+                if (reduce.policy== ReduceVariablesEnums.Policy.reduce_value) {
+                    values.sort(Comparator.comparingInt(Pair::getRight));
+                    skip = (long) values.size()*reduce.reducePercent/100;
+                }
+            }
+            String value = values.stream().skip(skip).map(Pair::getLeft).collect(Collectors.joining(", ", "[", "]"));
+            result.byValue.put(key, value);
         }
 
         return result;

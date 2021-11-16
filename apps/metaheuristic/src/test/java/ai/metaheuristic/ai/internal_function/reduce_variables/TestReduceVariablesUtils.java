@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,7 +44,8 @@ public class TestReduceVariablesUtils {
         assertTrue(zip.exists());
 
         ReduceVariablesData.Config config = new ReduceVariablesData.Config();
-        config.policy = ReduceVariablesEnums.Policy.reduce_instance;
+        ReduceVariablesData.Reduce reduce1 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 50, "activation");
+        config.reduces = List.of(reduce1);
         config.fixName = true;
         config.fittingVar = "fitting";
         config.metricsVar = "metrics";
@@ -63,7 +65,10 @@ public class TestReduceVariablesUtils {
         assertTrue(zip.exists());
 
         ReduceVariablesData.Config config = new ReduceVariablesData.Config();
-        config.policy = ReduceVariablesEnums.Policy.reduce_instance;
+        ReduceVariablesData.Reduce reduce1 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 50, "activation");
+        ReduceVariablesData.Reduce reduce2 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 35, "optimizer");
+        config.reduces = List.of(reduce1, reduce2);
+
         config.fixName = true;
         config.fittingVar = "fitting";
         config.metricsVar = "metrics";
@@ -75,6 +80,10 @@ public class TestReduceVariablesUtils {
         ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config);
 
         assertFalse(result.byValue.isEmpty());
-        assertFalse(result.byInstance.isEmpty());
+//        assertFalse(result.byInstance.isEmpty());
+
+        for (Map.Entry<String, String> entry : result.byValue.entrySet()) {
+            System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
+        }
     }
 }
