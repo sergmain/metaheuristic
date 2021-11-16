@@ -19,10 +19,16 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
 
@@ -42,16 +49,46 @@ public class ReduceVariablesUtils {
 
     public static ReduceVariablesData.ReduceVariablesResult  reduceVariables(File zipFile, ReduceVariablesData.Config config) {
 
-        ReduceVariablesData.VariablesData data = loadData(zipFile, config.fixName);
+        ReduceVariablesData.VariablesData data = loadData(zipFile, config);
 
         ReduceVariablesData.ReduceVariablesResult result = new ReduceVariablesData.ReduceVariablesResult();
 
+        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = new HashMap<>();
+
+        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
+            for (Map.Entry<String, String> entry : permutedVariable.values.entrySet()) {
+
+                for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
+
+                    freqValues
+                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
+                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
+                            .getLeft().incrementAndGet();
+
+                    if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                        continue;
+                    }
+
+                    freqValues
+                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
+                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
+                            .getRight().incrementAndGet();
+                }
+
+            }
+        }
+        for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
+            System.out.println(""+entry.getKey());
+            for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : entry.getValue().entrySet()) {
+                System.out.printf("\t%-15s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
+            }
+        }
 
         return result;
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(File zipFile, boolean fixVarName) {
+    public static ReduceVariablesData.VariablesData loadData(File zipFile, ReduceVariablesData.Config config) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -94,6 +131,8 @@ public class ReduceVariablesUtils {
                 }
 
                 Map<String, String> values = new HashMap<>();
+                EnumsApi.Fitting fitting = null;
+                MetricValues metricValues = null;
                 for (File file : FileUtils.listFiles(ctxDir, null, false)) {
                     final String fileName = file.getName();
                     if (MH_METADATA_YAML_FILE_NAME.equals(fileName)) {
@@ -104,8 +143,18 @@ public class ReduceVariablesUtils {
                             .filter(o->o.get(fileName)!=null)
                             .findFirst()
                             .map(o->o.get(fileName))
-                            .orElse( fixVarName(fileName, fixVarName) );
-                    values.put(varName, content);
+                            .orElse( fixVarName(fileName, config.fixName) );
+
+                    if (varName.equals(config.fittingVar)) {
+                        FittingYaml fittingYaml = FittingYamlUtils.BASE_YAML_UTILS.to(content);
+                        fitting = fittingYaml.fitting;
+                    }
+                    else if (varName.equals(config.metricsVar)) {
+                        metricValues = MetricsUtils.getMetricValues(content);
+                    }
+                    else {
+                        values.put(varName, content);
+                    }
                 }
 
                 if (ctxDir.getName().equals("1")) {
@@ -113,8 +162,11 @@ public class ReduceVariablesUtils {
                 }
                 else {
                     final ReduceVariablesData.PermutedVariables permutedVariables = new ReduceVariablesData.PermutedVariables();
+                    permutedVariables.fitting = fitting;
+                    permutedVariables.metricValues = metricValues;
                     permutedVariables.values.putAll(values);
                     pvs.subPermutedVariables.add(permutedVariables);
+
                 }
             }
 

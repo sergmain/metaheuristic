@@ -42,7 +42,16 @@ public class TestReduceVariablesUtils {
         File zip = new File(url.getFile());
         assertTrue(zip.exists());
 
-        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, true);
+        ReduceVariablesData.Config config = new ReduceVariablesData.Config();
+        config.policy = ReduceVariablesEnums.Policy.reduce_instance;
+        config.fixName = true;
+        config.fittingVar = "fitting";
+        config.metricsVar = "metrics";
+        config.metricsName = "sum";
+        config.reduceByValue = List.of("activation", "batchSize", "epoch", "optimizer", "RNN", "seed", "timeSteps");
+        config.reduceByInstance = List.of("binaryClusters1", "binaryDrawWithFrequency", "clusterCount1", "clusterSize1", "distribOfFreqFull", "matrixOfWinning");
+
+        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, config);
 
         assertFalse(data.permutedVariables.isEmpty());
     }
@@ -63,8 +72,9 @@ public class TestReduceVariablesUtils {
         config.reduceByInstance = List.of("binaryClusters1", "binaryDrawWithFrequency", "clusterCount1", "clusterSize1", "distribOfFreqFull", "matrixOfWinning");
 
 
-        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, true);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config);
 
-        assertFalse(data.permutedVariables.isEmpty());
+        assertFalse(result.byValue.isEmpty());
+        assertFalse(result.byInstance.isEmpty());
     }
 }
