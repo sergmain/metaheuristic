@@ -19,6 +19,11 @@ package ai.metaheuristic.ai.internal_function.reduce_variables;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesEnums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
+import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
+import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -43,15 +48,47 @@ public class TestReduceVariablesUtils {
         File zip = new File(url.getFile());
         assertTrue(zip.exists());
 
-        ReduceVariablesData.Config config = new ReduceVariablesData.Config();
-        ReduceVariablesData.Reduce reduce1 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 50, "activation");
-        config.reduces = List.of(reduce1);
-        config.fixName = true;
-        config.fittingVar = "fitting";
-        config.metricsVar = "metrics";
-        config.metricsName = "sum";
-        config.reduceByValue = List.of("activation", "batchSize", "epoch", "optimizer", "RNN", "seed", "timeSteps");
-        config.reduceByInstance = List.of("binaryClusters1", "binaryDrawWithFrequency", "clusterCount1", "clusterSize1", "distribOfFreqFull", "matrixOfWinning");
+        String yaml = """
+                version: 1
+                config:
+                    fixName: true
+                    fittingVar: fitting
+                    metricsVar: metrics
+                    metricsName: sum
+                    reduceByValue:
+                        activation: activation1
+                        batchSize: batchSize1
+                        epoch: epoch1
+                        optimizer: optimizer1
+                        RNN: RNN1
+                        seed: seed1
+                        timeSteps: timeSteps1
+                    reduceByInstance:
+                        - input: binaryClusters1
+                          inputIs: isBinaryClusters1
+                          outputIs: isBinaryClusters1New1
+                        - input: binaryDrawWithFrequency
+                          inputIs: isBinaryDrawWithFrequency
+                          outputIs: isBinaryDrawWithFrequencyNew1
+                        - input: clusterCount1
+                          inputIs: isClusterCount1
+                          outputIs: isClusterCount1News1
+                        - input: clusterSize1
+                          inputIs: isClusterSize1
+                          outputIs: isClusterSize1New1
+                        - input: distribOfFreqFull
+                          inputIs: isDistribOfFreqFull
+                          outputIs: isDistribOfFreqFullNew1
+                        - input: matrixOfWinning
+                          inputIs: isMatrixOfWinning
+                          outputIs: isMatrixOfWinningNew1
+                    reduces:
+                        - policy: reduce_value
+                          reducePercent: 50
+                          variable: activation
+                """;
+
+        ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, config);
 
@@ -64,18 +101,50 @@ public class TestReduceVariablesUtils {
         File zip = new File("variable-2653425-aggregatedResult1.zip");
         assertTrue(zip.exists());
 
-        ReduceVariablesData.Config config = new ReduceVariablesData.Config();
-        ReduceVariablesData.Reduce reduce1 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 50, "activation");
-        ReduceVariablesData.Reduce reduce2 = new ReduceVariablesData.Reduce(ReduceVariablesEnums.Policy.reduce_value, 35, "optimizer");
-        config.reduces = List.of(reduce1, reduce2);
+        String yaml = """
+                version: 1
+                config:
+                    fixName: true
+                    fittingVar: fitting
+                    metricsVar: metrics
+                    metricsName: sum
+                    reduceByValue:
+                        activation: activation1
+                        batchSize: batchSize1
+                        epoch: epoch1
+                        optimizer: optimizer1
+                        RNN: RNN1
+                        seed: seed1
+                        timeSteps: timeSteps1
+                    reduceByInstance:
+                        - input: binaryClusters1
+                          inputIs: isBinaryClusters1
+                          outputIs: isBinaryClusters1New1
+                        - input: binaryDrawWithFrequency
+                          inputIs: isBinaryDrawWithFrequency
+                          outputIs: isBinaryDrawWithFrequencyNew1
+                        - input: clusterCount1
+                          inputIs: isClusterCount1
+                          outputIs: isClusterCount1News1
+                        - input: clusterSize1
+                          inputIs: isClusterSize1
+                          outputIs: isClusterSize1New1
+                        - input: distribOfFreqFull
+                          inputIs: isDistribOfFreqFull
+                          outputIs: isDistribOfFreqFullNew1
+                        - input: matrixOfWinning
+                          inputIs: isMatrixOfWinning
+                          outputIs: isMatrixOfWinningNew1
+                    reduces:
+                        - policy: reduce_value
+                          reducePercent: 50
+                          variable: activation
+                        - policy: reduce_value
+                          reducePercent: 35
+                          variable: optimizer
+                """;
 
-        config.fixName = true;
-        config.fittingVar = "fitting";
-        config.metricsVar = "metrics";
-        config.metricsName = "sum";
-        config.reduceByValue = List.of("activation", "batchSize", "epoch", "optimizer", "RNN", "seed", "timeSteps");
-        config.reduceByInstance = List.of("binaryClusters1", "binaryDrawWithFrequency", "clusterCount1", "clusterSize1", "distribOfFreqFull", "matrixOfWinning");
-
+        ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config);
 

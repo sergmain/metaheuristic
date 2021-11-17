@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -45,7 +46,7 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
  */
 public class ReduceVariablesUtils {
 
-    public static ReduceVariablesData.ReduceVariablesResult  reduceVariables(File zipFile, ReduceVariablesData.Config config) {
+    public static ReduceVariablesData.ReduceVariablesResult  reduceVariables(File zipFile, ReduceVariablesConfigParamsYaml config) {
 
         ReduceVariablesData.VariablesData data = loadData(zipFile, config);
 
@@ -86,7 +87,7 @@ public class ReduceVariablesUtils {
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
 
             String key = entry.getKey();
-            if (!config.reduceByValue.contains(key)) {
+            if (!config.config.reduceByValue.containsKey(key)) {
                 continue;
             }
 
@@ -95,7 +96,7 @@ public class ReduceVariablesUtils {
                 values.add(Pair.of(en.getKey(), en.getValue().getRight().get()));
             }
 
-            ReduceVariablesData.Reduce reduce = config.reduces.stream().filter(o->o.variable.equals(key)).findFirst().orElse(null);
+            ReduceVariablesConfigParamsYaml.Reduce reduce = config.config.reduces.stream().filter(o->o.variable.equals(key)).findFirst().orElse(null);
 
             long skip = 0;
             if (reduce!=null) {
@@ -112,7 +113,7 @@ public class ReduceVariablesUtils {
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(File zipFile, ReduceVariablesData.Config config) {
+    public static ReduceVariablesData.VariablesData loadData(File zipFile, ReduceVariablesConfigParamsYaml config) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -167,13 +168,13 @@ public class ReduceVariablesUtils {
                             .filter(o->o.get(fileName)!=null)
                             .findFirst()
                             .map(o->o.get(fileName))
-                            .orElse( fixVarName(fileName, config.fixName) );
+                            .orElse( fixVarName(fileName, config.config.fixName) );
 
-                    if (varName.equals(config.fittingVar)) {
+                    if (varName.equals(config.config.fittingVar)) {
                         FittingYaml fittingYaml = FittingYamlUtils.BASE_YAML_UTILS.to(content);
                         fitting = fittingYaml.fitting;
                     }
-                    else if (varName.equals(config.metricsVar)) {
+                    else if (varName.equals(config.config.metricsVar)) {
                         metricValues = MetricsUtils.getMetricValues(content);
                     }
                     else {

@@ -36,26 +36,6 @@ import java.util.Map;
  */
 public class ReduceVariablesData {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Reduce {
-        public ReduceVariablesEnums.Policy policy;
-        public int reducePercent;
-        public String variable;
-    }
-
-    public static class Config {
-        public List<Reduce> reduces;
-
-        public boolean fixName;
-        public String fittingVar;
-        public String metricsVar;
-        public String metricsName;
-        public List<String> reduceByValue;
-        public List<String> reduceByInstance;
-    }
-
     public static class PermutedVariables {
         public final Map<String, String> values = new HashMap<>();
         @Nullable
