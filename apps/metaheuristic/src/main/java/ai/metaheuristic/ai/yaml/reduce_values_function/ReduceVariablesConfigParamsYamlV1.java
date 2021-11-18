@@ -22,6 +22,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +49,14 @@ public class ReduceVariablesConfigParamsYamlV1 implements BaseParams {
 
     @Data
     @NoArgsConstructor
+    public static class ByInstanceV1 {
+        public String input;
+        public String inputIs;
+        public String outputIs;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ConfigV1 {
         public List<ReduceV1> reduces;
 
@@ -54,8 +64,8 @@ public class ReduceVariablesConfigParamsYamlV1 implements BaseParams {
         public String fittingVar;
         public String metricsVar;
         public String metricsName;
-        public Map<String, String> reduceByValue;
-        public Map<String, String> reduceByInstance;
+        public final Map<String, String> reduceByValue = new HashMap<>();
+        public final List<ByInstanceV1> reduceByInstance = new ArrayList<>();
     }
 
     public ConfigV1 config;

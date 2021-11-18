@@ -23,6 +23,8 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.stream.Collectors;
+
 /**
  * @author Serge
  * Date: 6/17/2019
@@ -60,9 +62,17 @@ public class ReduceVariablesConfigParamsYamlUtilsV1
         cfg.fittingVar = v1.fittingVar;
         cfg.metricsVar = v1.metricsVar;
         cfg.metricsName = v1.metricsName;
-        cfg.reduceByValue.putAll(v1.reduceByValue);
-        cfg.reduceByInstance.putAll(v1.reduceByInstance);
+        if (v1.reduceByValue!=null) {
+            cfg.reduceByValue.putAll(v1.reduceByValue);
+        }
+        if (v1.reduceByInstance!=null) {
+            v1.reduceByInstance.stream().map(ReduceVariablesConfigParamsYamlUtilsV1::toByInstance).collect(Collectors.toCollection(()->cfg.reduceByInstance));
+        }
         return cfg;
+    }
+
+    private static ReduceVariablesConfigParamsYaml.ByInstance toByInstance(ReduceVariablesConfigParamsYamlV1.ByInstanceV1 v1) {
+        return new ReduceVariablesConfigParamsYaml.ByInstance(v1.input, v1.inputIs, v1.outputIs);
     }
 
     @NonNull

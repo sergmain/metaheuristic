@@ -36,6 +36,10 @@ import java.util.Map;
  */
 public class ReduceVariablesData {
 
+    public static class Request {
+        public final Map<String, Boolean> nullifiedVars = new HashMap<>();
+    }
+
     public static class PermutedVariables {
         public final Map<String, String> values = new HashMap<>();
         @Nullable

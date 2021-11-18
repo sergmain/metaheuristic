@@ -17,19 +17,14 @@
 package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
-import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesEnums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -125,7 +120,7 @@ public class TestReduceVariablesUtils {
                           outputIs: isBinaryDrawWithFrequencyNew1
                         - input: clusterCount1
                           inputIs: isClusterCount1
-                          outputIs: isClusterCount1News1
+                          outputIs: isClusterCount1New1
                         - input: clusterSize1
                           inputIs: isClusterSize1
                           outputIs: isClusterSize1New1
@@ -145,10 +140,28 @@ public class TestReduceVariablesUtils {
                 """;
 
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        ReduceVariablesData.Request r = new ReduceVariablesData.Request();
+        r.nullifiedVars.putAll(Map.of(
+                "isBinaryClusters1", true,
+                "isBinaryDrawWithFrequency", true,
+                "isClusterCount1", true,
+                "isClusterSize1", true,
+                "isDistribOfFreqFull", true,
+                "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config, r);
 
         assertFalse(result.byValue.isEmpty());
+        assertFalse(result.byInstance.isEmpty());
+        assertEquals(6, result.byInstance.size());
+
+        assertTrue(result.byInstance.get("isBinaryClusters1New1"));
+        assertTrue(result.byInstance.get("isBinaryDrawWithFrequencyNew1"));
+        assertTrue(result.byInstance.get("isClusterCount1New1"));
+        assertTrue(result.byInstance.get("isClusterSize1New1"));
+        assertTrue(result.byInstance.get("isDistribOfFreqFullNew1"));
+        assertTrue(result.byInstance.get("isMatrixOfWinningNew1"));
+
 //        assertFalse(result.byInstance.isEmpty());
 
         for (Map.Entry<String, String> entry : result.byValue.entrySet()) {

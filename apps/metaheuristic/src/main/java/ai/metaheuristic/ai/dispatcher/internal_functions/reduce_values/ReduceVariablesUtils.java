@@ -46,7 +46,8 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
  */
 public class ReduceVariablesUtils {
 
-    public static ReduceVariablesData.ReduceVariablesResult  reduceVariables(File zipFile, ReduceVariablesConfigParamsYaml config) {
+    public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
+            File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
 
         ReduceVariablesData.VariablesData data = loadData(zipFile, config);
 
@@ -82,7 +83,7 @@ public class ReduceVariablesUtils {
                 System.out.printf("\t%-15s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
             }
         }
-
+        config.config.reduceByInstance.forEach(byInstance -> result.byInstance.put(byInstance.outputIs, request.nullifiedVars.get(byInstance.inputIs)));
 
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
 
@@ -120,7 +121,7 @@ public class ReduceVariablesUtils {
             throw new RuntimeException("Can't create temp dir in metaheuristic-temp dir");
         }
         File zipDir = new File(tempDir, "zip");
-        ZipUtils.unzipFolder(zipFile, zipDir);
+        ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
 
@@ -128,7 +129,7 @@ public class ReduceVariablesUtils {
         for (File f : files) {
             File tmp = DirUtils.createTempDir(tempDir, "load-data");
             File zipDataDir = new File(tmp, "zip");
-            ZipUtils.unzipFolder(f, zipDataDir);
+            ZipUtils.unzipFolder(f, zipDataDir, false, Collections.emptyList(), false);
 
             File[] top = zipDataDir.listFiles(File::isDirectory);
             if (top==null || top.length==0) {

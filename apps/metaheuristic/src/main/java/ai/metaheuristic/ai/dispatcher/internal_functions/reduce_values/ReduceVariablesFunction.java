@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -87,13 +87,14 @@ public class ReduceVariablesFunction implements InternalFunction {
         TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(0);
 
         ReduceVariablesConfigParamsYaml config = initConfig(taskParamsYaml);
+        ReduceVariablesData.Request request = initRequestData(simpleExecContext.execContextId, taskContextId, config);
 
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         File zipFile = new File(tempDir, "zip.zip");
         variableService.storeToFile(input.id, zipFile);
 
-        ReduceVariablesUtils.reduceVariables(zipFile, config);
+        ReduceVariablesUtils.reduceVariables(zipFile, config, request);
 
 
 /*
@@ -120,13 +121,32 @@ public class ReduceVariablesFunction implements InternalFunction {
     private static ReduceVariablesConfigParamsYaml initConfig(TaskParamsYaml taskParamsYaml) {
         String yaml = MetaUtils.getValue(taskParamsYaml.task.metas, "config");
         if (S.b(yaml)) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                            "#961.120 Meta 'config' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
+                            "#961.120 Meta 'config' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
 
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         return config;
+    }
+
+    public ReduceVariablesData.Request initRequestData(Long execContextId, String taskContextId, ReduceVariablesConfigParamsYaml config) {
+        ReduceVariablesData.Request request = new ReduceVariablesData.Request();
+
+        for (ReduceVariablesConfigParamsYaml.ByInstance byInstance : config.config.reduceByInstance) {
+            SimpleVariable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
+            if (sv==null) {
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
+                                "#961.200 Input variable "+byInstance.inputIs+" wasn't found");
+            }
+            String content = variableService.getVariableDataAsString(sv.id);
+            if (S.b(content)) {
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
+                        "#961.240 Input variable "+byInstance.inputIs+" is empty");
+            }
+            request.nullifiedVars.put(sv.variable, Boolean.valueOf(content));
+        }
+
+        return request;
     }
 
     @Nullable

@@ -215,15 +215,21 @@ public class ZipUtils {
      *
      */
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping) {
+        return unzipFolder(archiveFile, zipDestinationFolder, useMapping, excludeFromMapping, true);
+    }
 
-        log.debug("Start unzipping archive file");
-        log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
-        log.debug("'\t\texists: {}", archiveFile.exists());
-        log.debug("'\t\tis writable: {}", archiveFile.canWrite());
-        log.debug("'\t\tis readable: {}", archiveFile.canRead());
-        log.debug("'\ttarget dir: {}", zipDestinationFolder.getAbsolutePath());
-        log.debug("'\t\texists: {}", zipDestinationFolder.exists());
-        log.debug("'\t\tis writable: {}", zipDestinationFolder.canWrite());
+    public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping, boolean debug) {
+
+        if (debug) {
+            log.debug("Start unzipping archive file");
+            log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
+            log.debug("'\t\texists: {}", archiveFile.exists());
+            log.debug("'\t\tis writable: {}", archiveFile.canWrite());
+            log.debug("'\t\tis readable: {}", archiveFile.canRead());
+            log.debug("'\ttarget dir: {}", zipDestinationFolder.getAbsolutePath());
+            log.debug("'\t\texists: {}", zipDestinationFolder.exists());
+            log.debug("'\t\tis writable: {}", zipDestinationFolder.canWrite());
+        }
 
         try (MyZipFile zipFile = new MyZipFile(archiveFile)) {
 
@@ -232,13 +238,14 @@ public class ZipUtils {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
-                if (zipEntry.isDirectory()) {
-                    log.debug("'\t\tzip entry: {} is directory", zipEntry.getName());
+                if (debug) {
+                    if (zipEntry.isDirectory()) {
+                        log.debug("'\t\tzip entry: {} is directory", zipEntry.getName());
+                    }
+                    else {
+                        log.debug("'\t\tzip entry: {} is file, size: {}", zipEntry.getName(), zipEntry.getSize());
+                    }
                 }
-                else {
-                    log.debug("'\t\tzip entry: {} is file, size: {}", zipEntry.getName(), zipEntry.getSize());
-                }
-
 
                 String name = zipEntry.getName();
                 if (zipEntry.isDirectory()) {
@@ -247,7 +254,9 @@ public class ZipUtils {
                     }
 
                     File newDir = new File(zipDestinationFolder, name);
-                    log.debug("'\t\t\tcreate dirs in {}", newDir.getAbsolutePath());
+                    if (debug) {
+                        log.debug("'\t\t\tcreate dirs in {}", newDir.getAbsolutePath());
+                    }
                     Files.createDirectories(newDir.toPath());
                 }
                 else {
@@ -275,7 +284,9 @@ public class ZipUtils {
                     if (!destinationFile.getParentFile().exists()) {
                         Files.createDirectories(destinationFile.getParentFile().toPath());
                     }
-                    log.debug("'\t\t\tcopy content of zip entry to file {}", destinationFile.getAbsolutePath());
+                    if (debug) {
+                        log.debug("'\t\t\tcopy content of zip entry to file {}", destinationFile.getAbsolutePath());
+                    }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
                         FileUtils.copyInputStreamToFile(inputStream, destinationFile);
                     }
