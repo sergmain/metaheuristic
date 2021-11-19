@@ -51,38 +51,34 @@ public class ReduceVariablesUtils {
 
         ReduceVariablesData.VariablesData data = loadData(zipFile, config);
 
-        ReduceVariablesData.ReduceVariablesResult result = new ReduceVariablesData.ReduceVariablesResult();
-
-        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = new HashMap<>();
-
-        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
-            for (Map.Entry<String, String> entry : permutedVariable.values.entrySet()) {
-
-                for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
-
-                    freqValues
-                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
-                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
-                            .getLeft().incrementAndGet();
-
-                    if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
-                        continue;
-                    }
-
-                    freqValues
-                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
-                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
-                            .getRight().incrementAndGet();
-                }
-
-            }
-        }
+        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data);
+        System.out.println("\n=====================");
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
             System.out.println(entry.getKey());
             for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : entry.getValue().entrySet()) {
                 System.out.printf("\t%-15s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
             }
         }
+
+        Map<String, Pair<AtomicInteger, AtomicInteger>> freqVariables = getFreqVariables(config, data);
+        System.out.println("\n=====================");
+        for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : freqVariables.entrySet()) {
+            System.out.printf("\t%-40s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
+        }
+/*
+        isBinaryDrawWithFrequency   7938    60
+        isDistribOfFreqFull         7938    28
+        isClusterSize1              7938   126
+        isClusterCount1             7938   128
+        isBinaryClusters1           7938   147
+        isMatrixOfWinning           7938   146
+
+        predicted                   7938     0
+        fittingNormal               231     0
+        fittingUnderfitting         7707     0
+*/
+
+        ReduceVariablesData.ReduceVariablesResult result = new ReduceVariablesData.ReduceVariablesResult();
         config.config.reduceByInstance.forEach(byInstance -> result.byInstance.put(byInstance.outputIs, request.nullifiedVars.get(byInstance.inputIs)));
 
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
@@ -111,6 +107,61 @@ public class ReduceVariablesUtils {
         }
 
         return result;
+    }
+
+    private static Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> getFreqValues(ReduceVariablesData.VariablesData data) {
+        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = new HashMap<>();
+
+        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
+            for (Map.Entry<String, String> entry : permutedVariable.values.entrySet()) {
+
+                for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
+
+                    freqValues
+                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
+                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
+                            .getLeft().incrementAndGet();
+
+                    if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                        continue;
+                    }
+
+                    freqValues
+                            .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
+                            .computeIfAbsent(entry.getValue(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
+                            .getRight().incrementAndGet();
+                }
+
+            }
+        }
+        return freqValues;
+    }
+
+    private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data) {
+        Map<String, Pair<AtomicInteger, AtomicInteger>> freqValues = new HashMap<>();
+
+        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
+            for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
+                for (Map.Entry<String, String> varValue : subPermutedVariable.values.entrySet()) {
+                    if (config.config.reduceByInstance.stream().noneMatch(o->o.inputIs.equals(varValue.getKey()))) {
+                        continue;
+                    }
+                    freqValues
+                            .computeIfAbsent(varValue.getKey(), (o)->Pair.of(new AtomicInteger(), new AtomicInteger()))
+                            .getLeft().incrementAndGet();
+
+                    if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                        continue;
+                    }
+                    if ("true".equals(varValue.getValue())) {
+                        freqValues
+                                .computeIfAbsent(varValue.getKey(), (o) -> Pair.of(new AtomicInteger(), new AtomicInteger()))
+                                .getRight().incrementAndGet();
+                    }
+                }
+            }
+        }
+        return freqValues;
     }
 
     @SneakyThrows

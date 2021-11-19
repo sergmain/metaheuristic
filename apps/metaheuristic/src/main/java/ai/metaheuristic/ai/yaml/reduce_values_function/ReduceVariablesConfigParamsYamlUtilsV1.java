@@ -62,10 +62,8 @@ public class ReduceVariablesConfigParamsYamlUtilsV1
         cfg.fittingVar = v1.fittingVar;
         cfg.metricsVar = v1.metricsVar;
         cfg.metricsName = v1.metricsName;
-        if (v1.reduceByValue!=null) {
-            cfg.reduceByValue.putAll(v1.reduceByValue);
-        }
-        if (v1.reduceByInstance!=null) {
+        cfg.reduceByValue.putAll(v1.reduceByValue);
+        if (!v1.reduceByInstance.isEmpty()) {
             v1.reduceByInstance.stream().map(ReduceVariablesConfigParamsYamlUtilsV1::toByInstance).collect(Collectors.toCollection(()->cfg.reduceByInstance));
         }
         return cfg;
