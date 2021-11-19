@@ -164,6 +164,7 @@ public class TestReduceVariablesUtils {
 
 //        assertFalse(result.byInstance.isEmpty());
 
+        System.out.println("\n=====================");
         for (Map.Entry<String, String> entry : result.byValue.entrySet()) {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }

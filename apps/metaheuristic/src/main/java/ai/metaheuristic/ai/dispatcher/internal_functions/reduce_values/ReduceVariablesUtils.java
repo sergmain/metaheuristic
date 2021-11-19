@@ -65,18 +65,6 @@ public class ReduceVariablesUtils {
         for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : freqVariables.entrySet()) {
             System.out.printf("\t%-40s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
         }
-/*
-        isBinaryDrawWithFrequency   7938    60
-        isDistribOfFreqFull         7938    28
-        isClusterSize1              7938   126
-        isClusterCount1             7938   128
-        isBinaryClusters1           7938   147
-        isMatrixOfWinning           7938   146
-
-        predicted                   7938     0
-        fittingNormal               231     0
-        fittingUnderfitting         7707     0
-*/
 
         ReduceVariablesData.ReduceVariablesResult result = new ReduceVariablesData.ReduceVariablesResult();
         config.config.reduceByInstance.forEach(byInstance -> result.byInstance.put(byInstance.outputIs, request.nullifiedVars.get(byInstance.inputIs)));
