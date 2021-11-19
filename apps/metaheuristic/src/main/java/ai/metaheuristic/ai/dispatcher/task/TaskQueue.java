@@ -143,14 +143,14 @@ public class TaskQueue {
             }
             if (priority!= task.priority) {
                 throw new IllegalStateException(
-                        S.f("Different priority, group priority: %d, task priority %d",
+                        S.f("#029.040 Different priority, group priority: %d, task priority %d",
                                 priority, task.priority));
             }
             if (execContextId!=null && !execContextId.equals(task.execContextId)) {
-                throw new IllegalStateException("wrong execContextId");
+                throw new IllegalStateException("#029.080 wrong execContextId");
             }
             if (allocated==groupSize) {
-                throw new IllegalStateException("already allocated");
+                throw new IllegalStateException("#029.120 already allocated");
             }
             if (execContextId==null) {
                 execContextId = task.execContextId;
@@ -185,7 +185,7 @@ public class TaskQueue {
         public boolean isEmpty() {
             boolean noneTasks = noneTasks();
             if (!noneTasks && execContextId==null) {
-                log.error("There is a task but execContextId is null. Shouldn't happened.");
+                log.error("#029.160 There is a task but execContextId is null. Shouldn't happened.");
             }
             return execContextId==null || noneTasks;
         }
@@ -330,7 +330,7 @@ public class TaskQueue {
      */
     public boolean setTaskExecState(Long execContextId, Long taskId, final EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
-            log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
+            log.debug("#029.200 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
         boolean ok = false;
         for (TaskGroup taskGroup : taskGroups) {
@@ -348,18 +348,18 @@ public class TaskQueue {
                     continue;
                 }
                 if (state==EnumsApi.TaskExecState.OK && !task.assigned) {
-                    log.warn("#029.021 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
+                    log.warn("#029.240 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
                     // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it as OK
                     startTaskProcessing(task.queuedTask.execContextId, task.queuedTask.taskId);
                 }
                 // state from CHECK_CASHE to NONE is being changing without assigning
                 else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
-                    log.warn("#029.022 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
+                    log.warn("#029.260 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
                     try {
                         throw new RuntimeException("for stacktrace");
                     }
                     catch (RuntimeException e) {
-                        log.warn("#029.023 Stacktrace", e);
+                        log.warn("#029.280 Stacktrace", e);
                     }
                     continue;
                 }
@@ -371,12 +371,12 @@ public class TaskQueue {
                 ok = true;
                 break;
             }
-            log.debug("#029.025 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
+            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
             if (ok) {
                 return groupFinished(taskGroup);
             }
         }
-        log.debug("#029.027 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
+        log.debug("#029.320 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
         return false;
     }
 
@@ -489,10 +489,13 @@ public class TaskQueue {
     }
 
     public void addNewInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        if (taskParamYaml.task.context!= EnumsApi.FunctionExecContext.internal) {
+            throw new IllegalStateException("#029.360 (taskParamYaml.task.context!= EnumsApi.FunctionExecContext.internal)");
+        }
         QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, TaskQueue.MAX_PRIORITY + 1);
         TaskGroup taskGroup = addNewTask(task, false);
         if (taskGroup.assignTask(taskId)==null) {
-            throw new IllegalStateException("(taskGroup.assignTask(taskId)==null)");
+            throw new IllegalStateException("#029.400 (taskGroup.assignTask(taskId)==null)");
         }
     }
 

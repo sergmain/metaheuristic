@@ -106,7 +106,13 @@ public class TaskProviderTopLevelService {
                 eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                 return;
             }
-            registerTaskInternal(ec, task, taskParamYaml);
+            if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
+                registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml);
+                eventPublisher.publishEvent(new TaskWithInternalContextEvent(ec.sourceCodeId, execContextId, taskId));
+            }
+            else {
+                registerTaskInternal(ec, task, taskParamYaml);
+            }
         });
 
     }
@@ -204,12 +210,14 @@ public class TaskProviderTopLevelService {
     }
 
     public static void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
-        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
-            if (TaskQueueService.alreadyRegistered(taskId)) {
-                return;
-            }
-            TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
-        });
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml));
+    }
+
+    private static void registerInternalTaskWithoutSync(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        if (TaskQueueService.alreadyRegistered(taskId)) {
+            return;
+        }
+        TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
     }
 
     @Async
