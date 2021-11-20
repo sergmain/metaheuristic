@@ -72,6 +72,7 @@ public class TaskProviderTransactionalService {
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -155,8 +156,9 @@ public class TaskProviderTransactionalService {
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.error("#317.040 Task #{} with function '{}' was already processed with status {}",
+                    log.error("#317.040 Task #{} with function '{}' isn't in state NONE, actual: {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
                     continue;
                 }
 
@@ -274,12 +276,10 @@ public class TaskProviderTransactionalService {
             throw new IllegalStateException("(quota==null)");
         }
         final QuotasData.ActualQuota finalQuota = quota;
-        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(()->{
-            currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount));
-        }));
-        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent (()->{
-            finalResultTask.assigned = false;
-        }));
+        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(
+                ()-> currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount))));
+        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent(
+                ()-> finalResultTask.assigned = false));
 
         return new TaskData.AssignedTask(t, resultTask.queuedTask.tag, quota.amount);
     }

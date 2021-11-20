@@ -90,8 +90,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 }
 //                log.info("task: {}, execState: {}", taskId, EnumsApi.TaskExecState.from(task.execState));
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
-                    taskCheckCachingTopLevelService.putToQueue(event);
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
                     // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
                     continue;
                 }
