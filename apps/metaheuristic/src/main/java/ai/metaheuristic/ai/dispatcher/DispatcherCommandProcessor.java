@@ -52,11 +52,18 @@ public class DispatcherCommandProcessor {
 
     public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas) {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
-            throw new IllegalStateException("(scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
+            throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
+        log.debug("#997.080 start checkForMissingOutputResources()");
         response.resendTaskOutputs = checkForMissingOutputResources(request);
+
+        log.debug("#997.120 start processResendTaskOutputResourceResult()");
         processResendTaskOutputResourceResult(request);
+
+        log.debug("#997.160 start processReportTaskProcessingResult()");
         response.reportResultDelivering = processReportTaskProcessingResult(request);
+
+        log.debug("#997.200 start processRequestTask()");
         response.assignedTask = processRequestTask(request, quotas);
     }
 
@@ -77,7 +84,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         if (request.processorCommContext==null) {
-            log.warn("#997.010 (request.processorCommContext==null)");
+            log.warn("#997.080 (request.processorCommContext==null)");
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {

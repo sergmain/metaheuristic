@@ -64,7 +64,7 @@ public class KeepAliveCommandProcessor  {
 
     public void processProcessorTaskStatus(KeepAliveRequestParamYaml.ProcessorRequest processorRequest) {
         if (processorRequest.processorCommContext==null) {
-            log.warn("#997.020 (request.processorCommContext==null)");
+            log.warn("#998.040 (request.processorCommContext==null)");
             return;
         }
         processorTopLevelService.setTaskIds(processorRequest.processorCommContext.processorId, processorRequest.taskIds);
@@ -85,7 +85,7 @@ public class KeepAliveCommandProcessor  {
     private static void checkProcessorId(@Nullable KeepAliveRequestParamYaml.ProcessorCommContext commContext) {
         if (commContext ==null || commContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#997.070 processorId is null");
+            throw new IllegalStateException("#998.200 processorId is null");
         }
     }
 
