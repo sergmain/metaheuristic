@@ -210,10 +210,10 @@ public class ExecContextService {
     }
 
     @Transactional
-    public Void deleteExecContext(Long execContextId) {
+    public void deleteExecContext(Long execContextId) {
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
-            return null;
+            return;
         }
         eventPublisherService.publishProcessDeletedExecContextTxEvent(new ProcessDeletedExecContextTxEvent(
                 execContextId, ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId));
@@ -226,7 +226,6 @@ public class ExecContextService {
         eventPublisherService.publishTaskQueueCleanByExecContextIdTxEvent(new TaskQueueCleanByExecContextIdTxEvent(execContextId));
         execContextCache.deleteById(execContextId);
         // tasks and variables will be deleted in another thread launched by Scheduler
-        return null;
     }
 
     @Transactional(readOnly = true)

@@ -105,7 +105,11 @@ public class TaskWithInternalContextTopLevelService {
                 VariableUtils.VariableHolder variableHolder = holders.get(0);
                 if (variableHolder.variable == null) {
                     throw new InternalFunctionException(variable_not_found,
-                                    "#992.120 local variable with name: " + execContextOutput.name + " wasn't found");
+                                    "#992.120 only local variable is supported right now. variable with name: " + execContextOutput.name + " wasn't found in local context");
+                }
+                if (!variableHolder.variable.inited) {
+                    throw new InternalFunctionException(variable_not_found,
+                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited");
                 }
 
                 File tempFile = File.createTempFile("output-", ".bin", tempDir);

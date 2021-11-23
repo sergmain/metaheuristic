@@ -17,8 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.event.*;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,7 +59,7 @@ public class TaskTopLevelService {
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId,
-                        S.f("#303.390 Task #%s was finished while resending variable #%s with status %s", taskId, variableId, status)));
+                        "#303.390 Task #"+taskId+" was finished while resending variable #"+variableId+" with status " + status));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:

@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -105,6 +104,10 @@ public class TaskFinishingService {
                 log.warn("#319.140 task #{} wasn't found", taskId);
                 return null;
             }
+            if (task.execState==EnumsApi.TaskExecState.ERROR.value) {
+                log.warn("#319.145 task #{} was already finished", taskId);
+                return null;
+            }
             String taskContextId = null;
             try {
                 final TaskParamsYaml taskParamYaml;
@@ -115,26 +118,14 @@ public class TaskFinishingService {
                 log.error(es, e.getMessage());
             }
 
-            return finishWithError(task, console, -10001);
+            finishTaskAsError(task, -10001, console);
+
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         } catch (Throwable th) {
             log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#319.170 Error", th);
             ExceptionUtils.rethrow(th);
         }
-        return null;
-    }
-
-    public Void finishWithError(TaskImpl task, String console) {
-        return finishWithError(task, console, -10002);
-    }
-
-    public Void finishWithError(TaskImpl task, String console, int exitCode) {
-        TxUtils.checkTxExists();
-
-        TaskSyncService.checkWriteLockPresent(task.id);
-
-        finishTaskAsError(task, exitCode, console);
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         return null;
     }
 
@@ -154,7 +145,6 @@ public class TaskFinishingService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
         task.setResultReceived(true);
-
         task = taskService.save(task);
 
         taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);

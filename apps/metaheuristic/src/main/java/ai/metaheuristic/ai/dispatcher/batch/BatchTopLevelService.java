@@ -42,6 +42,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.AllArgsConstructor;
@@ -269,11 +270,13 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
+        File tempDir = DirUtils.createMhTempDir("batch-processing-");
+        if (tempDir==null) {
+            return new BatchData.UploadingStatus("#981.122 Can't create temporaty directory. Batch file can't be processed");
+        }
         File tempFile;
         try {
-            // TODO 2021.03.13 add a support of
-            //  CleanerInfo resource = new CleanerInfo();
-            tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin");
+            tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin", tempDir);
             file.transferTo(tempFile);
             if (file.getSize()!=tempFile.length()) {
                 return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
@@ -327,7 +330,12 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus(es);
         }
         finally {
-            FileUtils.deleteQuietly(tempFile);
+            try {
+                FileUtils.deleteDirectory(tempDir);
+            }
+            catch (IOException e) {
+                log.error("#981.265 can't delete temporary dir " + tempDir.getAbsolutePath());
+            }
         }
     }
 
@@ -335,7 +343,7 @@ public class BatchTopLevelService {
         try {
             return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
         } catch (Throwable th) {
-            final String es = "Error while deleting batch #" + batchId;
+            final String es = "#981.270 Error while deleting batch #" + batchId;
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

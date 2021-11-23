@@ -56,7 +56,8 @@ public class ExecSourceCodeTopLevelService {
                                 taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
                                 taskFinishingService.finishAsOk(longRunningExecContext.taskId);
                             } catch (Throwable th) {
-                                String es = S.f("#035.040 error while finishing a long-running task with OK, error: " + th.getMessage());
+                                String es = S.f("#035.040 error while finishing a long-running task #%s in execContext #%s with OK, error: %s",
+                                        longRunningExecContext.taskId, longRunningExecContext.execContextId, th.getMessage());
                                 log.error(es, th);
                                 taskFinishingService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
                             }

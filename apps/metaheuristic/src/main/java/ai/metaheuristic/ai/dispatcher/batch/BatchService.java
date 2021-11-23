@@ -190,7 +190,7 @@ public class BatchService {
         changeStateToPreparing(b);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = ExecContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
