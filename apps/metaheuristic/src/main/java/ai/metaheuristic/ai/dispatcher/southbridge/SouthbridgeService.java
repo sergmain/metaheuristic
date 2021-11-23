@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -242,7 +243,7 @@ public class SouthbridgeService {
                 keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
             }
             keepAliveCommandProcessor.initDispatcherInfo(resp);
-
+            resp.hasTasks = !TaskQueueService.isQueueEmptyWithSync();
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", req);
             log.error("#444.230 Error", th);

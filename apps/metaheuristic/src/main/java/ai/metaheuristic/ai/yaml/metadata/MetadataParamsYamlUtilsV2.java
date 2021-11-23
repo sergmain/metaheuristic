@@ -72,6 +72,7 @@ public class MetadataParamsYamlUtilsV2
             trg.quotas.put(entry.getKey(), q);
             entry.getValue().quotas.stream().map(MetadataParamsYamlUtilsV2::toQuota).collect(Collectors.toCollection(()->q.quotas));
         }
+        trg.hasTasks.putAll(src.hasTasks);
 
         trg.checkIntegrity();
         return trg;

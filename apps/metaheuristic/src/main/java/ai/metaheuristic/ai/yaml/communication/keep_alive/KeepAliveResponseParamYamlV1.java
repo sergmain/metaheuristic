@@ -136,6 +136,7 @@ public class KeepAliveResponseParamYamlV1 implements BaseParams {
     public ExecContextStatusV1 execContextStatus;
     public DispatcherInfoV1 dispatcherInfo;
 
+    public boolean hasTasks;
     public boolean success = true;
     public String msg;
 
