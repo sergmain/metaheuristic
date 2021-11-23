@@ -91,11 +91,6 @@ public class TaskWithInternalContextEventService {
     // number of active executers with different execContextId
     private static final int MAX_NUMBER_EXECUTORS = 2;
 
-    public static class QueueWithExecutor {
-        public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
-        public final LinkedList<TaskWithInternalContextEvent> queue = new LinkedList<>();
-    }
-
     public static class ExecutorForExecContext {
         public Long execContextId;
         public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
@@ -158,6 +153,7 @@ public class TaskWithInternalContextEventService {
                     continue;
                 }
                 if (POOL_OF_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_OF_EXECUTORS[i].executor.getActiveCount()==0) {
+                    POOL_OF_EXECUTORS[i].executor.shutdown();
                     POOL_OF_EXECUTORS[i] = null;
                 }
             }
