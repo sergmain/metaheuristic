@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +26,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -43,27 +43,36 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RequiredArgsConstructor
 public class TaskCheckCachingTopLevelService {
 
-    private final ExecContextService execContextService;
     private final TaskCheckCachingService taskCheckCachingService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
+    private final Set<Long> queueIds = new HashSet<>();
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
-            if (queue.contains(event)) {
+            if (queueIds.contains(event.taskId)) {
                 return;
             }
             queue.add(event);
+            queueIds.add(event.taskId);
         }
     }
 
     @Nullable
     private RegisterTaskForCheckCachingEvent pullFromQueue() {
         synchronized (queue) {
-            return queue.pollFirst();
+            final RegisterTaskForCheckCachingEvent task = queue.pollFirst();
+            if (task==null) {
+                if (!queueIds.isEmpty()) {
+                    throw new IllegalStateException("(!queueIds.isEmpty())");
+                }
+                return null;
+            }
+            queueIds.remove(task.taskId);
+            return task;
         }
     }
 
@@ -88,19 +97,21 @@ public class TaskCheckCachingTopLevelService {
             return;
         }
 
+/*
         ExecContextImpl execContext = execContextService.findById(event.execContextId);
         if (execContext == null) {
             return;
         }
+*/
 
         try {
-            ExecContextSyncService.getWithSyncVoid(execContext.id,
+            ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId)));
         } catch (InvalidateCacheProcessException e) {
             log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
-                ExecContextSyncService.getWithSyncVoid(execContext.id,
+                ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncVoid(e.taskId,
                                 () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
             } catch (Throwable th) {

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -67,6 +68,7 @@ public class TaskCheckCachingService {
 
     private final Globals globals;
     private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
     private final VariableService variableService;
@@ -115,7 +117,7 @@ public class TaskCheckCachingService {
             return;
         }
 
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
             return;
