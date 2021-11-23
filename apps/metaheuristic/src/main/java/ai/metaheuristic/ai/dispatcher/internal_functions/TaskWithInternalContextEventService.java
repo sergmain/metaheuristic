@@ -108,6 +108,29 @@ public class TaskWithInternalContextEventService {
         processPoolOfExecutors(event.execContextId, this::process);
     }
 
+    public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
+        synchronized (POOL_OF_EXECUTORS) {
+            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
+                if (POOL_OF_EXECUTORS[i] == null) {
+                    continue;
+                }
+                if (POOL_OF_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_OF_EXECUTORS[i].executor.getActiveCount()==0) {
+                    POOL_OF_EXECUTORS[i].executor.shutdown();
+                    POOL_OF_EXECUTORS[i] = null;
+                }
+            }
+            final LinkedHashSet<Long> execContextIds;
+            synchronized (QUEUE) {
+                execContextIds = new LinkedHashSet<>(QUEUE.keySet());
+            }
+            for (Long id : execContextIds) {
+                if (pokeExecutor(id, taskProcessor)) {
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      *
      * @param execContextId
@@ -120,12 +143,22 @@ public class TaskWithInternalContextEventService {
                     continue;
                 }
                 if (poolExecutor.execContextId.equals(execContextId)) {
+                    return false;
+                }
+            }
+/*
+            for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
+                if (poolExecutor==null) {
+                    continue;
+                }
+                if (poolExecutor.execContextId.equals(execContextId)) {
                     if (poolExecutor.executor.getActiveCount() == 0) {
                         poolExecutor.executor.submit(() -> processTask(execContextId, taskProcessor, poolExecutor));
                     }
                     return false;
                 }
             }
+*/
             for (int i = 0; i < POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i]==null) {
                     POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
@@ -143,29 +176,6 @@ public class TaskWithInternalContextEventService {
         TaskWithInternalContextEvent e;
         while ((e = pullFromQueue(poolExecutor.execContextId)) != null) {
             taskProcessor.accept(e);
-        }
-    }
-
-    public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        synchronized (POOL_OF_EXECUTORS) {
-            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i] == null) {
-                    continue;
-                }
-                if (POOL_OF_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_OF_EXECUTORS[i].executor.getActiveCount()==0) {
-                    POOL_OF_EXECUTORS[i].executor.shutdown();
-                    POOL_OF_EXECUTORS[i] = null;
-                }
-            }
-            final LinkedHashSet<Long> ids;
-            synchronized (QUEUE) {
-                ids = new LinkedHashSet<>(QUEUE.keySet());
-            }
-            for (Long id : ids) {
-                if (pokeExecutor(id, taskProcessor)) {
-                    break;
-                }
-            }
         }
     }
 
