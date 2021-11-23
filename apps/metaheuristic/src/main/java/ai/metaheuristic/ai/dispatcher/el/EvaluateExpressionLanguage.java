@@ -30,7 +30,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
@@ -159,9 +158,7 @@ public class EvaluateExpressionLanguage {
                             try {
                                 tempDir = DirUtils.createMhTempDir("mh-evaluation-");
                                 if (tempDir == null) {
-                                    throw new InternalFunctionException(
-                                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                                    "#509.050 can't create a temporary file"));
+                                    throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
                                 }
                                 File tempFile = File.createTempFile("input-", ".bin", tempDir);
                                 if (variableHolderInput.globalVariable != null) {
@@ -169,17 +166,13 @@ public class EvaluateExpressionLanguage {
                                 } else if (variableHolderInput.variable != null) {
                                     variableService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
                                 } else {
-                                    throw new InternalFunctionException(
-                                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                                    "#509.052 both local and global variables are null"));
+                                    throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
                                 }
                                 try (InputStream is = new FileInputStream(tempFile)) {
                                     variableService.updateWithTx(is, tempFile.length(), variableHolderOutput.variable.id);
                                 }
                             } finally {
-                                if (tempDir!=null) {
-                                    FileUtils.deleteQuietly(tempDir);
-                                }
+                                DirUtils.deleteAsync(tempDir);
                             }
                         }
                         else if (intValue!=null) {
@@ -195,9 +188,7 @@ public class EvaluateExpressionLanguage {
                             }
                         }
                         else {
-                            throw new InternalFunctionException(
-                                    new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                            "#509.025 not supported type: " + newValue.getClass()));
+                            throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
                         }
                     }
                     catch (InternalFunctionException e) {
@@ -206,8 +197,7 @@ public class EvaluateExpressionLanguage {
                     catch (Throwable th) {
                         final String es = "#509.055 error " + th.getMessage();
                         log.error(es, th);
-                        throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error, es));
+                        throw new InternalFunctionException(system_error, es);
                     }
                     int i=0;
                 }
@@ -377,9 +367,8 @@ public class EvaluateExpressionLanguage {
             List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
                     execContextId, taskContextId, name);
             if (holders.size()>1) {
-                throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                                "#509.160 Too many variables with the same name at top-level context, name: "+ name));
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
+                                "#509.160 Too many variables with the same name at top-level context, name: "+ name);
             }
 
             VariableUtils.VariableHolder variableHolder = holders.get(0);

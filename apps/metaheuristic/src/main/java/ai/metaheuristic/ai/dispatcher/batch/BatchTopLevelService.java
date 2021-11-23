@@ -49,7 +49,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -274,18 +273,18 @@ public class BatchTopLevelService {
         if (tempDir==null) {
             return new BatchData.UploadingStatus("#981.122 Can't create temporaty directory. Batch file can't be processed");
         }
-        File tempFile;
         try {
-            tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin", tempDir);
-            file.transferTo(tempFile);
-            if (file.getSize()!=tempFile.length()) {
-                return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
+            File tempFile;
+            try {
+                tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin", tempDir);
+                file.transferTo(tempFile);
+                if (file.getSize()!=tempFile.length()) {
+                    return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
+                }
+            } catch (IOException e) {
+                return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
             }
-        } catch (IOException e) {
-            return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
-        }
 
-        try {
             if (ext.equals(ZIP_EXT)) {
                 List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
                 if (!errors.isEmpty()) {
@@ -330,12 +329,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus(es);
         }
         finally {
-            try {
-                FileUtils.deleteDirectory(tempDir);
-            }
-            catch (IOException e) {
-                log.error("#981.265 can't delete temporary dir " + tempDir.getAbsolutePath());
-            }
+            DirUtils.deleteAsync(tempDir);
         }
     }
 

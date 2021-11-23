@@ -43,7 +43,6 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -131,7 +130,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         final ExecContextParamsYaml execContextParamsYaml = execContextResultRest.execContext.getExecContextParamsYaml();
 
 
-        File tempDir = null;
+        File tempDir=null;
         try {
             tempDir = DirUtils.createMhTempDir("mh-exec-source-code-");
             if (tempDir == null) {
@@ -177,9 +176,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
             throw new InternalFunctionException(system_error, es);
         }
         finally {
-            if (tempDir!=null) {
-                FileUtils.deleteQuietly(tempDir);
-            }
+            DirUtils.deleteAsync(tempDir);
         }
 
         execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest);

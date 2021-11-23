@@ -35,13 +35,11 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -105,15 +103,13 @@ public class BatchSplitterFunction implements InternalFunction {
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
                 log.error(es);
-                throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
             }
 
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
             internalFunctionVariableService.storeToFile(variableHolder, dataFile);
             if (dataFile.length()==0) {
-                throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.100 Empty files aren't supported"));
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#995.100 Empty files aren't supported");
             }
 
             final File workingDir;
@@ -138,29 +134,20 @@ public class BatchSplitterFunction implements InternalFunction {
         catch(UnzipArchiveException e) {
             final String es = "#995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
             final String es = "#995.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
             final String es = "#995.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         finally {
-            try {
-                if (tempDir!=null && tempDir.exists()) {
-                    FileUtils.deleteDirectory(tempDir);
-                }
-            } catch (IOException e) {
-                log.warn("#995.180 Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
-            }
+            DirUtils.deleteAsync(tempDir);
         }
     }
 
