@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -27,7 +28,6 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -65,6 +65,7 @@ public class ExecContextReadinessService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     private final LinkedList<Long> queue = new LinkedList<>();
@@ -136,9 +137,16 @@ public class ExecContextReadinessService {
                 continue;
             }
             if (!EnumsApi.TaskExecState.isFinishedState(entry.getValue().execState)) {
-                taskProviderTopLevelService.registerTask(execContext, taskId);
-                if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
+                if (dispatcherParamsService.isLongRunning(taskId)) {
+                    if (entry.getValue().execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                        taskProviderTopLevelService.registerTask(execContext, taskId);
+                    }
+                }
+                else {
+                    taskProviderTopLevelService.registerTask(execContext, taskId);
+                    if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                        taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
+                    }
                 }
             }
         }
