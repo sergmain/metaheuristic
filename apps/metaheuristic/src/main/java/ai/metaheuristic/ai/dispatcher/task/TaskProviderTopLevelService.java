@@ -82,13 +82,8 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
-    public void registerTask(Long execContextId, Long taskId) {
+    public void registerTask(ExecContextImpl execContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
-            if (ec==null) {
-                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
-                return;
-            }
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
             }
@@ -107,14 +102,13 @@ public class TaskProviderTopLevelService {
                 return;
             }
             if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
-                registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml);
-                eventPublisher.publishEvent(new TaskWithInternalContextEvent(ec.sourceCodeId, execContextId, taskId));
+                registerInternalTaskWithoutSync(execContext.id, taskId, taskParamYaml);
+                eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContext.id, taskId));
             }
             else {
-                registerTaskInternal(ec, task, taskParamYaml);
+                registerTaskLambda(execContext, task, taskParamYaml);
             }
         });
-
     }
 
     public static void registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
@@ -122,11 +116,11 @@ public class TaskProviderTopLevelService {
             if (TaskQueueService.alreadyRegistered(task.id)) {
                 return;
             }
-            registerTaskInternal(execContext, task, taskParamYaml);
+            registerTaskLambda(execContext, task, taskParamYaml);
         });
     }
 
-    private static void registerTaskInternal(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+    private static void registerTaskLambda(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
 
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
