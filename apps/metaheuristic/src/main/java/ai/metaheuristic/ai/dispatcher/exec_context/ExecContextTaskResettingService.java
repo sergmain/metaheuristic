@@ -48,6 +48,8 @@ public class ExecContextTaskResettingService {
 
     @Transactional
     public OperationStatusRest resetTaskWithTx(Long execContextId, Long taskId) {
+        TaskSyncService.checkWriteLockNotPresent(taskId);
+
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
