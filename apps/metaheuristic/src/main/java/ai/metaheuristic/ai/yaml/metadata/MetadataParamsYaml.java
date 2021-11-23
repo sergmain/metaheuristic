@@ -86,9 +86,6 @@ public class MetadataParamsYaml implements BaseParams {
      */
     public final LinkedHashMap<String, Processor> processors = new LinkedHashMap<>();
 
-    // key is url of dispatcher
-    public final Map<String, Boolean> hasTasks = new HashMap<>();
-
     public final List<Status> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
     // key is url of dispatcher

@@ -40,8 +40,6 @@ public class ProcessorKeepAliveProcessor {
     private final CurrentExecState currentExecState;
 
     public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-        storeHasTasks(dispatcherUrl, responseParamYaml.hasTasks);
-
         for (KeepAliveResponseParamYaml.DispatcherResponse response : responseParamYaml.responses) {
 
             processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
@@ -61,10 +59,6 @@ public class ProcessorKeepAliveProcessor {
 
     private void registerFunctions(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.Functions functions) {
         metadataService.registerNewFunctionCode(dispatcherUrl, functions.infos);
-    }
-
-    private void storeHasTasks(DispatcherUrl dispatcherUrl, boolean hasTasks) {
-        metadataService.storeHasTasks(dispatcherUrl, hasTasks);
     }
 
     private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {

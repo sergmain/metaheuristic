@@ -315,19 +315,6 @@ public class MetadataService {
         }
     }
 
-    public void storeHasTasks(DispatcherUrl dispatcherUrl, boolean hasTasks) {
-        synchronized (syncObj) {
-            metadata.hasTasks.put(dispatcherUrl.url, hasTasks);
-            updateMetadataFile();
-        }
-    }
-
-    public boolean hasTasks(DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
-            return metadata.hasTasks.getOrDefault(dispatcherUrl.url, Boolean.FALSE);
-        }
-    }
-
     public void resetAllQuotas() {
         synchronized (syncObj) {
             metadata.quotas.forEach((k,v)->v.quotas.clear());

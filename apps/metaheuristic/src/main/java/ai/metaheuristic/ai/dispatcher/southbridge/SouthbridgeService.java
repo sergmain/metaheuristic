@@ -243,7 +243,6 @@ public class SouthbridgeService {
                 keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
             }
             keepAliveCommandProcessor.initDispatcherInfo(resp);
-            resp.hasTasks = !TaskQueueService.isQueueEmptyWithSync();
         } catch (Throwable th) {
             log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", req);
             log.error("#444.230 Error", th);

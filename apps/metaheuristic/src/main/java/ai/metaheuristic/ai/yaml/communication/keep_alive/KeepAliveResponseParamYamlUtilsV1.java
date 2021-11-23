@@ -87,7 +87,6 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
             }
         }
 
-        t.hasTasks = v1.hasTasks;
         t.success = v1.success;
         t.msg = v1.msg;
 
