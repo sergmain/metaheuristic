@@ -130,9 +130,9 @@ public class DispatcherRequestor {
             return;
         }
 
-        if (!metadataService.hasTasks(dispatcherUrl)) {
-            return;
-        }
+//        if (!metadataService.hasTasks(dispatcherUrl)) {
+//            return;
+//        }
 
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         pcpy.quotas.current = metadataService.currentQuota(dispatcherUrl.url);
