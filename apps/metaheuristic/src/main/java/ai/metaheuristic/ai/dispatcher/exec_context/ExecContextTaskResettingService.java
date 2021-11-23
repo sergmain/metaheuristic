@@ -54,7 +54,7 @@ public class ExecContextTaskResettingService {
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
         }
-        return TaskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
+        return TaskSyncService.getWithSyncForCreation(taskId, ()->resetTask(execContext, taskId));
     }
 
     public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {

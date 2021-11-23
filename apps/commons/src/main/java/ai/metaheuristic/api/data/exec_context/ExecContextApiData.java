@@ -187,6 +187,7 @@ public class ExecContextApiData {
     @Data
     public static class TaskStateInfos {
         public final List<TaskStateInfo> taskInfos = new ArrayList<>();
+        public int totalTasks;
         public NonLongRunning nonLongRunning;
     }
 

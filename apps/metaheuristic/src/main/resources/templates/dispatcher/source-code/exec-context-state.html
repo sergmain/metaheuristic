@@ -23,6 +23,7 @@
             </tr>
             </tbody>
         </table>
+        <p th:text="${'Total tasks: ' + result.taskStateInfos.totalTasks}"></p>
         <p th:if="${result.taskStateInfos.nonLongRunning.lastTaskFinished!=null}" th:text="${'The last task was finished on: ' + #dates.format(result.taskStateInfos.nonLongRunning.lastTaskFinished, 'dd-MMM-yy HH:mm')}">lastTaskFinished</p>
         <p th:if="${result.taskStateInfos.nonLongRunning.lastTaskFinished==null}">There isn't any finished task</p>
         <p th:text="${'Non-long-running tasks in progress: ' + result.taskStateInfos.nonLongRunning.inProgressCount}"></p>

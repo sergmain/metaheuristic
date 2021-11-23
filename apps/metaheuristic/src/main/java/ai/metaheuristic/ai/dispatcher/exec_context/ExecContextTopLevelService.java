@@ -99,7 +99,7 @@ public class ExecContextTopLevelService {
             stateInfos.taskInfos.add(new ExecContextApiData.TaskStateInfo(EnumsApi.TaskExecState.from(execState), count));
         }
         stateInfos.taskInfos.sort(Comparator.comparingInt(o -> o.execState.value));
-
+        stateInfos.totalTasks = stateInfos.taskInfos.stream().mapToInt(o->o.count).sum();
 
         List<Object[]> simpleTaskInfos = taskRepository.getSimpleTaskInfos(execContextId);
         List<Long> longRunningIds = dispatcherParamsTopLevelService.getLongRunningTaskIds();
