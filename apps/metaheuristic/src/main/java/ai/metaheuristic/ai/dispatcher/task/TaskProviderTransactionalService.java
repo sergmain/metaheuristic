@@ -159,6 +159,7 @@ public class TaskProviderTransactionalService {
                     log.error("#317.040 Task #{} with function '{}' isn't in state NONE, actual: {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
