@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestDbCaseSensitivity extends PreparingSourceCode {
 
@@ -68,6 +68,7 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
         assertNotEquals(TEST_VARIABLE, TEST_VARIABLE.toUpperCase());
 
         ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest();
+        assertNull(result.errorMessages, ""+result.errorMessages);
         execContextForTest = result.execContext;
 
         Variable v = variableService.createUninitialized(TEST_VARIABLE, execContextForTest.id, Consts.TOP_LEVEL_CONTEXT_ID);

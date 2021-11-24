@@ -53,9 +53,6 @@ public class TestBinaryDataRepository {
     @Autowired
     private VariableRepository variableRepository;
 
-    @Autowired
-    private ExecContextSyncService execContextSyncService;
-
     private Variable d1 = null;
     @AfterEach
     public void after() {
@@ -70,7 +67,7 @@ public class TestBinaryDataRepository {
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = execContextSyncService.getWithSync(10L,
+        d1 = ExecContextSyncService.getWithSync(10L,
                 ()-> txSupportForTestingService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
 
         Timestamp ts = d1.getUploadTs();
@@ -85,7 +82,7 @@ public class TestBinaryDataRepository {
 
         final byte[] bytes2 = "another one very short data".getBytes();
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
-        execContextSyncService.getWithSyncNullable(10L,
+        ExecContextSyncService.getWithSyncNullable(10L,
                 ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2.id));
 
         final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());

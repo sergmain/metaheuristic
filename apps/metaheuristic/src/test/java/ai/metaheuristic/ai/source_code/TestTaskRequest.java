@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestTaskRequest extends FeatureMethods {
 
@@ -64,9 +64,6 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
-
-    @Autowired
-    private TaskSyncService taskSyncService;
 
     @Override
     public String getSourceCodeYamlAsString() {

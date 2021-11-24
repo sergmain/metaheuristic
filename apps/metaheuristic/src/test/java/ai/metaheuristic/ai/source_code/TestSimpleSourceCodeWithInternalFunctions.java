@@ -70,9 +70,6 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     @Autowired
     public ExecContextSchedulerService execContextSchedulerService;
 
-    @Autowired
-    private TaskSyncService taskSyncService;
-
     @Override
     @SneakyThrows
     public String getSourceCodeYamlAsString() {

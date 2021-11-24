@@ -87,9 +87,6 @@ source:
         - name: batchSize
         - name: timeSteps
         - name: RNN
-        - name: epoch
-        - name: activation
-        - name: optimizer
       metas:
         - prefix: sub
         - suffix: Val
@@ -100,7 +97,7 @@ source:
           - code: mh.permute-variables
             name: permute variables
             function:
-              code: mh.permute-variables-and-inlines
+              code: mh.permute-variables
               context: internal
             metas:
               - output-is-dynamic: true

@@ -61,12 +61,6 @@ public class TestBinaryDataSaveAndLoad {
     private VariableService variableService;
 
     @Autowired
-    private VariableRepository variableRepository;
-
-    @Autowired
-    private ExecContextSyncService execContextSyncService;
-
-    @Autowired
     private TxSupportForTestingService txSupportForTestingService;
 
     private static final int ARRAY_SIZE = 1_000_000;
@@ -94,7 +88,7 @@ public class TestBinaryDataSaveAndLoad {
 
         Variable variable = null;
         try (InputStream is = new FileInputStream(dataFile)) {
-            variable = execContextSyncService.getWithSync(1L,
+            variable = ExecContextSyncService.getWithSync(1L,
                     ()-> txSupportForTestingService.createInitializedWithTx(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
         }
         assertNotNull(variable);
