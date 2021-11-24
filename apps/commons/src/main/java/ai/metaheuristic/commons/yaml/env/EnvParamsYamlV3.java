@@ -56,6 +56,8 @@ public class EnvParamsYamlV3 implements BaseParams {
     public static class QuotaV3 {
         public String tag;
         public int amount;
+        // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
+        public String processingTime;
     }
 
     @Data

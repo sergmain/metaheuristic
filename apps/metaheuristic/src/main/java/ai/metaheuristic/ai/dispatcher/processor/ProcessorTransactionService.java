@@ -281,7 +281,7 @@ public class ProcessorTransactionService {
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
         ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
-        envYaml.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->env.quotas.values));
+        envYaml.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envYaml.quotas.limit;
         env.quotas.disabled = envYaml.quotas.disabled;
         env.quotas.defaultValue = envYaml.quotas.defaultValue;
@@ -362,7 +362,7 @@ public class ProcessorTransactionService {
             return true;
         }
         for (ProcessorStatusYaml.Quota quota : quotas.values) {
-            if (!quotas1.values.contains(new KeepAliveRequestParamYaml.Quota(quota.tag, quota.amount))) {
+            if (!quotas1.values.contains(new KeepAliveRequestParamYaml.Quota(quota.tag, quota.amount, quota.disabled))) {
                 return true;
             }
         }

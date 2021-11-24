@@ -78,15 +78,15 @@ public class TestQuotasUtils {
         assertEquals(Enums.QuotaAllocation.present, quotaAmount.quotaAllocation);
         assertEquals(42, quotaAmount.amount);
 
-        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15), new Quota("a2", 25))), "a1");
+        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15, false), new Quota("a2", 25, false))), "a1");
         assertEquals(Enums.QuotaAllocation.present, quotaAmount.quotaAllocation);
         assertEquals(15, quotaAmount.amount);
 
-        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15), new Quota("a2", 25))), "a2");
+        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15, false), new Quota("a2", 25, false))), "a2");
         assertEquals(Enums.QuotaAllocation.present, quotaAmount.quotaAllocation);
         assertEquals(25, quotaAmount.amount);
 
-        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15), new Quota("a2", 25))), "a3");
+        quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42, List.of(new Quota("a1", 15, false), new Quota("a2", 25, false))), "a3");
         assertEquals(Enums.QuotaAllocation.present, quotaAmount.quotaAllocation);
         assertEquals(42, quotaAmount.amount);
 

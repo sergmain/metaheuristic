@@ -187,7 +187,7 @@ public class DispatcherLookupExtendedService {
             final Map<DispatcherUrl, DispatcherLookupExtended> map = new HashMap<>();
             for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
                 DispatcherUrl dispatcherServerUrl = new DispatcherUrl(dispatcher.url);
-                DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended(dispatcherServerUrl, dispatcher, new DispatcherSchedule(dispatcher.taskProcessingTime));
+                DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended(dispatcherServerUrl, dispatcher, DispatcherSchedule.createDispatcherSchedule(dispatcher.taskProcessingTime));
                 map.put(dispatcherServerUrl, lookupExtended);
             }
             dispatcherLookupExtendedMap = Collections.unmodifiableMap(map);

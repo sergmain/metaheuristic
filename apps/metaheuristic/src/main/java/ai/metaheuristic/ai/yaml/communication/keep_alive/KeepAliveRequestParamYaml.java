@@ -60,10 +60,12 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    @EqualsAndHashCode( of={"tag","amount"})
+//    @EqualsAndHashCode( of={"tag","amount"})
     public static class Quota {
         public String tag;
         public int amount;
+        // processor can disable specific tag. i.e. on scheduler basis
+        public boolean disabled;
     }
 
     @Data

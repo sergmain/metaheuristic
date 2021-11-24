@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -55,7 +56,6 @@ public class TimePeriods {
         if (idx ==-1) {
             throw new IllegalArgumentException("Wrong format of string for parsing: " + s+". Must be in format [HH:mm - HH:mm] (without brackets)");
         }
-        //noinspection UnnecessaryLocalVariable
         TimePeriod period = new TimePeriod(parseTime(s.substring(0, idx).trim()), parseTime(s.substring(idx+1).trim()));
         return period;
     }
@@ -78,7 +78,7 @@ public class TimePeriods {
         return s==null ? t : s;
     }
 
-    public static TimePeriods from(String s) {
+    public static TimePeriods from(@Nullable String s) {
         if (StringUtils.isBlank(s)) {
             return ALWAYS_ACTIVE;
         }
@@ -92,7 +92,7 @@ public class TimePeriods {
         return periods;
     }
 
-    private boolean isActive(LocalTime curr, TimePeriods.TimePeriod period) {
+    private static boolean isActive(LocalTime curr, TimePeriods.TimePeriod period) {
         return curr.compareTo(period.start)==0 || curr.compareTo(period.end)==0 || ( curr.isAfter(period.start) && curr.isBefore(period.end));
     }
 

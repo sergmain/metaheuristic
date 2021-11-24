@@ -35,13 +35,13 @@ public class TestRoundRobinForDispatcher {
 
         DispatcherUrl url1 = new DispatcherUrl("url1");
         DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
-                url1, new DispatcherLookupParamsYaml.DispatcherLookup(), new DispatcherSchedule(null));
+                url1, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
         lle1.dispatcherLookup.url = url1.url;
         lookupExtendedMap.put( url1, lle1);
 
         DispatcherUrl url2 = new DispatcherUrl("url2");
         DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
-                url2, new DispatcherLookupParamsYaml.DispatcherLookup(), new DispatcherSchedule(null));
+                url2, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 

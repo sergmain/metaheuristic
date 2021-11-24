@@ -46,7 +46,7 @@ public class TestKeepAliveRequestParamYamlUtils {
         assertEquals(1, karv2.requests.size());
         KeepAliveRequestParamYamlV2.ProcessorRequestV2 processorRequestV2 = karv2.requests.get(0);
         processorRequestV2.processor.env.quotas.limit = 13;
-        processorRequestV2.processor.env.quotas.values.addAll(List.of(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15), new KeepAliveRequestParamYamlV2.QuotaV2("tag2", 25)));
+        processorRequestV2.processor.env.quotas.values.addAll(List.of(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false), new KeepAliveRequestParamYamlV2.QuotaV2("tag2", 25, false)));
         KeepAliveRequestParamYaml kar = new KeepAliveRequestParamYamlUtilsV2().upgradeTo(karv2);
 
         testAsserts(kar);

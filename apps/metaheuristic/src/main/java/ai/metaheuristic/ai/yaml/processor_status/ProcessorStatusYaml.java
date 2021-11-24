@@ -77,6 +77,8 @@ public class ProcessorStatusYaml implements BaseParams {
     public static class Quota {
         public String tag;
         public int amount;
+        // processor can disable specific tag. i.e. on scheduler basis
+        public boolean disabled;
     }
 
     @Data
