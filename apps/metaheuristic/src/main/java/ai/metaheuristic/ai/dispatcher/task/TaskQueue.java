@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Serge
@@ -65,7 +64,7 @@ public class TaskQueue {
     }
 
     private static final int GROUP_SIZE_DEFAULT = 10;
-    private static final int MIN_QUEUE_SIZE_DEFAULT = 200;
+    private static final int MIN_QUEUE_SIZE_DEFAULT = 5000;
 
     @Slf4j
     public static class TaskGroup {
@@ -216,9 +215,9 @@ public class TaskQueue {
         public final int groupSize;
         private int groupPtr = 0;
         private int taskPtr = 0;
-        private final CopyOnWriteArrayList<TaskGroup> taskGroups;
+        private final List<TaskGroup> taskGroups;
 
-        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, int groupSize) {
+        public GroupIterator(List<TaskGroup> taskGroups, int groupSize) {
             this.taskGroups = taskGroups;
             this.groupSize = groupSize;
         }
@@ -273,7 +272,7 @@ public class TaskQueue {
 
     private final int minQueueSize;
     private final int groupSize;
-    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
+    private final List<TaskGroup> taskGroups = new ArrayList<>();
 
     public TaskQueue() {
         this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);

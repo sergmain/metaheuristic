@@ -245,10 +245,11 @@ public class TaskProviderTopLevelService {
     private TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
+        if (TaskQueueService.isQueueEmpty()) {
+            return null;
+        }
+
         TaskData.AssignedTask task = TaskQueueSyncStaticService.getWithSync(()-> {
-            if (TaskQueueService.isQueueEmpty()) {
-                return null;
-            }
             return taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
         });
 
@@ -280,8 +281,8 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        final boolean queueEmptyWithSync = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmptyWithSync()",
-                TaskQueueService::isQueueEmptyWithSync);
+        final boolean queueEmptyWithSync = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
+                TaskQueueService::isQueueEmpty);
 
         if (queueEmptyWithSync) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
