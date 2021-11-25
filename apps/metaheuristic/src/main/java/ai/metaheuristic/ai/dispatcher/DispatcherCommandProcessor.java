@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
+import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -55,18 +56,26 @@ public class DispatcherCommandProcessor {
             throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
         final long threadId = Thread.currentThread().getId();
-        log.debug("#997.080 start checkForMissingOutputResources(), thread: {}, procCode: {}", threadId, request.processorCode);
-        response.resendTaskOutputs = checkForMissingOutputResources(request);
 
-        log.debug("#997.120 start processResendTaskOutputResourceResult(), thread: {}, procCode: {}", threadId, request.processorCode);
-        processResendTaskOutputResourceResult(request);
+        if (log.isDebugEnabled()) {
+            MetaheuristicThreadLocal.getExecutionStat().setStat(true);
+        }
+        
+        MetaheuristicThreadLocal.getExecutionStat().exec("checkForMissingOutputResources()",
+                ()-> response.resendTaskOutputs = checkForMissingOutputResources(request));
 
-        log.debug("#997.160 start processReportTaskProcessingResult(), thread: {}, procCode: {}", threadId,  request.processorCode);
-        response.reportResultDelivering = processReportTaskProcessingResult(request);
+        MetaheuristicThreadLocal.getExecutionStat().exec("processResendTaskOutputResourceResult()",
+                ()-> processResendTaskOutputResourceResult(request));
 
-        log.debug("#997.200 start processRequestTask(), thread: {}, procCode: {}", threadId,  request.processorCode);
-        response.assignedTask = processRequestTask(request, quotas);
-        log.debug("#997.300 request was procecced, thread: {}, procCode: {}", threadId, request.processorCode);
+        MetaheuristicThreadLocal.getExecutionStat().exec("processReportTaskProcessingResult()",
+                ()->response.reportResultDelivering = processReportTaskProcessingResult(request));
+
+        MetaheuristicThreadLocal.getExecutionStat().exec("processRequestTask()",
+                ()->response.assignedTask = processRequestTask(request, quotas));
+
+        if (log.isDebugEnabled()) {
+            MetaheuristicThreadLocal.getExecutionStat().print().forEach(log::debug);
+        }
     }
 
     // processing at dispatcher side
