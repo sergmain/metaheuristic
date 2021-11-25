@@ -2,6 +2,7 @@ package ai.metaheuristic.commons.stat;
 
 import ai.metaheuristic.commons.S;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -33,10 +34,6 @@ public class ExecutionStat {
         return S.f("%-80s: called %10d times, total time %10d, avg time %10.2f", k, v.count, v.time, ((double) v.time) / v.count);
     }
 
-    public interface Something {
-        void exec();
-    }
-
     @Data
     public static class StatElement {
         public int count;
@@ -55,10 +52,10 @@ public class ExecutionStat {
 
     public LinkedHashMap<String, StatElement> execStat = new LinkedHashMap<>();
 
-    public void exec(String key, Something action) {
+    public void exec(String key, Runnable runnable) {
         long start = System.currentTimeMillis();
         try {
-            action.exec();
+            runnable.run();
         } finally {
             if (isStat) {
                 execStat.computeIfAbsent(key, o -> new StatElement()).add(System.currentTimeMillis() - start);
@@ -67,6 +64,18 @@ public class ExecutionStat {
     }
 
     public <T> T get(String key, Supplier<T> action) {
+        long start = System.currentTimeMillis();
+        try {
+            return action.get();
+        } finally {
+            if (isStat) {
+                execStat.computeIfAbsent(key, o -> new StatElement()).add(System.currentTimeMillis() - start);
+            }
+        }
+    }
+
+    @Nullable
+    public <T> T getNullable(String key, Supplier<T> action) {
         long start = System.currentTimeMillis();
         try {
             return action.get();

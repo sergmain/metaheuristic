@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -271,13 +272,18 @@ public class TaskProviderTopLevelService {
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        final Processor processor = processorCache.findById(processorId);
+        final Processor processor = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
+                ()->processorCache.findById(processorId));
+
         if (processor == null) {
             log.error("#393.440 Processor with id #{} wasn't found", processorId);
             return null;
         }
 
-        if (TaskQueueService.isQueueEmptyWithSync()) {
+        final boolean queueEmptyWithSync = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmptyWithSync()",
+                TaskQueueService::isQueueEmptyWithSync);
+
+        if (queueEmptyWithSync) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
             if (System.currentTimeMillis()-mills.get() < 60_000 ) {
                 return null;
@@ -290,7 +296,9 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas);
+        DispatcherCommParamsYaml.AssignedTask assignedTask =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
+                        ()-> getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -321,7 +329,10 @@ public class TaskProviderTopLevelService {
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        final TaskData.AssignedTask task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas);
+        final TaskData.AssignedTask task =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
+                        ()-> getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas));
+
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -358,7 +369,9 @@ public class TaskProviderTopLevelService {
     private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
+        KeepAliveResponseParamYaml.ExecContextStatus statuses =
+                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> execContextStatusService.getExecContextStatuses()",
+                        execContextStatusService::getExecContextStatuses);
 
         List<Long> taskIds = S.b(psy.taskIds) ?
                 List.of() :
@@ -424,7 +437,10 @@ public class TaskProviderTopLevelService {
             }
         }
 
-        TaskData.AssignedTask result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
+        TaskData.AssignedTask result =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
+                        ()-> findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas));
+
         return result;
     }
 
