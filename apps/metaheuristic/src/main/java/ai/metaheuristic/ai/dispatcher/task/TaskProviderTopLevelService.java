@@ -370,7 +370,7 @@ public class TaskProviderTopLevelService {
         TxUtils.checkTxNotExists();
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses =
-                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> execContextStatusService.getExecContextStatuses()",
+                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
                         execContextStatusService::getExecContextStatuses);
 
         List<Long> taskIds = S.b(psy.taskIds) ?

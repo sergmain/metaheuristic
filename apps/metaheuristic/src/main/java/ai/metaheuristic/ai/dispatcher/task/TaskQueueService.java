@@ -71,7 +71,6 @@ public class TaskQueueService {
         taskQueue.startTaskProcessing(event.execContextId, event.taskId);
     }
 
-
     public static void deleteByExecContextId(Long execContextId) {
         checkWriteLockPresent();
         taskQueue.deleteByExecContextId(execContextId);

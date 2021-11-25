@@ -28,7 +28,6 @@ import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -105,7 +104,15 @@ public class TaskQueue {
                 if (tasks[i]!=null && tasks[i].queuedTask.taskId.equals(taskId)) {
                     tasks[i] = null;
                     --allocated;
-                    if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
+
+                    boolean noneMatch = true;
+                    for (AllocatedTask task : tasks) {
+                        if (task != null) {
+                            noneMatch = false;
+                            break;
+                        }
+                    }
+                    if (noneMatch) {
                         if (allocated!=0) {
                             throw new IllegalStateException("(allocated!=0)");
                         }
@@ -191,7 +198,12 @@ public class TaskQueue {
         }
 
         public boolean noneTasks() {
-            return Arrays.stream(tasks).noneMatch(Objects::nonNull);
+            for (AllocatedTask task : tasks) {
+                if (task != null) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public void lock() {
@@ -283,7 +295,14 @@ public class TaskQueue {
     }
 
     public boolean allTaskGroupFinished(Long execContextId) {
-        return taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).allMatch(TaskQueue::groupFinished);
+        for (TaskGroup o : taskGroups) {
+            if (execContextId.equals(o.execContextId)) {
+                if (!groupFinished(o)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public Map<Long, AllocatedTask> getTaskExecStates(Long execContextId) {
@@ -410,7 +429,10 @@ public class TaskQueue {
         if (forRemoving.isEmpty()) {
             return;
         }
-        List<Long> execContextIds = forRemoving.stream().map(o->o.execContextId).collect(Collectors.toList());
+        Set<Long> execContextIds = new HashSet<>();
+        for (QueuedTask o : forRemoving) {
+            execContextIds.add(o.execContextId);
+        }
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextIds.contains(taskGroup.execContextId)) {
                 for (QueuedTask queuedTask : forRemoving) {
@@ -420,7 +442,6 @@ public class TaskQueue {
                 }
             }
         }
-        shrink();
     }
 
     public void addNewTask(QueuedTask task) {
@@ -533,11 +554,15 @@ public class TaskQueue {
                 taskGroup.reset();
             }
         }
-        shrink();
     }
 
     public boolean alreadyRegistered(Long taskId) {
-        return taskGroups.stream().anyMatch(o->o.alreadyRegistered(taskId));
+        for (TaskGroup o : taskGroups) {
+            if (o.alreadyRegistered(taskId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {
@@ -551,7 +576,12 @@ public class TaskQueue {
     }
 
     public boolean isQueueEmpty() {
-        return taskGroups.stream().noneMatch(TaskGroup::isNewTask);
+        for (TaskGroup taskGroup : taskGroups) {
+            if (taskGroup.isNewTask()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public int groupCount() {
