@@ -159,12 +159,7 @@ public class ExecContextTopLevelService {
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
         ExecContextSyncService.getWithSyncVoid(execContextId,
-                () -> findUnassignedTasksAndRegisterInQueueInternal(execContextId));
-    }
-
-    // this method is here to handle situation when a method with @Transactional is being called from lambda
-    private void findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
+                () -> execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId));
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {

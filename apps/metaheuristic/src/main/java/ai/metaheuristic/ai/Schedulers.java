@@ -240,7 +240,7 @@ public class Schedulers {
             execContextVariableStateTopLevelService.processFlushing();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
         public void processCheckCaching() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;

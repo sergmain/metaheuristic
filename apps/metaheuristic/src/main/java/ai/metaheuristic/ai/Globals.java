@@ -66,6 +66,7 @@ public class Globals {
     public static final Duration SECONDS_9 = Duration.ofSeconds(9);
     public static final Duration SECONDS_11 = Duration.ofSeconds(11);
     public static final Duration SECONDS_19 = Duration.ofSeconds(19);
+    public static final Duration SECONDS_23 = Duration.ofSeconds(23);
     public static final Duration SECONDS_29 = Duration.ofSeconds(29);
     public static final Duration SECONDS_31 = Duration.ofSeconds(31);
     public static final Duration SECONDS_60 = Duration.ofSeconds(60);
@@ -224,7 +225,7 @@ public class Globals {
 
 //        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
         public Duration getUpdateBatchStatuses() {
-            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_5;
+            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_23;
         }
 
         public void setGc(Duration gc) {
