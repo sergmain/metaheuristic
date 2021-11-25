@@ -21,6 +21,7 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -65,8 +66,10 @@ public class ExecContextStatusService {
         destroy(old);
     }
 
-    private static void destroy(ExecContextStatus cachedStatus) {
-        cachedStatus.statuses.clear();
+    private static void destroy(@Nullable ExecContextStatus cachedStatus) {
+        if (cachedStatus!=null) {
+            cachedStatus.statuses.clear();
+        }
     }
 
     private static ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
