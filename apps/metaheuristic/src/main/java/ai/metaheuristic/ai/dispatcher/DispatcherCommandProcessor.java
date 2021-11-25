@@ -54,18 +54,19 @@ public class DispatcherCommandProcessor {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
-        log.debug("#997.080 start checkForMissingOutputResources()");
+        final long threadId = Thread.currentThread().getId();
+        log.debug("#997.080 start checkForMissingOutputResources(), thread: {}, procCode: {}", threadId, request.processorCode);
         response.resendTaskOutputs = checkForMissingOutputResources(request);
 
-        log.debug("#997.120 start processResendTaskOutputResourceResult()");
+        log.debug("#997.120 start processResendTaskOutputResourceResult(), thread: {}, procCode: {}", threadId, request.processorCode);
         processResendTaskOutputResourceResult(request);
 
-        log.debug("#997.160 start processReportTaskProcessingResult()");
+        log.debug("#997.160 start processReportTaskProcessingResult(), thread: {}, procCode: {}", threadId,  request.processorCode);
         response.reportResultDelivering = processReportTaskProcessingResult(request);
 
-        log.debug("#997.200 start processRequestTask()");
+        log.debug("#997.200 start processRequestTask(), thread: {}, procCode: {}", threadId,  request.processorCode);
         response.assignedTask = processRequestTask(request, quotas);
-        log.debug("#997.300 request was procecced");
+        log.debug("#997.300 request was procecced, thread: {}, procCode: {}", threadId, request.processorCode);
     }
 
     // processing at dispatcher side
