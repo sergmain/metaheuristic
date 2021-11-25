@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -183,6 +184,7 @@ public class Schedulers {
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
         private final ApplicationEventPublisher eventPublisher;
+        private final ExecContextStatusService execContextStatusService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -238,6 +240,14 @@ public class Schedulers {
                 return;
             }
             execContextVariableStateTopLevelService.processFlushing();
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 10_000 )
+        public void execContextStatusUpdate() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            execContextStatusService.resetStatus();
         }
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )

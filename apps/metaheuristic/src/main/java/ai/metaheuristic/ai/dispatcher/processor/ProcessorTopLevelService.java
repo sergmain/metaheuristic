@@ -189,10 +189,7 @@ public class ProcessorTopLevelService {
                 log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
-                OperationStatusRest result = ExecContextSyncService.getWithSync(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
-                if (result.status== EnumsApi.OperationStatus.ERROR) {
-                    log.error("#808.220 Resetting of task #{} was failed. See log for more info.", taskId);
-                }
+                ExecContextSyncService.getWithSyncVoid(execContextId, () -> execContextTaskResettingService.resetTaskWithTx(execContextId, taskId));
             }
         }
     }

@@ -65,6 +65,7 @@ public class DispatcherCommandProcessor {
 
         log.debug("#997.200 start processRequestTask()");
         response.assignedTask = processRequestTask(request, quotas);
+        log.debug("#997.300 request was procecced");
     }
 
     // processing at dispatcher side
@@ -84,7 +85,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         if (request.processorCommContext==null) {
-            log.warn("#997.080 (request.processorCommContext==null)");
+            log.warn("#997.480 (request.processorCommContext==null)");
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
@@ -117,18 +118,18 @@ public class DispatcherCommandProcessor {
         try {
             assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#997.045 ObjectOptimisticLockingFailureException", e);
-            log.error("#997.047 Lets try requesting a new task one more time");
+            log.error("#997.520 ObjectOptimisticLockingFailureException", e);
+            log.error("#997.540 Lets try requesting a new task one more time");
             try {
                 assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
             } catch (ObjectOptimisticLockingFailureException e1) {
-                log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
+                log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
             }
         }
 
         if (assignedTask!=null) {
-            log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.r50 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }

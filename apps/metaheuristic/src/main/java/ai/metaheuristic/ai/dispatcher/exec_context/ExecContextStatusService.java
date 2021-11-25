@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml.ExecContextStatus;
@@ -42,29 +42,31 @@ public class ExecContextStatusService {
     private final ExecContextRepository execContextRepository;
 
     private ExecContextStatus cachedStatus = null;
-    private long updatedOn = 0L;
-    private static final long TTL_FOR_STATUS = TimeUnit.SECONDS.toMillis(10);
 
-    public synchronized ExecContextStatus getExecContextStatuses() {
-        if (cachedStatus==null) {
-            resetStatus();
-        }
-        if (System.currentTimeMillis() - updatedOn > TTL_FOR_STATUS) {
-            resetStatus();
-        }
+    @PostConstruct
+    public void post() {
+        resetStatus();
+    }
+
+    public ExecContextStatus getExecContextStatuses() {
         return cachedStatus;
     }
 
-    private void resetStatus() {
-
-        cachedStatus = new ExecContextStatus();
+    public void resetStatus() {
+        ExecContextStatus cachedStatusTemp = new ExecContextStatus();
 
         execContextRepository.findAllExecStates()
                 .stream()
-                .map(o -> toSimpleStatus((Long)o[0], (Integer)o[1]))
-                .collect(Collectors.toCollection(()->cachedStatus.statuses));
+                .map(o -> toSimpleStatus((Long) o[0], (Integer) o[1]))
+                .collect(Collectors.toCollection(() -> cachedStatusTemp.statuses));
 
-        updatedOn = System.currentTimeMillis();
+        ExecContextStatus old = cachedStatus;
+        cachedStatus = cachedStatusTemp;
+        destroy(old);
+    }
+
+    private static void destroy(ExecContextStatus cachedStatus) {
+        cachedStatus.statuses.clear();
     }
 
     private static ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {

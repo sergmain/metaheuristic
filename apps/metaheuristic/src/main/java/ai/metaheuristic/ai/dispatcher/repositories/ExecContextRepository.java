@@ -45,7 +45,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     void deleteById(Long id);
 
     @Query(value="select w.id, w.state from ExecContextImpl w ")
-//    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findAllExecStates();
 
     @Query(value="select w.id, w.sourceCodeId from ExecContextImpl w ")
