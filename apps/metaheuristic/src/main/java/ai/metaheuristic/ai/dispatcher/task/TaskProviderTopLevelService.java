@@ -249,9 +249,7 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        TaskData.AssignedTask task = TaskQueueSyncStaticService.getWithSync(()-> {
-            return taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
-        });
+        TaskData.AssignedTask task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
 
         if (task!=null) {
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.task.id, task.task.execContextId);

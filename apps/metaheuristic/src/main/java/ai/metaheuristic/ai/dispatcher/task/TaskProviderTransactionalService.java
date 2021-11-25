@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
-import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.checkWriteLockPresent;
+import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.checkWriteLockNotPresent;
 
 /**
  * @author Serge
@@ -86,7 +86,7 @@ public class TaskProviderTransactionalService {
     @Nullable
     @Transactional
     public TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
-        checkWriteLockPresent();
+        checkWriteLockNotPresent();
 
         if (TaskQueueService.isQueueEmpty()) {
             return null;
@@ -241,7 +241,7 @@ public class TaskProviderTransactionalService {
             }
         }
         finally {
-            TaskQueueService.removeAll(forRemoving);
+            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.removeAll(forRemoving));
         }
 
         if (resultTask == null) {

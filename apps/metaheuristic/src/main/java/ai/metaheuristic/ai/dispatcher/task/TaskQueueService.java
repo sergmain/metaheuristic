@@ -37,7 +37,7 @@ public class TaskQueueService {
     private static final TaskQueue taskQueue = new TaskQueue();
 
     public static TaskQueue.GroupIterator getIterator() {
-        checkWriteLockPresent();
+//        checkWriteLockPresent();
         return taskQueue.getIterator();
     }
 
