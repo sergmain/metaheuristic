@@ -152,6 +152,7 @@ public class TaskProviderTransactionalService {
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this can happened because of async call of StartTaskProcessingTxEvent
                     log.info("#317.039 task #{} already assigned for processing", queuedTask.taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
