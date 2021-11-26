@@ -15,6 +15,10 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.commons.S;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -70,7 +74,44 @@ public class Processor implements Serializable {
      * @see ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml
      */
     @Column(name = "STATUS")
-    public String status;
+    private String status;
+
+    public void setStatus(String status) {
+        synchronized (this) {
+            this.status = status;
+            this.psy =null;
+        }
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    @Transient
+    @JsonIgnore
+    @Nullable
+    private ProcessorStatusYaml psy = null;
+
+    @JsonIgnore
+    public ProcessorStatusYaml getProcessorStatusYaml() {
+        if (psy ==null) {
+            synchronized (this) {
+                if (psy ==null) {
+                    // to create a valid structure of params
+                    String p = S.b(status) ? ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(new ProcessorStatusYaml()) : status;
+                    //noinspection UnnecessaryLocalVariable
+                    ProcessorStatusYaml temp = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(p);
+                    psy = temp;
+                }
+            }
+        }
+        return psy;
+    }
+
+    @JsonIgnore
+    public void updateParams(ProcessorStatusYaml dpy) {
+        setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(dpy));
+    }
 
 }
 

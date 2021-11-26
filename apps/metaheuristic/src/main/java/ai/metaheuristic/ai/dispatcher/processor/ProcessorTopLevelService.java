@@ -30,8 +30,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -50,6 +48,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorFunctionDownloadStatusDifferent;
+import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorStatusDifferent;
 
 @Slf4j
 @Profile("dispatcher")
@@ -87,10 +88,38 @@ public class ProcessorTopLevelService {
         return ProcessorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
-    public void processProcessorStatuses(
-            final Long processorId, @Nullable KeepAliveRequestParamYaml.ReportProcessor status, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+    public void processKeepAliveData(
+            KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            final Processor processor) {
 
-        ProcessorSyncService.getWithSyncVoid(processorId, ()-> processorTransactionService.storeProcessorStatuses(processorId, status, functionDownloadStatus));
+        if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("#809.080 processorId is null");
+        }
+        final Long processorId = processorRequest.processorCommContext.processorId;
+        KeepAliveRequestParamYaml.ReportProcessor status = processorRequest.processor;
+
+        if (status==null) {
+            return;
+        }
+        ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
+
+        final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
+        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
+
+        if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
+
+            ProcessorSyncService.getWithSyncVoid(processorId,
+                    () -> processorTransactionService.processKeepAliveData(
+                            processorId, status, functionDownloadStatus, psy,
+                            processorStatusDifferent, processorFunctionDownloadStatusDifferent));
+
+        }
+
+        // TODO 2020-11-22 need to decide what to do with reconcileProcessorTasks() below
+        // TODO 2021-11-25 the problem is that such reconcileProcessorTasksmust be done outside of keepAlive request, but where
+//        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
+
     }
 
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<Long> taskIds) {
@@ -101,23 +130,67 @@ public class ProcessorTopLevelService {
         ProcessorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
     }
 
-    @Nullable
-    public DispatcherApiData.ProcessorSessionId checkProcessorId(final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSyncNullable( processorId,
-                ()-> processorTransactionService.checkProcessorId(processorId, sessionId, remoteAddress));
-        return processorSessionId;
+    public static Enums.ProcessorAndSessionStatus checkProcessorAndSessionStatus(final Processor processor, @Nullable String sessionId) {
+
+        ProcessorStatusYaml ss = processor.getProcessorStatusYaml();
+        if (StringUtils.isBlank(sessionId)) {
+            log.debug("#809.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            // the same processor but with different and expired sessionId
+            // so we can continue to use this processorId with new sessionId
+            return Enums.ProcessorAndSessionStatus.newSession;
+        }
+        if (!ss.sessionId.equals(sessionId)) {
+            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
+                log.debug("#809.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                // the same processor but with different and expired sessionId
+                // so we can continue to use this processorId with new sessionId
+                // we won't use processor's sessionIf to be sure that sessionId has valid format
+                return Enums.ProcessorAndSessionStatus.newSession;
+            } else {
+                log.debug("#809.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                // different processors with the same processorId
+                // there is other active processor with valid sessionId
+                return Enums.ProcessorAndSessionStatus.reassignProcessor;
+            }
+        } else {
+            // see logs in method
+            final long millis = System.currentTimeMillis();
+            final long diff = millis - ss.sessionCreatedOn;
+            if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
+                return Enums.ProcessorAndSessionStatus.updateSession;
+            }
+            return Enums.ProcessorAndSessionStatus.ok;
+        }
     }
+
+    @Nullable
+    public DispatcherApiData.ProcessorSessionId checkProcessorId(Processor processor, Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, @Nullable String sessionId, String remoteAddress) {
+        switch (processorAndSessionStatus) {
+            case reassignProcessor -> {
+                return ProcessorSyncService.getWithSync(processorId,
+                        ()-> processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId));
+            }
+            case newSession -> {
+                return ProcessorSyncService.getWithSync(processorId,
+                        () -> processorTransactionService.assignNewSessionId(processor));
+            }
+            case updateSession -> {
+                return null;
+//                return ProcessorSyncService.getWithSyncVoid( processorId,
+//                        ()-> processorTransactionService.updateSessionWithTx(processor, ss));
+            }
+            case ok -> {
+                return null;
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
 
     public OperationStatusRest requestLogFile(final Long processorId) {
         return ProcessorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
-    }
-
-    public void setTaskIds(@Nullable Long processorId, @Nullable String taskIds) {
-        if (processorId==null) {
-            log.warn("#808.060 setTaskIds() was called with processorId==null");
-            return;
-        }
-        ProcessorSyncService.getWithSyncVoid( processorId, ()-> processorTransactionService.setTaskIds(processorId, taskIds));
     }
 
     public void setLogFileReceived(final long processorId) {
@@ -135,7 +208,7 @@ public class ProcessorTopLevelService {
             if (processor ==null) {
                 continue;
             }
-            ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            ProcessorStatusYaml status = processor.getProcessorStatusYaml();
 
             String blacklistReason = processorBlacklisted(status);
 
@@ -161,7 +234,7 @@ public class ProcessorTopLevelService {
     @Nullable
     private static String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "#808.080 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
+            return "#809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }
@@ -176,7 +249,7 @@ public class ProcessorTopLevelService {
             Long execContextId = ((Number)obj[2]).longValue();
 
             if (assignedOn==null) {
-                log.error("#808.190 Processor #{} has a task with assignedOn is null", processorId);
+                log.error("#809.440 Processor #{} has a task with assignedOn is null", processorId);
             }
 
             boolean isFound = taskIds.contains(taskId);
@@ -185,7 +258,7 @@ public class ProcessorTopLevelService {
             // if Processor haven't reported back about this task in 90 seconds,
             // this task will be de-assigned from this Processor
             if (!isFound && isExpired) {
-                log.info("#808.200 De-assign task #{} from processor #{}", taskId, processorId);
+                log.info("#809.480 De-assign task #{} from processor #{}", taskId, processorId);
                 log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
@@ -210,10 +283,9 @@ public class ProcessorTopLevelService {
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
+            throw new IllegalStateException("#809.520 Processor wasn't found for processorId: " + processorId);
         }
-        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-
+        ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
         if (psy.log!=null && psy.log.logRequested) {
             if (psy.log.requestedOn==0) {
                 throw new IllegalStateException("(psy.log.requestedOn==0)");

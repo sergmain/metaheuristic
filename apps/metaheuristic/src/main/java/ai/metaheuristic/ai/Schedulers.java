@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
+import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -299,7 +300,6 @@ public class Schedulers {
             this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
-
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
@@ -326,6 +326,7 @@ public class Schedulers {
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
+                    // call /rest/v1/srv-v2/
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
@@ -573,7 +574,7 @@ public class Schedulers {
     public static class ProcessorSchedulers {
 
         private final Globals globals;
-        private final ApplicationEventPublisher eventPublisher;
+        private final ProcessorEventBusService processorEventBusService;
 
         // this scheduler is being run at the processor side
 
@@ -586,7 +587,7 @@ public class Schedulers {
                 return;
             }
             log.info("Send keepAliveEvent");
-            eventPublisher.publishEvent(new KeepAliveEvent());
+            processorEventBusService.keepAlive(new KeepAliveEvent());
         }
     }
 }

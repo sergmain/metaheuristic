@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -205,7 +204,7 @@ public class TaskProviderTransactionalService {
                         continue;
                     }
                 }
-                ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+                ProcessorStatusYaml status = processor.getProcessorStatusYaml();
 
                 if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
                     log.debug("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);

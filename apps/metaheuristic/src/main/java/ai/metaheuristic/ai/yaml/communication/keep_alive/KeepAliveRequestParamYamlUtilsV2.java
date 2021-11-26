@@ -79,7 +79,6 @@ public class KeepAliveRequestParamYamlUtilsV2 extends
             else {
                 r.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext();
             }
-            r.taskIds = v2.taskIds;
         }
         return t;
     }

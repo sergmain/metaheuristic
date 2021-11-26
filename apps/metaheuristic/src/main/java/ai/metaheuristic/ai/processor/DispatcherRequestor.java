@@ -40,10 +40,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -157,8 +154,11 @@ public class DispatcherRequestor {
                 if (currentExecState.isInited(dispatcherUrl)) {
                     final boolean b = processorTaskService.isNeedNewTask(ref);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired);
-                    } else {
+                        // always report about current active tasks, if we have actual processorId
+                        final String taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                    }
+                    else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()

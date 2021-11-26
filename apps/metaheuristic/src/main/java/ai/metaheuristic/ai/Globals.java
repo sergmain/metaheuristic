@@ -64,6 +64,7 @@ public class Globals {
     public static final Duration SECONDS_5 = Duration.ofSeconds(5);
     public static final Duration SECONDS_6 = Duration.ofSeconds(6);
     public static final Duration SECONDS_9 = Duration.ofSeconds(9);
+    public static final Duration SECONDS_10 = Duration.ofSeconds(10);
     public static final Duration SECONDS_11 = Duration.ofSeconds(11);
     public static final Duration SECONDS_19 = Duration.ofSeconds(19);
     public static final Duration SECONDS_23 = Duration.ofSeconds(23);
@@ -377,9 +378,9 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration artifactCleaner = SECONDS_29;
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 3, 20)*1000 }")
+//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 6, 30)*1000 }")
         public Duration getRequestDispatcher() {
-            return requestDispatcher.toSeconds() >= 3 && requestDispatcher.toSeconds() <= 20 ? requestDispatcher : SECONDS_6;
+            return requestDispatcher.toSeconds() >= 6 && requestDispatcher.toSeconds() <= 30 ? requestDispatcher : SECONDS_10;
         }
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")

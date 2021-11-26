@@ -170,7 +170,17 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public ProcessorCommContext processorCommContext;
 
         @Nullable
-        public String taskIds;
+        private String taskIds = null;
+
+        @Nullable
+        public String getTaskIds() {
+            return taskIds;
+        }
+
+        @SuppressWarnings("MethodMayBeStatic")
+        public void setTaskIds(@Nullable String taskIds) {
+            throw new IllegalStateException("taskIds isn't used any more");
+        }
 
         public String processorCode;
 

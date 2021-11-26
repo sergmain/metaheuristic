@@ -61,10 +61,7 @@ public class ProcessorEventBusService {
         this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
     }
 
-    @Async
-    @EventListener
     public void keepAlive(KeepAliveEvent event) {
-
         try {
             Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {

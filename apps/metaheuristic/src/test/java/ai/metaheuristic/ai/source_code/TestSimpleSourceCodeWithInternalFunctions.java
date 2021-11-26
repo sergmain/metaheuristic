@@ -98,7 +98,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, "127.0.0.1");
@@ -133,7 +133,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
@@ -154,7 +154,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm1.requests.add(req1);
 
         req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
         String dispatcherResponse1 = southbridgeService.processRequest(processorYaml1, Consts.LOCALHOST_IP);

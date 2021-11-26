@@ -29,10 +29,15 @@ import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -55,8 +60,6 @@ public class DispatcherCommandProcessor {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
-        final long threadId = Thread.currentThread().getId();
-
         if (log.isDebugEnabled()) {
             MetaheuristicThreadLocal.getExecutionStat().setStat(true);
         }
@@ -125,13 +128,16 @@ public class DispatcherCommandProcessor {
         checkProcessorId(request);
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
+        List<Long> taskIds = S.b(request.requestTask.taskIds) ?
+                List.of() :
+                Arrays.stream(StringUtils.split(request.requestTask.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
         try {
-            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
+            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.520 ObjectOptimisticLockingFailureException", e);
             log.error("#997.540 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
+                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;

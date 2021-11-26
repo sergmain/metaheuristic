@@ -41,9 +41,9 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetManagerUrl;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * User: Serg
@@ -58,7 +58,6 @@ public class ProcessorKeepAliveRequestor {
     private final DispatcherUrl dispatcherUrl;
     private final Globals globals;
 
-    private final ProcessorTaskService processorTaskService;
     private final ProcessorService processorService;
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
@@ -71,12 +70,11 @@ public class ProcessorKeepAliveRequestor {
     private final String dispatcherRestUrl;
 
     public ProcessorKeepAliveRequestor(
-            DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
+            DispatcherUrl dispatcherUrl, Globals globals,
             ProcessorService processorService, MetadataService metadataService,
             DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
-        this.processorTaskService = processorTaskService;
         this.processorService = processorService;
         this.metadataService = metadataService;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
@@ -142,8 +140,6 @@ public class ProcessorKeepAliveRequestor {
                         dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
                 request.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-                // always report about current active tasks, if we have actual processorId
-                request.taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                 request.processor = processorService.produceReportProcessorStatus(ref, dispatcher.schedule);
 
                 AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);

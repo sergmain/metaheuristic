@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor.complex;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -137,7 +136,7 @@ public class TestRegisterProcessor {
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
         req.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
         ed = requestServer(processorComm);
@@ -153,7 +152,7 @@ public class TestRegisterProcessor {
         Processor s = processorRepository.findById(processorId).orElse(null);
         assertNotNull(s);
 
-        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml ss1 = s.getProcessorStatusYaml();
 
         final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
                 new KeepAliveRequestParamYaml.Env(),
@@ -169,7 +168,7 @@ public class TestRegisterProcessor {
         ss1.ip = ss.ip;
         ss1.host = ss.host;
 
-        assertFalse(ProcessorTransactionService.isProcessorStatusDifferent(ss1, ss), S.f("ss1:\n%s\n\nss:\n%s", ss1, ss));
+        assertFalse(ProcessorUtils.isProcessorStatusDifferent(ss1, ss), S.f("ss1:\n%s\n\nss:\n%s", ss1, ss));
 
         //noinspection unused
         int i=0;
@@ -178,7 +177,7 @@ public class TestRegisterProcessor {
     private DispatcherCommParamsYaml requestServer(ProcessorCommParamsYaml data) throws Exception {
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
 
-        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
+        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID();
         MvcResult result = mockMvc
                 .perform(buildPostRequest(processorYaml, url))
                 .andExpect(status().isOk())
@@ -191,7 +190,7 @@ public class TestRegisterProcessor {
         return d;
     }
 
-    private MockHttpServletRequestBuilder buildPostRequest(String data, String url) {
+    private static MockHttpServletRequestBuilder buildPostRequest(String data, String url) {
         return MockMvcRequestBuilders
                 .post(url)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -206,7 +205,7 @@ public class TestRegisterProcessor {
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 
-        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
+        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID();
         mockMvc.perform(buildPostRequest(processorYaml, url))
                 .andExpect(status().isForbidden());
 

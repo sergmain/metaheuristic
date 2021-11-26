@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -42,7 +41,6 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -51,12 +49,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -264,11 +260,11 @@ public class TaskProviderTopLevelService {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
-        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000));
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000), List.of());
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final Processor processor = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
@@ -279,10 +275,10 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        final boolean queueEmptyWithSync = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
+        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
                 TaskQueueService::isQueueEmpty);
 
-        if (queueEmptyWithSync) {
+        if (queueEmpty) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
             if (System.currentTimeMillis()-mills.get() < 60_000 ) {
                 return null;
@@ -297,7 +293,7 @@ public class TaskProviderTopLevelService {
 
         DispatcherCommParamsYaml.AssignedTask assignedTask =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
-                        ()-> getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas));
+                        ()-> getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -315,22 +311,23 @@ public class TaskProviderTopLevelService {
     private static ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
         ProcessorStatusYaml ss;
         try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            ss = processor.getProcessorStatusYaml();
             return ss;
         } catch (Throwable e) {
-            log.error("#393.560 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#393.560 Error parsing current status of processor:\n{}", processor.getStatus());
             log.error("#393.570 Error ", e);
             return null;
         }
     }
 
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
+            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final TaskData.AssignedTask task =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
-                        ()-> getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas));
+                        ()-> getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas, taskIds));
 
         // task won't be returned for an internal function
         if (task==null) {
@@ -365,16 +362,14 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
+            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+
         TxUtils.checkTxNotExists();
 
         KeepAliveResponseParamYaml.ExecContextStatus statuses =
                 MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
                         execContextStatusService::getExecContextStatuses);
-
-        List<Long> taskIds = S.b(psy.taskIds) ?
-                List.of() :
-                Arrays.stream(StringUtils.split(psy.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
 
         List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processor.id);
         for (Object[] obj : tasks) {

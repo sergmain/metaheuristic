@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import lombok.extern.slf4j.Slf4j;
@@ -162,7 +161,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         Processor s = processorCache.findById(processorId);
 
         assertNotNull(s);
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml ss = s.getProcessorStatusYaml();
 
         // 0L is default for long type
         assertNotEquals(0L, ss.sessionCreatedOn);
@@ -177,10 +176,10 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     private void setSessionAsExpired() {
         final Processor processor = processorCache.findById(processorIdBefore);
         assertNotNull(processor);
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+        ProcessorStatusYaml ss = processor.getProcessorStatusYaml();
         ss.sessionCreatedOn = EXPIRED_SESSION_CREATED_ON;
 
-        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        processor.updateParams(ss);
         txSupportForTestingService.saveProcessor(processor);
     }
 }

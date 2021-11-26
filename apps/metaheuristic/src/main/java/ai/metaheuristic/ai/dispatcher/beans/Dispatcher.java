@@ -80,7 +80,7 @@ public class Dispatcher implements Serializable {
         if (dpy ==null) {
             synchronized (this) {
                 if (dpy ==null) {
-                    // to create a corrected structure of params
+                    // to create a valid structure of params
                     String p = S.b(params) ? DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml()) : params;
                     //noinspection UnnecessaryLocalVariable
                     DispatcherParamsYaml temp = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(p);
