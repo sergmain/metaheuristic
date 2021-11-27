@@ -153,6 +153,7 @@ public class CacheService {
         }
     }
 
+    @Transactional(readOnly = true)
     public CacheData.Key getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         return getKey(tpy, function, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }

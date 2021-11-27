@@ -88,7 +88,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Nullable
     @Query(value="select b.data from Variable b where b.id=:id")
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     Blob getDataAsStreamById(Long id);
 
     @Modifying
