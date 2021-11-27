@@ -94,7 +94,9 @@ public class TaskCheckCachingTopLevelService {
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
-            if (queueIds.contains(event.taskId) || executor.getTaskCount()>100) {
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            if (queueIds.contains(event.taskId) || (taskCount - completedTaskCount)  >100) {
                 return;
             }
             queue.add(event);
@@ -119,7 +121,10 @@ public class TaskCheckCachingTopLevelService {
 
     public void checkCaching() {
         final int activeCount = executor.getActiveCount();
-        log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, executor.getTaskCount());
+        final long completedTaskCount = executor.getCompletedTaskCount();
+        final long taskCount = executor.getTaskCount();
+
+        log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
         if (activeCount>0) {
             return;
         }
