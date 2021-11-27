@@ -251,16 +251,8 @@ public class Schedulers {
             execContextStatusService.resetStatus();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 17_000 )
         public void processCheckCaching() {
-            if (globals.testing || !globals.dispatcher.enabled) {
-                return;
-            }
-            taskCheckCachingTopLevelService.checkCaching();
-        }
-
-        @Scheduled(initialDelay = 31_000, fixedDelay = 31_000 )
-        public void pushCheckingOfCachedTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }

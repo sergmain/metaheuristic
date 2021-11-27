@@ -31,10 +31,7 @@ import org.springframework.stereotype.Service;
  * Date: 1/17/2020
  * Time: 9:47 PM
  */
-@Service
 @Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
     /**
@@ -46,7 +43,7 @@ public class InternalFunctionProcessor {
      *
      * @return boolean is that task a long-running task?
      */
-    public boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public static boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = InternalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {

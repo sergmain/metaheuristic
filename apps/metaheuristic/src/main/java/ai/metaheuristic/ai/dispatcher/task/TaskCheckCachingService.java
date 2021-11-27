@@ -107,6 +107,7 @@ public class TaskCheckCachingService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
+            log.debug("#609.009 task #{} wasn't found", taskId);
             return;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {

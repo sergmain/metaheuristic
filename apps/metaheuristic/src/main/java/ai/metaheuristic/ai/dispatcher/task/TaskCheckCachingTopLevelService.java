@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
@@ -120,7 +119,7 @@ public class TaskCheckCachingTopLevelService {
 
     public void checkCaching() {
         final int activeCount = executor.getActiveCount();
-        log.debug("checkCaching, active task in executor: {}", activeCount);
+        log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, executor.getTaskCount());
         if (activeCount>0) {
             return;
         }
@@ -147,6 +146,7 @@ public class TaskCheckCachingTopLevelService {
 
         PrepareData prepareData = getCacheProcess(execContext, event.taskId);
         if (prepareData.state==PrepareDataState.none) {
+            log.debug("execContextId: {}, task: {}, prepareData.state: PrepareDataState.none", event.execContextId, event.taskId);
             return;
         }
 
@@ -157,9 +157,8 @@ public class TaskCheckCachingTopLevelService {
         } catch (InvalidateCacheProcessException e) {
             log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
-                ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                        () -> TaskSyncService.getWithSyncVoid(e.taskId,
-                                () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
+                TaskSyncService.getWithSyncVoid(e.taskId,
+                        () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
             } catch (Throwable th) {
                 log.error("#610.300 error while invalidating task #"+e.taskId, th);
             }
@@ -182,7 +181,6 @@ public class TaskCheckCachingTopLevelService {
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return PREPARE_DATA_NONE;
         }
         CacheData.Key fullKey;
@@ -190,7 +188,6 @@ public class TaskCheckCachingTopLevelService {
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
             log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContext.id, e.getAdditionalInfo());
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return PREPARE_DATA_NONE;
         }
 
@@ -204,6 +201,7 @@ public class TaskCheckCachingTopLevelService {
             cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
         } catch (IOException e) {
             log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
+            return PREPARE_DATA_NONE;
         }
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
