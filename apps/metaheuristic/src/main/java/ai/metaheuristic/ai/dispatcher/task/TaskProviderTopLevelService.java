@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -32,7 +33,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -41,7 +41,6 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -50,12 +49,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -82,33 +79,33 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
-    public void registerTask(Long execContextId, Long taskId) {
+    public void registerTask(ExecContextImpl execContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
-            if (ec==null) {
-                log.warn("#317.010 Can't register task #{}, execContext #{} doesn't exist", taskId, execContextId);
-                return;
-            }
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
             }
             final TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task == null) {
-                log.warn("#317.015 Can't register task #{}, task doesn't exist", taskId);
+                log.warn("#317.040 Can't register task #{}, task doesn't exist", taskId);
                 return;
             }
             final TaskParamsYaml taskParamYaml;
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
-                String es = S.f("#317.020 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                String es = S.f("#317.080 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
                 eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                 return;
             }
-            registerTaskInternal(ec, task, taskParamYaml);
+            if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
+                registerInternalTaskWithoutSync(execContext.id, taskId, taskParamYaml);
+                eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContext.id, taskId));
+            }
+            else {
+                registerTaskLambda(execContext, task, taskParamYaml);
+            }
         });
-
     }
 
     public static void registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
@@ -116,16 +113,16 @@ public class TaskProviderTopLevelService {
             if (TaskQueueService.alreadyRegistered(task.id)) {
                 return;
             }
-            registerTaskInternal(execContext, task, taskParamYaml);
+            registerTaskLambda(execContext, task, taskParamYaml);
         });
     }
 
-    private static void registerTaskInternal(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+    private static void registerTaskLambda(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
 
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
         if (p==null) {
-            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
+            log.warn("#317.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
             return;
         }
 
@@ -140,7 +137,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#317.160 Error, need to investigate ", th);
         }
     }
 
@@ -151,7 +148,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.startTaskProcessing(event));
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#317.200 Error, need to investigate ", th);
         }
     }
 
@@ -162,7 +159,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.unAssignTask(event));
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#317.240 Error, need to investigate ", th);
         }
     }
 
@@ -173,7 +170,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()->TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#317.280 Error, need to investigate ", th);
         }
     }
 
@@ -204,12 +201,14 @@ public class TaskProviderTopLevelService {
     }
 
     public static void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
-        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
-            if (TaskQueueService.alreadyRegistered(taskId)) {
-                return;
-            }
-            TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
-        });
+        TaskQueueSyncStaticService.getWithSyncVoid(()-> registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml));
+    }
+
+    private static void registerInternalTaskWithoutSync(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        if (TaskQueueService.alreadyRegistered(taskId)) {
+            return;
+        }
+        TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
     }
 
     @Async
@@ -218,19 +217,19 @@ public class TaskProviderTopLevelService {
         try {
             setTaskExecState(event.execContextId, event.taskId, event.state);
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("#317.320 Error, need to investigate ", th);
         }
     }
 
     public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
-        log.debug("#393.020 set task #{} as {}", taskId, state);
+        log.debug("#393.360 set task #{} as {}", taskId, state);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return;
         }
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             boolean b = TaskQueueService.setTaskExecState(execContextId, taskId, state);
-            log.debug("#393.025 task #{}, state: {}, result: {}", taskId, state, b);
+            log.debug("#393.400 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
                 applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                         execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
@@ -242,12 +241,11 @@ public class TaskProviderTopLevelService {
     private TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        TaskData.AssignedTask task = TaskQueueSyncStaticService.getWithSync(()-> {
-            if (TaskQueueService.isQueueEmpty()) {
-                return null;
-            }
-            return taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
-        });
+        if (TaskQueueService.isQueueEmpty()) {
+            return null;
+        }
+
+        TaskData.AssignedTask task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
 
         if (task!=null) {
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.task.id, task.task.execContextId);
@@ -262,20 +260,25 @@ public class TaskProviderTopLevelService {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
-        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000));
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000), List.of());
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
-        final Processor processor = processorCache.findById(processorId);
+        final Processor processor = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
+                ()->processorCache.findById(processorId));
+
         if (processor == null) {
-            log.error("#393.030 Processor with id #{} wasn't found", processorId);
+            log.error("#393.440 Processor with id #{} wasn't found", processorId);
             return null;
         }
 
-        if (TaskQueueService.isQueueEmptyWithSync()) {
+        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
+                TaskQueueService::isQueueEmpty);
+
+        if (queueEmpty) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
             if (System.currentTimeMillis()-mills.get() < 60_000 ) {
                 return null;
@@ -288,15 +291,17 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas);
+        DispatcherCommParamsYaml.AssignedTask assignedTask =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
+                        ()-> getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
             if (task==null) {
-                log.debug("#393.040 findTask(), task #{} wasn't found", assignedTask.taskId);
+                log.debug("#393.480 findTask(), task #{} wasn't found", assignedTask.taskId);
             }
             else {
-                log.debug("#393.060 findTask(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
+                log.debug("#393.520 findTask(), task id: #{}, ver: {}, task: {}", task.id, task.version, task);
             }
         }
         return assignedTask;
@@ -306,20 +311,24 @@ public class TaskProviderTopLevelService {
     private static ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
         ProcessorStatusYaml ss;
         try {
-            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            ss = processor.getProcessorStatusYaml();
             return ss;
         } catch (Throwable e) {
-            log.error("#393.080 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#393.100 Error ", e);
+            log.error("#393.560 Error parsing current status of processor:\n{}", processor.getStatus());
+            log.error("#393.570 Error ", e);
             return null;
         }
     }
 
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
+            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
-        final TaskData.AssignedTask task = getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas);
+        final TaskData.AssignedTask task =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
+                        ()-> getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas, taskIds));
+
         // task won't be returned for an internal function
         if (task==null) {
             return null;
@@ -337,7 +346,7 @@ public class TaskProviderTopLevelService {
                 // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
-                log.warn("#393.120 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                log.warn("#393.600 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                         task.task.getId(), processor.id, psy.taskParamsVersion);
                 return null;
             }
@@ -346,21 +355,21 @@ public class TaskProviderTopLevelService {
             return new DispatcherCommParamsYaml.AssignedTask(params, task.task.getId(), task.task.getExecContextId(), EnumsApi.ExecContextState.STARTED, task.tag, task.quota);
 
         } catch (Throwable th) {
-            String es = "#393.140 Something wrong";
+            String es = "#393.640 Something wrong";
             log.error(es, th);
             throw new IllegalStateException(es, th);
         }
     }
 
     @Nullable
-    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
+            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+
         TxUtils.checkTxNotExists();
 
-        KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
-
-        List<Long> taskIds = S.b(psy.taskIds) ?
-                List.of() :
-                Arrays.stream(StringUtils.split(psy.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
+        KeepAliveResponseParamYaml.ExecContextStatus statuses =
+                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
+                        execContextStatusService::getExecContextStatuses);
 
         List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processor.id);
         for (Object[] obj : tasks) {
@@ -373,18 +382,17 @@ public class TaskProviderTopLevelService {
             }
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.warn("#393.160 already assigned task, processor: #{}, task #{}, execStatus: {}",
+                    log.warn("#393.680 already assigned task, processor: #{}, task #{}, execStatus: {}",
                             processor.id, taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
                         if (psy.env==null) {
-                            log.error("#317.070 Processor {} has empty env.yaml", processor.id);
+                            log.error("#317.720 Processor {} has empty env.yaml", processor.id);
                             return null;
                         }
                         ExecContextImpl ec =  execContextService.findById(execContextId);
                         if (ec==null) {
-                            log.warn("#393.300 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
-
+                            log.warn("#393.750 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
                             continue;
                         }
                         final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
@@ -393,7 +401,7 @@ public class TaskProviderTopLevelService {
                         try {
                             taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                         } catch (YAMLException e) {
-                            String es = S.f("#393.340 Task #%s has broken params yaml and will be finished with error, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                            String es = S.f("#393.780 Task #%s has broken params yaml and will be finished with error, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                             log.error(es, e.getMessage());
                             eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                             continue;
@@ -401,8 +409,8 @@ public class TaskProviderTopLevelService {
 
                         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
                         if (p==null) {
-                            String es = S.f("#317.025 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
-                            log.warn("#317.025 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
+                            String es = S.f("#317.810 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
+                            log.warn("#317.815 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
                             eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                             continue;
                         }
@@ -410,7 +418,8 @@ public class TaskProviderTopLevelService {
                         QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tags);
 
                         if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
-                            TaskSyncService.getWithSyncForCreation(task.id, ()-> execContextTaskResettingService.resetTaskWithTx(ec.id, task.id));
+                            log.warn("#393.840 Not enough quotas, start re-setting task #{}, execContext #{}", taskId, execContextId);
+                            eventPublisher.publishEvent(new ResetTaskEvent(ec.id, task.id));
                             continue;
                         }
 
@@ -422,7 +431,10 @@ public class TaskProviderTopLevelService {
             }
         }
 
-        TaskData.AssignedTask result = findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
+        TaskData.AssignedTask result =
+                MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
+                        ()-> findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas));
+
         return result;
     }
 

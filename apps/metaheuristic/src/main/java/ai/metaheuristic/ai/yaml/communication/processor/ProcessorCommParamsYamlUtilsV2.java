@@ -61,7 +61,7 @@ public class ProcessorCommParamsYamlUtilsV2
                 t.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId(true);
             }
             if (v2.requestTask!=null) {
-                t.requestTask = new ProcessorCommParamsYaml.RequestTask(v2.requestTask.newTask, v2.requestTask.acceptOnlySigned);
+                t.requestTask = new ProcessorCommParamsYaml.RequestTask(v2.requestTask.newTask, v2.requestTask.acceptOnlySigned, v2.requestTask.taskIds);
             }
             if (v2.reportTaskProcessingResult!=null) {
                 t.reportTaskProcessingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();

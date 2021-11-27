@@ -17,10 +17,10 @@ source:
       - name: resultOutput1
       - name: aggregatedResult
   processes:
-    - code: mh.permute-variables-and-inlines
-      name: permute variables and inlines
+    - code: mh.permute-variables
+      name: permute variables
       function:
-        code: mh.permute-variables-and-inlines
+        code: mh.permute-variables
         context: internal
       metas:
         - variables-for-permutation: nullVar1, nullVar2, nullVar3, nullVar4

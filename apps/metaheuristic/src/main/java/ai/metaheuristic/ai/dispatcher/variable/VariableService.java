@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
@@ -84,27 +83,24 @@ public class VariableService {
 
     private final EntityManager em;
     private final VariableRepository variableRepository;
-    private final ExecContextSyncService execContextSyncService;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public UploadResult storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
+    public void storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.040 Variable #"+variableId+" wasn't found" );
+            throw new VariableCommonException("#441.040 Variable #"+variableId+" wasn't found", variableId);
         }
         if (!execContextId.equals(variable.execContextId)) {
             final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
                     "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
             log.warn(es);
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
+            throw new VariableCommonException(es, variableId);
         }
-
         update(variableIS, length, variable);
-        return OK_UPLOAD_RESULT;
     }
 
     @Transactional

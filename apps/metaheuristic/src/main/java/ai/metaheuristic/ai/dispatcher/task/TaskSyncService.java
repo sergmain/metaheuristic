@@ -18,11 +18,8 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -32,11 +29,7 @@ import java.util.function.Supplier;
  * Date: 7/27/2019
  * Time: 8:26 PM
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
 @Slf4j
-@Service
-@RequiredArgsConstructor
-@Profile("dispatcher")
 public class TaskSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();

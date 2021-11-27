@@ -58,7 +58,7 @@ public class ProcessorStatusYamlUtilsV2
         if (src.log!=null) {
             trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
-        BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors");
+        BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors", "taskIds");
         trg.checkIntegrity();
         return trg;
     }
@@ -88,7 +88,7 @@ public class ProcessorStatusYamlUtilsV2
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
             env.mirrors.putAll(mirrorMap);
         }
-        envSrc.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->env.quotas.values));
+        envSrc.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envSrc.quotas.limit;
         env.quotas.disabled = envSrc.quotas.disabled;
         env.quotas.defaultValue = envSrc.quotas.defaultValue;

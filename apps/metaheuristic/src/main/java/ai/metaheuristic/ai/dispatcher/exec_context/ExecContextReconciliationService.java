@@ -66,7 +66,7 @@ public class ExecContextReconciliationService {
         }
 
         for (Long taskForResettingId : status.taskForResettingIds) {
-            TaskSyncService.getWithSyncForCreation(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
+            TaskSyncService.getWithSyncVoid(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
         }
         for (Long taskIsOkId : status.taskIsOkIds) {
             TaskSyncService.getWithSyncNullable(taskIsOkId, ()-> {

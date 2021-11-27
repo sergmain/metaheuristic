@@ -98,6 +98,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
 
+    @Autowired
+    private TaskVariableTopLevelService taskVariableTopLevelService;
+
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -390,7 +393,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(simpleTask32.taskId,
-                    () -> txSupportForTestingService.setVariableReceivedWithTx(simpleTask32.taskId, output.id));
+                    () -> taskVariableTopLevelService.updateStatusOfVariable(simpleTask32.taskId, output.id).status);
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
         taskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId);
@@ -565,7 +568,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        ExecContextSyncService.getWithSync(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
+        ExecContextSyncService.getWithSyncVoid(execContextForTest.id, () -> execContextFSM.storeExecResultWithTx(r));
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
@@ -573,7 +576,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(task.id,
-                    () -> txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id));
+                    () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status);
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 

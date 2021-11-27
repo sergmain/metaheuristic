@@ -18,11 +18,8 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.utils.TxUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -32,37 +29,33 @@ import java.util.function.Supplier;
  * Date: 2/26/2021
  * Time: 11:35 PM
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
 @Slf4j
-@Service
-@RequiredArgsConstructor
-@Profile("dispatcher")
 public class VariableSyncService {
 
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public void checkWriteLockPresent(Long variableId) {
+    public static void checkWriteLockPresent(Long variableId) {
         if (!getWriteLock(variableId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#973.020 Must be locked by WriteLock");
         }
     }
 
-    public void checkWriteLockNotPresent(Long variableId) {
+    public static void checkWriteLockNotPresent(Long variableId) {
         if (getWriteLock(variableId).isHeldByCurrentThread()) {
             throw new IllegalStateException("#973.025 The thread was already locked by WriteLock");
         }
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
+    public static ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
         return commonSync.getWriteLock(taskId);
     }
 
-    private ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
+    private static ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
         return commonSync.getReadLock(taskId);
     }
 
-    public <T> T getWithSync(Long variableId, Supplier<T> supplier) {
+    public static <T> T getWithSync(Long variableId, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(variableId);
 
@@ -76,7 +69,7 @@ public class VariableSyncService {
     }
 
     // ForCreation means that the presence of TX won't be checked
-    public <T> T getWithSyncForCreation(Long variableId, Supplier<T> supplier) {
+    public static <T> T getWithSyncForCreation(Long variableId, Supplier<T> supplier) {
         checkWriteLockNotPresent(variableId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);
@@ -90,7 +83,7 @@ public class VariableSyncService {
 
     // ForCreation means that the presence of TX won't be checked
     @Nullable
-    public <T> T getWithSyncNullableForCreation(Long variableId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullableForCreation(Long variableId, Supplier<T> supplier) {
         checkWriteLockNotPresent(variableId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);
@@ -103,7 +96,7 @@ public class VariableSyncService {
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long variableId, Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Long variableId, Supplier<T> supplier) {
         checkWriteLockNotPresent(variableId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);

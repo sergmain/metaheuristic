@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -25,7 +25,6 @@ import org.springframework.lang.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -63,19 +62,36 @@ public class DirUtils {
         return currDir;
     }
 
+    public static @Nullable File createMhTempDir(String prefix) {
+        File trgDir = new File(SystemUtils.getJavaIoTmpDir(), CommonConsts.METAHEURISTIC_TEMP);
+        if (!trgDir.exists()) {
+            boolean isOk = trgDir.mkdirs();
+            if (!isOk) {
+                return null;
+            }
+        }
+        return createTempDir(trgDir, prefix);
+    }
+
     public static @Nullable File createTempDir(String prefix) {
+        return createTempDir(SystemUtils.getJavaIoTmpDir(), prefix);
+    }
+
+    public static @Nullable File createTempDir(File trgDir, String prefix) {
 
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String prefixDate = format.format(date);
         for (int i = 0; i < 5; i++) {
-            File newTempDir = new File(SystemUtils.JAVA_IO_TMPDIR, prefix + prefixDate + "-" + System.nanoTime());
+            File newTempDir = new File(trgDir, prefix + prefixDate + "-" + System.nanoTime());
             if (newTempDir.exists()) {
                 continue;
             }
             try {
                 Files.createDirectories(newTempDir.toPath());
-                return newTempDir;
+                if (newTempDir.exists()) {
+                    return newTempDir;
+                }
             } catch (IOException e) {
                 log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.getAbsolutePath(), i, e.getMessage()));
             }

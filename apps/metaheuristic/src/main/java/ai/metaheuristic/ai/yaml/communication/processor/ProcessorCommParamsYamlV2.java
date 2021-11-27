@@ -83,6 +83,8 @@ public class ProcessorCommParamsYamlV2 implements BaseParams {
         @Nullable
         public Boolean newTask;
         public boolean acceptOnlySigned;
+        @Nullable
+        public String taskIds;
     }
 
     @Data

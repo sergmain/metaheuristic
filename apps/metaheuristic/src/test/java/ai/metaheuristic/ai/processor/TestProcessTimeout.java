@@ -33,7 +33,7 @@ public class TestProcessTimeout {
     @Test
     public void testProcessTimeout() throws IOException, InterruptedException {
 
-        File tempDir = DirUtils.createTempDir("test-process-timeout-");
+        File tempDir = DirUtils.createMhTempDir("test-process-timeout-");
 
         List<String> cmd = List.of("jshell");
         ProcessBuilder pb = new ProcessBuilder();

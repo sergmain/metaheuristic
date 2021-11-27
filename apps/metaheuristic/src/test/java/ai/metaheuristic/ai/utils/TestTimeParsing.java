@@ -45,7 +45,7 @@ public class TestTimeParsing {
     }
 
     public static class SimpleYamlHolderUtils {
-        private static Yaml yaml;
+        private static final Yaml yaml;
 
         static {
             yaml = YamlUtils.init(SimpleYamlHolder.class);
@@ -74,6 +74,7 @@ public class TestTimeParsing {
 
         SimpleYamlHolder holder;
         try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period.yaml")) {
+            assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -96,7 +97,7 @@ public class TestTimeParsing {
         assertEquals(2019, c.get(Calendar.YEAR));
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
-        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
+        DispatcherSchedule schedule = DispatcherSchedule.createDispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
@@ -113,6 +114,7 @@ public class TestTimeParsing {
 
         SimpleYamlHolder holder;
         try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period-with-weeks.yaml")) {
+            assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -137,7 +139,7 @@ public class TestTimeParsing {
         assertEquals(2019, c.get(Calendar.YEAR));
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
-        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
+        DispatcherSchedule schedule = DispatcherSchedule.createDispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         assertFalse(schedule.isActive(LocalDateTime.parse( "05/08/2019 13:05", fmt)));
@@ -157,6 +159,7 @@ public class TestTimeParsing {
 
         SimpleYamlHolder holder;
         try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-short.yaml")) {
+            assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -169,7 +172,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
+        DispatcherSchedule schedule = DispatcherSchedule.createDispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertFalse(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
@@ -184,6 +187,7 @@ public class TestTimeParsing {
     public void parseExtendedTimeYaml_alwaysPermitted() throws IOException {
         SimpleYamlHolder holder;
         try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-always-permitted.yaml")) {
+            assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -196,7 +200,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
+        DispatcherSchedule schedule = DispatcherSchedule.createDispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertTrue(schedule.isActive(LocalDateTime.parse( "14/01/2019 23:59", fmt)));
 
@@ -213,6 +217,7 @@ public class TestTimeParsing {
     public void parseExtendedTimeYaml_weekendRestricted() throws IOException {
         SimpleYamlHolder holder;
         try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-weekend-restricted.yaml")) {
+            assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -225,7 +230,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
+        DispatcherSchedule schedule = DispatcherSchedule.createDispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS");
         assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59.138", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00.000", fmt)));

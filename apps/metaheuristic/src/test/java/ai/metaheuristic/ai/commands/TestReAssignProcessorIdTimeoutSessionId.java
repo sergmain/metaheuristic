@@ -18,17 +18,16 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import lombok.extern.slf4j.Slf4j;
@@ -109,13 +108,13 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         Processor s = processorCache.findById(processorId);
         assertNotNull(s);
 
-        ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml psy = s.getProcessorStatusYaml();
         assertNotEquals(0L, psy.sessionCreatedOn);
         assertEquals(sessionIdBefore, psy.sessionId);
 
         psy.sessionCreatedOn -= (Consts.SESSION_TTL + 100000);
         sessionCreatedOn = psy.sessionCreatedOn;
-        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(psy);
+        s.updateParams(psy);
 
         DispatcherApiData.ProcessorSessionId s1 = processorTransactionService.reassignProcessorId(null, null);
 
@@ -154,7 +153,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         Processor s = processorCache.findById(processorIdBefore);
 
         assertNotNull(s);
-        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml ss = s.getProcessorStatusYaml();
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);

@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-class DispatcherParamsService {
+public class DispatcherParamsService {
 
     public final ApplicationEventPublisher eventPublisher;
     public final DispatcherParamsRepository dispatcherParamsRepository;

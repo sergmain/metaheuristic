@@ -329,12 +329,12 @@ public class EnumsApi {
             };
         }
 
-        public static boolean isFinishedState(int state) {
-            return isFinishedState(from(state));
+        public static boolean isFinishedState(TaskExecState state) {
+            return isFinishedState(state.value);
         }
 
-        public static boolean isFinishedState(TaskExecState state) {
-            return state==EnumsApi.TaskExecState.OK || state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.SKIPPED;
+        public static boolean isFinishedState(int state) {
+            return state== TaskExecState.OK.value || state== TaskExecState.ERROR.value || state== TaskExecState.SKIPPED.value;
         }
     }
 

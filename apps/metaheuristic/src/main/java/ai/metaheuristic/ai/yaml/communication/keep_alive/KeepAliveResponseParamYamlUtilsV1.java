@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -88,7 +87,9 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
             }
         }
 
-        BeanUtils.copyProperties(v1, t);
+        t.success = v1.success;
+        t.msg = v1.msg;
+
         return t;
     }
 

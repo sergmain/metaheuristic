@@ -61,12 +61,8 @@ public class ProcessorEventBusService {
         this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
     }
 
-    @Async
-    @EventListener
     public void keepAlive(KeepAliveEvent event) {
-
         try {
-            // TODO 2020-11-22 do we need to convert Set to List and sort it?
             Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
                 log.info("Can't find any enabled dispatcher");
@@ -76,6 +72,9 @@ public class ProcessorEventBusService {
             if (activeCount >0) {
                 log.error("#047.020 executor has a not finished tasks, count: {}", activeCount);
             }
+            // TODO 2020-11-22 do we need to convert Set to List and sort it?
+            // TODO 2021-11-10 actually, activeDispatchers.getActiveDispatchers() returns a map, which is unmodifiable LinkedHashMap
+            //  so we don't need to sort this map.
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 executor.submit(() -> {
                     log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);

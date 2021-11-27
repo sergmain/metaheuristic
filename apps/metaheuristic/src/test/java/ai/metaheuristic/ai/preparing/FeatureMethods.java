@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
@@ -136,7 +137,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertFalse(result.isErrorMessages());
         assertNotNull(execContextForTest);
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
             EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);

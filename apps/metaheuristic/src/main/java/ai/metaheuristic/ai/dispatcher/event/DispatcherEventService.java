@@ -156,7 +156,7 @@ public class DispatcherEventService {
     public CleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
         CleanerInfo resource = new CleanerInfo();
 
-        File tempDir = DirUtils.createTempDir("events-");
+        File tempDir = DirUtils.createMhTempDir("events-");
         resource.toClean.add(tempDir);
         File filesDir = new File(tempDir, "files");
 

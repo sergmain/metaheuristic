@@ -72,7 +72,6 @@ public class ExecContextCreatorService {
     private final ExecContextService execContextService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final SourceCodeSyncService sourceCodeSyncService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateCache execContextVariableStateCache;
@@ -105,7 +104,7 @@ public class ExecContextCreatorService {
     public ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, Long companyId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
 
-        sourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
+        SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
         if (sourceCodesForCompany.isErrorMessages()) {
@@ -152,7 +151,7 @@ public class ExecContextCreatorService {
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId, @Nullable ExecContextData.RootAndParent rootAndParent) {
         TxUtils.checkTxExists();
-        sourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
+        SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);

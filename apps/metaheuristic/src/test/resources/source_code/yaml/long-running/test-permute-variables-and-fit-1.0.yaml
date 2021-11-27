@@ -1,0 +1,96 @@
+version: 3
+source:
+  clean: true
+  strictNaming: true
+  uid: test-permute-variables-and-fit-1.0
+  variables:
+    inputs:
+      - name: assembledRaw
+      - name: datasetProcessing
+      - name: clusterSize1
+        nullable: true
+      - name: clusterCount1
+        nullable: true
+      - name: binaryClusters1
+        nullable: true
+      - name: binaryDrawWithFrequency
+        nullable: true
+      - name: distribOfFreqFull
+        nullable: true
+      - name: matrixOfWinning
+        nullable: true
+      - name: seed
+      - name: batchSize
+      - name: timeSteps
+      - name: RNN
+      - name: epoch
+      - name: activation
+      - name: optimizer
+    outputs:
+      - name: aggregatedResult
+  processes:
+    - code: mh.permute-values-of-variables
+      name: permute values of variables
+      function:
+        code: mh.permute-values-of-variables
+        context: internal
+      inputs:
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
+        - name: epoch
+        - name: activation
+        - name: optimizer
+      metas:
+        - prefix: sub
+        - suffix: Val
+        - upper-case-first-char: true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.exec-source-code2
+            name: mh.exec-source-code2
+            function:
+              code: mh.exec-source-code
+              context: internal
+            inputs:
+              - name: assembledRaw
+              - name: datasetProcessing
+              - name: clusterSize1
+              - name: clusterCount1
+              - name: binaryClusters1
+              - name: binaryDrawWithFrequency
+              - name: distribOfFreqFull
+              - name: matrixOfWinning
+              - name: subSeedVal
+              - name: subBatchSizeVal
+              - name: subTimeStepsVal
+              - name: subRNNVal
+              - name: subEpochVal
+              - name: subActivationVal
+              - name: subOptimizerVal
+            outputs:
+              - name: _aggregatedResult
+                ext: .zip
+            metas:
+              - source-code-uid: test-fit-and-predict-1.0
+    - code: mh.aggregate
+      name: mh.aggregate
+      function:
+        code: mh.aggregate
+        context: internal
+      metas:
+        - variables: _aggregatedResult
+      outputs:
+        - name: aggregatedResult1
+          ext: .zip
+      priority: -2
+    - code: mh.evaluation6
+      name: mh.evaluation6
+      function:
+        code: mh.evaluation
+        context: internal
+      metas:
+        - expression: aggregatedResult = aggregatedResult1
+

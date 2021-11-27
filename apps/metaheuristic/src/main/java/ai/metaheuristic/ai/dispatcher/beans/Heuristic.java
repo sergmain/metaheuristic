@@ -28,6 +28,7 @@ import org.springframework.lang.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -42,6 +43,7 @@ import java.io.Serializable;
 @ToString(exclude={"ecpy"})
 @NoArgsConstructor
 public class Heuristic implements Serializable {
+    @Serial
     private static final long serialVersionUID = -2054668981438811654L;
 
     @Id

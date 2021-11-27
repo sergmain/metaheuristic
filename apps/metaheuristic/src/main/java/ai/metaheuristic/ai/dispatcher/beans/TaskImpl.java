@@ -24,6 +24,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 
 @Entity
@@ -35,6 +36,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class TaskImpl implements Serializable, Task {
+    @Serial
     private static final long serialVersionUID = 5618845653823904624L;
 
     public static class LastUpdateListener {

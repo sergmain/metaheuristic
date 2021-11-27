@@ -34,15 +34,13 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -129,6 +127,10 @@ public class DispatcherRequestor {
             return;
         }
 
+//        if (!metadataService.hasTasks(dispatcherUrl)) {
+//            return;
+//        }
+
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
         pcpy.quotas.current = metadataService.currentQuota(dispatcherUrl.url);
 
@@ -152,8 +154,11 @@ public class DispatcherRequestor {
                 if (currentExecState.isInited(dispatcherUrl)) {
                     final boolean b = processorTaskService.isNeedNewTask(ref);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired);
-                    } else {
+                        // always report about current active tasks, if we have actual processorId
+                        final String taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                    }
+                    else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
@@ -244,6 +249,9 @@ public class DispatcherRequestor {
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
                     log.error("#775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else if (cause instanceof SSLException) {
+                    log.error("#775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#775.100 Error, url: " + url, e);

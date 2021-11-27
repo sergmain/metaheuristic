@@ -32,19 +32,28 @@ import java.util.Map;
  */
 @Slf4j
 public class MetaUtils {
-
     public static boolean isTrue(@Nullable Meta m) {
         return m!=null && "true".equals(m.getValue());
     }
 
+    @Deprecated(forRemoval = true)
     public static boolean isFalse(@Nullable Meta m) {
         return !isTrue(m);
     }
 
     public static boolean isTrue(@Nullable List<Map<String, String>> metas, String... keys) {
-        return isTrue(getMeta(metas, keys));
+        return isTrue(metas, false, keys);
     }
 
+    public static boolean isTrue(@Nullable List<Map<String, String>> metas, boolean defaultValue, String... keys) {
+        final Meta meta = getMeta(metas, keys);
+        if (meta==null) {
+            return defaultValue;
+        }
+        return isTrue(meta);
+    }
+
+    @Deprecated(forRemoval = true)
     public static boolean isFalse(@Nullable List<Map<String, String>> metas, String... keys) {
         return isFalse(getMeta(metas, keys));
     }

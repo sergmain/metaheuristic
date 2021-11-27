@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -35,6 +36,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExperimentTask implements Serializable {
+    @Serial
     private static final long serialVersionUID = -1225513309547284431L;
 
     @Id

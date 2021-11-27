@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
@@ -40,7 +39,7 @@ import java.nio.file.Files;
  * Date: 10/30/2020
  * Time: 7:14 PM
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "MethodMayBeStatic"})
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -50,7 +49,6 @@ public class EventBusService {
     public final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     public final TaskWithInternalContextEventService taskWithInternalContextEventService;
     public final TaskFinishingTopLevelService taskFinishingTopLevelService;
-    public final ExecContextSyncService execContextSyncService;
     public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     public final ExecContextTopLevelService execContextTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
@@ -60,7 +58,7 @@ public class EventBusService {
     public void registerVariableState(VariableUploadedEvent event) {
         try {
             log.debug("call EventBusService.registerVariableStates(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
-            execContextVariableStateTopLevelService.registerVariableState(event);
+            ExecContextVariableStateTopLevelService.registerVariableState(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -70,7 +68,7 @@ public class EventBusService {
     @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
         try {
-            execContextVariableStateTopLevelService.registerCreatedTask(event);
+            ExecContextVariableStateTopLevelService.registerCreatedTask(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

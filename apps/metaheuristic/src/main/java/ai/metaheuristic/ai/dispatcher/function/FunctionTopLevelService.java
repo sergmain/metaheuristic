@@ -184,7 +184,7 @@ public class FunctionTopLevelService {
 
         File tempDir = null;
         try {
-            tempDir = DirUtils.createTempDir("function-upload-");
+            tempDir = DirUtils.createMhTempDir("function-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#424.060 can't create temporary directory in " + location);

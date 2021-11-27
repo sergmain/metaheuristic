@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -31,6 +32,7 @@ import java.sql.Timestamp;
 @EqualsAndHashCode(of = {"id", "version"})
 @NoArgsConstructor
 public class LogData implements Serializable {
+    @Serial
     private static final long serialVersionUID = -6065599957629315147L;
 
     public void setType(Enums.LogType type) {

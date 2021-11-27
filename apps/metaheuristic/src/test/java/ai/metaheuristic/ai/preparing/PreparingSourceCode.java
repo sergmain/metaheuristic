@@ -127,15 +127,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public ExecContextGraphService execContextGraphService;
 
     @Autowired
-    public ExecContextSyncService execContextSyncService;
-
-    @Autowired
-    public ExecContextGraphSyncService execContextGraphSyncService;
-
-    @Autowired
-    public ExecContextTaskStateSyncService execContextTaskStateSyncService;
-
-    @Autowired
     public TaskProducingService taskProducingService;
 
     @Autowired
@@ -480,7 +471,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest();
         execContextForTest = result.execContext;
-        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
 
             assertFalse(result.isErrorMessages());
             assertNotNull(execContextForTest);
@@ -551,7 +542,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ecg==null) {
             return List.of();
         }
-        return execContextGraphService.findLeafs(ecg);
+        return ExecContextGraphService.findLeafs(ecg);
     }
 
     public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
@@ -562,7 +553,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ecg==null) {
             return Set.of();
         }
-        return execContextGraphService.findDirectAncestors(ecg, vertex);
+        return ExecContextGraphService.findDirectAncestors(ecg, vertex);
     }
 
     @Nullable

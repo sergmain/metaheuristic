@@ -53,7 +53,7 @@ public class TestMetricsYaml {
         internalTestValueYaml(s);
     }
 
-    private void internalTestValueYaml(String s) {
+    private static void internalTestValueYaml(String s) {
         Metrics metrics = new Metrics();
         metrics.setMetrics(s);
         metrics.setStatus(EnumsApi.MetricsStatus.Ok);

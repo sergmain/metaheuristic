@@ -37,7 +37,7 @@ public class TaskQueueService {
     private static final TaskQueue taskQueue = new TaskQueue();
 
     public static TaskQueue.GroupIterator getIterator() {
-        checkWriteLockPresent();
+//        checkWriteLockPresent();
         return taskQueue.getIterator();
     }
 
@@ -57,7 +57,7 @@ public class TaskQueueService {
     }
 
     public static boolean isQueueEmpty() {
-        checkWriteLockPresent();
+//        checkWriteLockPresent();
         return taskQueue.isQueueEmpty();
     }
 
@@ -70,7 +70,6 @@ public class TaskQueueService {
         checkWriteLockPresent();
         taskQueue.startTaskProcessing(event.execContextId, event.taskId);
     }
-
 
     public static void deleteByExecContextId(Long execContextId) {
         checkWriteLockPresent();

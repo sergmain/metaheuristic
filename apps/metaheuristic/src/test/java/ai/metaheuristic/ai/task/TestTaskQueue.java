@@ -185,6 +185,8 @@ public class TestTaskQueue {
         taskQueue.removeAll(List.of(task_1_6));
 
         // it's 1 because taskQueue was created with minQueueSize==1
+        assertEquals(2, taskQueue.groupCount());
+        taskQueue.shrink();
         assertEquals(1, taskQueue.groupCount());
 
         taskQueue.addNewTask(task_1_6);
@@ -198,6 +200,8 @@ public class TestTaskQueue {
         assertEquals(3, taskQueue.groupCount());
 
         taskQueue.deleteByExecContextId(1L);
+        assertEquals(3, taskQueue.groupCount());
+        taskQueue.shrink();
         assertEquals(1, taskQueue.groupCount());
         assertTrue(taskQueue.isQueueEmpty());
 

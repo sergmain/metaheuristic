@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.tx;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingService;
@@ -302,14 +303,14 @@ public class TestTx extends PreparingSourceCode {
 
     private void testService(Long taskId) {
         ////
-        String s = execContextSyncService.getWithSync(execContextForTest.id,
+        String s = ExecContextSyncService.getWithSync(execContextForTest.id,
                 () -> txTestingService.updateWithSyncSingle(execContextForTest.id, taskId));
 
         assertEquals("AAA", s);
 
         ////
 
-        s = execContextSyncService.getWithSync(execContextForTest.id,
+        s = ExecContextSyncService.getWithSync(execContextForTest.id,
                 () -> txTestingService.updateWithSyncDouble(execContextForTest.id, taskId));
         assertEquals("AAAAAA", s);
 

@@ -42,8 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -62,6 +61,8 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
 
     public void createExperiment() {
         ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        assertNull(r.errorMessages, ""+r.errorMessages);
+
         assertNotNull(r.execContext);
         execContextForTest = r.execContext;
 

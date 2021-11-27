@@ -22,19 +22,16 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -85,7 +82,7 @@ public class TaskWithInternalContextTopLevelService {
         }
         File tempDir = null;
         try {
-            tempDir = DirUtils.createTempDir("mh-exec-source-code-result-");
+            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-result-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error,
                                 "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
@@ -105,7 +102,11 @@ public class TaskWithInternalContextTopLevelService {
                 VariableUtils.VariableHolder variableHolder = holders.get(0);
                 if (variableHolder.variable == null) {
                     throw new InternalFunctionException(variable_not_found,
-                                    "#992.120 local variable with name: " + execContextOutput.name + " wasn't found");
+                                    "#992.120 only local variable is supported right now. variable with name: " + execContextOutput.name + " wasn't found in local context");
+                }
+                if (!variableHolder.variable.inited) {
+                    throw new InternalFunctionException(variable_not_found,
+                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited");
                 }
 
                 File tempFile = File.createTempFile("output-", ".bin", tempDir);
@@ -113,17 +114,13 @@ public class TaskWithInternalContextTopLevelService {
                 variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                 execContextVariableService.storeDataInVariable(output, tempFile);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             log.error("#992.220 Error", e);
             throw new InternalFunctionException(system_error, "#992.240 error: " + e.getMessage());
-        } finally {
-            if (tempDir != null) {
-                try {
-                    FileUtils.deleteDirectory(tempDir);
-                } catch (Throwable th) {
-                    log.error("#992.260 Error", th);
-                }
-            }
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
         }
     }
 }

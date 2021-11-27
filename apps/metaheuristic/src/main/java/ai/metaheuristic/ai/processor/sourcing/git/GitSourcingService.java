@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -112,9 +113,13 @@ public class GitSourcingService {
     }
 
     private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
+        File gitTemp = DirUtils.createMhTempDir("git-exec-");
+        if (gitTemp==null) {
+            return new GitExecResult(null, false, "#027.017 Error: can't create temporary directory");
+        }
         File consoleLogFile = null;
         try {
-            consoleLogFile = File.createTempFile("console-", ".log");
+            consoleLogFile = File.createTempFile("console-", ".log", gitTemp);
             FunctionApiData.SystemExecResult systemExecResult = SystemProcessLauncher.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null,
                     globals.processor.taskConsoleOutputMaxLines);
@@ -125,7 +130,7 @@ public class GitSourcingService {
             return new GitExecResult(null, false, "#027.020 Error: " + e.getMessage());
         }
         finally {
-            FileUtils.deleteQuietly(consoleLogFile);
+            DirUtils.deleteAsync(gitTemp);
         }
     }
 

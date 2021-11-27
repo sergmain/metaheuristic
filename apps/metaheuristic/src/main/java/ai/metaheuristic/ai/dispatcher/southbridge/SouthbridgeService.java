@@ -17,20 +17,25 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
-import ai.metaheuristic.ai.dispatcher.KeepAliveCommandProcessor;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.CommonIOErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -47,6 +52,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlU
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -72,7 +78,7 @@ import java.util.function.Supplier;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-// !!! Do not change the name to SouthBridgeService
+// !!! __ Do not change the name of class to SouthBridgeService ___ !!!
 public class SouthbridgeService {
 
     private final Globals globals;
@@ -80,9 +86,10 @@ public class SouthbridgeService {
     private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final KeepAliveCommandProcessor keepAliveCommandProcessor;
-    private final ProcessorTopLevelService processorTopLevelService;
+    private final KeepAliveTopLevelService keepAliveTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProcessorCache processorCache;
+    private final ProcessorTransactionService processorTransactionService;
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
@@ -206,50 +213,9 @@ public class SouthbridgeService {
 
     public String keepAlive(String data, String remoteAddress) {
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
-        KeepAliveResponseParamYaml response = processKeepAliveInternal(karpy, remoteAddress);
+        KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress);
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
         return yaml;
-    }
-
-    private KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress) {
-        KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
-        try {
-            for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
-                KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
-                resp.responses.add(dispatcherResponse);
-
-                if (processorRequest.processorCommContext == null) {
-                    dispatcherResponse.assignedProcessorId = keepAliveCommandProcessor.getNewProcessorId(new KeepAliveRequestParamYaml.RequestProcessorId());
-                    continue;
-                }
-                if (processorRequest.processorCommContext.processorId == null) {
-                    log.warn("#444.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
-                    DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                    dispatcherResponse.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
-                    continue;
-                }
-
-                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(processorRequest.processorCommContext.processorId, processorRequest.processorCommContext.sessionId, remoteAddress);
-                if (processorSessionId != null) {
-                    dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-
-                log.debug("Start processing commands");
-                keepAliveCommandProcessor.processProcessorTaskStatus(processorRequest);
-                keepAliveCommandProcessor.processReportProcessorStatus(req.functions, processorRequest);
-                keepAliveCommandProcessor.processGetNewProcessorId(processorRequest, dispatcherResponse);
-                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
-            }
-            keepAliveCommandProcessor.initDispatcherInfo(resp);
-
-        } catch (Throwable th) {
-            log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", req);
-            log.error("#444.230 Error", th);
-            resp.success = false;
-            resp.msg = th.getMessage();
-        }
-        return resp;
     }
 
     public String processRequest(String data, String remoteAddress) {
@@ -272,18 +238,43 @@ public class SouthbridgeService {
                     response.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                     continue;
                 }
-                DispatcherApiData.ProcessorSessionId processorSessionId = checkForReAssigningProcessorSessionId(Long.parseLong(request.processorCommContext.processorId), request.processorCommContext.sessionId, remoteAddress);
+                Long processorId = Long.parseLong(request.processorCommContext.processorId);
+                final Processor processor = processorCache.findById(processorId);
+                if (processor == null) {
+                    log.warn("#444.200 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+                    DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + request.processorCommContext.processorId);
+                    response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                    continue;
+                }
+
+                Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
+                if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession) {
+                    log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
+                    continue;
+                }
+/*
+                DispatcherApiData.ProcessorSessionId processorSessionId =
+                        processorTopLevelService.checkProcessorId(processor, processorAndSessionStatus, processorId, request.processorCommContext.sessionId, remoteAddress);
+
                 if (processorSessionId!=null) {
                     response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                     continue;
                 }
+*/
 
                 log.debug("Start processing commands");
                 dispatcherCommandProcessor.process(request, response, quotas);
             }
         } catch (Throwable th) {
-            log.error("#444.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
-            log.error("#444.230 Error", th);
+            String json;
+            try {
+                json = JsonUtils.getMapper().writeValueAsString(scpy);
+            }
+            catch (JsonProcessingException e) {
+                json = scpy.toString();
+            }
+            log.error("#444.320 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
+            log.error("#444.330 Error", th);
             lcpy.success = false;
             lcpy.msg = th.getMessage();
         }
@@ -294,9 +285,4 @@ public class SouthbridgeService {
         return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;
     }
 
-    @Nullable
-    private DispatcherApiData.ProcessorSessionId checkForReAssigningProcessorSessionId(Long processorId, @Nullable String sessionId, String remoteAddress) {
-        DispatcherApiData.ProcessorSessionId processorSessionId = processorTopLevelService.checkProcessorId(processorId, sessionId, remoteAddress);
-        return processorSessionId;
-    }
 }

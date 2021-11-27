@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -46,8 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TaskVariableService {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
-
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final VariableRepository variableRepository;
@@ -62,7 +61,19 @@ public class TaskVariableService {
     }
 
     @Transactional
-    public Void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
+    public void setVariableAsNull(Long taskId, Long variableId) {
+        Variable variable = variableRepository.findById(variableId).orElseThrow(()->new VariableCommonException("#441.120 Variable #"+variableId+" wasn't found", variableId));
+        variable.inited = true;
+        variable.nullified = true;
+        variable.setData(null);
+
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
+
+        variableRepository.save(variable);
+    }
+
+    @Transactional
+    public void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
         TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -80,40 +91,6 @@ public class TaskVariableService {
             throw new UpdateStatusOfVariableException(
                     new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId));
         }
-        return null;
-    }
-
-    @Transactional
-    public UploadResult setVariableAsNull(Long taskId, Long variableId) {
-        TaskSyncService.checkWriteLockPresent(taskId);
-
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            final String es = "#441.100 Task "+taskId+" is obsolete and was already deleted";
-            log.warn(es);
-            return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
-        }
-
-        Variable variable = variableRepository.findById(variableId).orElse(null);
-        if (variable ==null) {
-            return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND,"#441.120 Variable #"+variableId+" wasn't found" );
-        }
-        if (!task.execContextId.equals(variable.execContextId)) {
-            final String es = "#441.140 Task #"+taskId+" has the different execContextId than variable #"+task.id+", " +
-                    "task execContextId: "+task.execContextId+", var execContextId: "+variable.execContextId;
-            log.warn(es);
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
-        }
-
-        variable.inited = true;
-        variable.nullified = true;
-        variable.setData(null);
-
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(task.id, variableId, true));
-
-        variableRepository.save(variable);
-
-        return OK_UPLOAD_RESULT;
     }
 
     private Enums.UploadVariableStatus setVariableReceived(TaskImpl task, Long variableId) {

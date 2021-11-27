@@ -26,10 +26,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -69,23 +67,20 @@ public class TxSupportForTestingService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskRepository taskRepository;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
-    private final SourceCodeSyncService sourceCodeSyncService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
-    private final TaskFinishingService taskFinishingService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return sourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
+        return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
                 () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
     }
 
@@ -199,33 +194,6 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("Only for testing");
         }
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
-    }
-
-    public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId).status;
-    }
-
-    @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console, @Nullable String taskContextId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            throw new IllegalStateException("Reporting about non-existed task #" + taskId);
-        }
-        return taskFinishingService.finishWithError(task, console);
-    }
-
-    @Transactional
-    public List<ExecContextData.TaskVertex> findAllWithTx(Long execContextGraphId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.findAll(execContextGraphId);
     }
 
     @Transactional

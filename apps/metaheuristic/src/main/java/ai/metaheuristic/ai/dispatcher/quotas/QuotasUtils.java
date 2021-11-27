@@ -38,7 +38,7 @@ public class QuotasUtils {
         }
         return new QuotasData.ActualQuota(
                 Enums.QuotaAllocation.present,
-                processorQuotas.values.stream().filter(o->o.tag.equals(tag)).findFirst().map(o->o.amount).orElse(processorQuotas.defaultValue));
+                processorQuotas.values.stream().filter(o->!o.disabled && o.tag.equals(tag)).findFirst().map(o->o.amount).orElse(processorQuotas.defaultValue));
     }
 
     /**

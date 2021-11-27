@@ -105,7 +105,7 @@ public class ExecContextFSM {
         return status;
     }
 
-    public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+    public static OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
@@ -146,29 +146,30 @@ public class ExecContextFSM {
     }
 
     @Transactional
-    public Void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    public void storeExecResultWithTx(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
-            return null;
+            return;
+        }
+        if (task.resultReceived) {
+            return;
         }
 
-        return storeExecResult(task, result);
+        storeExecResult(task, result);
     }
 
-    public Void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
+    public void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         task.setFunctionExecResults(result.getResult());
         task.setResultReceived(true);
 
         eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
-        return null;
     }
 
-    public Void updateExecContextStatus(Long execContextId, ExecContextData.ReconciliationStatus status) {
+    public void updateExecContextStatus(Long execContextId, ExecContextData.ReconciliationStatus status) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
         execContextReconciliationService.finishReconciliation(status);
-        return null;
     }
 
     public List<Long> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {

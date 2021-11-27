@@ -60,10 +60,12 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    @EqualsAndHashCode( of={"tag","amount"})
+//    @EqualsAndHashCode( of={"tag","amount"})
     public static class Quota {
         public String tag;
         public int amount;
+        // processor can disable specific tag. i.e. on scheduler basis
+        public boolean disabled;
     }
 
     @Data
@@ -168,7 +170,17 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public ProcessorCommContext processorCommContext;
 
         @Nullable
-        public String taskIds;
+        private String taskIds = null;
+
+        @Nullable
+        public String getTaskIds() {
+            return taskIds;
+        }
+
+        @SuppressWarnings("MethodMayBeStatic")
+        public void setTaskIds(@Nullable String taskIds) {
+            throw new IllegalStateException("taskIds isn't used any more");
+        }
 
         public String processorCode;
 

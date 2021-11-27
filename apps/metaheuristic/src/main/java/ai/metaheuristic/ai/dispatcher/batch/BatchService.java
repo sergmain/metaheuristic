@@ -190,7 +190,7 @@ public class BatchService {
         changeStateToPreparing(b);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = ExecContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -344,7 +344,7 @@ public class BatchService {
 
         CleanerInfo resource = new CleanerInfo();
         try {
-            File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+            File resultDir = DirUtils.createMhTempDir("prepare-file-processing-result-");
             resource.toClean.add(resultDir);
 
             File zipDir = new File(resultDir, "zip");

@@ -29,10 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @ToString(of = "asString")
@@ -61,8 +58,15 @@ public class DispatcherSchedule {
 
     public final String asString;
 
-    public DispatcherSchedule(@Nullable String cfg) {
-        if (StringUtils.isBlank(cfg)) {
+    private static final Map<String, DispatcherSchedule> cache = new HashMap<>();
+
+    public static DispatcherSchedule createDispatcherSchedule(@Nullable String cfg) {
+        String key = S.b(cfg) ? "" : cfg;
+        return cache.computeIfAbsent(key, (o)->new DispatcherSchedule(key));
+    }
+
+    private DispatcherSchedule(@Nullable String cfg) {
+        if (S.b(cfg)) {
             this.policy = ExtendedTimePeriod.SchedulePolicy.normal;
             this.asString = "";
             return;

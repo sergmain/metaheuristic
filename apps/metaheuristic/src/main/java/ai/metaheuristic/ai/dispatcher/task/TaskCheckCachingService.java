@@ -20,10 +20,10 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
-import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -31,13 +31,10 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
-import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,10 +42,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,7 +70,6 @@ public class TaskCheckCachingService {
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
     private final VariableService variableService;
-    private final CacheService cacheService;
     private final CacheVariableService cacheVariableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
@@ -86,70 +86,35 @@ public class TaskCheckCachingService {
     }
 
     @Transactional
-    public Void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
+    public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
         ExecContextImpl execContext = execContextService.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
-            return null;
+            return;
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return null;
+            return;
         }
 
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
-
-        return null;
     }
 
     @Transactional
-    public Void checkCaching(Long execContextId, Long taskId) {
+    public void checkCaching(Long execContextId, Long taskId, @Nullable CacheProcess cacheProcess) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return null;
+            return;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
             log.info("#609.010 task #{} was already checked for cached variables", taskId);
-            return null;
-        }
-
-        ExecContextImpl execContext = execContextService.findById(execContextId);
-        if (execContext==null) {
-            log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
-            return null;
+            return;
         }
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
-        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
-        if (p==null) {
-            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            return null;
-        }
-
-        CacheData.Key fullKey;
-        try {
-            fullKey = cacheService.getKey(tpy, p.function);
-        } catch (VariableCommonException e) {
-            log.info("#609.025 ExecContext: #{}, VariableCommonException: {}", execContextId, e.getAdditionalInfo());
-            return null;
-        }
-
-        String keyAsStr = fullKey.asString();
-        byte[] bytes = keyAsStr.getBytes();
-
-        CacheProcess cacheProcess=null;
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
-            String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
-        } catch (IOException e) {
-            log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
-        }
 
         if (cacheProcess!=null) {
             log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
@@ -161,8 +126,14 @@ public class TaskCheckCachingService {
                 throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
             }
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Object[] obj = vars.stream().filter(o-> o[1].equals(output.name)).findFirst().orElse(null);
-                if (obj==null) {
+                boolean found = false;
+                for (Object[] var : vars) {
+                    if (var[1].equals(output.name)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     log.warn("#609.100 cashProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.\n" +
                                     "vars[0]: {}\nvars[1]: {}\nvars[2]: {}\n",
                             cacheProcess.id, output.name,
@@ -232,6 +203,5 @@ public class TaskCheckCachingService {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
         }
-        return null;
     }
 }

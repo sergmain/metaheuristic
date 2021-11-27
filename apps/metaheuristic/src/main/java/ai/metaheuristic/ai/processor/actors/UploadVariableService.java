@@ -181,6 +181,9 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 if (e.getStatusCode()==401) {
                     log.error("#311.055 Error uploading resource to server, code: 401, error: {}", e.getMessage());
                 }
+                else if (e.getStatusCode()== 500) {
+                    log.error("#311.056 Server error, code: 500, error: {}", e.getMessage());
+                }
                 else {
                     log.error("#311.060 Error uploading resource to server, code: " + e.getStatusCode(), e);
                 }

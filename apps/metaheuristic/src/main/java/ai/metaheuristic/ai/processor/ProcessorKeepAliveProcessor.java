@@ -40,7 +40,6 @@ public class ProcessorKeepAliveProcessor {
     private final CurrentExecState currentExecState;
 
     public void processKeepAliveResponseParamYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-
         for (KeepAliveResponseParamYaml.DispatcherResponse response : responseParamYaml.responses) {
 
             processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
@@ -54,6 +53,7 @@ public class ProcessorKeepAliveProcessor {
         }
 
         registerFunctions(dispatcherUrl, responseParamYaml.functions);
+
 //        processRequestLogFile(pcpy)
     }
 

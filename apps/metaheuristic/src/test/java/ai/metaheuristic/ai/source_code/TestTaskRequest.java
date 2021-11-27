@@ -22,10 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -52,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestTaskRequest extends FeatureMethods {
 
@@ -66,7 +63,7 @@ public class TestTaskRequest extends FeatureMethods {
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
 
     @Autowired
-    private TaskSyncService taskSyncService;
+    private TaskVariableTopLevelService taskVariableTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -96,7 +93,7 @@ public class TestTaskRequest extends FeatureMethods {
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
@@ -119,7 +116,7 @@ public class TestTaskRequest extends FeatureMethods {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         TaskSyncService.getWithSyncNullable(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+                Enums.UploadVariableStatus status = taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status;
                 assertEquals(Enums.UploadVariableStatus.OK, status);
             }
             return null;
@@ -146,7 +143,7 @@ public class TestTaskRequest extends FeatureMethods {
         ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
@@ -163,7 +160,7 @@ public class TestTaskRequest extends FeatureMethods {
         ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm1.requests.add(req1);
         req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
         String dispatcherResponse1 = serverService.processRequest(processorYaml1, Consts.LOCALHOST_IP);

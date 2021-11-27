@@ -88,6 +88,7 @@ public class MetadataParamsYamlV2 implements BaseParams {
 
     // key is a code of processor which is configured in env.yaml
     public final LinkedHashMap<String, ProcessorV2> processors = new LinkedHashMap<>();
+
     public final List<StatusV2> statuses = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
     // key is url of dispatcher

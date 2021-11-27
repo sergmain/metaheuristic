@@ -27,6 +27,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Account implements UserDetails, Serializable, Cloneable {
+    @Serial
     private static final long serialVersionUID = 708692073045562337L;
 
     @Id

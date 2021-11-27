@@ -108,7 +108,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
                     log.warn("#806.210 Service Unavailable for url {}", assetManager.url);
                 }
                 else {
-                    log.error("#806.220 HttpResponseException", e);
+                    log.error("#806.220 HttpResponseException for url: "+assetManager.url+ ", code: "+ e.getStatusCode(), e);
                 }
             }
             catch (HttpHostConnectException e) {

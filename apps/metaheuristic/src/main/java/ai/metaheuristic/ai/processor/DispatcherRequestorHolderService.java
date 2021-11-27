@@ -65,7 +65,7 @@ public class DispatcherRequestorHolderService {
 
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals,
-                    processorTaskService, processorService, metadataService, dispatcherLookupExtendedService,
+                    processorService, metadataService, dispatcherLookupExtendedService,
                     processorKeepAliveProcessor);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));

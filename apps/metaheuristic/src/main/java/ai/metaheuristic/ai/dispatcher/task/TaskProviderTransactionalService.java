@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -54,7 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskQueue.*;
-import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.checkWriteLockPresent;
+import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.checkWriteLockNotPresent;
 
 /**
  * @author Serge
@@ -72,6 +71,7 @@ public class TaskProviderTransactionalService {
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -85,7 +85,7 @@ public class TaskProviderTransactionalService {
     @Nullable
     @Transactional
     public TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
-        checkWriteLockPresent();
+        checkWriteLockNotPresent();
 
         if (TaskQueueService.isQueueEmpty()) {
             return null;
@@ -151,12 +151,15 @@ public class TaskProviderTransactionalService {
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this can happened because of async call of StartTaskProcessingTxEvent
                     log.info("#317.039 task #{} already assigned for processing", queuedTask.taskId);
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.error("#317.040 Task #{} with function '{}' was already processed with status {}",
+                    log.error("#317.040 Task #{} with function '{}' isn't in state NONE, actual: {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
+                    forRemoving.add(queuedTask);
                     continue;
                 }
 
@@ -201,7 +204,7 @@ public class TaskProviderTransactionalService {
                         continue;
                     }
                 }
-                ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+                ProcessorStatusYaml status = processor.getProcessorStatusYaml();
 
                 if (notAllFunctionsReady(processor.id, status, queuedTask.taskParamYaml)) {
                     log.debug("#317.123 Processor #{} isn't ready to process task #{}", processor.id, queuedTask.taskId);
@@ -237,7 +240,7 @@ public class TaskProviderTransactionalService {
             }
         }
         finally {
-            TaskQueueService.removeAll(forRemoving);
+            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.removeAll(forRemoving));
         }
 
         if (resultTask == null) {
@@ -274,12 +277,10 @@ public class TaskProviderTransactionalService {
             throw new IllegalStateException("(quota==null)");
         }
         final QuotasData.ActualQuota finalQuota = quota;
-        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(()->{
-            currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount));
-        }));
-        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent (()->{
-            finalResultTask.assigned = false;
-        }));
+        eventPublisher.publishEvent(new PostTaskAssigningTxEvent(
+                ()-> currentQuotas.allocated.add(new DispatcherData.AllocatedQuotas(t.id, finalResultTask.queuedTask.tag, finalQuota.amount))));
+        eventPublisher.publishEvent(new PostTaskAssigningRollbackTxEvent(
+                ()-> finalResultTask.assigned = false));
 
         return new TaskData.AssignedTask(t, resultTask.queuedTask.tag, quota.amount);
     }

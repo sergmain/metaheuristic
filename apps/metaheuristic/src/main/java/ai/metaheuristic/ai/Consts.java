@@ -74,6 +74,7 @@ public class Consts {
     public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
+    public static final String MH_METADATA_YAML_FILE_NAME = "mh-metadata.yaml";
 
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
@@ -134,7 +135,7 @@ public class Consts {
     public static final String MH_EXEC_SOURCE_CODE_FUNCTION = "mh.exec-source-code";
     public static final String MH_EVALUATION_FUNCTION = "mh.evaluation";
     public static final String MH_INLINE_AS_VARIABLE_FUNCTION = "mh.inline-as-variable";
-    public static final String MH_REDUCE_VALUES_FUNCTION = "mh.reduce-values";
+    public static final String MH_REDUCE_VARIABLES_FUNCTION = "mh.reduce-variables";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
+import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -28,10 +29,15 @@ import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -52,12 +58,27 @@ public class DispatcherCommandProcessor {
 
     public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas) {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
-            throw new IllegalStateException("(scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
+            throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
-        response.resendTaskOutputs = checkForMissingOutputResources(request);
-        processResendTaskOutputResourceResult(request);
-        response.reportResultDelivering = processReportTaskProcessingResult(request);
-        response.assignedTask = processRequestTask(request, quotas);
+        if (log.isDebugEnabled()) {
+            MetaheuristicThreadLocal.getExecutionStat().setStat(true);
+        }
+        
+        MetaheuristicThreadLocal.getExecutionStat().exec("checkForMissingOutputResources()",
+                ()-> response.resendTaskOutputs = checkForMissingOutputResources(request));
+
+        MetaheuristicThreadLocal.getExecutionStat().exec("processResendTaskOutputResourceResult()",
+                ()-> processResendTaskOutputResourceResult(request));
+
+        MetaheuristicThreadLocal.getExecutionStat().exec("processReportTaskProcessingResult()",
+                ()->response.reportResultDelivering = processReportTaskProcessingResult(request));
+
+        MetaheuristicThreadLocal.getExecutionStat().exec("processRequestTask()",
+                ()->response.assignedTask = processRequestTask(request, quotas));
+
+        if (log.isDebugEnabled()) {
+            MetaheuristicThreadLocal.getExecutionStat().print().forEach(log::debug);
+        }
     }
 
     // processing at dispatcher side
@@ -77,7 +98,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         if (request.processorCommContext==null) {
-            log.warn("#997.010 (request.processorCommContext==null)");
+            log.warn("#997.480 (request.processorCommContext==null)");
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
@@ -107,21 +128,24 @@ public class DispatcherCommandProcessor {
         checkProcessorId(request);
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
+        List<Long> taskIds = S.b(request.requestTask.taskIds) ?
+                List.of() :
+                Arrays.stream(StringUtils.split(request.requestTask.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
         try {
-            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
+            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#997.045 ObjectOptimisticLockingFailureException", e);
-            log.error("#997.047 Lets try requesting a new task one more time");
+            log.error("#997.520 ObjectOptimisticLockingFailureException", e);
+            log.error("#997.540 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas);
+                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
             } catch (ObjectOptimisticLockingFailureException e1) {
-                log.error("#997.048 ObjectOptimisticLockingFailureException again", e1);
+                log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
             }
         }
 
         if (assignedTask!=null) {
-            log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.r50 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }

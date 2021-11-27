@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -71,7 +72,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     public ExecContextSchedulerService execContextSchedulerService;
 
     @Autowired
-    private TaskSyncService taskSyncService;
+    private TaskVariableTopLevelService taskVariableTopLevelService;
 
     @Override
     @SneakyThrows
@@ -101,7 +102,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, "127.0.0.1");
@@ -118,7 +119,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(t.taskId,
-                    ()-> txSupportForTestingService.setVariableReceivedWithTx(t.taskId, output.id));
+                    () -> taskVariableTopLevelService.updateStatusOfVariable(t.taskId, output.id).status);
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 
@@ -136,7 +137,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requests.add(req0);
 
         req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
@@ -157,7 +158,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm1.requests.add(req1);
 
         req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false);
+        req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
         String dispatcherResponse1 = southbridgeService.processRequest(processorYaml1, Consts.LOCALHOST_IP);

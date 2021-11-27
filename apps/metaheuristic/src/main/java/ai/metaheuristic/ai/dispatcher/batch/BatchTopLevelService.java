@@ -42,13 +42,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -269,20 +269,22 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        File tempFile;
-        try {
-            // TODO 2021.03.13 add a support of
-            //  CleanerInfo resource = new CleanerInfo();
-            tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin");
-            file.transferTo(tempFile);
-            if (file.getSize()!=tempFile.length()) {
-                return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
-            }
-        } catch (IOException e) {
-            return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
+        File tempDir = DirUtils.createMhTempDir("batch-processing-");
+        if (tempDir==null) {
+            return new BatchData.UploadingStatus("#981.122 Can't create temporaty directory. Batch file can't be processed");
         }
-
         try {
+            File tempFile;
+            try {
+                tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin", tempDir);
+                file.transferTo(tempFile);
+                if (file.getSize()!=tempFile.length()) {
+                    return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
+                }
+            } catch (IOException e) {
+                return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
+            }
+
             if (ext.equals(ZIP_EXT)) {
                 List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
                 if (!errors.isEmpty()) {
@@ -327,7 +329,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus(es);
         }
         finally {
-            FileUtils.deleteQuietly(tempFile);
+            DirUtils.deleteAsync(tempDir);
         }
     }
 
@@ -335,7 +337,7 @@ public class BatchTopLevelService {
         try {
             return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
         } catch (Throwable th) {
-            final String es = "Error while deleting batch #" + batchId;
+            final String es = "#981.270 Error while deleting batch #" + batchId;
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

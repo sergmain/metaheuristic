@@ -64,7 +64,7 @@ public class KeepAliveRequestParamYamlUtilsV2 extends
                     r.processor.env.mirrors.putAll(v2.processor.env.mirrors);
                     r.processor.env.envs.putAll(v2.processor.env.envs);
                     v2.processor.env.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> r.processor.env.disk));
-                    v2.processor.env.quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->r.processor.env.quotas.values));
+                    v2.processor.env.quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->r.processor.env.quotas.values));
                     r.processor.env.quotas.limit = v2.processor.env.quotas.limit;
                     r.processor.env.quotas.disabled = v2.processor.env.quotas.disabled;
                     r.processor.env.quotas.defaultValue = v2.processor.env.quotas.defaultValue;
@@ -79,7 +79,6 @@ public class KeepAliveRequestParamYamlUtilsV2 extends
             else {
                 r.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext();
             }
-            r.taskIds = v2.taskIds;
         }
         return t;
     }

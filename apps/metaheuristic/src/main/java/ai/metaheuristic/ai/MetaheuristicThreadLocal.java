@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.commons.stat.ExecutionStat;
 import lombok.AllArgsConstructor;
 
 /**
@@ -36,5 +37,11 @@ public class MetaheuristicThreadLocal {
         if (!schedule.get()) {
             throw new IllegalStateException("THis method must be used only in scheduler");
         }
+    }
+
+    private static final ThreadLocal<ExecutionStat> executionStat =  ThreadLocal.withInitial(ExecutionStat::new);
+
+    public static ExecutionStat getExecutionStat() {
+        return executionStat.get();
     }
 }

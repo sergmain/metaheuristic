@@ -17,7 +17,9 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -32,6 +34,7 @@ import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
+import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -181,6 +184,8 @@ public class Schedulers {
         private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
+        private final ApplicationEventPublisher eventPublisher;
+        private final ExecContextStatusService execContextStatusService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -205,6 +210,8 @@ public class Schedulers {
             }
         }
 
+        boolean needToInitializeReadyness = true;
+
         @Scheduled(initialDelay = 5_000, fixedDelay = 10_000)
         public void processInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -213,7 +220,10 @@ public class Schedulers {
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
-            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            if (needToInitializeReadyness) {
+                eventPublisher.publishEvent(new StartProcessReadinessEvent());
+                needToInitializeReadyness = false;
+            }
             execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
         }
 
@@ -233,8 +243,24 @@ public class Schedulers {
             execContextVariableStateTopLevelService.processFlushing();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 10_000 )
+        public void execContextStatusUpdate() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            execContextStatusService.resetStatus();
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
         public void processCheckCaching() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            taskCheckCachingTopLevelService.checkCaching();
+        }
+
+        @Scheduled(initialDelay = 31_000, fixedDelay = 31_000 )
+        public void pushCheckingOfCachedTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
@@ -274,7 +300,6 @@ public class Schedulers {
             this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
-
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
@@ -301,6 +326,7 @@ public class Schedulers {
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
+                    // call /rest/v1/srv-v2/
                     dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
@@ -548,7 +574,7 @@ public class Schedulers {
     public static class ProcessorSchedulers {
 
         private final Globals globals;
-        private final ApplicationEventPublisher eventPublisher;
+        private final ProcessorEventBusService processorEventBusService;
 
         // this scheduler is being run at the processor side
 
@@ -561,7 +587,7 @@ public class Schedulers {
                 return;
             }
             log.info("Send keepAliveEvent");
-            eventPublisher.publishEvent(new KeepAliveEvent());
+            processorEventBusService.keepAlive(new KeepAliveEvent());
         }
     }
 }

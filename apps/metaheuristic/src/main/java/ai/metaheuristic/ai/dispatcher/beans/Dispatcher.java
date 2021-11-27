@@ -27,6 +27,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -42,6 +43,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Dispatcher implements Serializable {
+    @Serial
     private static final long serialVersionUID = 2499919383081808903L;
 
     @Id
@@ -78,7 +80,7 @@ public class Dispatcher implements Serializable {
         if (dpy ==null) {
             synchronized (this) {
                 if (dpy ==null) {
-                    // to create a corrected structure of params
+                    // to create a valid structure of params
                     String p = S.b(params) ? DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml()) : params;
                     //noinspection UnnecessaryLocalVariable
                     DispatcherParamsYaml temp = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(p);

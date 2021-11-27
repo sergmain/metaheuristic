@@ -63,6 +63,7 @@ public class ExecContextTaskAssigningTopLevelService {
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
+//        log.info("findUnassignedTasksAndRegisterInQueue({})", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return;
@@ -70,6 +71,9 @@ public class ExecContextTaskAssigningTopLevelService {
 
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
+
+//        log.info("Number of founded vertices: {}", vertices.size());
+
         if (vertices.isEmpty()) {
             return;
         }
@@ -77,11 +81,20 @@ public class ExecContextTaskAssigningTopLevelService {
         int page = 0;
         List<Long> taskIds;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+//            log.info("Founded task Ids: {}", taskIds);
+
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
                     continue;
                 }
+//                log.info("task: {}, execState: {}", taskId, EnumsApi.TaskExecState.from(task.execState));
+                if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
+                    // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
+                    continue;
+                }
+
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     if (log.isDebugEnabled()) {
@@ -98,6 +111,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     continue;
                 }
+
                 final TaskParamsYaml taskParamYaml;
                 try {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -121,11 +135,6 @@ public class ExecContextTaskAssigningTopLevelService {
                         case long_running:
                             break;
                     }
-                }
-                else if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    RegisterTaskForCheckCachingEvent event = new RegisterTaskForCheckCachingEvent(execContextId, taskId);
-                    taskCheckCachingTopLevelService.putToQueue(event);
-                    // cache will be checked via Scheduler.processCheckCaching()
                 }
                 else {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +28,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Serge
@@ -44,34 +43,63 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class ExecContextVariableStateTopLevelService {
 
-    public final ExecContextVariableStateSyncService execContextVariableStateSyncService;
-    public final ExecContextSyncService execContextSyncService;
     public final ExecContextVariableStateService execContextVariableStateService;
     public final ExecContextCache execContextCache;
 
-    private static ConcurrentHashMap<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<Long, List<VariableUploadedEvent>> variableUploadedEvents = new ConcurrentHashMap<>();
+    private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
+    private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();
 
-    public void registerCreatedTask(TaskCreatedEvent event) {
-        taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k->new ArrayList<>()).add(event.taskVariablesInfo);
+    private static final Object syncTaskCreatedEvents = new Object();
+    private static final Object syncVariableUploadedEvents = new Object();
+
+    public static void registerCreatedTask(TaskCreatedEvent event) {
+        synchronized (syncTaskCreatedEvents) {
+            taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k -> new ArrayList<>()).add(event.taskVariablesInfo);
+        }
     }
 
-    public void registerVariableState(VariableUploadedEvent event) {
-        variableUploadedEvents.computeIfAbsent(event.execContextId, k->new ArrayList<>()).add(event);
+    public static void registerVariableState(VariableUploadedEvent event) {
+        synchronized (syncVariableUploadedEvents) {
+            variableUploadedEvents.computeIfAbsent(event.execContextId, k -> new ArrayList<>()).add(event);
+        }
     }
 
     public void processFlushing() {
-        if (taskCreatedEvents.isEmpty() && variableUploadedEvents.isEmpty()) {
-            return;
+        processFlushingTaskCreatedEvents();
+        processFlushingVariableUploadedEvents();
+    }
+
+    private void processFlushingVariableUploadedEvents() {
+        Map<Long, List<VariableUploadedEvent>> variableUploadedEventsTemp;
+        synchronized (syncVariableUploadedEvents) {
+            if (variableUploadedEvents.isEmpty()) {
+                return;
+            }
+            variableUploadedEventsTemp = variableUploadedEvents;
+            variableUploadedEvents = new HashMap<>();
         }
-
-        Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEventsTemp = taskCreatedEvents;
-        taskCreatedEvents = new ConcurrentHashMap<>();
-        processCreatedTasks(taskCreatedEventsTemp);
-
-        Map<Long, List<VariableUploadedEvent>> variableUploadedEventsTemp = variableUploadedEvents;
-        variableUploadedEvents = new ConcurrentHashMap<>();
         processVariableStates(variableUploadedEventsTemp);
+        for (Map.Entry<Long, List<VariableUploadedEvent>> entry : variableUploadedEventsTemp.entrySet()) {
+            entry.getValue().clear();
+        }
+        variableUploadedEventsTemp.clear();
+    }
+
+    private void processFlushingTaskCreatedEvents() {
+        Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEventsTemp;
+        synchronized (syncTaskCreatedEvents) {
+            if (taskCreatedEvents.isEmpty()) {
+                return;
+            }
+
+            taskCreatedEventsTemp = taskCreatedEvents;
+            taskCreatedEvents = new HashMap<>();
+        }
+        processCreatedTasks(taskCreatedEventsTemp);
+        for (Map.Entry<Long, List<ExecContextApiData.VariableState>> entry : taskCreatedEventsTemp.entrySet()) {
+            entry.getValue().clear();
+        }
+        taskCreatedEventsTemp.clear();
     }
 
     private void processCreatedTasks(Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents) {
@@ -80,7 +108,7 @@ public class ExecContextVariableStateTopLevelService {
             if (execContextVariableStateId == null) {
                 return;
             }
-            execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
                     () -> execContextVariableStateService.registerCreatedTasks(execContextVariableStateId, entry.getValue()));
         }
     }
@@ -91,7 +119,7 @@ public class ExecContextVariableStateTopLevelService {
             if (execContextVariableStateId == null) {
                 return;
             }
-            execContextVariableStateSyncService.getWithSyncNullable(execContextVariableStateId,
+            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
                     () -> registerVariableStateInternal(entry.getKey(), execContextVariableStateId, entry.getValue()));
         }
     }

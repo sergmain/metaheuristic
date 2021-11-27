@@ -27,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -66,7 +64,7 @@ public class TaskQueue {
     }
 
     private static final int GROUP_SIZE_DEFAULT = 10;
-    private static final int MIN_QUEUE_SIZE_DEFAULT = 200;
+    private static final int MIN_QUEUE_SIZE_DEFAULT = 5000;
 
     @Slf4j
     public static class TaskGroup {
@@ -105,7 +103,15 @@ public class TaskQueue {
                 if (tasks[i]!=null && tasks[i].queuedTask.taskId.equals(taskId)) {
                     tasks[i] = null;
                     --allocated;
-                    if (Arrays.stream(tasks).noneMatch(Objects::nonNull)) {
+
+                    boolean noneMatch = true;
+                    for (AllocatedTask task : tasks) {
+                        if (task != null) {
+                            noneMatch = false;
+                            break;
+                        }
+                    }
+                    if (noneMatch) {
                         if (allocated!=0) {
                             throw new IllegalStateException("(allocated!=0)");
                         }
@@ -143,14 +149,14 @@ public class TaskQueue {
             }
             if (priority!= task.priority) {
                 throw new IllegalStateException(
-                        S.f("Different priority, group priority: %d, task priority %d",
+                        S.f("#029.040 Different priority, group priority: %d, task priority %d",
                                 priority, task.priority));
             }
             if (execContextId!=null && !execContextId.equals(task.execContextId)) {
-                throw new IllegalStateException("wrong execContextId");
+                throw new IllegalStateException("#029.080 wrong execContextId");
             }
             if (allocated==groupSize) {
-                throw new IllegalStateException("already allocated");
+                throw new IllegalStateException("#029.120 already allocated");
             }
             if (execContextId==null) {
                 execContextId = task.execContextId;
@@ -185,13 +191,18 @@ public class TaskQueue {
         public boolean isEmpty() {
             boolean noneTasks = noneTasks();
             if (!noneTasks && execContextId==null) {
-                log.error("There is a task but execContextId is null. Shouldn't happened.");
+                log.error("#029.160 There is a task but execContextId is null. Shouldn't happened.");
             }
             return execContextId==null || noneTasks;
         }
 
         public boolean noneTasks() {
-            return Arrays.stream(tasks).noneMatch(Objects::nonNull);
+            for (AllocatedTask task : tasks) {
+                if (task != null) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public void lock() {
@@ -204,9 +215,9 @@ public class TaskQueue {
         public final int groupSize;
         private int groupPtr = 0;
         private int taskPtr = 0;
-        private final CopyOnWriteArrayList<TaskGroup> taskGroups;
+        private final List<TaskGroup> taskGroups;
 
-        public GroupIterator(CopyOnWriteArrayList<TaskGroup> taskGroups, int groupSize) {
+        public GroupIterator(List<TaskGroup> taskGroups, int groupSize) {
             this.taskGroups = taskGroups;
             this.groupSize = groupSize;
         }
@@ -261,7 +272,7 @@ public class TaskQueue {
 
     private final int minQueueSize;
     private final int groupSize;
-    private final CopyOnWriteArrayList<TaskGroup> taskGroups = new CopyOnWriteArrayList<>();
+    private final List<TaskGroup> taskGroups = new ArrayList<>();
 
     public TaskQueue() {
         this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);
@@ -283,7 +294,14 @@ public class TaskQueue {
     }
 
     public boolean allTaskGroupFinished(Long execContextId) {
-        return taskGroups.stream().filter(o-> execContextId.equals(o.execContextId)).allMatch(TaskQueue::groupFinished);
+        for (TaskGroup o : taskGroups) {
+            if (execContextId.equals(o.execContextId)) {
+                if (!groupFinished(o)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public Map<Long, AllocatedTask> getTaskExecStates(Long execContextId) {
@@ -328,9 +346,9 @@ public class TaskQueue {
      *
      * @return true is all tasks in group were finished
      */
-    public boolean setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+    public boolean setTaskExecState(Long execContextId, Long taskId, final EnumsApi.TaskExecState state) {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
-            log.debug("#029.020 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
+            log.debug("#029.200 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
         boolean ok = false;
         for (TaskGroup taskGroup : taskGroups) {
@@ -347,13 +365,19 @@ public class TaskQueue {
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
-                if (!task.assigned) {
-                    log.warn("#029.022 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
+                if (state==EnumsApi.TaskExecState.OK && !task.assigned) {
+                    log.warn("#029.240 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
+                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it as OK
+                    startTaskProcessing(task.queuedTask.execContextId, task.queuedTask.taskId);
+                }
+                // state from CHECK_CASHE to NONE is being changing without assigning
+                else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
+                    log.warn("#029.260 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
                     try {
                         throw new RuntimeException("for stacktrace");
                     }
                     catch (RuntimeException e) {
-                        log.warn("#029.023 Stacktrace", e);
+                        log.warn("#029.280 Stacktrace", e);
                     }
                     continue;
                 }
@@ -365,12 +389,12 @@ public class TaskQueue {
                 ok = true;
                 break;
             }
-            log.debug("#029.025 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
+            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
             if (ok) {
                 return groupFinished(taskGroup);
             }
         }
-        log.debug("#029.027 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
+        log.debug("#029.320 task #{}, state {}, execContextId: #{}, not changed", taskId, state, execContextId);
         return false;
     }
 
@@ -404,7 +428,10 @@ public class TaskQueue {
         if (forRemoving.isEmpty()) {
             return;
         }
-        List<Long> execContextIds = forRemoving.stream().map(o->o.execContextId).collect(Collectors.toList());
+        Set<Long> execContextIds = new HashSet<>();
+        for (QueuedTask o : forRemoving) {
+            execContextIds.add(o.execContextId);
+        }
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextIds.contains(taskGroup.execContextId)) {
                 for (QueuedTask queuedTask : forRemoving) {
@@ -414,7 +441,6 @@ public class TaskQueue {
                 }
             }
         }
-        shrink();
     }
 
     public void addNewTask(QueuedTask task) {
@@ -483,10 +509,13 @@ public class TaskQueue {
     }
 
     public void addNewInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        if (taskParamYaml.task.context!= EnumsApi.FunctionExecContext.internal) {
+            throw new IllegalStateException("#029.360 (taskParamYaml.task.context!= EnumsApi.FunctionExecContext.internal)");
+        }
         QueuedTask task = new QueuedTask(EnumsApi.FunctionExecContext.internal, execContextId, taskId, null, taskParamYaml, null, TaskQueue.MAX_PRIORITY + 1);
         TaskGroup taskGroup = addNewTask(task, false);
         if (taskGroup.assignTask(taskId)==null) {
-            throw new IllegalStateException("(taskGroup.assignTask(taskId)==null)");
+            throw new IllegalStateException("#029.400 (taskGroup.assignTask(taskId)==null)");
         }
     }
 
@@ -524,11 +553,15 @@ public class TaskQueue {
                 taskGroup.reset();
             }
         }
-        shrink();
     }
 
     public boolean alreadyRegistered(Long taskId) {
-        return taskGroups.stream().anyMatch(o->o.alreadyRegistered(taskId));
+        for (TaskGroup o : taskGroups) {
+            if (o.alreadyRegistered(taskId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {
@@ -542,7 +575,12 @@ public class TaskQueue {
     }
 
     public boolean isQueueEmpty() {
-        return taskGroups.stream().noneMatch(TaskGroup::isNewTask);
+        for (TaskGroup taskGroup : taskGroups) {
+            if (taskGroup.isNewTask()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public int groupCount() {

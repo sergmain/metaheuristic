@@ -1,0 +1,132 @@
+version: 3
+source:
+  clean: false
+  strictNaming: true
+  uid: test-fit-and-predict-1.0
+  variables:
+    inputs:
+      - name: assembledRaw
+      - name: datasetProcessing
+      - name: clusterSize1
+        nullable: true
+      - name: clusterCount1
+        nullable: true
+      - name: binaryClusters1
+        nullable: true
+      - name: binaryDrawWithFrequency
+        nullable: true
+      - name: distribOfFreqFull
+        nullable: true
+      - name: matrixOfWinning
+        nullable: true
+      - name: seed
+      - name: batchSize
+      - name: timeSteps
+      - name: RNN
+      - name: epoch
+      - name: activation
+      - name: optimizer
+    outputs:
+      - name: aggregatedResult
+  processes:
+    - code: mh.permute-variables
+      name: permute variables
+      function:
+        code: mh.permute-variables
+        context: internal
+      metas:
+        - variables-for-permutation: clusterSize1, clusterCount1, binaryClusters1, binaryDrawWithFrequency, distribOfFreqFull, matrixOfWinning
+        - permute-inline: false
+        - output-variable: dataset
+        - produce-present-variable: true
+        - produce-present-variable-prefix: is
+        - produce-present-variable-upper-case-first-char: true
+        - skip-null: true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop0
+            name: mh.nop0
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: datasetProcessing
+              - name: dataset
+                array: true
+              - name: seed
+              - name: batchSize
+              - name: timeSteps
+              - name: RNN
+              - name: epoch
+              - name: activation
+              - name: optimizer
+            outputs:
+              - name: model
+                nullable: true
+                ext: .h5
+          - code: mh.nop1
+            name: mh.nop1
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: datasetProcessing
+              - name: dataset
+                array: true
+              - name: seed
+              - name: batchSize
+              - name: timeSteps
+              - name: RNN
+              - name: epoch
+              - name: activation
+              - name: optimizer
+            outputs:
+              - name: model
+                nullable: true
+                ext: .h5
+          - code: mh.evaluation001
+            name: mh.evaluation001
+            function:
+              code: mh.evaluation
+              context: internal
+            outputs:
+              - name: fittingUnderfitting
+            metas:
+              - expression: fittingUnderfitting = 1
+          - code: mh.evaluation002
+            name: mh.evaluation002
+            function:
+              code: mh.evaluation
+              context: internal
+            outputs:
+              - name: fittingNormal
+            metas:
+              - expression: fittingNormal = 2
+          - code: mh.evaluation01
+            name: mh.evaluation01
+            function:
+              code: mh.evaluation
+              context: internal
+            outputs:
+              - name: fittingOverfitting
+            metas:
+              - expression: fittingOverfitting = 3
+    - code: mh.aggregate
+      name: mh.aggregate
+      function:
+        code: mh.aggregate
+        context: internal
+      metas:
+        - variables: fittingUnderfitting, fittingNormal, fittingOverfitting, seed, batchSize, timeSteps, RNN, epoch, activation, optimizer
+      outputs:
+        - name: _aggregatedResult
+          ext: .zip
+      priority: -2
+    - code: mh.evaluation6
+      name: mh.evaluation6
+      function:
+        code: mh.evaluation
+        context: internal
+      metas:
+        - expression: aggregatedResult = _aggregatedResult

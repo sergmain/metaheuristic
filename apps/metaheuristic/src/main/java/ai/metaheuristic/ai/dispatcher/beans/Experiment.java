@@ -28,6 +28,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -43,6 +44,7 @@ import java.io.Serializable;
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Experiment implements Serializable, Cloneable {
+    @Serial
     private static final long serialVersionUID = -3509391644278818781L;
 
     @Id

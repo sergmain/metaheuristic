@@ -54,7 +54,7 @@ public class EnvParamsYamlUtilsV3
         trg.envs.putAll(src.envs);
         src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
         src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
-        src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount)).collect(Collectors.toCollection(()->trg.quotas.values));
+        src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount, o.processingTime)).collect(Collectors.toCollection(()->trg.quotas.values));
         trg.quotas.limit = src.quotas.limit;
         trg.quotas.disabled = src.quotas.disabled;
         trg.quotas.defaultValue = src.quotas.defaultValue;

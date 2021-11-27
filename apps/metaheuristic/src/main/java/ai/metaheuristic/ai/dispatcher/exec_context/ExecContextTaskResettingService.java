@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,15 +46,17 @@ public class ExecContextTaskResettingService {
     private final TaskStateService taskStateService;
 
     @Transactional
-    public OperationStatusRest resetTaskWithTx(Long execContextId, Long taskId) {
+    public void resetTaskWithTx(Long execContextId, Long taskId) {
+        TaskSyncService.checkWriteLockNotPresent(taskId);
+
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "execContext wasn't found");
+            return;
         }
-        return TaskSyncService.getWithSync(taskId, ()->resetTask(execContext, taskId));
+        TaskSyncService.getWithSyncVoid(taskId, ()->resetTask(execContext, taskId));
     }
 
-    public OperationStatusRest resetTask(ExecContextImpl execContext, Long taskId) {
+    public void resetTask(ExecContextImpl execContext, Long taskId) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);
@@ -67,12 +68,9 @@ public class ExecContextTaskResettingService {
             log.error(es);
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
-
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            return;
         }
-
         taskStateService.updateTaskExecStates(t, EnumsApi.TaskExecState.NONE);
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
 
