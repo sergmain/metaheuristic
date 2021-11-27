@@ -33,12 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestTaskWithInternalContextEventService {
 
-    @SuppressWarnings("ConstantConditions")
-    @Test
-    public void testConstants() {
-        assertTrue(TaskWithInternalContextEventService.MAX_QUEUE_SIZE > TaskWithInternalContextEventService.MAX_ACTIVE_THREAD * 5);
-    }
-
     @SneakyThrows
     @Test
     public void test() {
