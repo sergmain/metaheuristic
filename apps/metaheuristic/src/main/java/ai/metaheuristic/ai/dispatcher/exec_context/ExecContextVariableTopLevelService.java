@@ -48,6 +48,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import static ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService.OK_UPLOAD_RESULT;
+
 /**
  * @author Serge
  * Date: 10/8/2020
@@ -84,9 +86,8 @@ public class ExecContextVariableTopLevelService {
 
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
         try {
-            final UploadResult uploadResult = TaskSyncService.getWithSync(taskId,
-                    () -> taskVariableService.setVariableAsNull(taskId, variableId));
-            return uploadResult;
+            taskVariableService.setVariableAsNull(taskId, variableId);
+            return OK_UPLOAD_RESULT;
         }
         catch (ObjectOptimisticLockingFailureException th) {
             if (log.isDebugEnabled()) {
@@ -162,12 +163,13 @@ public class ExecContextVariableTopLevelService {
                     return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #" + variableId + " wasn't found");
                 }
                 if (v.inited) {
-                    return TaskVariableTopLevelService.OK_UPLOAD_RESULT;
+                    return OK_UPLOAD_RESULT;
                 }
                 try (final FileInputStream inputStream = new FileInputStream(variableFile)) {
-                    return variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
+                    variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
+                    return OK_UPLOAD_RESULT;
                 } catch (Throwable th) {
-                    final String error = "#440.290 can't store the result, Error: " + th.toString();
+                    final String error = "#440.290 can't store the result, Error: " + th.getMessage();
                     log.error(error, th);
                     return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
                 }
@@ -204,17 +206,17 @@ public class ExecContextVariableTopLevelService {
                     log.debug("#440.360 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                 }
             }
-            final String es = "#440.380 can't store the result, need to try again. Error: " + th.toString();
+            final String es = "#440.380 can't store the result, need to try again. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableSavingException th) {
-            final String es = "#440.400 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            final String es = "#440.400 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
         catch (Throwable th) {
-            final String error = "#440.420 can't store the result, Error: " + th.toString();
+            final String error = "#440.420 can't store the result, Error: " + th.getMessage();
             log.error(error, th);
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }

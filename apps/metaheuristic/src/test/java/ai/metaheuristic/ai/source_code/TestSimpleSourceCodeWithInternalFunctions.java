@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -70,6 +71,9 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     @Autowired
     public ExecContextSchedulerService execContextSchedulerService;
 
+    @Autowired
+    private TaskVariableTopLevelService taskVariableTopLevelService;
+
     @Override
     @SneakyThrows
     public String getSourceCodeYamlAsString() {
@@ -115,7 +119,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(t.taskId,
-                    ()-> txSupportForTestingService.setVariableReceivedWithTx(t.taskId, output.id));
+                    () -> taskVariableTopLevelService.updateStatusOfVariable(t.taskId, output.id).status);
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
 

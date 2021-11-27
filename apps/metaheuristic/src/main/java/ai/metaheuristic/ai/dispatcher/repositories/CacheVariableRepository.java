@@ -50,7 +50,7 @@ public interface CacheVariableRepository extends CrudRepository<CacheVariable, L
     Blob getDataAsStreamById(Long id);
 
     @Query(value="select b.id, b.variableName, b.nullified from CacheVariable b where b.cacheProcessId=:cacheProcessId")
-    @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
+    @Transactional(readOnly = true, propagation=Propagation.NOT_SUPPORTED)
     List<Object[]> getVarsByCacheProcessId(Long cacheProcessId);
 
 }

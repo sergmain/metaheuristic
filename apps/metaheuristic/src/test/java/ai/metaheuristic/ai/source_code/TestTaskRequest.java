@@ -22,10 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -64,6 +61,9 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
     public TaskFinishingTopLevelService taskFinishingTopLevelService;
+
+    @Autowired
+    private TaskVariableTopLevelService taskVariableTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -116,7 +116,7 @@ public class TestTaskRequest extends FeatureMethods {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         TaskSyncService.getWithSyncNullable(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Enums.UploadVariableStatus status = txSupportForTestingService.setVariableReceivedWithTx(task.id, output.id);
+                Enums.UploadVariableStatus status = taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status;
                 assertEquals(Enums.UploadVariableStatus.OK, status);
             }
             return null;

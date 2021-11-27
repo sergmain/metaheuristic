@@ -196,13 +196,6 @@ public class TxSupportForTestingService {
         return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
 
-    public Enums.UploadVariableStatus setVariableReceivedWithTx(Long taskId, Long variableId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId).status;
-    }
-
     @Transactional
     public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {
         if (!globals.testing) {
