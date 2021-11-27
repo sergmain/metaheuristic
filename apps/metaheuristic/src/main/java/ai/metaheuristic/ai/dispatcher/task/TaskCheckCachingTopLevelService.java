@@ -88,7 +88,7 @@ public class TaskCheckCachingTopLevelService {
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
 
     private final Set<Long> queueIds = new HashSet<>();
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
