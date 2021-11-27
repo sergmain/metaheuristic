@@ -63,7 +63,7 @@ public class ExecContextStatusService {
 
         ExecContextStatus old = cachedStatus;
         cachedStatus = cachedStatusTemp;
-        destroy(old);
+//        destroy(old);
     }
 
     private static void destroy(@Nullable ExecContextStatus cachedStatus) {
