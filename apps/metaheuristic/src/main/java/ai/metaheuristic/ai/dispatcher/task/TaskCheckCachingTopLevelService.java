@@ -39,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -94,7 +93,7 @@ public class TaskCheckCachingTopLevelService {
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
-            if (queueIds.contains(event.taskId)) {
+            if (queueIds.contains(event.taskId) || executor.getTaskCount()>100) {
                 return;
             }
             queue.add(event);
@@ -141,6 +140,7 @@ public class TaskCheckCachingTopLevelService {
 
         ExecContextImpl execContext = execContextCache.findById(event.execContextId);
         if (execContext == null) {
+            log.debug("Exec context not found, execContextId: {}", event.execContextId);
             return;
         }
 
@@ -151,6 +151,7 @@ public class TaskCheckCachingTopLevelService {
         }
 
         try {
+            log.debug("Start taskCheckCachingService.checkCaching(), execContextId: {}, task: {}", event.execContextId, event.taskId);
             TaskSyncService.getWithSyncVoid(event.taskId,
                     () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
 
@@ -169,6 +170,7 @@ public class TaskCheckCachingTopLevelService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
+            log.debug("Task wasn't found, execContextId: {}, task: {}", execContext.id, taskId);
             return PREPARE_DATA_NONE;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
@@ -185,6 +187,7 @@ public class TaskCheckCachingTopLevelService {
         }
         CacheData.Key fullKey;
         try {
+            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
             log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContext.id, e.getAdditionalInfo());
@@ -201,7 +204,6 @@ public class TaskCheckCachingTopLevelService {
             cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
         } catch (IOException e) {
             log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
-            return PREPARE_DATA_NONE;
         }
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
