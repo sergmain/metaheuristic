@@ -73,12 +73,6 @@ public class CacheService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void deleteCacheProcessEntry(Long cacheProcessId) {
-        cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
-        cacheProcessRepository.deleteById(cacheProcessId);
-    }
-
-    @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
     }
