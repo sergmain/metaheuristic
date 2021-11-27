@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -167,6 +168,7 @@ public class TaskCheckCachingTopLevelService {
     }
 
     private PrepareData getCacheProcess(ExecContextImpl execContext, Long taskId) {
+        TxUtils.checkTxNotExists();
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -193,6 +195,8 @@ public class TaskCheckCachingTopLevelService {
             log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContext.id, e.getAdditionalInfo());
             return PREPARE_DATA_NONE;
         }
+        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
+
 
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
@@ -201,10 +205,13 @@ public class TaskCheckCachingTopLevelService {
         try (InputStream is = new ByteArrayInputStream(bytes)) {
             String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
             String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
+
+            log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", execContext.id, taskId, key);
+            cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key);
         } catch (IOException e) {
             log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
         }
+        log.debug("execContextId: {}, task: {}, CacheProcess: {}", execContext.id, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
 

@@ -51,6 +51,11 @@ public interface CacheProcessRepository extends CrudRepository<CacheProcess, Lon
     @Query(value="select c from CacheProcess c where c.keySha256Length=:keySha256Length")
     CacheProcess findByKeySha256Length(String keySha256Length);
 
+    @Nullable
+    @Query(value="select c from CacheProcess c where c.keySha256Length=:keySha256Length")
+    @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
+    CacheProcess findByKeySha256LengthReadOnly(String keySha256Length);
+
     @Transactional(readOnly = true, propagation=Propagation.SUPPORTS)
     @Query(value="select c.id from CacheProcess c where c.functionCode=:functionCode")
     List<Long> findByFunctionCode(Pageable pageable, String functionCode);
