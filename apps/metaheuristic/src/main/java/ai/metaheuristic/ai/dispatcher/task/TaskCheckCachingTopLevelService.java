@@ -166,7 +166,7 @@ public class TaskCheckCachingTopLevelService {
         }
     }
 
-    public PrepareData getCacheProcess(ExecContextImpl execContext, Long taskId) {
+    private PrepareData getCacheProcess(ExecContextImpl execContext, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
