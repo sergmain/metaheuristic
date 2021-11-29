@@ -216,9 +216,19 @@ public class ArtifactCleanerAtDispatcher {
                         continue;
                     }
                     log.info("Found orphan cache entries, funcCode: #{}, cacheProcessIds #{}", funcCode, page);
-                    cacheService.deleteCacheProcesses(page);
+                    try {
+                        cacheService.deleteCacheProcesses(page);
+                    }
+                    catch (Throwable th) {
+                        log.error("cacheService.deleteCacheProcesses("+page+")", th);
+                    }
                     for (Long cacheProcessId : page) {
-                        cacheService.deleteCacheVariable(cacheProcessId);
+                        try {
+                            cacheService.deleteCacheVariable(cacheProcessId);
+                        }
+                        catch (Throwable th) {
+                            log.error("cacheService.deleteCacheVariable("+page+")", th);
+                        }
                     }
                 }
             }

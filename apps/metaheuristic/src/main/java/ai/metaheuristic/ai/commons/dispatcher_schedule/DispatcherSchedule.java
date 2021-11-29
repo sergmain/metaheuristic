@@ -162,31 +162,16 @@ public class DispatcherSchedule {
         }
         TimePeriods periods;
         int i = curr.get(ChronoField.DAY_OF_WEEK);
-        switch(i) {
-            case 1:
-                periods = monday;
-                break;
-            case 2:
-                periods = tuesday;
-                break;
-            case 3:
-                periods = wednesday;
-                break;
-            case 4:
-                periods = thursday;
-                break;
-            case 5:
-                periods = friday;
-                break;
-            case 6:
-                periods = saturday;
-                break;
-            case 7:
-                periods = sunday;
-                break;
-            default:
-                throw new IllegalStateException("Wrong number of day of week " + i);
-        }
+        periods = switch (i) {
+            case 1 -> monday;
+            case 2 -> tuesday;
+            case 3 -> wednesday;
+            case 4 -> thursday;
+            case 5 -> friday;
+            case 6 -> saturday;
+            case 7 -> sunday;
+            default -> throw new IllegalStateException("Wrong number of day of week " + i);
+        };
         return periods.isActive(curr.toLocalTime());
     }
 
