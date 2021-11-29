@@ -30,6 +30,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @ToString(of = "asString")
@@ -58,11 +59,11 @@ public class DispatcherSchedule {
 
     public final String asString;
 
-    private static final Map<String, DispatcherSchedule> cache = new HashMap<>();
+    private static final ConcurrentHashMap<String, DispatcherSchedule> cache = new ConcurrentHashMap<>();
 
     public static DispatcherSchedule createDispatcherSchedule(@Nullable String cfg) {
         String key = S.b(cfg) ? "" : cfg;
-        return cache.computeIfAbsent(key, (o)->new DispatcherSchedule(key));
+        return cache.computeIfAbsent(key, DispatcherSchedule::new);
     }
 
     private DispatcherSchedule(@Nullable String cfg) {

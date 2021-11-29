@@ -127,7 +127,7 @@ public class DispatcherLookupExtendedService {
         }
     }
 
-    // TODO 2021-03-29 investigate why this service isn't using anymore
+    // TODO 2021-03-29 investigate why this service isn't being used anymore
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {

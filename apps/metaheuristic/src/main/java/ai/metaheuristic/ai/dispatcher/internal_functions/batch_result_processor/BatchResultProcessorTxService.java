@@ -283,7 +283,7 @@ public class BatchResultProcessorTxService {
                 continue;
             }
             //noinspection unused
-            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId, o -> new ItemWithStatusWithMapping(var.taskContextId));
+            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId,ItemWithStatusWithMapping::new);
         }
 
         for (SimpleVariable simpleVariable : vars) {
