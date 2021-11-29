@@ -100,7 +100,12 @@ public class ArtifactCleanerAtDispatcher {
                 continue;
             }
             log.info("Found obsolete events #{}", page);
-            dispatcherEventRepository.deleteAllByIdIn(page);
+            try {
+                dispatcherEventRepository.deleteAllByIdIn(page);
+            }
+            catch (Throwable th) {
+                log.error("dispatcherEventRepository.deleteAllByIdIn("+page+")", th);
+            }
         }
     }
 
@@ -160,7 +165,12 @@ public class ArtifactCleanerAtDispatcher {
                     continue;
                 }
                 log.warn("execContextId #{} was deleted in db, clean up the cache", execContextId);
-                execContextService.deleteExecContextFromCache(execContextId);
+                try {
+                    execContextService.deleteExecContextFromCache(execContextId);
+                }
+                catch (Throwable th) {
+                    log.error("execContextService.deleteExecContextFromCache("+execContextId+")", th);
+                }
             }
 
             List<Long> ids;
@@ -168,7 +178,12 @@ public class ArtifactCleanerAtDispatcher {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
-                    ExecContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
+                    try {
+                        ExecContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
+                    }
+                    catch (Throwable th) {
+                        log.error("taskTransactionalService.deleteOrphanTasks("+execContextId+")", th);
+                    }
                 }
             }
         }
@@ -195,7 +210,12 @@ public class ArtifactCleanerAtDispatcher {
                         continue;
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
-                    ExecContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+                    try {
+                        ExecContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+                    }
+                    catch (Throwable th) {
+                        log.error("variableService.deleteOrphanVariables("+execContextId+")", th);
+                    }
                 }
             }
         }

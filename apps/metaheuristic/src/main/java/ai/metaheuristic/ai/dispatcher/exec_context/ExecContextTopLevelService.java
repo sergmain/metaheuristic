@@ -223,9 +223,13 @@ public class ExecContextTopLevelService {
     public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
             log.info("210.140 Found orphan execContext #{}", execContextId);
-            ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            try {
+                ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            }
+            catch (Throwable th) {
+                log.error("execContextService.deleteExecContext("+execContextId+")", th);
+            }
         }
-
     }
 
     @Async
