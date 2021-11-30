@@ -118,10 +118,10 @@ public class ExecContextReconciliationTopLevelService {
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else if (taskState.execState== TaskExecState.OK.value && tv.state== TaskExecState.CHECK_CACHE) {
-                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. this situation is presumable a normal situation.",
+                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. trying to update a state of task in execContext.",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state);
-                        // #307.060 Found different states for task #196546, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found, trying to update a state of task in execContext
-                        // ---> Is this a normal situation? need to monitor a situation
+                        // this situation can occure if task was stoped, then MH was restarted, and then task was started again
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
