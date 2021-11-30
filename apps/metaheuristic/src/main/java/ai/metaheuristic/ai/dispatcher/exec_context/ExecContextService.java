@@ -26,9 +26,7 @@ import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -84,6 +82,9 @@ public class ExecContextService {
     private final VariableService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
+    private final ExecContextGraphRepository execContextGraphRepository;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -312,5 +313,21 @@ public class ExecContextService {
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextGraph(Long execContextGraphId) {
+        execContextGraphRepository.deleteById(execContextGraphId);
+
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextTaskState(Long execContextTaskStateId) {
+        execContextTaskStateRepository.deleteById(execContextTaskStateId);
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextVariableState(Long execContextVariableStateId) {
+        execContextVariableStateRepository.deleteById(execContextVariableStateId);
     }
 }

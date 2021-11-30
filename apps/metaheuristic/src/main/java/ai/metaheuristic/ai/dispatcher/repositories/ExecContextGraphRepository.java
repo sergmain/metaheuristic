@@ -34,6 +34,9 @@ import java.util.List;
 @Profile("dispatcher")
 public interface ExecContextGraphRepository extends CrudRepository<ExecContextGraph, Long> {
 
+    @Query(value="select w.id from ExecContextGraph w")
+    List<Long> findAllIds();
+
     @Query(value="select distinct v.execContextId from ExecContextGraph v")
     List<Long> getAllExecContextIds();
 

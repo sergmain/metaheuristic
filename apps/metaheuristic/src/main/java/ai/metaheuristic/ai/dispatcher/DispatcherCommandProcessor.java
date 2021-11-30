@@ -153,7 +153,7 @@ public class DispatcherCommandProcessor {
         }
 
         if (assignedTask!=null) {
-            log.info("#997.r50 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.550 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }

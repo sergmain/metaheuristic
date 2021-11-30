@@ -214,7 +214,7 @@ public class ExecContextTopLevelService {
         return task.id;
     }
 
-    // this methd ehre because thre was strange behaviour
+    // this methd here because there was a strange behaviour
     // when execContextFSM.storeExecResultWithTx() was called as lambda directly
     private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         execContextFSM.storeExecResultWithTx(result);
@@ -222,12 +222,12 @@ public class ExecContextTopLevelService {
 
     public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
-            log.info("210.140 Found orphan execContext #{}", execContextId);
+            log.info("#210.140 Found orphan execContext #{}", execContextId);
             try {
                 ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
             }
             catch (Throwable th) {
-                log.error("execContextService.deleteExecContext("+execContextId+")", th);
+                log.error("#210.145 execContextService.deleteExecContext("+execContextId+")", th);
             }
         }
     }

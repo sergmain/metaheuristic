@@ -23,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,4 +45,7 @@ public interface ExecContextVariableStateRepository extends CrudRepository<ExecC
 
     void deleteAllByIdIn(List<Long> ids);
 
+    @Query(value="select w.id from ExecContextVariableState w")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    List<Long> findAllIds();
 }

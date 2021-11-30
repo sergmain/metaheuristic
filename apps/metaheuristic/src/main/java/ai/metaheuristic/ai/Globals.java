@@ -216,7 +216,7 @@ public class Globals {
 
         //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
         public Duration getArtifactCleaner() {
-            return artifactCleaner.toSeconds() >= 30 && artifactCleaner.toSeconds() <=300 ? artifactCleaner : SECONDS_60;
+            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_60;
         }
 
 //        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.gc.toSeconds(), 600, 3600*24*7)*1000 }")

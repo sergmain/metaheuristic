@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -53,6 +54,9 @@ public class ArtifactCleanerAtDispatcher {
     public final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
+    private final ExecContextGraphRepository execContextGraphRepository;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final SourceCodeCache sourceCodeCache;
     private final BatchRepository batchRepository;
     private final CompanyRepository companyRepository;
@@ -99,12 +103,12 @@ public class ArtifactCleanerAtDispatcher {
             if (page.isEmpty()) {
                 continue;
             }
-            log.info("Found obsolete events #{}", page);
+            log.info("#510.140 Found obsolete events #{}", page);
             try {
                 dispatcherEventRepository.deleteAllByIdIn(page);
             }
             catch (Throwable th) {
-                log.error("dispatcherEventRepository.deleteAllByIdIn("+page+")", th);
+                log.error("#510.200 dispatcherEventRepository.deleteAllByIdIn("+page+")", th);
             }
         }
     }
@@ -136,16 +140,79 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanExecContexts() {
+        List<Long> execContextIds = execContextRepository.findAllIds();
+        deleteOrphanExecContexts(execContextIds);
+        deleteOrphanExecContextGraph(execContextIds);
+        deleteOrphanExecContextTaskState(execContextIds);
+        deleteOrphanExecContextVariableState(execContextIds);
+    }
+
+    private void deleteOrphanExecContexts(List<Long> execContextIds) {
         Set<Long> forDeletion = new HashSet<>();
-        List<Object[]> objs = execContextRepository.findAllExecContextIdWithSourceCodeId();
-        for (Object[] obj : objs) {
-            long sourceCodeId = ((Number)obj[1]).longValue();
-            if (sourceCodeCache.findById(sourceCodeId)==null) {
-                long execContextId = ((Number)obj[0]).longValue();
+        for (Long execContextId : execContextIds) {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                continue;
+            }
+            if (sourceCodeCache.findById(ec.sourceCodeId)==null) {
                 forDeletion.add(execContextId);
             }
         }
         execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
+    }
+
+    private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
+        Set<Long> execContextGraphIds = new HashSet<>();
+        for (Long execContextId : execContextIds) {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                continue;
+            }
+            execContextGraphIds.add(ec.execContextGraphId);
+        }
+        List<Long> allExecContextGraphIds = execContextGraphRepository.findAllIds();
+        for (Long allExecContextGraphId : allExecContextGraphIds) {
+            if (!execContextGraphIds.contains(allExecContextGraphId)) {
+                log.info("#510.240 Found orphan ExecContextGraph #{}", allExecContextGraphId);
+                execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
+            }
+        }
+    }
+
+    private void deleteOrphanExecContextTaskState(List<Long> execContextIds) {
+        Set<Long> execContextTaskStateIds = new HashSet<>();
+        for (Long execContextId : execContextIds) {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                continue;
+            }
+            execContextTaskStateIds.add(ec.execContextTaskStateId);
+        }
+        List<Long> allExecContextTaskStateIds = execContextTaskStateRepository.findAllIds();
+        for (Long allExecContextTaskStateId : allExecContextTaskStateIds) {
+            if (!execContextTaskStateIds.contains(allExecContextTaskStateId)) {
+                log.info("#510.280 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
+                execContextService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
+            }
+        }
+    }
+
+    private void deleteOrphanExecContextVariableState(List<Long> execContextIds) {
+        Set<Long> execContextVariableStateIds = new HashSet<>();
+        for (Long execContextId : execContextIds) {
+            ExecContextImpl ec = execContextCache.findById(execContextId);
+            if (ec==null) {
+                continue;
+            }
+            execContextVariableStateIds.add(ec.execContextVariableStateId);
+        }
+        List<Long> allExecContextVariableStateIds = execContextVariableStateRepository.findAllIds();
+        for (Long allExecContextVariableStateId : allExecContextVariableStateIds) {
+            if (!execContextVariableStateIds.contains(allExecContextVariableStateId)) {
+                log.info("#510.320 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
+                execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
+            }
+        }
     }
 
     private void deleteOrphanTasks() {
