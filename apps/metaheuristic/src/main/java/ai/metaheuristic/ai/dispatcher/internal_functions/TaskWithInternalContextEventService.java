@@ -144,19 +144,6 @@ public class TaskWithInternalContextEventService {
                     return false;
                 }
             }
-/*
-            for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
-                if (poolExecutor==null) {
-                    continue;
-                }
-                if (poolExecutor.execContextId.equals(execContextId)) {
-                    if (poolExecutor.executor.getActiveCount() == 0) {
-                        poolExecutor.executor.submit(() -> processTask(execContextId, taskProcessor, poolExecutor));
-                    }
-                    return false;
-                }
-            }
-*/
             for (int i = 0; i < POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i]==null) {
                     POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);

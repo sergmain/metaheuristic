@@ -16,7 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResetTaskShortEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -35,11 +38,22 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextTaskResettingTopLevelService {
 
+    private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     @Async
     @EventListener
     public void resetTask(ResetTaskEvent event) {
         ExecContextSyncService.getWithSyncVoid(event.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(event.execContextId, event.taskId));
+    }
+
+    @Async
+    @EventListener
+    public void resetTaskShort(ResetTaskShortEvent event) {
+        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+        if (task==null) {
+            return;
+        }
+        ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
 }
