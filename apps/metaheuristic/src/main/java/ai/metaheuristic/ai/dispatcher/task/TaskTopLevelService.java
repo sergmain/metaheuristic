@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -113,7 +115,14 @@ public class TaskTopLevelService {
         for (Long actualTaskId : actualTaskIds) {
             if (!event.taskIds.contains(actualTaskId)) {
                 log.warn("#303.370 found a lost task #" + actualTaskId+ ", which doesn't exist at processor");
-                applicationEventPublisher.publishEvent(new ResetTaskShortEvent(actualTaskId));
+                TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
+                if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
+                    return;
+                }
+                if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {
+                    return;
+                }
+                applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
             }
         }
     }

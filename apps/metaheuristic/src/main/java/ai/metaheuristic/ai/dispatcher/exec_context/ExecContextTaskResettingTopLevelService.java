@@ -55,6 +55,9 @@ public class ExecContextTaskResettingTopLevelService {
         if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
             return;
         }
+        if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<30_000)) {
+            return;
+        }
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
 }
