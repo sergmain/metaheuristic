@@ -178,12 +178,6 @@ public class TaskProcessor {
                 continue;
             }
 
-/*
-        2021-11-29 18:28:30.472  INFO 6168 --- [task-processor-mh-processor-01] a.m.ai.processor.TaskProcessor           : #100.001 Start processing task #1402704
-        2021-11-29 18:28:30.488  WARN 6168 --- [task-processor-mh-processor-01] a.m.ai.processor.ProcessorTaskService    : delete dir in ProcessorTaskService.delete(), file: c:\opt\metaheuristic_PC8\processor\processor\mh-processor-01\task\mh-main_herokuapp_com\140\2704
-        2021-11-29 18:28:30.488  INFO 6168 --- [task-processor-mh-processor-01] a.m.ai.processor.TaskProcessor           : #100.034 The state for ExecContext #4423, host: ProcessorAndCoreData.DispatcherUrl(url=https://mh-main.herokuapp.com), is STOPPED, delete a task #1402704
-*/
-
             if (state!= EnumsApi.ExecContextState.STARTED) {
                 log.info("#100.034 The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, dispatcherUrl, state, task.taskId);
                 processorTaskService.delete(ref, task.taskId);

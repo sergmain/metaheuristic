@@ -23,6 +23,13 @@
     <version>1.0</version>
     <packaging>pom</packaging>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
     <modules>
         <module>apps/commons</module>
         <module>apps/metaheuristic</module>
@@ -32,7 +39,6 @@
         <module>apps/sign-string</module>
         <module>apps/simple-app</module>
         <module>apps/simple-batch-app</module>
-
     </modules>
 
 </project>
