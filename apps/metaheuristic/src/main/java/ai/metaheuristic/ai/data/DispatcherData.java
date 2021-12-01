@@ -66,5 +66,9 @@ public class DispatcherData {
         public final int initial;
 
         public final List<AllocatedQuotas> allocated = new ArrayList<>();
+
+        public synchronized void addQuotas(DispatcherData.AllocatedQuotas quotas) {
+            allocated.add(quotas);
+        }
     }
 }

@@ -37,8 +37,11 @@ public class TaskQueueService {
     private static final TaskQueue taskQueue = new TaskQueue();
 
     public static TaskQueue.GroupIterator getIterator() {
-//        checkWriteLockPresent();
         return taskQueue.getIterator();
+    }
+
+    public static boolean isQueueEmpty() {
+        return taskQueue.isQueueEmpty();
     }
 
     public static void removeAll(List<TaskQueue.QueuedTask> forRemoving) {
@@ -54,11 +57,6 @@ public class TaskQueueService {
     public static void lock(Long execContextId) {
         checkWriteLockPresent();
         taskQueue.lock(execContextId);
-    }
-
-    public static boolean isQueueEmpty() {
-//        checkWriteLockPresent();
-        return taskQueue.isQueueEmpty();
     }
 
     public static boolean isQueueEmptyWithSync() {

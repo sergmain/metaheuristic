@@ -25,7 +25,10 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -59,7 +62,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Date: 10/11/2020
  * Time: 5:38 AM
  */
-@SuppressWarnings("DuplicatedCode")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -67,8 +69,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskProviderTopLevelService {
 
     private final Globals globals;
-    private final TaskProviderTransactionalService taskProviderTransactionalService;
-    private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final ExecContextStatusService execContextStatusService;
@@ -77,7 +77,7 @@ public class TaskProviderTopLevelService {
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
-    private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
 
     public void registerTask(ExecContextImpl execContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
@@ -237,22 +237,6 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    @Nullable
-    private TaskData.AssignedTask findUnassignedTaskAndAssign(Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
-        TxUtils.checkTxNotExists();
-
-        if (TaskQueueService.isQueueEmpty()) {
-            return null;
-        }
-
-        TaskData.AssignedTask task = taskProviderTransactionalService.findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas);
-
-        if (task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.id, task.task.id, task.task.execContextId);
-        }
-        return task;
-    }
-
     private static final Map<Long, AtomicLong> processorCheckedOn = new HashMap<>();
 
     @Nullable
@@ -293,7 +277,7 @@ public class TaskProviderTopLevelService {
 
         DispatcherCommParamsYaml.AssignedTask assignedTask =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
-                        ()-> getTaskAndAssignToProcessor(processor, psy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessor(processor.id, psy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -322,12 +306,12 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final TaskData.AssignedTask task =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
-                        ()-> getTaskAndAssignToProcessorInternal(processor, psy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessorInternal(processorId, psy, isAcceptOnlySigned, quotas, taskIds));
 
         // task won't be returned for an internal function
         if (task==null) {
@@ -347,7 +331,7 @@ public class TaskProviderTopLevelService {
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
                 log.warn("#393.600 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.task.getId(), processor.id, psy.taskParamsVersion);
+                        task.task.getId(), processorId, psy.taskParamsVersion);
                 return null;
             }
 
@@ -363,7 +347,7 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
-            Processor processor, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
 
         TxUtils.checkTxNotExists();
 
@@ -371,7 +355,7 @@ public class TaskProviderTopLevelService {
                 MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
                         execContextStatusService::getExecContextStatuses);
 
-        List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processor.id);
+        List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processorId);
         for (Object[] obj : tasks) {
             Long taskId = ((Number)obj[0]).longValue();
             int execState = ((Number)obj[1]).intValue();
@@ -383,11 +367,11 @@ public class TaskProviderTopLevelService {
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.680 already assigned task, processor: #{}, task #{}, execStatus: {}",
-                            processor.id, taskId, EnumsApi.TaskExecState.from(execState));
+                            processorId, taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
                         if (psy.env==null) {
-                            log.error("#317.720 Processor {} has empty env.yaml", processor.id);
+                            log.error("#317.720 Processor {} has empty env.yaml", processorId);
                             return null;
                         }
                         ExecContextImpl ec =  execContextService.findById(execContextId);
@@ -433,7 +417,7 @@ public class TaskProviderTopLevelService {
 
         TaskData.AssignedTask result =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
-                        ()-> findUnassignedTaskAndAssign(processor, psy, isAcceptOnlySigned, quotas));
+                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned, quotas));
 
         return result;
     }
