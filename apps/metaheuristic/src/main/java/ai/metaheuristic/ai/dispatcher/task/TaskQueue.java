@@ -373,7 +373,7 @@ public class TaskQueue {
                 // state from CHECK_CASHE to NONE is being changing without assigning
                 else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
                     log.warn("#029.260 State of task #{} {} can't be changed to {} because the task wasn't assigned.",
-                            task.queuedTask.task==null ? null : EnumsApi.TaskExecState.from(task.queuedTask.task.execState), task.queuedTask.taskId, state);
+                            task.queuedTask.task==null ? null : "<null>", task.queuedTask.taskId, state);
                     try {
                         throw new RuntimeException("This isn't actual an error, only for stacktrace:");
                     }
