@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskShortEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -51,7 +52,7 @@ public class ExecContextTaskResettingTopLevelService {
     @EventListener
     public void resetTaskShort(ResetTaskShortEvent event) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
-        if (task==null) {
+        if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
             return;
         }
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
