@@ -174,7 +174,7 @@ public class ExecContextTopLevelService {
         List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         execContextIds.add(execContextId);
         for (Long contextId : execContextIds) {
-            OperationStatusRest status = ExecContextSyncService.getWithSync(execContextId,
+            OperationStatusRest status = ExecContextSyncService.getWithSync(contextId,
                     () -> execContextFSM.changeExecContextStateWithTx(execState, contextId, context.getCompanyId()));
             if (status.status== EnumsApi.OperationStatus.ERROR) {
                 return status;
