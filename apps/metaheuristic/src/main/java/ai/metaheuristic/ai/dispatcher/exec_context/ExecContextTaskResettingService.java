@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskTxAfterCommitEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -50,6 +52,7 @@ public class ExecContextTaskResettingService {
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final TaskService taskService;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public void resetTaskWithTx(Long execContextId, Long taskId) {
@@ -99,6 +102,8 @@ public class ExecContextTaskResettingService {
             }
             variableService.resetVariable(execContext.id, output.id);
         }
+
+        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
 
         log.info("#305.035 task #{} and its output variables were re-setted to initial state", taskId);
     }
