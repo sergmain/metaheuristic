@@ -39,6 +39,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -193,10 +194,17 @@ public class ExecContextService {
         return EnumsApi.SourceCodeType.common;
     }
 
-    public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+    private ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
+        for (ExecContextsListItem instance : result.instances) {
+            ExecContextImpl ec = execContextCache.findById(instance.id);
+            if (ec==null) {
+                continue;
+            }
+            instance.rootExecContext = ec.rootExecContextId==null;
+        }
         return result;
     }
 

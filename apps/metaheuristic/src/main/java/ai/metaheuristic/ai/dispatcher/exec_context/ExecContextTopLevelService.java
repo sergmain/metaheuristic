@@ -167,8 +167,12 @@ public class ExecContextTopLevelService {
         if (execState == EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
         }
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.065 ExecContext #" + execContextId +" wasn't found");
+        }
         return ExecContextSyncService.getWithSync(execContextId,
-                () -> execContextFSM.changeExecContextStateWithTx(execState, execContextId, context.getCompanyId()));
+                () -> execContextFSM.changeExecContextStateInTreeWithTx(execState, execContextId, context.getCompanyId()));
     }
 
     public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {

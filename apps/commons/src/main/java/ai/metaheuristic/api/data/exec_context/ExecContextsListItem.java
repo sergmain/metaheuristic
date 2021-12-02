@@ -28,13 +28,21 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class ExecContextsListItem {
     public Long id;
     public long createdOn;
     public boolean valid;
     public Long completedOn;
     public int state;
+    public boolean rootExecContext = false;
+
+    public ExecContextsListItem(Long id, long createdOn, boolean valid, Long completedOn, int state) {
+        this.id = id;
+        this.createdOn = createdOn;
+        this.valid = valid;
+        this.completedOn = completedOn;
+        this.state = state;
+    }
 
     public String getExecState() {
         return EnumsApi.ExecContextState.from(state);
