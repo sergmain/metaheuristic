@@ -94,15 +94,6 @@ public class ExecContextFSM {
         return changeExecContextState(execState, execContextId, companyUniqueId);
     }
 
-    @Transactional
-    public OperationStatusRest changeExecContextStateInTreeWithTx(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
-        List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
-        for (Long execContextIdForChanging : execContextIds) {
-            return changeExecContextState(execState, execContextIdForChanging, companyUniqueId);
-        }
-        return changeExecContextState(execState, execContextId, companyUniqueId);
-    }
-
     private OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 

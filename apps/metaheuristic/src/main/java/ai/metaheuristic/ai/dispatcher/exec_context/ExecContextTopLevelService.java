@@ -171,8 +171,16 @@ public class ExecContextTopLevelService {
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.065 ExecContext #" + execContextId +" wasn't found");
         }
-        return ExecContextSyncService.getWithSync(execContextId,
-                () -> execContextFSM.changeExecContextStateInTreeWithTx(execState, execContextId, context.getCompanyId()));
+        List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
+        execContextIds.add(execContextId);
+        for (Long contextId : execContextIds) {
+            OperationStatusRest status = ExecContextSyncService.getWithSync(execContextId,
+                    () -> execContextFSM.changeExecContextStateWithTx(execState, contextId, context.getCompanyId()));
+            if (status.status== EnumsApi.OperationStatus.ERROR) {
+                return status;
+            }
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
