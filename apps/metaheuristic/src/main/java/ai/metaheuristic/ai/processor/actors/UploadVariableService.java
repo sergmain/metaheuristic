@@ -139,6 +139,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 final Executor executor = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword);
 
                 if (!isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor)) {
+                    log.info("variable #{} in task #{} isn't ready for uploading", task.variableId, task.taskId);
                     continue;
                 }
 

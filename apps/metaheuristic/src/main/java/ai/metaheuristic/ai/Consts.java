@@ -146,4 +146,6 @@ public class Consts {
     public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 
     public static final String SOURCE_CODE_UID = "source-code-uid";
+
+    public static final EnumsApi.TaskExecState INITIAL_TASK_STATE = EnumsApi.TaskExecState.CHECK_CACHE;
 }

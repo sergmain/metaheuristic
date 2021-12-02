@@ -157,19 +157,31 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     continue;
                 }
 
+                if (EnumsApi.TaskExecState.isFinishedState(queuedTask.task.execState)) {
+                    log.info("#317.040 task #{} already in a finished state as {}", queuedTask.taskId, queuedTask.task.execState);
+                    forRemoving.add(queuedTask);
+                    continue;
+                }
+
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this can happened because of async call of StartTaskProcessingTxEvent
-                    log.info("#317.039 task #{} already assigned for processing", queuedTask.taskId);
+                    log.info("#317.045 task #{} already assigned for processing", queuedTask.taskId);
+                    forRemoving.add(queuedTask);
+                    continue;
+                }
+
+                if (queuedTask.task.execState==EnumsApi.TaskExecState.CHECK_CACHE.value) {
+                    log.error("#317.050 Task #{} with function '{}' is in state CHECK_CACHE",
+                            queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code);
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
                     forRemoving.add(queuedTask);
                     continue;
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.error("#317.040 Task #{} with function '{}' isn't in state NONE, actual: {}",
+                    log.error("#317.050 Task #{} with function '{}' isn't in state NONE, actual: {}",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
-                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
-                    forRemoving.add(queuedTask);
-                    continue;
+                    throw new IllegalStateException("(queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value)");
                 }
 
                 // check of git availability

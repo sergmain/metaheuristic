@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
@@ -41,7 +42,6 @@ import org.springframework.stereotype.Service;
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
-    private final TaskService taskService;
     private final EventPublisherService eventPublisherService;
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
@@ -56,31 +56,6 @@ public class TaskExecStateService {
             t.setCompleted(true);
             t.setCompletedOn(System.currentTimeMillis());
         }
-    }
-
-    @Nullable
-    public TaskImpl resetTask(final Long taskId) {
-        TxUtils.checkTxExists();
-        TaskSyncService.checkWriteLockPresent(taskId);
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        log.info("#305.025 Start re-setting task #{}", taskId);
-        if (task==null) {
-            log.error("#305.030 task is null");
-            return null;
-        }
-
-        task.setFunctionExecResults(null);
-        task.setProcessorId(null);
-        task.setAssignedOn(null);
-        task.setCompleted(false);
-        task.setCompletedOn(null);
-        task.setExecState(EnumsApi.TaskExecState.NONE.value);
-        task.setResultReceived(false);
-        task.setResultResourceScheduledOn(0);
-        task = taskService.save(task);
-
-        log.info("#305.035 task #{} was re-setted to initial state", taskId);
-        return task;
     }
 
     public TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){

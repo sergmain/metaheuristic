@@ -116,7 +116,7 @@ public class TaskTopLevelService {
             if (!event.taskIds.contains(actualTaskId)) {
                 log.warn("#303.370 found a lost task #" + actualTaskId+ ", which doesn't exist at processor");
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
-                if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
+                if (task==null || EnumsApi.TaskExecState.IN_PROGRESS!=EnumsApi.TaskExecState.from(task.execState)) {
                     return;
                 }
                 if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {

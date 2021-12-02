@@ -92,10 +92,10 @@ public class VariableService {
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            throw new VariableCommonException("#441.040 Variable #"+variableId+" wasn't found", variableId);
+            throw new VariableCommonException("#171.030 Variable #"+variableId+" wasn't found", variableId);
         }
         if (!execContextId.equals(variable.execContextId)) {
-            final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
+            final String es = "#171.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
                     "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
             log.warn(es);
             throw new VariableCommonException(es, variableId);
@@ -103,16 +103,36 @@ public class VariableService {
         update(variableIS, length, variable);
     }
 
+    public void resetVariable(Long execContextId, Long variableId) {
+        TxUtils.checkTxExists();
+
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        if (v ==null) {
+            throw new VariableCommonException("#171.090 Variable #"+variableId+" wasn't found", variableId);
+        }
+        if (!execContextId.equals(v.execContextId)) {
+            final String es = "#171.120 the different execContextId than variable #"+variableId+", " +
+                    "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
+            log.warn(es);
+            throw new VariableCommonException(es, variableId);
+        }
+        v.uploadTs = new Timestamp(System.currentTimeMillis());
+        v.inited = false;
+        v.nullified = true;
+        v.setData(null);
+        variableRepository.save(v);
+    }
+
     @Transactional
     public void setVariableAsNull(Long variableId) {
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            String es = S.f("#611.063 variable #%d wasn't found", variableId);
+            String es = S.f("#171.150 variable #%d wasn't found", variableId);
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
         if (variable.inited) {
-            String es = S.f("#611.065 variable #%d wasn't already inited", variableId);
+            String es = S.f("#171.180 variable #%d wasn't already inited", variableId);
             log.error(es);
             throw new VariableCommonException(es, variableId);
 
@@ -228,7 +248,7 @@ public class VariableService {
         final Long execContextId = task.execContextId;
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#171.020 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("#171.240 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return null;
         }
 
@@ -245,13 +265,13 @@ public class VariableService {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
             if (S.b(contextId)) {
                 throw new TaskCreationException(
-                        S.f("#171.040 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             SimpleVariable variable = findVariableInAllInternalContexts(v.name, contextId, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.060 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
@@ -261,7 +281,7 @@ public class VariableService {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.080 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.330 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
@@ -285,7 +305,7 @@ public class VariableService {
             return null;
         }
         if (vars.size()>1) {
-            throw new SourceCodeException("#171.100 Too many variable '"+variable+"', actual count: " + vars.size());
+            throw new SourceCodeException("#171.360 Too many variable '"+variable+"', actual count: " + vars.size());
         }
         return vars.get(0);
     }
@@ -324,7 +344,7 @@ public class VariableService {
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
-            final String es = "#171.120 Variable data wasn't found, variableId: " + variableId;
+            final String es = "#171.390 Variable data wasn't found, variableId: " + variableId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -337,11 +357,11 @@ public class VariableService {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 if (nullable) {
-                    log.info("#171.140 Variable #{} is nullable and current value is null", variableId);
+                    log.info("#171.420 Variable #{} is nullable and current value is null", variableId);
                     return null;
                 }
                 else {
-                    final String es = "#171.160 Variable data wasn't found, variableId: " + variableId;
+                    final String es = "#171.450 Variable data wasn't found, variableId: " + variableId;
                     log.warn(es);
                     throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
                 }
@@ -353,8 +373,8 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            log.error("#171.180", th);
-            throw new VariableCommonException("#171.200 Error: " + th.getMessage(), variableId);
+            log.error("#171.480", th);
+            throw new VariableCommonException("#171.510 Error: " + th.getMessage(), variableId);
         }
     }
 
@@ -368,7 +388,7 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = "#171.220 Variable #"+variableId+" wasn't found";
+                String es = "#171.540 Variable #"+variableId+" wasn't found";
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
@@ -378,7 +398,7 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#171.240 Error while storing data to file";
+            String es = "#171.570 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -402,7 +422,7 @@ public class VariableService {
 
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         if (size==0) {
-            throw new IllegalStateException("#171.260 Variable can't be of zero length");
+            throw new IllegalStateException("#171.600 Variable can't be of zero length");
         }
         TxUtils.checkTxExists();
 
@@ -431,7 +451,7 @@ public class VariableService {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
-                        S.f("#171.280 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                        S.f("#171.630 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
                                 p.processCode, variable.context, p.internalContextId, execContextId));
             }
 
@@ -482,7 +502,7 @@ public class VariableService {
     public Void updateWithTx(InputStream is, long size, Long variableId) {
         Variable v = variableRepository.findById(variableId).orElse(null);
         if (v==null) {
-            String es = S.f("#171.293 Variable #%d wasn't found", variableId);
+            String es = S.f("#171.660 Variable #%d wasn't found", variableId);
             log.error(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -492,7 +512,7 @@ public class VariableService {
 
     public void update(InputStream is, long size, Variable data) {
         if (size==0) {
-            throw new IllegalStateException("#171.290 Variable can't be with zero length");
+            throw new IllegalStateException("#171.690 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -507,13 +527,13 @@ public class VariableService {
     @Transactional
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
         if (size==0) {
-            throw new IllegalStateException("#171.295 Variable can't be with zero length");
+            throw new IllegalStateException("#171.720 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
 
         Variable data = variableRepository.findById(variableId).orElse(null);
         if (data==null) {
-            log.error("#171.300 can't find variable #" + variableId);
+            log.error("#171.750 can't find variable #" + variableId);
             return;
         }
         data.filename = filename;

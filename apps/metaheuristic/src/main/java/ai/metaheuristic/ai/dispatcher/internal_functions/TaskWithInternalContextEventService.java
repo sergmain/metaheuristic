@@ -85,7 +85,7 @@ public class TaskWithInternalContextEventService {
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public static final int MAX_ACTIVE_THREAD = 1;
+    private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
     private static final int MAX_NUMBER_EXECUTORS = 2;
 
@@ -207,16 +207,16 @@ public class TaskWithInternalContextEventService {
         }
         catch (InternalFunctionException e) {
             if (e.result.processing != Enums.InternalFunctionProcessing.ok) {
-                log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
+                log.error("#706.100 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
-                final String console = "#707.180 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
+                final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncNullable(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
         catch (Throwable th) {
-            final String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
+            final String es = "#706.150 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
                     ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
@@ -232,12 +232,12 @@ public class TaskWithInternalContextEventService {
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
-                log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+                log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
                 return null;
             }
 
             if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                log.error("#707.080 Task #"+task.id+" already in progress.");
+                log.error("#706.210 Task #"+task.id+" already in progress.");
                 return null;
             }
 
@@ -249,7 +249,7 @@ public class TaskWithInternalContextEventService {
                     p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                 }
                 else {
-                    final String msg = "#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
+                    final String msg = "#706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
                     log.warn(msg);
                     throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
                 }

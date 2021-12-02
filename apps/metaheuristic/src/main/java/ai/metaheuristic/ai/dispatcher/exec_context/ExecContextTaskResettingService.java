@@ -18,12 +18,17 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -42,8 +47,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
-    private final TaskExecStateService taskExecStateService;
-    private final TaskStateService taskStateService;
+    private final VariableService variableService;
+    private final TaskRepository taskRepository;
+    private final TaskService taskService;
 
     @Transactional
     public void resetTaskWithTx(Long execContextId, Long taskId) {
@@ -61,8 +67,9 @@ public class ExecContextTaskResettingService {
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);
 
-        TaskImpl t = taskExecStateService.resetTask(taskId);
-        if (t == null) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        log.info("#305.025 Start re-setting task #{}", taskId);
+        if (task == null) {
             String es = S.f("#320.020 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);
             log.error(es);
@@ -70,8 +77,30 @@ public class ExecContextTaskResettingService {
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return;
         }
-        taskStateService.updateTaskExecStates(t, EnumsApi.TaskExecState.NONE);
-    }
 
+        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        final ExecContextParamsYaml.Process process = execContext.getExecContextParamsYaml().findProcess(taskParams.task.processCode);
+        if (process==null) {
+            throw new BreakFromLambdaException("#375.080 Process '" + taskParams.task.processCode + "' wasn't found");
+        }
+
+        task.setFunctionExecResults(null);
+        task.setProcessorId(null);
+        task.setAssignedOn(null);
+        task.setCompleted(false);
+        task.setCompletedOn(null);
+        task.execState = process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
+        task.setResultReceived(false);
+        task.setResultResourceScheduledOn(0);
+        taskService.save(task);
+        for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
+            if (output.context== EnumsApi.VariableContext.global) {
+                throw new IllegalStateException("(output.context== EnumsApi.VariableContext.global)");
+            }
+            variableService.resetVariable(execContext.id, output.id);
+        }
+
+        log.info("#305.035 task #{} and its output variables were re-setted to initial state", taskId);
+    }
 
 }

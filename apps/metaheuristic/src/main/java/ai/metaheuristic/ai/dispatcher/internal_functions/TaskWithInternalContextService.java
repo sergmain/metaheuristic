@@ -63,7 +63,7 @@ public class TaskWithInternalContextService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+            log.warn("#707.030 Task #{} with internal context doesn't exist", taskId);
             return null;
         }
         preProcessInternalFunction(simpleExecContext, task);
@@ -74,7 +74,7 @@ public class TaskWithInternalContextService {
     public void skipTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+            log.warn("#707.060 Task #{} with internal context doesn't exist", taskId);
             return;
         }
         // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
@@ -85,7 +85,7 @@ public class TaskWithInternalContextService {
     public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+            log.warn("#707.090 Task #{} with internal context doesn't exist", taskId);
             return;
         }
 
@@ -104,7 +104,7 @@ public class TaskWithInternalContextService {
         TxUtils.checkTxExists();
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#441.220 Task {} was reset, can't set new value to field resultReceived", task.id);
+            log.warn("#707.220 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -119,15 +119,15 @@ public class TaskWithInternalContextService {
 
     private void preProcessInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, TaskImpl task) {
         if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-            log.error("#707.080 Task #"+task.id+" already in progress.");
+            log.error("#707.250 Task #"+task.id+" already in progress.");
             return;
         }
         if (task.execState!= EnumsApi.TaskExecState.NONE.value) {
-            log.info("#707.100 Task #"+task.id+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
+            log.info("#707.280 Task #"+task.id+" was already processed with state " + EnumsApi.TaskExecState.from(task.execState));
             return;
         }
         if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
-            log.error("#707.120 Task #"+task.id+" already was finished");
+            log.error("#707.310 Task #"+task.id+" already was finished");
             return;
         }
 
@@ -145,7 +145,7 @@ public class TaskWithInternalContextService {
                 p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
             }
             else {
-                final String msg = "#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
+                final String msg = "#707.340 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
                 log.warn(msg);
                 throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
             }
