@@ -167,6 +167,9 @@ public class ExecContextTopLevelService {
         if (execState == EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
         }
+        if (execState!= EnumsApi.ExecContextState.STARTED && execState!= EnumsApi.ExecContextState.STOPPED) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.061 execCpntext state can be only STARTED or STOPPED, requested state: " + state);
+        }
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.065 ExecContext #" + execContextId +" wasn't found");
@@ -174,6 +177,14 @@ public class ExecContextTopLevelService {
         List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         execContextIds.add(execContextId);
         for (Long contextId : execContextIds) {
+            ExecContextImpl ecLoop = execContextCache.findById(contextId);
+            if (ecLoop==null) {
+                continue;
+            }
+            EnumsApi.ExecContextState execContextState = EnumsApi.ExecContextState.fromCode(ecLoop.state);
+            if (execContextState!= EnumsApi.ExecContextState.STARTED && execContextState!= EnumsApi.ExecContextState.STOPPED) {
+                continue;
+            }
             OperationStatusRest status = ExecContextSyncService.getWithSync(contextId,
                     () -> execContextFSM.changeExecContextStateWithTx(execState, contextId, context.getCompanyId()));
             if (status.status== EnumsApi.OperationStatus.ERROR) {
