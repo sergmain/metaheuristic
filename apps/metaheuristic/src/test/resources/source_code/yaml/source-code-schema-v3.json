@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Welcome1",
+  "definitions": {
+    "Welcome1": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 3
+        },
+        "source": {
+          "$ref": "#/definitions/Source"
+        }
+      },
+      "required": [
+          "source",
+          "version"
+      ],
+      "title": "Welcome1"
+    },
+    "Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strictNaming": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "clean": {
+          "type": "boolean"
+        },
+        "instances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ac": {
+          "$ref": "#/definitions/AC"
+        },
+        "metas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Meta"
+          }
+        },
+        "variables": {
+          "$ref": "#/definitions/VariableDefinition"
+        },
+        "processes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Process"
+          }
+        }
+      },
+      "required": [
+          "processes",
+          "uid"
+      ],
+      "title": "Source"
+    },
+    "AC": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "string"
+        }
+      },
+      "required": [
+          "groups"
+      ],
+      "title": "AC"
+    },
+    "Process": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "function": {
+          "$ref": "#/definitions/Function"
+        },
+        "metas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Meta"
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Variable"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Variable"
+          }
+        },
+        "cache": {
+          "$ref": "#/definitions/Cache"
+        },
+        "timeoutBeforeTerminate": {
+          "type": "integer"
+        },
+        "subProcesses": {
+          "$ref": "#/definitions/SubProcesses"
+        }
+      },
+      "required": [
+          "code",
+          "function"
+      ],
+      "title": "Process"
+    },
+    "Cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "omitInline": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+      ],
+      "title": "Cache"
+    },
+    "SubProcesses": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logic": {
+          "type": "string"
+        },
+        "processes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Process"
+          }
+        }
+      },
+      "required": [
+          "logic",
+          "processes"
+      ],
+      "title": "SubProcesses"
+    },
+    "Function": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "params": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+          "code"
+      ],
+      "title": "Function"
+    },
+    "Meta": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {"type": ["string", "boolean", "integer"]
+        }
+      },
+      "additionalProperties": false,
+      "required": [],
+      "title": "Meta"
+    },
+    "Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "ext": {
+          "type": "string"
+        },
+        "array": {
+          "type": "boolean"
+        },
+        "sourcing": {
+          "enum" : ["dispatcher", "disk", "git", "inline"]
+        },
+        "parentContext": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+          "name"
+      ],
+      "title": "Variable"
+    },
+    "VariableDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inline": {
+          "$ref": "#/definitions/Inline"
+        },
+        "globals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startInputAs": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Variable"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Variable"
+          }
+        }
+      },
+      "required": [
+      ],
+      "title": "VariableDefinition"
+    },
+    "Inline": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^.*$": {
+          "$ref": "#/definitions/InlineMeta"
+        }
+      },
+      "required": [
+      ],
+      "title": "Inline"
+    },
+    "InlineMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^.*$": {"type": ["string", "boolean", "integer"]
+        }
+      },
+      "required": [
+      ],
+      "title": "InlineMeta"
+    }
+
+
+  }
+}
