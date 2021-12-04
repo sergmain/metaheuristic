@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -94,6 +95,8 @@ public class ReduceVariablesUtils {
             result.byValue.put(key, value);
         }
 
+        result.metricsList = getExperimentMetrics(data);
+
         return result;
     }
 
@@ -123,6 +126,38 @@ public class ReduceVariablesUtils {
             }
         }
         return freqValues;
+    }
+
+    private static List<ReduceVariablesData.ExperimentMetrics> getExperimentMetrics(ReduceVariablesData.VariablesData data) {
+        List<ReduceVariablesData.ExperimentMetrics> ems = new ArrayList<>();
+
+        boolean emptyMetrics = false;
+        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
+            for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
+
+                if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                    continue;
+                }
+                if (subPermutedVariable.metricValues==null) {
+                    emptyMetrics = true;
+                    continue;
+                }
+                ReduceVariablesData.ExperimentMetrics em = new ReduceVariablesData.ExperimentMetrics();
+                em.metricValues = subPermutedVariable.metricValues;
+                em.data = subPermutedVariable.values.entrySet().stream().filter(o->"true".equals(o.getValue())).map(Map.Entry::getKey).collect(Collectors.joining(", "));
+                em.hyper = permutedVariable.values.entrySet().stream().map(o->""+o.getKey()+":"+o.getValue()).collect(Collectors.joining(", "));
+                em.metrics = subPermutedVariable.metricValues.values.entrySet().stream().map(o->""+o.getKey()+":"+o.getValue()).collect(Collectors.joining(","));
+                em.dir = subPermutedVariable.dir;
+
+                ems.add(em);
+            }
+        }
+        if (emptyMetrics) {
+            System.out.println("Found an empty metrics");
+        }
+        final String metricsName = "sum_norm_6";
+        ems.sort((o1, o2) -> o2.metricValues.values.get(metricsName).compareTo(o1.metricValues.values.get(metricsName)));
+        return ems;
     }
 
     private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data) {
@@ -227,6 +262,7 @@ public class ReduceVariablesUtils {
                 }
                 else {
                     final ReduceVariablesData.PermutedVariables permutedVariables = new ReduceVariablesData.PermutedVariables();
+                    permutedVariables.dir = ""+f.getParentFile().getParentFile().getName()+File.separatorChar+f.getParentFile().getName()+File.separatorChar+top[0].getName()+File.separatorChar+ctxDir.getName();
                     permutedVariables.fitting = fitting;
                     permutedVariables.metricValues = metricValues;
                     permutedVariables.values.putAll(values);

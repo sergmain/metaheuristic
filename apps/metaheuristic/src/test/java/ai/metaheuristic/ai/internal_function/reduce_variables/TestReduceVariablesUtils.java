@@ -93,8 +93,19 @@ public class TestReduceVariablesUtils {
     @Disabled
     @Test
     public void testExternal() {
-        File zip = new File("variable-2653425-aggregatedResult1.zip");
+        extracted("variable-2653425-aggregatedResult1.zip");
+    }
+
+    @Disabled
+    @Test
+    public void testExternal_1() {
+        extracted("variable-4016080-aggregatedResult1.zip");
+    }
+
+    private static void extracted(String pathname) {
+        File zip = new File(pathname);
         assertTrue(zip.exists());
+        assertTrue(zip.isFile());
 
         String yaml = """
                 version: 1
@@ -167,6 +178,16 @@ public class TestReduceVariablesUtils {
         System.out.println("\n=====================");
         for (Map.Entry<String, String> entry : result.byValue.entrySet()) {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
+        }
+
+        System.out.println("\n=====================");
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+            System.out.println(experimentMetrics.hyper);
+            System.out.println(experimentMetrics.data);
+            System.out.println(experimentMetrics.metrics);
+            System.out.println(experimentMetrics.metricValues.comment);
+            System.out.println(experimentMetrics.dir);
+            System.out.println();
         }
     }
 }
