@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,7 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
     public static class DispatcherLookupV2 {
         // fields, which are specific to concrete installation
         // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
+        @Nullable
         public String taskProcessingTime;
 
         // common fields
