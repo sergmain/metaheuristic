@@ -6,8 +6,11 @@ FROM alpine:latest
 
 RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic
 
-RUN apk add --update git openjdk11-jre tzdata
+RUN apk add --update git tzdata
 #RUN apk add --update git openjdk11-jre tzdata && rm -rf /var/cache/apk/*
+
+FROM eclipse-temurin:17.0.1_12-jdk
+#RUN apk add --update eclipse-temurin:17.0.1_12-jdk
 
 
 # Set language
@@ -37,11 +40,11 @@ RUN mkdir -p /metaheuristic/mh-dispatcher
 
 COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
 COPY /docker/quickstart/processor/* /metaheuristic/mh-processor/
-COPY /apps/metaheuristic/src/main/resources/application-quickstart.properties /metaheuristic/config/application.properties
+COPY /apps/metaheuristic/src/main/resources/application-quickstart.prop /metaheuristic/config/application.properties
 
 WORKDIR /metaheuristic
 EXPOSE 8083
 
-ENTRYPOINT ["/usr/bin/java", "-Dserver.port=8083", "-Dspring.profiles.active=quickstart,dispatcher,processor", "-Dhttps.protocols=TLSv1.2", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+ENTRYPOINT ["java", "-Dserver.port=8083", "-Dserver.address=0.0.0.0", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
 #ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
 

@@ -90,16 +90,20 @@ public class TestReduceVariablesUtils {
         assertFalse(data.permutedVariables.isEmpty());
     }
 
-    @Disabled
-    @Test
-    public void testExternal() {
+    @Disabled @Test public void testExternal() {
         extracted("variable-2653425-aggregatedResult1.zip");
     }
 
-    @Disabled
-    @Test
-    public void testExternal_1() {
+    @Disabled @Test public void testExternal_1() {
         extracted("variable-4016080-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_2() {
+        extracted("variable-3967531-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_3() {
+        extracted("variable-4095959-aggregatedResult1.zip");
     }
 
     private static void extracted(String pathname) {

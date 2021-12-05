@@ -111,7 +111,7 @@ public class Config {
 
         private final ApplicationContext appCtx;
 
-        @Value("${spring.host:#{null}}")
+        @Value("${server.address:#{null}}")
         public String serverHost;
 
         @Value("${server.port:#{-1}}")
