@@ -6,11 +6,11 @@ FROM alpine:latest
 
 RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic
 
-RUN apk add --update git tzdata
-#RUN apk add --update git openjdk11-jre tzdata && rm -rf /var/cache/apk/*
+RUN apk add --update git
+RUN apk add --update tzdata
+
 
 FROM eclipse-temurin:17.0.1_12-jdk
-#RUN apk add --update eclipse-temurin:17.0.1_12-jdk
 
 
 # Set language
@@ -29,7 +29,7 @@ FROM eclipse-temurin:17.0.1_12-jdk
 # Set environment
 ENV LANG=en_EN.UTF-8 \
     LANGUAGE=en_EN.UTF-8 \
-    JAVA_HOME=/usr/bin/java \
+    JAVA_HOME=/opt/java/openjdk \
     TZ=America/Los_Angeles
 
 RUN mkdir -p /metaheuristic
