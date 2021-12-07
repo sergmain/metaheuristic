@@ -46,5 +46,4 @@ WORKDIR /metaheuristic
 EXPOSE 8083
 
 ENTRYPOINT ["java", "-Dserver.port=8083", "-Dserver.address=0.0.0.0", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
-#ENTRYPOINT ["sh", "-c", "/usr/bin/java -Dserver.port=8083 -Dspring.profiles.active=quickstart,dispatcher,processor -Dhttps.protocols=TLSv1.2 -Xrs -Xms384m -Xmx384m -jar /metaheuristic/metaheuristic.jar"]
 
