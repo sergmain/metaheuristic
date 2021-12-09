@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.api.dispatcher;
 
+import org.springframework.lang.Nullable;
+
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {
     Long getId();
@@ -24,14 +26,18 @@ public interface Task {
 
     String getParams();
 
+    @Nullable
     Long getProcessorId();
 
+    @Nullable
     Long getAssignedOn();
 
+    @Nullable
     Long getCompletedOn();
 
     boolean isCompleted();
 
+    @Nullable
     String getFunctionExecResults();
 
     Long getExecContextId();
@@ -48,15 +54,15 @@ public interface Task {
 
     void setParams(String params);
 
-    void setProcessorId(Long processorId);
+    void setProcessorId(@Nullable Long processorId);
 
-    void setAssignedOn(Long assignedOn);
+    void setAssignedOn(@Nullable Long assignedOn);
 
-    void setCompletedOn(Long completedOn);
+    void setCompletedOn(@Nullable Long completedOn);
 
     void setCompleted(boolean isCompleted);
 
-    void setFunctionExecResults(String functionExecResults);
+    void setFunctionExecResults(@Nullable String functionExecResults);
 
     void setExecContextId(Long execContextId);
 
@@ -66,9 +72,10 @@ public interface Task {
 
     void setResultResourceScheduledOn(long resultResourceScheduledOn);
 
+    @Nullable
     Long getUpdatedOn();
 
-    void setUpdatedOn(Long updatedOn);
+    void setUpdatedOn(@Nullable Long updatedOn);
 
     Long getAccessByProcessorOn();
 

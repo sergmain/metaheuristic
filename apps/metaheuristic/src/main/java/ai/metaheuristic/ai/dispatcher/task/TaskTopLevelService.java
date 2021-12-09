@@ -114,11 +114,15 @@ public class TaskTopLevelService {
         List<Long> actualTaskIds = taskRepository.findTaskIdsForProcessorId(event.processorId);
         for (Long actualTaskId : actualTaskIds) {
             if (!event.taskIds.contains(actualTaskId)) {
-                log.warn("#303.370 found a lost task #" + actualTaskId+ ", which doesn't exist at processor");
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
+                log.warn("#303.370 found a lost task #{}, which doesn't exist at processor #{}. task exists in db: {}, state: {}",
+                        actualTaskId, event.processorId, (task!=null), (task!=null) ? EnumsApi.TaskExecState.from(task.execState) : null);
                 if (task==null || EnumsApi.TaskExecState.IN_PROGRESS!=EnumsApi.TaskExecState.from(task.execState)) {
                     return;
                 }
+                log.warn("#303.375 found a lost task #{}, assignedOn: {}, is old: {}",
+                        actualTaskId, task.assignedOn, task.assignedOn!=null ? (System.currentTimeMillis() - task.assignedOn<60_000) : null);
+
                 if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {
                     return;
                 }

@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serial;
@@ -61,15 +62,19 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "PARAMS")
     public String params;
 
+    @Nullable
     @Column(name = "PROCESSOR_ID")
     public Long processorId;
 
+    @Nullable
     @Column(name = "ASSIGNED_ON")
     public Long assignedOn;
 
+    @Nullable
     @Column(name = "UPDATED_ON")
     public Long updatedOn;
 
+    @Nullable
     @Column(name = "COMPLETED_ON")
     public Long completedOn;
 
@@ -77,6 +82,7 @@ public class TaskImpl implements Serializable, Task {
     public boolean isCompleted;
 
     @JsonIgnore
+    @Nullable
     @Column(name = "FUNCTION_EXEC_RESULTS")
     public String functionExecResults;
 
