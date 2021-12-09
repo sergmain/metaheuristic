@@ -19,8 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -173,6 +172,11 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> allExecContextGraphIds = execContextGraphRepository.findAllIds();
         for (Long allExecContextGraphId : allExecContextGraphIds) {
             if (!execContextGraphIds.contains(allExecContextGraphId)) {
+                ExecContextGraph execContextGraph = execContextGraphRepository.findById(allExecContextGraphId).orElse(null);
+                if (execContextGraph==null || execContextGraph.createdOn==null ||
+                        execContextGraph.createdOn==0 || (System.currentTimeMillis()-execContextGraph.createdOn) < 3_600_000 ) {
+                    continue;
+                }
                 log.info("#510.240 Found orphan ExecContextGraph #{}", allExecContextGraphId);
                 execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
             }
@@ -191,6 +195,11 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> allExecContextTaskStateIds = execContextTaskStateRepository.findAllIds();
         for (Long allExecContextTaskStateId : allExecContextTaskStateIds) {
             if (!execContextTaskStateIds.contains(allExecContextTaskStateId)) {
+                ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(allExecContextTaskStateId).orElse(null);
+                if (execContextTaskState==null || execContextTaskState.createdOn==null ||
+                        execContextTaskState.createdOn==0 || (System.currentTimeMillis()-execContextTaskState.createdOn) < 3_600_000 ) {
+                    continue;
+                }
                 log.info("#510.280 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
                 execContextService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
             }
@@ -209,6 +218,11 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> allExecContextVariableStateIds = execContextVariableStateRepository.findAllIds();
         for (Long allExecContextVariableStateId : allExecContextVariableStateIds) {
             if (!execContextVariableStateIds.contains(allExecContextVariableStateId)) {
+                ExecContextVariableState execContextVariableState = execContextVariableStateRepository.findById(allExecContextVariableStateId).orElse(null);
+                if (execContextVariableState==null || execContextVariableState.createdOn==null ||
+                        execContextVariableState.createdOn==0 || (System.currentTimeMillis()-execContextVariableState.createdOn) < 3_600_000 ) {
+                    continue;
+                }
                 log.info("#510.320 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
                 execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
             }

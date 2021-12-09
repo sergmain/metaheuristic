@@ -57,6 +57,10 @@ public class ExecContextGraph implements Serializable {
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 
+    @Nullable
+    @Column(name="CREATED_ON")
+    public Long createdOn;
+
     @NotBlank
     @Column(name = "PARAMS")
     private String params;

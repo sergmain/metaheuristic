@@ -309,6 +309,7 @@ CREATE TABLE mh_exec_context_graph
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -317,6 +318,7 @@ CREATE TABLE mh_exec_context_task_state
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -325,6 +327,7 @@ CREATE TABLE mh_exec_context_variable_state
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 

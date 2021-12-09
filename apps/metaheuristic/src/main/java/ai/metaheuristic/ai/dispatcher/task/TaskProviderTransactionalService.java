@@ -61,6 +61,8 @@ public class TaskProviderTransactionalService {
             throw new IllegalStateException("#317.100 (resultTask.queuedTask.task == null)");
         }
 
+        TaskSyncService.checkWriteLockPresent(resultTask.queuedTask.task.id);
+
         TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
             log.warn("#317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);

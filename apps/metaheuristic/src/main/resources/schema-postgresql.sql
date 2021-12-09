@@ -304,6 +304,7 @@ CREATE TABLE MH_EXEC_CONTEXT_GRAPH
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 
@@ -312,6 +313,7 @@ CREATE TABLE MH_EXEC_CONTEXT_TASK_STATE
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 
@@ -320,6 +322,7 @@ CREATE TABLE MH_EXEC_CONTEXT_VARIABLE_STATE
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 

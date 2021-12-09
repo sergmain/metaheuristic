@@ -204,16 +204,19 @@ public class ExecContextCreatorService {
 
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();
         execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
+        execContextTaskState.createdOn = System.currentTimeMillis();
         execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
         ec.execContextTaskStateId = execContextTaskState.id;
 
         ExecContextGraph execContextGraph = new ExecContextGraph();
         execContextGraph.updateParams(new ExecContextGraphParamsYaml());
+        execContextGraph.createdOn = System.currentTimeMillis();
         execContextGraph = execContextGraphCache.save(execContextGraph);
         ec.execContextGraphId = execContextGraph.id;
 
         ExecContextVariableState bean = new ExecContextVariableState();
         bean.updateParams(new ExecContextApiData.ExecContextVariableStates());
+        bean.createdOn = System.currentTimeMillis();
         bean = execContextVariableStateCache.save(bean);
         ec.execContextVariableStateId = bean.id;
 

@@ -279,7 +279,11 @@ public class TaskProviderUnassignedTaskTopLevelService {
         if (quota==null) {
             throw new IllegalStateException("(quota==null)");
         }
-        return taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, currentQuotas, resultTask, quota);
+
+        final TaskQueue.AllocatedTask resultTaskFinal = resultTask;
+        final QuotasData.ActualQuota quotaFinal = quota;
+        return TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
+                ()->taskProviderTransactionalService.findUnassignedTaskAndAssign(processorId, currentQuotas, resultTaskFinal, quotaFinal));
     }
 
 
