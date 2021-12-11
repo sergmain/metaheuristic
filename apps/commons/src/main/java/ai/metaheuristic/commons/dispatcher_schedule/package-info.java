@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.commons.dispatcher_schedule;
+package ai.metaheuristic.commons.dispatcher_schedule;
 
 import javax.annotation.ParametersAreNonnullByDefault;
