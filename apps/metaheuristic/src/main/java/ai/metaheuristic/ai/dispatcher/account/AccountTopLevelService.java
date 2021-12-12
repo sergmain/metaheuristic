@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.dispatcher.account;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +38,7 @@ public class AccountTopLevelService {
     private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.account, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.account, pageable);
         return accountService.getAccounts(pageable, context.getCompanyId());
     }
 

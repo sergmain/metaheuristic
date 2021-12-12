@@ -19,13 +19,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +47,7 @@ public class GlobalVariableTopLevelService {
     private final GlobalVariableService globalVariableService;
 
     public GlobalVariableData.GlobalVariablesResult getGlobalVariables(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.globalVariableTable, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.globalVariableTable, pageable);
         return new GlobalVariableData.GlobalVariablesResult(globalVariableService.getAllAsSimpleGlobalVariable(pageable));
     }
 

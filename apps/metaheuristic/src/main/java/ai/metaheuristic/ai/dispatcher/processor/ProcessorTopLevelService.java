@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -33,6 +32,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -199,7 +199,7 @@ public class ProcessorTopLevelService {
 
     public ProcessorData.ProcessorsResult getProcessors(Pageable pageable) {
         TxUtils.checkTxNotExists();
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.processor, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.processor, pageable);
         ProcessorData.ProcessorsResult result = new ProcessorData.ProcessorsResult();
         Slice<Long> ids = processorRepository.findAllByOrderByUpdatedOnDescId(pageable);
         List<ProcessorData.ProcessorStatus> ss = new ArrayList<>(pageable.getPageSize()+1);

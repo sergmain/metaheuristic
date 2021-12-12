@@ -29,13 +29,13 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelSer
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +86,7 @@ public class ExperimentTopLevelService {
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.experiment, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.experiment, pageable);
         ExperimentApiData.ExperimentsResult result = new ExperimentApiData.ExperimentsResult();
         final Slice<Long> experimentIds = experimentRepository.findAllByOrderByIdDesc(pageable);
 

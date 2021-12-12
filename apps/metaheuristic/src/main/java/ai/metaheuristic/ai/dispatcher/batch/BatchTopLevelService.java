@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
@@ -43,6 +42,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.AllArgsConstructor;
@@ -149,7 +149,7 @@ public class BatchTopLevelService {
             log.warn("#981.020 (filterBatches && account==null)");
             return new BatchData.BatchesResult();
         }
-        pageable = ControllerUtils.fixPageSize(20, pageable);
+        pageable = PageUtils.fixPageSize(20, pageable);
         Page<Long> batchIds;
         if (includeDeleted) {
             if (filterBatches) {
