@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
-import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -41,12 +40,14 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -78,8 +79,10 @@ public class Config {
     @Value("${ajp.port:#{0}}")
     private int ajpPort;
 
-    @Value("${ajp.enabled:#{false}}")
-    private boolean ajpEnabled;
+    // TODO p9 2021-12-12 disabled because isn't used at this time and not tested
+//    @Value("${ajp.enabled:#{false}}")
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean ajpEnabled = false;
 
     // https://careydevelopment.us/2017/06/19/run-spring-boot-apache-web-server-front-end/
     @Bean
@@ -94,6 +97,19 @@ public class Config {
             tomcat.addAdditionalTomcatConnectors(ajpConnector);
         }
         return tomcat;
+    }
+
+    @Bean
+    public RequestRejectedHandler requestRejectedHandler() {
+        return (request, response, requestRejectedException) -> {
+            log.error("Rejecting request due to: " + requestRejectedException.getMessage());
+/*
+            if (log.isDebugEnabled()) {
+                log.debug("Rejecting request due to: " + requestRejectedException.getMessage(), requestRejectedException);
+            }
+*/
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        };
     }
 
     @Bean
