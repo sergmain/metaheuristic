@@ -40,14 +40,26 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.EOFException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -99,15 +111,43 @@ public class Config {
         return tomcat;
     }
 
+    public static class EOFCustomFilter extends GenericFilterBean {
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+                throws IOException, ServletException {
+            try {
+                chain.doFilter(request, response);
+            }
+            catch (IOException e) {
+                if (e instanceof EOFException) {
+                    if (request instanceof HttpServletRequest httpRequest) {
+                        log.error("EOF with request from "+httpRequest.getRemoteAddr()+" at uri " + httpRequest.getRequestURI());
+                    }
+                    else {
+                        log.error("EOF with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() +", ctx: " + request.getServletContext().getContextPath());
+                    }
+                }
+                throw e;
+            }
+        }
+    }
+
+/*
+    @Configuration
+    public static class CustomWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.addFilterAfter(new EOFCustomFilter(), BasicAuthenticationFilter.class);
+        }
+    }
+*/
+
     @Bean
     public RequestRejectedHandler requestRejectedHandler() {
         return (request, response, requestRejectedException) -> {
-            log.error("Rejecting request due to: " + requestRejectedException.getMessage());
-/*
             if (log.isDebugEnabled()) {
                 log.debug("Rejecting request due to: " + requestRejectedException.getMessage(), requestRejectedException);
             }
-*/
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         };
     }

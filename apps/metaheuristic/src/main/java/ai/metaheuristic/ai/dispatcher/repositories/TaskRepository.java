@@ -79,10 +79,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
-    List<Task> findForMissingResultVariables(Long processorId, long mills, int execState);
+    List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
 
     @Query(value="select v.id from TaskImpl v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);

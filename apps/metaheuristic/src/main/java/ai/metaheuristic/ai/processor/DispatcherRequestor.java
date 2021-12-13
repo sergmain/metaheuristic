@@ -40,11 +40,14 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * User: Serg
@@ -163,6 +166,7 @@ public class DispatcherRequestor {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
                                     .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
+                                    .filter(t -> currentExecState.isNotFinishedOrDoesntExist(ref.dispatcherUrl, t.execContextId))
                                     .collect(Collectors.toList());
 
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();

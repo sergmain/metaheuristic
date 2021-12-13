@@ -91,7 +91,7 @@ public class DispatcherCommandProcessor {
             return null;
         }
         final long processorId = Long.parseLong(request.processorCommContext.processorId);
-        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.variableReceivingChecker(processorId);
+        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskTopLevelService.variableReceivingChecker(processorId);
         return outputs;
     }
 

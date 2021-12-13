@@ -44,21 +44,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final EntityManager em;
 
-    @Transactional(readOnly = true, propagation = Propagation.NEVER)
-    public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(Long processorId) {
-        List<Task> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
-        DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
-        for (Task task : tasks) {
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                if (!output.uploaded) {
-                    result.resends.add(new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
-                }
-            }
-        }
-        return result;
-    }
-
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
 

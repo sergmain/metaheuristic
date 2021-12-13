@@ -90,6 +90,11 @@ public class CurrentExecState {
         }
     }
 
+    boolean isNotFinishedOrDoesntExist(DispatcherUrl dispatcherUrl, Long execContextId) {
+        EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
+        return currState!=EnumsApi.ExecContextState.ERROR && currState!= EnumsApi.ExecContextState.FINISHED && currState!= EnumsApi.ExecContextState.DOESNT_EXIST;
+    }
+
     boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
         EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
         return currState==state;
