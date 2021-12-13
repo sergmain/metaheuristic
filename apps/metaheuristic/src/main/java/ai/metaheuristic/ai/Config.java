@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.catalina.connector.Connector;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -120,16 +121,14 @@ public class Config {
                 filterchain.doFilter(request, response);
             }
             catch (Throwable e) {
-                if (e instanceof EOFException) {
-                    if (request instanceof HttpServletRequest httpRequest) {
-                        log.error("EOF with request from "+httpRequest.getRemoteAddr()+" at uri " + httpRequest.getRequestURI());
+                Throwable root = ExceptionUtils.getRootCause(e);
+                log.error("Error with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() + ", root: " +(root!=null ? root.getClass().getName() : null) +", ctx: " + request.getServletContext().getContextPath()+", " + e.getMessage());
+                if (root!=null) {
+                    if (root instanceof EOFException) {
+                        if (request instanceof HttpServletRequest httpRequest) {
+                            log.error("EOF with request from "+httpRequest.getRemoteAddr()+" at uri " + httpRequest.getRequestURI());
+                        }
                     }
-                    else {
-                        log.error("EOF with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() +", ctx: " + request.getServletContext().getContextPath());
-                    }
-                }
-                else {
-                    log.error("Error with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() +", ctx: " + request.getServletContext().getContextPath()+", " + e.getMessage());
                 }
                 throw e;
             }
