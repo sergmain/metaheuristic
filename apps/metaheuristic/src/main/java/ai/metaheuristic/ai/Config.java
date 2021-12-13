@@ -35,6 +35,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -42,7 +44,7 @@ import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
@@ -50,12 +52,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.EOFException;
@@ -111,12 +111,13 @@ public class Config {
         return tomcat;
     }
 
-    public static class EOFCustomFilter extends GenericFilterBean {
+    @Component
+    public static class EOFCustomFilter implements Filter {
         @Override
-        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterchain)
                 throws IOException, ServletException {
             try {
-                chain.doFilter(request, response);
+                filterchain.doFilter(request, response);
             }
             catch (IOException e) {
                 if (e instanceof EOFException) {
@@ -131,16 +132,6 @@ public class Config {
             }
         }
     }
-
-/*
-    @Configuration
-    public static class CustomWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.addFilterAfter(new EOFCustomFilter(), BasicAuthenticationFilter.class);
-        }
-    }
-*/
 
     @Bean
     public RequestRejectedHandler requestRejectedHandler() {
