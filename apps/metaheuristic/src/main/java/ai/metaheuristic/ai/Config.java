@@ -119,7 +119,7 @@ public class Config {
             try {
                 filterchain.doFilter(request, response);
             }
-            catch (IOException e) {
+            catch (Throwable e) {
                 if (e instanceof EOFException) {
                     if (request instanceof HttpServletRequest httpRequest) {
                         log.error("EOF with request from "+httpRequest.getRemoteAddr()+" at uri " + httpRequest.getRequestURI());
@@ -127,6 +127,9 @@ public class Config {
                     else {
                         log.error("EOF with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() +", ctx: " + request.getServletContext().getContextPath());
                     }
+                }
+                else {
+                    log.error("Error with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() +", ctx: " + request.getServletContext().getContextPath()+", " + e.getMessage());
                 }
                 throw e;
             }
