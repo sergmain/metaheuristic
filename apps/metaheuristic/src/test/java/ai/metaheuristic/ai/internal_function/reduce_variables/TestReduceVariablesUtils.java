@@ -110,6 +110,14 @@ public class TestReduceVariablesUtils {
         extracted("variable-4064629-aggregatedResult1.zip");
     }
 
+    @Disabled @Test public void testExternal_5() {
+        //  repeating of variable-3967531-aggregatedResult1.zip
+    }
+
+    @Disabled @Test public void testExternal_6() {
+        extracted("variable-4189389-aggregatedResult1.zip");
+    }
+
     private static void extracted(String pathname) {
         File zip = new File(pathname);
         assertTrue(zip.exists());
