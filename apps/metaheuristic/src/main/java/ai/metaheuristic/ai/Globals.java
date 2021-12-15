@@ -516,7 +516,7 @@ public class Globals {
         if (dispatcher.enabled) {
             if (S.b(dispatcher.masterUsername) || S.b(dispatcher.masterPassword)) {
                 throw new GlobalConfigurationException(
-                        "if mh.secure-rest-url=true, then mh.dispatcher.master-username, " +
+                        "if dispatcher.enabled, then mh.dispatcher.master-username, " +
                                 "and mh.dispatcher.master-password have to be not null");
             }
         }
