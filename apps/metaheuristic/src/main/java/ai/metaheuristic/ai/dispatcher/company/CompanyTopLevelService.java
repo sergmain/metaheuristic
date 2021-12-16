@@ -50,7 +50,7 @@ public class CompanyTopLevelService {
     private final CompanyCache companyCache;
     private final IdsRepository idsRepository;
 
-    public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable)  {
+    public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable) {
         pageable = PageUtils.fixPageSize(ROWS_IN_TABLE, pageable);
         CompanyData.SimpleCompaniesResult result = new CompanyData.SimpleCompaniesResult();
         result.companies = companyRepository.findAllAsSimple(pageable);
