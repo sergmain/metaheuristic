@@ -42,6 +42,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
@@ -479,7 +480,7 @@ public class TaskProcessor {
                         }
 
                         File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
-                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
+                        FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
 
                         cmd.add(execFile.getAbsolutePath());
                     }

@@ -27,7 +27,7 @@
     </parent>
     <groupId>ai.metaheuristic</groupId>
     <artifactId>mh-commons</artifactId>
-    <version>4.8.6</version>
+    <version>4.8.7</version>
 
     <packaging>jar</packaging>
 

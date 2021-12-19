@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class ArtifactUtils {
             }
 
             try {
-                FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
+                FileSystemUtils.writeStringToFileWithSync(paramFile, params, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.error("#103.020 Error with writing to " + paramFile.getAbsolutePath() + " file", e);
                 return false;

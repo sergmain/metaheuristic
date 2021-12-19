@@ -269,6 +269,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             }
                             FileUtils.copyFile(input, fos);
                         }
+                        fos.flush();
+                        fos.getFD().sync();
                     }
 
                     functionTempFile.renameTo(assetFile.file);

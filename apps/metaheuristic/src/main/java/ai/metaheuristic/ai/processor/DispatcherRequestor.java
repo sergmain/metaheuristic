@@ -160,7 +160,7 @@ public class DispatcherRequestor {
                         // always report about current active tasks, if we have actual processorId
                         // don't report about tasks which belong to finished execContext
                         final String taskIds = processorTaskService.findAll(ref).stream()
-                                .filter(o->currentExecState.isNotFinishedOrDoesntExist(dispatcher.dispatcherUrl, o.execContextId))
+                                .filter(o->currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
                                 .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                         r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
                     }
@@ -169,7 +169,7 @@ public class DispatcherRequestor {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
                                     .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
-                                    .filter(t -> currentExecState.isNotFinishedOrDoesntExist(ref.dispatcherUrl, t.execContextId))
+                                    .filter(t -> currentExecState.notFinishedAndExists(ref.dispatcherUrl, t.execContextId))
                                     .collect(Collectors.toList());
 
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();

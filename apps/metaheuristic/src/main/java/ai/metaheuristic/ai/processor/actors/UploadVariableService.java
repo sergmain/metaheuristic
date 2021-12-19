@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.processor.CurrentExecState;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
@@ -67,6 +68,7 @@ import java.util.UUID;
 public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> implements QueueProcessor {
 
     private static final ObjectMapper mapper;
+    private final CurrentExecState currentExecState;
 
     static {
         mapper = new ObjectMapper();
@@ -97,13 +99,20 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         UploadVariableTask task;
         List<UploadVariableTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
+            final UploadVariableTask finalTask = task;
+
             ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
             }
+            if (currentExecState.finishedOrDoesntExist(task.ref.dispatcherUrl, processorTask.execContextId)) {
+                log.info("#311.021 ExecContext #{} for task #{} with variable #{} is finished or doesn't exist, url: {}",
+                        processorTask.execContextId, task.taskId, finalTask.variableId, task.getDispatcherUrl());
+                processorTaskService.setVariableUploadedAndCompleted(task.ref, finalTask.taskId, finalTask.variableId);
+                continue;
+            }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
-            final UploadVariableTask finalTask = task;
 
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {
@@ -139,6 +148,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 final Executor executor = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword);
 
                 if (!isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor)) {
+                    // variable #4322054 in task #1582515 isn't ready for uploading
                     log.info("variable #{} in task #{} isn't ready for uploading", task.variableId, task.taskId);
                     continue;
                 }

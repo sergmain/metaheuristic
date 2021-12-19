@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
@@ -643,7 +644,7 @@ public class MetadataService {
 
         try {
             String data = MetadataParamsYamlUtils.BASE_YAML_UTILS.toString(metadata);
-            FileUtils.writeStringToFile(metadataFile, data, StandardCharsets.UTF_8, false);
+            FileSystemUtils.writeStringToFileWithSync(metadataFile, data, StandardCharsets.UTF_8);
             String check = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
                 log.error("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
@@ -662,7 +663,7 @@ public class MetadataService {
             File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
             String content = FileUtils.readFileToString(yamlFileBak, StandardCharsets.UTF_8);
             File yamlFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
-            FileUtils.writeStringToFile(yamlFile, content, StandardCharsets.UTF_8, false);
+            FileSystemUtils.writeStringToFileWithSync(yamlFile, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
             System.exit(SpringApplication.exit(appCtx, () -> -500));

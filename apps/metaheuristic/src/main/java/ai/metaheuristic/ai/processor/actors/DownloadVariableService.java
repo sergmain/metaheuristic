@@ -267,6 +267,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         }
                         FileUtils.copyFile(input, fos);
                     }
+                    fos.flush();
+                    fos.getFD().sync();
                 }
 
                 if (!tempFile.renameTo(assetFile.file)) {

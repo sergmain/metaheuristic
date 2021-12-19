@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.AllArgsConstructor;
@@ -143,7 +144,7 @@ public class DispatcherLookupExtendedService {
                     return;
                 }
                 try {
-                    FileUtils.copyFile(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
+                    FileSystemUtils.copyFileWithSync(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
                 } catch (IOException e) {
                     log.error("Error", e);
                     throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);

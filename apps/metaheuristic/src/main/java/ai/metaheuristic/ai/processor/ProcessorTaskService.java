@@ -305,7 +305,7 @@ public class ProcessorTaskService {
             markAsFinished(ref, taskId,
                     new FunctionApiData.FunctionExec(
                             null, null, null,
-                            new FunctionApiData.SystemExecResult("system-error", false, -991, es)));
+                            new FunctionApiData.SystemExecResult("system-error", false, -992, es)));
         }
     }
 
