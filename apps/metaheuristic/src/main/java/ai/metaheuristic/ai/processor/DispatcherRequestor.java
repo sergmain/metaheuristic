@@ -158,7 +158,10 @@ public class DispatcherRequestor {
                     final boolean b = processorTaskService.isNeedNewTask(ref);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
                         // always report about current active tasks, if we have actual processorId
-                        final String taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                        // don't report about tasks which belong to finished execContext
+                        final String taskIds = processorTaskService.findAll(ref).stream()
+                                .filter(o->currentExecState.isNotFinishedOrDoesntExist(dispatcher.dispatcherUrl, o.execContextId))
+                                .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                         r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
                     }
                     else {
