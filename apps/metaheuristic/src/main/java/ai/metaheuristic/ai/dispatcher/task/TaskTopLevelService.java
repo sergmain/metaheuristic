@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +34,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -124,18 +124,24 @@ public class TaskTopLevelService {
         for (Long actualTaskId : actualTaskIds) {
             if (!event.taskIds.contains(actualTaskId)) {
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
+                if (task!=null) {
+                    ExecContextImpl ec = execContextCache.findById(task.execContextId);
+                    if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
+                        continue;
+                    }
+                }
                 // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
                 log.info("#303.370 found a lost task #{}, which doesn't exist at processor #{}. task exists in db: {}, state: {}",
                         actualTaskId, event.processorId, (task!=null), (task!=null) ? EnumsApi.TaskExecState.from(task.execState) : null);
                 if (task==null || EnumsApi.TaskExecState.IN_PROGRESS!=EnumsApi.TaskExecState.from(task.execState)) {
-                    return;
+                    continue;
                 }
                 log.warn("#303.375 found a lost task #{}, state: {}, assignedOn: {}, is old: {}",
                         actualTaskId, EnumsApi.TaskExecState.from(task.execState),
                         task.assignedOn, task.assignedOn!=null ? (System.currentTimeMillis() - task.assignedOn<60_000) : null);
 
                 if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {
-                    return;
+                    continue;
                 }
                 applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
             }
