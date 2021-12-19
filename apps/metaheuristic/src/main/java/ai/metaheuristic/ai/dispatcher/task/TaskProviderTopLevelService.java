@@ -55,6 +55,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -237,7 +238,7 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    private static final Map<Long, AtomicLong> processorCheckedOn = new HashMap<>();
+    private static final ConcurrentHashMap<Long, AtomicLong> processorCheckedOn = new ConcurrentHashMap<>();
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
