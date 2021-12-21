@@ -16,8 +16,8 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
-import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -55,7 +55,6 @@ public class SystemProcessLauncher {
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines, List<Supplier<Boolean>> outerInterrupters) throws IOException, InterruptedException {
-//        log.warn("Start executing a system process in dir {}", execDir.getAbsolutePath());
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());

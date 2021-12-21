@@ -153,7 +153,8 @@ public class ArtifactCleanerAtDispatcher {
             if (ec==null) {
                 continue;
             }
-            if (sourceCodeCache.findById(ec.sourceCodeId)==null) {
+            if (sourceCodeCache.findById(ec.sourceCodeId)==null ||
+                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId)==null)) {
                 forDeletion.add(execContextId);
             }
         }
