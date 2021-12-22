@@ -23,7 +23,7 @@ body {
     /* Structure */
     display: inline-block;
     *display: inline; /*IE 6/7*/
-    zoom: 1;
+    /*zoom: 1;*/
     line-height: normal;
     white-space: nowrap;
     vertical-align: baseline;
@@ -504,7 +504,7 @@ Forms Core
 .pure-skin-mine .pure-form-message-inline {
     display: inline-block;
     *display: inline; /* IE7 inline-block hack */
-    *zoom: 1;
+    /**zoom: 1;*/
     vertical-align: middle;
 }
 
@@ -722,14 +722,14 @@ striping:
 .pure-skin-mine .pure-menu.pure-menu-horizontal > .pure-menu-heading {
     display: inline-block;
     *display: inline;
-    zoom: 1;
+    /*zoom: 1;*/
     margin: 0;
     vertical-align: middle;
 }
 .pure-skin-mine .pure-menu.pure-menu-horizontal > ul {
     display: inline-block;
     *display: inline;
-    zoom: 1;
+    /*zoom: 1;*/
     vertical-align: middle;
     /* height: 2.4em; removed for Skin Builder */
 }
@@ -776,7 +776,7 @@ striping:
 .pure-skin-mine .pure-menu-horizontal li {
     display: inline-block;
     *display: inline;
-    zoom: 1;
+    /*zoom: 1;*/
     vertical-align: middle;
 }
 
@@ -836,7 +836,7 @@ striping:
 .pure-skin-mine .pure-paginator li {
     display: inline-block;
     *display: inline; /* IE < 8: fake inline-block */
-    zoom: 1;
+    /*zoom: 1;*/
     letter-spacing: normal;
     word-spacing: normal;
     vertical-align: top;
