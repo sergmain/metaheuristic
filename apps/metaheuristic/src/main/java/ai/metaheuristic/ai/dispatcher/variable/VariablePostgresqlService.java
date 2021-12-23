@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -44,6 +45,6 @@ public class VariablePostgresqlService implements VariableDatabaseSpecificServic
         TxUtils.checkTxExists();
 
         // TODO 2021-10-14 right now, an array variable isn't supported
-        variablePostgresqlRepository.copyData(srcVariable.id, targetVariable.id);
+        variablePostgresqlRepository.copyData(srcVariable.id, targetVariable.id, targetVariable.filename, new Timestamp(System.currentTimeMillis()));
     }
 }

@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -44,6 +45,8 @@ public class VariableMysqlService implements VariableDatabaseSpecificService {
         TxUtils.checkTxExists();
 
         // TODO 2021-10-14 right now, a variable as array isn't supported
-        variableMysqlRepository.copyData(srcVariable.id, targetVariable.id);
+        variableMysqlRepository.copyData(srcVariable.id, targetVariable.id, targetVariable.filename, new Timestamp(System.currentTimeMillis()));
+
+
     }
 }

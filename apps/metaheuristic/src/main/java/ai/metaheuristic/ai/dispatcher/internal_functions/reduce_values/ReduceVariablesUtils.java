@@ -49,8 +49,16 @@ public class ReduceVariablesUtils {
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
             File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+        return reduceVariables(List.of(zipFile), config, request);
+    }
 
-        ReduceVariablesData.VariablesData data = loadData(zipFile, config);
+    public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
+            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+
+        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
+        for (File zipFile : zipFiles) {
+            loadData(data, zipFile, config);
+        }
 
         Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data);
         System.out.println("\n=====================");
@@ -188,7 +196,7 @@ public class ReduceVariablesUtils {
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(File zipFile, ReduceVariablesConfigParamsYaml config) {
+    public static ReduceVariablesData.VariablesData loadData(ReduceVariablesData.VariablesData data, File zipFile, ReduceVariablesConfigParamsYaml config) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -196,8 +204,6 @@ public class ReduceVariablesUtils {
         }
         File zipDir = new File(tempDir, "zip");
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
-
-        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
 
         Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
         for (File f : files) {

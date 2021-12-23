@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -85,7 +87,8 @@ public class TestReduceVariablesUtils {
 
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
-        ReduceVariablesData.VariablesData data = ReduceVariablesUtils.loadData(zip, config);
+        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
+        ReduceVariablesUtils.loadData(data, zip, config);
 
         assertFalse(data.permutedVariables.isEmpty());
     }
@@ -123,13 +126,37 @@ public class TestReduceVariablesUtils {
     }
 
     @Disabled @Test public void testExternal_8() {
-        extracted("variable-4372373-aggregatedResult1.zip");
+        // repeating of variable-4403511-aggregatedResult1.zip
+    }
+
+    @Disabled @Test public void testExternal_9() {
+        extracted("variable-4403511-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_10() {
+        extracted("variable-4387942-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_9_10() {
+        extracted(List.of("variable-4403511-aggregatedResult1.zip", "variable-4387942-aggregatedResult1.zip"));
+    }
+
+    @Disabled @Test public void testExternal_11() {
+        extracted("variable-4419080-aggregatedResult1.zip");
     }
 
     private static void extracted(String pathname) {
-        File zip = new File(pathname);
-        assertTrue(zip.exists());
-        assertTrue(zip.isFile());
+        extracted(List.of(pathname));
+    }
+
+    private static void extracted(List<String> pathnames) {
+        List<File> files = new ArrayList<>();
+        for (String pathname : pathnames) {
+            File zip = new File(pathname);
+            assertTrue(zip.exists());
+            assertTrue(zip.isFile());
+            files.add(zip);
+        }
 
         String yaml = """
                 version: 1
@@ -184,7 +211,7 @@ public class TestReduceVariablesUtils {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zip, config, r);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r);
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());

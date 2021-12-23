@@ -18,6 +18,9 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.lang.Nullable;
+
+import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -26,5 +29,5 @@ import org.springframework.data.repository.NoRepositoryBean;
  */
 @NoRepositoryBean
 public interface VariableDatabaseSpecificRepository<T, ID> extends CrudRepository<T, ID> {
-    void copyData(Long srcId, Long trgId);
+    void copyData(Long srcId, Long trgId, @Nullable String filename, Timestamp uploadedOn);
 }

@@ -20,7 +20,10 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+
+import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -34,9 +37,10 @@ public interface VariablePostgresqlRepository extends VariableDatabaseSpecificRe
     @Override
     @Modifying
     @Query(nativeQuery = true, value="update mh_variable " +
-            "set DATA= (select data from mh_cache_variable where id=:srcId) " +
+            "set DATA= (select data from mh_cache_variable where id=:srcId), " +
+            "FILENAME=:filename, IS_INITED=true, IS_NULLIFIED=false, UPLOAD_TS=:uploadedOn " +
             "where id=:trgId")
-    void copyData(Long srcId, Long trgId);
+    void copyData(Long srcId, Long trgId, @Nullable String filename, Timestamp uploadedOn);
 
 
 }
