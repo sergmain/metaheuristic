@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.lang.Nullable;
@@ -106,5 +105,13 @@ public class VariableData {
         public UploadVariableStatusResult(Enums.UploadVariableStatus status) {
             this.status = status;
         }
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class StoredVariable {
+        public Long id;
+        public String name;
+        public boolean nullified;
     }
 }

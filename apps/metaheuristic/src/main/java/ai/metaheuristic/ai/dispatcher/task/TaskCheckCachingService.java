@@ -16,40 +16,31 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -65,25 +56,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TaskCheckCachingService {
 
-    private final Globals globals;
     private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
-    private final VariableService variableService;
-    private final CacheVariableService cacheVariableService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final TaskVariableService taskVariableService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final EventPublisherService eventPublisherService;
-
-    @Data
-    @AllArgsConstructor
-    private static class StoredVariable {
-        public Long id;
-        public String name;
-        public boolean nullified;
-    }
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
@@ -153,28 +133,12 @@ public class TaskCheckCachingService {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElseThrow(()->new IllegalStateException("#609.120 ???? How???"));
                 try {
-                    StoredVariable storedVariable = new StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
+                    VariableData.StoredVariable storedVariable = new VariableData.StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
                         taskVariableService.setVariableAsNull(taskId, output.id);
                     }
                     else {
-                        final File tempFile = File.createTempFile("var-" + obj[0] + "-", ".bin", globals.dispatcherTempDir);
-                        InputStream is;
-                        try {
-                            // TODO 2021-10-14 right now, an array variable isn't supported
-                            cacheVariableService.storeToFile(storedVariable.id, tempFile);
-                            is = new FileInputStream(tempFile);
-                        } catch (CommonErrorWithDataException e) {
-                            eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
-                            throw e;
-                        } catch (Exception e) {
-                            eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
-                            String es = "#173.040 Error while storing data to file";
-                            log.error(es, e);
-                            throw new IllegalStateException(es, e);
-                        }
-                        eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-                        variableService.storeData(is, tempFile.length(), output.id, output.filename);
+                        variableDatabaseSpecificService.copyData(storedVariable, output);
                     }
 
                     output.uploaded = true;
@@ -205,4 +169,5 @@ public class TaskCheckCachingService {
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
         }
     }
+
 }
