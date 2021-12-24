@@ -30,12 +30,13 @@ import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
@@ -49,18 +50,18 @@ public class ReduceVariablesUtils {
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
             File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
-        return reduceVariables(List.of(zipFile), config, request);
+        return reduceVariables(List.of(zipFile), config, request, null);
     }
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
-            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter) {
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
         for (File zipFile : zipFiles) {
             loadData(data, zipFile, config);
         }
 
-        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data);
+        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data, filter);
         System.out.println("\n=====================");
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
             System.out.println(entry.getKey());
@@ -69,7 +70,7 @@ public class ReduceVariablesUtils {
             }
         }
 
-        Map<String, Pair<AtomicInteger, AtomicInteger>> freqVariables = getFreqVariables(config, data);
+        Map<String, Pair<AtomicInteger, AtomicInteger>> freqVariables = getFreqVariables(config, data, filter);
         System.out.println("\n=====================");
         for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : freqVariables.entrySet()) {
             System.out.printf("\t%-40s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
@@ -108,7 +109,9 @@ public class ReduceVariablesUtils {
         return result;
     }
 
-    private static Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> getFreqValues(ReduceVariablesData.VariablesData data) {
+    private static Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> getFreqValues(
+            ReduceVariablesData.VariablesData data, @Nullable Function<String, Boolean> filter) {
+
         Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = new HashMap<>();
 
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
@@ -122,6 +125,9 @@ public class ReduceVariablesUtils {
                             .getLeft().incrementAndGet();
 
                     if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                        continue;
+                    }
+                    if (filter!=null && (subPermutedVariable.metricValues==null || !filter.apply(subPermutedVariable.metricValues.comment))) {
                         continue;
                     }
 
@@ -168,7 +174,8 @@ public class ReduceVariablesUtils {
         return ems;
     }
 
-    private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data) {
+    private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(
+            ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data, @Nullable Function<String, Boolean> filter) {
         Map<String, Pair<AtomicInteger, AtomicInteger>> freqValues = new HashMap<>();
 
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
@@ -182,6 +189,9 @@ public class ReduceVariablesUtils {
                             .getLeft().incrementAndGet();
 
                     if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                        continue;
+                    }
+                    if (filter!=null && (subPermutedVariable.metricValues==null || !filter.apply(subPermutedVariable.metricValues.comment))) {
                         continue;
                     }
                     if ("true".equals(varValue.getValue())) {

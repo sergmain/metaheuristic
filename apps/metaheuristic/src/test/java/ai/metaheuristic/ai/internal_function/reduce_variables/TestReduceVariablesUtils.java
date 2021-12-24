@@ -22,12 +22,16 @@ import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigPara
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -130,26 +134,56 @@ public class TestReduceVariablesUtils {
     }
 
     @Disabled @Test public void testExternal_9() {
-        extracted("variable-4403511-aggregatedResult1.zip");
+        // replaced by variable-4450218-aggregatedResult1.zip, extracted("variable-4403511-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_10() {
-        extracted("variable-4387942-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_9_10() {
-        extracted(List.of("variable-4403511-aggregatedResult1.zip", "variable-4387942-aggregatedResult1.zip"));
+        // replaced by variable-4434649-aggregatedResult1, extracted("variable-4387942-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_11() {
-        extracted("variable-4419080-aggregatedResult1.zip");
+        // broken extracted("variable-4419080-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_12() {
+        extracted("variable-4434649-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_13() {
+        extracted("variable-4450218-aggregatedResult1.zip", TestReduceVariablesUtils::filterStr);
+    }
+
+    @Disabled @Test public void testExternal_1_2_3_4_6_7_12_13() {
+        extracted(List.of(
+                "variable-4016080-aggregatedResult1.zip",
+                "variable-3967531-aggregatedResult1.zip",
+                "variable-4095959-aggregatedResult1.zip",
+                "variable-4064629-aggregatedResult1.zip",
+                "variable-4189389-aggregatedResult1.zip",
+                "variable-4189373-aggregatedResult1.zip",
+                "variable-4434649-aggregatedResult1.zip",
+                "variable-4450218-aggregatedResult1.zip"),
+                TestReduceVariablesUtils::filterStr);
+
+    }
+
+    private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
+
+    private static boolean filterStr(String o) {
+        return FILTER.matcher(o).find();
     }
 
     private static void extracted(String pathname) {
-        extracted(List.of(pathname));
+        extracted(List.of(pathname), null);
     }
 
-    private static void extracted(List<String> pathnames) {
+    private static void extracted(String pathname, @Nullable Function<String, Boolean> filter) {
+        extracted(List.of(pathname), filter);
+    }
+
+    private static void extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
+        final Date startDate = new Date();
+        System.out.println("Start time: " + startDate);
         List<File> files = new ArrayList<>();
         for (String pathname : pathnames) {
             File zip = new File(pathname);
@@ -211,7 +245,7 @@ public class TestReduceVariablesUtils {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -240,5 +274,7 @@ public class TestReduceVariablesUtils {
             System.out.println(experimentMetrics.dir);
             System.out.println();
         }
+        System.out.println("Start time: " + startDate);
+        System.out.println("End time:   " + new Date());
     }
 }
