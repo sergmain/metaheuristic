@@ -22,16 +22,10 @@ import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigPara
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -98,23 +92,23 @@ public class TestReduceVariablesUtils {
     }
 
     @Disabled @Test public void testExternal() {
-        extracted("variable-2653425-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-2653425-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_1() {
-        extracted("variable-4016080-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4016080-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_2() {
-        extracted("variable-3967531-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-3967531-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_3() {
-        extracted("variable-4095959-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4095959-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_4() {
-        extracted("variable-4064629-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4064629-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_5() {
@@ -122,11 +116,11 @@ public class TestReduceVariablesUtils {
     }
 
     @Disabled @Test public void testExternal_6() {
-        extracted("variable-4189389-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4189389-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_7() {
-        extracted("variable-4189373-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4189373-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_8() {
@@ -134,27 +128,39 @@ public class TestReduceVariablesUtils {
     }
 
     @Disabled @Test public void testExternal_9() {
-        // replaced by variable-4450218-aggregatedResult1.zip, extracted("variable-4403511-aggregatedResult1.zip");
+        // replaced by variable-4450218-aggregatedResult1.zip, UtilsForTestReduceVariables.extracted("variable-4403511-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_10() {
-        // replaced by variable-4434649-aggregatedResult1, extracted("variable-4387942-aggregatedResult1.zip");
+        // replaced by variable-4434649-aggregatedResult1, UtilsForTestReduceVariables.extracted("variable-4387942-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_11() {
-        // broken extracted("variable-4419080-aggregatedResult1.zip");
+        // broken UtilsForTestReduceVariables.extracted("variable-4419080-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_12() {
-        extracted("variable-4434649-aggregatedResult1.zip");
+        UtilsForTestReduceVariables.extracted("variable-4434649-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_13() {
-        extracted("variable-4450218-aggregatedResult1.zip", TestReduceVariablesUtils::filterStr);
+        UtilsForTestReduceVariables.extracted("variable-4450218-aggregatedResult1.zip", UtilsForTestReduceVariables::filterStr);
+    }
+
+    @Disabled @Test public void testExternal_14() {
+        UtilsForTestReduceVariables.extracted("variable-4477574-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_15() {
+        UtilsForTestReduceVariables.extracted("variable-4469716-aggregatedResult1.zip");
+    }
+
+    @Disabled @Test public void testExternal_16() {
+        UtilsForTestReduceVariables.extracted("variable-4481503-aggregatedResult1.zip");
     }
 
     @Disabled @Test public void testExternal_1_2_3_4_6_7_12_13() {
-        extracted(List.of(
+        UtilsForTestReduceVariables.extracted(List.of(
                 "variable-4016080-aggregatedResult1.zip",
                 "variable-3967531-aggregatedResult1.zip",
                 "variable-4095959-aggregatedResult1.zip",
@@ -163,118 +169,8 @@ public class TestReduceVariablesUtils {
                 "variable-4189373-aggregatedResult1.zip",
                 "variable-4434649-aggregatedResult1.zip",
                 "variable-4450218-aggregatedResult1.zip"),
-                TestReduceVariablesUtils::filterStr);
+                UtilsForTestReduceVariables::filterStr);
 
     }
 
-    private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
-
-    private static boolean filterStr(String o) {
-        return FILTER.matcher(o).find();
-    }
-
-    private static void extracted(String pathname) {
-        extracted(List.of(pathname), null);
-    }
-
-    private static void extracted(String pathname, @Nullable Function<String, Boolean> filter) {
-        extracted(List.of(pathname), filter);
-    }
-
-    private static void extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
-        final Date startDate = new Date();
-        System.out.println("Start time: " + startDate);
-        List<File> files = new ArrayList<>();
-        for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists());
-            assertTrue(zip.isFile());
-            files.add(zip);
-        }
-
-        String yaml = """
-                version: 1
-                config:
-                    fixName: true
-                    fittingVar: fitting
-                    metricsVar: metrics
-                    metricsName: sum
-                    reduceByValue:
-                        activation: activation1
-                        batchSize: batchSize1
-                        epoch: epoch1
-                        optimizer: optimizer1
-                        RNN: RNN1
-                        seed: seed1
-                        timeSteps: timeSteps1
-                    reduceByInstance:
-                        - input: binaryClusters1
-                          inputIs: isBinaryClusters1
-                          outputIs: isBinaryClusters1New1
-                        - input: binaryDrawWithFrequency
-                          inputIs: isBinaryDrawWithFrequency
-                          outputIs: isBinaryDrawWithFrequencyNew1
-                        - input: clusterCount1
-                          inputIs: isClusterCount1
-                          outputIs: isClusterCount1New1
-                        - input: clusterSize1
-                          inputIs: isClusterSize1
-                          outputIs: isClusterSize1New1
-                        - input: distribOfFreqFull
-                          inputIs: isDistribOfFreqFull
-                          outputIs: isDistribOfFreqFullNew1
-                        - input: matrixOfWinning
-                          inputIs: isMatrixOfWinning
-                          outputIs: isMatrixOfWinningNew1
-                    reduces:
-                        - policy: reduce_value
-                          reducePercent: 50
-                          variable: activation
-                        - policy: reduce_value
-                          reducePercent: 35
-                          variable: optimizer
-                """;
-
-        ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        ReduceVariablesData.Request r = new ReduceVariablesData.Request();
-        r.nullifiedVars.putAll(Map.of(
-                "isBinaryClusters1", true,
-                "isBinaryDrawWithFrequency", true,
-                "isClusterCount1", true,
-                "isClusterSize1", true,
-                "isDistribOfFreqFull", true,
-                "isMatrixOfWinning", true));
-
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
-
-        assertFalse(result.byValue.isEmpty());
-        assertFalse(result.byInstance.isEmpty());
-        assertEquals(6, result.byInstance.size());
-
-        assertTrue(result.byInstance.get("isBinaryClusters1New1"));
-        assertTrue(result.byInstance.get("isBinaryDrawWithFrequencyNew1"));
-        assertTrue(result.byInstance.get("isClusterCount1New1"));
-        assertTrue(result.byInstance.get("isClusterSize1New1"));
-        assertTrue(result.byInstance.get("isDistribOfFreqFullNew1"));
-        assertTrue(result.byInstance.get("isMatrixOfWinningNew1"));
-
-//        assertFalse(result.byInstance.isEmpty());
-
-        System.out.println("\n=====================");
-        for (Map.Entry<String, String> entry : result.byValue.entrySet()) {
-            System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
-        }
-
-        System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
-            System.out.println(experimentMetrics.hyper);
-            System.out.println(experimentMetrics.data);
-            System.out.println(experimentMetrics.metrics);
-            System.out.println(experimentMetrics.metricValues.comment);
-            System.out.println(experimentMetrics.dir);
-            System.out.println();
-        }
-        System.out.println("Start time: " + startDate);
-        System.out.println("End time:   " + new Date());
-    }
 }
