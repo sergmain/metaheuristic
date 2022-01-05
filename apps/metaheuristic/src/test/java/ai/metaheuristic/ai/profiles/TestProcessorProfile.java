@@ -63,7 +63,7 @@ public class TestProcessorProfile {
         assertEquals(1735, globals.processor.timeout.dispatcherContextInfo.toSeconds());
         assertEquals(1737, globals.processor.timeout.artifactCleaner.toSeconds());
 
-        assertEquals(Globals.SECONDS_6.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
+        assertEquals(Globals.SECONDS_10.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
         assertEquals(Globals.SECONDS_5.toSeconds(), globals.processor.timeout.getTaskAssigner().toSeconds());
         assertEquals(Globals.SECONDS_9.toSeconds(), globals.processor.timeout.getTaskProcessor().toSeconds());
         

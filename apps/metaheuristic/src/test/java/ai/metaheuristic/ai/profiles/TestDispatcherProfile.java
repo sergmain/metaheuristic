@@ -66,7 +66,7 @@ public class TestDispatcherProfile {
         assertEquals(8, globals.dispatcher.timeout.batchDeletion.toDays());
 
         assertEquals(Globals.SECONDS_60.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
-        assertEquals(Globals.SECONDS_5.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
+        assertEquals(Globals.SECONDS_23.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
         assertEquals(Globals.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
 
     }

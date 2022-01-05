@@ -95,7 +95,7 @@ public class InlineAsVariableFunction implements InternalFunction {
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
                     .filter(o->o.name.equals(inlineAsVar.output))
                     .findFirst()
-                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output));
+                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
 
             execContextVariableService.storeStringInVariable(outputVariable, value);
         }

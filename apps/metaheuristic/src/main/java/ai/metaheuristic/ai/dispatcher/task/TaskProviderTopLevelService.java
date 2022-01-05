@@ -245,7 +245,7 @@ public class TaskProviderTopLevelService {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
-        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(1000), List.of());
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of());
     }
 
     @Nullable

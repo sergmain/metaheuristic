@@ -268,21 +268,21 @@ public abstract class PreparingSourceCode extends PreparingCore {
      */
     public String step_1_0_init_session_id() {
         String sessionId;
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
+        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAsStr, null);
 
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
-        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
+        final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
 
-        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
+        KeepAliveResponseParamYaml d0 = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d0);
         assertNotNull(d0.responses);
         assertEquals(1, d0.responses.size());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);
         assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
@@ -326,7 +326,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return list;
     }
 
-    @SuppressWarnings("WeakerAccess")
     @SneakyThrows
     public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextId);
@@ -340,6 +339,21 @@ public abstract class PreparingSourceCode extends PreparingCore {
             }
         }
         assertFalse(isQueueEmpty);
+    }
+
+    @SneakyThrows
+    public void findInternalTaskForRegisteringInQueue(Long execContextId) {
+        execContextTopLevelService.findTaskForRegisteringInQueue(execContextId);
+
+        boolean isQueueEmpty = true;
+        for (int i = 0; i < 30; i++) {
+            Thread.sleep(2_000);
+            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
+            if (isQueueEmpty) {
+                break;
+            }
+        }
+        assertTrue(isQueueEmpty);
     }
 
     public void cleanUp(String sourceCodeUid) {

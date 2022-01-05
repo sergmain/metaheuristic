@@ -17,10 +17,7 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
@@ -31,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -82,6 +80,9 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     @Autowired
     public SouthbridgeService southbridgeService;
+
+    @Autowired
+    public ExecContextStatusService execContextStatusService;
 
     public boolean isCorrectInit = true;
 
@@ -161,6 +162,12 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             return null;
         });
+        // statuses of ExecContext are being refreshing from Scheduler which is disabled while testing
+        execContextStatusService.resetStatus();
+        assertEquals(EnumsApi.ExecContextState.STARTED,
+                execContextStatusService.getExecContextStatuses().statuses.stream()
+                        .filter(o->o.id.equals(execContextForTest.id))
+                        .findFirst().map(KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus::getState).orElse(null));
 
         execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));

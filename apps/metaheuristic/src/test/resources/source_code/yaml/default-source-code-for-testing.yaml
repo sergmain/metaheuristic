@@ -9,7 +9,7 @@ source:
         seed: '42'
         batches: '[40, 60]'
         time_steps: '7'
-        RNN: LSTM
+        RNN: 'LSTM'
   processes:
     - code: mh.inline-as-variable
       name: mh.inline-as-variable
@@ -24,7 +24,7 @@ source:
                 output: seed
               - group: mh.hyper-params
                 name: batches
-                output: batches
+                output: batchSize
               - group: mh.hyper-params
                 name: time_steps
                 output: timeSteps

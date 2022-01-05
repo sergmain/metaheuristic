@@ -82,6 +82,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(String sessionId) {
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
 
         // get a task for processing

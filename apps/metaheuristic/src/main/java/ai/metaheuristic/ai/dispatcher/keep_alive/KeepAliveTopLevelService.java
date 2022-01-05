@@ -102,7 +102,7 @@ public class KeepAliveTopLevelService {
                 final Processor processor = processorCache.findById(processorRequest.processorCommContext.processorId);
                 if (processor == null) {
                     log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                    // no need syncing for creation of new Processor
+                    // no need of syncing for creation of new Processor
                     DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
                     dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                     continue;

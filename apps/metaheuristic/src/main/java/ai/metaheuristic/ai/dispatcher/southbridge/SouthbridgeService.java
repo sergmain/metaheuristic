@@ -249,18 +249,10 @@ public class SouthbridgeService {
 
                 Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
                 if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession) {
+                    // do nothing because sessionId will be initialized via KeepAlive call
                     log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
                     continue;
                 }
-/*
-                DispatcherApiData.ProcessorSessionId processorSessionId =
-                        processorTopLevelService.checkProcessorId(processor, processorAndSessionStatus, processorId, request.processorCommContext.sessionId, remoteAddress);
-
-                if (processorSessionId!=null) {
-                    response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-*/
 
                 log.debug("Start processing commands");
                 dispatcherCommandProcessor.process(request, response, quotas);

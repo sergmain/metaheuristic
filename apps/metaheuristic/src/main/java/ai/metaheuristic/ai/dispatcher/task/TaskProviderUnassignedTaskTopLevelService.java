@@ -259,7 +259,9 @@ public class TaskProviderUnassignedTaskTopLevelService {
             }
         }
         finally {
-            TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.removeAll(forRemoving));
+            if (!forRemoving.isEmpty()) {
+                TaskQueueSyncStaticService.getWithSyncVoid(() -> TaskQueueService.removeAll(forRemoving));
+            }
         }
 
         if (resultTask == null) {
