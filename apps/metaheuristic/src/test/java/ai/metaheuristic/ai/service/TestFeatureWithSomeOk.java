@@ -66,6 +66,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         String sessionId = step_1_0_init_session_id();
         step_1_1_register_function_statuses(sessionId);
 
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         TaskQueue.TaskGroup taskGroup =
                 ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->

@@ -100,12 +100,8 @@ source:
               code: mh.permute-variables
               context: internal
             metas:
-              - output-is-dynamic: true
               - variables-for-permutation: feature-output-1, feature-output-2
-              - inline-key: mh.hyper-params
-              - permute-inline: true
               - output-variable: feature-item
-              - inline-permutation: inline-permutation
             subProcesses:
               logic: sequential
               processes:
@@ -116,7 +112,10 @@ source:
                     context: external
                   inputs:
                     - name: dataset-processing-output
-                    - name: inline-permutation
+                    - name: subSeedVal
+                    - name: subBatchSizeVal
+                    - name: subTimeStepsVal
+                    - name: subRNNVal
                     - name: feature-item
                       array: true
                   outputs:

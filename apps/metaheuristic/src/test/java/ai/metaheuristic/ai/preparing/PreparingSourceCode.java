@@ -45,13 +45,10 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -173,6 +170,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     protected ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+
+    @Autowired
+    private ExecContextStatusService execContextStatusService;
 
     public SourceCodeImpl sourceCode = null;
     public Function f1 = null;
@@ -508,8 +508,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
         });
 
         this.execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
+        execContextStatusService.resetStatus();
+        assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextState(execContextForTest.id));
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest() {

@@ -75,17 +75,21 @@ public class ExecContextProcessGraphService {
         return result;
     }
 
-    @SneakyThrows
     public static DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+        return importProcessGraph(wpy.processesGraph);
+    }
+
+    @SneakyThrows
+    public static DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(String processGraphAsStr) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(
                 ExecContextData.ProcessVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
         AtomicLong id = new AtomicLong();
-        processGraph.setVertexSupplier(()->new ExecContextData.ProcessVertex(id.incrementAndGet()));
+        processGraph.setVertexSupplier(() -> new ExecContextData.ProcessVertex(id.incrementAndGet()));
 
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
         DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = new DOTImporter<>();
         importer.addVertexAttributeConsumer(((vertex, attribute) -> {
-            switch(vertex.getSecond()) {
+            switch (vertex.getSecond()) {
                 case PROCESS_NAME_ATTR:
                     vertex.getFirst().process = attribute.getValue();
                     break;
@@ -96,11 +100,13 @@ public class ExecContextProcessGraphService {
                     // do nothing
                     break;
                 default:
-                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond()+", attr value: " + attribute.getValue());
+                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond() + ", attr value: " + attribute.getValue());
             }
         }));
 
-        importer.importGraph(processGraph, new StringReader(wpy.processesGraph));
+        try (final StringReader stringReader = new StringReader(processGraphAsStr)) {
+            importer.importGraph(processGraph, stringReader);
+        }
         return processGraph;
     }
 
@@ -118,6 +124,11 @@ public class ExecContextProcessGraphService {
 
     public static Set<ExecContextData.ProcessVertex> findDescendants(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {
         return sourceCodeGraph.processGraph.getDescendants(startVertex);
+    }
+
+    public static Set<ExecContextData.ProcessVertex> findDirectAncestors(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> graph, ExecContextData.ProcessVertex vertex) {
+        Set<ExecContextData.ProcessVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
+        return ancestors;
     }
 
     public static Set<ExecContextData.ProcessVertex> findAncestors(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex startVertex) {

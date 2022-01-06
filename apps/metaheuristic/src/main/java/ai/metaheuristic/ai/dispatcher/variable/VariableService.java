@@ -18,18 +18,24 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -65,9 +71,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -86,6 +90,8 @@ public class VariableService {
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
+    private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextCache execContextCache;
 
     @Transactional
     public void storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
@@ -240,7 +246,7 @@ public class VariableService {
     }
 
     @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<Long> parentTaskIds) {
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -252,14 +258,38 @@ public class VariableService {
             return null;
         }
 
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            log.error("#171.260 can't find execContext #" + execContextId);
+            return null;
+        }
+
+        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
+        if (ecg==null) {
+            log.error("#171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
+            return null;
+        }
+        Set<ExecContextData.TaskVertex> set = new HashSet<>();
+        for (Long parentTaskId : parentTaskIds) {
+            ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
+            if (vertex==null) {
+                throw new RuntimeException("#171.267 vertex wasn't found for task #"+task.id);
+            }
+            set.add(vertex);
+            Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
+            set.addAll(setTemp);
+        }
+
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set.stream().map(o->o.taskContextId).collect(Collectors.toSet()));
+
         p.inputs.stream()
-                .map(v -> toInputVariable(v, taskParams.task.taskContextId, execContextId))
+                .map(v -> toInputVariable(list, v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         return initOutputVariables(execContextId, task, p, taskParams);
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+    private TaskParamsYaml.InputVariable toInputVariable(List<String> list, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
@@ -268,7 +298,7 @@ public class VariableService {
                         S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            SimpleVariable variable = findVariableInAllInternalContexts(v.name, contextId, execContextId);
+            SimpleVariable variable = findVariableInAllInternalContexts(list, v.name, contextId, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
                         S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
@@ -336,6 +366,17 @@ public class VariableService {
                 return v;
             }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
+        }
+        return null;
+    }
+
+    @Nullable
+    public SimpleVariable findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+        for (String taskCtxId : taskCtxIds) {
+            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
+            if (v!=null) {
+                return v;
+            }
         }
         return null;
     }

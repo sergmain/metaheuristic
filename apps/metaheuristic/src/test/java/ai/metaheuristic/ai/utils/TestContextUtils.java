@@ -18,6 +18,10 @@ package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -48,5 +52,50 @@ public class TestContextUtils {
         assertEquals("2", ContextUtils.getSubContext("123"+CONTEXT_SEPARATOR+"2"));
     }
 
+    @Test
+    public void testContextIdComparator_11() {
+        Set<String> set = Set.of("1,2,3,4", "1,2#1", "1,2",  "1", "1,2,3,4,5#1");
+        check(set);
+    }
+
+    @Test
+    public void testContextIdComparator_12() {
+        List<String> set = List.of("1,2,3,4", "1,2#1", "1,2", "1", "1,2,3,4,5#1");
+        check(set);
+    }
+
+    private static void check(Collection<String> collection) {
+        List<String> list = ContextUtils.sortSetAsTaskContextId(collection);
+
+        assertEquals("1,2,3,4,5#1", list.get(0), list.toString());
+        assertEquals("1,2,3,4", list.get(1), list.toString());
+        assertEquals("1,2#1", list.get(2), list.toString());
+        assertEquals("1,2", list.get(3), list.toString());
+        assertEquals("1", list.get(4), list.toString());
+    }
+
+    @Test
+    public void testContextIdComparator_1() {
+        List<String> set = List.of("1,4#1", "1", "1,2", "1,3");
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+
+        assertEquals("1,4#1", list.get(0), list.toString());
+        assertEquals("1,3", list.get(1), list.toString());
+        assertEquals("1,2", list.get(2), list.toString());
+        assertEquals("1", list.get(3), list.toString());
+
+    }
+
+    @Test
+    public void testContextIdComparator_2() {
+        List<String> set = List.of("1,4#1", "1", "1,2#2", "1,2#1");
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+
+        assertEquals("1,4#1", list.get(0), list.toString());
+        assertEquals("1,2#2", list.get(1), list.toString());
+        assertEquals("1,2#1", list.get(2), list.toString());
+        assertEquals("1", list.get(3), list.toString());
+
+    }
 
 }

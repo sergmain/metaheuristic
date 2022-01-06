@@ -428,6 +428,10 @@ public class ExecContextGraphService {
         });
     }
 
+    public static Set<ExecContextData.TaskVertex> findAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
+        return readOnlyGraph(execContextGraph, graph -> graph.getAncestors(vertex));
+    }
+
     public static Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
         return readOnlyGraph(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
     }
@@ -610,6 +614,18 @@ public class ExecContextGraphService {
                 vertices.computeIfAbsent(v.taskContextId, (o)->new ArrayList<>()).add( new ExecContextData.TaskWithState(v.taskId, state));
             }
             return vertices;
+        });
+    }
+
+    @Nullable
+    public static ExecContextData.TaskVertex findVertexByTaskId(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraphNullable(execContextGraph, (graph) -> {
+            for (ExecContextData.TaskVertex v : graph.vertexSet()) {
+                if (taskId.equals(v.taskId)) {
+                    return v;
+                }
+            }
+            return null;
         });
     }
 

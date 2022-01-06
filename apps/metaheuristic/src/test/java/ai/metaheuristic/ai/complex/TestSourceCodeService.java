@@ -101,6 +101,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired
     private TaskVariableTopLevelService taskVariableTopLevelService;
 
+    @Autowired
+    private ExecContextStatusService execContextStatusService;
+
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -125,6 +128,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Test
     public void testCreateTasks() {
 
+        System.out.println("start produceTasksForTest()");
         produceTasksForTest();
 
         List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(execContextForTest.getId());
@@ -133,10 +137,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 
+        System.out.println("start verifyGraphIntegrity()");
         verifyGraphIntegrity();
 
         // ======================
 
+        System.out.println("start taskProviderService.findTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
                 taskProviderService.findTask(processor.getId(), false);
 
@@ -144,6 +150,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
 
+            System.out.println("start txSupportForTestingService.toStarted()");
             txSupportForTestingService.toStarted(execContextForTest.id);
             execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
 
@@ -153,25 +160,45 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
             return null;
         });
+        System.out.println("start execContextStatusService.resetStatus()");
+        execContextStatusService.resetStatus();
 
+        System.out.println("start step_1_0_init_session_id()");
         String sessionId = step_1_0_init_session_id();
+
+        System.out.println("start step_1_1_register_function_statuses()");
         step_1_1_register_function_statuses(sessionId);
 
+        System.out.println("start findInternalTaskForRegisteringInQueue()");
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
+        System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
+        System.out.println("start step_AssembledRaw()");
         step_AssembledRaw();
 
+        System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
+        System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing();
 
+        System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         //   processCode: feature-processing-1, function code: function-03:1.1
+        System.out.println("start step_CommonProcessing(feature-output-1)");
         step_CommonProcessing("feature-output-1");
 
+        System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
         findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         //   processCode: feature-processing-2, function code: function-04:1.1
+        System.out.println("start step_CommonProcessing(feature-output-2)");
         step_CommonProcessing("feature-output-2");
 
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
+
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
+
+        findInternalTaskForRegisteringInQueue(execContextForTest.id);
 
         final List<Long> taskIds = getUnfinishedTaskVertices(execContextForTest);
         assertEquals(3, taskIds.size());
@@ -214,6 +241,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 taskProviderService.findTask(processor.getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
+
+        System.out.println("start findTaskForRegisteringInQueue() #5");
 
 //        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
         execContextTopLevelService.findTaskForRegisteringInQueue(execContextForTest.id);
