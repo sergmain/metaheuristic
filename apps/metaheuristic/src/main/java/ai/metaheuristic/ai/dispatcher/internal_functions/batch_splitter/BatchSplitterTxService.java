@@ -105,7 +105,7 @@ public class BatchSplitterTxService {
                             }
                             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                             variableService.createInputVariablesForSubProcess(
-                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
                             taskProducingService.createTasksForSubProcesses(
                                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);

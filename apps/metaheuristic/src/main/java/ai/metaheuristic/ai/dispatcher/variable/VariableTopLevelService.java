@@ -18,9 +18,11 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -28,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,6 +52,16 @@ public class VariableTopLevelService {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final InternalFunctionVariableService internalFunctionVariableService;
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void createInputVariablesForSubProcess(
+            VariableData.VariableDataSource variableDataSource,
+            Long execContextId, String inputVariableName,
+            String currTaskContextId, boolean contentAsArray) {
+        TxUtils.checkTxNotExists();
+        variableService.createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, contentAsArray);
+    }
+
 
     public void checkFinalOutputVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
         ExecContextImpl execContext = execContextCache.findById(subExecContextId);

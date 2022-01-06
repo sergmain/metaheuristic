@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -32,6 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -50,6 +53,7 @@ import java.util.stream.Collectors;
 public class PermuteVariablesService {
 
     private final VariableService variableService;
+    private final VariableTopLevelService variableTopLevelService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
 
@@ -67,7 +71,7 @@ public class PermuteVariablesService {
      * @param upperCaseFirstChar
      * @param presentVariable
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
@@ -107,8 +111,8 @@ public class PermuteVariablesService {
                                             null, null, false),
                                     booleanVariables);
 
-                            variableService.createInputVariablesForSubProcess(
-                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+                            variableTopLevelService.createInputVariablesForSubProcess(
+                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
                             taskProducingService.createTasksForSubProcesses(
                                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);

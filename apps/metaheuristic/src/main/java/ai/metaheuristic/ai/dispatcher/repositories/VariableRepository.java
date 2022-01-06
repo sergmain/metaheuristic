@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,11 +63,15 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "from Variable v where v.execContextId=:execContextId and v.name in (:names)")
     List<SimpleVariable> getIdAndStorageUrlInVarsForExecContext(Long execContextId, String[] names);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED, isolation = Isolation.READ_UNCOMMITTED)
     @Nullable
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     SimpleVariable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
+
+    @Nullable
+    @Query(value="select v.id, v.filename from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
+    List<Object[]> findAsObject(String name, String taskContextId, Long execContextId);
 
     @Nullable
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +

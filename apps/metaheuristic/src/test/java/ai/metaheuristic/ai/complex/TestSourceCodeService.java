@@ -198,8 +198,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         findInternalTaskForRegisteringInQueue(execContextForTest.id);
 
-        findInternalTaskForRegisteringInQueue(execContextForTest.id);
-
         final List<Long> taskIds = getUnfinishedTaskVertices(execContextForTest);
         assertEquals(3, taskIds.size());
 

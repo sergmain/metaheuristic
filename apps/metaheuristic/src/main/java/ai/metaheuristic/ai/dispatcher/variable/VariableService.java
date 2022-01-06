@@ -49,10 +49,10 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -60,14 +60,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.persistence.EntityManager;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -166,14 +164,7 @@ public class VariableService {
         return data;
     }
 
-    public void createInputVariablesForSubProcess(
-            VariableData.VariableDataSource variableDataSource,
-            Long execContextId, String inputVariableName,
-            String currTaskContextId) {
-        createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, true);
-    }
-
-    @SneakyThrows
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             Long execContextId, String inputVariableName,
@@ -194,12 +185,17 @@ public class VariableService {
             for (BatchTopLevelService.FileWithMapping f : files) {
                 String variableName = VariableUtils.getNameForVariableInArray();
 
-                FileInputStream fis = new FileInputStream(f.file);
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                try {
+                    FileInputStream fis = new FileInputStream(f.file);
+                    eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
+                    Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
 
-                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                variableHolders.add(new VariableUtils.VariableHolder(sv));
+                    SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+                    variableHolders.add(new VariableUtils.VariableHolder(sv));
+                }
+                catch (FileNotFoundException e) {
+                    ExceptionUtils.rethrow(e);
+                }
             }
 
             if (!S.b(inputVariableContent)) {
@@ -269,18 +265,19 @@ public class VariableService {
             log.error("#171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
             return null;
         }
-        Set<ExecContextData.TaskVertex> set = new HashSet<>();
+        Set<String> set = new HashSet<>();
         for (Long parentTaskId : parentTaskIds) {
             ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
             if (vertex==null) {
                 throw new RuntimeException("#171.267 vertex wasn't found for task #"+task.id);
             }
-            set.add(vertex);
+            set.add(vertex.taskContextId);
             Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
-            set.addAll(setTemp);
+            setTemp.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->set));
         }
+        set.add(taskParams.task.taskContextId);
 
-        List<String> list = ContextUtils.sortSetAsTaskContextId(set.stream().map(o->o.taskContextId).collect(Collectors.toSet()));
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
 
         p.inputs.stream()
                 .map(v -> toInputVariable(list, v, taskParams.task.taskContextId, execContextId))
@@ -298,14 +295,14 @@ public class VariableService {
                         S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            SimpleVariable variable = findVariableInAllInternalContexts(list, v.name, contextId, execContextId);
+            Object[] variable = findVariableInAllInternalContexts(list, v.name, contextId, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
                         S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            iv.id = variable.id;
-            iv.filename = variable.filename;
+            iv.id = (Long)variable[0];
+            iv.filename = (String)variable[1];
         }
         else {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
@@ -371,11 +368,22 @@ public class VariableService {
     }
 
     @Nullable
-    public SimpleVariable findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+    private Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
         for (String taskCtxId : taskCtxIds) {
-            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
-            if (v!=null) {
-                return v;
+            List<Object[]> obj = variableRepository.findAsObject(variable, taskCtxId, execContextId);
+            if (obj!=null && !obj.isEmpty()) {
+                return obj.get(0);
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private SimpleVariable findVariableInAllInternalContexts_old(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+        for (String taskCtxId : taskCtxIds) {
+            SimpleVariable obj = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
+            if (obj!=null) {
+                return obj;
             }
         }
         return null;
