@@ -101,9 +101,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired
     private TaskVariableTopLevelService taskVariableTopLevelService;
 
-    @Autowired
-    private ExecContextStatusService execContextStatusService;
-
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();

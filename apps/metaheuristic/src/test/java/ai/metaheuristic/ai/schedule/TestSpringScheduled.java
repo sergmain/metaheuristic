@@ -34,7 +34,7 @@ import javax.annotation.PostConstruct;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({TestSpringScheduled.ScheduleService1.class, TestSpringScheduled.ScheduleService2.class})
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @DependsOn({"Globals"})
 @Disabled

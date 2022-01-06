@@ -172,7 +172,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     protected ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     @Autowired
-    private ExecContextStatusService execContextStatusService;
+    public ExecContextStatusService execContextStatusService;
 
     public SourceCodeImpl sourceCode = null;
     public Function f1 = null;
