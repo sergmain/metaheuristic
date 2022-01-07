@@ -38,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -66,7 +68,7 @@ public class BatchSplitterTxService {
     private final TaskProducingService taskProducingService;
     private final VariableService variableService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
@@ -128,7 +130,7 @@ public class BatchSplitterTxService {
     }
 
     @Nullable
-    private VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
+    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
         if (file.isDirectory()) {
             final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
