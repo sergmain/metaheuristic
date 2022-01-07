@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -155,7 +156,7 @@ public class PreparingCoreInitService {
 
     public void afterPreparingCore(PreparingData.PreparingCodeData preparingCodeData) {
         long mills = System.currentTimeMillis();
-        log.info("Start after()");
+        log.info("Start afterPreparingCore()");
         if (preparingCodeData.processor != null) {
             try {
                 processorTopLevelService.deleteProcessorById(preparingCodeData.processor.getId());
@@ -177,8 +178,11 @@ public class PreparingCoreInitService {
                 throwable.printStackTrace();
             }
         }
-        System.out.println("Was finished correctly");
+        TaskWithInternalContextEventService.shutdown();
+        System.out.println("afterPreparingCore() Was finished correctly");
         log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
+
+
     }
 
 }

@@ -120,7 +120,7 @@ public class TestCountOfTasks extends PreparingExperiment {
         setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
 
-        experiment = Objects.requireNonNull(experimentCache.findById(getExperiment().getId()));
+        setExperiment(Objects.requireNonNull(experimentCache.findById(getExperiment().getId())));
 
         List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().id);
 

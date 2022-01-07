@@ -65,4 +65,8 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
     public Experiment getExperiment() {
         return experiment;
     }
+
+    public void setExperiment(Experiment experiment) {
+        this.experiment = experiment;
+    }
 }

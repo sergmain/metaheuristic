@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
@@ -104,6 +105,29 @@ public class TaskWithInternalContextEventService {
     public void putToQueue(final TaskWithInternalContextEvent event) {
         putToQueueInternal(event);
         processPoolOfExecutors(event.execContextId, this::process);
+    }
+
+    public static void clearQueue() {
+        synchronized (QUEUE) {
+            for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
+                entry.getValue().clear();
+            }
+            QUEUE.clear();
+        }
+    }
+
+    public static void shutdown() {
+        clearQueue();
+        synchronized (POOL_OF_EXECUTORS) {
+            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
+                if (POOL_OF_EXECUTORS[i] == null) {
+                    continue;
+                }
+                POOL_OF_EXECUTORS[i].executor.shutdownNow();
+                POOL_OF_EXECUTORS[i] = null;
+            }
+        }
+
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
