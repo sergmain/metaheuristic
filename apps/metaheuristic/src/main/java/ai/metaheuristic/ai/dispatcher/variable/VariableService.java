@@ -605,9 +605,13 @@ public class VariableService {
     }
 
     @Transactional
-    public Void deleteOrphanVariables(List<Long> ids) {
-        variableRepository.deleteAllByIdIn(ids);
-        return null;
+    public void deleteOrphanVariables(List<Long> ids) {
+        variableRepository.deleteByIds(ids);
+    }
+
+    @Transactional
+    public void deleteOrphanVariable(Long id) {
+        variableRepository.deleteById(id);
     }
 
 }

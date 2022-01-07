@@ -51,7 +51,9 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select distinct v.execContextId from Variable v")
     List<Long> getAllExecContextIds();
 
-    void deleteAllByIdIn(List<Long> ids);
+    @Modifying
+    @Query(value="delete from Variable t where t.id in (:ids)")
+    void deleteByIds(List<Long> ids);
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
@@ -100,6 +102,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="delete from Variable v where v.execContextId=:execContextId")
     void deleteByExecContextId(Long execContextId);
 
+    @Modifying
     void deleteByName(String variable);
 
 }

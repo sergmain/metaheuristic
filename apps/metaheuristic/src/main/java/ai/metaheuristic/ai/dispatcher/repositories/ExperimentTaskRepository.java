@@ -57,5 +57,6 @@ public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask,
     @Nullable
     ExperimentTask findByExperimentResultIdAndTaskId(Long experimentResultId, Long taskId);
 
+    @Modifying
     void deleteByExperimentResultId(Long experimentResultId);
 }

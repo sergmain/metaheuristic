@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -261,7 +260,7 @@ public class ArtifactCleanerAtDispatcher {
                 for (List<Long> page : pages) {
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
                     try {
-                        ExecContextSyncService.getWithSyncNullable(execContextId, () -> taskTransactionalService.deleteOrphanTasks(page));
+                        taskTransactionalService.deleteOrphanTasks(page);
                     }
                     catch (Throwable th) {
                         log.error("taskTransactionalService.deleteOrphanTasks("+execContextId+")", th);
@@ -293,7 +292,13 @@ public class ArtifactCleanerAtDispatcher {
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
                     try {
-                        ExecContextSyncService.getWithSyncNullable(execContextId, () -> variableService.deleteOrphanVariables(page));
+//                        ExecContextSyncService.getWithSyncVoid(execContextId, () -> variableService.deleteOrphanVariables(page));
+                        variableService.deleteOrphanVariables(page);
+/*
+                        for (Long aLong : page) {
+                            variableService.deleteOrphanVariable(aLong);
+                        }
+*/
                     }
                     catch (Throwable th) {
                         log.error("variableService.deleteOrphanVariables("+execContextId+")", th);

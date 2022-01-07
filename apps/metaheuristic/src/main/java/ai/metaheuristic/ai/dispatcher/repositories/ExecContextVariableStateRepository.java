@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,7 @@ public interface ExecContextVariableStateRepository extends CrudRepository<ExecC
     @Query(value="select v.id from ExecContextVariableState v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
+    @Modifying
     void deleteAllByIdIn(List<Long> ids);
 
     @Query(value="select w.id from ExecContextVariableState w")
