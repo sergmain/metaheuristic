@@ -21,9 +21,9 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,7 +43,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,6 +58,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestUploadFileForBatch extends PreparingSourceCode {
+
+    @Autowired private BatchTopLevelService batchTopLevelService;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired private SourceCodeService sourceCodeService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -82,17 +86,6 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         System.out.println("TestUploadFileForBatch.getPlanYamlAsString yaml:\n" + yaml);
         return yaml;
     }
-
-
-    @Autowired
-    public TaskService taskService;
-    @Autowired
-    public ExecContextService execContextService;
-    @Autowired
-    private BatchTopLevelService batchTopLevelService;
-
-    @Autowired
-    private SourceCodeTopLevelService sourceCodeTopLevelService;
 
     private BatchData.UploadingStatus uploadingStatus = null;
 
@@ -131,22 +124,23 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         // ID==1L for admin but in this case it doesn't matter
         a.id = 1L;
         a.username = "test-batch-processing";
-        a.companyId = company.uniqueId;
-        final DispatcherContext context = new DispatcherContext(a, company);
+        a.companyId = getCompany().uniqueId;
+        final DispatcherContext context = new DispatcherContext(a, getCompany());
 
 
-        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeService.validateSourceCode(sourceCode.id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeService.validateSourceCode(getSourceCode().id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.validationResult.status);
-        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(sourceCode.id));
-        assertNotNull(sourceCode);
-        assertTrue(sourceCode.isValid());
+        // TODO p5 delete this line if thest will work ok without it
+//        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(getSourceCode().id));
+        assertNotNull(getSourceCode());
+        assertTrue(getSourceCode().isValid());
 
         String planYamlAsString = getSourceCodeYamlAsString();
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 
-        uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, sourceCode.getId(), context);
+        uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, getSourceCode().getId(), context);
         assertFalse(uploadingStatus.isErrorMessages(), uploadingStatus.getErrorMessagesAsStr());
         assertNotNull(uploadingStatus.batchId);
         assertNotNull(uploadingStatus.execContextId);

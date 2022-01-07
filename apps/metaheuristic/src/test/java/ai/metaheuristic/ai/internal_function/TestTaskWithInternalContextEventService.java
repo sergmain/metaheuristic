@@ -117,7 +117,7 @@ public class TestTaskWithInternalContextEventService {
             }
             Thread.sleep(500);
             System.out.println(Thread.currentThread().getId()+", "+event.taskId+", i = " + i++);
-            if (i==300) {
+            if (i==100) {
                 throw new RuntimeException("Too long execution");
             }
         }

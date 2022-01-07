@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -50,6 +53,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestSingleInternalFunction extends FeatureMethods {
 
+    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired private TaskRepository taskRepository;
+
     @Override
     @SneakyThrows
     public String getSourceCodeYamlAsString() {
@@ -59,7 +65,7 @@ public class TestSingleInternalFunction extends FeatureMethods {
     @Test
     public void test() {
         produceTasks();
-        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(getExecContextForTest().id);
         assertEquals(2, list.size());
 
         final List<String> codes = List.of(getFunctionCode(list.get(0)[0]), getFunctionCode(list.get(1)[0]));

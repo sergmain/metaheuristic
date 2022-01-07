@@ -17,12 +17,12 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -55,8 +55,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestGraphEdges extends PreparingSourceCode {
 
-    @Autowired
-    public ExecContextCache execContextCache;
+    @Autowired private ExecContextCache execContextCache;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ExecContextService execContextService;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private TestGraphService testGraphService;
+    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -66,31 +70,31 @@ public class TestGraphEdges extends PreparingSourceCode {
     @Test
     public void test() {
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(sourceCode, company.getUniqueId());
-        execContextForTest = result.execContext;
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        setExecContextForTest(result.execContext);
 
-        assertNotNull(execContextForTest);
-        ExecContextSyncService.getWithSync(execContextForTest.id, ()->
-                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
-                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+        assertNotNull(getExecContextForTest());
+        ExecContextSyncService.getWithSync(getExecContextForTest().id, ()->
+                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
+                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
 
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-            long count = getCountUnfinishedTasks(execContextForTest);
+            long count = preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest());
             assertEquals(1, count);
 
-            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id,List.of(1L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,List.of(1L),
                     List.of(new TaskApiData.TaskWithContext(21L, "123###1"),
                             new TaskApiData.TaskWithContext(22L, "123###1"),
                             new TaskApiData.TaskWithContext(23L, "123###1")));
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
-            List<ExecContextData.TaskVertex> leafs = findLeafs(execContextForTest);
+            List<ExecContextData.TaskVertex> leafs = testGraphService.findLeafs(getExecContextForTest());
 
             assertEquals(3, leafs.size());
 
@@ -98,20 +102,20 @@ public class TestGraphEdges extends PreparingSourceCode {
             assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, "123###1")));
             assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, "123###1")));
 
-            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(21L),
+            osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(21L),
                     List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
                             new TaskApiData.TaskWithContext(312L, "123###1"),
                             new TaskApiData.TaskWithContext(313L, "123###1")));
             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
-            Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest.execContextGraphId, 1L);
+            Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(getExecContextForTest().execContextGraphId, 1L);
             assertEquals(6, descendands.size());
 
-            descendands = execContextGraphTopLevelService.findDescendants(execContextForTest.execContextGraphId, 21L);
+            descendands = execContextGraphTopLevelService.findDescendants(getExecContextForTest().execContextGraphId, 21L);
             assertEquals(3, descendands.size());
 
-            leafs = findLeafs(execContextForTest);
+            leafs = testGraphService.findLeafs(getExecContextForTest());
             assertEquals(5, leafs.size());
             return null;
         })));

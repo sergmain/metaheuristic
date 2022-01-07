@@ -18,9 +18,14 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -30,6 +35,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -49,6 +55,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestCountOfTasks extends PreparingExperiment {
 
+    @Autowired private SourceCodeValidationService sourceCodeValidationService;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ExecContextService execContextService;
+    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired private ExperimentCache experimentCache;
+
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -62,35 +74,35 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(sourceCode, company.getUniqueId());
-        execContextForTest = result.execContext;
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        setExecContextForTest(result.execContext);
         assertFalse(result.isErrorMessages());
-        assertNotNull(execContextForTest);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
+        assertNotNull(getExecContextForTest());
+        assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
 
 
-        EnumsApi.TaskProducingStatus producingStatus = ExecContextSyncService.getWithSync(execContextForTest.id,
-                () -> txSupportForTestingService.toProducing(execContextForTest.id));
+        EnumsApi.TaskProducingStatus producingStatus = ExecContextSyncService.getWithSync(getExecContextForTest().id,
+                () -> txSupportForTestingService.toProducing(getExecContextForTest().id));
 
         assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
 
-        execContextForTest = Objects.requireNonNull(execContextService.findById(this.execContextForTest.id));
-        assertNotNull(execContextForTest);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
+        setExecContextForTest(Objects.requireNonNull(execContextService.findById(this.getExecContextForTest().id)));
+        assertNotNull(getExecContextForTest());
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, getExecContextForTest().getState());
 
-        List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(execContextForTest.id);
+        List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(getExecContextForTest().id);
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
 
-        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
+        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
-                        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+            ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
+                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id, execContextParamsYaml);
                         return null;
                     }));
             return null;
@@ -98,19 +110,19 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        ExecContextImpl execContext = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+        ExecContextImpl execContext = Objects.requireNonNull(execContextService.findById(getExecContextForTest().id));
         List<Object[]> tasks02 = taskRepositoryForTest.findByExecContextId(execContext.id);
         assertEquals(7, tasks02.size());
 
         mills = System.currentTimeMillis();
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
 
-        experiment = Objects.requireNonNull(experimentCache.findById(experiment.getId()));
+        experiment = Objects.requireNonNull(experimentCache.findById(getExperiment().getId()));
 
-        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(execContextForTest.id);
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().id);
 
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,31 +53,25 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestTx extends PreparingSourceCode {
 
+    @Autowired private TaskService taskService;
+    @Autowired private ExecContextService execContextService;
+    @Autowired private TxTestingService txTestingService;
+    @Autowired private TxTestingTopLevelService txTestingTopLevelService;
+    @Autowired private TaskRepository taskRepository;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
     }
 
-    @Autowired
-    public TaskService taskService;
-    @Autowired
-    public ExecContextService execContextService;
-    @Autowired
-    public TxTestingService txTestingService;
-    @Autowired
-    public TxTestingTopLevelService txTestingTopLevelService;
-
-    @Autowired
-    public TaskRepository taskRepository;
-
-
     @Test
     public void testSingleThread() {
-        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        ExecContextCreatorService.ExecContextCreationResult r = preparingSourceCodeService.createExecContextForTest(preparingSourceCodeData);
         assertNotNull(r.execContext);
-        execContextForTest = r.execContext;
+        setExecContextForTest(r.execContext);
 
-        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+        TaskImpl task = txTestingService.create(getExecContextForTest().id, "BBB");
 
         assertNotNull(task.id);
         assertNotNull(task.version);
@@ -84,7 +79,7 @@ public class TestTx extends PreparingSourceCode {
 
         // == txTestingTopLevelService
 
-        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, task.id);
+        String s = txTestingTopLevelService.updateWithSyncSingle(getExecContextForTest().id, task.id);
         assertEquals("AAA", s);
 
         TaskImpl task1 = txTestingService.update(task.id, "BBB");
@@ -98,7 +93,7 @@ public class TestTx extends PreparingSourceCode {
 
         ////
 
-        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, task.id);
+        s = txTestingTopLevelService.updateWithSyncDouble(getExecContextForTest().id, task.id);
         assertEquals("AAAAAA", s);
 
         TaskImpl task2 = txTestingService.update(task.id, "BBB");
@@ -113,7 +108,7 @@ public class TestTx extends PreparingSourceCode {
 
         // == txTestingService
 
-        s = txTestingService.updateSingle(execContextForTest.id, task.id);
+        s = txTestingService.updateSingle(getExecContextForTest().id, task.id);
         assertEquals("AAA", s);
 
         TaskImpl task3 = txTestingService.update(task.id, "BBB");
@@ -128,7 +123,7 @@ public class TestTx extends PreparingSourceCode {
 
         ////
 
-        s = txTestingService.updateDouble(execContextForTest.id, task.id);
+        s = txTestingService.updateDouble(getExecContextForTest().id, task.id);
         assertEquals("AAAAAA", s);
 
         TaskImpl task4 = txTestingService.update(task.id, "BBB");
@@ -146,11 +141,11 @@ public class TestTx extends PreparingSourceCode {
 
     @Test
     public void testMultiThreadTopLevelService() throws InterruptedException {
-        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        ExecContextCreatorService.ExecContextCreationResult r = preparingSourceCodeService.createExecContextForTest(preparingSourceCodeData);
         assertNotNull(r.execContext);
-        execContextForTest = r.execContext;
+        setExecContextForTest(r.execContext);
 
-        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+        TaskImpl task = txTestingService.create(getExecContextForTest().id, "BBB");
 
         assertNotNull(task.id);
         assertNotNull(task.version);
@@ -219,23 +214,23 @@ public class TestTx extends PreparingSourceCode {
     private void testTopLevelService(Long taskId) {
         // == txTestingTopLevelService
 
-        String s = txTestingTopLevelService.updateWithSyncSingle(execContextForTest.id, taskId);
+        String s = txTestingTopLevelService.updateWithSyncSingle(getExecContextForTest().id, taskId);
         assertEquals("AAA", s);
 
         ////
 
-        s = txTestingTopLevelService.updateWithSyncDouble(execContextForTest.id, taskId);
+        s = txTestingTopLevelService.updateWithSyncDouble(getExecContextForTest().id, taskId);
         assertEquals("AAAAAA", s);
 
     }
 
     @Test
     public void testMultiThreadService() throws InterruptedException {
-        ExecContextCreatorService.ExecContextCreationResult r = createExecContextForTest();
+        ExecContextCreatorService.ExecContextCreationResult r = preparingSourceCodeService.createExecContextForTest(preparingSourceCodeData);
         assertNotNull(r.execContext);
-        execContextForTest = r.execContext;
+        setExecContextForTest(r.execContext);
 
-        TaskImpl task = txTestingService.create(execContextForTest.id, "BBB");
+        TaskImpl task = txTestingService.create(getExecContextForTest().id, "BBB");
 
         assertNotNull(task.id);
         assertNotNull(task.version);
@@ -303,15 +298,15 @@ public class TestTx extends PreparingSourceCode {
 
     private void testService(Long taskId) {
         ////
-        String s = ExecContextSyncService.getWithSync(execContextForTest.id,
-                () -> txTestingService.updateWithSyncSingle(execContextForTest.id, taskId));
+        String s = ExecContextSyncService.getWithSync(getExecContextForTest().id,
+                () -> txTestingService.updateWithSyncSingle(getExecContextForTest().id, taskId));
 
         assertEquals("AAA", s);
 
         ////
 
-        s = ExecContextSyncService.getWithSync(execContextForTest.id,
-                () -> txTestingService.updateWithSyncDouble(execContextForTest.id, taskId));
+        s = ExecContextSyncService.getWithSync(getExecContextForTest().id,
+                () -> txTestingService.updateWithSyncDouble(getExecContextForTest().id, taskId));
         assertEquals("AAAAAA", s);
 
 

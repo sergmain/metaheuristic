@@ -19,8 +19,12 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
@@ -62,17 +66,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
 
-    @Autowired
-    public SouthbridgeService southbridgeService;
-
-    @Autowired
-    public TaskService taskService;
-
-    @Autowired
-    public ExecContextSchedulerService execContextSchedulerService;
-
-    @Autowired
-    private TaskVariableTopLevelService taskVariableTopLevelService;
+    @Autowired private SouthbridgeService southbridgeService;
+    @Autowired private TaskService taskService;
+    @Autowired private ExecContextSchedulerService execContextSchedulerService;
+    @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
+    @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
+    @Autowired private TaskRepository taskRepository;
+    @Autowired private ExecContextTopLevelService execContextTopLevelService;
+    @Autowired private ExecContextCache execContextCache;
 
     @Override
     @SneakyThrows
@@ -94,14 +95,14 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        final DispatcherCommParamsYaml.AssignedTask t = taskProviderService.findTask(processor.getId(), false);
+        final DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
 
-        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorIdAsStr(), sessionId);
         req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
@@ -127,8 +128,8 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         assertTrue(task.isCompleted);
 
-        execContextTopLevelService.updateExecContextStatus(execContextForTest.id);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+        execContextTopLevelService.updateExecContextStatus(getExecContextForTest().id);
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
     }
 
     public void step_3(String sessionId) {
@@ -136,7 +137,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         ProcessorCommParamsYaml.ProcessorRequest req0 = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm0.requests.add(req0);
 
-        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorIdAsStr(), sessionId);
         req0.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
@@ -157,7 +158,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         ProcessorCommParamsYaml.ProcessorRequest req1 = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm1.requests.add(req1);
 
-        req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+        req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorIdAsStr(), sessionId);
         req1.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);

@@ -18,10 +18,15 @@ package ai.metaheuristic.ai.db;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.preparing.PreparingConsts;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -50,11 +55,12 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
 
     private static final String TEST_VARIABLE = "test-variable";
 
-    @Autowired
-    private DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-
-    @Autowired
-    private GlobalVariableRepository globalVariableRepository;
+    @Autowired private GlobalVariableRepository globalVariableRepository;
+    @Autowired private VariableService variableService;
+    @Autowired private VariableRepository variableRepository;
+    @Autowired private SourceCodeRepository sourceCodeRepository;
+    @Autowired private FunctionRepository functionRepository;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @SneakyThrows
     @Override
@@ -67,29 +73,29 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
 
         assertNotEquals(TEST_VARIABLE, TEST_VARIABLE.toUpperCase());
 
-        ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest();
+        ExecContextCreatorService.ExecContextCreationResult result = preparingSourceCodeService.createExecContextForTest(preparingSourceCodeData);
         assertNull(result.errorMessages, ""+result.errorMessages);
-        execContextForTest = result.execContext;
+        setExecContextForTest(result.execContext);
 
-        Variable v = variableService.createUninitialized(TEST_VARIABLE, execContextForTest.id, Consts.TOP_LEVEL_CONTEXT_ID);
+        Variable v = variableService.createUninitialized(TEST_VARIABLE, getExecContextForTest().id, Consts.TOP_LEVEL_CONTEXT_ID);
         assertNotNull(v);
 
         assertNotNull(variableRepository.findByNameAndTaskContextIdAndExecContextId(
-                TEST_VARIABLE, Consts.TOP_LEVEL_CONTEXT_ID, execContextForTest.id));
+                TEST_VARIABLE, Consts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
 
         assertNull(variableRepository.findByNameAndTaskContextIdAndExecContextId(
-                TEST_VARIABLE.toUpperCase(), Consts.TOP_LEVEL_CONTEXT_ID, execContextForTest.id));
+                TEST_VARIABLE.toUpperCase(), Consts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
 
-        assertNotEquals(GLOBAL_TEST_VARIABLE, GLOBAL_TEST_VARIABLE.toUpperCase());
-        assertNotNull(globalVariableRepository.findIdByName(GLOBAL_TEST_VARIABLE));
-        assertNull(globalVariableRepository.findIdByName(GLOBAL_TEST_VARIABLE.toUpperCase()));
+        assertNotEquals(PreparingConsts.GLOBAL_TEST_VARIABLE, PreparingConsts.GLOBAL_TEST_VARIABLE.toUpperCase());
+        assertNotNull(globalVariableRepository.findIdByName(PreparingConsts.GLOBAL_TEST_VARIABLE));
+        assertNull(globalVariableRepository.findIdByName(PreparingConsts.GLOBAL_TEST_VARIABLE.toUpperCase()));
 
-        assertNotEquals(sourceCode.uid, sourceCode.uid.toUpperCase());
-        assertNotNull(sourceCodeRepository.findIdByUid(sourceCode.uid));
-        assertNull(sourceCodeRepository.findIdByUid(sourceCode.uid.toUpperCase()));
+        assertNotEquals(getSourceCode().uid, getSourceCode().uid.toUpperCase());
+        assertNotNull(sourceCodeRepository.findIdByUid(getSourceCode().uid));
+        assertNull(sourceCodeRepository.findIdByUid(getSourceCode().uid.toUpperCase()));
 
-        assertNotEquals(f1.code, f1.code.toUpperCase());
-        assertNotNull(functionRepository.findByCode(f1.code));
-        assertNull(functionRepository.findByCode(f1.code.toUpperCase()));
+        assertNotEquals(getF1().code, getF1().code.toUpperCase());
+        assertNotNull(functionRepository.findByCode(getF1().code));
+        assertNull(functionRepository.findByCode(getF1().code.toUpperCase()));
     }
 }
