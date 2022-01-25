@@ -56,6 +56,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         String sessionId = preparingSourceCodeService.step_1_0_init_session_id(getProcessorIdAsStr());
         preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
 
+        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         mills = System.currentTimeMillis();
