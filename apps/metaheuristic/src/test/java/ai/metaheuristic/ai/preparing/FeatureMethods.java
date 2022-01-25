@@ -21,16 +21,12 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncSer
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -50,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class FeatureMethods extends PreparingExperiment {
 
     @Autowired private ExecContextService execContextService;
-    @Autowired private SouthbridgeService southbridgeService;
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -92,30 +87,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
     public void toStarted() {
         setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-    }
-
-    public String initSessionId() {
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
-
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorIdAsStr(), null);
-
-
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
-        String dispatcherResponse = southbridgeService.processRequest(processorYaml, "127.0.0.1");
-
-        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
-
-        assertNotNull(d0);
-        assertEquals(1, d0.responses.size());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
-        assertNotNull(reAssignedProcessorId);
-        assertNotNull(reAssignedProcessorId.sessionId);
-        assertEquals(getProcessorIdAsStr(), reAssignedProcessorId.reAssignedProcessorId);
-
-        String sessionId = reAssignedProcessorId.sessionId;
-        return sessionId;
     }
 
     protected void produceTasks() {

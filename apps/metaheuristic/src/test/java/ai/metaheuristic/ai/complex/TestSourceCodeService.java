@@ -189,12 +189,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
         step_CommonProcessing("feature-output-2");
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        // mh.permute-values-of-variables
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        // mh.permute-variables
+//        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         final List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
-        assertEquals(3, taskIds.size());
+        assertEquals(4, taskIds.size());
 
         TaskHolder finishTask = new TaskHolder(), permuteTask = new TaskHolder(), aggregateTask = new TaskHolder();
 
@@ -216,9 +218,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 case Consts.MH_FINISH_FUNCTION:
                     finishTask.task = tempTask;
                     break;
-//                case "test.fit.function:1.0":
-//                case "test.predict.function:1.0":
-//                    break;
+                case "test.fit.function:1.0":
+                case "test.predict.function:1.0":
+                    break;
                 default:
                     throw new IllegalStateException("unknown code: " + tpy.task.function.code);
             }
@@ -236,9 +238,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         System.out.println("start findTaskForRegisteringInQueue() #5");
 
-//        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
-        execContextTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-        waitForFinishing(permuteTask.task.id, 300);
+        // mh.permute-variables
+        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+//        execContextTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+//        waitForFinishing(permuteTask.task.id, 60);
+
         TaskQueue.TaskGroup taskGroup =
                 ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
                         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()->
@@ -261,17 +265,22 @@ public class TestSourceCodeService extends PreparingSourceCode {
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));
 
-            // there are 3 'test.fit.function:1.0' tasks,
-            // 3 'test.predict.function:1.0',
-            // 1 'mh.aggregate-internal-context'  task,
-            // and 1 'mh.finish' task
             assertEquals(14, taskIds.size());
 
             Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(getExecContextForTest().execContextGraphId, permuteTask.task.id);
-            assertEquals(14, descendants.size());
+            // there are:
+            // 3 'test.fit.function:1.0' tasks,
+            // 3 'test.predict.function:1.0' tasks
+            // 1 'mh.aggregate-internal-context' task
+            // and 1 'mh.finish' task
+            assertEquals(8, descendants.size());
 
             descendants = execContextGraphTopLevelService.findDirectDescendants(getExecContextForTest().execContextGraphId, permuteTask.task.id);
-            assertEquals(7, descendants.size());
+            // there are:
+            // 3 'test.fit.function:1.0' tasks,
+            // 1 'mh.aggregate-internal-context' task
+            // and 1 'mh.finish' task
+            assertEquals(3 + 1 + 1, descendants.size());
             return null;
         });
 
@@ -396,7 +405,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         boolean fitTask = "fit-dataset".equals(taskParamsYaml.task.processCode);
 
-        assertEquals(fitTask ? 3 : 3, taskParamsYaml.task.inputs.size());
+        assertEquals(fitTask ? 6 : 3, taskParamsYaml.task.inputs.size());
         assertEquals(fitTask ? 1 : 2, taskParamsYaml.task.outputs.size());
 
         if (fitTask) {

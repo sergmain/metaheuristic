@@ -141,6 +141,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_3(String sessionId) {
+        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

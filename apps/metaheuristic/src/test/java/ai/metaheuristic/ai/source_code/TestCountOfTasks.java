@@ -112,7 +112,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         ExecContextImpl execContext = Objects.requireNonNull(execContextService.findById(getExecContextForTest().id));
         List<Object[]> tasks02 = taskRepositoryForTest.findByExecContextId(execContext.id);
-        assertEquals(7, tasks02.size());
+        assertEquals(8, tasks02.size());
 
         mills = System.currentTimeMillis();
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
@@ -126,29 +126,7 @@ public class TestCountOfTasks extends PreparingExperiment {
 
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
-//        assertEquals(numberOfTasks, tasks.size());
 
-//        taskResult = sourceCodeService.produceAndStartAllTasks(false, sourceCode, execContextForTest);
-//        List<Object[]> tasks03 = taskCollector.getTasks(execContextForTest);
-//        assertFalse(tasks03.isEmpty());
-//        assertEquals(numberOfTasks, tasks.size());
-
-        // todo 2020-03-11 because this test is just about calculating the number of tasks without processing any of them,
-        //  we don't need additional calculation
-/*
-        int taskNumber = 0;
-        for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
-            if (process.subProcesses!=null) {
-                if (true) {
-                    throw new NotImplementedException("Need to calc number of tasks for parallel case");
-                }
-            }
-            taskNumber++;
-        }
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-
-        assertEquals( 1+1+3+ 2*12*7, taskNumber +  epy.processing.getNumberOfTask());
-*/
 
     }
 
