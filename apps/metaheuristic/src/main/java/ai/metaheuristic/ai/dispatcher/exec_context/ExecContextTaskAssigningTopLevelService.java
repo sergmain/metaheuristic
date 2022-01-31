@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
@@ -72,6 +73,7 @@ public class ExecContextTaskAssigningTopLevelService {
 //        log.info("Number of founded vertices: {}", vertices.size());
 
         if (vertices.isEmpty()) {
+            eventPublisher.publishEvent(new ResetTasksWithErrorTxEvent(execContextId));
             return;
         }
 

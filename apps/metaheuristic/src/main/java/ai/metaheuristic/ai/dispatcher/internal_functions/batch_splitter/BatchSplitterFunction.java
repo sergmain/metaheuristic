@@ -127,9 +127,9 @@ public class BatchSplitterFunction implements InternalFunction {
                 workingDir = tempDir;
                 mapping = Map.of(dataFile.getName(), originFilename);
             }
-            ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                            batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId)));
+            ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId,
+                            () -> loadFilesFromDirAfterZip(simpleExecContext, taskId, taskParamsYaml, workingDir, mapping)));
         }
         catch(UnzipArchiveException e) {
             final String es = "#995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
@@ -149,6 +149,10 @@ public class BatchSplitterFunction implements InternalFunction {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
+    }
+
+    private void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, File workingDir, Map<String, String> mapping) {
+        batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId);
     }
 
 }

@@ -16,17 +16,33 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskShortEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -41,11 +57,19 @@ public class ExecContextTaskResettingTopLevelService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextCache execContextCache;
 
     @Async
     @EventListener
     public void resetTask(ResetTaskEvent event) {
         ExecContextSyncService.getWithSyncVoid(event.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(event.execContextId, event.taskId));
+    }
+
+    @Async
+    @EventListener
+    public void resetTask(ResetTasksWithErrorEvent event) {
+        resetTasksWithErrorForRecovery(event.execContextId);
     }
 
     @Async
@@ -60,4 +84,38 @@ public class ExecContextTaskResettingTopLevelService {
         }
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
+
+    private void resetTasksWithErrorForRecovery(Long execContextId) {
+        TxUtils.checkTxNotExists();
+
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            return;
+        }
+
+        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(ec.execContextTaskStateId);
+        if (execContextTaskState==null) {
+            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
+            return;
+        }
+        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+
+        List<Long> taskIds = taskRepository.findTaksForErrorWithRecoveryState(execContextId);
+        final List<TaskData.TaskWithRecoveryStatus> statuses = new ArrayList<>(taskIds.size()+1);
+        for (Long taskId : taskIds) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                continue;
+            }
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            AtomicInteger ai = ectspy.triesWasMade.get(taskId);
+            int triesWasMade = ai == null ? 0 : ai.get();
+            int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
+            statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, maxTries>triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR));
+        }
+        ExecContextSyncService.getWithSyncVoid(execContextId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId,
+                        () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(execContextId, statuses)));
+    }
+
 }

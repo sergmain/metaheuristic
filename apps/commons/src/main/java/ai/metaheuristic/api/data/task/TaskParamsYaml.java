@@ -228,10 +228,13 @@ public class TaskParamsYaml implements BaseParams {
          * value in seconds
          * null or 0 mean the infinite execution
          */
-        @Nullable public Long timeoutBeforeTerminate;
+        @Nullable
+        public Long timeoutBeforeTerminate;
 
         // fields which are initialized at processor
         public String workingPath;
+        @Nullable
+        public Integer triesAfterError;
     }
 
     public TaskYaml task = new TaskYaml();

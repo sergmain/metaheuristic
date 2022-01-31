@@ -17,15 +17,20 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskTxAfterCommitEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -36,6 +41,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -53,6 +61,41 @@ public class ExecContextTaskResettingService {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final EventPublisherService eventPublisherService;
+    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final TaskFinishingService taskFinishingService;
+
+    @Transactional
+    public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
+        TxUtils.checkTxExists();
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
+
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            return;
+        }
+
+        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(ec.execContextTaskStateId);
+        if (execContextTaskState==null) {
+            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
+            return;
+        }
+        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
+
+        for (TaskData.TaskWithRecoveryStatus status : statuses) {
+            if (status.targetState== EnumsApi.TaskExecState.ERROR) {
+                // console is null because an actual text of error was specified with TaskExecState.ERROR_WITH_RECOVERY
+                taskFinishingService.finishWithErrorWithTx(status.taskId, null, EnumsApi.TaskExecState.ERROR);
+            }
+            else if (status.targetState== EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
+                TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId));
+                ectspy.triesWasMade.put(status.taskId, new AtomicInteger(status.triesWasMade));
+            }
+            else {
+                throw new IllegalStateException("status.targetState==");
+            }
+        }
+        execContextTaskState.updateParams(ectspy);
+    }
 
     @Transactional
     public void resetTaskWithTx(Long execContextId, Long taskId) {

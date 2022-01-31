@@ -309,7 +309,7 @@ public class ExecContextGraphService {
                     // do nothing
                 }
                 else if (execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
-                    stateParamsYaml.triesMade.computeIfAbsent(tv.taskId, (o)->new AtomicInteger()).incrementAndGet();
+                    stateParamsYaml.triesWasMade.computeIfAbsent(tv.taskId, (o)->new AtomicInteger()).incrementAndGet();
                 }
             }
         });
@@ -718,7 +718,7 @@ public class ExecContextGraphService {
         return execContextGraph;
     }
 
-    private ExecContextTaskState prepareExecContextTaskState(Long execContextTaskStateId) {
+    public ExecContextTaskState prepareExecContextTaskState(Long execContextTaskStateId) {
         ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(execContextTaskStateId);
         if (execContextTaskState==null) {
             throw new IllegalStateException("(execContextTaskState==null)");

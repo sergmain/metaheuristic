@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -98,6 +99,12 @@ public class TaskFinishingService {
 
     @Transactional
     public void finishWithErrorWithTx(Long taskId, String console) {
+        finishWithErrorWithTx(taskId, console, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
+    }
+
+    public void finishWithErrorWithTx(Long taskId, @Nullable String console, EnumsApi.TaskExecState targetState) {
+        TxUtils.checkTxExists();
+
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
@@ -116,7 +123,7 @@ public class TaskFinishingService {
                 log.error(es, e.getMessage());
             }
 
-            finishTaskAsError(task, console);
+            finishTaskAsError(task, console, targetState);
 
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         } catch (Throwable th) {
@@ -126,20 +133,31 @@ public class TaskFinishingService {
         }
     }
 
-    private void finishTaskAsError(TaskImpl task, String console) {
+    private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
         if ((task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value)
                 && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
             log.info("#319.200 (task.execState==EnumsApi.TaskExecState.ERROR && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
-        task.setExecState(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value);
+        task.setExecState(targetState.value);
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, -10001, console);
+            if (targetState== EnumsApi.TaskExecState.ERROR) {
+                if (functionExec.exec==null) {
+                    if (console==null) {
+                        log.error("#319.240 (console==null)");
+                    }
+                    functionExec.exec = new FunctionApiData.SystemExecResult(
+                            tpy.task.function.code, false, -10001, console==null ? "<no console output>" : console);
+                }
+            }
+            else {
+                functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, -10001, console);
+            }
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
         task.setResultReceived(true);

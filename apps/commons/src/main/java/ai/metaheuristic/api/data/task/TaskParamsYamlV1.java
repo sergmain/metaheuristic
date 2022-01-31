@@ -220,22 +220,29 @@ public class TaskParamsYamlV1 implements BaseParams {
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;
 
-        @Nullable public Map<String, Map<String, String>> inline;
+        @Nullable
+        public Map<String, Map<String, String>> inline;
+
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();
         public final List<Map<String, String>> metas = new ArrayList<>();
 
-        @Nullable public CacheV1 cache;
+        @Nullable
+        public CacheV1 cache;
 
         /**
          * Timeout before terminate a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */
-        @Nullable public Long timeoutBeforeTerminate;
+        @Nullable
+        public Long timeoutBeforeTerminate;
 
         // fields which are initialized at processor
         public String workingPath;
+
+        @Nullable
+        public Integer triesAfterError;
     }
 
     public TaskYamlV1 task = new TaskYamlV1();

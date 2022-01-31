@@ -47,7 +47,7 @@ public class ExecContextTaskStateParamsYamlUtilsV1
     public ExecContextTaskStateParamsYaml upgradeTo(@NonNull ExecContextTaskStateParamsYamlV1 v1) {
         ExecContextTaskStateParamsYaml t = new ExecContextTaskStateParamsYaml();
         t.states.putAll(v1.states);
-        t.triesMade.putAll(v1.triesMade);
+        t.triesWasMade.putAll(v1.triesWasMade);
         return t;
     }
 

@@ -69,7 +69,7 @@ public class BatchSplitterTxService {
     private final VariableService variableService;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public Void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
+    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
@@ -126,7 +126,6 @@ public class BatchSplitterTxService {
             throw new BatchResourceProcessingException(es);
         }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
-        return null;
     }
 
     @Nullable

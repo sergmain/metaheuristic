@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -52,6 +53,7 @@ public class TaskProducingService {
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
     private final TaskService taskService;
+    private final Globals globals;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
@@ -195,6 +197,7 @@ public class TaskProducingService {
         }
         taskParams.task.clean = execContextParamsYaml.clean;
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
+        taskParams.task.triesAfterError = process.triesAfterError==null ? null : Math.min(globals.dispatcher.getMaxTriesAfterError(), Math.max(0, process.triesAfterError));
         if (process.cache!=null) {
             taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline);
         }

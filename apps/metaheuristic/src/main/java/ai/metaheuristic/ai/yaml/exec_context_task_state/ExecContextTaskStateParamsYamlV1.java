@@ -22,6 +22,7 @@ import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -40,5 +41,5 @@ public class ExecContextTaskStateParamsYamlV1 implements BaseParams {
 
     public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
 
-    public final Map<Long, Integer> triesMade = new HashMap<>();
+    public final Map<Long, AtomicInteger> triesWasMade = new HashMap<>();
 }

@@ -116,5 +116,10 @@ public class EventsBoundedToTx {
         event.clean();
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    public void handleResetTaskWithErrorTxEvent(ResetTasksWithErrorTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
 
 }
