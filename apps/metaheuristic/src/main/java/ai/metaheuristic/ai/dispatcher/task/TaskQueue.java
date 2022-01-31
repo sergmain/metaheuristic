@@ -365,12 +365,12 @@ public class TaskQueue {
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
-                if (state==EnumsApi.TaskExecState.OK && !task.assigned) {
+                if (!task.assigned && (state == EnumsApi.TaskExecState.OK || state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY )) {
                     log.warn("#029.240 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
-                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it as OK
+                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it with specified state
                     startTaskProcessing(task.queuedTask.execContextId, task.queuedTask.taskId);
                 }
-                // state from CHECK_CASHE to NONE is being changing without assigning
+                // state from CHECK_CACHE to NONE is being changing without assigning
                 else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
                     log.warn("#029.260 State of task #{} {} can't be changed to {} because the task wasn't assigned.",
                             task.queuedTask.task==null ? null : "<null>", task.queuedTask.taskId, state);
@@ -407,7 +407,7 @@ public class TaskQueue {
             if (!task.assigned) {
                 return false;
             }
-            if (!EnumsApi.TaskExecState.isFinishedState(task.state)) {
+            if (!EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(task.state.value)) {
                 return false;
             }
         }

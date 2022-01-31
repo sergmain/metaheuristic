@@ -28,7 +28,8 @@ public class SourceCodeParamsYamlUtils {
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
             1, 1,
             2, 1,
-            3, 1
+            3, 1,
+            4, 1
     );
 
     public static int getRequiredVersionOfTaskParamsYaml(int sourceCodeParamsYamlVersion) {
@@ -42,13 +43,15 @@ public class SourceCodeParamsYamlUtils {
     private static final SourceCodeParamsYamlUtilsV1 YAML_UTILS_V_1 = new SourceCodeParamsYamlUtilsV1();
     private static final SourceCodeParamsYamlUtilsV2 YAML_UTILS_V_2 = new SourceCodeParamsYamlUtilsV2();
     private static final SourceCodeParamsYamlUtilsV3 YAML_UTILS_V_3 = new SourceCodeParamsYamlUtilsV3();
-    private static final SourceCodeParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final SourceCodeParamsYamlUtilsV4 YAML_UTILS_V_4 = new SourceCodeParamsYamlUtilsV4();
+    private static final SourceCodeParamsYamlUtilsV4 DEFAULT_UTILS = YAML_UTILS_V_4;
 
     public static final BaseYamlUtils<SourceCodeParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3
+                    3, YAML_UTILS_V_3,
+                    4, YAML_UTILS_V_4
             ),
             DEFAULT_UTILS
     );

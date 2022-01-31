@@ -56,9 +56,6 @@ public class ExecContextTaskAssigningTopLevelService {
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
-    // TODO 2021-11-10 see TODO below
-//    private final TaskProviderTopLevelService taskProviderService;
-//    private final EventPublisherService eventPublisherService;
 
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
@@ -140,8 +137,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
                     log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, state);
-                    // TODO 2021-11-01 actually, this situation must be handled while reconciliation stage
-//                    eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, state));
+                    // this situation will be handled while a reconciliation stage
                 }
             }
         }

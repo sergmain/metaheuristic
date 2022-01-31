@@ -235,7 +235,7 @@ public class TaskWithInternalContextEventService {
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
                 final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                        () -> TaskSyncService.getWithSyncNullable(event.taskId,
+                        () -> TaskSyncService.getWithSyncVoid(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
@@ -245,7 +245,7 @@ public class TaskWithInternalContextEventService {
 
             log.error(es, th);
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
+                    () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }
     }

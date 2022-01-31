@@ -226,7 +226,7 @@ public class SourceCodeValidationService {
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 
-    private SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
+    private static SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
         if (!Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
             return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         }
@@ -413,7 +413,7 @@ public class SourceCodeValidationService {
         try {
             sourceCodeValidation.status = checkConsistencyOfSourceCode(sourceCode);
         } catch (YAMLException e) {
-            sourceCodeValidation.addErrorMessage("#177.280 Error while parsing yaml config, " + e.toString());
+            sourceCodeValidation.addErrorMessage("#177.280 Error while parsing yaml config, " + e.getMessage());
             sourceCodeValidation.status = new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR, "#177.300 Error while parsing yaml config");
         }

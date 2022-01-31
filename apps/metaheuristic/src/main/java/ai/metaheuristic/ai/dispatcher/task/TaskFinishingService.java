@@ -59,15 +59,15 @@ public class TaskFinishingService {
 
     @Transactional
     public Void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
-        return finish(taskId, ecpy, true);
+        return finishAsOk(taskId, ecpy, true);
     }
 
     @Transactional
     public Void finishAsOk(Long taskId) {
-        return finish(taskId, null, false);
+        return finishAsOk(taskId, null, false);
     }
 
-    private Void finish(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
+    private Void finishAsOk(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
         if (store && ecpy==null) {
             throw new IllegalStateException("(store && ecpy==null)");
         }
@@ -97,28 +97,26 @@ public class TaskFinishingService {
     }
 
     @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console) {
+    public void finishWithErrorWithTx(Long taskId, String console) {
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#319.140 task #{} wasn't found", taskId);
-                return null;
+                return;
             }
-            if (task.execState==EnumsApi.TaskExecState.ERROR.value) {
+            if (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value) {
                 log.warn("#319.145 task #{} was already finished", taskId);
-                return null;
+                return;
             }
-            String taskContextId = null;
             try {
-                final TaskParamsYaml taskParamYaml;
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                taskContextId = taskParamYaml.task.taskContextId;
+                //noinspection unused
+                final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
             }
 
-            finishTaskAsError(task, -10001, console);
+            finishTaskAsError(task, console);
 
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         } catch (Throwable th) {
@@ -126,28 +124,28 @@ public class TaskFinishingService {
             log.warn("#319.170 Error", th);
             ExceptionUtils.rethrow(th);
         }
-        return null;
     }
 
-    private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
-        if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
+    private void finishTaskAsError(TaskImpl task, String console) {
+        if ((task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value)
+                && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
             log.info("#319.200 (task.execState==EnumsApi.TaskExecState.ERROR && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
             return;
         }
-        task.setExecState(EnumsApi.TaskExecState.ERROR.value);
+        task.setExecState(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value);
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
+            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, -10001, console);
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
         task.setResultReceived(true);
         task = taskService.save(task);
 
-        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
+        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
     }
 
 

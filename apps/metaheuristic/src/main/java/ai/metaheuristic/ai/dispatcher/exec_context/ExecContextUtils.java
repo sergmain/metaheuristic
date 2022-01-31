@@ -78,8 +78,8 @@ public class ExecContextUtils {
         r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
-        List<String> sortedContexts = contexts.stream()
-                .sorted(ExecContextUtils::compare).collect(Collectors.toList());
+        //noinspection SimplifyStreamApiCallChains
+        List<String> sortedContexts = contexts.stream().sorted(ExecContextUtils::compare).collect(Collectors.toList());
 
         for (int i = 0; i < r.lines.length; i++) {
             r.lines[i] = new ExecContextApiData.LineWithState();

@@ -65,6 +65,7 @@ public class TaskExecStateService {
         log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.processorId);
         switch (state) {
             case ERROR:
+            case ERROR_WITH_RECOVERY:
                 throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithError()");
             case OK:
                 if (task.execState==EnumsApi.TaskExecState.OK.value) {

@@ -274,11 +274,17 @@ public class Globals {
 
         public String defaultResultFileExtension = ".bin";
 
+        public int maxTriesAfterError = 3;
+
         @DataSizeUnit(DataUnit.MEGABYTES)
         public DataSize chunkSize = DataSize.ofMegabytes(10);
 
         public Period getKeepEventsInDb() {
             return keepEventsInDb.getDays() >= 7 && keepEventsInDb.getDays() <= DAYS_IN_YEARS_3.getDays() ? keepEventsInDb : DAYS_90;
+        }
+
+        public void setMaxTriesAfterError(int maxTriesAfterError) {
+            this.maxTriesAfterError = EnvProperty.minMax(maxTriesAfterError, 0, 10);
         }
 
         @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.global-variable-table")
@@ -690,6 +696,7 @@ public class Globals {
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
         log.info("'\tdispatcher.keepEventsInDb: {}", dispatcher.keepEventsInDb);
+        log.info("'\tdispatcher.maxTriesAfterError: {}", dispatcher.maxTriesAfterError);
 
         log.info("'\tdispatcher.timeout.gc: {}", dispatcher.timeout.gc);
         log.info("'\tdispatcher.timeout.artifactCleaner: {}", dispatcher.timeout.artifactCleaner);

@@ -85,7 +85,7 @@ public class TestSourceCodeGraphLanguageYaml {
         assertEquals(2, findTargets(graph.processGraph, v23.process).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextParamsYaml.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
-        assertEquals("ai", p.tags);
+        assertEquals("ai", p.tag);
         assertEquals(-1, p.priority);
     }
 

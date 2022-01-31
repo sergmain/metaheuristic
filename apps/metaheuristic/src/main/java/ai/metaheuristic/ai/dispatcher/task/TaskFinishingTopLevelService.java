@@ -110,7 +110,7 @@ public class TaskFinishingTopLevelService {
 
             if (!functionExec.allFunctionsAreOk()) {
                 log.info("#318.080 store result with the state ERROR");
-                TaskSyncService.getWithSyncNullable(task.id,
+                TaskSyncService.getWithSyncVoid(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
 
@@ -142,8 +142,8 @@ public class TaskFinishingTopLevelService {
         return taskFinishingService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 
-    private Void finishWithErrorWithInternal(Long taskId, String console) {
-        return taskFinishingService.finishWithErrorWithTx(taskId, console);
+    private void finishWithErrorWithInternal(Long taskId, String console) {
+        taskFinishingService.finishWithErrorWithTx(taskId, console);
     }
 
 

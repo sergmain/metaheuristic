@@ -20,10 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -38,7 +36,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +58,6 @@ public class ExecContextReconciliationTopLevelService {
     private final ExecContextService execContextService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
-    private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
@@ -87,7 +83,7 @@ public class ExecContextReconciliationTopLevelService {
                 execContext.execContextGraphId, execContext.execContextTaskStateId, rootVertices.get(0).taskId);
 
         final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
-        final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = taskProviderTopLevelService.getTaskExecStates(execContext.id);
+        final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContext.id);
 
         for (ExecContextData.TaskWithState tv : vertices) {
 
@@ -118,6 +114,7 @@ public class ExecContextReconciliationTopLevelService {
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else if (taskState.execState== TaskExecState.OK.value && tv.state== TaskExecState.CHECK_CACHE) {
+                        // #307.055 Found different states for task #375939, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found. trying to update a state of task in execContext.
                         log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. trying to update a state of task in execContext.",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state);
                         // this situation can occure if task was stoped, then MH was restarted, and then task was started again

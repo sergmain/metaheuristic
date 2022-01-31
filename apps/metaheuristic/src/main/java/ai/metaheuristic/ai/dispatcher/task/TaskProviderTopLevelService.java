@@ -52,7 +52,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -127,7 +126,7 @@ public class TaskProviderTopLevelService {
             return;
         }
 
-        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tags, p.priority);
+        final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tag, p.priority);
         TaskQueueService.addNewTask(queuedTask);
     }
 
@@ -400,7 +399,7 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tags);
+                        QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tag);
 
                         if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
                             log.warn("#393.840 Not enough quotas, start re-setting task #{}, execContext #{}", taskId, execContextId);
@@ -408,9 +407,9 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        quotas.allocated.add(new DispatcherData.AllocatedQuotas(task.id, p.tags, quota.amount));
+                        quotas.allocated.add(new DispatcherData.AllocatedQuotas(task.id, p.tag, quota.amount));
 
-                        return new TaskData.AssignedTask(task, p.tags, quota.amount);
+                        return new TaskData.AssignedTask(task, p.tag, quota.amount);
                     }
                 }
             }

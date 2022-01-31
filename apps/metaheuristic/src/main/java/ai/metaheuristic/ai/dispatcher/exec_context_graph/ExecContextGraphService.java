@@ -53,6 +53,7 @@ import javax.persistence.EntityManager;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -270,7 +271,6 @@ public class ExecContextGraphService {
     /**
      * !!! This method doesn't return the id of current Task and its new status. Must be changed by an outside code.
      */
-    @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);
@@ -305,8 +305,11 @@ public class ExecContextGraphService {
                     log.info("#915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
                     // todo 2020-11-01 need to decide what to do here
                 }
-                else if (execState==EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (execState == EnumsApi.TaskExecState.IN_PROGRESS) {
                     // do nothing
+                }
+                else if (execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
+                    stateParamsYaml.triesMade.computeIfAbsent(tv.taskId, (o)->new AtomicInteger()).incrementAndGet();
                 }
             }
         });
@@ -632,9 +635,8 @@ public class ExecContextGraphService {
     public void setStateForAllChildrenTasks(Long execContextGraphId, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);
-        changeState(execContextGraph, execContextTaskState, (graph, stateParamsYaml) -> {
-            setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, withTaskList, state);
-        });
+        changeState(execContextGraph, execContextTaskState,
+                (graph, stateParamsYaml) -> setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, withTaskList, state));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -662,6 +664,7 @@ public class ExecContextGraphService {
                 .map(o->new ExecContextData.TaskWithState(o.taskId, state))
                 .collect(Collectors.toCollection(()->withTaskList.childrenTasks));
 
+        //noinspection unused
         int i=1;
     }
 
@@ -674,6 +677,7 @@ public class ExecContextGraphService {
         return addNewTasksToGraph(execContextGraph, execContextTaskState, parentTaskIds, taskIds, state);
     }
 
+    @SuppressWarnings("SimplifyStreamApiCallChains")
     private OperationStatusRest addNewTasksToGraph(
             ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, List<Long> parentTaskIds,
             List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@ import java.util.Map;
 
 /**
  * @author Serge
- * Date: 06/10/2021
+ * Date: 01/30/2022
+ * Time: 10:15 PM
  */
 @Data
-public class ExecContextParamsYamlV3 implements BaseParams {
+public class ExecContextParamsYamlV5 implements BaseParams {
 
-    public final int version = 3;
+    public final int version = 5;
 
     @Override
     public boolean checkIntegrity() {
@@ -47,17 +48,17 @@ public class ExecContextParamsYamlV3 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDeclarationV3 {
+    public static class VariableDeclarationV5 {
         public List<String> globals;
-        public final List<VariableV3> inputs = new ArrayList<>();
-        public final List<VariableV3> outputs = new ArrayList<>();
+        public final List<VariableV5> inputs = new ArrayList<>();
+        public final List<VariableV5> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableV3 {
+    public static class VariableV5 {
         public String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -92,11 +93,11 @@ public class ExecContextParamsYamlV3 implements BaseParams {
             this.nullable = nullable;
         }
 
-        public VariableV3(String name) {
+        public VariableV5(String name) {
             this.name = name;
         }
 
-        public VariableV3(EnumsApi.DataSourcing sourcing, String name) {
+        public VariableV5(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -105,17 +106,17 @@ public class ExecContextParamsYamlV3 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefinitionV3 implements SimpleFunctionDefinition {
+    public static class FunctionDefinitionV5 implements SimpleFunctionDefinition {
         public String code;
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefinitionV3(String code) {
+        public FunctionDefinitionV5(String code) {
             this.code = code;
         }
 
-        public FunctionDefinitionV3(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefinitionV5(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -125,9 +126,18 @@ public class ExecContextParamsYamlV3 implements BaseParams {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CacheV3 {
+    public static class CacheV5 {
         public boolean enabled;
         public boolean omitInline;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextGraphV5 {
+        public Long rootExecContextId;
+        public Long parentExecContextId;
+        public String graph = ConstsApi.EMPTY_GRAPH;
     }
 
     /**
@@ -141,18 +151,18 @@ public class ExecContextParamsYamlV3 implements BaseParams {
     @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessV3 {
+    public static class ProcessV5 {
 
         public String processName;
         public String processCode;
 
         public String internalContextId;
 
-        public FunctionDefinitionV3 function;
+        public FunctionDefinitionV5 function;
         @Nullable
-        public List<FunctionDefinitionV3> preFunctions;
+        public List<FunctionDefinitionV5> preFunctions;
         @Nullable
-        public List<FunctionDefinitionV3> postFunctions;
+        public List<FunctionDefinitionV5> postFunctions;
 
         @Nullable
         public EnumsApi.SourceCodeSubProcessLogic logic;
@@ -164,19 +174,22 @@ public class ExecContextParamsYamlV3 implements BaseParams {
          */
         @Nullable
         public Long timeoutBeforeTerminate;
-        public final List<VariableV3> inputs = new ArrayList<>();
-        public final List<VariableV3> outputs = new ArrayList<>();
+        public final List<VariableV5> inputs = new ArrayList<>();
+        public final List<VariableV5> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
 
         @Nullable
-        public CacheV3 cache;
+        public CacheV5 cache;
         @Nullable
-        public String tags;
+        public String tag;
         public int priority;
         @Nullable
         public String condition;
 
-        public ProcessV3(String processName, String processCode, String internalContextId, FunctionDefinitionV3 function) {
+        @Nullable
+        public Integer triesAfterError;
+
+        public ProcessV5(String processName, String processCode, String internalContextId, FunctionDefinitionV5 function) {
             this.processName = processName;
             this.processCode = processCode;
             this.internalContextId = internalContextId;
@@ -186,9 +199,12 @@ public class ExecContextParamsYamlV3 implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
-    public final List<ProcessV3> processes = new ArrayList<>();
-    public final VariableDeclarationV3 variables = new VariableDeclarationV3();
+    public final List<ProcessV5> processes = new ArrayList<>();
+    public final VariableDeclarationV5 variables = new VariableDeclarationV5();
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
+
+    @Nullable
+    public ExecContextGraphV5 execContextGraph;
 }
