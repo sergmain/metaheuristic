@@ -40,9 +40,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/13/2021
  * Time: 6:53 PM
  */
+@Disabled
 public class TestReduceVariablesUtils_1 {
 
-    @Disabled @Test
+    @Test
     public void testExternal_17() {
         UtilsForTestReduceVariables.extracted_1(List.of("variable-4487360-aggregatedResult11.zip"), UtilsForTestReduceVariables::filterStr);
     }
