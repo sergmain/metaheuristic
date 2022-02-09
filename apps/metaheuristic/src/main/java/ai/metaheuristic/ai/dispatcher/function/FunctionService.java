@@ -16,8 +16,6 @@
 package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -40,29 +33,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FunctionService {
 
-    private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
-
-    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
-    private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = new ArrayList<>();
-    private long mills = 0L;
-
-    public synchronized List<KeepAliveResponseParamYaml.Functions.Info> getFunctionInfos() {
-        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-            mills = System.currentTimeMillis();
-            final List<Long> allIds = functionRepository.findAllIds();
-            functionInfosCache = allIds.stream()
-                    .map(functionCache::findById)
-                    .filter(Objects::nonNull)
-                    .map(s->{
-                        FunctionConfigYaml fcy = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(s.params);
-                        return new KeepAliveResponseParamYaml.Functions.Info(s.code, fcy.sourcing);
-                    })
-                    .collect(Collectors.toList());
-        }
-        return functionInfosCache;
-    }
 
     @Transactional
     public Void deleteFunction(Long functionId, String functionCode) {

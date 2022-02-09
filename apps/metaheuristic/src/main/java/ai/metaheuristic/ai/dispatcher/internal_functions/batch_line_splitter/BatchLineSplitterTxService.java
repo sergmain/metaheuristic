@@ -143,7 +143,7 @@ public class BatchLineSplitterTxService {
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
-                String es = "#994.300 An error while saving data to file, " + th.toString();
+                String es = "#994.300 An error while saving data to file, " + th.getMessage();
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);
             }
@@ -165,6 +165,7 @@ public class BatchLineSplitterTxService {
 
         @Override
         protected boolean isValidLine(String line) {
+            //noinspection ConstantConditions
             return line!=null && !line.isBlank();
         }
     }

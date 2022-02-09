@@ -75,25 +75,21 @@ public class BatchLineSplitterFunction implements InternalFunction {
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found");
         }
         // number-of-lines-per-task
         Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, "number-of-lines-per-task");
         if (numberOfLines==null) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found");
         }
 
         List<VariableUtils.VariableHolder> varHolders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, inputVariableName);
         if (varHolders.isEmpty()) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#994.030 No input variable was found");
         }
 
         if (varHolders.size()>1) {
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.040 Too many variables"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#994.040 Too many variables");
         }
 
         VariableUtils.VariableHolder variableHolder = varHolders.get(0);
@@ -107,18 +103,16 @@ public class BatchLineSplitterFunction implements InternalFunction {
                 content = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
             }
             else {
-                throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable and variable both are null"));
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#994.060 Global variable and variable both are null");
             }
         }
         catch (InternalFunctionException e) {
             throw e;
         }
-        catch(Throwable th) {
+        catch (Throwable th) {
             final String es = "#994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
 
         ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->

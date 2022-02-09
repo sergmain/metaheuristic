@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.event.CheckForLostTaskEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -52,7 +51,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
-    private final TaskService taskService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final TaskTopLevelService taskTopLevelService;
     private final ProcessorTransactionService processorService;

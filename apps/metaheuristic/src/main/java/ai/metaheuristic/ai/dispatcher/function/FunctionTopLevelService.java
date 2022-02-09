@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -43,8 +44,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,6 +57,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
@@ -109,6 +114,73 @@ public class FunctionTopLevelService {
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final FunctionService functionService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
+    private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = null;
+    private long mills = 0L;
+
+    private static class RefreshInfoAboutFunctionsEvent {}
+
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+
+    public List<KeepAliveResponseParamYaml.Functions.Info> getFunctionInfos() {
+        rwl.readLock().lock();
+        try {
+            if (functionInfosCache == null) {
+                rwl.readLock().unlock();
+                rwl.writeLock().lock();
+                try {
+                    if (functionInfosCache == null) {
+                        functionInfosCache = collectInfoAboutFunction();
+                        mills = System.currentTimeMillis();
+                    }
+                    rwl.readLock().lock();
+                }
+                finally {
+                    rwl.writeLock().unlock();
+                }
+            }
+        }
+        finally {
+            rwl.readLock().unlock();
+        }
+
+        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
+            eventPublisher.publishEvent(new RefreshInfoAboutFunctionsEvent());
+        }
+
+        return functionInfosCache;
+    }
+
+    @SuppressWarnings("unused")
+    @Async
+    @EventListener
+    public void handleRefreshInfoAboutFunctionsEvent(RefreshInfoAboutFunctionsEvent event) {
+        rwl.writeLock().lock();
+        try {
+            if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
+                functionInfosCache = collectInfoAboutFunction();
+                mills = System.currentTimeMillis();
+            }
+        }
+        finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    private List<KeepAliveResponseParamYaml.Functions.Info> collectInfoAboutFunction() {
+        final List<Long> allIds = functionRepository.findAllIds();
+
+        return allIds.stream()
+                .map(functionCache::findById)
+                .filter(Objects::nonNull)
+                .map(s->{
+                    FunctionConfigYaml fcy = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(s.params);
+                    return new KeepAliveResponseParamYaml.Functions.Info(s.code, fcy.sourcing);
+                })
+                .collect(Collectors.toList());
+    }
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;

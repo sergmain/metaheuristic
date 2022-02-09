@@ -213,19 +213,19 @@ public class SouthbridgeService {
 
     public String keepAlive(String data, String remoteAddress) {
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
-        KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress);
+        KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
         return yaml;
     }
 
     public String processRequest(String data, String remoteAddress) {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
-        DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
+        DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy, System.currentTimeMillis());
         String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         return yaml;
     }
 
-    private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
+    private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy, long startMills) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.quotas.current);
         try {
@@ -256,6 +256,9 @@ public class SouthbridgeService {
 
                 log.debug("Start processing commands");
                 dispatcherCommandProcessor.process(request, response, quotas);
+                if (System.currentTimeMillis() - startMills > 12_000) {
+                    break;
+                }
             }
         } catch (Throwable th) {
             String json;
