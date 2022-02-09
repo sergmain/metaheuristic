@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -152,7 +153,13 @@ public class BatchSplitterFunction implements InternalFunction {
     }
 
     private void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, File workingDir, Map<String, String> mapping) {
-        batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId);
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
     }
 
 }

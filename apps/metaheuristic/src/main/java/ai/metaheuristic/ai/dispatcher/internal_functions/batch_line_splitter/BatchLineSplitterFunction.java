@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -37,8 +38,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -71,6 +70,19 @@ public class BatchLineSplitterFunction implements InternalFunction {
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
+
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
+    }
+
+    private void processInternal(
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            TaskParamsYaml taskParamsYaml) {
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");

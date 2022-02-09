@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("DuplicatedCode")
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArtifactCleanerAtDispatcher {
 
-    public final Globals globals;
+    private final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextGraphRepository execContextGraphRepository;
@@ -71,8 +72,28 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextService execContextService;
     private final DispatcherEventRepository dispatcherEventRepository;
 
+    private static final AtomicInteger busy = new AtomicInteger(0);
+
+    private static boolean isBusy() {
+        return busy.get() > 0;
+    }
+
+    public static void setBusy() {
+        ArtifactCleanerAtDispatcher.busy.incrementAndGet();
+    }
+
+    public static void notBusy() {
+        int curr = ArtifactCleanerAtDispatcher.busy.decrementAndGet();
+        if (curr<0) {
+            throw new IllegalStateException("(curr<0)");
+        }
+    }
+
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
+        if (isBusy()) {
+            return;
+        }
 
         // do not change the order of calling
         deleteOrphanAndObsoletedBatches();
@@ -98,6 +119,9 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> periodsForDelete = dispatcherEventRepository.getPeriodIdsBefore(period);
         List<List<Long>> pages = CollectionUtils.parseAsPages(periodsForDelete, 10);
         for (List<Long> page : pages) {
+            if (isBusy()) {
+                return;
+            }
             if (page.isEmpty()) {
                 continue;
             }
@@ -117,6 +141,9 @@ public class ArtifactCleanerAtDispatcher {
         Set<Long> forDeletion = new HashSet<>();
         List<Object[]> batches = batchRepository.findAllIdAndCreatedOnAndDeleted();
         for (Object[] obj : batches) {
+            if (isBusy()) {
+                return;
+            }
             long batchId = ((Number)obj[0]).longValue();
             long createdOn = ((Number)obj[1]).longValue();
             boolean deleted = Boolean.TRUE.equals(obj[2]);
@@ -140,8 +167,17 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContexts() {
         List<Long> execContextIds = execContextRepository.findAllIds();
         deleteOrphanExecContexts(execContextIds);
+        if (isBusy()) {
+            return;
+        }
         deleteOrphanExecContextGraph(execContextIds);
+        if (isBusy()) {
+            return;
+        }
         deleteOrphanExecContextTaskState(execContextIds);
+        if (isBusy()) {
+            return;
+        }
         deleteOrphanExecContextVariableState(execContextIds);
     }
 
@@ -235,10 +271,14 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> taskExecContextIds = taskRepository.getAllExecContextIds();
         List<Long> execContextIds = execContextRepository.findAllIds();
 
+        //noinspection SimplifyStreamApiCallChains
         List<Long> orphanExecContextIds = taskExecContextIds.stream()
                 .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
 
         for (Long execContextId : orphanExecContextIds) {
+            if (isBusy()) {
+                return;
+            }
             if (execContextCache.findById(execContextId)!=null) {
                 log.warn("execContextId #{} still here", execContextId);
                 Long id = execContextRepository.findIdById(execContextId);
@@ -258,6 +298,9 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
+                    if (isBusy()) {
+                        return;
+                    }
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
                     try {
                         taskTransactionalService.deleteOrphanTasks(page);
@@ -274,6 +317,7 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> variableExecContextIds = variableRepository.getAllExecContextIds();
         List<Long> execContextIds = execContextRepository.findAllIds();
 
+        //noinspection SimplifyStreamApiCallChains
         List<Long> orphanExecContextIds = variableExecContextIds.stream()
                 .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
 
@@ -287,18 +331,15 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
                 for (List<Long> page : pages) {
+                    if (isBusy()) {
+                        return;
+                    }
                     if (page.isEmpty()) {
                         continue;
                     }
                     log.info("Found orphan variables, execContextId: #{}, variables #{}", execContextId, page);
                     try {
-//                        ExecContextSyncService.getWithSyncVoid(execContextId, () -> variableService.deleteOrphanVariables(page));
                         variableService.deleteOrphanVariables(page);
-/*
-                        for (Long aLong : page) {
-                            variableService.deleteOrphanVariable(aLong);
-                        }
-*/
                     }
                     catch (Throwable th) {
                         log.error("variableService.deleteOrphanVariables("+execContextId+")", th);
@@ -312,6 +353,7 @@ public class ArtifactCleanerAtDispatcher {
         List<String> funcCodes = functionRepository.findAllFunctionCodes();
         Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
 
+        //noinspection SimplifyStreamApiCallChains
         List<String> missingCodes = currFuncCodes.stream().filter(currFuncCode -> !funcCodes.contains(currFuncCode)).collect(Collectors.toList());
 
         for (String funcCode : missingCodes) {
@@ -319,6 +361,9 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = cacheProcessRepository.findByFunctionCode(Consts.PAGE_REQUEST_100_REC, funcCode)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
                 for (List<Long> page : pages) {
+                    if (isBusy()) {
+                        return;
+                    }
                     if (page.isEmpty()) {
                         continue;
                     }
