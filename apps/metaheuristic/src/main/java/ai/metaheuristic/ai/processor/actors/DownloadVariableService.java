@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
@@ -268,7 +269,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         FileUtils.copyFile(input, fos);
                     }
                     fos.flush();
-                    fos.getFD().sync();
+                    final FileDescriptor fd = fos.getFD();
+                    if (fd.valid()) {
+                        fd.sync();
+                    }
                 }
 
                 if (!tempFile.renameTo(assetFile.file)) {

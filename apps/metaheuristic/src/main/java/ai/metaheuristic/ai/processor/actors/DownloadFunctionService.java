@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -270,7 +271,10 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             FileUtils.copyFile(input, fos);
                         }
                         fos.flush();
-                        fos.getFD().sync();
+                        final FileDescriptor fd = fos.getFD();
+                        if (fd.valid()) {
+                            fd.sync();
+                        }
                     }
 
                     functionTempFile.renameTo(assetFile.file);

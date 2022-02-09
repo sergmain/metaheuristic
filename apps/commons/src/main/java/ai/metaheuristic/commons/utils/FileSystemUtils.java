@@ -47,7 +47,10 @@ public class FileSystemUtils {
         try (FileOutputStream fos = new FileOutputStream(destFile)) {
             copyFile(srcFile, fos);
             fos.flush();
-            fos.getFD().sync();
+            final FileDescriptor fd = fos.getFD();
+            if (fd.valid()) {
+                fd.sync();
+            }
         }
     }
 
