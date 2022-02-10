@@ -445,12 +445,12 @@ public class Schedulers {
     @Profile("processor")
     public static class DownloadResourceActorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
-        private final DownloadVariableService downloadResourceActor;
+        private final DownloadVariableService downloadVariableService;
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::downloadResourceActor,
+            taskRegistrar.addTriggerTask( this::downloadVariableService,
                     context -> {
                         Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
                         Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getDownloadResource().toSeconds());
@@ -460,12 +460,12 @@ public class Schedulers {
         }
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
-        public void downloadResourceActor() {
+        public void downloadVariableService() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
             }
-            log.info("Run downloadResourceActor.process()");
-            downloadResourceActor.process();
+            log.info("Run downloadVariableService.process()");
+            downloadVariableService.process();
         }
 
     }

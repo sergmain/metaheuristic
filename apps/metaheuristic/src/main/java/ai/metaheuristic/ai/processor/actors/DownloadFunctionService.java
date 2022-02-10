@@ -262,22 +262,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         continue;
                     }
 
-                    try (FileOutputStream fos = new FileOutputStream(functionTempFile)) {
-                        for (int i = 0; i <= idx; i++) {
-                            final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
-                            if (input.length() == 0) {
-                                continue;
-                            }
-                            FileUtils.copyFile(input, fos);
-                        }
-                        fos.flush();
-                        final FileDescriptor fd = fos.getFD();
-                        if (fd.valid()) {
-                            fd.sync();
-                        }
-                    }
+                    DownloadUtils.combineParts(assetFile, functionTempFile, idx);
 
-                    functionTempFile.renameTo(assetFile.file);
+                    if (!functionTempFile.renameTo(assetFile.file)) {
+                        log.warn("#811.138 Can't rename file {} to file {}", functionTempFile.getPath(), assetFile.file.getPath());
+                        return;
+                    }
 
                 } catch (HttpResponseException e) {
                     logError(functionCode, e);
