@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -24,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskShortEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -111,6 +109,7 @@ public class ExecContextTaskResettingTopLevelService {
             AtomicInteger ai = ectspy.triesWasMade.get(taskId);
             int triesWasMade = ai == null ? 0 : ai.get();
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
+            // after a recovery try we don't need to use CACHE. so it'll be NONE
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, maxTries>triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR));
         }
         ExecContextSyncService.getWithSyncVoid(execContextId, ()->

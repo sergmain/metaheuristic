@@ -110,7 +110,7 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-context-add";
     }
 
-    // TODO P1 2022-02-10 do wee need to specify a role for downloading a variable
+    // TODO P1 2022-02-10 do wee need to specify a role for downloading a variable?
     @GetMapping(value= "/exec-context/{execContextId}/download-variable/{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadVariable(
             HttpServletRequest request, @PathVariable("execContextId") Long execContextId, @PathVariable("variableId") Long variableId,

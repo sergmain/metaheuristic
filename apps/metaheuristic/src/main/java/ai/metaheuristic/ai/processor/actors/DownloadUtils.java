@@ -56,7 +56,7 @@ class DownloadUtils {
         return null;
     }
 
-    static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {
+    public static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             for (int i = 0; i <= idx; i++) {
                 final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");

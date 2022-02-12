@@ -193,9 +193,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         return;
                     }
                     else if (statusCode != HttpServletResponse.SC_OK ) {
-                        es = "#810.030 Unexpected http status code: "+statusCode+",  #"+task.variableId+"";
-                        log.warn(es);
-                        // do nothing, this info for monitoring purpose only
+                        es = "#810.030 An unexpected http status code: "+statusCode+",  #"+task.variableId+"";
+                        log.error(es);
+                        return;
                     }
 
                     try (final FileOutputStream out = new FileOutputStream(partFile)) {
@@ -247,7 +247,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         break;
                     }
                     else {
-                        es = String.format("#810.037 An unknown error while downloading a variable #%s. Task #%s is finished with an error.", task.variableId, task.getTaskId());
+                        es = String.format("#810.038 An unknown error while downloading a variable #%s. Task #%s is finished with an error.", task.variableId, task.getTaskId());
                         log.warn(es);
                         processorTaskService.markAsFinishedWithError(task.ref, task.getTaskId(), es);
                         resourceState = Enums.VariableState.unknown_error;

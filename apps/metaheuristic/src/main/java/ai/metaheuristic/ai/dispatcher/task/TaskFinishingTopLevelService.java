@@ -72,6 +72,7 @@ public class TaskFinishingTopLevelService {
 
         switch (state) {
             case ERROR:
+            case ERROR_WITH_RECOVERY:
             case OK:
             case SKIPPED:
                 // ---> This is a normal operation. do nothing
@@ -109,7 +110,7 @@ public class TaskFinishingTopLevelService {
             }
 
             if (!functionExec.allFunctionsAreOk()) {
-                log.info("#318.080 store result with the state ERROR");
+                log.info("#318.080 store result with the state ERROR_WITH_RECOVERY");
                 TaskSyncService.getWithSyncVoid(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
@@ -122,7 +123,7 @@ public class TaskFinishingTopLevelService {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream()
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
-                .allMatch(o -> o.uploaded);
+                .allMatch(o->o.uploaded);
 
         if (task.resultReceived && allUploaded) {
 

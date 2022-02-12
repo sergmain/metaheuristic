@@ -75,7 +75,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
-public class TestSourceCodeService extends PreparingSourceCode {
+public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -105,7 +105,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     @AfterEach
-    public void afterTestSourceCodeService() {
+    public void afterTestExecutionWithRecoveryFromError() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
         if (getExecContextForTest() !=null) {
             ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
