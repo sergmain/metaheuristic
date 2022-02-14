@@ -21,11 +21,12 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskTxAfterCommitEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -43,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -63,10 +63,10 @@ public class ExecContextTaskResettingService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final TaskFinishingService taskFinishingService;
+    private final TaskStateService taskStateService;
 
     @Transactional
     public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
-        TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -86,9 +86,10 @@ public class ExecContextTaskResettingService {
                 // console is null because an actual text of error was specified with TaskExecState.ERROR_WITH_RECOVERY
                 taskFinishingService.finishWithErrorWithTx(status.taskId, null, EnumsApi.TaskExecState.ERROR);
             }
-            else if (status.targetState== EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
-                TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId));
-                ectspy.triesWasMade.put(status.taskId, new AtomicInteger(status.triesWasMade));
+            else if (status.targetState==EnumsApi.TaskExecState.NONE) {
+                TaskSyncService.getWithSyncVoid(status.taskId,
+                        ()->resetTask(ec, status.taskId));
+                ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
             }
             else {
                 throw new IllegalStateException("status.targetState==");
@@ -146,7 +147,8 @@ public class ExecContextTaskResettingService {
             variableService.resetVariable(execContext.id, output.id);
         }
 
-        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
+        eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+//        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
 
         log.info("#305.035 task #{} and its output variables were re-setted to initial state", taskId);
     }

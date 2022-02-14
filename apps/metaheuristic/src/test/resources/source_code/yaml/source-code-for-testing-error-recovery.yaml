@@ -1,3 +1,4 @@
+version: 4
 source:
   clean: false
   uid: source-code-for-tesing-experiment-1.0
@@ -44,6 +45,7 @@ source:
         - name: global-test-variable
       outputs:
         - name: assembled-raw-output
+      triesAfterError: 1
     - code: dataset-processing
       name: dataset processing
       function:
@@ -53,93 +55,3 @@ source:
         - name: assembled-raw-output
       outputs:
         - name: dataset-processing-output
-      subProcesses:
-        logic: and
-        processes:
-          - code: feature-processing-1
-            name: feature-processing-1
-            function:
-              code: function-03:1.1
-              context: external
-            inputs:
-              - name: dataset-processing-output
-            outputs:
-              - name: feature-output-1
-                sourcing: dispatcher
-                parentContext: true
-          - code: feature-processing-2
-            name: feature-processing-2
-            function:
-              code: function-04:1.1
-              context: external
-            inputs:
-              - name: dataset-processing-output
-            outputs:
-              - name: feature-output-2
-                parentContext: true
-    - code: mh.permute-values-of-variables
-      name: permute values of variables
-      function:
-        code: mh.permute-values-of-variables
-        context: internal
-      inputs:
-        - name: seed
-        - name: batchSize
-        - name: timeSteps
-        - name: RNN
-      metas:
-        - prefix: sub
-        - suffix: Val
-        - upper-case-first-char: true
-      subProcesses:
-        logic: sequential
-        processes:
-          - code: mh.permute-variables
-            name: permute variables
-            function:
-              code: mh.permute-variables
-              context: internal
-            metas:
-              - variables-for-permutation: feature-output-1, feature-output-2
-              - output-variable: feature-item
-            subProcesses:
-              logic: sequential
-              processes:
-                - code: fit-dataset
-                  name: fit-dataset
-                  function:
-                    code: test.fit.function:1.0
-                    context: external
-                  inputs:
-                    - name: dataset-processing-output
-                    - name: subSeedVal
-                    - name: subBatchSizeVal
-                    - name: subTimeStepsVal
-                    - name: subRNNVal
-                    - name: feature-item
-                      array: true
-                  outputs:
-                    - name: model
-                - code: predict-dataset
-                  name: predict-dataset
-                  function:
-                    code: test.predict.function:1.0
-                    context: external
-                  inputs:
-                    - name: dataset-processing-output
-                    - name: model
-                    - name: feature-item
-                      array: true
-                  outputs:
-                    - name: metrics
-                    - name: predicted
-    - code: mh.aggregate
-      name: mh.aggregate
-      function:
-        code: mh.aggregate
-        context: internal
-      metas:
-        - variables: metrics, predicted
-      outputs:
-        - name: final-result
-version: 4

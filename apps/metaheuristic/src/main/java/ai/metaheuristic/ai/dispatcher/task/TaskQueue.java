@@ -399,15 +399,12 @@ public class TaskQueue {
         return false;
     }
 
-    public static boolean groupFinished(TaskGroup taskGroup) {
+    private static boolean groupFinished(TaskGroup taskGroup) {
         for (AllocatedTask task : taskGroup.tasks) {
             if (task==null) {
                 continue;
             }
-            if (!task.assigned) {
-                return false;
-            }
-            if (!EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(task.state.value)) {
+            if (!EnumsApi.TaskExecState.isFinishedState(task.state.value)) {
                 return false;
             }
         }

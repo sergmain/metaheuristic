@@ -113,6 +113,7 @@ public class ExecContextProcessGraphService {
     public static void addProcessVertexToGraph(
             DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex vertex, Collection<ExecContextData.ProcessVertex> parentProcesses) {
 
+        //noinspection SimplifyStreamApiCallChains
         List<ExecContextData.ProcessVertex> parentVertices = processGraph.vertexSet()
                 .stream()
                 .filter(parentProcesses::contains)
@@ -160,6 +161,7 @@ public class ExecContextProcessGraphService {
         if (startVertex==null) {
             return List.of();
         }
+        //noinspection SimplifyStreamApiCallChains
         List<String> ctxs = processGraph.outgoingEdgesOf(startVertex).stream()
                 .map(processGraph::getEdgeTarget)
                 .filter(o->!o.processContextId.equals(startVertex.processContextId) && o.processContextId.startsWith(startVertex.processContextId))

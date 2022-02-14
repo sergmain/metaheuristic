@@ -35,7 +35,7 @@ import java.util.List;
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.execState=7")
+    @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")
     List<Long> findTaksForErrorWithRecoveryState(Long execContextId);
 
     @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +

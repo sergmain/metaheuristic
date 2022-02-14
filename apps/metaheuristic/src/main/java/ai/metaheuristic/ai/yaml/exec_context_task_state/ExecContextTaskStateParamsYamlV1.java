@@ -41,5 +41,5 @@ public class ExecContextTaskStateParamsYamlV1 implements BaseParams {
 
     public final Map<Long, EnumsApi.TaskExecState> states = new HashMap<>();
 
-    public final Map<Long, AtomicInteger> triesWasMade = new HashMap<>();
+    public final Map<Long, Integer> triesWasMade = new HashMap<>();
 }

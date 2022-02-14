@@ -309,7 +309,8 @@ public class ExecContextGraphService {
                     // do nothing
                 }
                 else if (execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
-                    stateParamsYaml.triesWasMade.computeIfAbsent(tv.taskId, (o)->new AtomicInteger()).incrementAndGet();
+//                    Integer currVal = stateParamsYaml.triesWasMade.get(tv.taskId);
+//                    stateParamsYaml.triesWasMade.put(tv.taskId, currVal==null ? 1 : currVal +1);
                 }
             }
         });

@@ -83,7 +83,7 @@ public class ExecContextTaskResettingTopLevelService {
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
 
-    private void resetTasksWithErrorForRecovery(Long execContextId) {
+    public void resetTasksWithErrorForRecovery(Long execContextId) {
         TxUtils.checkTxNotExists();
 
         ExecContextImpl ec = execContextCache.findById(execContextId);
@@ -106,8 +106,8 @@ public class ExecContextTaskResettingTopLevelService {
                 continue;
             }
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            AtomicInteger ai = ectspy.triesWasMade.get(taskId);
-            int triesWasMade = ai == null ? 0 : ai.get();
+            Integer ai = ectspy.triesWasMade.get(taskId);
+            int triesWasMade = ai == null ? 0 : ai;
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
             // after a recovery try we don't need to use CACHE. so it'll be NONE
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, maxTries>triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR));
@@ -115,6 +115,7 @@ public class ExecContextTaskResettingTopLevelService {
         ExecContextSyncService.getWithSyncVoid(execContextId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId,
                         () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(execContextId, statuses)));
+        int i=0;
     }
 
 }
