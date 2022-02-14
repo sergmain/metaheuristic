@@ -84,7 +84,8 @@ public class ExecContextTaskResettingService {
         for (TaskData.TaskWithRecoveryStatus status : statuses) {
             if (status.targetState== EnumsApi.TaskExecState.ERROR) {
                 // console is null because an actual text of error was specified with TaskExecState.ERROR_WITH_RECOVERY
-                taskFinishingService.finishWithErrorWithTx(status.taskId, null, EnumsApi.TaskExecState.ERROR);
+                TaskSyncService.getWithSyncVoid(status.taskId,
+                        ()->taskFinishingService.finishWithError(status.taskId, null, EnumsApi.TaskExecState.ERROR));
             }
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
                 TaskSyncService.getWithSyncVoid(status.taskId,

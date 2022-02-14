@@ -99,10 +99,10 @@ public class TaskFinishingService {
 
     @Transactional
     public void finishWithErrorWithTx(Long taskId, String console) {
-        finishWithErrorWithTx(taskId, console, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
+        finishWithError(taskId, console, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
     }
 
-    public void finishWithErrorWithTx(Long taskId, @Nullable String console, EnumsApi.TaskExecState targetState) {
+    public void finishWithError(Long taskId, @Nullable String console, EnumsApi.TaskExecState targetState) {
         TxUtils.checkTxExists();
 
         try {
@@ -111,7 +111,7 @@ public class TaskFinishingService {
                 log.warn("#319.140 task #{} wasn't found", taskId);
                 return;
             }
-            if (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value) {
+            if (task.execState==targetState.value && (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value)) {
                 log.warn("#319.145 task #{} was already finished", taskId);
                 return;
             }
@@ -134,9 +134,11 @@ public class TaskFinishingService {
     }
 
     private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
-        if ((task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value)
-                && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#319.200 (task.execState==EnumsApi.TaskExecState.ERROR && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
+        final boolean updatePossible = targetState.value == task.execState &&
+                (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
+                task.isCompleted && task.resultReceived && !S.b(task.functionExecResults);
+        if (updatePossible) {
+            log.info("#319.200 task: #{}, updatePossible: {}", task.id, updatePossible);
             return;
         }
         task.setExecState(targetState.value);
@@ -163,7 +165,7 @@ public class TaskFinishingService {
         task.setResultReceived(true);
         task = taskService.save(task);
 
-        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
+        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, targetState);
     }
 
 
