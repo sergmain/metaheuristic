@@ -233,11 +233,6 @@ public class ExecContextGraphService {
         return callable.apply(graph, ectspy);
     }
 
-    private static long readOnlyGraphLong(ExecContextGraph execContextGraph, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
-        return callable.apply(graph);
-    }
-
     private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextGraph execContextGraph) {
         return importProcessGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
@@ -308,8 +303,7 @@ public class ExecContextGraphService {
                     // do nothing
                 }
                 else if (execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
-//                    Integer currVal = stateParamsYaml.triesWasMade.get(tv.taskId);
-//                    stateParamsYaml.triesWasMade.put(tv.taskId, currVal==null ? 1 : currVal +1);
+                    // todo 2022-02-17 need to decide what to do here
                 }
             }
         });
@@ -460,28 +454,24 @@ public class ExecContextGraphService {
             }
 
             ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
-                    .filter( v -> {
-                        if (!graph.incomingEdgesOf(v).isEmpty()) {
-                            return false;
-                        }
-                        EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(v.taskId, EnumsApi.TaskExecState.NONE);
-                        if (includeForCaching) {
-                            return (state == EnumsApi.TaskExecState.NONE || state == EnumsApi.TaskExecState.CHECK_CACHE);
-                        }
-                        else {
-                            return state == EnumsApi.TaskExecState.NONE;
-                        }
-                    })
+                    .filter( v -> graph.incomingEdgesOf(v).isEmpty())
                     .findFirst()
                     .orElse(null);
 
             // if this is newly created graph then return only the start vertex of graph
             if (startVertex!=null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}",
-                            startVertex.taskId, stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE));
+                EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE);
+                boolean found = includeForCaching ?
+                        (state == EnumsApi.TaskExecState.NONE || state == EnumsApi.TaskExecState.CHECK_CACHE) :
+                        state == EnumsApi.TaskExecState.NONE;
+
+                if (found) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}",
+                                startVertex.taskId, stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE));
+                    }
+                    return List.of(startVertex);
                 }
-                return List.of(startVertex);
             }
 
             log.debug("\tThe root vertex of execContextGraph was already processes");
@@ -584,7 +574,7 @@ public class ExecContextGraphService {
         ExecContextTaskStateParamsYaml stateParamsYaml = execContextTaskState.getExecContextTaskStateParamsYaml();
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
             EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(ancestor.taskId, EnumsApi.TaskExecState.NONE);
-            if (state==EnumsApi.TaskExecState.NONE || state==EnumsApi.TaskExecState.IN_PROGRESS || state==EnumsApi.TaskExecState.CHECK_CACHE) {
+            if (!EnumsApi.TaskExecState.isFinishedState(state)) {
                 return false;
             }
         }

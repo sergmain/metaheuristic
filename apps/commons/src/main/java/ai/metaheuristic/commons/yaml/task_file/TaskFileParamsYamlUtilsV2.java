@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("DuplicatedCode")
 public class TaskFileParamsYamlUtilsV2
         extends AbstractParamsYamlUtils<TaskFileParamsYamlV2, TaskFileParamsYaml, Void,
-        TaskFileParamsYamlV1, TaskFileParamsYamlUtilsV1, TaskFileParamsYamlV2> {
+        TaskFileParamsYamlV1, TaskFileParamsYamlUtilsV1, TaskFileParamsYaml> {
 
     @Override
     public int getVersion() {
@@ -94,7 +94,7 @@ public class TaskFileParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public TaskFileParamsYamlV1 downgradeTo(@NonNull TaskFileParamsYamlV2 v2) {
+    public TaskFileParamsYamlV1 downgradeTo(@NonNull TaskFileParamsYaml v2) {
         v2.checkIntegrity();
 
         TaskFileParamsYamlV1 t1 = new TaskFileParamsYamlV1();
@@ -108,7 +108,7 @@ public class TaskFileParamsYamlUtilsV2
         return t1;
     }
 
-    private static TaskFileParamsYamlV1.InputVariableV1 downInputVariable(TaskFileParamsYamlV2.InputVariableV2 v2) {
+    private static TaskFileParamsYamlV1.InputVariableV1 downInputVariable(TaskFileParamsYaml.InputVariable v2) {
         TaskFileParamsYamlV1.InputVariableV1 v = new TaskFileParamsYamlV1.InputVariableV1();
         v.id = v2.id;
         v.name = v2.name;
@@ -123,7 +123,7 @@ public class TaskFileParamsYamlUtilsV2
         return v;
     }
 
-    private static TaskFileParamsYamlV1.OutputVariableV1 downOutputVariable(TaskFileParamsYamlV2.OutputVariableV2 v2) {
+    private static TaskFileParamsYamlV1.OutputVariableV1 downOutputVariable(TaskFileParamsYaml.OutputVariable v2) {
         TaskFileParamsYamlV1.OutputVariableV1 v = new TaskFileParamsYamlV1.OutputVariableV1();
         v.id = v2.id;
         v.name = v2.name;

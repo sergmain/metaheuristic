@@ -28,8 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestTaskParamYamlWithoutRef {
 
@@ -50,8 +49,10 @@ public class TestTaskParamYamlWithoutRef {
     }
 
     @Test
-    public void createTaskFileParamYaml() {
+    public void createTaskFileParamYamlAndCheckDowngrading() {
         TaskFileParamsYaml params = new TaskFileParamsYaml();
+        assertNotEquals(1, params.version);
+
         params.task = new TaskFileParamsYaml.Task();
         TaskFileParamsYaml.Task t = params.task;
         t.clean = true;
@@ -68,6 +69,8 @@ public class TestTaskParamYamlWithoutRef {
         String yaml = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toString(params);
 
         System.out.println(yaml);
+
+        assertDoesNotThrow(()->TaskFileParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(params, 1));
     }
 
 }

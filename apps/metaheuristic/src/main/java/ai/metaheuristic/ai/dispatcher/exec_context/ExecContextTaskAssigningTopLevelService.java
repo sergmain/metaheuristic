@@ -19,10 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
-import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
@@ -64,7 +61,6 @@ public class ExecContextTaskAssigningTopLevelService {
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
-//        log.info("findUnassignedTasksAndRegisterInQueue({})", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return;
@@ -73,10 +69,8 @@ public class ExecContextTaskAssigningTopLevelService {
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
 
-//        log.info("Number of founded vertices: {}", vertices.size());
-
         if (vertices.isEmpty()) {
-            eventPublisher.publishEvent(new ResetTasksWithErrorTxEvent(execContextId));
+            ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
             return;
         }
 
@@ -85,14 +79,12 @@ public class ExecContextTaskAssigningTopLevelService {
         boolean isEmpty = true;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             isEmpty = false;
-//            log.info("Founded task Ids: {}", taskIds);
 
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
                     continue;
                 }
-//                log.info("task: {}, execState: {}", taskId, EnumsApi.TaskExecState.from(task.execState));
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
                     // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()

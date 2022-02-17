@@ -15,11 +15,13 @@
  */
 package ai.metaheuristic.commons.yaml.function_list;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -58,6 +60,9 @@ public class FunctionConfigListYaml implements BaseParams {
             }
             if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
                 errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
+            }
+            if (MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION)==null) {
+                errors.add(S.f("function %s must have a meta 'mh.task-params-version' with effective version of TaskParams", function.code));
             }
         }
         if (!errors.isEmpty()) {

@@ -528,13 +528,13 @@ public class SourceCodeValidationService {
 
     private SourceCodeApiData.SourceCodeValidationResult checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode fnDef) {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVersionOfTaskParamsYaml(sourceCodeParamsVersion);
-        TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(fnDef);
-        if (sc==null) {
+        TaskParamsYaml.FunctionConfig fc = functionTopLevelService.getFunctionConfig(fnDef);
+        if (fc==null) {
             String es = S.f("#175.440 Function %s wasn't found",  fnDef.code);
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
-        if (!sc.skipParams && taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(sc.metas)) {
+        if (!fc.skipParams && taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(fc.metas)) {
             String es = S.f("#175.460 Version of function %s is too low, required version: %s", fnDef.code, taskParamsYamlVersion);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(

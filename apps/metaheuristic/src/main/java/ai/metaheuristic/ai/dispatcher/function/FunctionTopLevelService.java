@@ -234,18 +234,15 @@ public class FunctionTopLevelService {
                     "#424.020 Can't upload function while 'replicated' mode of asset is active");
         }
         if (file==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.025 File with function wasn't selected");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#424.025 File with function wasn't selected");
         }
         String originFilename = file.getOriginalFilename();
         if (S.b(originFilename)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.030 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#424.030 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
         if (S.b(ext)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.040 file without extension, bad filename: " + originFilename);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#424.040 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -286,7 +283,7 @@ public class FunctionTopLevelService {
         catch (Exception e) {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.070 can't load functions, Error: " + e.toString());
+                    "#424.070 can't load functions, Error: " + e.getMessage());
         }
         finally {
             DirUtils.deleteAsync(tempDir);
@@ -406,6 +403,7 @@ public class FunctionTopLevelService {
                         continue;
                     }
                     // ###idea### why?
+                    //noinspection ConstantConditions
                     EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(
                             hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcher.publicKey);
 
@@ -443,7 +441,7 @@ public class FunctionTopLevelService {
                 statuses.add(new FunctionApiData.FunctionConfigStatus(false, e.getMessage()));
             }
             catch(Throwable th) {
-                final String es = "#295.240 Error " + th.getClass().getName() + " while processing function '" + functionConfig.code + "': " + th.toString();
+                final String es = "#295.240 Error " + th.getClass().getName() + " while processing function '" + functionConfig.code + "': " + th.getMessage();
                 log.error(es, th);
                 statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
             }
