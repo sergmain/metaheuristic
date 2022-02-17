@@ -141,8 +141,15 @@ public class ExecContextReconciliationTopLevelService {
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
+                    else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
+                        // #307.085 Found different states for task #31786, db: ERROR_WITH_RECOVERY, graph: NONE, assigned: false, state in queue: NONE, required steps are unknown
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                    }
                     else {
-                        log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
+                        log.warn("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                     }
                 }

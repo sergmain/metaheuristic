@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
@@ -58,6 +59,8 @@ public class ExecContextTaskAssigningTopLevelService {
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private long mills = 0L;
+
     public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -79,7 +82,9 @@ public class ExecContextTaskAssigningTopLevelService {
 
         int page = 0;
         List<Long> taskIds;
+        boolean isEmpty = true;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+            isEmpty = false;
 //            log.info("Founded task Ids: {}", taskIds);
 
             for (Long taskId : taskIds) {
@@ -142,6 +147,11 @@ public class ExecContextTaskAssigningTopLevelService {
                     // this situation will be handled while a reconciliation stage
                 }
             }
+        }
+        if (isEmpty && System.currentTimeMillis() - mills > 10_000) {
+            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                    execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
+            mills = System.currentTimeMillis();
         }
         TaskProviderTopLevelService.lock(execContextId);
     }

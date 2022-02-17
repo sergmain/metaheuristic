@@ -293,6 +293,16 @@ public class TaskQueue {
         return null;
     }
 
+    @Nullable
+    public TaskGroup getTaskGroupForTransfering(Long execContextId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId) && groupReadyForTransfering(taskGroup)) {
+                return taskGroup;
+            }
+        }
+        return null;
+    }
+
     public boolean allTaskGroupFinished(Long execContextId) {
         for (TaskGroup o : taskGroups) {
             if (execContextId.equals(o.execContextId)) {
@@ -405,6 +415,18 @@ public class TaskQueue {
                 continue;
             }
             if (!EnumsApi.TaskExecState.isFinishedState(task.state.value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean groupReadyForTransfering(TaskGroup taskGroup) {
+        for (AllocatedTask task : taskGroup.tasks) {
+            if (task==null) {
+                continue;
+            }
+            if (!EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(task.state.value)) {
                 return false;
             }
         }

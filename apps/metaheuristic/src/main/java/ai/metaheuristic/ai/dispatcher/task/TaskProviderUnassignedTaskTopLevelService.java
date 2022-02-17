@@ -178,12 +178,6 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     continue;
                 }
 
-                if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
-                    log.error("#317.050 Task #{} with function '{}' isn't in state NONE, actual: {}",
-                            queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(queuedTask.task.execState));
-                    throw new IllegalStateException("(queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value)");
-                }
-
                 // check of git availability
                 if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
                     log.warn("#317.060 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
@@ -253,6 +247,10 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     resultTask = null;
                 }
 
+                if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
+                    continue;
+                }
+
                 if (resultTask != null) {
                     break;
                 }
@@ -276,6 +274,10 @@ public class TaskProviderUnassignedTaskTopLevelService {
         TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
             log.warn("#317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
+            return null;
+        }
+        if (t.execState!= EnumsApi.TaskExecState.NONE.value) {
+            log.warn("#317.200 Can't assign task #{}, task state isn't NONE, actual: {}", t.id, EnumsApi.TaskExecState.from(t.execState));
             return null;
         }
         if (quota==null) {
@@ -305,7 +307,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
         ProcessorStatusYaml.DownloadStatus ds = status.downloadStatuses.stream().filter(o->o.functionCode.equals(functionConfig.code)).findFirst().orElse(null);
 
         if (ds==null || ds.functionState!= Enums.FunctionState.ready) {
-            log.debug("#317.180 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "'not prepared yet'" : ds.functionState);
+            log.debug("#317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "'not prepared yet'" : ds.functionState);
             result.set(true);
         }
     }

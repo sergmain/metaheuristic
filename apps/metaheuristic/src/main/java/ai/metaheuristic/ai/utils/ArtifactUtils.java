@@ -23,7 +23,6 @@ import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
  * Date: 1/27/2021
  * Time: 1:28 AM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 public class ArtifactUtils {
 
@@ -87,7 +87,7 @@ public class ArtifactUtils {
     }
 
     private static EnumsApi.DataType toType(EnumsApi.VariableContext context) {
-        switch(context) {
+        switch (context) {
             case global:
                 return EnumsApi.DataType.global_variable;
             case local:
@@ -102,6 +102,7 @@ public class ArtifactUtils {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
         v.id = v1.id.toString();
         v.dataType = toType(v1.context);
+        v.array = v1.context== EnumsApi.VariableContext.array;
         v.name = v1.name;
         v.disk = v1.disk;
         v.git = v1.git;

@@ -86,6 +86,12 @@ public class TaskQueueService {
     }
 
     @Nullable
+    public static TaskQueue.TaskGroup getTaskGroupForTransfering(Long execContextId) {
+        checkWriteLockPresent();
+        return taskQueue.getTaskGroupForTransfering(execContextId);
+    }
+
+    @Nullable
     public static TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
         checkWriteLockPresent();
         return taskQueue.getTaskExecState(execContextId, taskId);

@@ -19,6 +19,8 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV1;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestTaskParamYamlWithoutRef {
 
@@ -34,7 +37,10 @@ public class TestTaskParamYamlWithoutRef {
     public void testTaskFileParamYaml() throws IOException {
         String yaml = IOUtils.resourceToString("/yaml/task_file_params/params-v1.yaml", StandardCharsets.UTF_8);
 
-        TaskFileParamsYaml taskParam = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        final AbstractParamsYamlUtils forVersion = TaskFileParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
+        assertNotNull(forVersion);
+
+        TaskFileParamsYamlV1 taskParam = (TaskFileParamsYamlV1)forVersion.to(yaml);
 
         String s = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toString(taskParam);
 

@@ -20,7 +20,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -38,9 +41,9 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode
-public class TaskFileParamsYaml implements BaseParams {
+public class TaskFileParamsYamlV2 implements BaseParams {
 
-    public final int version = 2;
+    public final int version = 1;
 
     @Override
     public boolean checkIntegrity() {
@@ -50,7 +53,7 @@ public class TaskFileParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class InputVariable {
+    public static class InputVariableV2 {
         public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -62,7 +65,6 @@ public class TaskFileParamsYaml implements BaseParams {
         // real file name of variable, is present
         public @Nullable String filename;
         public @Nullable String type;
-
         public boolean empty = false;
         private Boolean nullable;
 
@@ -74,11 +76,7 @@ public class TaskFileParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public InputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
-            this(id.toString(), name, sourcing);
-        }
-
-        public InputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
+        public InputVariableV2(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;
@@ -88,7 +86,7 @@ public class TaskFileParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OutputVariable {
+    public static class OutputVariableV2 {
         public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -108,11 +106,7 @@ public class TaskFileParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public OutputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
-            this(id.toString(), name, sourcing);
-        }
-
-        public OutputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
+        public OutputVariableV2(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;
@@ -120,27 +114,19 @@ public class TaskFileParamsYaml implements BaseParams {
     }
 
     @Data
-    @ToString
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Cache {
-        public boolean enabled;
-    }
-
-    @Data
-    public static class Task {
+    public static class TaskV2 {
         public Long execContextId;
         public boolean clean = false;
 
         public @Nullable Map<String, Map<String, String>> inline;
 
-        public final List<InputVariable> inputs = new ArrayList<>();
-        public final List<OutputVariable> outputs = new ArrayList<>();
+        public final List<InputVariableV2> inputs = new ArrayList<>();
+        public final List<OutputVariableV2> outputs = new ArrayList<>();
 
         // fields which are initialized at processor
         public String workingPath;
     }
 
-    public Task task = new Task();
+    public TaskV2 task = new TaskV2();
 
 }

@@ -25,6 +25,8 @@ import org.yaml.snakeyaml.Yaml;
  * @author Serge
  * Date: 6/17/2019
  * Time: 12:17 AM
+ *
+ * !!! we don't exetend CurrForDownT with 'extends BaseParams' because it'll break a Void type
  */
 abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 

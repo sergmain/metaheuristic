@@ -33,7 +33,10 @@ public class FileSystemUtils {
         try (FileOutputStream out = FileUtils.openOutputStream(file, false)) {
             IOUtils.write(data, out, charset);
             out.flush();
-            out.getFD().sync();
+            final FileDescriptor fd = out.getFD();
+            if (fd.valid()) {
+                fd.sync();
+            }
         }
     }
 

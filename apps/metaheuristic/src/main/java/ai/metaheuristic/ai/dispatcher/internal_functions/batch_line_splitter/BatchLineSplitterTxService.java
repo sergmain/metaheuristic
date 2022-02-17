@@ -103,17 +103,17 @@ public class BatchLineSplitterTxService {
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                            "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
         if (S.b(variableName)) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                            "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
         }
+
+        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, "is-array");
 
         List<List<String>> allLines = stringToListOfList(content, numberOfLines);
 
@@ -135,7 +135,7 @@ public class BatchLineSplitterTxService {
                 String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                 variableService.createInputVariablesForSubProcess(
-                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
+                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, isArray);
 
                 taskProducingService.createTasksForSubProcesses(
                         simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);

@@ -86,14 +86,14 @@ public class TaskProviderTopLevelService {
             }
             final TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task == null) {
-                log.warn("#317.040 Can't register task #{}, task doesn't exist", taskId);
+                log.warn("#393.040 Can't register task #{}, task doesn't exist", taskId);
                 return;
             }
             final TaskParamsYaml taskParamYaml;
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
-                String es = S.f("#317.080 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
+                String es = S.f("#393.080 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
                 eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                 return;
@@ -122,7 +122,7 @@ public class TaskProviderTopLevelService {
 
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
         if (p==null) {
-            log.warn("#317.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
+            log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
             return;
         }
 
@@ -137,7 +137,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
-            log.error("#317.160 Error, need to investigate ", th);
+            log.error("#393.160 Error, need to investigate ", th);
         }
     }
 
@@ -148,7 +148,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.startTaskProcessing(event));
         } catch (Throwable th) {
-            log.error("#317.200 Error, need to investigate ", th);
+            log.error("#393.200 Error, need to investigate ", th);
         }
     }
 
@@ -159,7 +159,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.unAssignTask(event));
         } catch (Throwable th) {
-            log.error("#317.240 Error, need to investigate ", th);
+            log.error("#393.240 Error, need to investigate ", th);
         }
     }
 
@@ -170,7 +170,7 @@ public class TaskProviderTopLevelService {
         try {
             TaskQueueSyncStaticService.getWithSyncVoid(()->TaskQueueService.deleteByExecContextId(event.execContextId));
         } catch (Throwable th) {
-            log.error("#317.280 Error, need to investigate ", th);
+            log.error("#393.280 Error, need to investigate ", th);
         }
     }
 
@@ -181,6 +181,11 @@ public class TaskProviderTopLevelService {
     @Nullable
     public static TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
         return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getFinishedTaskGroup(execContextId));
+    }
+
+    @Nullable
+    public static TaskQueue.TaskGroup getTaskGroupForTransfering(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskGroupForTransfering(execContextId));
     }
 
     public static boolean allTaskGroupFinished(Long execContextId) {
@@ -217,7 +222,7 @@ public class TaskProviderTopLevelService {
         try {
             setTaskExecState(event.execContextId, event.taskId, event.state);
         } catch (Throwable th) {
-            log.error("#317.320 Error, need to investigate ", th);
+            log.error("#393.320 Error, need to investigate ", th);
         }
     }
 
@@ -371,7 +376,7 @@ public class TaskProviderTopLevelService {
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
                         if (psy.env==null) {
-                            log.error("#317.720 Processor {} has empty env.yaml", processorId);
+                            log.error("#393.720 Processor {} has empty env.yaml", processorId);
                             return null;
                         }
                         ExecContextImpl ec =  execContextService.findById(execContextId);
@@ -393,8 +398,8 @@ public class TaskProviderTopLevelService {
 
                         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
                         if (p==null) {
-                            String es = S.f("#317.810 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
-                            log.warn("#317.815 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
+                            String es = S.f("#393.810 Can't register task #%s, process %s doesn't exist in execContext #%s", taskId, taskParamYaml.task.processCode, execContextId);
+                            log.warn("#393.815 Can't register task #{}, process {} doesn't exist in execContext #{}", taskId, taskParamYaml.task.processCode, execContextId);
                             eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.id, es));
                             continue;
                         }
