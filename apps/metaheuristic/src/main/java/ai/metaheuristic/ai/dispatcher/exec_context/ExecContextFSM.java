@@ -48,7 +48,6 @@ import java.util.List;
 public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
-
     private final TaskRepository taskRepository;
     private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
