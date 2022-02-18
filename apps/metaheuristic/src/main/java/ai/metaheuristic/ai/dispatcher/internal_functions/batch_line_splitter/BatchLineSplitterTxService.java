@@ -78,20 +78,17 @@ public class BatchLineSplitterTxService {
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
             final String es = "#994.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
             final String es = "#994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         return null;
     }
