@@ -71,6 +71,7 @@ public class ArtifactCleanerAtDispatcher {
     private final CacheService cacheService;
     private final ExecContextService execContextService;
     private final DispatcherEventRepository dispatcherEventRepository;
+    private final FunctionDataRepository functionDataRepository;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
 
@@ -102,6 +103,20 @@ public class ArtifactCleanerAtDispatcher {
         deleteOrphanVariables();
         deleteOrphanCacheData();
         deleteObsoleteEvents();
+        deleteObsoleteFunctionData();
+    }
+
+    private void deleteObsoleteFunctionData() {
+        List<String> functionCodesInData = functionDataRepository.findAllFunctionCodes();
+        List<String> functionCodes = functionRepository.findAllFunctionCodes();
+        for (String functionCode : functionCodesInData) {
+            if (!functionCodes.contains(functionCode)) {
+                if (isBusy()) {
+                    return;
+                }
+                functionDataRepository.deleteByFunctionCode(functionCode);
+            }
+        }
     }
 
     private void deleteObsoleteEvents() {

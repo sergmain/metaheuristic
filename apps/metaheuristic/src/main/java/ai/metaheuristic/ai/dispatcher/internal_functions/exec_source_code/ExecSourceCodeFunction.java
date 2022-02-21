@@ -114,6 +114,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         if (sourceCode==null) {
             throw new InternalFunctionException(source_code_not_found, "#508.030 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found");
         }
+        boolean isArray = MetaUtils.isTrue(taskParamsYaml.task.metas, false, "is-array");
 
         Long subScId = sourceCodeRepository.findIdByUid(scUid);
         if (subScId==null) {
@@ -173,6 +174,13 @@ public class ExecSourceCodeFunction implements InternalFunction {
                         execContextVariableService.initInputVariable(
                                 is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
                     }
+/*
+                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                            List.of(new BatchTopLevelService.FileWithMapping(tempFile, "variable-" + input.name)));
+
+                    variableService.createInputVariablesForSubProcess(
+                            variableDataSource, execContextResultRest.execContext.id, "variable-" + input.name, Consts.TOP_LEVEL_CONTEXT_ID, isArray);
+*/
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {

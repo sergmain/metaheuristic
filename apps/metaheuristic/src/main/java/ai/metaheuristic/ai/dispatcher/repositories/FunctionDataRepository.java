@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
+import java.util.List;
 
 /**
  * @author Serge
@@ -37,6 +38,10 @@ import java.sql.Blob;
 //@Transactional
 @Profile("dispatcher")
 public interface FunctionDataRepository extends CrudRepository<FunctionData, Long> {
+
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    @Query(value="select b.functionCode from FunctionData b ")
+    List<String> findAllFunctionCodes();
 
     @Override
     @Modifying
