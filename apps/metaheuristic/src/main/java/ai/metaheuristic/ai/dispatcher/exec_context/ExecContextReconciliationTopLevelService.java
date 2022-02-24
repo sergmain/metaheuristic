@@ -166,25 +166,35 @@ public class ExecContextReconciliationTopLevelService {
                     // ---> This is a normal situation
                 }
                 else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
-                    // #307.140 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
+                    // #307.130 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
                     log.warn("#307.130 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: NONE, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.IN_PROGRESS) {
-                    // #307.140 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
+                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.warn("#307.135 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: IN_PROGRESS, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.IN_PROGRESS && allocatedTask.state== TaskExecState.CHECK_CACHE) {
+                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
+                    log.warn("#307.141 Found different states for task #{}, db: CHECK_CACHE, graph: IN_PROGRESS, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
+                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
+                    log.warn("#307.145 Found different states for task #{}, db: ERROR_WITH_RECOVERY, graph: NONE, allocatedTask: ERROR_WITH_RECOVERY, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else {
                     // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
-                    log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
+                    log.error("#307.270 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
                             tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                 }
             }
         }
 
         if (status.isNullState.get()) {
-            log.info("#307.150 Found non-created task, graph consistency is failed");
+            log.info("#307.300 Found non-created task, graph consistency is failed");
             return status;
         }
 
@@ -210,7 +220,7 @@ public class ExecContextReconciliationTopLevelService {
                                     // only if there is any input variable and context of task is FunctionExecContext.external
                                     // TODO 2021-05-17 check that internal function is setting task.accessByProcessorOn at all
                                     if (tpy.task.context== FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
-                                        log.info("#307.160 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
+                                        log.info("#307.360 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
                                                 task.id, task.processorId);
                                         status.taskForResettingIds.add(task.id);
                                     }
@@ -224,7 +234,7 @@ public class ExecContextReconciliationTopLevelService {
                                         final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                                         long effectiveTimeout = Math.min(timeoutForChecking, oneHourToMills);
                                         if ((System.currentTimeMillis() - task.accessByProcessorOn) > effectiveTimeout) {
-                                            log.info("#307.170 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, timeoutForChecking: {}, effective timeout: {}",
+                                            log.info("#307.400 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, timeoutForChecking: {}, effective timeout: {}",
                                                     task.id, task.processorId, tpy.task.timeoutBeforeTerminate, timeoutForChecking, effectiveTimeout);
                                             status.taskForResettingIds.add(task.id);
                                         }
