@@ -39,6 +39,8 @@
         <module>apps/sign-string</module>
         <module>apps/simple-app</module>
         <module>apps/simple-batch-app</module>
+
+        <module>apps/utils/db_copy</module>
     </modules>
 
 </project>

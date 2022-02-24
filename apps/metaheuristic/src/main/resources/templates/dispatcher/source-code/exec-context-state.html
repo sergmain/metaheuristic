@@ -59,7 +59,7 @@
                             <div th:if="${o.nullified}" th:text="${o.id+', ' + o.name+', is null'}" class="no-wrap">Variable is null</div>
                         </div>
                     </div>
-                    <div class="no-wrap" th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString()}">
+                    <div class="no-wrap" th:if="${c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR.toString() || c.state==T(ai.metaheuristic.api.EnumsApi.TaskExecState).ERROR_WITH_RECOVERY.toString()}">
                         <a href="#" th:href="${'/dispatcher/source-code/exec-context-task-exec-info/'+result.sourceCodeId+'/'+result.execContextId+'/' +c.taskId}"
                            th:text="${'Task exec info'}">Task exec info</a>
                     </div>
