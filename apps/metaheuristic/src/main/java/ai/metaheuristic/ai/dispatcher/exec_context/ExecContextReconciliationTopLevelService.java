@@ -146,6 +146,14 @@ public class ExecContextReconciliationTopLevelService {
                         // ---> This is a normal situation, will occur after restarting a dispatcher
                         log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                    }
+                    else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state==TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.NONE) {
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.087 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                     else {
