@@ -189,8 +189,13 @@ public class ExecContextReconciliationTopLevelService {
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
-                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.warn("#307.145 Found different states for task #{}, db: ERROR_WITH_RECOVERY, graph: NONE, allocatedTask: ERROR_WITH_RECOVERY, trying to update a state of task in execContext", tv.taskId);
+                    TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
+                    log.warn("#307.150 Found different states for task #{}, db: ERROR_WITH_RECOVERY, graph: CHECK_CACHE, allocatedTask: ERROR_WITH_RECOVERY, trying to update a state of task in execContext", tv.taskId);
+                    TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else {
