@@ -64,6 +64,13 @@ public class FunctionConfigListYaml implements BaseParams {
             if (MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION)==null) {
                 errors.add(S.f("function %s must have a meta 'mh.task-params-version' with effective version of TaskParams", function.code));
             }
+            if (function.metas!=null) {
+                for (Map<String, String> meta : function.metas) {
+                    if (meta.size()!=1) {
+                        errors.add(S.f("function %s has an incorrectly defined meta, mest be one meta per yaml element, %s", function.code, meta));
+                    }
+                }
+            }
         }
         if (!errors.isEmpty()) {
             throw new CheckIntegrityFailedException(errors.toString());

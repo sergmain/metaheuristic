@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/13/2021
  * Time: 6:53 PM
  */
+@Disabled
 public class TestReduceVariablesUtils {
 
     @Test

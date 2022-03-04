@@ -5,17 +5,23 @@ functions:
       env: python-3
       params: abc1
       sourcing: processor
+      metas:
+        - mh.task-params-version: 1
     - code: aiai.predict.default.function:1.0-SNAPSHOT
       type: predict
       file: predict-model.py
       env: python-3
       params: abc2
       sourcing: processor
+      metas:
+        - mh.task-params-version: 1
     - code: aiai.predict-model-for-test-only.function:1.0-SNAPSHOT
       type: predict
       file: predict-model-for-test-only.py
       env: python-3
       params: abc3
       sourcing: processor
+      metas:
+        - mh.task-params-version: 1
 
 

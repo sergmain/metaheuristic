@@ -19,6 +19,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
@@ -27,6 +28,7 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlV1;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,10 +80,10 @@ public class TestFunctionConfig {
         config.type = CommonConsts.FIT_TYPE;
         config.params = "content-of-file";
         config.sourcing= EnumsApi.FunctionSourcing.processor;
-        config.metas.add(
-                Map.of(ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META,"true",
-                        "some-meta", "111",
-                        ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
+        config.metas = List.of(
+                Map.of(ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META,"true"),
+                Map.of("some-meta", "111"),
+                Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
         scs.functions.add(config);
 
@@ -101,6 +103,28 @@ public class TestFunctionConfig {
         assertNull(MetaUtils.getMeta(fc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META));
         assertEquals("111", MetaUtils.getValue(fc.metas, "some-meta"));
 
+    }
+
+    @Test
+    public void test_2() {
+        FunctionConfigListYamlV1 scs = new FunctionConfigListYamlV1();
+        scs.functions = new ArrayList<>();
+
+        FunctionConfigListYamlV1.FunctionConfigV1 config = new FunctionConfigListYamlV1.FunctionConfigV1();
+        config.code = "aiai.fit.default.function:1.0";
+        config.type = CommonConsts.FIT_TYPE;
+        config.params = "content-of-file";
+        config.sourcing= EnumsApi.FunctionSourcing.processor;
+        config.metas.add(
+                Map.of("aaa","true",
+                        "some-meta", "111",
+                        ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
+
+        scs.functions.add(config);
+
+        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
+        System.out.println(yaml);
+        assertThrows(CheckIntegrityFailedException.class, ()->FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yaml));
     }
 
 }
