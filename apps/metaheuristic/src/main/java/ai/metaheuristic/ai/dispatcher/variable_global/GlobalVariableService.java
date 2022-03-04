@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -137,8 +138,8 @@ public class GlobalVariableService {
                 log.warn("#089.030 Binary data for variableId {} wasn't found", variableId);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "#089.040 Binary data wasn't found, variableId: " + variableId);
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                FileUtils.copyInputStreamToFile(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

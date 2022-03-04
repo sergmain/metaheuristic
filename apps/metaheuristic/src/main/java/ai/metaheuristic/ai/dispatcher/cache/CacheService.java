@@ -133,15 +133,16 @@ public class CacheService {
                 variableService.storeToFile(output.id, tempFile);
 
                 InputStream is;
+                BufferedInputStream bis;
                 try {
-                    is = new FileInputStream(tempFile);
+                    is = new FileInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
                 } catch (IOException e) {
                     String es = "#611.080 Error: " + e.getMessage();
                     log.error(es, e);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
                     throw new VariableCommonException(es, output.id);
                 }
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
+                eventPublisher.publishEvent(new ResourceCloseTxEvent(List.of(bis, is), tempFile));
                 cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
             }
         }
@@ -202,7 +203,8 @@ public class CacheService {
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
-            try (InputStream is = blob.getBinaryStream(); CountingInputStream cis = new CountingInputStream(is)) {
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000);
+                 CountingInputStream cis = new CountingInputStream(bis)) {
                 String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
                 long length = cis.getBytesRead();
                 return new CacheData.Sha256PlusLength(sha256, length);

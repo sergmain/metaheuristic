@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.List;
 
 /**
@@ -42,7 +41,7 @@ public class DbCopyService {
     public final DbCopyTxService dbCopyTxService;
 
     @SneakyThrows
-    public void process1() {
+    public void process() {
         List<String> srcCodes = srcFunctionDataRepository.findAllFunctionCodes();
         System.out.println("Source: ");
         srcCodes.forEach(System.out::println);
@@ -60,22 +59,22 @@ public class DbCopyService {
             System.out.println(" OK, lenght: " + f.length());
 
             System.out.println("\tpersist to db");
+/*
             try (FileInputStream fis = new FileInputStream(f)) {
                 dbCopyTxService.save(functionData.functionCode, functionData.uploadTs, functionData.params, fis, f.length());
             }
-/*
+*/
             byte[] bytes = "123".getBytes();
             try (ByteArrayInputStream fis = new ByteArrayInputStream(bytes)) {
                 dbCopyTxService.save(functionData.functionCode, functionData.uploadTs, functionData.params, fis, bytes.length);
             }
-*/
             System.out.println("\tpersist was OK");
         }
 
     }
 
     @SneakyThrows
-    public void process() {
+    public void process1() {
         List<String> srcCodes = srcFunctionDataRepository.findAllFunctionCodes();
         System.out.println("Source: ");
         srcCodes.forEach(System.out::println);

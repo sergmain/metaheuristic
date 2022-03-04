@@ -31,7 +31,7 @@ import java.sql.Timestamp;
 @Table(name = "MH_FUNCTION_DATA")
 @Data
 @EqualsAndHashCode(of = {"functionCode"})
-@ToString(exclude={"data", "bytes"})
+@ToString(exclude={"data"})
 @NoArgsConstructor
 public class FunctionData implements Serializable {
     @Serial
@@ -53,9 +53,6 @@ public class FunctionData implements Serializable {
     @Column(name = "DATA")
     @Lob
     private Blob data;
-
-    @Transient
-    public byte[] bytes;
 
     @Column(name = "PARAMS")
     public String params;

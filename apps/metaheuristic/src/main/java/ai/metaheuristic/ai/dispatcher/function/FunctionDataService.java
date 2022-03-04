@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.sql.Blob;
@@ -65,8 +66,8 @@ public class FunctionDataService {
                 log.warn("#088.010 Binary data for code {} wasn't found", code);
                 throw new FunctionDataNotFoundException(code, "#088.010 Function data wasn't found, code: " + code);
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                FileUtils.copyInputStreamToFile(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

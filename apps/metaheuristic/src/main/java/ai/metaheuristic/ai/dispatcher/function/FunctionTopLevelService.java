@@ -249,14 +249,12 @@ public class FunctionTopLevelService {
                     "#424.050 only '.zip', '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
-        final String location = System.getProperty("java.io.tmpdir");
-
         File tempDir = null;
         try {
             tempDir = DirUtils.createMhTempDir("function-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#424.060 can't create temporary directory in " + location);
+                        "#424.060 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
             final File zipFile = new File(tempDir, "functions" + ext);
             log.debug("Start storing an uploaded function to disk");
@@ -428,8 +426,8 @@ public class FunctionTopLevelService {
                 else {
                     FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                     if (file != null) {
-                        try (InputStream inputStream = new FileInputStream(file)) {
-                            functionService.persistFunction(scy, inputStream, file.length());
+                        try (InputStream is = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                            functionService.persistFunction(scy, bis, file.length());
                         }
                     }
                     else {

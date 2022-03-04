@@ -82,8 +82,8 @@ public class GlobalVariableTopLevelService {
             }
 
             try {
-                try (InputStream is = new FileInputStream(tempFile)) {
-                    globalVariableService.save(is, tempFile.length(), variable, originFilename);
+                try (InputStream is = new FileInputStream(tempFile); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                    globalVariableService.save(bis, tempFile.length(), variable, originFilename);
                 }
             } catch (Throwable e) {
                 String es = "#172.050 An error while saving data to file, " + e.getMessage();

@@ -43,10 +43,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService.OK_UPLOAD_RESULT;
 
@@ -165,8 +162,8 @@ public class ExecContextVariableTopLevelService {
                 if (v.inited) {
                     return OK_UPLOAD_RESULT;
                 }
-                try (final FileInputStream inputStream = new FileInputStream(variableFile)) {
-                    variableService.storeVariable(inputStream, variableFile.length(), execContextId, taskId, variableId);
+                try (final FileInputStream is = new FileInputStream(variableFile); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                    variableService.storeVariable(bis, variableFile.length(), execContextId, taskId, variableId);
                     return OK_UPLOAD_RESULT;
                 } catch (Throwable th) {
                     final String error = "#440.290 can't store the result, Error: " + th.getMessage();

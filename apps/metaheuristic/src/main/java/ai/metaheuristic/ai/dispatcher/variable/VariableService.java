@@ -415,8 +415,8 @@ public class VariableService {
                     throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
                 }
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                String s = IOUtils.toString(is, StandardCharsets.UTF_8);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                String s = IOUtils.toString(bis, StandardCharsets.UTF_8);
                 return s;
             }
         } catch (CommonErrorWithDataException e) {
@@ -441,8 +441,8 @@ public class VariableService {
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                FileUtils.copyInputStreamToFile(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

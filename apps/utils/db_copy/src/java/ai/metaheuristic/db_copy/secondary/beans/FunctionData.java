@@ -28,10 +28,10 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "MH_FUNCTION_DATA")
+@Table(name = "MH_FUNCTION_DATA1")
 @Data
 @EqualsAndHashCode(of = {"functionCode"})
-@ToString(exclude={"data", "bytes"})
+@ToString(exclude={"data"})
 @NoArgsConstructor
 public class FunctionData implements Serializable {
     @Serial
@@ -53,9 +53,6 @@ public class FunctionData implements Serializable {
     @Column(name = "DATA")
     @Lob
     public Blob data;
-
-    @Transient
-    public byte[] bytes;
 
     @Column(name = "PARAMS")
     public String params;

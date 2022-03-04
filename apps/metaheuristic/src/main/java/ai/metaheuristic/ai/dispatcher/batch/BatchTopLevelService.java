@@ -49,6 +49,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -59,10 +60,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -279,10 +278,15 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#981.122 Can't create temporaty directory. Batch file can't be processed");
         }
         try {
+            // we need to create a temporary file because org.apache.commons.compress.archivers.zip.ZipFile
+            // doesn't work with abstract InputStream
             File tempFile;
             try {
-                tempFile = File.createTempFile("mh-temp-file-for-checking-integrity-", ".bin", tempDir);
-                file.transferTo(tempFile);
+                tempFile = File.createTempFile("mh-temp-file-for-processing-", ".bin", tempDir);
+                try (OutputStream os = Files.newOutputStream(tempFile.toPath())) {
+                    IOUtils.copy(file.getInputStream(), os, 128_000);
+                }
+//                file.transferTo(tempFile);
                 if (file.getSize()!=tempFile.length()) {
                     return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
                 }

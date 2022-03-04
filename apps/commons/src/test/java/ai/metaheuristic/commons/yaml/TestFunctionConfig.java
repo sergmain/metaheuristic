@@ -42,6 +42,8 @@ public class TestFunctionConfig {
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
+        config.metas.add(
+                Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
         config.checksumMap = Checksum.fromJson("{\"checksums\":{\"SHA256\":\"<some value #1>\"}}").checksums;
         config.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"<some value #2>\"}}").checksums);
@@ -76,8 +78,10 @@ public class TestFunctionConfig {
         config.type = CommonConsts.FIT_TYPE;
         config.params = "content-of-file";
         config.sourcing= EnumsApi.FunctionSourcing.processor;
-        config.metas.add(Map.of(ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META, "true"));
-        config.metas.add(Map.of("some-meta", "111"));
+        config.metas.add(
+                Map.of(ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META,"true",
+                        "some-meta", "111",
+                        ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
         scs.functions.add(config);
 
