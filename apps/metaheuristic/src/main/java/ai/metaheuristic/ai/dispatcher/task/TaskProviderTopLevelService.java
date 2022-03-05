@@ -371,7 +371,7 @@ public class TaskProviderTopLevelService {
             }
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.warn("#393.680 already assigned task, processor: #{}, task #{}, execStatus: {}",
+                    log.warn("#393.680 already assigned task, processor: #{}, task #{}, task execStatus: {}",
                             processorId, taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
