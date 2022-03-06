@@ -313,7 +313,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    if (isBusy()) {
+                    if (page.isEmpty() || isBusy()) {
                         return;
                     }
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);

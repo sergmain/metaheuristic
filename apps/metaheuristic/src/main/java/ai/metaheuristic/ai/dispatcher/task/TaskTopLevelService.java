@@ -129,20 +129,21 @@ public class TaskTopLevelService {
                     if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                         continue;
                     }
+                    if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
+                        continue;
+                    }
                 }
-                // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
-                log.info("#303.370 found a lost task #{}, which doesn't exist at processor #{}. task exists in db: {}, state: {}",
-                        actualTaskId, event.processorId, (task!=null), (task!=null) ? EnumsApi.TaskExecState.from(task.execState) : null);
                 if (task==null || EnumsApi.TaskExecState.IN_PROGRESS!=EnumsApi.TaskExecState.from(task.execState)) {
                     continue;
                 }
-                log.warn("#303.375 found a lost task #{}, state: {}, assignedOn: {}, is old: {}",
-                        actualTaskId, EnumsApi.TaskExecState.from(task.execState),
-                        task.assignedOn, task.assignedOn!=null ? (System.currentTimeMillis() - task.assignedOn<60_000) : null);
-
                 if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {
                     continue;
                 }
+                // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
+                log.info("#303.370 found a lost task #{}, which doesn't exist at processor #{}. state: {}, assignedOn: {}, is old: {}",
+                        actualTaskId, event.processorId, EnumsApi.TaskExecState.from(task.execState),
+                        task.assignedOn, System.currentTimeMillis() - task.assignedOn<60_000);
+
                 applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
             }
         }

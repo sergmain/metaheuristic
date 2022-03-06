@@ -273,6 +273,7 @@ public class TaskQueue {
     private final int minQueueSize;
     private final int groupSize;
     private final List<TaskGroup> taskGroups = new ArrayList<>();
+    private boolean isEmpty = true;
 
     public TaskQueue() {
         this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);
@@ -435,6 +436,9 @@ public class TaskQueue {
 
     public void lock(Long execContextId) {
         for (TaskGroup tg : taskGroups) {
+            if (tg.locked) {
+                continue;
+            }
             if (execContextId.equals(tg.execContextId)) {
                 if (tg.allocated>0) {
                     tg.lock();

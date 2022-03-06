@@ -268,6 +268,7 @@ public class TaskProviderTopLevelService {
                 () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
 
         if (queueEmpty) {
+            log.warn("#393.445 queue is empty");
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
             if (System.currentTimeMillis()-mills.get() < 60_000 ) {
                 return null;

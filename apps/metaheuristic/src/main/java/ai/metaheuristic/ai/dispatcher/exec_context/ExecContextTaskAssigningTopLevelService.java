@@ -69,6 +69,8 @@ public class ExecContextTaskAssigningTopLevelService {
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
 
+        log.warn("#703.010 found {} tasks for registering", vertices.size());
+
         if (vertices.isEmpty()) {
             ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
             return;
