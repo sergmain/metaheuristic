@@ -41,6 +41,7 @@ public class TaskQueueService {
     }
 
     public static boolean isQueueEmpty() {
+        checkWriteLockPresent();
         return taskQueue.isQueueEmpty();
     }
 

@@ -265,7 +265,7 @@ public class TaskProviderTopLevelService {
         }
 
         final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
-                TaskQueueService::isQueueEmpty);
+                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
 
         if (queueEmpty) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());

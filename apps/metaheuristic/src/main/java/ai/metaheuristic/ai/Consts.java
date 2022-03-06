@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -148,4 +149,14 @@ public class Consts {
     public static final String SOURCE_CODE_UID = "source-code-uid";
 
     public static final EnumsApi.TaskExecState INITIAL_TASK_STATE = EnumsApi.TaskExecState.CHECK_CACHE;
+
+    public static final Duration DURATION_5_SECONDS = Duration.ofSeconds(5);
+    public static final Duration DURATION_20_SECONDS = Duration.ofSeconds(20);
+
+    public static final Duration DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS = DURATION_20_SECONDS;
+    public static final long DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.toMillis();
+
+    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+    public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
+
 }

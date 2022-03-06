@@ -70,7 +70,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
     public TaskData.AssignedTask findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        if (TaskQueueService.isQueueEmpty()) {
+        if (TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty)) {
             return null;
         }
 
@@ -96,7 +96,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
     private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
 
-        if (TaskQueueService.isQueueEmpty()) {
+        if (TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty)) {
             return null;
         }
 
