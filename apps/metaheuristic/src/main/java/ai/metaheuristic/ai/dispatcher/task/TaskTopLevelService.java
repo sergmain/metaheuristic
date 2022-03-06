@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -57,6 +59,8 @@ public class TaskTopLevelService {
     private final ExecContextCache execContextCache;
     private final TaskService taskService;
     private final TaskRepository taskRepository;
+    private final VariableService variableService;
+    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Async
@@ -179,7 +183,13 @@ public class TaskTopLevelService {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 if (!output.uploaded) {
-                    result.resends.add(new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+                    SimpleVariable sv = variableService.getVariableAsSimple(output.id);
+                    if (sv!=null && sv.inited) {
+                        TaskSyncService.getWithSync(task.id, () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id));
+                    }
+                    else {
+                        result.resends.add(new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+                    }
                 }
             }
         }
