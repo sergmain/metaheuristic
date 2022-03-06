@@ -225,8 +225,9 @@ public class ExecContextVariableTopLevelService {
 
     /**
      * return string as "true"/"false".
-     *      "true" - if variable already inited or it doesn't exist
+     *      "true" - if variable already inited
      *      "false" - variable isn't inited yet
+     *      "null" - variable doesn't exist;
      *
      * @param variableId
      * @return
@@ -235,10 +236,7 @@ public class ExecContextVariableTopLevelService {
         return VariableSyncService.getWithSync(variableId,
                 () -> {
                     SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
-                    if (v==null) {
-                        return "true";
-                    }
-                    return ""+v.inited;
+                    return v == null ? "null" : "" + v.inited;
                 });
     }
 }

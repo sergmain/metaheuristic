@@ -65,6 +65,11 @@ public class TaskQueueService {
         return getWithSync(taskQueue::isQueueEmpty);
     }
 
+    public static boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
+        checkWriteLockNotPresent();
+        return getWithSync(() -> taskQueue.allocatedTaskMoreThan(requiredNumberOfTasks));
+    }
+
     public static void startTaskProcessing(StartTaskProcessingEvent event) {
         checkWriteLockPresent();
         taskQueue.startTaskProcessing(event.execContextId, event.taskId);

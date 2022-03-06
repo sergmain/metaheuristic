@@ -51,6 +51,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -147,9 +148,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             try {
                 final Executor executor = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword);
 
-                if (!isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor)) {
-                    // variable #4322054 in task #1582515 isn't ready for uploading
-                    log.info("variable #{} in task #{} isn't ready for uploading", task.variableId, task.taskId);
+                final Boolean readyForUploading = isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor);
+                if (readyForUploading==null) {
+                    log.info("variable #{} in task #{} doesn't exist at dispathcer", task.variableId, task.taskId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
+                    continue;
+                }
+                if (!readyForUploading) {
+                    log.info("variable #{} in task #{} was aready inited", task.variableId, task.taskId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
                     continue;
                 }
 
@@ -256,7 +263,8 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
     }
 
-    private static boolean isVariableReadyForUploading(String dispatcherUrl, Long variableId, Executor executor) {
+    @Nullable
+    private static Boolean isVariableReadyForUploading(String dispatcherUrl, Long variableId, Executor executor) {
         final String variableStatusRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.VARIABLE_STATUS_REST_URL;
 
         try {
@@ -285,7 +293,11 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 String value = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
                 // right now uri /variable-status returns value of 'inited' field
 
-                return "false".equals(value);
+                return switch (value) {
+                    case "false" -> true;
+                    case "true" -> false;
+                    default -> null;
+                };
             }
             else {
                 return true;

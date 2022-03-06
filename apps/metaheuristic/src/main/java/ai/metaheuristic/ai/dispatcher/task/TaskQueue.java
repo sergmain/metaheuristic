@@ -143,6 +143,22 @@ public class TaskQueue {
             return false;
         }
 
+        public int newTasks() {
+            if (execContextId == null) {
+                return 0;
+            }
+            if (!locked) {
+                return 0;
+            }
+            int count = 0;
+            for (AllocatedTask task : tasks) {
+                if (task != null && !task.assigned) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
         public void addTask(QueuedTask task) {
             if (noneTasks()) {
                 priority = task.priority;
@@ -596,6 +612,17 @@ public class TaskQueue {
                 }
             }
         }
+    }
+
+    public boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
+        int count = 0;
+        for (TaskGroup taskGroup : taskGroups) {
+            count += taskGroup.newTasks();
+            if (count>requiredNumberOfTasks) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isQueueEmpty() {

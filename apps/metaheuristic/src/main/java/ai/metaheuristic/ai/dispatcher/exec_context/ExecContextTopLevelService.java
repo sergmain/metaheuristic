@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevel
 import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -150,6 +151,9 @@ public class ExecContextTopLevelService {
 
     public void findUnassignedTasksAndRegisterInQueue() {
 //        log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+//        boolean allocatedTaskMoreThan = TaskQueueService.allocatedTaskMoreThan(100);
+//        log.warn("#703.010 found {} tasks for registering, execCOntextId: #{}", vertices.size(), execContextId);
+
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         execContextIds.sort((Comparator.naturalOrder()));
         for (Long execContextId : execContextIds) {

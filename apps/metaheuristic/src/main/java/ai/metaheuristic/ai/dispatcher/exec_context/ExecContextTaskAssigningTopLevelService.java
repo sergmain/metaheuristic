@@ -69,7 +69,7 @@ public class ExecContextTaskAssigningTopLevelService {
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
 
-        log.warn("#703.010 found {} tasks for registering", vertices.size());
+        log.warn("#703.010 found {} tasks for registering, execCOntextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
             ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
@@ -79,6 +79,7 @@ public class ExecContextTaskAssigningTopLevelService {
         int page = 0;
         List<Long> taskIds;
         boolean isEmpty = true;
+        int actuallAllocation = 0;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             isEmpty = false;
 
@@ -122,6 +123,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     switch(taskParamYaml.task.context) {
                         case external:
+                            actuallAllocation++;
                             TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml);
                             break;
                         case internal:
@@ -148,5 +150,6 @@ public class ExecContextTaskAssigningTopLevelService {
             mills = System.currentTimeMillis();
         }
         TaskProviderTopLevelService.lock(execContextId);
+        log.warn("#703.500 allocated {} of new taks in execContext #{}", actuallAllocation, execContextId);
     }
 }
