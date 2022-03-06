@@ -218,15 +218,15 @@ public class TaskProviderTopLevelService {
 
     @Async
     @EventListener
-    public void setTaskExecState(SetTaskExecStateEvent event) {
+    public void setTaskExecStateInQueue(SetTaskExecStateEvent event) {
         try {
-            setTaskExecState(event.execContextId, event.taskId, event.state);
+            setTaskExecStateInQueue(event.execContextId, event.taskId, event.state);
         } catch (Throwable th) {
             log.error("#393.320 Error, need to investigate ", th);
         }
     }
 
-    public void setTaskExecState(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
+    public void setTaskExecStateInQueue(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         log.debug("#393.360 set task #{} as {}", taskId, state);
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {

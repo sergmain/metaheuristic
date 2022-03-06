@@ -165,7 +165,9 @@ public class TaskFinishingService {
         task.setResultReceived(true);
         task = taskService.save(task);
 
-        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, targetState);
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+
+        taskProviderTopLevelService.setTaskExecStateInQueue(task.execContextId, task.id, targetState);
     }
 
 
