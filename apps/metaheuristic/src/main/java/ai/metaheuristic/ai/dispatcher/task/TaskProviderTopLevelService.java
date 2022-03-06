@@ -259,7 +259,7 @@ public class TaskProviderTopLevelService {
         if (queueEmpty) {
             AtomicLong mills = processorCheckedOn.computeIfAbsent(processorId, o -> new AtomicLong());
             final boolean b = System.currentTimeMillis() - mills.get() < 60_000;
-            log.warn("#393.445 queue is empty, suspend findinf of new tasks: {}", b );
+            log.debug("#393.445 queue is empty, suspend finding of new tasks: {}", b );
             if (b) {
                 return null;
             }
