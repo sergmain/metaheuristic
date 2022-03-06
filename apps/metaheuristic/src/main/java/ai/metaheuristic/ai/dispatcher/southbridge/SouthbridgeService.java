@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -29,6 +30,8 @@ import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -70,6 +73,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -230,6 +234,10 @@ public class SouthbridgeService {
     private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy, long startMills) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.quotas.current);
+
+        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
+                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
+
         try {
             for (ProcessorCommParamsYaml.ProcessorRequest request : scpy.requests) {
                 DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse(request.processorCode);
@@ -257,7 +265,7 @@ public class SouthbridgeService {
                 }
 
                 log.debug("Start processing commands");
-                dispatcherCommandProcessor.process(request, response, quotas);
+                dispatcherCommandProcessor.process(request, response, quotas, queueEmpty);
                 if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) {
                     break;
                 }

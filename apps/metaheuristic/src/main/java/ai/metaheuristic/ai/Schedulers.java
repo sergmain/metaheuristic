@@ -112,7 +112,13 @@ public class Schedulers {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");
-            batchService.updateBatchStatuses();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                batchService.updateBatchStatuses();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
     }
 
@@ -297,7 +303,13 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )

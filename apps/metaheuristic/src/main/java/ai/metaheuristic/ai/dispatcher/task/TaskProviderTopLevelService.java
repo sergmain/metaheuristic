@@ -249,12 +249,22 @@ public class TaskProviderTopLevelService {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
-        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of());
+        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of(), false);
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds, boolean queueEmpty) {
         TxUtils.checkTxNotExists();
+
+        if (queueEmpty) {
+            AtomicLong mills = processorCheckedOn.computeIfAbsent(processorId, o -> new AtomicLong());
+            final boolean b = System.currentTimeMillis() - mills.get() < 60_000;
+            log.warn("#393.445 queue is empty, suspend findinf of new tasks: {}", b );
+            if (b) {
+                return null;
+            }
+            mills.set(System.currentTimeMillis());
+        }
 
         final Processor processor = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
                 ()->processorCache.findById(processorId));
@@ -262,18 +272,6 @@ public class TaskProviderTopLevelService {
         if (processor == null) {
             log.error("#393.440 Processor with id #{} wasn't found", processorId);
             return null;
-        }
-
-        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
-                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
-
-        if (queueEmpty) {
-            log.warn("#393.445 queue is empty");
-            AtomicLong mills = processorCheckedOn.computeIfAbsent(processor.id, o -> new AtomicLong());
-            if (System.currentTimeMillis()-mills.get() < 60_000 ) {
-                return null;
-            }
-            mills.set(System.currentTimeMillis());
         }
 
         ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
