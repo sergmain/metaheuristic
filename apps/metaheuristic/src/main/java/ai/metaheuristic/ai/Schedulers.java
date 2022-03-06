@@ -203,12 +203,16 @@ public class Schedulers {
             }
 
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
+            ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextSchedulerService.updateExecContextStatuses();
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateExecContextStatuses()",e);
             } catch (Throwable th) {
                 log.error("Error while updateExecContextStatuses()", th);
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
             }
         }
 
@@ -226,7 +230,14 @@ public class Schedulers {
                 eventPublisher.publishEvent(new StartProcessReadinessEvent());
                 needToInitializeReadyness = false;
             }
-            execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
+            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 13_000, fixedDelay = 13_000 )
@@ -258,7 +269,13 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 17_000 )
@@ -266,7 +283,13 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            taskCheckCachingTopLevelService.checkCaching();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                taskCheckCachingTopLevelService.checkCaching();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
