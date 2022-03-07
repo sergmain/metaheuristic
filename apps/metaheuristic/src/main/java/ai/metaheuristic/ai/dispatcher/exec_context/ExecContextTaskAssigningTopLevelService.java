@@ -42,6 +42,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -117,17 +118,21 @@ public class ExecContextTaskAssigningTopLevelService {
                         execContext.execContextGraphId, execContext.execContextTaskStateId, true));
 
         stat.found = vertices.size();
-        log.warn("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
+        log.debug("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
             ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
             return stat;
         }
 
+        List<ExecContextData.TaskVertex> filteredVertices = vertices.stream()
+                .filter(o->!TaskQueueService.alreadyRegisteredWithSync(o.taskId))
+                .collect(Collectors.toList());
+
         int page = 0;
         List<Long> taskIds;
         boolean isEmpty = true;
-        while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+        while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, filteredVertices, page++)).size()>0) {
             isEmpty = false;
 
             for (Long taskId : taskIds) {
