@@ -42,7 +42,7 @@ public class CurrentExecState {
 
     public Map<Long, EnumsApi.ExecContextState> getExecContexts(DispatcherUrl dispatcherUrl) {
         synchronized(execContextState) {
-            return Collections.unmodifiableMap(execContextState.getOrDefault(dispatcherUrl, Map.of()));
+            return new HashMap<>(execContextState.getOrDefault(dispatcherUrl, Map.of()));
         }
     }
 
@@ -99,9 +99,14 @@ public class CurrentExecState {
         return !notFinishedAndExists(dispatcherUrl, execContextId);
     }
 
-    boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
+    boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState ... state) {
         EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
-        return currState==state;
+        for (EnumsApi.ExecContextState contextState : state) {
+            if (currState==contextState) {
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean isStarted(DispatcherUrl dispatcherUrl, Long execContextId) {

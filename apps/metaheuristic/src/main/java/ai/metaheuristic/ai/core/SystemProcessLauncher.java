@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.core;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -117,7 +118,7 @@ public class SystemProcessLauncher {
                     interrupters.add( ()-> System.currentTimeMillis() > terminateAt );
                 }
                 interrupters.add( () -> {
-                    if (schedule!=null && schedule.isCurrentTimeInactive()) {
+                    if (schedule!=null && schedule.policy==ExtendedTimePeriod.SchedulePolicy.strict && schedule.isCurrentTimeInactive()) {
                         isInactivePeriod.set(true);
                         return true;
                     }
@@ -189,13 +190,15 @@ public class SystemProcessLauncher {
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
         log.debug("'\texitCode: {}", exitCode);
-        log.debug("'\tdestroyed with timeout: {}", isTerminated.get());
+        log.debug("'\tdestroyed with timeout or for other reason: {}", isTerminated.get());
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getAbsolutePath());
         String console = readLastLines(taskConsoleOutputMaxLines, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
-//        log.warn("Finish executing a system process in dir {}", execDir.getAbsolutePath());
+        if (isTerminated.get() && exitCode==0) {
+            log.error("!!! FATAL ERROR need to re-write a code");
+        }
         return new FunctionApiData.SystemExecResult(functionCode, exitCode==0, exitCode, console);
     }
 

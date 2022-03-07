@@ -502,7 +502,9 @@ public class TaskProcessor {
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             final Supplier<Boolean> execContextDeletionCheck =
-                    () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
+                    () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId,
+                            EnumsApi.ExecContextState.DOESNT_EXIST, EnumsApi.ExecContextState.STOPPED, EnumsApi.ExecContextState.ERROR,
+                            EnumsApi.ExecContextState.FINISHED);
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(

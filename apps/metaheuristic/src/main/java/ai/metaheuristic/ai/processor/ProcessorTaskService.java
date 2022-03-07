@@ -366,7 +366,7 @@ public class ProcessorTaskService {
             for (ProcessorTask task : tasks) {
                 // we don't need new task because execContext for this task is active
                 // i.e. there is a non-completed task with active execContext
-                // if execContext wasn't active we would need a new task
+                // if execContext wasn't active, we would need a new task
                 if (currentExecState.isStarted(new DispatcherUrl(task.dispatcherUrl), task.execContextId)) {
                     return false;
                 }
@@ -384,7 +384,9 @@ public class ProcessorTaskService {
                         task.completed = true;
                         save(ref, task);
                     }
-                    list.add(task);
+                    else {
+                        list.add(task);
+                    }
                 }
             }
             return list;

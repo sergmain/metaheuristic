@@ -194,7 +194,7 @@ public class DispatcherRequestor {
                 r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
             }
             if (!newRequest(pcpy)) {
-                log.info("#775.045 no new requests");
+                log.info("#775.045 no new requests to {}", dispatcherUrl.url );
                 return;
             }
 
