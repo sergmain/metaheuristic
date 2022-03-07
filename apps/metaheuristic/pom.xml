@@ -21,7 +21,7 @@
 
     <groupId>ai.metaheuristic</groupId>
     <artifactId>srv</artifactId>
-    <version>4.5.5-SNAPSHOT</version>
+    <version>4.5.6-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ai.metaheuristic</name>
@@ -43,17 +43,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.17.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.17.1</version>
-        </dependency>
-
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
@@ -87,7 +76,6 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>3.0.8</version>
         </dependency>
 
         <dependency>

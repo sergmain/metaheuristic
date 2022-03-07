@@ -162,7 +162,7 @@ public class ProcessorTaskService {
                 FileUtils.deleteDirectory(f);
             }
         } catch (IOException e) {
-            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.toString());
+            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.getMessage());
         }
     }
 
@@ -572,7 +572,11 @@ public class ProcessorTaskService {
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
-            } catch (Throwable th) {
+            }
+            catch (java.lang.NoClassDefFoundError th) {
+                log.error("#713.205 Error deleting task {}, {}", taskId, th.getMessage());
+            }
+            catch (Throwable th) {
                 log.error("#713.210 Error deleting task " + taskId, th);
             }
         }
