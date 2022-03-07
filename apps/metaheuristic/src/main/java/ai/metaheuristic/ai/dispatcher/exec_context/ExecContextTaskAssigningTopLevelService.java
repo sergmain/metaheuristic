@@ -88,9 +88,7 @@ public class ExecContextTaskAssigningTopLevelService {
             UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
             statTotal.add(stat);
         }
-        if (statTotal.found==0) {
-            log.warn("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
-        }
+        log.warn("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
     }
 
     public void findTaskForRegisteringInQueue(Long execContextId) {
@@ -145,9 +143,7 @@ public class ExecContextTaskAssigningTopLevelService {
 
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
-                    if (log.isDebugEnabled()) {
-                        logDebugAboutTask(task);
-                    }
+                    logDebugAboutTask(task);
                     continue;
                 }
 
@@ -192,12 +188,15 @@ public class ExecContextTaskAssigningTopLevelService {
             }
         }
         TaskProviderTopLevelService.lock(execContextId);
-        log.warn("#703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
+        log.debug("#703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
 
         return stat;
     }
 
     private static void logDebugAboutTask(TaskImpl task) {
+        if (!log.isDebugEnabled()) {
+            return;
+        }
         try {
             TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
