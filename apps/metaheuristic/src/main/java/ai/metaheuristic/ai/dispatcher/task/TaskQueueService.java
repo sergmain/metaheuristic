@@ -123,6 +123,11 @@ public class TaskQueueService {
         return taskQueue.alreadyRegistered(taskId);
     }
 
+    public static boolean alreadyRegisteredWithSync(Long taskId) {
+        checkWriteLockNotPresent();
+        return getWithSync(() -> taskQueue.alreadyRegistered(taskId));
+    }
+
     public static void addNewTask(TaskQueue.QueuedTask queuedTask) {
         checkWriteLockPresent();
         taskQueue.addNewTask(queuedTask);

@@ -19,11 +19,16 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -35,6 +40,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -54,33 +60,75 @@ public class ExecContextTaskAssigningTopLevelService {
     private final TaskRepository taskRepository;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingService taskFinishingService;
+    private final ExecContextRepository execContextRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    public static class UnassignedTasksStat {
+        public int found;
+        public int allocated;
+
+        public void add(UnassignedTasksStat add) {
+            this.found += add.found;
+            this.allocated += add.allocated;
+        }
+    }
 
     private long mills = 0L;
 
-    public void findUnassignedTasksAndRegisterInQueue(Long execContextId) {
-        ExecContextSyncService.checkWriteLockPresent(execContextId);
+    public void findUnassignedTasksAndRegisterInQueue() {
+//        log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+//        boolean allocatedTaskMoreThan = TaskQueueService.allocatedTaskMoreThan(100);
+//        log.warn("#703.010 found {} tasks for registering, execCOntextId: #{}", vertices.size(), execContextId);
 
-        log.warn("#703.005 start finding a new tasks for registering, execContextId: #{}", execContextId);
+        List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        execContextIds.sort((Comparator.naturalOrder()));
+        UnassignedTasksStat statTotal = new UnassignedTasksStat();
+        for (Long execContextId : execContextIds) {
+//            findTaskForRegisteringInQueue(execContextId);
+            UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
+            statTotal.add(stat);
+        }
+        if (statTotal.found==0) {
+            log.warn("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+        }
+    }
+
+    public void findTaskForRegisteringInQueue(Long execContextId) {
+        ExecContextSyncService.getWithSyncVoid(execContextId, () -> findUnassignedTasksAndRegisterInQueue(execContextId));
+    }
+
+    public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
+//        ExecContextSyncService.checkWriteLockPresent(execContextId);
+
+        UnassignedTasksStat stat = new UnassignedTasksStat();
+
+        log.warn("#703.100 start finding a new tasks for registering, execContextId: #{}", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return;
+            return stat;
         }
 
-        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
-                execContext.execContextGraphId, execContext.execContextTaskStateId, true);
+        if (System.currentTimeMillis() - mills > 10_000) {
+            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                    execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
+            mills = System.currentTimeMillis();
+        }
 
-        log.warn("#703.010 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
+        final List<ExecContextData.TaskVertex> vertices = ExecContextSyncService.getWithSync(execContextId,
+                () -> execContextGraphTopLevelService.findAllForAssigning(
+                        execContext.execContextGraphId, execContext.execContextTaskStateId, true));
+
+        stat.found = vertices.size();
+        log.warn("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
             ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
-            return;
+            return stat;
         }
 
         int page = 0;
         List<Long> taskIds;
         boolean isEmpty = true;
-        int actuallAllocation = 0;
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             isEmpty = false;
 
@@ -98,17 +146,12 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     if (log.isDebugEnabled()) {
-                        try {
-                            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                            if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
-                                log.warn("#703.020 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
-                            }
-                        }
-                        catch (Throwable th) {
-                            log.warn("#703.040 Error parsing taskParamsYaml, error: " + th.getMessage());
-                            log.warn("#703.060 task #{} with IN_PROGRESS is there?", task.id);
-                        }
+                        logDebugAboutTask(task);
                     }
+                    continue;
+                }
+
+                if (TaskQueueService.alreadyRegisteredWithSync(task.id)) {
                     continue;
                 }
 
@@ -124,13 +167,16 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     switch(taskParamYaml.task.context) {
                         case external:
-                            actuallAllocation++;
-                            TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml);
+                            if (TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml)) {
+                                stat.allocated++;
+                            }
                             break;
                         case internal:
                             // all tasks with internal function will be processed in a different thread after registering in TaskQueue
                             log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
-                            TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml);
+                            if (TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml)) {
+                                stat.allocated++;
+                            }
                             eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContextId, taskId));
                             break;
                         case long_running:
@@ -139,18 +185,28 @@ public class ExecContextTaskAssigningTopLevelService {
                 }
                 else {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
-                    log.warn("#703.280 Task #{} with function '{}' was already processed with status {}",
+                    log.warn("#703.380 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, state);
                     // this situation will be handled while a reconciliation stage
                 }
             }
         }
-        if (isEmpty && System.currentTimeMillis() - mills > 10_000) {
-            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                    execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
-            mills = System.currentTimeMillis();
-        }
         TaskProviderTopLevelService.lock(execContextId);
-        log.warn("#703.500 allocated {} of new taks in execContext #{}", actuallAllocation, execContextId);
+        log.warn("#703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
+
+        return stat;
+    }
+
+    private static void logDebugAboutTask(TaskImpl task) {
+        try {
+            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
+                log.warn("#703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
+            }
+        }
+        catch (Throwable th) {
+            log.warn("#703.540 Error parsing taskParamsYaml, error: " + th.getMessage());
+            log.warn("#703.560 task #{} with IN_PROGRESS is there?", task.id);
+        }
     }
 }

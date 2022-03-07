@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskAssigningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
@@ -186,7 +186,6 @@ public class Schedulers {
 
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
-        private final ExecContextTopLevelService execContextTopLevelService;
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
         private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
@@ -194,6 +193,7 @@ public class Schedulers {
         private final ApplicationEventPublisher eventPublisher;
         private final ExecContextStatusService execContextStatusService;
         private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
+        private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -239,7 +239,7 @@ public class Schedulers {
             log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
-                execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
+                execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
             }
             finally {
                 ArtifactCleanerAtDispatcher.notBusy();

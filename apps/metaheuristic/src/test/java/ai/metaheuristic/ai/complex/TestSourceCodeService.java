@@ -85,7 +85,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextTopLevelService execContextTopLevelService;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private ExecContextRepository execContextRepository;
@@ -98,6 +97,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextFSM execContextFSM;
     @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -294,7 +294,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(2, taskIds.size());
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         // null because current task is 'internal' and will be processed in async way
@@ -314,7 +314,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskIds.size());
         });
 
-        execContextTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
         t = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);

@@ -108,12 +108,13 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    public static void registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
-        TaskQueueSyncStaticService.getWithSyncVoid(()-> {
+    public static boolean registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        return TaskQueueSyncStaticService.getWithSync(()-> {
             if (TaskQueueService.alreadyRegistered(task.id)) {
-                return;
+                return false;
             }
             registerTaskLambda(execContext, task, taskParamYaml);
+            return true;
         });
     }
 
@@ -205,15 +206,16 @@ public class TaskProviderTopLevelService {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.lock(execContextId));
     }
 
-    public static void registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
-        TaskQueueSyncStaticService.getWithSyncVoid(()-> registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml));
+    public static boolean registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+        return TaskQueueSyncStaticService.getWithSync(()-> registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml));
     }
 
-    private static void registerInternalTaskWithoutSync(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
+    private static boolean registerInternalTaskWithoutSync(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         if (TaskQueueService.alreadyRegistered(taskId)) {
-            return;
+            return false;
         }
         TaskQueueService.addNewInternalTask(execContextId, taskId, taskParamYaml);
+        return true;
     }
 
     @Async

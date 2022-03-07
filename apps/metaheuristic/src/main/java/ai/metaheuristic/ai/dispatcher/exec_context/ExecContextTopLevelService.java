@@ -64,7 +64,6 @@ public class ExecContextTopLevelService {
     private final ExecContextFSM execContextFSM;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
@@ -147,23 +146,6 @@ public class ExecContextTopLevelService {
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
         return result;
-    }
-
-    public void findUnassignedTasksAndRegisterInQueue() {
-//        log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
-//        boolean allocatedTaskMoreThan = TaskQueueService.allocatedTaskMoreThan(100);
-//        log.warn("#703.010 found {} tasks for registering, execCOntextId: #{}", vertices.size(), execContextId);
-
-        List<Long> execContextIds = execContextRepository.findAllStartedIds();
-        execContextIds.sort((Comparator.naturalOrder()));
-        for (Long execContextId : execContextIds) {
-            findTaskForRegisteringInQueue(execContextId);
-        }
-    }
-
-    public void findTaskForRegisteringInQueue(Long execContextId) {
-        ExecContextSyncService.getWithSyncVoid(execContextId,
-                () -> execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId));
     }
 
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {

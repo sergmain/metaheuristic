@@ -82,11 +82,11 @@ public class PreparingSourceCodeService {
     private final GlobalVariableService globalVariableService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final SouthbridgeService serverService;
-    private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextStatusService execContextStatusService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextService execContextService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
     public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
@@ -207,7 +207,7 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextId);
+        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(execContextId);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
@@ -222,7 +222,7 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findInternalTaskForRegisteringInQueue(Long execContextId) {
-        execContextTopLevelService.findTaskForRegisteringInQueue(execContextId);
+        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(execContextId);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
