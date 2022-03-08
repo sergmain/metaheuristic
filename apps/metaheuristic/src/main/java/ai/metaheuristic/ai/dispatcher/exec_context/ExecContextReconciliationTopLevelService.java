@@ -183,6 +183,10 @@ public class ExecContextReconciliationTopLevelService {
                     log.warn("#307.135 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: IN_PROGRESS, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
+                else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.CHECK_CACHE) {
+                    log.warn("#307.137 Found different states for task #{}, db: CHECK_CACHE, graph: NONE, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
                 else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.IN_PROGRESS && allocatedTask.state== TaskExecState.CHECK_CACHE) {
                     // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.warn("#307.141 Found different states for task #{}, db: CHECK_CACHE, graph: IN_PROGRESS, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
