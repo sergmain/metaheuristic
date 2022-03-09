@@ -1,5 +1,7 @@
 # Metaheuristic
 
+[![Join the chat at https://gitter.im/metaheuristic-ai/community](https://badges.gitter.im/metaheuristic-ai/community.svg)](https://gitter.im/metaheuristic-ai/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Distributed framework for hyper-parameter optimization and AutoML.  
 [Explore Metaheuristic docs »](https://docs.metaheuristic.ai)
 
