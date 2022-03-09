@@ -26,7 +26,7 @@ Access a simple UI of Metaheuristic via [http://localhost:8083](http://localhost
 or access an Angular-based UI of Metaheuristic via
 [https://adocker8083.metaheuristic.ai/#/](https://adocker8083.metaheuristic.ai/#/)
 
-continue reading at [start running the actual tasks](https://docs.metaheuristic.ai/p/quick-start#quick-start-for-evaluating-ui-only)
+continue reading at [start running the actual tasks](https://docs.metaheuristic.ai/p/quick-start#quick-start-with-running-the-actual-tasks)
 
 
 ## Quick start
