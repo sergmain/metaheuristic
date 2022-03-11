@@ -48,6 +48,7 @@ public class EnumsApi {
     }
 
     public enum FunctionExecContext { external, internal, long_running }
+    public enum FunctionRefType { code, type }
 
     /**
      * local - all assets are managed locally
@@ -168,6 +169,8 @@ public class EnumsApi {
         TOO_MANY_FUNCTION_CODES_ERROR,
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         FUNCTION_NOT_FOUND_ERROR,
+        FUNCTION_REF_TYPE_EMPTY_ERROR,
+        FUNCTION_WITH_SUCH_TYPE_DOESNT_EXIST_ERROR,
         FITTING_FUNCTION_NOT_FOUND_ERROR,
         VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,

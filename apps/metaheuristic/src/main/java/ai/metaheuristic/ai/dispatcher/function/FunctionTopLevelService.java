@@ -450,8 +450,17 @@ public class FunctionTopLevelService {
     @Nullable
     public TaskParamsYaml.FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
-        if(StringUtils.isNotBlank(functionDef.getCode())) {
-            Function function = findByCode(functionDef.getCode());
+        if (StringUtils.isNotBlank(functionDef.getCode())) {
+            Function function;
+            if (functionDef.getRefType()== EnumsApi.FunctionRefType.code) {
+                function = findByCode(functionDef.getCode());
+            }
+            else if (functionDef.getRefType()== EnumsApi.FunctionRefType.type) {
+                function = functionRepository.findByType(functionDef.getCode());
+            }
+            else {
+                throw new IllegalStateException("unknown refType: " + functionDef.getRefType());
+            }
             if (function != null) {
                 FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);

@@ -39,7 +39,7 @@ public class TestPlanYamlYaml {
         System.out.println(yaml);
         assertFalse(yaml.startsWith("!!"));
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        SourceCodeParamsYaml.SourceCodeYaml py = planParams.source;
+        SourceCodeParamsYaml.SourceCode py = planParams.source;
 
         assertNotNull(py);
         assertNotNull(py.processes);
@@ -48,7 +48,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml_2() {
-        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        SourceCodeParamsYaml.SourceCode sourceCodeYaml = new SourceCodeParamsYaml.SourceCode();
         sourceCodeYaml.uid = UUID.randomUUID().toString();
 
         SourceCodeParamsYaml.Process p1 = new SourceCodeParamsYaml.Process();

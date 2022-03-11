@@ -239,7 +239,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
                 taskProviderTopLevelService.findTask(getProcessor().getId(), false);
 
-        assertNull(simpleTask2, ()->"error");
+        assertNotNull(simpleTask2);
+        assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
         assertNotNull(taskParamsYaml.task.processCode);

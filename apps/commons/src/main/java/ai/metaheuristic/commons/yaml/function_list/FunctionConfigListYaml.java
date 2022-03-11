@@ -80,8 +80,6 @@ public class FunctionConfigListYaml implements BaseParams {
 
     /**
      * this class must be equal to ai.metaheuristic.commons.yaml.function.FunctionConfigYaml
-     *
-     * TODO 2020-09-27 add unit test to confirm equality
      */
     @Data
     @ToString
@@ -112,7 +110,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public String file;
         /**
          * params for command line for invoking function
-         * <p>
+         *
          * this isn't a holder for yaml-based config
          */
         @Nullable

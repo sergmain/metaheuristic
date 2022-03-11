@@ -75,11 +75,13 @@ public class TestFeatureWithAllError extends FeatureMethods {
         storeConsoleResultAsError();
         log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
 
-        task = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
-        assertNull(task);
+        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        assertNull(task2);
 
         log.info("noNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 

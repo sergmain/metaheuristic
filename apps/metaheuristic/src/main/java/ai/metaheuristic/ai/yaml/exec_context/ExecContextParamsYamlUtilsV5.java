@@ -99,7 +99,7 @@ public class ExecContextParamsYamlUtilsV5
     }
 
     private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV5.FunctionDefinitionV5 f1) {
-        return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context);
+        return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context, f1.refType);
     }
 
     @NonNull

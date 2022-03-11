@@ -98,7 +98,7 @@ public class SourceCodeValidationService {
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = sourceCodeParamsYaml.source;
+        SourceCodeParamsYaml.SourceCode sourceCodeYaml = sourceCodeParamsYaml.source;
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
@@ -226,7 +226,7 @@ public class SourceCodeValidationService {
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 
-    private static SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
+    private static SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCode sourceCodeYaml) {
         if (!Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
             return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         }
@@ -319,7 +319,7 @@ public class SourceCodeValidationService {
         return null;
     }
 
-    private static SourceCodeApiData.SourceCodeValidationResult checkStrictNaming(SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml) {
+    private static SourceCodeApiData.SourceCodeValidationResult checkStrictNaming(SourceCodeParamsYaml.SourceCode sourceCodeYaml) {
         Set<String> codes = new HashSet<>();
         for (SourceCodeParamsYaml.Process process : sourceCodeYaml.processes) {
             codes.add(process.function.code);
@@ -421,16 +421,29 @@ public class SourceCodeValidationService {
     }
 
     private SourceCodeApiData.SourceCodeValidationResult checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        if (StringUtils.isNotBlank(snDef.code)) {
-            Long functionId = functionRepository.findIdByCode(snDef.code);
-            if (functionId == null) {
-                String es = S.f("#177.320 Function wasn't found for code: %s, process: %s", snDef.code, process.code);
-                log.error(es);
-                return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
-            }
+        if (S.b(snDef.code)) {
+            String es = S.f("#177.340 function wasn't found for code: %s, process: %s", snDef.code, process.code);
+            log.error(es);
+            return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
+        }
+        if (snDef.refType==null) {
+            String es = S.f("#175.430 function %s has empty refType field");
+            return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.FUNCTION_REF_TYPE_EMPTY_ERROR, es);
+        }
+
+        Long functionId;
+        if (snDef.refType== EnumsApi.FunctionRefType.type) {
+            functionId = functionRepository.findIdByType(snDef.code);
+        }
+        else if (snDef.refType== EnumsApi.FunctionRefType.code) {
+            functionId = functionRepository.findIdByCode(snDef.code);
         }
         else {
-            String es = S.f("#177.340 function wasn't found for code: %s, process: %s", snDef.code, process.code);
+            throw new IllegalStateException("unknow refType: " + snDef.refType);
+        }
+        if (functionId == null) {
+            String es = S.f("#177.320 Function wasn't found for code: %s, refType: %s,  process: %s", snDef.code, snDef.refType, process.code);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
@@ -480,10 +493,6 @@ public class SourceCodeValidationService {
                                 S.f("#177.388 SourceCode '%s' has different number of output variables (count: %d) from sourceCode '%s' (count: %d)",
                                         sourceCode.uid, process.outputs.size(), sc.uid, ppy.source.variables.outputs.size())
                         );
-                    }
-                    SourceCodeApiData.SourceCodeValidationResult result = checkConsistencyOfSourceCodeInternal(sc, checkedUids);
-                    if (result.status!=OK) {
-                        return result;
                     }
                 }
             }

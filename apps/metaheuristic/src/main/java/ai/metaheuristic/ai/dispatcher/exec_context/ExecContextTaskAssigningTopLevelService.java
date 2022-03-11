@@ -77,6 +77,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private long mills = 0L;
 
     public void findUnassignedTasksAndRegisterInQueue() {
+        // TODO P3 2022-03-11 this commented code is for optimized queries. maybe it should be deleted as not actual
 //        log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
 //        boolean allocatedTaskMoreThan = TaskQueueService.allocatedTaskMoreThan(100);
 //        log.warn("#703.010 found {} tasks for registering, execCOntextId: #{}", vertices.size(), execContextId);
@@ -85,19 +86,13 @@ public class ExecContextTaskAssigningTopLevelService {
         execContextIds.sort((Comparator.naturalOrder()));
         UnassignedTasksStat statTotal = new UnassignedTasksStat();
         for (Long execContextId : execContextIds) {
-//            findTaskForRegisteringInQueue(execContextId);
             UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
             statTotal.add(stat);
         }
         log.warn("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
     }
 
-    public void findTaskForRegisteringInQueue(Long execContextId) {
-        ExecContextSyncService.getWithSyncVoid(execContextId, () -> findUnassignedTasksAndRegisterInQueue(execContextId));
-    }
-
     public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
-//        ExecContextSyncService.checkWriteLockPresent(execContextId);
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 

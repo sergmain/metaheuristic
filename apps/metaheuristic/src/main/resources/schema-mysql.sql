@@ -260,6 +260,9 @@ CREATE TABLE mh_function
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx
     ON mh_function (FUNCTION_CODE);
 
+CREATE INDEX mh_function_function_type_idx
+    ON mh_function (FUNCTION_TYPE);
+
 CREATE TABLE mh_source_code
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

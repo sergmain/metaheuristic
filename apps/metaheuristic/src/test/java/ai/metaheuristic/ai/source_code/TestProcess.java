@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCodeYaml;
+import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -44,14 +44,14 @@ public class TestProcess {
                         Map.of("feature", "feature"))
         );
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
-        SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        SourceCode sourceCodeYaml = new SourceCode();
         sourceCodeYaml.uid = "test-process-for-meta";
         sourceCodeYaml.processes.add(p);
         sourceCodeParamsYaml.source = sourceCodeYaml;
 
         String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        SourceCodeYaml sourceCodeYamlV21 = planParams.source;
+        SourceCode sourceCodeYamlV21 = planParams.source;
 
         SourceCodeParamsYaml.Process p1 = sourceCodeYamlV21.getProcesses().get(0);
 

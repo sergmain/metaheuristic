@@ -107,6 +107,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @AfterEach
     public void afterPreparingSourceCode() {
-        preparingSourceCodeInitService.afterPreparingSourceCode(preparingSourceCodeData);
+        if (preparingSourceCodeData!=null) {
+            preparingSourceCodeInitService.afterPreparingSourceCode(preparingSourceCodeData);
+        }
     }
 }

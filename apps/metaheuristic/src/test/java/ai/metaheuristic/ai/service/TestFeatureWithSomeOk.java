@@ -95,6 +95,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         storeConsoleResultAsError();
 
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
 
         assertNull(task1);

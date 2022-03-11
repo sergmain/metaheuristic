@@ -147,7 +147,7 @@ public class TestProcessGraph {
     }
 
     private static void init(String code, EnumsApi.FunctionExecContext context, String internalContextId, ExecContextParamsYaml ecpy) {
-        FunctionDefinition f4 = new FunctionDefinition(code, "", context);
+        FunctionDefinition f4 = new FunctionDefinition(code, "", context, EnumsApi.FunctionRefType.code);
         ExecContextParamsYaml.Process p4 = new ExecContextParamsYaml.Process(code, code, internalContextId, f4);
         ecpy.processes.add(p4);
     }

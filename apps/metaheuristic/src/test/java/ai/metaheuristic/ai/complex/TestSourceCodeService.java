@@ -294,7 +294,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(2, taskIds.size());
 
-        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         // null because current task is 'internal' and will be processed in async way
@@ -314,7 +314,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskIds.size());
         });
 
-        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
         t = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
@@ -439,7 +439,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
                 taskProviderTopLevelService.findTask(getProcessor().getId(), false);
-        assertNull(simpleTask21);
+        assertNotNull(simpleTask21);
+        assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask20.params);
         assertNotNull(taskParamsYaml.task.processCode);
@@ -488,7 +489,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
                 taskProviderTopLevelService.findTask(getProcessor().getId(), false);
-        assertNull(simpleTask2);
+        assertNotNull(simpleTask2);
+        assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
         assertNotNull(taskParamsYaml.task.processCode);

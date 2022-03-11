@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV4;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV5;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -99,7 +100,7 @@ public class ExecContextParamsYamlUtilsV4
     }
 
     private static ExecContextParamsYamlV5.FunctionDefinitionV5 toFunction(ExecContextParamsYamlV4.FunctionDefinitionV4 f1) {
-        return new ExecContextParamsYamlV5.FunctionDefinitionV5(f1.code, f1.params, f1.context);
+        return new ExecContextParamsYamlV5.FunctionDefinitionV5(f1.code, f1.params, f1.context, EnumsApi.FunctionRefType.code);
     }
 
     @NonNull

@@ -31,7 +31,7 @@ public class TestProcessMeta {
 
     @Test
     public void testProcessMeta() {
-        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        SourceCodeParamsYaml.SourceCode sourceCodeYaml = new SourceCodeParamsYaml.SourceCode();
         sourceCodeYaml.uid = "test-process-for-meta";
         {
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
@@ -56,7 +56,7 @@ public class TestProcessMeta {
         System.out.println(s);
 
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        SourceCodeParamsYaml.SourceCodeYaml yaml1 = planParams.source;
+        SourceCodeParamsYaml.SourceCode yaml1 = planParams.source;
 
         assertEquals(sourceCodeYaml, yaml1);
 

@@ -269,7 +269,8 @@ public class TaskWithInternalContextEventService {
             ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
             if (p == null) {
                 if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
-                    ExecContextParamsYaml.FunctionDefinition function = new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal);
+                    ExecContextParamsYaml.FunctionDefinition function =
+                            new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
                     p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                 }
                 else {

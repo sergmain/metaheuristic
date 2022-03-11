@@ -111,6 +111,7 @@ public class ExecContextParamsYamlV5 implements BaseParams {
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+        public EnumsApi.FunctionRefType refType = EnumsApi.FunctionRefType.code;
 
         public FunctionDefinitionV5(String code) {
             this.code = code;

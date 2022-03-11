@@ -207,7 +207,7 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(execContextId);
+        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
@@ -222,7 +222,7 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findInternalTaskForRegisteringInQueue(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findTaskForRegisteringInQueue(execContextId);
+        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {

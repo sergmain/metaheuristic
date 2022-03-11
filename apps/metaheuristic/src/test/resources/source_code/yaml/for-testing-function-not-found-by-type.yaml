@@ -1,0 +1,9 @@
+source:
+  uid: for-testing-function-type
+  processes:
+    - code: test-funtion-type
+      name: test-funtion-type
+      function:
+        code: function-01:1.1-unknown-type
+        refType: type
+version: 5
