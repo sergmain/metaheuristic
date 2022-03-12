@@ -451,12 +451,15 @@ public class FunctionTopLevelService {
     public TaskParamsYaml.FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
         if (StringUtils.isNotBlank(functionDef.getCode())) {
-            Function function;
+            Function function = null;
             if (functionDef.getRefType()== EnumsApi.FunctionRefType.code) {
                 function = findByCode(functionDef.getCode());
             }
             else if (functionDef.getRefType()== EnumsApi.FunctionRefType.type) {
-                function = functionRepository.findByType(functionDef.getCode());
+                Long funcId = functionRepository.findIdByType(functionDef.getCode());
+                if (funcId!=null) {
+                    function = functionRepository.findById(funcId).orElse(null);
+                }
             }
             else {
                 throw new IllegalStateException("unknown refType: " + functionDef.getRefType());
