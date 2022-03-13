@@ -17,14 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
@@ -49,6 +47,7 @@ public class InternalFunctionProcessor {
         if (internalFunction==null) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }
+        ArtifactCleanerAtDispatcher.setBusy();
         try {
             internalFunction.process(simpleExecContext, taskId, internalContextId, taskParamsYaml);
             return internalFunction.isLongRunning();
@@ -60,6 +59,9 @@ public class InternalFunctionProcessor {
             String es = "#977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
             log.error(es, th);
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 }

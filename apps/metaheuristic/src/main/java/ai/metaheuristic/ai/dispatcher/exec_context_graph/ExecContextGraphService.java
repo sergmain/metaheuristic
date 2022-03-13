@@ -447,7 +447,7 @@ public class ExecContextGraphService {
     public static List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
         return readOnlyGraphWithState(execContextGraph, execContextTaskState, (graph,stateParamsYaml) -> {
 
-            log.debug("Start find a task for assigning");
+            log.debug("Start searching a task for assigning");
             if (log.isDebugEnabled()) {
                 log.debug("\tcurrent state of tasks:");
                 graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, stateParamsYaml.states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE)));

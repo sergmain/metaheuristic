@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -92,7 +93,7 @@ public class ArtifactCleanerAtDispatcher {
 
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
-        if (isBusy()) {
+        if (isBusy() || !TaskQueueService.isQueueEmptyWithSync()) {
             return;
         }
 
@@ -132,7 +133,7 @@ public class ArtifactCleanerAtDispatcher {
         int period = DispatcherEventService.getPeriod(keepStartDate);
 
         List<Long> periodsForDelete = dispatcherEventRepository.getPeriodIdsBefore(period);
-        List<List<Long>> pages = CollectionUtils.parseAsPages(periodsForDelete, 10);
+        List<List<Long>> pages = CollectionUtils.parseAsPages(periodsForDelete, 20);
         for (List<Long> page : pages) {
             if (isBusy()) {
                 return;
@@ -311,7 +312,7 @@ public class ArtifactCleanerAtDispatcher {
 
             List<Long> ids;
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
                 for (List<Long> page : pages) {
                     if (page.isEmpty() || isBusy()) {
                         return;
@@ -344,7 +345,7 @@ public class ArtifactCleanerAtDispatcher {
 
             List<Long> ids;
             while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
                 for (List<Long> page : pages) {
                     if (isBusy()) {
                         return;
@@ -374,7 +375,7 @@ public class ArtifactCleanerAtDispatcher {
         for (String funcCode : missingCodes) {
             List<Long> ids;
             while (!(ids = cacheProcessRepository.findByFunctionCode(Consts.PAGE_REQUEST_100_REC, funcCode)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 5);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
                 for (List<Long> page : pages) {
                     if (isBusy()) {
                         return;

@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -289,7 +290,7 @@ public class TaskQueue {
     private final int minQueueSize;
     private final int groupSize;
     private final List<TaskGroup> taskGroups = new ArrayList<>();
-    private boolean isEmpty = true;
+    private final AtomicInteger taskForExecution = new AtomicInteger();
 
     public TaskQueue() {
         this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);
