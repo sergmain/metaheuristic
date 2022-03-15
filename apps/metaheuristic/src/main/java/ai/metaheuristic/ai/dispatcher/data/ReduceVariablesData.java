@@ -16,12 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesEnums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -36,6 +32,14 @@ import java.util.Map;
  */
 public class ReduceVariablesData {
 
+    public static class ExperimentMetrics {
+        public String hyper;
+        public String data;
+        public String metrics;
+        public String dir;
+        public MetricValues metricValues;
+    }
+
     public static class Request {
         public final Map<String, Boolean> nullifiedVars = new HashMap<>();
     }
@@ -46,6 +50,7 @@ public class ReduceVariablesData {
         public EnumsApi.Fitting fitting;
         @Nullable
         public MetricValues metricValues;
+        public String dir;
     }
 
     public static class TopPermutedVariables {
@@ -60,5 +65,6 @@ public class ReduceVariablesData {
     public static class ReduceVariablesResult {
         public final Map<String, String> byValue = new HashMap<>();
         public final Map<String, Boolean> byInstance = new HashMap<>();
+        public List<ExperimentMetrics> metricsList;
     }
 }

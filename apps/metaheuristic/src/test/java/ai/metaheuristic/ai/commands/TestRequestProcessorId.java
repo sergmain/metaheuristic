@@ -22,6 +22,10 @@ import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -128,19 +132,20 @@ public class TestRequestProcessorId {
 
     @Test
     public void testEmptySessionId() {
-        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
+        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId.toString(), null);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId.toString(), null);
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
+        final String reqYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.keepAlive(reqYaml, "127.0.0.1");
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
+        KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
         assertNotNull(d);
         assertNotNull(d.responses);
         assertEquals(1, d.responses.size());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
 
         assertNotNull(reAssignedProcessorId.getReAssignedProcessorId());

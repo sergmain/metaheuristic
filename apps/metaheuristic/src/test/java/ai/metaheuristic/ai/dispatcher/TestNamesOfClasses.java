@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeController;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,5 +34,6 @@ public class TestNamesOfClasses {
         // !!! __ Do not change the name of class to SouthBridgeController ___ !!!
         //noinspection ConstantExpression
         assertEquals("Southbridge"+"Controller", SouthbridgeController.class.getSimpleName());
+        assertEquals("Southbridge"+"Service", SouthbridgeService.class.getSimpleName());
     }
 }

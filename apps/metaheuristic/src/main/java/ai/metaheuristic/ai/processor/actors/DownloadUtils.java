@@ -17,10 +17,15 @@
 package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.Header;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * @author Serge
@@ -49,5 +54,22 @@ class DownloadUtils {
             }
         }
         return null;
+    }
+
+    public static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            for (int i = 0; i <= idx; i++) {
+                final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                if (input.length()==0) {
+                    continue;
+                }
+                FileUtils.copyFile(input, fos);
+            }
+            fos.flush();
+            final FileDescriptor fd = fos.getFD();
+            if (fd.valid()) {
+                fd.sync();
+            }
+        }
     }
 }

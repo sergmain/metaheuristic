@@ -17,14 +17,14 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
-import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nz.net.ultraq.thymeleaf.LayoutDialect;
+import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
 import org.apache.catalina.connector.Connector;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,17 +36,31 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.EOFException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -78,8 +92,10 @@ public class Config {
     @Value("${ajp.port:#{0}}")
     private int ajpPort;
 
-    @Value("${ajp.enabled:#{false}}")
-    private boolean ajpEnabled;
+    // TODO p9 2021-12-12 disabled because isn't used at this time and not tested
+//    @Value("${ajp.enabled:#{false}}")
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean ajpEnabled = false;
 
     // https://careydevelopment.us/2017/06/19/run-spring-boot-apache-web-server-front-end/
     @Bean
@@ -96,6 +112,39 @@ public class Config {
         return tomcat;
     }
 
+    @Component
+    public static class EOFCustomFilter implements Filter {
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterchain)
+                throws IOException, ServletException {
+            try {
+                filterchain.doFilter(request, response);
+            }
+            catch (Throwable e) {
+                Throwable root = ExceptionUtils.getRootCause(e);
+                log.error("Error with request from " + request.getRemoteAddr() + ", class: " + request.getClass().getName() + ", root: " +(root!=null ? root.getClass().getName() : null) +", ctx: " + request.getServletContext().getContextPath()+", " + e.getMessage());
+                if (root!=null) {
+                    if (root instanceof EOFException) {
+                        if (request instanceof HttpServletRequest httpRequest) {
+                            log.error("EOF with request from "+httpRequest.getRemoteAddr()+" at uri " + httpRequest.getRequestURI());
+                        }
+                    }
+                }
+                throw e;
+            }
+        }
+    }
+
+    @Bean
+    public RequestRejectedHandler requestRejectedHandler() {
+        return (request, response, requestRejectedException) -> {
+            if (log.isDebugEnabled()) {
+                log.debug("Rejecting request due to: " + requestRejectedException.getMessage(), requestRejectedException);
+            }
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        };
+    }
+
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -107,11 +156,11 @@ public class Config {
     @Component
     @RequiredArgsConstructor
     public static class SpringChecker {
-        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
+        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart", "mysql", "postgresql");
 
         private final ApplicationContext appCtx;
 
-        @Value("${spring.host:#{null}}")
+        @Value("${server.address:#{null}}")
         public String serverHost;
 
         @Value("${server.port:#{-1}}")

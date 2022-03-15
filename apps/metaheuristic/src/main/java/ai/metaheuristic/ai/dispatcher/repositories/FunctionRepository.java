@@ -48,6 +48,11 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     Long findIdByCode(String code);
 
     @Transactional(readOnly = true)
+    @Nullable
+    @Query(value="select max(b.id) from Function b where b.type=:funcType")
+    Long findIdByType(String funcType);
+
+    @Transactional(readOnly = true)
     @NonNull
     List<Function> findAll();
 
@@ -55,7 +60,7 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     @Query(value="select b.id from Function b")
     List<Long> findAllIds();
 
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     @Query(value="select b.code from Function b")
     List<String> findAllFunctionCodes();
 }

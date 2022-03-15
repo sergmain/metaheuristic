@@ -19,12 +19,15 @@ package ai.metaheuristic.ai.experiment_result;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -34,10 +37,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestExperimentToJson extends PreparingExperiment {
 
-    @Autowired
-    private ExperimentResultService experimentResultService;
+    @Autowired private ExperimentResultService experimentResultService;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -48,13 +53,13 @@ public class TestExperimentToJson extends PreparingExperiment {
     public void toExperimentStoredToExperimentResultToYaml() {
         createExperiment();
 
-        produceTasksForTest();
+        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
 
-        assertNotNull(experiment);
-        assertNotNull(experiment.getId());
+        assertNotNull(getExperiment());
+        assertNotNull(getExperiment().getId());
 //        assertNotNull(experiment.getExecContextId());
 
-        ExperimentResultService.StoredToExperimentResultWithStatus r = ExperimentResultService.toExperimentStoredToExperimentResult(execContextForTest.asSimple(), experiment);
+        ExperimentResultService.StoredToExperimentResultWithStatus r = ExperimentResultService.toExperimentStoredToExperimentResult(getExecContextForTest().asSimple(), getExperiment());
         assertEquals(Enums.StoringStatus.OK, r.status);
 
         String yaml = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(r.experimentResultParamsYamlWithCache.experimentResult);

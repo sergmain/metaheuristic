@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author Serge
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
  * Time: 2:02 AM
  */
 @AllArgsConstructor
+@EqualsAndHashCode(of={"taskId"})
 public class CheckTaskCanBeFinishedTxEvent {
     public final Long execContextId;
     public final Long taskId;

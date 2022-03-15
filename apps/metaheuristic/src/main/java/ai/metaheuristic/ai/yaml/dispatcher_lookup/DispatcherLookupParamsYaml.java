@@ -49,6 +49,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     public static class DispatcherLookup {
         // fields, which are specific to concrete installation
         // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
+        @Nullable
         public String taskProcessingTime;
 
         // common fields

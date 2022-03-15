@@ -38,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -66,8 +68,8 @@ public class BatchSplitterTxService {
     private final TaskProducingService taskProducingService;
     private final VariableService variableService;
 
-    @Transactional
-    public Void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
+    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
@@ -105,7 +107,7 @@ public class BatchSplitterTxService {
                             }
                             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                             variableService.createInputVariablesForSubProcess(
-                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
                             taskProducingService.createTasksForSubProcesses(
                                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
@@ -124,11 +126,10 @@ public class BatchSplitterTxService {
             throw new BatchResourceProcessingException(es);
         }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
-        return null;
     }
 
     @Nullable
-    private VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
+    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
         if (file.isDirectory()) {
             final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)

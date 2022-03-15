@@ -38,6 +38,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -117,9 +118,7 @@ public class ExecContextTaskProducingService {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
                         "#701.220 Process '"+processCode+"' must be internal");
             }
-            Set<ExecContextData.ProcessVertex> ancestors = ExecContextProcessGraphService.findAncestors(processGraph, processVertex);
-            ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctions(execContextParamsYaml, ancestors, p);
-
+            ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctionAsParent(execContextParamsYaml, processGraph, processVertex);
             // internal functions will be processed in another thread
             if (internalFuncProcess!=null) {
                 continue;
@@ -147,25 +146,47 @@ public class ExecContextTaskProducingService {
         return okResult;
     }
 
+    // the logis is following: because we goes through all processed, we have to filter out any processes whose ancesor is internal task
+    // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
     @Nullable
-    private static ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
-        for (ExecContextData.ProcessVertex ancestor : ancestors) {
-            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
+    public static ExecContextParamsYaml.Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
+        if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
+            return null;
+        }
+
+        ExecContextData.ProcessVertex directAncestor = currProcess;
+        while ((directAncestor=getDirectAncestor(processGraph, directAncestor))!=null) {
+            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(directAncestor.process);
             if (p==null) {
                 log.warn("#701.260 Unusual state, need to investigate");
-                continue;
-            }
-            if (!currProcess.internalContextId.startsWith(p.internalContextId)) {
-                continue;
-            }
-            if (p.internalContextId.equals(currProcess.internalContextId)) {
                 continue;
             }
             if (p.function.context== EnumsApi.FunctionExecContext.internal) {
                 return p;
             }
+
         }
         return null;
+    }
+
+    @SuppressWarnings("SimplifyStreamApiCallChains")
+    @Nullable
+    private static ExecContextData.ProcessVertex getDirectAncestor(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
+        if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
+            return null;
+        }
+        List<ExecContextData.ProcessVertex> l = ExecContextProcessGraphService.findDirectAncestors(processGraph, currProcess).stream()
+                .filter(o->currProcess.processContextId.startsWith(o.processContextId))
+                .collect(Collectors.toList());
+
+        if (l.isEmpty()) {
+            return null;
+        }
+        if (l.size()!=1) {
+            throw new IllegalStateException("(l.size()!=1)");
+        }
+
+        return l.get(0);
     }
 
 

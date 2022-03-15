@@ -1,0 +1,57 @@
+version: 4
+source:
+  clean: false
+  uid: source-code-for-tesing-experiment-1.0
+  variables:
+    globals:
+      - global-test-variable
+    inline:
+      mh.hyper-params:
+        seed: '42'
+        batches: '[40, 60]'
+        time_steps: '7'
+        RNN: 'LSTM'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: seed
+                output: seed
+              - group: mh.hyper-params
+                name: batches
+                output: batchSize
+              - group: mh.hyper-params
+                name: time_steps
+                output: timeSteps
+              - group: mh.hyper-params
+                name: RNN
+                output: RNN
+      outputs:
+        - name: seed
+        - name: batchSize
+        - name: timeSteps
+        - name: RNN
+    - code: assembly-raw-file
+      name: assembly raw file
+      function:
+        code: function-01:1.1
+      inputs:
+        - name: global-test-variable
+      outputs:
+        - name: assembled-raw-output
+      triesAfterError: 1
+    - code: dataset-processing
+      name: dataset processing
+      function:
+        code: function-02:1.1
+        context: external
+      inputs:
+        - name: assembled-raw-output
+      outputs:
+        - name: dataset-processing-output

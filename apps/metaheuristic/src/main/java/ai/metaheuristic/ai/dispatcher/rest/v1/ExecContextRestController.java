@@ -40,6 +40,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -95,7 +96,7 @@ public class ExecContextRestController {
      */
     @PostMapping("/uid-exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") String variable, Authentication authentication) {
+    public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(uid, context.getCompanyId());
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
@@ -106,7 +107,7 @@ public class ExecContextRestController {
      */
     @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") String variable, Authentication authentication) {
+    public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
 

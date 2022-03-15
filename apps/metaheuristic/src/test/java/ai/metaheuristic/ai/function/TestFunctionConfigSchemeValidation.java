@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.function;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
@@ -75,6 +76,9 @@ public class TestFunctionConfigSchemeValidation {
     }
 
     @NonNull
+    private static String createYaml() {
+        FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
+        FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();
     private String createYaml() {
         BundleParamsYaml cfgList = new BundleParamsYaml();
         BundleParamsYaml.FunctionConfig cfg = new BundleParamsYaml.FunctionConfig();
@@ -88,6 +92,7 @@ public class TestFunctionConfigSchemeValidation {
         cfg.git = new GitInfo("repo", "branch", "commit");
         cfg.skipParams = false;
         cfg.metas.add(Map.of("meta-key", "meta-value"));
+        cfg.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
         cfgList.functions = List.of(cfg);
 
         return BundleParamsYamlUtils.BASE_YAML_UTILS.toString(cfgList);

@@ -22,11 +22,11 @@ import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -57,7 +57,7 @@ public class SeriesTopLevelService {
     private final ExperimentResultRepository experimentResultRepository;
 
     public SeriesData.SeriesesResult getSerieses(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(40, pageable);
+        pageable = PageUtils.fixPageSize(40, pageable);
         SeriesData.SeriesesResult result = new SeriesData.SeriesesResult();
         final Slice<Object[]> serieses = seriesRepository.findAllByOrderByIdDesc(pageable);
 

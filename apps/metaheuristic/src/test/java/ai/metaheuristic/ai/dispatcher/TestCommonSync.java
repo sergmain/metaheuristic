@@ -46,25 +46,25 @@ public class TestCommonSync {
 
         private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-        public void checkWriteLockPresent(Long execContextId) {
+        public static void checkWriteLockPresent(Long execContextId) {
             if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
                 throw new IllegalStateException("#977.020 Must be locked by WriteLock");
             }
         }
 
-        public ReentrantReadWriteLock getLock(Long execContextId) {
+        public static ReentrantReadWriteLock getLock(Long execContextId) {
             return commonSync.getLock(execContextId);
         }
 
-        public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
+        public static ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
             return commonSync.getWriteLock(execContextId);
         }
 
-        private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
+        private static ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
             return commonSync.getReadLock(execContextId);
         }
 
-        public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
+        public static <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
             final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
             try {
                 lock.lock();
@@ -75,7 +75,7 @@ public class TestCommonSync {
         }
 
         @Nullable
-        public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+        public static <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
             final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
             try {
                 lock.lock();
@@ -85,7 +85,7 @@ public class TestCommonSync {
             }
         }
 
-        public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
+        public static <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
             final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContext.id);
             try {
                 lock.lock();
@@ -210,12 +210,12 @@ public class TestCommonSync {
             waitForStoppingThreads("t2, t3", isStarted2, isStarted3);
 
             boolean lockOk = false;
-            if (!testSync.getWriteLock(42L).isHeldByCurrentThread()) {
+            if (!TestSync.getWriteLock(42L).isHeldByCurrentThread()) {
                 lockOk = true;
             }
 
             assertTrue(lockOk);
-            final ReentrantReadWriteLock.WriteLock writeLock = testSync.getWriteLock(42L);
+            final ReentrantReadWriteLock.WriteLock writeLock = TestSync.getWriteLock(42L);
             final boolean condition = writeLock.tryLock();
             assertTrue(condition);
             writeLock.unlock();
@@ -227,13 +227,13 @@ public class TestCommonSync {
         }
     }
 
-    private void terminateThread(@Nullable Thread t) {
+    private static void terminateThread(@Nullable Thread t) {
         if (t!=null) {
             t.interrupt();
         }
     }
 
-    private void waitForStoppingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
+    private static void waitForStoppingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
         long mills;
         mills = System.currentTimeMillis();
         while (isStarted.get()) {
@@ -244,7 +244,7 @@ public class TestCommonSync {
         }
     }
 
-    private void waitForStoppingThreads(String threadNames, AtomicBoolean ... isStarteds) throws InterruptedException {
+    private static void waitForStoppingThreads(String threadNames, AtomicBoolean... isStarteds) throws InterruptedException {
         long mills;
         mills = System.currentTimeMillis();
         while (isAny(isStarteds)) {
@@ -255,7 +255,7 @@ public class TestCommonSync {
         }
     }
 
-    private void waitForAnyInsideThreads(String threadNames, AtomicBoolean ... isStarteds) throws InterruptedException {
+    private static void waitForAnyInsideThreads(String threadNames, AtomicBoolean... isStarteds) throws InterruptedException {
         long mills;
         mills = System.currentTimeMillis();
         while (!isAny(isStarteds)) {
@@ -266,7 +266,7 @@ public class TestCommonSync {
         }
     }
 
-    private void waitForStartingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
+    private static void waitForStartingThread(AtomicBoolean isStarted, String threadName) throws InterruptedException {
         long mills;
         mills = System.currentTimeMillis();
         while (!isStarted.get()) {
@@ -277,7 +277,7 @@ public class TestCommonSync {
         }
     }
 
-    private void waitForStartingThreads(String threadName, AtomicBoolean ... isStarteds) throws InterruptedException {
+    private static void waitForStartingThreads(String threadName, AtomicBoolean... isStarteds) throws InterruptedException {
         long mills;
         mills = System.currentTimeMillis();
         while (!isStarted(isStarteds)) {
@@ -288,7 +288,7 @@ public class TestCommonSync {
         }
     }
 
-    private boolean isStarted(AtomicBoolean ... isStarteds) {
+    private static boolean isStarted(AtomicBoolean... isStarteds) {
         for (AtomicBoolean isStarted : isStarteds) {
             if (!isStarted.get()) {
                 return false;
@@ -297,7 +297,7 @@ public class TestCommonSync {
         return true;
     }
 
-    private boolean isAny(AtomicBoolean ... isStarteds) {
+    private static boolean isAny(AtomicBoolean... isStarteds) {
         for (AtomicBoolean isStarted : isStarteds) {
             if (isStarted.get()) {
                 return true;

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -127,9 +128,9 @@ public class BatchSplitterFunction implements InternalFunction {
                 workingDir = tempDir;
                 mapping = Map.of(dataFile.getName(), originFilename);
             }
-            ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                            batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId)));
+            ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId,
+                            () -> loadFilesFromDirAfterZip(simpleExecContext, taskId, taskParamsYaml, workingDir, mapping)));
         }
         catch(UnzipArchiveException e) {
             final String es = "#995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
@@ -148,6 +149,16 @@ public class BatchSplitterFunction implements InternalFunction {
         }
         finally {
             DirUtils.deleteAsync(tempDir);
+        }
+    }
+
+    private void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, File workingDir, Map<String, String> mapping) {
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 

@@ -20,7 +20,8 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskAssigningTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
@@ -111,7 +112,13 @@ public class Schedulers {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");
-            batchService.updateBatchStatuses();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                batchService.updateBatchStatuses();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
     }
 
@@ -179,13 +186,14 @@ public class Schedulers {
 
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
-        private final ExecContextTopLevelService execContextTopLevelService;
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
         private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
         private final ApplicationEventPublisher eventPublisher;
         private final ExecContextStatusService execContextStatusService;
+        private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
+        private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -201,6 +209,7 @@ public class Schedulers {
             }
 
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
+            ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextSchedulerService.updateExecContextStatuses();
             } catch (InvalidDataAccessResourceUsageException e) {
@@ -208,11 +217,14 @@ public class Schedulers {
             } catch (Throwable th) {
                 log.error("Error while updateExecContextStatuses()", th);
             }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         boolean needToInitializeReadyness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 10_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 30_000)
         public void processInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -224,7 +236,14 @@ public class Schedulers {
                 eventPublisher.publishEvent(new StartProcessReadinessEvent());
                 needToInitializeReadyness = false;
             }
-            execContextTopLevelService.findUnassignedTasksAndRegisterInQueue();
+            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 13_000, fixedDelay = 13_000 )
@@ -251,20 +270,32 @@ public class Schedulers {
             execContextStatusService.resetStatus();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 11_000 )
+        public void resetTasksWithErrorForRecovery() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 17_000 )
         public void processCheckCaching() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            taskCheckCachingTopLevelService.checkCaching();
-        }
-
-        @Scheduled(initialDelay = 31_000, fixedDelay = 31_000 )
-        public void pushCheckingOfCachedTasks() {
-            if (globals.testing || !globals.dispatcher.enabled) {
-                return;
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                taskCheckCachingTopLevelService.checkCaching();
             }
-            taskCheckCachingTopLevelService.checkCaching();
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
@@ -272,7 +303,13 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
 
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
@@ -453,12 +490,12 @@ public class Schedulers {
     @Profile("processor")
     public static class DownloadResourceActorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
-        private final DownloadVariableService downloadResourceActor;
+        private final DownloadVariableService downloadVariableService;
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::downloadResourceActor,
+            taskRegistrar.addTriggerTask( this::downloadVariableService,
                     context -> {
                         Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
                         Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getDownloadResource().toSeconds());
@@ -468,12 +505,12 @@ public class Schedulers {
         }
 
 //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
-        public void downloadResourceActor() {
+        public void downloadVariableService() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
             }
-            log.info("Run downloadResourceActor.process()");
-            downloadResourceActor.process();
+            log.info("Run downloadVariableService.process()");
+            downloadVariableService.process();
         }
 
     }

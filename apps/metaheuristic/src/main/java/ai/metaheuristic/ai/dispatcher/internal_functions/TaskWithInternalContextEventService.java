@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
@@ -73,7 +74,6 @@ public class TaskWithInternalContextEventService {
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
 
-    private final InternalFunctionProcessor internalFunctionProcessor;
     private final TaskService taskService;
     private final ExecContextVariableService execContextVariableService;
     private final VariableService variableService;
@@ -86,8 +86,7 @@ public class TaskWithInternalContextEventService {
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public static final int MAX_QUEUE_SIZE = 20;
-    public static final int MAX_ACTIVE_THREAD = 1;
+    private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
     private static final int MAX_NUMBER_EXECUTORS = 2;
 
@@ -106,6 +105,29 @@ public class TaskWithInternalContextEventService {
     public void putToQueue(final TaskWithInternalContextEvent event) {
         putToQueueInternal(event);
         processPoolOfExecutors(event.execContextId, this::process);
+    }
+
+    public static void clearQueue() {
+        synchronized (QUEUE) {
+            for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
+                entry.getValue().clear();
+            }
+            QUEUE.clear();
+        }
+    }
+
+    public static void shutdown() {
+        clearQueue();
+        synchronized (POOL_OF_EXECUTORS) {
+            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
+                if (POOL_OF_EXECUTORS[i] == null) {
+                    continue;
+                }
+                POOL_OF_EXECUTORS[i].executor.shutdownNow();
+                POOL_OF_EXECUTORS[i] = null;
+            }
+        }
+
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
@@ -146,19 +168,6 @@ public class TaskWithInternalContextEventService {
                     return false;
                 }
             }
-/*
-            for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
-                if (poolExecutor==null) {
-                    continue;
-                }
-                if (poolExecutor.execContextId.equals(execContextId)) {
-                    if (poolExecutor.executor.getActiveCount() == 0) {
-                        poolExecutor.executor.submit(() -> processTask(execContextId, taskProcessor, poolExecutor));
-                    }
-                    return false;
-                }
-            }
-*/
             for (int i = 0; i < POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i]==null) {
                     POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
@@ -222,21 +231,21 @@ public class TaskWithInternalContextEventService {
         }
         catch (InternalFunctionException e) {
             if (e.result.processing != Enums.InternalFunctionProcessing.ok) {
-                log.error("#707.160 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
+                log.error("#706.100 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
-                final String console = "#707.180 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
+                final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                        () -> TaskSyncService.getWithSyncNullable(event.taskId,
+                        () -> TaskSyncService.getWithSyncVoid(event.taskId,
                                 () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
         catch (Throwable th) {
-            final String es = "#989.020 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
+            final String es = "#706.150 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
                     ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
+                    () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
         }
     }
@@ -247,12 +256,12 @@ public class TaskWithInternalContextEventService {
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
-                log.warn("#707.040 Task #{} with internal context doesn't exist", taskId);
+                log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
                 return null;
             }
 
             if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                log.error("#707.080 Task #"+task.id+" already in progress.");
+                log.error("#706.210 Task #"+task.id+" already in progress.");
                 return null;
             }
 
@@ -260,11 +269,12 @@ public class TaskWithInternalContextEventService {
             ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
             if (p == null) {
                 if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
-                    ExecContextParamsYaml.FunctionDefinition function = new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal);
+                    ExecContextParamsYaml.FunctionDefinition function =
+                            new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
                     p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                 }
                 else {
-                    final String msg = "#707.140 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
+                    final String msg = "#706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
                     log.warn(msg);
                     throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
                 }
@@ -279,7 +289,7 @@ public class TaskWithInternalContextEventService {
                 int i=0;
             }
             if (notSkip) {
-                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
+                boolean isLongRunning = InternalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
                     taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
                 }

@@ -24,11 +24,11 @@ import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -95,7 +94,9 @@ public class TaskCheckCachingTopLevelService {
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
-            if (queueIds.contains(event.taskId)) {
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            if (queueIds.contains(event.taskId) || (taskCount - completedTaskCount)>1000) {
                 return;
             }
             queue.add(event);
@@ -120,7 +121,12 @@ public class TaskCheckCachingTopLevelService {
 
     public void checkCaching() {
         final int activeCount = executor.getActiveCount();
-        log.debug("checkCaching, active task in executor: {}", activeCount);
+        if (log.isDebugEnabled()) {
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+        }
+
         if (activeCount>0) {
             return;
         }
@@ -142,24 +148,26 @@ public class TaskCheckCachingTopLevelService {
 
         ExecContextImpl execContext = execContextCache.findById(event.execContextId);
         if (execContext == null) {
+            log.debug("Exec context not found, execContextId: {}", event.execContextId);
             return;
         }
 
         PrepareData prepareData = getCacheProcess(execContext, event.taskId);
         if (prepareData.state==PrepareDataState.none) {
+            log.debug("execContextId: {}, task: {}, prepareData.state: PrepareDataState.none", event.execContextId, event.taskId);
             return;
         }
 
         try {
+            log.debug("Start taskCheckCachingService.checkCaching(), execContextId: {}, task: {}", event.execContextId, event.taskId);
             TaskSyncService.getWithSyncVoid(event.taskId,
                     () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
 
         } catch (InvalidateCacheProcessException e) {
             log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
-                ExecContextSyncService.getWithSyncVoid(event.execContextId,
-                        () -> TaskSyncService.getWithSyncVoid(e.taskId,
-                                () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId)));
+                TaskSyncService.getWithSyncVoid(e.taskId,
+                        () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
             } catch (Throwable th) {
                 log.error("#610.300 error while invalidating task #"+e.taskId, th);
             }
@@ -167,9 +175,11 @@ public class TaskCheckCachingTopLevelService {
     }
 
     private PrepareData getCacheProcess(ExecContextImpl execContext, Long taskId) {
+        TxUtils.checkTxNotExists();
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
+            log.debug("Task wasn't found, execContextId: {}, task: {}", execContext.id, taskId);
             return PREPARE_DATA_NONE;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
@@ -182,17 +192,18 @@ public class TaskCheckCachingTopLevelService {
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return PREPARE_DATA_NONE;
         }
         CacheData.Key fullKey;
         try {
+            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
             log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContext.id, e.getAdditionalInfo());
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return PREPARE_DATA_NONE;
         }
+        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
+
 
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
@@ -201,10 +212,13 @@ public class TaskCheckCachingTopLevelService {
         try (InputStream is = new ByteArrayInputStream(bytes)) {
             String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
             String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
+
+            log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", execContext.id, taskId, key);
+            cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key);
         } catch (IOException e) {
             log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
         }
+        log.debug("execContextId: {}, task: {}, CacheProcess: {}", execContext.id, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
 

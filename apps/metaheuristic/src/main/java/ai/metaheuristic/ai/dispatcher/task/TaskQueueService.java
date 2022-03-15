@@ -37,8 +37,12 @@ public class TaskQueueService {
     private static final TaskQueue taskQueue = new TaskQueue();
 
     public static TaskQueue.GroupIterator getIterator() {
-//        checkWriteLockPresent();
         return taskQueue.getIterator();
+    }
+
+    public static boolean isQueueEmpty() {
+        checkWriteLockPresent();
+        return taskQueue.isQueueEmpty();
     }
 
     public static void removeAll(List<TaskQueue.QueuedTask> forRemoving) {
@@ -56,14 +60,14 @@ public class TaskQueueService {
         taskQueue.lock(execContextId);
     }
 
-    public static boolean isQueueEmpty() {
-//        checkWriteLockPresent();
-        return taskQueue.isQueueEmpty();
-    }
-
     public static boolean isQueueEmptyWithSync() {
         checkWriteLockNotPresent();
         return getWithSync(taskQueue::isQueueEmpty);
+    }
+
+    public static boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
+        checkWriteLockNotPresent();
+        return getWithSync(() -> taskQueue.allocatedTaskMoreThan(requiredNumberOfTasks));
     }
 
     public static void startTaskProcessing(StartTaskProcessingEvent event) {
@@ -85,6 +89,12 @@ public class TaskQueueService {
     public static TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
         checkWriteLockPresent();
         return taskQueue.getFinishedTaskGroup(execContextId);
+    }
+
+    @Nullable
+    public static TaskQueue.TaskGroup getTaskGroupForTransfering(Long execContextId) {
+        checkWriteLockPresent();
+        return taskQueue.getTaskGroupForTransfering(execContextId);
     }
 
     @Nullable
@@ -111,6 +121,11 @@ public class TaskQueueService {
     public static boolean alreadyRegistered(Long taskId) {
         checkWriteLockPresent();
         return taskQueue.alreadyRegistered(taskId);
+    }
+
+    public static boolean alreadyRegisteredWithSync(Long taskId) {
+        checkWriteLockNotPresent();
+        return getWithSync(() -> taskQueue.alreadyRegistered(taskId));
     }
 
     public static void addNewTask(TaskQueue.QueuedTask queuedTask) {

@@ -40,11 +40,14 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * User: Serg
@@ -155,7 +158,10 @@ public class DispatcherRequestor {
                     final boolean b = processorTaskService.isNeedNewTask(ref);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
                         // always report about current active tasks, if we have actual processorId
-                        final String taskIds = processorTaskService.findAll(ref).stream().map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                        // don't report about tasks which belong to finished execContext
+                        final String taskIds = processorTaskService.findAll(ref).stream()
+                                .filter(o->currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
+                                .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
                         r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
                     }
                     else {
@@ -163,6 +169,7 @@ public class DispatcherRequestor {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
                                     .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
+                                    .filter(t -> currentExecState.notFinishedAndExists(ref.dispatcherUrl, t.execContextId))
                                     .collect(Collectors.toList());
 
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
@@ -187,7 +194,7 @@ public class DispatcherRequestor {
                 r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
             }
             if (!newRequest(pcpy)) {
-                log.info("#775.045 no new requests");
+                log.info("#775.045 no new requests to {}", dispatcherUrl.url );
                 return;
             }
 

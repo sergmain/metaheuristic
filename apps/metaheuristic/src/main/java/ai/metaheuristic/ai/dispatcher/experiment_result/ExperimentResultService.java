@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
@@ -49,6 +48,7 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
@@ -112,7 +112,7 @@ public class ExperimentResultService {
     }
 
     public ExperimentResultData.ExperimentResultSimpleList getExperimentResultExperiments(Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.experimentResult, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.experimentResult, pageable);
         ExperimentResultData.ExperimentResultSimpleList result = new ExperimentResultData.ExperimentResultSimpleList();
         result.items = experimentResultRepository.findAllAsSimple(pageable);
         return result;

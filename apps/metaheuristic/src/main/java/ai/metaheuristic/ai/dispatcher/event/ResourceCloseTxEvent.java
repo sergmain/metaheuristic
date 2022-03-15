@@ -47,6 +47,11 @@ public class ResourceCloseTxEvent {
         add(tempFile);
     }
 
+    public ResourceCloseTxEvent(List<InputStream> iss, File tempFile) {
+        this.inputStreams.addAll(iss);
+        add(tempFile);
+    }
+
     public void add(InputStream inputStream) {
         this.inputStreams.add(inputStream);
     }

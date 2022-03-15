@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -34,12 +35,16 @@ import java.util.List;
 @Profile("dispatcher")
 public interface ExecContextGraphRepository extends CrudRepository<ExecContextGraph, Long> {
 
+    @Query(value="select w.id from ExecContextGraph w")
+    List<Long> findAllIds();
+
     @Query(value="select distinct v.execContextId from ExecContextGraph v")
     List<Long> getAllExecContextIds();
 
     @Query(value="select v.id from ExecContextGraph v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
+    @Modifying
     void deleteAllByIdIn(List<Long> ids);
 
 }

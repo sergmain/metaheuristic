@@ -46,6 +46,20 @@
         <heap>100</heap>
     </cache-template>
 
+    <cache-template name="template-5000-60-minute">
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <heap>5000</heap>
+    </cache-template>
+
+    <cache-template name="template-1000-5-minute">
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+        <heap>1000</heap>
+    </cache-template>
+
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Account" uses-template="template-1000-1-day">
     </cache>
 
@@ -79,14 +93,10 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Experiment" uses-template="template-10-30-day">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent">
-        <expiry>
-            <ttl unit="minutes">5</ttl>
-        </expiry>
-        <heap>1000</heap>
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent" uses-template="template-1000-5-minute">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.TaskImpl" uses-template="template-100-10-minute">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.TaskImpl" uses-template="template-5000-60-minute">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult" uses-template="template-100-10-minute">

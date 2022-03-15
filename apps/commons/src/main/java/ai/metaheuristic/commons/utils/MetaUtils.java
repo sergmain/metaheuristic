@@ -70,11 +70,12 @@ public class MetaUtils {
         return m!=null ? Long.valueOf(m.getValue()) : null;
     }
 
-    public static List<Map<String, String>> remove(List<Map<String, String>> metas, @NonNull String... keys) {
-        if (keys.length==0) {
+    @Nullable
+    public static List<Map<String, String>> remove(@Nullable final List<Map<String, String>> metas, String... keys) {
+        if (metas==null || keys.length==0) {
             return metas;
         }
-        List<Map<String, String>> result = new ArrayList<>();
+        final List<Map<String, String>> result = new ArrayList<>();
         for (Map<String, String> meta : metas) {
             boolean found = false;
             for (String key : keys) {

@@ -15,11 +15,14 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -36,10 +39,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestFeatureWithAllError extends FeatureMethods {
 
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
+
     @Test
     public void testFeatureCompletionWithAllError() {
         createExperiment();
-        assertTrue(isCorrectInit);
 
         long mills = System.currentTimeMillis();
         log.info("Start produceTasks()");
@@ -48,17 +53,18 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         toStarted();
 
-        String sessionId = step_1_0_init_session_id();
-        step_1_1_register_function_statuses(sessionId);
+        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(getProcessorIdAsStr());
+        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
 
-        findTaskForRegisteringInQueueAndWait(execContextForTest.id);
+        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
         log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processor.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
         // there isn't a new task for processing
         // we will get the same task
         assertNotNull(task);
@@ -69,11 +75,13 @@ public class TestFeatureWithAllError extends FeatureMethods {
         storeConsoleResultAsError();
         log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
 
-        task = taskProviderService.findTask(processor.getId(), false);
-        assertNull(task);
+        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        assertNull(task2);
 
         log.info("noNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 

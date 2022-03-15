@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtilsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
@@ -86,6 +87,17 @@ public class AggregateFunction implements InternalFunction {
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
+    }
+
+    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+                                 TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(

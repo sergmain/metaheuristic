@@ -15,26 +15,18 @@
  */
 package ai.metaheuristic.ai.preparing;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -53,45 +45,38 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public abstract class FeatureMethods extends PreparingExperiment {
 
-    @Autowired
-    protected Globals globals;
-
-    @Autowired
-    protected ExperimentService experimentService;
-
-    @Autowired
-    protected ExperimentRepository experimentRepository;
-
-    @Autowired
-    protected FunctionCache functionCache;
-
-    @Autowired
-    protected TaskRepository taskRepository;
-
-    @Autowired
-    protected TaskService taskService;
-
-    @Autowired
-    public ExecContextService execContextService;
-
-    @Autowired
-    public ExecContextFSM execContextFSM;
-
-    @Autowired
-    public ExecContextCreatorService execContextCreatorService;
-
-    @Autowired
-    public SouthbridgeService southbridgeService;
-
-    public boolean isCorrectInit = true;
+    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextStatusService execContextStatusService;
+    @Autowired private TaskProviderTopLevelService taskProviderService;
+    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired private SourceCodeValidationService sourceCodeValidationService;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ExecContextTopLevelService execContextTopLevelService;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
     }
 
+    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
+        long mills;
+
+        mills = System.currentTimeMillis();
+
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
+        // get a task for processing
+        log.info("Start experimentService.getTaskAndAssignToProcessor()");
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(getProcessor().getId(), false);
+        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {} milliseconds", System.currentTimeMillis() - mills);
+
+        assertNotNull(task);
+        return task;
+    }
+
     public long countTasks(@Nullable List<EnumsApi.ExecContextState> states) {
-        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(execContextForTest.id);
+        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(getExecContextForTest().id);
         if (states==null) {
             return list.size();
         }
@@ -100,48 +85,24 @@ public abstract class FeatureMethods extends PreparingExperiment {
     }
 
     public void toStarted() {
-        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.getId()));
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
-    }
-
-    public String initSessionId() {
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
-
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-
-
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
-        String dispatcherResponse = southbridgeService.processRequest(processorYaml, "127.0.0.1");
-
-        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
-
-        assertNotNull(d0);
-        assertEquals(1, d0.responses.size());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
-        assertNotNull(reAssignedProcessorId);
-        assertNotNull(reAssignedProcessorId.sessionId);
-        assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
-
-        String sessionId = reAssignedProcessorId.sessionId;
-        return sessionId;
+        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
     }
 
     protected void produceTasks() {
-        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(sourceCode, company.getUniqueId());
-        execContextForTest = result.execContext;
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        setExecContextForTest(result.execContext);
         assertFalse(result.isErrorMessages());
-        assertNotNull(execContextForTest);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
-        ExecContextSyncService.getWithSync(execContextForTest.id, () -> {
-            EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(execContextForTest.id);
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+        assertNotNull(getExecContextForTest());
+        assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
+        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+            EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(getExecContextForTest().id);
+            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
+            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, getExecContextForTest().getState());
 
             List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(result.execContext.id);
             assertTrue(tasks01.isEmpty());
@@ -151,9 +112,9 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
-                        txSupportForTestingService.produceAndStartAllTasks(sourceCode, result.execContext.id, execContextParamsYaml);
+            ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
+                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id, execContextParamsYaml);
                         return null;
                     }));
 
@@ -161,15 +122,21 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             return null;
         });
+        // statuses of ExecContext are being refreshing from Scheduler which is disabled while testing
+        execContextStatusService.resetStatus();
+        assertEquals(EnumsApi.ExecContextState.STARTED,
+                execContextStatusService.getExecContextStatuses().statuses.stream()
+                        .filter(o->o.id.equals(getExecContextForTest().id))
+                        .findFirst().map(KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus::getState).orElse(null));
 
-        execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-        assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
+        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 
     protected void storeConsoleResultAsError() {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(getProcessor().getId());
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
@@ -186,7 +153,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     protected void storeConsoleResultAsOk() {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByProcessorIdAndResultReceivedIsFalse(getProcessor().getId());
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);

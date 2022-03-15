@@ -260,6 +260,9 @@ CREATE TABLE mh_function
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx
     ON mh_function (FUNCTION_CODE);
 
+CREATE INDEX mh_function_function_type_idx
+    ON mh_function (FUNCTION_TYPE);
+
 CREATE TABLE mh_source_code
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -292,7 +295,7 @@ CREATE TABLE mh_exec_context
     CTX_GRAPH_ID            INT UNSIGNED NOT NULL,
     CTX_TASK_STATE_ID       INT UNSIGNED NOT NULL,
     CTX_VARIABLE_STATE_ID   INT UNSIGNED NOT NULL,
-    ROOT_EXEC_CONTEXT_ID    INT UNSIGNED NOT NULL
+    ROOT_EXEC_CONTEXT_ID    INT UNSIGNED
 );
 
 CREATE INDEX mh_exec_context_state_idx
@@ -309,6 +312,7 @@ CREATE TABLE mh_exec_context_graph
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -317,6 +321,7 @@ CREATE TABLE mh_exec_context_task_state
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 
@@ -325,6 +330,7 @@ CREATE TABLE mh_exec_context_variable_state
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID     INT UNSIGNED    default NULL,
+    CREATED_ON          bigint not null,
     PARAMS              LONGTEXT NOT NULL
 );
 

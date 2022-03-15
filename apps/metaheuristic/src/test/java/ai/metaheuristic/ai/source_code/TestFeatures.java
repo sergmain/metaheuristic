@@ -17,10 +17,12 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -31,9 +33,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestFeatures extends PreparingExperiment {
+
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -47,17 +51,17 @@ public class TestFeatures extends PreparingExperiment {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
 
-        produceTasksForTest();
+        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
         log.info("experimentService.produceFeaturePermutations() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
         log.info("Start experimentFeatureRepository.findByExperimentId()");
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        final ExperimentParamsYaml epy = getExperiment().getExperimentParamsYaml();
         log.info("experimentFeatureRepository.findByExperimentId() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         String s = "feature-per-task";
         // todo 2020-03-12 right now permutation is being created dynamically at runtime.
-        //  so for calculation an actual number of permutation we need to process all tasks in current SourceCode/ExecContext
+        //  so for calculating an actual number of permutation we need to process all tasks in current SourceCode/ExecContext
 /*
         assertNotNull(epy.processing.features);
         assertEquals(7, epy.processing.features.size());

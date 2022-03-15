@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -34,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestDispatcherProfile {
 
     @Autowired
@@ -66,7 +70,7 @@ public class TestDispatcherProfile {
         assertEquals(8, globals.dispatcher.timeout.batchDeletion.toDays());
 
         assertEquals(Globals.SECONDS_60.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
-        assertEquals(Globals.SECONDS_5.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
+        assertEquals(Globals.SECONDS_23.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
         assertEquals(Globals.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
 
     }

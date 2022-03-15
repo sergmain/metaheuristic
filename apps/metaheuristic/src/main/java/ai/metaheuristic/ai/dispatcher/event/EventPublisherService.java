@@ -86,6 +86,11 @@ public class EventPublisherService {
         eventPublisher.publishEvent(event);
     }
 
+    public void publishUnAssignTaskTxEventAfterCommit(UnAssignTaskTxAfterCommitEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
+
     public void publishResourceCloseTxEvent(ResourceCloseTxEvent event) {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);

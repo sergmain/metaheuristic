@@ -104,6 +104,7 @@ public class ExecContextTaskStateTopLevelService {
             TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             if (!event.execContextId.equals(task.execContextId)) {
                 log.error("#417.020 (!execContextId.equals(task.execContextId))");
+                return;
             }
             ExecContextImpl ec = execContextCache.findById(task.execContextId);
             if (ec==null) {

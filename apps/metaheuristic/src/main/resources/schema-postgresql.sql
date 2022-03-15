@@ -12,6 +12,7 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+-- !!!!! DO NOT CHANGE THE TYPE OF ID FIELD. IT MUST BE NUMERIC(10, 0) !!!!!!!
 create table MH_IDS
 (
     ID      NUMERIC(10, 0) PRIMARY KEY,
@@ -255,6 +256,9 @@ CREATE TABLE MH_FUNCTION
 CREATE UNIQUE INDEX MH_FUNCTION_FUNCTION_CODE_UNQ_IDX
   ON MH_FUNCTION (FUNCTION_CODE);
 
+CREATE INDEX MH_FUNCTION_FUNCTION_TYPE_IDX
+  ON MH_FUNCTION (FUNCTION_TYPE);
+
 CREATE TABLE MH_SOURCE_CODE
 (
   ID            SERIAL PRIMARY KEY,
@@ -304,6 +308,7 @@ CREATE TABLE MH_EXEC_CONTEXT_GRAPH
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 
@@ -312,6 +317,7 @@ CREATE TABLE MH_EXEC_CONTEXT_TASK_STATE
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 
@@ -320,6 +326,7 @@ CREATE TABLE MH_EXEC_CONTEXT_VARIABLE_STATE
     ID                SERIAL PRIMARY KEY,
     VERSION           NUMERIC(5, 0)  NOT NULL,
     EXEC_CONTEXT_ID   NUMERIC(10, 0) default NULL,
+    CREATED_ON        bigint not null,
     PARAMS            TEXT NOT NULL
 );
 

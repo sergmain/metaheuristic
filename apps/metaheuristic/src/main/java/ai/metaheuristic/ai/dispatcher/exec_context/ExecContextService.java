@@ -26,14 +26,11 @@ import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -41,11 +38,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -84,6 +83,9 @@ public class ExecContextService {
     private final VariableService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
+    private final ExecContextGraphRepository execContextGraphRepository;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -192,10 +194,17 @@ public class ExecContextService {
         return EnumsApi.SourceCodeType.common;
     }
 
-    public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
+    private ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
+        for (ExecContextsListItem instance : result.instances) {
+            ExecContextImpl ec = execContextCache.findById(instance.id);
+            if (ec==null) {
+                continue;
+            }
+            instance.rootExecContext = ec.rootExecContextId==null;
+        }
         return result;
     }
 
@@ -312,5 +321,21 @@ public class ExecContextService {
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextGraph(Long execContextGraphId) {
+        execContextGraphRepository.deleteById(execContextGraphId);
+
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextTaskState(Long execContextTaskStateId) {
+        execContextTaskStateRepository.deleteById(execContextTaskStateId);
+    }
+
+    @Transactional
+    public void deleteOrphanExecContextVariableState(Long execContextVariableStateId) {
+        execContextVariableStateRepository.deleteById(execContextVariableStateId);
     }
 }

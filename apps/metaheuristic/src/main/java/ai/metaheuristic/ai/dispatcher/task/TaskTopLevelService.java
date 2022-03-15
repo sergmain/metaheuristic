@@ -17,9 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,6 +36,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Serge
@@ -40,13 +56,101 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TaskTopLevelService {
 
+    private final ExecContextCache execContextCache;
     private final TaskService taskService;
+    private final TaskRepository taskRepository;
+    private final VariableService variableService;
+    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Async
     @EventListener
     public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
         taskService.updateAccessByProcessorOn(event.taskId);
+    }
+
+    public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    private final LinkedList<CheckForLostTaskEvent> queue = new LinkedList<>();
+    private final Map<Long, AtomicLong> lastCheckOn = new HashMap<>();
+
+    private static final int MILLS_TO_HOLD_CHECK = 30_000;
+
+    private void putToQueue(final CheckForLostTaskEvent event) {
+        synchronized (queue) {
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            if ((taskCount - completedTaskCount)>20) {
+                return;
+            }
+
+            AtomicLong lastCheck = lastCheckOn.computeIfAbsent(event.processorId, (o)->new AtomicLong());
+            if (System.currentTimeMillis() - lastCheck.get() > MILLS_TO_HOLD_CHECK) {
+                boolean found = false;
+                for (CheckForLostTaskEvent checkForLostTaskEvent : queue) {
+                    if (event.processorId.equals(checkForLostTaskEvent.processorId)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    queue.add(event);
+                    lastCheck.set(System.currentTimeMillis());
+                }
+            }
+        }
+    }
+
+    @Nullable
+    private CheckForLostTaskEvent pullFromQueue() {
+        synchronized (queue) {
+            return queue.pollFirst();
+        }
+    }
+
+    @Async
+    @EventListener
+    public void handleCheckForLostTaskEvent(final CheckForLostTaskEvent event) {
+        putToQueue(event);
+
+        executor.submit(() -> {
+            CheckForLostTaskEvent currEvent;
+            while ((currEvent = pullFromQueue()) != null) {
+                checkForLostTaskInternal(currEvent);
+            }
+        });
+    }
+
+    private void checkForLostTaskInternal(final CheckForLostTaskEvent event) {
+        if (event.taskIds.isEmpty()) {
+            return;
+        }
+        List<Long> actualTaskIds = taskRepository.findTaskIdsForProcessorId(event.processorId);
+        for (Long actualTaskId : actualTaskIds) {
+            if (!event.taskIds.contains(actualTaskId)) {
+                TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
+                if (task!=null) {
+                    ExecContextImpl ec = execContextCache.findById(task.execContextId);
+                    if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
+                        continue;
+                    }
+                    if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
+                        continue;
+                    }
+                }
+                if (task==null || EnumsApi.TaskExecState.IN_PROGRESS!=EnumsApi.TaskExecState.from(task.execState)) {
+                    continue;
+                }
+                if (task.assignedOn==null || (System.currentTimeMillis() - task.assignedOn<60_000)) {
+                    continue;
+                }
+                // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
+                log.info("#303.370 found a lost task #{}, which doesn't exist at processor #{}. state: {}, assignedOn: {}, is old: {}",
+                        actualTaskId, event.processorId, EnumsApi.TaskExecState.from(task.execState),
+                        task.assignedOn, System.currentTimeMillis() - task.assignedOn<60_000);
+
+                applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
+            }
+        }
     }
 
     public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
@@ -68,5 +172,28 @@ public class TaskTopLevelService {
         }
     }
 
+    public DispatcherCommParamsYaml.ResendTaskOutputs variableReceivingChecker(Long processorId) {
+        List<TaskImpl> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
+        DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
+        for (TaskImpl task : tasks) {
+            ExecContextImpl ec = execContextCache.findById(task.execContextId);
+            if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
+                continue;
+            }
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                if (!output.uploaded) {
+                    SimpleVariable sv = variableService.getVariableAsSimple(output.id);
+                    if (sv!=null && sv.inited) {
+                        TaskSyncService.getWithSync(task.id, () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id));
+                    }
+                    else {
+                        result.resends.add(new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+                    }
+                }
+            }
+        }
+        return result;
+    }
 
 }

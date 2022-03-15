@@ -233,11 +233,6 @@ public class ExecContextGraphService {
         return callable.apply(graph, ectspy);
     }
 
-    private static long readOnlyGraphLong(ExecContextGraph execContextGraph, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
-        return callable.apply(graph);
-    }
-
     private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextGraph execContextGraph) {
         return importProcessGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
@@ -270,7 +265,6 @@ public class ExecContextGraphService {
     /**
      * !!! This method doesn't return the id of current Task and its new status. Must be changed by an outside code.
      */
-    @SuppressWarnings("StatementWithEmptyBody")
     public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);
@@ -305,8 +299,11 @@ public class ExecContextGraphService {
                     log.info("#915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
                     // todo 2020-11-01 need to decide what to do here
                 }
-                else if (execState==EnumsApi.TaskExecState.IN_PROGRESS) {
+                else if (execState == EnumsApi.TaskExecState.IN_PROGRESS) {
                     // do nothing
+                }
+                else if (execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY) {
+                    // todo 2022-02-17 need to decide what to do here
                 }
             }
         });
@@ -428,6 +425,10 @@ public class ExecContextGraphService {
         });
     }
 
+    public static Set<ExecContextData.TaskVertex> findAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
+        return readOnlyGraph(execContextGraph, graph -> graph.getAncestors(vertex));
+    }
+
     public static Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextGraph execContextGraph, ExecContextData.TaskVertex vertex) {
         return readOnlyGraph(execContextGraph, graph -> findDirectAncestorsInternal(graph, vertex));
     }
@@ -446,35 +447,31 @@ public class ExecContextGraphService {
     public static List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, boolean includeForCaching) {
         return readOnlyGraphWithState(execContextGraph, execContextTaskState, (graph,stateParamsYaml) -> {
 
-            log.debug("Start find a task for assigning");
+            log.debug("Start searching a task for assigning");
             if (log.isDebugEnabled()) {
                 log.debug("\tcurrent state of tasks:");
                 graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, stateParamsYaml.states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE)));
             }
 
             ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
-                    .filter( v -> {
-                        if (!graph.incomingEdgesOf(v).isEmpty()) {
-                            return false;
-                        }
-                        EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(v.taskId, EnumsApi.TaskExecState.NONE);
-                        if (includeForCaching) {
-                            return (state == EnumsApi.TaskExecState.NONE || state == EnumsApi.TaskExecState.CHECK_CACHE);
-                        }
-                        else {
-                            return state == EnumsApi.TaskExecState.NONE;
-                        }
-                    })
+                    .filter( v -> graph.incomingEdgesOf(v).isEmpty())
                     .findFirst()
                     .orElse(null);
 
             // if this is newly created graph then return only the start vertex of graph
             if (startVertex!=null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}",
-                            startVertex.taskId, stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE));
+                EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE);
+                boolean found = includeForCaching ?
+                        (state == EnumsApi.TaskExecState.NONE || state == EnumsApi.TaskExecState.CHECK_CACHE) :
+                        state == EnumsApi.TaskExecState.NONE;
+
+                if (found) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("\tThe root vertex of graph wasn't processed, #{}, state {}",
+                                startVertex.taskId, stateParamsYaml.states.getOrDefault(startVertex.taskId, EnumsApi.TaskExecState.NONE));
+                    }
+                    return List.of(startVertex);
                 }
-                return List.of(startVertex);
             }
 
             log.debug("\tThe root vertex of execContextGraph was already processes");
@@ -577,7 +574,7 @@ public class ExecContextGraphService {
         ExecContextTaskStateParamsYaml stateParamsYaml = execContextTaskState.getExecContextTaskStateParamsYaml();
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
             EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(ancestor.taskId, EnumsApi.TaskExecState.NONE);
-            if (state==EnumsApi.TaskExecState.NONE || state==EnumsApi.TaskExecState.IN_PROGRESS || state==EnumsApi.TaskExecState.CHECK_CACHE) {
+            if (!EnumsApi.TaskExecState.isFinishedState(state)) {
                 return false;
             }
         }
@@ -613,12 +610,23 @@ public class ExecContextGraphService {
         });
     }
 
+    @Nullable
+    public static ExecContextData.TaskVertex findVertexByTaskId(ExecContextGraph execContextGraph, Long taskId) {
+        return readOnlyGraphNullable(execContextGraph, (graph) -> {
+            for (ExecContextData.TaskVertex v : graph.vertexSet()) {
+                if (taskId.equals(v.taskId)) {
+                    return v;
+                }
+            }
+            return null;
+        });
+    }
+
     public void setStateForAllChildrenTasks(Long execContextGraphId, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);
-        changeState(execContextGraph, execContextTaskState, (graph, stateParamsYaml) -> {
-            setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, withTaskList, state);
-        });
+        changeState(execContextGraph, execContextTaskState,
+                (graph, stateParamsYaml) -> setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, withTaskList, state));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -646,6 +654,7 @@ public class ExecContextGraphService {
                 .map(o->new ExecContextData.TaskWithState(o.taskId, state))
                 .collect(Collectors.toCollection(()->withTaskList.childrenTasks));
 
+        //noinspection unused
         int i=1;
     }
 
@@ -658,6 +667,7 @@ public class ExecContextGraphService {
         return addNewTasksToGraph(execContextGraph, execContextTaskState, parentTaskIds, taskIds, state);
     }
 
+    @SuppressWarnings("SimplifyStreamApiCallChains")
     private OperationStatusRest addNewTasksToGraph(
             ExecContextGraph execContextGraph, ExecContextTaskState execContextTaskState, List<Long> parentTaskIds,
             List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState state) {
@@ -698,7 +708,7 @@ public class ExecContextGraphService {
         return execContextGraph;
     }
 
-    private ExecContextTaskState prepareExecContextTaskState(Long execContextTaskStateId) {
+    public ExecContextTaskState prepareExecContextTaskState(Long execContextTaskStateId) {
         ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(execContextTaskStateId);
         if (execContextTaskState==null) {
             throw new IllegalStateException("(execContextTaskState==null)");

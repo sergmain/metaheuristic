@@ -19,9 +19,12 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -40,6 +43,10 @@ public interface ExecContextTaskStateRepository extends CrudRepository<ExecConte
     @Query(value="select v.id from ExecContextTaskState v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
+    @Modifying
     void deleteAllByIdIn(List<Long> ids);
 
+    @Query(value="select w.id from ExecContextTaskState w")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    List<Long> findAllIds();
 }

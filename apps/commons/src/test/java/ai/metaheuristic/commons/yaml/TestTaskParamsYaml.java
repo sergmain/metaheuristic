@@ -59,6 +59,7 @@ public class TestTaskParamsYaml {
         ty.inline = Map.of( ConstsApi.MH_HYPER_PARAMS, Map.of("hyper-param-key-01", "hyper-param-value-01"));
         ty.workingPath = "working-path";
         ty.timeoutBeforeTerminate = 42L;
+        ty.triesAfterError = 3;
 
 
         final TaskParamsYamlV1.FunctionConfigV1 preFunction = new TaskParamsYamlV1.FunctionConfigV1();
@@ -99,6 +100,7 @@ public class TestTaskParamsYaml {
         assertTrue(tpy.task.clean);
         assertEquals("working-path", tpy.task.workingPath);
         assertEquals(Long.valueOf(42L), tpy.task.timeoutBeforeTerminate);
+        assertEquals(3, tpy.task.triesAfterError);
         assertNotNull(tpy.task.inputs);
         assertNotNull(tpy.task.outputs);
 

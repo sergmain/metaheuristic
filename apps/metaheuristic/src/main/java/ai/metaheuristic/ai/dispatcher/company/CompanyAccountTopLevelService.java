@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.sec.SecConsts;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +38,7 @@ public class CompanyAccountTopLevelService {
     private final AccountService accountService;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
-        pageable = ControllerUtils.fixPageSize(50, pageable);
+        pageable = PageUtils.fixPageSize(50, pageable);
         return accountService.getAccounts(pageable, companyUniqueId);
     }
 

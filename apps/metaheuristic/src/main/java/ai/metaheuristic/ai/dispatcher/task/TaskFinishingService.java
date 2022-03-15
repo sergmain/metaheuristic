@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -59,15 +60,15 @@ public class TaskFinishingService {
 
     @Transactional
     public Void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
-        return finish(taskId, ecpy, true);
+        return finishAsOk(taskId, ecpy, true);
     }
 
     @Transactional
     public Void finishAsOk(Long taskId) {
-        return finish(taskId, null, false);
+        return finishAsOk(taskId, null, false);
     }
 
-    private Void finish(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
+    private Void finishAsOk(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
         if (store && ecpy==null) {
             throw new IllegalStateException("(store && ecpy==null)");
         }
@@ -97,28 +98,32 @@ public class TaskFinishingService {
     }
 
     @Transactional
-    public Void finishWithErrorWithTx(Long taskId, String console) {
+    public void finishWithErrorWithTx(Long taskId, String console) {
+        finishWithError(taskId, console, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
+    }
+
+    public void finishWithError(Long taskId, @Nullable String console, EnumsApi.TaskExecState targetState) {
+        TxUtils.checkTxExists();
+
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#319.140 task #{} wasn't found", taskId);
-                return null;
+                return;
             }
-            if (task.execState==EnumsApi.TaskExecState.ERROR.value) {
+            if (task.execState==targetState.value && (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState==EnumsApi.TaskExecState.ERROR.value)) {
                 log.warn("#319.145 task #{} was already finished", taskId);
-                return null;
+                return;
             }
-            String taskContextId = null;
             try {
-                final TaskParamsYaml taskParamYaml;
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                taskContextId = taskParamYaml.task.taskContextId;
+                //noinspection unused
+                final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
             }
 
-            finishTaskAsError(task, -10001, console);
+            finishTaskAsError(task, console, targetState);
 
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
         } catch (Throwable th) {
@@ -126,28 +131,43 @@ public class TaskFinishingService {
             log.warn("#319.170 Error", th);
             ExceptionUtils.rethrow(th);
         }
-        return null;
     }
 
-    private void finishTaskAsError(TaskImpl task, int exitCode, String console) {
-        if (task.execState==EnumsApi.TaskExecState.ERROR.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
-            log.info("#319.200 (task.execState==EnumsApi.TaskExecState.ERROR && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)), task: {}", task.id);
+    private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
+        final boolean updatePossible = targetState.value == task.execState &&
+                (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
+                task.isCompleted && task.resultReceived && !S.b(task.functionExecResults);
+        if (updatePossible) {
+            log.info("#319.200 task: #{}, updatePossible: {}", task.id, updatePossible);
             return;
         }
-        task.setExecState(EnumsApi.TaskExecState.ERROR.value);
+        task.setExecState(targetState.value);
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
+            if (targetState== EnumsApi.TaskExecState.ERROR) {
+                if (functionExec.exec==null) {
+                    if (console==null) {
+                        log.error("#319.240 (console==null)");
+                    }
+                    functionExec.exec = new FunctionApiData.SystemExecResult(
+                            tpy.task.function.code, false, -10001, console==null ? "<no console output>" : console);
+                }
+            }
+            else {
+                functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, -10001, console);
+            }
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
         task.setResultReceived(true);
         task = taskService.save(task);
 
-        taskProviderTopLevelService.setTaskExecState(task.execContextId, task.id, EnumsApi.TaskExecState.ERROR);
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+
+        taskProviderTopLevelService.setTaskExecStateInQueue(task.execContextId, task.id, targetState);
     }
 
 

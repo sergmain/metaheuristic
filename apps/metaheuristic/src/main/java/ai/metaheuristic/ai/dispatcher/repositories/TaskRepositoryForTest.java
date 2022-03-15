@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -46,6 +47,7 @@ public interface TaskRepositoryForTest extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     List<TaskImpl> findByExecContextIdAsList(Long execContextId);
 
+    @Modifying
     @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
     void deleteByExecContextId(Long execContextId);
 

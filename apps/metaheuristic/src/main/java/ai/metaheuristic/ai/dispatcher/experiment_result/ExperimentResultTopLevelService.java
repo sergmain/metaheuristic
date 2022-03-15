@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
@@ -41,9 +40,9 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.json.versioning_json.JsonForVersioning;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -771,7 +770,7 @@ public class ExperimentResultTopLevelService {
         execContext.state = EnumsApi.ExecContextState.FINISHED.code;
 
         ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
-        result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
+        result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, PageUtils.fixPageSize(10, pageable), feature, params);
         result.consoleResult = new ConsoleResult();
 
         result.experimentFeature = asExperimentFeatureData(feature, ypywc.experimentResult.taskFeatures);

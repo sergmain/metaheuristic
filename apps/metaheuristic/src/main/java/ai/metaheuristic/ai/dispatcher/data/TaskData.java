@@ -50,4 +50,11 @@ public class TaskData {
         public final String tag;
         public final int quota;
     }
+
+    @RequiredArgsConstructor
+    public static class TaskWithRecoveryStatus {
+        public final Long taskId;
+        public final int triesWasMade;
+        public final EnumsApi.TaskExecState targetState;
+    }
 }

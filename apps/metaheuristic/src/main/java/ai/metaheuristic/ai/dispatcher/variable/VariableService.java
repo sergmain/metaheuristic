@@ -18,18 +18,24 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,10 +49,10 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -54,20 +60,16 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.persistence.EntityManager;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -86,16 +88,18 @@ public class VariableService {
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
+    private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextCache execContextCache;
 
     @Transactional
     public void storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            throw new VariableCommonException("#441.040 Variable #"+variableId+" wasn't found", variableId);
+            throw new VariableCommonException("#171.030 Variable #"+variableId+" wasn't found", variableId);
         }
         if (!execContextId.equals(variable.execContextId)) {
-            final String es = "#441.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
+            final String es = "#171.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
                     "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
             log.warn(es);
             throw new VariableCommonException(es, variableId);
@@ -103,16 +107,36 @@ public class VariableService {
         update(variableIS, length, variable);
     }
 
+    public void resetVariable(Long execContextId, Long variableId) {
+        TxUtils.checkTxExists();
+
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        if (v ==null) {
+            throw new VariableCommonException("#171.090 Variable #"+variableId+" wasn't found", variableId);
+        }
+        if (!execContextId.equals(v.execContextId)) {
+            final String es = "#171.120 the different execContextId than variable #"+variableId+", " +
+                    "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
+            log.warn(es);
+            throw new VariableCommonException(es, variableId);
+        }
+        v.uploadTs = new Timestamp(System.currentTimeMillis());
+        v.inited = false;
+        v.nullified = true;
+        v.setData(null);
+        variableRepository.save(v);
+    }
+
     @Transactional
     public void setVariableAsNull(Long variableId) {
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
-            String es = S.f("#611.063 variable #%d wasn't found", variableId);
+            String es = S.f("#171.150 variable #%d wasn't found", variableId);
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
         if (variable.inited) {
-            String es = S.f("#611.065 variable #%d wasn't already inited", variableId);
+            String es = S.f("#171.180 variable #%d wasn't already inited", variableId);
             log.error(es);
             throw new VariableCommonException(es, variableId);
 
@@ -140,14 +164,7 @@ public class VariableService {
         return data;
     }
 
-    public void createInputVariablesForSubProcess(
-            VariableData.VariableDataSource variableDataSource,
-            Long execContextId, String inputVariableName,
-            String currTaskContextId) {
-        createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, true);
-    }
-
-    @SneakyThrows
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createInputVariablesForSubProcess(
             VariableData.VariableDataSource variableDataSource,
             Long execContextId, String inputVariableName,
@@ -168,12 +185,17 @@ public class VariableService {
             for (BatchTopLevelService.FileWithMapping f : files) {
                 String variableName = VariableUtils.getNameForVariableInArray();
 
-                FileInputStream fis = new FileInputStream(f.file);
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                try {
+                    FileInputStream fis = new FileInputStream(f.file);
+                    eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
+                    Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
 
-                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                variableHolders.add(new VariableUtils.VariableHolder(sv));
+                    SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
+                    variableHolders.add(new VariableUtils.VariableHolder(sv));
+                }
+                catch (FileNotFoundException e) {
+                    ExceptionUtils.rethrow(e);
+                }
             }
 
             if (!S.b(inputVariableContent)) {
@@ -220,7 +242,7 @@ public class VariableService {
     }
 
     @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task) {
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<Long> parentTaskIds) {
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -228,40 +250,65 @@ public class VariableService {
         final Long execContextId = task.execContextId;
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#171.020 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("#171.240 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return null;
         }
 
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            log.error("#171.260 can't find execContext #" + execContextId);
+            return null;
+        }
+
+        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
+        if (ecg==null) {
+            log.error("#171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
+            return null;
+        }
+        Set<String> set = new HashSet<>();
+        for (Long parentTaskId : parentTaskIds) {
+            ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
+            if (vertex==null) {
+                throw new RuntimeException("#171.267 vertex wasn't found for task #"+task.id);
+            }
+            set.add(vertex.taskContextId);
+            Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
+            setTemp.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->set));
+        }
+        set.add(taskParams.task.taskContextId);
+
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+
         p.inputs.stream()
-                .map(v -> toInputVariable(v, taskParams.task.taskContextId, execContextId))
+                .map(v -> toInputVariable(list, v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         return initOutputVariables(execContextId, task, p, taskParams);
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+    private TaskParamsYaml.InputVariable toInputVariable(List<String> list, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
             if (S.b(contextId)) {
                 throw new TaskCreationException(
-                        S.f("#171.040 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            SimpleVariable variable = findVariableInAllInternalContexts(v.name, contextId, execContextId);
+            Object[] variable = findVariableInAllInternalContexts(list, v.name, contextId, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.060 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            iv.id = variable.id;
-            iv.filename = variable.filename;
+            iv.id = (Long)variable[0];
+            iv.filename = (String)variable[1];
         }
         else {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.080 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("#171.330 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
@@ -285,7 +332,7 @@ public class VariableService {
             return null;
         }
         if (vars.size()>1) {
-            throw new SourceCodeException("#171.100 Too many variable '"+variable+"', actual count: " + vars.size());
+            throw new SourceCodeException("#171.360 Too many variable '"+variable+"', actual count: " + vars.size());
         }
         return vars.get(0);
     }
@@ -320,11 +367,33 @@ public class VariableService {
         return null;
     }
 
+    @Nullable
+    private Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+        for (String taskCtxId : taskCtxIds) {
+            List<Object[]> obj = variableRepository.findAsObject(variable, taskCtxId, execContextId);
+            if (obj!=null && !obj.isEmpty()) {
+                return obj.get(0);
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private SimpleVariable findVariableInAllInternalContexts_old(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+        for (String taskCtxId : taskCtxIds) {
+            SimpleVariable obj = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
+            if (obj!=null) {
+                return obj;
+            }
+        }
+        return null;
+    }
+
     @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
-            final String es = "#171.120 Variable data wasn't found, variableId: " + variableId;
+            final String es = "#171.390 Variable data wasn't found, variableId: " + variableId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -337,24 +406,24 @@ public class VariableService {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 if (nullable) {
-                    log.info("#171.140 Variable #{} is nullable and current value is null", variableId);
+                    log.info("#171.420 Variable #{} is nullable and current value is null", variableId);
                     return null;
                 }
                 else {
-                    final String es = "#171.160 Variable data wasn't found, variableId: " + variableId;
+                    final String es = "#171.450 Variable data wasn't found, variableId: " + variableId;
                     log.warn(es);
                     throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
                 }
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                String s = IOUtils.toString(is, StandardCharsets.UTF_8);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                String s = IOUtils.toString(bis, StandardCharsets.UTF_8);
                 return s;
             }
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            log.error("#171.180", th);
-            throw new VariableCommonException("#171.200 Error: " + th.getMessage(), variableId);
+            log.error("#171.480", th);
+            throw new VariableCommonException("#171.510 Error: " + th.getMessage(), variableId);
         }
     }
 
@@ -368,17 +437,17 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                String es = "#171.220 Variable #"+variableId+" wasn't found";
+                String es = "#171.540 Variable #"+variableId+" wasn't found";
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                FileUtils.copyInputStreamToFile(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#171.240 Error while storing data to file";
+            String es = "#171.570 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -402,7 +471,7 @@ public class VariableService {
 
     public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         if (size==0) {
-            throw new IllegalStateException("#171.260 Variable can't be of zero length");
+            throw new IllegalStateException("#171.600 Variable can't be of zero length");
         }
         TxUtils.checkTxExists();
 
@@ -431,7 +500,7 @@ public class VariableService {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
-                        S.f("#171.280 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                        S.f("#171.630 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
                                 p.processCode, variable.context, p.internalContextId, execContextId));
             }
 
@@ -482,7 +551,7 @@ public class VariableService {
     public Void updateWithTx(InputStream is, long size, Long variableId) {
         Variable v = variableRepository.findById(variableId).orElse(null);
         if (v==null) {
-            String es = S.f("#171.293 Variable #%d wasn't found", variableId);
+            String es = S.f("#171.660 Variable #%d wasn't found", variableId);
             log.error(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -492,7 +561,7 @@ public class VariableService {
 
     public void update(InputStream is, long size, Variable data) {
         if (size==0) {
-            throw new IllegalStateException("#171.290 Variable can't be with zero length");
+            throw new IllegalStateException("#171.690 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -507,13 +576,13 @@ public class VariableService {
     @Transactional
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
         if (size==0) {
-            throw new IllegalStateException("#171.295 Variable can't be with zero length");
+            throw new IllegalStateException("#171.720 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
 
         Variable data = variableRepository.findById(variableId).orElse(null);
         if (data==null) {
-            log.error("#171.300 can't find variable #" + variableId);
+            log.error("#171.750 can't find variable #" + variableId);
             return;
         }
         data.filename = filename;
@@ -536,9 +605,13 @@ public class VariableService {
     }
 
     @Transactional
-    public Void deleteOrphanVariables(List<Long> ids) {
-        variableRepository.deleteAllByIdIn(ids);
-        return null;
+    public void deleteOrphanVariables(List<Long> ids) {
+        variableRepository.deleteByIds(ids);
+    }
+
+    @Transactional
+    public void deleteOrphanVariable(Long id) {
+        variableRepository.deleteById(id);
     }
 
 }

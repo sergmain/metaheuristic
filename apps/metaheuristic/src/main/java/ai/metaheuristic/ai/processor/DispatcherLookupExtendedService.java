@@ -18,9 +18,10 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.AllArgsConstructor;
@@ -127,7 +128,7 @@ public class DispatcherLookupExtendedService {
         }
     }
 
-    // TODO 2021-03-29 investigate why this service isn't using anymore
+    // TODO 2021-03-29 investigate why this service isn't being used anymore
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
@@ -143,7 +144,7 @@ public class DispatcherLookupExtendedService {
                     return;
                 }
                 try {
-                    FileUtils.copyFile(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
+                    FileSystemUtils.copyFileWithSync(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
                 } catch (IOException e) {
                     log.error("Error", e);
                     throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);

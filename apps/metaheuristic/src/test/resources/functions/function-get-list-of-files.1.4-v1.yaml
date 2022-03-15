@@ -1,4 +1,8 @@
 functions:
+  - code: get-list-of-files:2.4
+    type: list-of-files
+    env: python-3
+    sourcing: processor
   - code: get-list-of-files:1.4
     type: list-of-files
     env: python-3

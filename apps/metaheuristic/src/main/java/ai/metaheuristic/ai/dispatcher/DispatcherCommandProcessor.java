@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.dispatcher.event.CheckForLostTaskEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -30,6 +30,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -50,13 +51,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
-    private final TaskService taskService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final TaskTopLevelService taskTopLevelService;
     private final ProcessorTransactionService processorService;
     private final TaskProviderTopLevelService taskProviderService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas) {
+    public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
         if (request.processorCommContext==null || S.b(request.processorCommContext.processorId) || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
@@ -74,7 +75,7 @@ public class DispatcherCommandProcessor {
                 ()->response.reportResultDelivering = processReportTaskProcessingResult(request));
 
         MetaheuristicThreadLocal.getExecutionStat().exec("processRequestTask()",
-                ()->response.assignedTask = processRequestTask(request, quotas));
+                ()->response.assignedTask = processRequestTask(request, quotas, queueEmpty));
 
         if (log.isDebugEnabled()) {
             MetaheuristicThreadLocal.getExecutionStat().print().forEach(log::debug);
@@ -88,7 +89,7 @@ public class DispatcherCommandProcessor {
             return null;
         }
         final long processorId = Long.parseLong(request.processorCommContext.processorId);
-        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.variableReceivingChecker(processorId);
+        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskTopLevelService.variableReceivingChecker(processorId);
         return outputs;
     }
 
@@ -120,7 +121,7 @@ public class DispatcherCommandProcessor {
 
     // processing at dispatcher side
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas) {
+    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
         if (request.requestTask==null || Boolean.FALSE.equals(request.requestTask.newTask) ||
                 request.processorCommContext==null || S.b(request.processorCommContext.processorId)) {
             return null;
@@ -131,21 +132,25 @@ public class DispatcherCommandProcessor {
         List<Long> taskIds = S.b(request.requestTask.taskIds) ?
                 List.of() :
                 Arrays.stream(StringUtils.split(request.requestTask.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
+        final long processorId = Long.parseLong(request.processorCommContext.processorId);
         try {
-            assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
+            assignedTask = taskProviderService.findTask(processorId, request.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.520 ObjectOptimisticLockingFailureException", e);
             log.error("#997.540 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), quotas, taskIds);
+                assignedTask = taskProviderService.findTask(processorId, request.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
             }
         }
+        if (!taskIds.isEmpty()) {
+            eventPublisher.publishEvent(new CheckForLostTaskEvent(processorId, taskIds, request.requestTask.taskIds == null ? "" : request.requestTask.taskIds));
+        }
 
         if (assignedTask!=null) {
-            log.info("#997.r50 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.550 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }

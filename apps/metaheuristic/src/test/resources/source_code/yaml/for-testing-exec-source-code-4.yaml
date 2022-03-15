@@ -1,6 +1,8 @@
 version: 3
 source:
   uid: for-testing-exec-source-code-1.0
+  ac:
+    groups: test
   variables:
     inputs:
       - name: var-input-1

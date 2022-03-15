@@ -34,6 +34,10 @@ import java.util.List;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")
+    List<Long> findTaksForErrorWithRecoveryState(Long execContextId);
+
     @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +
             "where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId " +
             "group by t.execState ")
@@ -68,6 +72,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findExecStateByProcessorId(Long processorId);
 
+    @Query(value="select t.id from TaskImpl t where t.processorId=:processorId")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    List<Long> findTaskIdsForProcessorId(Long processorId);
+
     @Query(value="select t.id, t.execState, t.updatedOn from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findExecStateByExecContextId(Long execContextId);
 
@@ -75,10 +83,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
-//    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
-    List<Task> findForMissingResultVariables(Long processorId, long mills, int execState);
+    List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
 
     @Query(value="select v.id from TaskImpl v where v.execContextId=:execContextId")
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);

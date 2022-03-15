@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Date: 6/10/2021
  * Time: 2:13 PM
  */
-
+@SuppressWarnings("DuplicatedCode")
 public class ExecContextParamsYamlUtilsV3
         extends AbstractParamsYamlUtils<ExecContextParamsYamlV3, ExecContextParamsYamlV4, ExecContextParamsYamlUtilsV4,
         Void, Void, Void> {
@@ -63,7 +63,7 @@ public class ExecContextParamsYamlUtilsV3
         return t;
     }
 
-    private void initVariables(ExecContextParamsYamlV3.VariableDeclarationV3 v3, ExecContextParamsYamlV4.VariableDeclarationV4 v) {
+    private static void initVariables(ExecContextParamsYamlV3.VariableDeclarationV3 v3, ExecContextParamsYamlV4.VariableDeclarationV4 v) {
         v.inline.putAll(v3.inline);
         v.globals = v3.globals;
         v3.inputs.forEach(o->v.inputs.add(toVariable(o)));
@@ -72,7 +72,6 @@ public class ExecContextParamsYamlUtilsV3
 
     private static ExecContextParamsYamlV4.ProcessV4 toProcess(ExecContextParamsYamlV3.ProcessV3 p2) {
         ExecContextParamsYamlV4.ProcessV4 p = new ExecContextParamsYamlV4.ProcessV4();
-        BeanUtils.copyProperties(p2, p, "function", "preFunctions", "postFunctions", "inputs", "outputs", "metas");
         p.function = toFunction(p2.function);
         p.preFunctions = p2.preFunctions!=null ? p2.preFunctions.stream().map(ExecContextParamsYamlUtilsV3::toFunction).collect(Collectors.toList()) : null;
         p.postFunctions = p2.postFunctions!=null ? p2.postFunctions.stream().map(ExecContextParamsYamlUtilsV3::toFunction).collect(Collectors.toList()) : null;
@@ -82,6 +81,12 @@ public class ExecContextParamsYamlUtilsV3
         if (p2.cache!=null) {
             p.cache = new ExecContextParamsYamlV4.CacheV4(p2.cache.enabled, p2.cache.omitInline);
         }
+        p.processName = p2.processName;
+        p.processCode = p2.processCode;
+        p.internalContextId = p2.internalContextId;
+        p.logic = p2.logic;
+        p.timeoutBeforeTerminate = p2.timeoutBeforeTerminate;
+
         p.tags = p2.tags;
         p.priority = p2.priority;
         p.condition = p2.condition;

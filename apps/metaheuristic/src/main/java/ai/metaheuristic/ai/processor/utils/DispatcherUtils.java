@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.processor.utils;
 
+import ai.metaheuristic.ai.Consts;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-
-import java.time.Duration;
 
 import static org.apache.http.client.config.RequestConfig.custom;
 
@@ -37,19 +36,19 @@ public class DispatcherUtils {
         // https://issues.apache.org/jira/browse/HTTPCLIENT-1892
         // https://github.com/spring-projects/spring-framework/issues/21238
 
-        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout((int) Duration.ofSeconds(5).toMillis()).build();
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS).build();
 
         final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         clientBuilder.setDefaultSocketConfig(socketConfig);
         clientBuilder.useSystemProperties();
-        clientBuilder.setDefaultRequestConfig(custom().setConnectTimeout((int) Duration.ofSeconds(5).toMillis())
-                .setSocketTimeout((int) Duration.ofSeconds(5).toMillis())
+        clientBuilder.setDefaultRequestConfig(custom().setConnectTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS)
+                .setSocketTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS)
                 .build());
         final HttpClient httpClient = clientBuilder.build();
 
         final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
-        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+        requestFactory.setConnectTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
+        requestFactory.setReadTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
         return requestFactory;
     }
 

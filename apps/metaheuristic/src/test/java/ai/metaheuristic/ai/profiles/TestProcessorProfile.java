@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("processor")
 @TestPropertySource(locations="classpath:test-processor-profile.properties")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestProcessorProfile {
 
@@ -63,7 +63,7 @@ public class TestProcessorProfile {
         assertEquals(1735, globals.processor.timeout.dispatcherContextInfo.toSeconds());
         assertEquals(1737, globals.processor.timeout.artifactCleaner.toSeconds());
 
-        assertEquals(Globals.SECONDS_6.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
+        assertEquals(Globals.SECONDS_10.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
         assertEquals(Globals.SECONDS_5.toSeconds(), globals.processor.timeout.getTaskAssigner().toSeconds());
         assertEquals(Globals.SECONDS_9.toSeconds(), globals.processor.timeout.getTaskProcessor().toSeconds());
         

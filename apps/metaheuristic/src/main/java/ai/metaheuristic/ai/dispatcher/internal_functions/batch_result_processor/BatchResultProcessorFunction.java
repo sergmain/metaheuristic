@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -63,9 +64,14 @@ public class BatchResultProcessorFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
-        ExecContextSyncService.getWithSyncNullable(simpleExecContext.execContextId,
-                () -> batchResultProcessorTxService.process(simpleExecContext, taskContextId, taskParamsYaml));
-
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            ExecContextSyncService.getWithSyncNullable(simpleExecContext.execContextId,
+                    () -> batchResultProcessorTxService.process(simpleExecContext, taskContextId, taskParamsYaml));
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
     }
 
 }

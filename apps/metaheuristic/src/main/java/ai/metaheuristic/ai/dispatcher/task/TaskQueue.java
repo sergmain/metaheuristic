@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -141,6 +142,22 @@ public class TaskQueue {
                 }
             }
             return false;
+        }
+
+        public int newTasks() {
+            if (execContextId == null) {
+                return 0;
+            }
+            if (!locked) {
+                return 0;
+            }
+            int count = 0;
+            for (AllocatedTask task : tasks) {
+                if (task != null && !task.assigned) {
+                    count++;
+                }
+            }
+            return count;
         }
 
         public void addTask(QueuedTask task) {
@@ -273,6 +290,7 @@ public class TaskQueue {
     private final int minQueueSize;
     private final int groupSize;
     private final List<TaskGroup> taskGroups = new ArrayList<>();
+    private final AtomicInteger taskForExecution = new AtomicInteger();
 
     public TaskQueue() {
         this(MIN_QUEUE_SIZE_DEFAULT, GROUP_SIZE_DEFAULT);
@@ -287,6 +305,16 @@ public class TaskQueue {
     public TaskGroup getFinishedTaskGroup(Long execContextId) {
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextId.equals(taskGroup.execContextId) && groupFinished(taskGroup)) {
+                return taskGroup;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public TaskGroup getTaskGroupForTransfering(Long execContextId) {
+        for (TaskGroup taskGroup : taskGroups) {
+            if (execContextId.equals(taskGroup.execContextId) && groupReadyForTransfering(taskGroup)) {
                 return taskGroup;
             }
         }
@@ -365,16 +393,17 @@ public class TaskQueue {
                 if (!task.queuedTask.taskId.equals(taskId)) {
                     continue;
                 }
-                if (state==EnumsApi.TaskExecState.OK && !task.assigned) {
+                if (!task.assigned && (state == EnumsApi.TaskExecState.OK || state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY )) {
                     log.warn("#029.240 start processing of task #{} because the task wasn't assigned.", task.queuedTask.taskId);
-                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it as OK
+                    // if this task was already processed but wasn't assigned, then set it as IN_PROGRESS and then finish it with specified state
                     startTaskProcessing(task.queuedTask.execContextId, task.queuedTask.taskId);
                 }
-                // state from CHECK_CASHE to NONE is being changing without assigning
+                // state from CHECK_CACHE to NONE is being changing without assigning
                 else if (!task.assigned && state!=EnumsApi.TaskExecState.NONE) {
-                    log.warn("#029.260 State of task #{} can't be changed to {} because the task wasn't assigned.", task.queuedTask.taskId, state);
+                    log.warn("#029.260 State of task #{} {} can't be changed to {} because the task wasn't assigned.",
+                            task.queuedTask.task==null ? null : "<null>", task.queuedTask.taskId, state);
                     try {
-                        throw new RuntimeException("for stacktrace");
+                        throw new RuntimeException("This isn't actual an error, only for stacktrace:");
                     }
                     catch (RuntimeException e) {
                         log.warn("#029.280 Stacktrace", e);
@@ -398,15 +427,24 @@ public class TaskQueue {
         return false;
     }
 
-    public static boolean groupFinished(TaskGroup taskGroup) {
+    private static boolean groupFinished(TaskGroup taskGroup) {
         for (AllocatedTask task : taskGroup.tasks) {
             if (task==null) {
                 continue;
             }
-            if (!task.assigned) {
+            if (!EnumsApi.TaskExecState.isFinishedState(task.state.value)) {
                 return false;
             }
-            if (!EnumsApi.TaskExecState.isFinishedState(task.state)) {
+        }
+        return true;
+    }
+
+    private static boolean groupReadyForTransfering(TaskGroup taskGroup) {
+        for (AllocatedTask task : taskGroup.tasks) {
+            if (task==null) {
+                continue;
+            }
+            if (!EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(task.state.value)) {
                 return false;
             }
         }
@@ -415,6 +453,9 @@ public class TaskQueue {
 
     public void lock(Long execContextId) {
         for (TaskGroup tg : taskGroups) {
+            if (tg.locked) {
+                continue;
+            }
             if (execContextId.equals(tg.execContextId)) {
                 if (tg.allocated>0) {
                     tg.lock();
@@ -572,6 +613,17 @@ public class TaskQueue {
                 }
             }
         }
+    }
+
+    public boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
+        int count = 0;
+        for (TaskGroup taskGroup : taskGroups) {
+            count += taskGroup.newTasks();
+            if (count>requiredNumberOfTasks) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isQueueEmpty() {

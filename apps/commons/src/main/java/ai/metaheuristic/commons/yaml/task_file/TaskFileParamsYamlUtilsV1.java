@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.task_file;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +34,8 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("DuplicatedCode")
 public class TaskFileParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<TaskFileParamsYamlV1, TaskFileParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<TaskFileParamsYamlV1, TaskFileParamsYamlV2,
+        TaskFileParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -48,10 +50,12 @@ public class TaskFileParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public TaskFileParamsYaml upgradeTo(@NonNull TaskFileParamsYamlV1 v1) {
+    public TaskFileParamsYamlV2 upgradeTo(@NonNull TaskFileParamsYamlV1 v1) {
+        throw new UpgradeNotSupportedException();
+/*
         v1.checkIntegrity();
-        TaskFileParamsYaml t = new TaskFileParamsYaml();
-        t.task = new TaskFileParamsYaml.Task();
+        TaskFileParamsYamlV2 t = new TaskFileParamsYamlV2();
+        t.task = new TaskFileParamsYamlV2.TaskV2();
         BeanUtils.copyProperties(v1.task, t.task, "inline", "input", "output");
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskFileParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
@@ -59,10 +63,11 @@ public class TaskFileParamsYamlUtilsV1
 
         t.checkIntegrity();
         return t;
+*/
     }
 
-    private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
-        TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
+    private static TaskFileParamsYamlV2.InputVariableV2 upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
+        TaskFileParamsYamlV2.InputVariableV2 v = new TaskFileParamsYamlV2.InputVariableV2();
         v.id = v1.id;
         v.name = v1.name;
         v.dataType = v1.dataType;
@@ -76,8 +81,8 @@ public class TaskFileParamsYamlUtilsV1
         return v;
     }
 
-    private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
-        TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+    private static TaskFileParamsYamlV2.OutputVariableV2 upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
+        TaskFileParamsYamlV2.OutputVariableV2 v = new TaskFileParamsYamlV2.OutputVariableV2();
         v.id = v1.id;
         v.name = v1.name;
         v.dataType = v1.dataType;
@@ -98,8 +103,8 @@ public class TaskFileParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public TaskFileParamsYamlUtilsV2 nextUtil() {
+        return (TaskFileParamsYamlUtilsV2) TaskFileParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

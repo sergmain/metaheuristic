@@ -33,9 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Blob;
 import java.sql.SQLException;
 
@@ -61,8 +59,8 @@ public class CacheVariableService {
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        try (InputStream is = blob.getBinaryStream()) {
-            FileUtils.copyInputStreamToFile(is, trgFile);
+        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+            FileUtils.copyInputStreamToFile(bis, trgFile);
         }
     }
 

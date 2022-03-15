@@ -65,7 +65,7 @@ public class ExecContextController {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
 
     @GetMapping("/exec-contexts/{sourceCodeId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'MASTER_OPERATOR')")
     public String execContexts(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -75,7 +75,7 @@ public class ExecContextController {
 
     // for AJAX
     @PostMapping("/exec-contexts-part/{sourceCodeId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'MASTER_OPERATOR')")
     public String execContextPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -84,7 +84,7 @@ public class ExecContextController {
     }
 
     @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR', 'MASTER_OPERATOR')")
     public String execContextsState(Model model, @PathVariable Long sourceCodeId,  @PathVariable Long execContextId,
                                     @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -98,7 +98,7 @@ public class ExecContextController {
     }
 
     @GetMapping(value = "/exec-context-add/{sourceCodeId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MASTER_OPERATOR')")
     public String execContextAdd(Model model, @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
@@ -110,6 +110,7 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-context-add";
     }
 
+    // TODO P1 2022-02-10 do wee need to specify a role for downloading a variable?
     @GetMapping(value= "/exec-context/{execContextId}/download-variable/{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadVariable(
             HttpServletRequest request, @PathVariable("execContextId") Long execContextId, @PathVariable("variableId") Long variableId,
@@ -136,7 +137,7 @@ public class ExecContextController {
      * right now,ExecContext can be created with Global variables only.
      */
     @PostMapping("/exec-context-add-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MASTER_OPERATOR')")
     public String execContextAddCommit(Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
@@ -147,7 +148,7 @@ public class ExecContextController {
     }
 
     @GetMapping("/exec-context-delete/{sourceCodeId}/{execContextId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MASTER_OPERATOR')")
     public String execContextDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -161,7 +162,7 @@ public class ExecContextController {
     }
 
     @PostMapping("/exec-context-delete-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MASTER_OPERATOR')")
     public String execContextDeleteCommit(Long sourceCodeId, Long execContextId,
                                        final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -174,7 +175,7 @@ public class ExecContextController {
     }
 
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MASTER_OPERATOR')")
     public String execContextTargetState(@PathVariable Long sourceCodeId, @PathVariable String state, @PathVariable Long id,
                                           final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -187,7 +188,7 @@ public class ExecContextController {
     }
 
     @GetMapping("/exec-context-task-exec-info/{sourceCodeId}/{execContextId}/{taskId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR', 'MASTER_OPERATOR')")
     public String taskExecInfo(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId, @PathVariable Long taskId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextApiData.TaskExecInfo taskExecInfo = execContextTopLevelService.getTaskExecInfo(sourceCodeId, execContextId, taskId);

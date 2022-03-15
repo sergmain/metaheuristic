@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.source_code;
 
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV3;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV4;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 public class SourceCodeParamsYamlUtilsV3
         extends AbstractParamsYamlUtils<
         SourceCodeParamsYamlV3,
-        SourceCodeParamsYaml,
-        Void, Void, Void, Void> {
+        SourceCodeParamsYamlV4,
+        SourceCodeParamsYamlUtilsV4, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -50,27 +50,27 @@ public class SourceCodeParamsYamlUtilsV3
 
     @NonNull
     @Override
-    public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV3 v3) {
+    public SourceCodeParamsYamlV4 upgradeTo(@NonNull SourceCodeParamsYamlV3 v3) {
         v3.checkIntegrity();
 
-        SourceCodeParamsYaml p = new SourceCodeParamsYaml();
-        p.source = new SourceCodeParamsYaml.SourceCodeYaml();
+        SourceCodeParamsYamlV4 p = new SourceCodeParamsYamlV4();
+        p.source = new SourceCodeParamsYamlV4.SourceCodeV4();
         p.source.instances = v3.source.instances;
         if (v3.source.metas!=null){
             p.source.metas = v3.source.metas;
         }
         if (v3.source.variables!=null) {
-            p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v3.source.variables.globals);
+            p.source.variables = new SourceCodeParamsYamlV4.VariableDefinitionV4(v3.source.variables.globals);
             toVariable(v3.source.variables.inputs, p.source.variables.inputs);
             toVariable(v3.source.variables.outputs, p.source.variables.outputs);
-            v3.source.variables.inline.forEach(p.source.variables.inline::put);
+            p.source.variables.inline.putAll(v3.source.variables.inline);
         }
         p.source.clean = v3.source.clean;
         p.source.processes = v3.source.processes.stream().map(SourceCodeParamsYamlUtilsV3::toProcess).collect(Collectors.toList());
 
         p.source.uid = v3.source.uid;
         if (v3.source.ac!=null) {
-            p.source.ac = new SourceCodeParamsYaml.AccessControl(v3.source.ac.groups);
+            p.source.ac = new SourceCodeParamsYamlV4.AccessControlV4(v3.source.ac.groups);
         }
         p.source.strictNaming = v3.source.strictNaming;
         p.checkIntegrity();
@@ -78,34 +78,34 @@ public class SourceCodeParamsYamlUtilsV3
     }
 
     @NonNull
-    private static SourceCodeParamsYaml.Process toProcess(SourceCodeParamsYamlV3.ProcessV3 o) {
-        SourceCodeParamsYaml.Process pr = new SourceCodeParamsYaml.Process();
+    private static SourceCodeParamsYamlV4.ProcessV4 toProcess(SourceCodeParamsYamlV3.ProcessV3 o) {
+        SourceCodeParamsYamlV4.ProcessV4 pr = new SourceCodeParamsYamlV4.ProcessV4();
         pr.name = o.name;
         pr.code = o.code;
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
         toVariable(o.inputs, pr.inputs);
         toVariable(o.outputs, pr.outputs);
-        pr.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context);
-        pr.preFunctions = o.preFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList());
-        pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList());
+        pr.function = new SourceCodeParamsYamlV4.FunctionDefForSourceCodeV4(o.function.code, o.function.params, o.function.context);
+        pr.preFunctions = o.preFunctions.stream().map(d->new SourceCodeParamsYamlV4.FunctionDefForSourceCodeV4(d.code, d.params, d.context)).collect(Collectors.toList());
+        pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYamlV4.FunctionDefForSourceCodeV4(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled, o.cache.omitInline);
+            pr.cache = new SourceCodeParamsYamlV4.CacheV4(o.cache.enabled, o.cache.omitInline);
         }
-        pr.tags = o.tags;
+        pr.tag = o.tags;
         pr.priority = o.priority;
         pr.condition = o.condition;
 
         pr.subProcesses = o.subProcesses!=null
-                ?  new SourceCodeParamsYaml.SubProcesses(
+                ?  new SourceCodeParamsYamlV4.SubProcessesV4(
                 o.subProcesses.logic, o.subProcesses.processes.stream().map(SourceCodeParamsYamlUtilsV3::toProcess).collect(Collectors.toList()) )
                 : null;
 
         return pr;
     }
 
-    private static void toVariable(List<SourceCodeParamsYamlV3.VariableV3> src, List<SourceCodeParamsYaml.Variable> trg) {
-        src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext)).forEach(trg::add);
+    private static void toVariable(List<SourceCodeParamsYamlV3.VariableV3> src, List<SourceCodeParamsYamlV4.VariableV4> trg) {
+        src.stream().map(v -> new SourceCodeParamsYamlV4.VariableV4(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext)).forEach(trg::add);
     }
 
     @NonNull
@@ -116,8 +116,8 @@ public class SourceCodeParamsYamlUtilsV3
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public SourceCodeParamsYamlUtilsV4 nextUtil() {
+        return (SourceCodeParamsYamlUtilsV4) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
     }
 
     @Override

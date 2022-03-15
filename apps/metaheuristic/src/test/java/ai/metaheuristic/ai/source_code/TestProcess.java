@@ -17,22 +17,17 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCodeYaml;
+import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -49,25 +44,28 @@ public class TestProcess {
                         Map.of("feature", "feature"))
         );
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
-        SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        SourceCode sourceCodeYaml = new SourceCode();
         sourceCodeYaml.uid = "test-process-for-meta";
         sourceCodeYaml.processes.add(p);
         sourceCodeParamsYaml.source = sourceCodeYaml;
 
         String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        SourceCodeYaml sourceCodeYamlV21 = planParams.source;
+        SourceCode sourceCodeYamlV21 = planParams.source;
 
         SourceCodeParamsYaml.Process p1 = sourceCodeYamlV21.getProcesses().get(0);
 
-        assertNotNull(p.getMeta("assembled-raw"));
-        assertEquals("assembled-raw", Objects.requireNonNull(p.getMeta("assembled-raw")).getValue());
+        final Meta meta1 = MetaUtils.getMeta(p.metas, "assembled-raw");
+        assertNotNull(meta1);
+        assertEquals("assembled-raw", Objects.requireNonNull(meta1).getValue());
 
-        assertNotNull(p.getMeta("dataset"));
-        assertEquals("dataset-processing", Objects.requireNonNull(MetaUtils.getMeta(p.metas, "dataset")).getValue());
+        final Meta dataset = MetaUtils.getMeta(p.metas, "dataset");
+        assertNotNull(dataset);
+        assertEquals("dataset-processing", Objects.requireNonNull(dataset).getValue());
 
-        assertNotNull(p.getMeta("feature"));
-        assertEquals("feature", Objects.requireNonNull(MetaUtils.getMeta(p.metas, "feature")).getValue());
+        final Meta feature = MetaUtils.getMeta(p.metas, "feature");
+        assertNotNull(feature);
+        assertEquals("feature", Objects.requireNonNull(feature).getValue());
     }
 
 }

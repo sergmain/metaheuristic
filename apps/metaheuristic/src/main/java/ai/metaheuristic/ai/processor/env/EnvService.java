@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor.env;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class EnvService {
                 throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             try {
-                FileUtils.copyFile(globals.processor.defaultEnvYamlFile, envYamlFile);
+                FileSystemUtils.copyFileWithSync(globals.processor.defaultEnvYamlFile, envYamlFile);
             } catch (IOException e) {
                 log.error("#747.035 Error", e);
                 throw new IllegalStateException("#747.040 Error while copying "+ globals.processor.defaultEnvYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);

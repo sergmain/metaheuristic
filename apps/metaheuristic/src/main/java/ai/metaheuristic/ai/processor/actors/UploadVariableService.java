@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.processor.CurrentExecState;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
@@ -50,6 +51,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -67,6 +69,7 @@ import java.util.UUID;
 public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> implements QueueProcessor {
 
     private static final ObjectMapper mapper;
+    private final CurrentExecState currentExecState;
 
     static {
         mapper = new ObjectMapper();
@@ -97,13 +100,20 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         UploadVariableTask task;
         List<UploadVariableTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
+            final UploadVariableTask finalTask = task;
+
             ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
             }
+            if (currentExecState.finishedOrDoesntExist(task.ref.dispatcherUrl, processorTask.execContextId)) {
+                log.info("#311.021 ExecContext #{} for task #{} with variable #{} is finished or doesn't exist, url: {}",
+                        processorTask.execContextId, task.taskId, finalTask.variableId, task.getDispatcherUrl());
+                processorTaskService.setVariableUploadedAndCompleted(task.ref, finalTask.taskId, finalTask.variableId);
+                continue;
+            }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
-            final UploadVariableTask finalTask = task;
 
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {
@@ -138,7 +148,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             try {
                 final Executor executor = HttpClientExecutor.getExecutor(task.getDispatcherUrl().url, task.dispatcher.restUsername, task.dispatcher.restPassword);
 
-                if (!isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor)) {
+                final Boolean readyForUploading = isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor);
+                if (readyForUploading==null) {
+                    log.info("variable #{} in task #{} doesn't exist at dispathcer", task.variableId, task.taskId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
+                    continue;
+                }
+                if (!readyForUploading) {
+                    log.info("variable #{} in task #{} was aready inited", task.variableId, task.taskId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
                     continue;
                 }
 
@@ -179,13 +197,14 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
             } catch (HttpResponseException e) {
                 if (e.getStatusCode()==401) {
-                    log.error("#311.055 Error uploading resource to server, code: 401, error: {}", e.getMessage());
+                    log.error("#311.055 Error uploading variable to server, code: 401, error: {}", e.getMessage());
                 }
                 else if (e.getStatusCode()== 500) {
                     log.error("#311.056 Server error, code: 500, error: {}", e.getMessage());
                 }
                 else {
-                    log.error("#311.060 Error uploading resource to server, code: " + e.getStatusCode(), e);
+                    log.error("#311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
+                            "size: " + (task.file!=null ? Long.toString(task.file.length()) : "file is null"), e);
                 }
             }
             catch (SocketTimeoutException e) {
@@ -244,7 +263,8 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
     }
 
-    private static boolean isVariableReadyForUploading(String dispatcherUrl, Long variableId, Executor executor) {
+    @Nullable
+    private static Boolean isVariableReadyForUploading(String dispatcherUrl, Long variableId, Executor executor) {
         final String variableStatusRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.VARIABLE_STATUS_REST_URL;
 
         try {
@@ -273,7 +293,11 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 String value = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
                 // right now uri /variable-status returns value of 'inited' field
 
-                return "false".equals(value);
+                return switch (value) {
+                    case "false" -> true;
+                    case "true" -> false;
+                    default -> null;
+                };
             }
             else {
                 return true;

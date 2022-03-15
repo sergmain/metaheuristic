@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -43,9 +45,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestWrongNameOfVariables extends PreparingSourceCode {
+
+    @Autowired private SourceCodeValidationService sourceCodeValidationService;
 
     @Override
     @SneakyThrows
@@ -55,7 +59,7 @@ public class TestWrongNameOfVariables extends PreparingSourceCode {
 
     @Test
     public void test() {
-        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, status.status);
     }
 }

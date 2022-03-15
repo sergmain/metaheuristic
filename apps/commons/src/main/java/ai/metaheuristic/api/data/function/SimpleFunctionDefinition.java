@@ -28,4 +28,7 @@ public interface SimpleFunctionDefinition {
     String getCode();
     @Nullable String getParams();
     EnumsApi.FunctionExecContext getContext();
+    default EnumsApi.FunctionRefType getRefType() {
+        return EnumsApi.FunctionRefType.code;
+    }
 }

@@ -20,10 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -38,7 +36,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +58,6 @@ public class ExecContextReconciliationTopLevelService {
     private final ExecContextService execContextService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
-    private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
@@ -87,7 +83,7 @@ public class ExecContextReconciliationTopLevelService {
                 execContext.execContextGraphId, execContext.execContextTaskStateId, rootVertices.get(0).taskId);
 
         final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContext.id);
-        final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = taskProviderTopLevelService.getTaskExecStates(execContext.id);
+        final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContext.id);
 
         for (ExecContextData.TaskWithState tv : vertices) {
 
@@ -118,10 +114,11 @@ public class ExecContextReconciliationTopLevelService {
                         // ---> This is a normal situation, will occur after restarting dispatcher
                     }
                     else if (taskState.execState== TaskExecState.OK.value && tv.state== TaskExecState.CHECK_CACHE) {
-                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. this situation is presumable a normal situation.",
+                        // #307.055 Found different states for task #375939, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found. trying to update a state of task in execContext.
+                        log.warn("#307.055 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found. trying to update a state of task in execContext.",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state);
-                        // #307.060 Found different states for task #196546, db: OK, graph: CHECK_CACHE, allocatedTask wasn't found, trying to update a state of task in execContext
-                        // ---> Is this a normal situation? need to monitor a situation
+                        // this situation can occure if task was stoped, then MH was restarted, and then task was started again
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
                     else {
                         log.warn("#307.060 Found different states for task #{}, db: {}, graph: {}, allocatedTask wasn't found, trying to update a state of task in execContext",
@@ -144,8 +141,23 @@ public class ExecContextReconciliationTopLevelService {
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                         eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                     }
+                    else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
+                        // #307.085 Found different states for task #31786, db: ERROR_WITH_RECOVERY, graph: NONE, assigned: false, state in queue: NONE, required steps are unknown
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                    }
+                    else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state==TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.NONE) {
+                        // ---> This is a normal situation, will occur after restarting a dispatcher
+                        log.warn("#307.087 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, trying to update a state of task in execContextGraph",
+                                tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
+                        TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                        eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                    }
                     else {
-                        log.warn("#307.085 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
+                        log.warn("#307.100 Found different states for task #{}, db: {}, graph: {}, assigned: false, state in queue: {}, required steps are unknown",
                                 tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                     }
                 }
@@ -162,25 +174,44 @@ public class ExecContextReconciliationTopLevelService {
                     // ---> This is a normal situation
                 }
                 else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
-                    // #307.140 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
+                    // #307.130 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
                     log.warn("#307.130 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: NONE, trying to update a state of task in execContext", tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else if (taskState.execState== TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.IN_PROGRESS) {
-                    // #307.140 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
+                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.warn("#307.135 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: IN_PROGRESS, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.CHECK_CACHE) {
+                    log.warn("#307.137 Found different states for task #{}, db: CHECK_CACHE, graph: NONE, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.IN_PROGRESS && allocatedTask.state== TaskExecState.CHECK_CACHE) {
+                    // #307.135 Found different states for task #222154, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
+                    log.warn("#307.141 Found different states for task #{}, db: CHECK_CACHE, graph: IN_PROGRESS, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
+                    log.warn("#307.145 Found different states for task #{}, db: ERROR_WITH_RECOVERY, graph: NONE, allocatedTask: ERROR_WITH_RECOVERY, trying to update a state of task in execContext", tv.taskId);
+                    TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
+                else if (taskState.execState== TaskExecState.ERROR_WITH_RECOVERY.value &&  tv.state== TaskExecState.CHECK_CACHE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
+                    log.warn("#307.150 Found different states for task #{}, db: ERROR_WITH_RECOVERY, graph: CHECK_CACHE, allocatedTask: ERROR_WITH_RECOVERY, trying to update a state of task in execContext", tv.taskId);
+                    TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
                 else {
                     // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
-                    log.error("#307.140 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
+                    log.error("#307.270 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
                             tv.taskId, TaskExecState.from(taskState.execState), tv.state, allocatedTask.state);
                 }
             }
         }
 
         if (status.isNullState.get()) {
-            log.info("#307.150 Found non-created task, graph consistency is failed");
+            log.info("#307.300 Found non-created task, graph consistency is failed");
             return status;
         }
 
@@ -206,7 +237,7 @@ public class ExecContextReconciliationTopLevelService {
                                     // only if there is any input variable and context of task is FunctionExecContext.external
                                     // TODO 2021-05-17 check that internal function is setting task.accessByProcessorOn at all
                                     if (tpy.task.context== FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
-                                        log.info("#307.160 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
+                                        log.info("#307.360 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
                                                 task.id, task.processorId);
                                         status.taskForResettingIds.add(task.id);
                                     }
@@ -220,7 +251,7 @@ public class ExecContextReconciliationTopLevelService {
                                         final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                                         long effectiveTimeout = Math.min(timeoutForChecking, oneHourToMills);
                                         if ((System.currentTimeMillis() - task.accessByProcessorOn) > effectiveTimeout) {
-                                            log.info("#307.170 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, timeoutForChecking: {}, effective timeout: {}",
+                                            log.info("#307.400 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, timeoutForChecking: {}, effective timeout: {}",
                                                     task.id, task.processorId, tpy.task.timeoutBeforeTerminate, timeoutForChecking, effectiveTimeout);
                                             status.taskForResettingIds.add(task.id);
                                         }

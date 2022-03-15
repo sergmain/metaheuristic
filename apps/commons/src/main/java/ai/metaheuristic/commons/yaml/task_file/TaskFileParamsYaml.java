@@ -40,7 +40,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskFileParamsYaml implements BaseParams {
 
-    public final int version = 1;
+    public final int version = 2;
 
     @Override
     public boolean checkIntegrity() {
@@ -57,9 +57,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
         public EnumsApi.DataType dataType;
-        // TODO 2020-09-12 right now a context of variable won't be set.
-        //  So you need to check compatibility between SourceCode and Function manually.
-//        public boolean array;
+        public boolean array;
 
         // real file name of variable, is present
         public @Nullable String filename;

@@ -52,21 +52,25 @@ public class ActiveDispatchers {
             dispatcherLookupList.add(dispatcherLookup);
         }
 
-        if (selectionStrategy== Enums.DispatcherSelectionStrategy.priority) {
-            dispatcherLookupList.sort((o, o1) -> Integer.compare(o1.priority, o.priority));
-        }
-        else if (selectionStrategy== Enums.DispatcherSelectionStrategy.alphabet) {
-            dispatcherLookupList.sort(Comparator.comparing(o -> o.url));
-        }
-        else {
-            throw new IllegalStateException("unknown strategy");
-        }
+        sortListOfDispatchers(selectionStrategy, dispatcherLookupList);
 
         for (DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup : dispatcherLookupList) {
             map.putIfAbsent(new ProcessorAndCoreData.DispatcherUrl(dispatcherLookup.url), new AtomicBoolean(true));
         }
 
         urls = Collections.unmodifiableMap(map);
+    }
+
+    public static void sortListOfDispatchers(Enums.DispatcherSelectionStrategy selectionStrategy, List<DispatcherLookupParamsYaml.DispatcherLookup> dispatcherLookupList) {
+        if (selectionStrategy == Enums.DispatcherSelectionStrategy.priority) {
+            dispatcherLookupList.sort((o, o1) -> Integer.compare(o1.priority, o.priority));
+        }
+        else if (selectionStrategy == Enums.DispatcherSelectionStrategy.alphabet) {
+            dispatcherLookupList.sort(Comparator.comparing(o -> o.url));
+        }
+        else {
+            throw new IllegalStateException("unknown strategy");
+        }
     }
 
     public Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> getActiveDispatchers() {

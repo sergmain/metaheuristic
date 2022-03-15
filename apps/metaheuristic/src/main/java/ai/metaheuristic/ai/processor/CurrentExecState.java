@@ -42,7 +42,7 @@ public class CurrentExecState {
 
     public Map<Long, EnumsApi.ExecContextState> getExecContexts(DispatcherUrl dispatcherUrl) {
         synchronized(execContextState) {
-            return Collections.unmodifiableMap(execContextState.getOrDefault(dispatcherUrl, Map.of()));
+            return new HashMap<>(execContextState.getOrDefault(dispatcherUrl, Map.of()));
         }
     }
 
@@ -90,9 +90,23 @@ public class CurrentExecState {
         }
     }
 
-    boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
+    public boolean notFinishedAndExists(DispatcherUrl dispatcherUrl, Long execContextId) {
         EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
-        return currState==state;
+        return currState!=EnumsApi.ExecContextState.ERROR && currState!= EnumsApi.ExecContextState.FINISHED && currState!= EnumsApi.ExecContextState.DOESNT_EXIST;
+    }
+
+    public boolean finishedOrDoesntExist(DispatcherUrl dispatcherUrl, Long execContextId) {
+        return !notFinishedAndExists(dispatcherUrl, execContextId);
+    }
+
+    boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState ... state) {
+        EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
+        for (EnumsApi.ExecContextState contextState : state) {
+            if (currState==contextState) {
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean isStarted(DispatcherUrl dispatcherUrl, Long execContextId) {

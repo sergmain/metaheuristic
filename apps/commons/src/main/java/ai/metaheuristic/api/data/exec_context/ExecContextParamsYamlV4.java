@@ -172,6 +172,7 @@ public class ExecContextParamsYamlV4 implements BaseParams {
          * value in seconds
          * null or 0 mean the infinite execution
          */
+        @Nullable
         public Long timeoutBeforeTerminate;
         public final List<VariableV4> inputs = new ArrayList<>();
         public final List<VariableV4> outputs = new ArrayList<>();

@@ -225,7 +225,14 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("Only for testing");
         }
         ExecContextSyncService.checkWriteLockPresent(execContextId);
-        execContextFSM.toState(execContextId, EnumsApi.ExecContextState.STARTED);
+        TxUtils.checkTxExists();
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        execContext.setState(EnumsApi.ExecContextState.STARTED.code);
+        execContextService.save(execContext);
     }
 
     @Nullable

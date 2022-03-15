@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -51,7 +51,7 @@ public class KeepAliveTopLevelService {
 
     private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final FunctionService functionService;
+    private final FunctionTopLevelService functionTopLevelService;
     private final ProcessorTransactionService processorService;
     private final ExecContextStatusService execContextStatusService;
     private final ProcessorCache processorCache;
@@ -59,7 +59,7 @@ public class KeepAliveTopLevelService {
     private final ProcessorTransactionService processorTransactionService;
 
     public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
-        keepAliveResponse.functions.infos.addAll( functionService.getFunctionInfos() );
+        keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
         keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
@@ -81,7 +81,7 @@ public class KeepAliveTopLevelService {
         return new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
     }
 
-    public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress) {
+    public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
             for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
@@ -102,7 +102,7 @@ public class KeepAliveTopLevelService {
                 final Processor processor = processorCache.findById(processorRequest.processorCommContext.processorId);
                 if (processor == null) {
                     log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                    // no need syncing for creation of new Processor
+                    // no need of syncing for creation of new Processor
                     DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
                     dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
                     continue;
@@ -122,6 +122,10 @@ public class KeepAliveTopLevelService {
                 processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
                 processGetNewProcessorId(processorRequest, dispatcherResponse);
 //                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
+
+                if (System.currentTimeMillis() - startMills > 12_000) {
+                    break;
+                }
             }
             initDispatcherInfo(resp);
         } catch (Throwable th) {

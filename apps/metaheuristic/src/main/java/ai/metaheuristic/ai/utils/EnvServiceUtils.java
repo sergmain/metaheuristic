@@ -17,17 +17,21 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +77,7 @@ public class EnvServiceUtils {
         final String newEnv = envYamlShortToString(envYaml);
 
         try {
-            FileUtils.writeStringToFile(envFile, newEnv, StandardCharsets.UTF_8);
+            FileSystemUtils.writeStringToFileWithSync(envFile, newEnv, StandardCharsets.UTF_8);
         } catch (IOException e) {
             final String es = "#712.060 An error while creating " + ConstsApi.MH_ENV_FILE + ", error: " + ErrorUtils.getAllMessages(e);
             log.error(es, e);

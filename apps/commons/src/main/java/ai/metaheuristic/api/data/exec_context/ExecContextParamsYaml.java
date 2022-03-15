@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @Data
 public class ExecContextParamsYaml implements BaseParams {
 
-    public final int version = 4;
+    public final int version = 5;
 
     @Override
     public boolean checkIntegrity() {
@@ -108,6 +108,7 @@ public class ExecContextParamsYaml implements BaseParams {
         @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+        public EnumsApi.FunctionRefType refType = EnumsApi.FunctionRefType.code;
 
         public FunctionDefinition(String code) {
             this.code = code;
@@ -174,6 +175,7 @@ public class ExecContextParamsYaml implements BaseParams {
          * value in seconds
          * null or 0 mean the infinite execution
          */
+        @Nullable
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
@@ -182,12 +184,14 @@ public class ExecContextParamsYaml implements BaseParams {
         @Nullable
         public Cache cache;
 
-        // event though it's named as a tagS, it actual is tag
         @Nullable
-        public String tags;
+        public String tag;
         public int priority;
         @Nullable
         public String condition;
+
+        @Nullable
+        public Integer triesAfterError;
 
         public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
             this.processName = processName;

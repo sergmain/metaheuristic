@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * class TaskParamsYaml is for storing parameters of task in db table MH_TASK AND
- *  for storing parameters internally at Processor side
+ * class TaskParamsYaml is for storing parameters of task in db table MH_TASK
+ * AND for storing parameters internally at Processor side
  *
  * class TaskFileParamsYaml is being used for storing a parameters of task for function in a file, ie params-v1.yaml
  *
@@ -228,10 +228,13 @@ public class TaskParamsYaml implements BaseParams {
          * value in seconds
          * null or 0 mean the infinite execution
          */
-        @Nullable public Long timeoutBeforeTerminate;
+        @Nullable
+        public Long timeoutBeforeTerminate;
 
         // fields which are initialized at processor
         public String workingPath;
+        @Nullable
+        public Integer triesAfterError;
     }
 
     public TaskYaml task = new TaskYaml();

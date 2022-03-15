@@ -20,6 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.thymeleaf.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 /**
  * @author Serge
  * Date: 4/7/2020
@@ -55,8 +61,61 @@ public class ContextUtils {
             subProcessContextId = subProcessContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + subContext;
         }
         else {
-            log.warn("#971.020 subContext wasn't found for task #{}, taskContextId: {}. Resulted processContextId: {}", taskId, currTaskContextId, processContextId);
+            log.warn("#971.020 subContext wasn't found for task #{}, taskContextId: {}. Resulted processContextId: {}", taskId, currTaskContextId, subProcessContextId);
         }
         return subProcessContextId;
     }
+
+    @SuppressWarnings("ConstantConditions")
+    private static int compareTaskContextIds(String taskContextId1, String taskContextId2) {
+        if (taskContextId1.equals(taskContextId2)) {
+            return 0;
+        }
+
+        String[] split1 = taskContextId1.split(",");
+        String[] split2 = taskContextId2.split(",");
+        if (split1.length!=split2.length) {
+            return split1.length>split2.length ? -1 : 1;
+        }
+        for (int i = 0; i < split1.length; i++) {
+            String s1 = split1[i];
+            String s2 = split2[i];
+            int cmp;
+            if (s1.contains(CONTEXT_SEPARATOR) || s2.contains(CONTEXT_SEPARATOR)) {
+                String sc1 = getWithoutSubContext(s1);
+                String sc2 = getWithoutSubContext(s2);
+                String sub1 = getSubContext(s1);
+                String sub2 = getSubContext(s2);
+                if (sc1.equals(sc2)) {
+                    if (sub1==null && sub2!=null) {
+                        return 1;
+                    }
+                    else if (sub1!=null && sub2==null) {
+                        return -1;
+                    }
+                    else if (sub1!=null && sub2!=null) {
+                        return sub2.compareTo(sub1);
+                    }
+                }
+                else {
+                    return sc2.compareTo(sc1);
+                }
+                cmp = s2.compareTo(s1);
+            }
+            else {
+                cmp = s2.compareTo(s1);
+            }
+            if (cmp!=0) {
+                return cmp;
+            }
+        }
+        throw new IllegalStateException("?");
+    }
+
+    public static List<String> sortSetAsTaskContextId(Collection<String> collection) {
+        List<String> list = collection instanceof List listTemp ? listTemp : new ArrayList<>(collection);
+        return list.stream().sorted(ContextUtils::compareTaskContextIds).collect(Collectors.toList());
+    }
+
+
 }

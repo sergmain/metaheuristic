@@ -21,16 +21,15 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,12 +96,16 @@ public class ExecContextFSM {
     private OperationStatusRest changeExecContextState(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
-        OperationStatusRest status = checkExecContext(execContextId);
-        if (status != null) {
-            return status;
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.040 execContext wasn't found, execContextId: " + execContextId);
         }
-        status = execContextTargetState(execContextId, execState, companyUniqueId);
-        return status;
+        if (execContext.state != execState.code) {
+            execContext.setState(execState.code);
+            execContextService.save(execContext);
+        }
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public static OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
@@ -111,27 +114,6 @@ public class ExecContextFSM {
 
         execContext.setState(execState.code);
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    private OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.040 execContext wasn't found, execContextId: " + execContextId);
-        }
-
-        if (execContext.state !=execState.code) {
-            toState(execContext.id, execState);
-        }
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    @Nullable
-    private OperationStatusRest checkExecContext(Long execContextId) {
-        ExecContext wb = execContextCache.findById(execContextId);
-        if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.060 ExecContext wasn't found, execContextId: " + execContextId );
-        }
-        return null;
     }
 
     private void toStateWithCompletion(ExecContextImpl execContext, EnumsApi.ExecContextState state) {

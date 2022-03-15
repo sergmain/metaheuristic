@@ -41,15 +41,15 @@ public class TestSourceCodeParamsYamlCloning {
         SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
         p.name = "name";
         p.code = "code";
-        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("function-code", "function-params", EnumsApi.FunctionExecContext.external);
+        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("function-code", "function-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code);
         p.preFunctions = List.of(
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre1-code", "pre1-params", EnumsApi.FunctionExecContext.external),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre2-code", "pre2-params", EnumsApi.FunctionExecContext.external)
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre1-code", "pre1-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre2-code", "pre2-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code)
         );
         p.postFunctions = List.of(
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post1-code", "post1-params", EnumsApi.FunctionExecContext.external),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post2-code", "post2-params", EnumsApi.FunctionExecContext.external),
-                new SourceCodeParamsYaml.FunctionDefForSourceCode("post3-code", "post3-params", EnumsApi.FunctionExecContext.external)
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post1-code", "post1-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post2-code", "post2-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post3-code", "post3-params", EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code)
         ) ;
 
         p.timeoutBeforeTerminate = 120L;

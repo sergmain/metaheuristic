@@ -30,11 +30,13 @@ import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
@@ -48,10 +50,18 @@ public class ReduceVariablesUtils {
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
             File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+        return reduceVariables(List.of(zipFile), config, request, null);
+    }
 
-        ReduceVariablesData.VariablesData data = loadData(zipFile, config);
+    public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
+            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter) {
 
-        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data);
+        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
+        for (File zipFile : zipFiles) {
+            loadData(data, zipFile, config);
+        }
+
+        Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data, filter);
         System.out.println("\n=====================");
         for (Map.Entry<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> entry : freqValues.entrySet()) {
             System.out.println(entry.getKey());
@@ -60,7 +70,7 @@ public class ReduceVariablesUtils {
             }
         }
 
-        Map<String, Pair<AtomicInteger, AtomicInteger>> freqVariables = getFreqVariables(config, data);
+        Map<String, Pair<AtomicInteger, AtomicInteger>> freqVariables = getFreqVariables(config, data, filter);
         System.out.println("\n=====================");
         for (Map.Entry<String, Pair<AtomicInteger, AtomicInteger>> en : freqVariables.entrySet()) {
             System.out.printf("\t%-40s  %5d %5d\n", en.getKey(), en.getValue().getLeft().get(), en.getValue().getRight().get());
@@ -94,10 +104,14 @@ public class ReduceVariablesUtils {
             result.byValue.put(key, value);
         }
 
+        result.metricsList = getExperimentMetrics(data);
+
         return result;
     }
 
-    private static Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> getFreqValues(ReduceVariablesData.VariablesData data) {
+    private static Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> getFreqValues(
+            ReduceVariablesData.VariablesData data, @Nullable Function<String, Boolean> filter) {
+
         Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = new HashMap<>();
 
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
@@ -113,6 +127,9 @@ public class ReduceVariablesUtils {
                     if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
                         continue;
                     }
+                    if (filter!=null && (subPermutedVariable.metricValues==null || !filter.apply(subPermutedVariable.metricValues.comment))) {
+                        continue;
+                    }
 
                     freqValues
                             .computeIfAbsent(entry.getKey(), (o)->new HashMap<>())
@@ -125,7 +142,40 @@ public class ReduceVariablesUtils {
         return freqValues;
     }
 
-    private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data) {
+    private static List<ReduceVariablesData.ExperimentMetrics> getExperimentMetrics(ReduceVariablesData.VariablesData data) {
+        List<ReduceVariablesData.ExperimentMetrics> ems = new ArrayList<>();
+
+        boolean emptyMetrics = false;
+        for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
+            for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
+
+                if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
+                    continue;
+                }
+                if (subPermutedVariable.metricValues==null) {
+                    emptyMetrics = true;
+                    continue;
+                }
+                ReduceVariablesData.ExperimentMetrics em = new ReduceVariablesData.ExperimentMetrics();
+                em.metricValues = subPermutedVariable.metricValues;
+                em.data = subPermutedVariable.values.entrySet().stream().filter(o->"true".equals(o.getValue())).map(Map.Entry::getKey).collect(Collectors.joining(", "));
+                em.hyper = permutedVariable.values.entrySet().stream().map(o->""+o.getKey()+":"+o.getValue()).collect(Collectors.joining(", "));
+                em.metrics = subPermutedVariable.metricValues.values.entrySet().stream().map(o->""+o.getKey()+":"+o.getValue()).collect(Collectors.joining(","));
+                em.dir = subPermutedVariable.dir;
+
+                ems.add(em);
+            }
+        }
+        if (emptyMetrics) {
+            System.out.println("Found an empty metrics");
+        }
+        final String metricsName = "sum_norm_6";
+        ems.sort((o1, o2) -> o2.metricValues.values.get(metricsName).compareTo(o1.metricValues.values.get(metricsName)));
+        return ems;
+    }
+
+    private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(
+            ReduceVariablesConfigParamsYaml config, ReduceVariablesData.VariablesData data, @Nullable Function<String, Boolean> filter) {
         Map<String, Pair<AtomicInteger, AtomicInteger>> freqValues = new HashMap<>();
 
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
@@ -141,6 +191,9 @@ public class ReduceVariablesUtils {
                     if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
                         continue;
                     }
+                    if (filter!=null && (subPermutedVariable.metricValues==null || !filter.apply(subPermutedVariable.metricValues.comment))) {
+                        continue;
+                    }
                     if ("true".equals(varValue.getValue())) {
                         freqValues
                                 .computeIfAbsent(varValue.getKey(), (o) -> Pair.of(new AtomicInteger(), new AtomicInteger()))
@@ -153,7 +206,7 @@ public class ReduceVariablesUtils {
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(File zipFile, ReduceVariablesConfigParamsYaml config) {
+    public static ReduceVariablesData.VariablesData loadData(ReduceVariablesData.VariablesData data, File zipFile, ReduceVariablesConfigParamsYaml config) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -161,8 +214,6 @@ public class ReduceVariablesUtils {
         }
         File zipDir = new File(tempDir, "zip");
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
-
-        ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
 
         Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
         for (File f : files) {
@@ -227,6 +278,7 @@ public class ReduceVariablesUtils {
                 }
                 else {
                     final ReduceVariablesData.PermutedVariables permutedVariables = new ReduceVariablesData.PermutedVariables();
+                    permutedVariables.dir = ""+f.getParentFile().getParentFile().getName()+File.separatorChar+f.getParentFile().getName()+File.separatorChar+top[0].getName()+File.separatorChar+ctxDir.getName();
                     permutedVariables.fitting = fitting;
                     permutedVariables.metricValues = metricValues;
                     permutedVariables.values.putAll(values);

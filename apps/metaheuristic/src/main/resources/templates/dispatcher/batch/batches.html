@@ -14,7 +14,7 @@
             return false;
         }
 
-        var table = function (html) {
+        const table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href')+'filterBatches='+isFilterBatches, table);

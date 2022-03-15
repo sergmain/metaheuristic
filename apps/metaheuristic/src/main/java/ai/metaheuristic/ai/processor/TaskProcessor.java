@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule;
-import ai.metaheuristic.ai.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
@@ -40,15 +38,17 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
@@ -179,8 +179,8 @@ public class TaskProcessor {
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
-                processorTaskService.delete(ref, task.taskId);
                 log.info("#100.034 The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, dispatcherUrl, state, task.taskId);
+                processorTaskService.delete(ref, task.taskId);
                 continue;
             }
 
@@ -479,7 +479,7 @@ public class TaskProcessor {
                         }
 
                         File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
-                        FileUtils.writeStringToFile(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
+                        FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
 
                         cmd.add(execFile.getAbsolutePath());
                     }
@@ -502,7 +502,9 @@ public class TaskProcessor {
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             final Supplier<Boolean> execContextDeletionCheck =
-                    () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
+                    () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId,
+                            EnumsApi.ExecContextState.DOESNT_EXIST, EnumsApi.ExecContextState.STOPPED, EnumsApi.ExecContextState.ERROR,
+                            EnumsApi.ExecContextState.FINISHED);
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(

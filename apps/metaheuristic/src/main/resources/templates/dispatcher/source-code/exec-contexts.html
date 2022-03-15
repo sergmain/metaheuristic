@@ -60,16 +60,10 @@
                 <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
                 <td>
                     <a class="pure-button pure-button-primary"
-                       th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).NONE.code and
-                       i.valid and
-                       result.sourceCodeValid
-                       }"
-                       th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/started/' + i.id}">Produce and Start</a>
-                    <a class="pure-button pure-button-primary"
-                       th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
+                       th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code and i.rootExecContext}"
                        th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/started/' + i.id}">Start</a>
                     <a class="pure-button pure-button-primary"
-                       th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
+                       th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code and i.rootExecContext}"
                        th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/stopped/' + i.id}">Stop</a>
                 </td>
                 <td><a class="pure-button pure-button-primary"

@@ -28,7 +28,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -54,8 +56,9 @@ public class ExecContextVariableStateService {
 
     private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
         register(execContextVariableStateId, (ecpy)-> {
+            Set<CheckTaskCanBeFinishedTxEvent> eventsFroChecking = new HashSet<>();
             for (VariableUploadedEvent event : events) {
-                eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
+                eventsFroChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
                 for (ExecContextApiData.VariableState task : ecpy.tasks) {
                     if (task.taskId.equals(event.taskId)) {
                         if (task.outputs==null || task.outputs.isEmpty()) {
@@ -72,6 +75,9 @@ public class ExecContextVariableStateService {
                         break;
                     }
                 }
+            }
+            for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsFroChecking) {
+                eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(checkTaskCanBeFinishedTxEvent);
             }
         });
         return null;

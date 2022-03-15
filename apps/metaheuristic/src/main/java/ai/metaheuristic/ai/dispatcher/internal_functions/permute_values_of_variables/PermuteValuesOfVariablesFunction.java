@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.permute_values_of_variables;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -76,6 +77,19 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
     @Override
     public void process(
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            TaskParamsYaml taskParamsYaml) {
+        TxUtils.checkTxNotExists();
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
+    }
+
+    private void processInternal(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();

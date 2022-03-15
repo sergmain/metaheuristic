@@ -41,18 +41,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 4/27/2020
  * Time: 5:33 PM
  */
+@SuppressWarnings("NewClassNamingConvention")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TransferExperimentResult {
 
-    @Autowired
-    public ExperimentResultService experimentResultService;
-
-    @Autowired
-    public ExecContextCache execContextCache;
+    @Autowired public ExperimentResultService experimentResultService;
+    @Autowired public ExecContextCache execContextCache;
 
     @Test
     @Disabled("This method is't test actually and is used for transfer an actual result of experiment, that's why it is disabled")

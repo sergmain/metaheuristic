@@ -162,7 +162,7 @@ public class ProcessorTaskService {
                 FileUtils.deleteDirectory(f);
             }
         } catch (IOException e) {
-            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.toString());
+            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.getMessage());
         }
     }
 
@@ -305,7 +305,7 @@ public class ProcessorTaskService {
             markAsFinished(ref, taskId,
                     new FunctionApiData.FunctionExec(
                             null, null, null,
-                            new FunctionApiData.SystemExecResult("system-error", false, -991, es)));
+                            new FunctionApiData.SystemExecResult("system-error", false, -992, es)));
         }
     }
 
@@ -366,7 +366,7 @@ public class ProcessorTaskService {
             for (ProcessorTask task : tasks) {
                 // we don't need new task because execContext for this task is active
                 // i.e. there is a non-completed task with active execContext
-                // if execContext wasn't active we would need a new task
+                // if execContext wasn't active, we would need a new task
                 if (currentExecState.isStarted(new DispatcherUrl(task.dispatcherUrl), task.execContextId)) {
                     return false;
                 }
@@ -384,7 +384,9 @@ public class ProcessorTaskService {
                         task.completed = true;
                         save(ref, task);
                     }
-                    list.add(task);
+                    else {
+                        list.add(task);
+                    }
                 }
             }
             return list;
@@ -570,7 +572,11 @@ public class ProcessorTaskService {
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
-            } catch (Throwable th) {
+            }
+            catch (java.lang.NoClassDefFoundError th) {
+                log.error("#713.205 Error deleting task {}, {}", taskId, th.getMessage());
+            }
+            catch (Throwable th) {
                 log.error("#713.210 Error deleting task " + taskId, th);
             }
         }

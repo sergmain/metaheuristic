@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -52,6 +53,7 @@ public class TaskProducingService {
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
     private final TaskService taskService;
+    private final Globals globals;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
@@ -64,8 +66,8 @@ public class TaskProducingService {
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
         // for external Functions internalContextId==process.internalContextId
-        TaskImpl t = createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
-                execContextParamsYaml.variables.inline);
+        TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, process.internalContextId,
+                execContextParamsYaml.variables.inline, parentTaskIds);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
                     EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.020 Unknown reason of error while task creation");
@@ -138,7 +140,7 @@ public class TaskProducingService {
                     throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
             }
 
-            t = createTaskInternal(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines);
+            t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId));
 
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
@@ -157,9 +159,9 @@ public class TaskProducingService {
     }
 
     @Nullable
-    private TaskImpl createTaskInternal(
+    private TaskImpl createTaskHelper(
             Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
-            String taskContextId, @Nullable Map<String, Map<String, String>> inlines) {
+            String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds) {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
@@ -195,6 +197,7 @@ public class TaskProducingService {
         }
         taskParams.task.clean = execContextParamsYaml.clean;
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
+        taskParams.task.triesAfterError = process.triesAfterError==null ? null : Math.min(globals.dispatcher.getMaxTriesAfterError(), Math.max(0, process.triesAfterError));
         if (process.cache!=null) {
             taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline);
         }
@@ -207,7 +210,7 @@ public class TaskProducingService {
         task.params = params;
         task = taskService.save(task);
 
-        task = variableService.prepareVariables(execContextParamsYaml, task);
+        task = variableService.prepareVariables(execContextParamsYaml, task, parentTaskIds);
         return task;
     }
 

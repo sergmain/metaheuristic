@@ -33,82 +33,81 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestTaskWithInternalContextEventService {
 
-    @SuppressWarnings("ConstantConditions")
-    @Test
-    public void testConstants() {
-        assertTrue(TaskWithInternalContextEventService.MAX_QUEUE_SIZE > TaskWithInternalContextEventService.MAX_ACTIVE_THREAD * 5);
-    }
-
     @SneakyThrows
     @Test
     public void test() {
-        TaskWithInternalContextEvent event1 = new TaskWithInternalContextEvent(1L, 10L, 20L);
+        try {
+            TaskWithInternalContextEvent event1 = new TaskWithInternalContextEvent(1L, 10L, 20L);
 
-        TaskWithInternalContextEventService.putToQueueInternal(event1);
+            TaskWithInternalContextEventService.putToQueueInternal(event1);
 
-        assertEquals(1, TaskWithInternalContextEventService.QUEUE.size());
-        assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(event1.execContextId).size());
-        assertEquals(event1, TaskWithInternalContextEventService.QUEUE.get(event1.execContextId).get(0));
+            assertEquals(1, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(event1.execContextId).size());
+            assertEquals(event1, TaskWithInternalContextEventService.QUEUE.get(event1.execContextId).get(0));
 
-        TaskWithInternalContextEvent event2 = new TaskWithInternalContextEvent(1L, 5L, 21L);
+            TaskWithInternalContextEvent event2 = new TaskWithInternalContextEvent(1L, 5L, 21L);
 
-        TaskWithInternalContextEventService.putToQueueInternal(event2);
+            TaskWithInternalContextEventService.putToQueueInternal(event2);
 
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
-        assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(event2.execContextId).size());
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(event2.execContextId).size());
 
-        TaskWithInternalContextEvent event3 = new TaskWithInternalContextEvent(1L, 5L, 22L);
+            TaskWithInternalContextEvent event3 = new TaskWithInternalContextEvent(1L, 5L, 22L);
 
-        TaskWithInternalContextEventService.putToQueueInternal(event3);
+            TaskWithInternalContextEventService.putToQueueInternal(event3);
 
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.get(event3.execContextId).size());
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.get(event3.execContextId).size());
 
-        TaskWithInternalContextEventService.putToQueueInternal(event3);
+            TaskWithInternalContextEventService.putToQueueInternal(event3);
 
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.get(event3.execContextId).size());
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.get(event3.execContextId).size());
 
-        TaskWithInternalContextEventService.pokeExecutor(5L, TestTaskWithInternalContextEventService::process);
-        assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(5L)));
+            TaskWithInternalContextEventService.pokeExecutor(5L, TestTaskWithInternalContextEventService::process);
+            assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(5L)));
 
-        TaskWithInternalContextEventService.pokeExecutor(10L, TestTaskWithInternalContextEventService::process);
-        assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(10L)));
+            TaskWithInternalContextEventService.pokeExecutor(10L, TestTaskWithInternalContextEventService::process);
+            assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(10L)));
 
-        assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
-        assertTrue(TaskWithInternalContextEventService.QUEUE.containsKey(5L));
-        assertTrue(TaskWithInternalContextEventService.QUEUE.containsKey(10L));
+            assertEquals(2, TaskWithInternalContextEventService.QUEUE.size());
+            assertTrue(TaskWithInternalContextEventService.QUEUE.containsKey(5L));
+            assertTrue(TaskWithInternalContextEventService.QUEUE.containsKey(10L));
 
-        Thread.sleep(100);
-        assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(5L).size());
-        assertEquals(0, TaskWithInternalContextEventService.QUEUE.get(10L).size());
+            Thread.sleep(100);
+            assertEquals(1, TaskWithInternalContextEventService.QUEUE.get(5L).size());
+            assertEquals(0, TaskWithInternalContextEventService.QUEUE.get(10L).size());
 
-        int i=0;
-        id = 5L;
-        Thread.sleep(1000);
-        TaskWithInternalContextEventService.processPoolOfExecutors(5L, TestTaskWithInternalContextEventService::process);
+            int i = 0;
+            id = 5L;
+            Thread.sleep(1000);
+            TaskWithInternalContextEventService.processPoolOfExecutors(5L, TestTaskWithInternalContextEventService::process);
 
-        assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(5L)));
-        assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(10L)));
+            assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(5L)));
+            assertTrue(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(10L)));
 
-        assertEquals(1, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(1, TaskWithInternalContextEventService.QUEUE.size());
 
-        assertNull(TaskWithInternalContextEventService.QUEUE.get(5L));
-        assertEquals(0, TaskWithInternalContextEventService.QUEUE.get(10L).size());
+            assertNull(TaskWithInternalContextEventService.QUEUE.get(5L));
+            assertEquals(0, TaskWithInternalContextEventService.QUEUE.get(10L).size());
 
-        id = 10L;
-        Thread.sleep(1000);
-        TaskWithInternalContextEventService.processPoolOfExecutors(5L, TestTaskWithInternalContextEventService::process);
+            id = 10L;
+            Thread.sleep(1000);
+            TaskWithInternalContextEventService.processPoolOfExecutors(5L, TestTaskWithInternalContextEventService::process);
 
-        assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(5L)));
-        assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o->o.execContextId.equals(10L)));
+            assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(5L)));
+            assertFalse(Arrays.stream(TaskWithInternalContextEventService.POOL_OF_EXECUTORS).sequential().filter(Objects::nonNull).anyMatch(o -> o.execContextId.equals(10L)));
 
-        assertEquals(0, TaskWithInternalContextEventService.QUEUE.size());
+            assertEquals(0, TaskWithInternalContextEventService.QUEUE.size());
 
-        assertNull(TaskWithInternalContextEventService.QUEUE.get(5L));
-        assertNull(TaskWithInternalContextEventService.QUEUE.get(10L));
+            assertNull(TaskWithInternalContextEventService.QUEUE.get(5L));
+            assertNull(TaskWithInternalContextEventService.QUEUE.get(10L));
 
-        flag = false;
+            flag = false;
+        }
+        finally {
+            TaskWithInternalContextEventService.shutdown();
+        }
     }
 
     private static Long id = null;
@@ -123,6 +122,9 @@ public class TestTaskWithInternalContextEventService {
             }
             Thread.sleep(500);
             System.out.println(Thread.currentThread().getId()+", "+event.taskId+", i = " + i++);
+            if (i==100) {
+                throw new RuntimeException("Too long execution");
+            }
         }
         System.out.println(Thread.currentThread().getId()+", "+event.taskId+" done. ");
     }

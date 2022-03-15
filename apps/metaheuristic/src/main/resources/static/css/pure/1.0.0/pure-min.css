@@ -233,7 +233,7 @@ legend {
     vertical-align: top;
     text-rendering: auto;
     display: inline-block;
-    zoom: 1
+    /*zoom: 1*/
 }
 
 .pure-g [class*=pure-u] {
@@ -354,7 +354,7 @@ legend {
 
 .pure-button {
     display: inline-block;
-    zoom: 1;
+    /*zoom: 1;*/
     white-space: nowrap;
     vertical-align: middle;
     text-align: center;
@@ -715,7 +715,7 @@ legend {
 
 .pure-menu-horizontal .pure-menu-heading, .pure-menu-horizontal .pure-menu-item, .pure-menu-horizontal .pure-menu-separator {
     display: inline-block;
-    zoom: 1;
+    /*zoom: 1;*/
     vertical-align: middle
 }
 

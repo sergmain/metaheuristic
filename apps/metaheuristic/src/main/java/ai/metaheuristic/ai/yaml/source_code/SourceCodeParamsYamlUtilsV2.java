@@ -66,7 +66,7 @@ public class SourceCodeParamsYamlUtilsV2
             if (!S.b(v2.source.variables.startInputAs)) {
                 p.source.variables.inputs.add(new SourceCodeParamsYamlV3.VariableV3(v2.source.variables.startInputAs, EnumsApi.DataSourcing.dispatcher));
             }
-            v2.source.variables.inline.forEach(p.source.variables.inline::put);
+            p.source.variables.inline.putAll(v2.source.variables.inline);
         }
         p.source.clean = v2.source.clean;
         p.source.processes = v2.source.processes.stream().map(SourceCodeParamsYamlUtilsV2::toProcess).collect(Collectors.toList());

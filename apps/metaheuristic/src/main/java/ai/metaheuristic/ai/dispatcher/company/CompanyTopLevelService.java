@@ -23,12 +23,12 @@ import ai.metaheuristic.ai.dispatcher.data.CompanyData;
 import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -50,8 +50,8 @@ public class CompanyTopLevelService {
     private final CompanyCache companyCache;
     private final IdsRepository idsRepository;
 
-    public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable)  {
-        pageable = ControllerUtils.fixPageSize(ROWS_IN_TABLE, pageable);
+    public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable) {
+        pageable = PageUtils.fixPageSize(ROWS_IN_TABLE, pageable);
         CompanyData.SimpleCompaniesResult result = new CompanyData.SimpleCompaniesResult();
         result.companies = companyRepository.findAllAsSimple(pageable);
         result.assetMode = globals.dispatcher.asset.mode;

@@ -35,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.lang.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -53,11 +54,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestFunctionService {
 
-    private static final String TEST_FUNCTION = "test.function:1.0";
+    public static final String TEST_FUNCTION = "test.function:1.0";
     private static final String FUNCTION_PARAMS = "AAA";
 
     @Autowired
@@ -83,6 +84,17 @@ public class TestFunctionService {
         sd.code = TEST_FUNCTION;
         sd.params = null;
         TaskParamsYaml.FunctionConfig sc = functionTopLevelService.getFunctionConfig(sd);
+        check(sc);
+
+        ExecContextParamsYaml.FunctionDefinition sd1 = new ExecContextParamsYaml.FunctionDefinition();
+        sd1.code = "test";
+        sd1.params = null;
+        sd1.refType = EnumsApi.FunctionRefType.type;
+        TaskParamsYaml.FunctionConfig sc1 = functionTopLevelService.getFunctionConfig(sd1);
+        check(sc1);
+    }
+
+    private static void check(@Nullable TaskParamsYaml.FunctionConfig sc) {
         assertNotNull(sc);
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);

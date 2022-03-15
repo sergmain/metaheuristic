@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -93,6 +94,17 @@ public class ExecSourceCodeFunction implements InternalFunction {
     @SneakyThrows
     public void process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            processInternale(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
+    }
+
+    private void processInternale(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+        TxUtils.checkTxNotExists();
 
         String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
         if (S.b(scUid)) {
@@ -102,6 +114,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         if (sourceCode==null) {
             throw new InternalFunctionException(source_code_not_found, "#508.030 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found");
         }
+        boolean isArray = MetaUtils.isTrue(taskParamsYaml.task.metas, false, "is-array");
 
         Long subScId = sourceCodeRepository.findIdByUid(scUid);
         if (subScId==null) {
@@ -161,6 +174,13 @@ public class ExecSourceCodeFunction implements InternalFunction {
                         execContextVariableService.initInputVariable(
                                 is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
                     }
+/*
+                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                            List.of(new BatchTopLevelService.FileWithMapping(tempFile, "variable-" + input.name)));
+
+                    variableService.createInputVariablesForSubProcess(
+                            variableDataSource, execContextResultRest.execContext.id, "variable-" + input.name, Consts.TOP_LEVEL_CONTEXT_ID, isArray);
+*/
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {

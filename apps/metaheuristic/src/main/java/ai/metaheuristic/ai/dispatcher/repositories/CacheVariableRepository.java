@@ -43,6 +43,7 @@ public interface CacheVariableRepository extends CrudRepository<CacheVariable, L
     void deleteById(Long id);
 
     @Transactional(propagation = Propagation.MANDATORY)
+    @Modifying
     void deleteByCacheProcessId(Long cacheProcessId);
 
     @Query(value="select b.data from CacheVariable b where b.id=:id")

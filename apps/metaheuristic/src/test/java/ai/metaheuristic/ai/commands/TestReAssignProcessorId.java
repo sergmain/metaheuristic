@@ -22,6 +22,10 @@ import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -48,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestReAssignProcessorId {
 
@@ -108,20 +112,20 @@ public class TestReAssignProcessorId {
 
         // in this scenario we test that processor has got a new re-assigned processorId
 
-        final ProcessorCommParamsYaml processorCommParamsYaml = new ProcessorCommParamsYaml();
-        final ProcessorCommParamsYaml.ProcessorRequest processorComm = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml processorCommParamsYaml = new KeepAliveRequestParamYaml();
+        KeepAliveRequestParamYaml.ProcessorRequest processorComm = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorCommParamsYaml.requests.add(processorComm);
 
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorCommParamsYaml);
-        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
+        processorComm.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
+        final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorCommParamsYaml);
+        String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
+        KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
         assertNotNull(d.responses);
         assertFalse(d.responses.isEmpty());
-        final DispatcherCommParamsYaml.ReAssignProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);

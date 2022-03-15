@@ -41,13 +41,13 @@ public class ExecContextGraphServiceTest {
     public void test_findAllForAssigning() throws IOException {
         ExecContextGraph ecg = new ExecContextGraph();
         ecg.id = 2908L;
-        ecg.execContextId = null;
+        ecg.execContextId = 42L;
         ecg.version = 2;
         ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph/exec-context-graph.yaml", StandardCharsets.UTF_8) );
 
         ExecContextTaskState ects = new ExecContextTaskState();
         ects.id = 2908L;
-        ects.execContextId = null;
+        ects.execContextId = 42L;
         ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph/exec_context_task_state.yaml", StandardCharsets.UTF_8));
 
 
@@ -58,5 +58,26 @@ public class ExecContextGraphServiceTest {
         assertEquals(2, vertices.size());
         assertTrue(vertices.contains(new ExecContextData.TaskVertex(978308L)));
         assertTrue(vertices.contains(new ExecContextData.TaskVertex(978189L)));
+    }
+
+    @Test
+    public void test_findAllForAssigning_1() throws IOException {
+        ExecContextGraph ecg = new ExecContextGraph();
+        ecg.id = 2908L;
+        ecg.execContextId = 42L;
+        ecg.version = 2;
+        ecg.setParams( IOUtils.resourceToString("/test_data/exec_context_graph_1/exec-context-graph.yaml", StandardCharsets.UTF_8) );
+
+        ExecContextTaskState ects = new ExecContextTaskState();
+        ects.id = 2908L;
+        ects.execContextId = 42L;
+        ects.setParams(IOUtils.resourceToString("/test_data/exec_context_graph_1/exec_context_task_state.yaml", StandardCharsets.UTF_8));
+
+
+        List<ExecContextData.TaskVertex> vertices = ExecContextGraphService.findAllForAssigning(ecg, ects, true);
+
+        System.out.println(vertices);
+
+        assertTrue(vertices.isEmpty());
     }
 }

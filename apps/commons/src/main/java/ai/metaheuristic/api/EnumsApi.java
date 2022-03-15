@@ -48,6 +48,7 @@ public class EnumsApi {
     }
 
     public enum FunctionExecContext { external, internal, long_running }
+    public enum FunctionRefType { code, type }
 
     /**
      * local - all assets are managed locally
@@ -168,6 +169,8 @@ public class EnumsApi {
         TOO_MANY_FUNCTION_CODES_ERROR,
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         FUNCTION_NOT_FOUND_ERROR,
+        FUNCTION_REF_TYPE_EMPTY_ERROR,
+        FUNCTION_WITH_SUCH_TYPE_DOESNT_EXIST_ERROR,
         FITTING_FUNCTION_NOT_FOUND_ERROR,
         VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,
@@ -310,7 +313,7 @@ public class EnumsApi {
 
     public enum TaskExecState { NONE(0), IN_PROGRESS(1),
         ERROR(2), OK(3), NOT_USED_ANYMORE(4),
-        SKIPPED(5), CHECK_CACHE(6);
+        SKIPPED(5), CHECK_CACHE(6), ERROR_WITH_RECOVERY(7);
 
         public final int value;
         TaskExecState(int value) {
@@ -325,6 +328,7 @@ public class EnumsApi {
                 case 3 -> OK;
                 case 5 -> SKIPPED;
                 case 6 -> CHECK_CACHE;
+                case 7 -> ERROR_WITH_RECOVERY;
                 default -> throw new IllegalStateException("Unknown type : " + type);
             };
         }
@@ -335,6 +339,10 @@ public class EnumsApi {
 
         public static boolean isFinishedState(int state) {
             return state== TaskExecState.OK.value || state== TaskExecState.ERROR.value || state== TaskExecState.SKIPPED.value;
+        }
+
+        public static boolean isFinishedStateIncludingRecovery(int state) {
+            return state== TaskExecState.OK.value || state== TaskExecState.ERROR_WITH_RECOVERY.value || state== TaskExecState.ERROR.value || state== TaskExecState.SKIPPED.value;
         }
     }
 

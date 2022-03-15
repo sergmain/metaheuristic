@@ -65,6 +65,7 @@ public class EnvParamsYaml implements BaseParams {
         public String tag;
         public int amount;
         // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
+        @Nullable
         public String processingTime;
     }
 

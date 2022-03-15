@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.ParamsVersion;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -32,6 +33,7 @@ import java.util.Objects;
  * Date: 6/17/2019
  * Time: 9:58 PM
  */
+@Slf4j
 public class BaseYamlUtils<T extends BaseParams> {
 
     private @NonNull final ParamsYamlUtilsFactory FACTORY;
@@ -39,7 +41,9 @@ public class BaseYamlUtils<T extends BaseParams> {
     public BaseYamlUtils(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
-                throw new IllegalStateException(S.f("Version is different, class: %s", v.getClass()));
+                final String es = "Versions are different, class: "+ v.getClass() + ", expected version: "+ k+", version of class: " + v.getVersion();
+                log.error(es);
+                throw new IllegalStateException(es);
             }
         });
         FACTORY = new ParamsYamlUtilsFactory(map, defYamlUtils);;

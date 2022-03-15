@@ -39,6 +39,8 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
@@ -65,7 +67,7 @@ public class BatchLineSplitterTxService {
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
         try {
             createTasks(simpleExecContext, content, taskParamsYaml, taskId, numberOfLines);
@@ -76,20 +78,17 @@ public class BatchLineSplitterTxService {
         catch(UnzipArchiveException e) {
             final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
             final String es = "#994.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
             final String es = "#994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         return null;
     }
@@ -101,17 +100,17 @@ public class BatchLineSplitterTxService {
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                            "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.sub_process_not_found,
+                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
         if (S.b(variableName)) {
-            throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                            "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
         }
+
+        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, "is-array");
 
         List<List<String>> allLines = stringToListOfList(content, numberOfLines);
 
@@ -133,7 +132,7 @@ public class BatchLineSplitterTxService {
                 String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                 variableService.createInputVariablesForSubProcess(
-                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId);
+                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, isArray);
 
                 taskProducingService.createTasksForSubProcesses(
                         simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
@@ -141,7 +140,7 @@ public class BatchLineSplitterTxService {
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
-                String es = "#994.300 An error while saving data to file, " + th.toString();
+                String es = "#994.300 An error while saving data to file, " + th.getMessage();
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);
             }
@@ -163,6 +162,7 @@ public class BatchLineSplitterTxService {
 
         @Override
         protected boolean isValidLine(String line) {
+            //noinspection ConstantConditions
             return line!=null && !line.isBlank();
         }
     }

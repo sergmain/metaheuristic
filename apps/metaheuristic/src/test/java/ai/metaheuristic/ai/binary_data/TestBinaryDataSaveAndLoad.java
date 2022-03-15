@@ -20,14 +20,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -77,16 +76,15 @@ public class TestBinaryDataSaveAndLoad {
     }
 
     @Test
-    public void testSaveAndLoad() throws IOException {
+    public void testSaveAndLoad(@TempDir File tempDir) throws IOException {
 
         byte[] bytes = new byte[ARRAY_SIZE];
         r.nextBytes(bytes);
 
-        File tempDir = DirUtils.createMhTempDir("test-binary-data-");
         File dataFile = new File(tempDir, DATA_FILE_BIN);
         FileUtils.writeByteArrayToFile(dataFile, bytes);
 
-        Variable variable = null;
+        Variable variable;
         try (InputStream is = new FileInputStream(dataFile)) {
             variable = ExecContextSyncService.getWithSync(1L,
                     ()-> txSupportForTestingService.createInitializedWithTx(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));

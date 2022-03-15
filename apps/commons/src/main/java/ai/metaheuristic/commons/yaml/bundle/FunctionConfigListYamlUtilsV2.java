@@ -28,6 +28,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +70,10 @@ public class FunctionConfigListYamlUtilsV2
             if (paramsAsFile) {
                 fnCfgTrg.content = fnCfgSrc.params;
                 fnCfgTrg.params = null;
-                fnCfgTrg.metas = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+                final List<Map<String, String>> metas = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+                if (metas!=null) {
+                    fnCfgTrg.metas = metas;
+                }
             }
             return  fnCfgTrg;
         }).collect(Collectors.toList());

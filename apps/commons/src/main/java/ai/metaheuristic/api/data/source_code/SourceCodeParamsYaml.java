@@ -43,7 +43,7 @@ import java.util.Map;
 @Data
 public class SourceCodeParamsYaml implements BaseParams {
 
-    public final int version=3;
+    public final int version=5;
 
     @Override
     public boolean checkIntegrity() {
@@ -57,8 +57,8 @@ public class SourceCodeParamsYaml implements BaseParams {
             if (process.function ==null) {
                 throw new CheckIntegrityFailedException("#608.060 (process.function==null)");
             }
-            if (StringUtils.containsAny(process.tags, ',', ' ')) {
-                throw new CheckIntegrityFailedException("#608.080 process.tags can't contain comma or space and must be handled as single tag");
+            if (StringUtils.containsAny(process.tag, ',', ' ')) {
+                throw new CheckIntegrityFailedException("#608.080 process.tag can't contain comma or space and must be handled as single tag");
             }
         }
         return true;
@@ -71,6 +71,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String code;
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+        public EnumsApi.FunctionRefType refType = EnumsApi.FunctionRefType.code;
 
         public FunctionDefForSourceCode(String code) {
             this.code = code;
@@ -161,14 +162,17 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCode function;
-        public @Nullable List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
-        public @Nullable List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
+        @Nullable
+        public List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
+        @Nullable
+        public List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */
+        @Nullable
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
@@ -176,20 +180,16 @@ public class SourceCodeParamsYaml implements BaseParams {
         @Nullable
         public SubProcesses subProcesses;
 
-        @JsonIgnore
-        @Nullable public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
-
         @Nullable
         public Cache cache;
 
-        // TODO 2021-10-24 next time when version of SourceCodeParamsYaml will be increased, rename this field to 'tag'
         @Nullable
-        public String tags;
+        public String tag;
         public int priority;
         @Nullable
         public String condition;
+        @Nullable
+        public Integer triesAfterError;
     }
 
     @Data
@@ -211,7 +211,7 @@ public class SourceCodeParamsYaml implements BaseParams {
 
     @Data
     @ToString
-    public static class SourceCodeYaml {
+    public static class SourceCode {
         @Nullable
         public Integer instances;
         public VariableDefinition variables = new VariableDefinition();
@@ -230,5 +230,5 @@ public class SourceCodeParamsYaml implements BaseParams {
         }
     }
 
-    public SourceCodeYaml source = new SourceCodeYaml();
+    public SourceCode source = new SourceCode();
 }

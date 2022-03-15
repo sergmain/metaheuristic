@@ -18,13 +18,14 @@ package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -53,15 +54,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestGraph extends PreparingSourceCode {
 
-    @Autowired
-    public ExecContextCache execContextCache;
-
-    @Autowired
-    public TaskTransactionalService taskTransactionalService;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ExecContextService execContextService;
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private TestGraphService testGraphService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -71,79 +71,79 @@ public class TestGraph extends PreparingSourceCode {
     @Test
     public void test() {
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(sourceCode, company.getUniqueId());
-        execContextForTest = result.execContext;
-        assertNotNull(execContextForTest);
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        setExecContextForTest(result.execContext);
+        assertNotNull(getExecContextForTest());
 
-        ExecContextSyncService.getWithSync(execContextForTest.id, ()->
-                ExecContextGraphSyncService.getWithSync(execContextForTest.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(execContextForTest.execContextTaskStateId, ()-> {
-                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(),
+        ExecContextSyncService.getWithSync(getExecContextForTest().id, () ->
+                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, () ->
+                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, () -> {
+                            OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
-            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+                            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-            long count = getCountUnfinishedTasks(execContextForTest);
-            assertEquals(1, count);
-
-
-            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L),
-                    List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###2")));
-            assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-
-            osr = txSupportForTestingService.addTasksToGraphWithTx(execContextForTest.id, List.of(1L, 2L, 3L),
-                    List.of(new TaskApiData.TaskWithContext(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
-            assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-
-            count = getCountUnfinishedTasks(execContextForTest);
-            assertEquals(4, count);
-
-            List<TaskVertex> leafs = findLeafs(execContextForTest);
-
-            assertEquals(1, leafs.size());
-            assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
-
-            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-            checkState(1L, EnumsApi.TaskExecState.ERROR);
-            checkState(2L, EnumsApi.TaskExecState.SKIPPED);
-            checkState(3L, EnumsApi.TaskExecState.SKIPPED);
-
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
-
-            Set<EnumsApi.TaskExecState> states = findTaskStates(execContextForTest);
-            assertEquals(3, states.size());
-            // there are 'ERROR' state for 1st task and NONE for the other two
-            assertTrue(states.contains(EnumsApi.TaskExecState.ERROR));
-            assertTrue(states.contains(EnumsApi.TaskExecState.SKIPPED));
-            assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
-
-            count = getCountUnfinishedTasks(execContextForTest);
-            // there is one unfinished task which is mh.finish and which must me invoked in any case
-            assertEquals(1, count);
+                            long count = preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest());
+                            assertEquals(1, count);
 
 
-            // reset all graph
-            txSupportForTestingService.updateTaskExecState(execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
-            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
-                    execContextForTest.execContextGraphId, execContextForTest.execContextTaskStateId, 1L);
+                            osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(1L),
+                                    List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###2")));
+                            assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
-            execContextForTest = Objects.requireNonNull(execContextService.findById(execContextForTest.id));
+                            osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(1L, 2L, 3L),
+                                    List.of(new TaskApiData.TaskWithContext(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                            assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
 
-            // there is only 'NONE' exec state
-            states = findTaskStates(execContextForTest);
-            assertEquals(1, states.size());
-            assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
-            return null;
-        })));
+                            count = preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest());
+                            assertEquals(4, count);
+
+                            List<TaskVertex> leafs = testGraphService.findLeafs(getExecContextForTest());
+
+                            assertEquals(1, leafs.size());
+                            assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
+
+                            txSupportForTestingService.updateTaskExecState(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            checkState(1L, EnumsApi.TaskExecState.ERROR);
+                            checkState(2L, EnumsApi.TaskExecState.SKIPPED);
+                            checkState(3L, EnumsApi.TaskExecState.SKIPPED);
+
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+
+                            Set<EnumsApi.TaskExecState> states = testGraphService.findTaskStates(getExecContextForTest());
+                            assertEquals(3, states.size());
+                            // there are 'ERROR' state for 1st task and NONE for the other two
+                            assertTrue(states.contains(EnumsApi.TaskExecState.ERROR));
+                            assertTrue(states.contains(EnumsApi.TaskExecState.SKIPPED));
+                            assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
+
+                            count = preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest());
+                            // there is one unfinished task which is mh.finish and which must me invoked in any case
+                            assertEquals(1, count);
+
+
+                            // reset all graph
+                            txSupportForTestingService.updateTaskExecState(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
+                            txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
+                                    getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L);
+
+                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+
+                            // there is only 'NONE' exec state
+                            states = testGraphService.findTaskStates(getExecContextForTest());
+                            assertEquals(1, states.size());
+                            assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
+                            return null;
+                        })));
     }
 
     private void checkState(Long id, EnumsApi.TaskExecState state) {
-        EnumsApi.TaskExecState v = findTaskState(execContextForTest, id);
+        EnumsApi.TaskExecState v = preparingSourceCodeService.findTaskState(getExecContextForTest(), id);
         assertNotNull(v);
         assertEquals(state, v);
     }

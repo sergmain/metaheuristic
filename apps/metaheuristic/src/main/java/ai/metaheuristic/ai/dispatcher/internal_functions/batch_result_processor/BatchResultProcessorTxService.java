@@ -65,6 +65,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -124,7 +126,7 @@ public class BatchResultProcessorTxService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void process(
             ExecContextData.SimpleExecContext simpleExecContext, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
@@ -283,7 +285,7 @@ public class BatchResultProcessorTxService {
                 continue;
             }
             //noinspection unused
-            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId, o -> new ItemWithStatusWithMapping(var.taskContextId));
+            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId,ItemWithStatusWithMapping::new);
         }
 
         for (SimpleVariable simpleVariable : vars) {
