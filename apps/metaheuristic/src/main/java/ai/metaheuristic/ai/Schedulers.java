@@ -173,7 +173,13 @@ public class Schedulers {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
-            replicationService.sync();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                replicationService.sync();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
     }
 
