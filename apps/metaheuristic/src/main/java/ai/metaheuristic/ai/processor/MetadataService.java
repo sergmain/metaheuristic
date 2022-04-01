@@ -194,14 +194,20 @@ public class MetadataService {
     }
 
     private void markAllAsUnverified() {
+        List<MetadataParamsYaml.Status> statuses = new ArrayList<>();
         for (MetadataParamsYaml.Status status : metadata.statuses) {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
+            }
+            if (status.functionState!= Enums.FunctionState.not_found) {
+                statuses.add(status);
             }
             status.functionState = Enums.FunctionState.none;
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
+        metadata.statuses.clear();
+        metadata.statuses.addAll(statuses);
     }
 
     @Nullable
