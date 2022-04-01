@@ -194,20 +194,21 @@ public class MetadataService {
     }
 
     private void markAllAsUnverified() {
-        List<MetadataParamsYaml.Status> statuses = new ArrayList<>();
+        List<MetadataParamsYaml.Status> forRemoving = new ArrayList<>();
         for (MetadataParamsYaml.Status status : metadata.statuses) {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            if (status.functionState!= Enums.FunctionState.not_found) {
-                statuses.add(status);
+            if (status.functionState == Enums.FunctionState.not_found) {
+                forRemoving.add(status);
             }
             status.functionState = Enums.FunctionState.none;
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
-        metadata.statuses.clear();
-        metadata.statuses.addAll(statuses);
+        for (MetadataParamsYaml.Status status : forRemoving) {
+            removeFunction(status.assetManagerUrl, status.code);
+        }
     }
 
     @Nullable
@@ -554,11 +555,15 @@ public class MetadataService {
     }
 
     private boolean removeFunction(final AssetManagerUrl assetManagerUrl, String functionCode) {
+        return removeFunction(assetManagerUrl.url, functionCode);
+    }
+
+    private boolean removeFunction(final String assetManagerUrl, String functionCode) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.280 functionCode is empty");
         }
         synchronized (syncObj) {
-            List<MetadataParamsYaml.Status> statuses = metadata.statuses.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))).collect(Collectors.toList());
+            List<MetadataParamsYaml.Status> statuses = metadata.statuses.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
             if (statuses.size()!= metadata.statuses.size()) {
                 metadata.statuses.clear();
                 metadata.statuses.addAll(statuses);
