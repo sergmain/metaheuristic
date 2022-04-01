@@ -202,6 +202,10 @@ public class ExecContextReconciliationTopLevelService {
                     TaskProviderTopLevelService.deregisterTask(execContext.id, tv.taskId);
                     eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
                 }
+                else if (taskState.execState== TaskExecState.CHECK_CACHE.value &&  tv.state== TaskExecState.ERROR_WITH_RECOVERY && allocatedTask.state== TaskExecState.CHECK_CACHE) {
+                    log.warn("#307.155 Found different states for task #{}, db: CHECK_CACHE, graph: ERROR_WITH_RECOVERY, allocatedTask: CHECK_CACHE, trying to update a state of task in execContext", tv.taskId);
+                    eventPublisher.publishEvent(new UpdateTaskExecStatesInGraphEvent(execContext.id, tv.taskId));
+                }
                 else {
                     // #307.140 Found different states for task #66935, db: OK, graph: NONE, state in queue: IN_PROGRESS, required steps are unknown
                     log.error("#307.270 Found different states for task #{}, db: {}, graph: {}, state in queue: {}, required steps are unknown",
