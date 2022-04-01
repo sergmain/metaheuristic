@@ -18,14 +18,16 @@ package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import ai.metaheuristic.commons.S;
+import org.apache.commons.io.FileUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
-import java.net.URL;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -48,21 +50,22 @@ public class UtilsForTestReduceVariables {
         return FILTER.matcher(o).find();
     }
 
-    public static void extracted(String pathname) {
+    public static void extracted(String pathname) throws IOException {
         extracted(List.of(pathname), null);
     }
 
-    public static void extracted(String pathname, @Nullable Function<String, Boolean> filter) {
+    public static void extracted(String pathname, @Nullable Function<String, Boolean> filter) throws IOException {
         extracted(List.of(pathname), filter);
     }
 
-    public static void extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
+    public static ReduceVariablesData.ReduceVariablesResult extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) throws IOException {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
+        System.out.println("Total files: " + pathnames.size());
         List<File> files = new ArrayList<>();
         for (String pathname : pathnames) {
             File zip = new File(pathname);
-            assertTrue(zip.exists());
+            assertTrue(zip.exists(), zip.getAbsolutePath());
             assertTrue(zip.isFile());
             files.add(zip);
         }
@@ -120,7 +123,17 @@ public class UtilsForTestReduceVariables {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
+        System.out.println("Start reducing variables at " + new Date());
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+                (o)->{
+                    if (o.current==0) {
+                        System.out.println("======================");
+                        System.out.println(o.file);
+                    }
+                    System.out.println(S.f("%-10d %d", o.current, o.total));
+//                    if (o.current%2==0) {
+//                    }
+                });
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -149,17 +162,35 @@ public class UtilsForTestReduceVariables {
             System.out.println(experimentMetrics.dir);
             System.out.println();
         }
+
         System.out.println("Start time: " + startDate);
         System.out.println("End time:   " + new Date());
+
+        writeResult(result);
+
+        return result;
     }
 
-    public static void extracted_1(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
+    private static void writeResult(ReduceVariablesData.ReduceVariablesResult result) throws IOException {
+        File d = new File("result");
+        if (!d.exists()) {
+            d.mkdir();
+        }
+        File f = File.createTempFile("reduce-result-", ".json", d);
+        String json = JsonUtils.getMapper().writeValueAsString(result);
+        FileUtils.write(f, json, StandardCharsets.UTF_8);
+        System.out.println("A result was stored to " + f.getAbsolutePath());
+    }
+
+    //    в этом методе не используется binaryDrawWithFrequency
+    public static ReduceVariablesData.ReduceVariablesResult extracted_1(List<String> pathnames, @Nullable Function<String, Boolean> filter) throws IOException {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
+        System.out.println("Total files: " + pathnames.size());
         List<File> files = new ArrayList<>();
         for (String pathname : pathnames) {
             File zip = new File(pathname);
-            assertTrue(zip.exists());
+            assertTrue(zip.exists(), zip.getAbsolutePath());
             assertTrue(zip.isFile());
             files.add(zip);
         }
@@ -214,16 +245,26 @@ public class UtilsForTestReduceVariables {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
+        System.out.println("Start reducing variables at " + new Date());
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+                (o)->{
+                    if (o.current==0) {
+                        System.out.println("======================");
+                        System.out.println(o.file);
+                    }
+                    System.out.println(S.f("%-10d %d", o.current, o.total));
+//                    if (o.current%2==0) {
+//                    }
+                });
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
         assertEquals(5, result.byInstance.size());
 
-        assertTrue(result.byInstance.get("isClusterCount1New1"));
-        assertTrue(result.byInstance.get("isClusterSize1New1"));
         assertTrue(result.byInstance.get("isBinaryClusters1New1"));
 //        assertTrue(result.byInstance.get("isBinaryDrawWithFrequencyNew1"));
+        assertTrue(result.byInstance.get("isClusterCount1New1"));
+        assertTrue(result.byInstance.get("isClusterSize1New1"));
         assertTrue(result.byInstance.get("isDistribOfFreqFullNew1"));
         assertTrue(result.byInstance.get("isMatrixOfWinningNew1"));
 
@@ -243,7 +284,12 @@ public class UtilsForTestReduceVariables {
             System.out.println(experimentMetrics.dir);
             System.out.println();
         }
+
         System.out.println("Start time: " + startDate);
         System.out.println("End time:   " + new Date());
+
+        writeResult(result);
+
+        return result;
     }
 }

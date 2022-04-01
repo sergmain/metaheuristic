@@ -125,22 +125,31 @@ public class BatchLineSplitterTxService {
                 return;
             }
             currTaskNumber.incrementAndGet();
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+            String str = StringUtils.join(lines, '\n' );
+            VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
+
             try {
-                String str = StringUtils.join(lines, '\n' );
-
-                VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
-                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
                 variableService.createInputVariablesForSubProcess(
                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, isArray);
-
+            } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
+                throw e;
+            } catch (Throwable th) {
+                // NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID
+                String es = S.f("#994.300 An error in createInputVariablesForSubProcess(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
+                        variableName, simpleExecContext.execContextId, currTaskContextId, th.getMessage());
+                log.error(es, th);
+                throw new BatchResourceProcessingException(es);
+            }
+            try {
                 taskProducingService.createTasksForSubProcesses(
                         simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
-                String es = "#994.300 An error while saving data to file, " + th.getMessage();
+                String es = S.f("#994.360 An error in createTasksForSubProcesses(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
+                        variableName, simpleExecContext.execContextId, currTaskContextId, th.getMessage());
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);
             }

@@ -675,7 +675,13 @@ public class Globals {
     }
 
     private static void logSystemEnvs() {
-        System.getProperties().forEach( (o, o2) -> log.info("{}: {}", o, o2));
+        log.info("Current system properties:");
+        System.getProperties().forEach( (o, o2) -> {
+            if (o instanceof String s && StringUtils.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
+                return;
+            }
+            log.info("'\t{}: {}", o, o2);
+        });
     }
 
     private void logGlobals() {

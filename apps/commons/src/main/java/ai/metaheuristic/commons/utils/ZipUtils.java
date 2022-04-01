@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -217,6 +217,11 @@ public class ZipUtils {
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping) {
         return unzipFolder(archiveFile, zipDestinationFolder, useMapping, excludeFromMapping, true);
     }
+
+    // TODO P3 2022-03-31 add a support of virtual FileSystem after fixing https://issues.apache.org/jira/browse/COMPRESS-365
+    //  see also
+    //  https://github.com/google/jimfs
+    //  https://stackoverflow.com/a/30395017/2672202
 
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping, boolean debug) {
 

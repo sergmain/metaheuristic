@@ -8,7 +8,7 @@
             <a class="pure-menu-link" href="dispatcher/source-code/source-codes.html" th:href="@{/dispatcher/source-code/source-codes}">Source codes</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/global-variable/'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/global-variable/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Variables</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')"

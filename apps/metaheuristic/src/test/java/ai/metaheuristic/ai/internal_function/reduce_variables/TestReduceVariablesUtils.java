@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -87,91 +86,9 @@ public class TestReduceVariablesUtils {
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
-        ReduceVariablesUtils.loadData(data, zip, config);
+        ReduceVariablesUtils.loadData(data, zip, config, (o)->{});
 
         assertFalse(data.permutedVariables.isEmpty());
-    }
-
-    @Disabled @Test public void testExternal() {
-        UtilsForTestReduceVariables.extracted("variable-2653425-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_1() {
-        UtilsForTestReduceVariables.extracted("variable-4016080-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_2() {
-        UtilsForTestReduceVariables.extracted("variable-3967531-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_3() {
-        UtilsForTestReduceVariables.extracted("variable-4095959-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_4() {
-        UtilsForTestReduceVariables.extracted("variable-4064629-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_5() {
-        //  repeating of variable-3967531-aggregatedResult1.zip
-    }
-
-    @Disabled @Test public void testExternal_6() {
-        UtilsForTestReduceVariables.extracted("variable-4189389-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_7() {
-        UtilsForTestReduceVariables.extracted("variable-4189373-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_8() {
-        // repeating of variable-4403511-aggregatedResult1.zip
-    }
-
-    @Disabled @Test public void testExternal_9() {
-        // replaced by variable-4450218-aggregatedResult1.zip, UtilsForTestReduceVariables.extracted("variable-4403511-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_10() {
-        // replaced by variable-4434649-aggregatedResult1, UtilsForTestReduceVariables.extracted("variable-4387942-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_11() {
-        // broken UtilsForTestReduceVariables.extracted("variable-4419080-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_12() {
-        UtilsForTestReduceVariables.extracted("variable-4434649-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_13() {
-        UtilsForTestReduceVariables.extracted("variable-4450218-aggregatedResult1.zip", UtilsForTestReduceVariables::filterStr);
-    }
-
-    @Disabled @Test public void testExternal_14() {
-        UtilsForTestReduceVariables.extracted("variable-4477574-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_15() {
-        UtilsForTestReduceVariables.extracted("variable-4469716-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_16() {
-        UtilsForTestReduceVariables.extracted("variable-4481503-aggregatedResult1.zip");
-    }
-
-    @Disabled @Test public void testExternal_1_2_3_4_6_7_12_13() {
-        UtilsForTestReduceVariables.extracted(List.of(
-                "variable-4016080-aggregatedResult1.zip",
-                "variable-3967531-aggregatedResult1.zip",
-                "variable-4095959-aggregatedResult1.zip",
-                "variable-4064629-aggregatedResult1.zip",
-                "variable-4189389-aggregatedResult1.zip",
-                "variable-4189373-aggregatedResult1.zip",
-                "variable-4434649-aggregatedResult1.zip",
-                "variable-4450218-aggregatedResult1.zip"),
-                UtilsForTestReduceVariables::filterStr);
-
     }
 
 }

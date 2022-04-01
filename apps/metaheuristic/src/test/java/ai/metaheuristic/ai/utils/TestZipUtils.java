@@ -17,12 +17,10 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.FileCopyUtils;
@@ -32,6 +30,7 @@ import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Serge
@@ -47,6 +46,7 @@ public class TestZipUtils {
         final File tempZipFile = File.createTempFile("temp-zip-file-", ".zip", dir);
         try (FileOutputStream fos = new FileOutputStream(tempZipFile);
              InputStream is = TestZipUtils.class.getResourceAsStream("/bin/test-zip.zip")) {
+            assertNotNull(is);
             FileCopyUtils.copy(is, fos);
         }
         List<String> errors = ZipUtils.validate(tempZipFile, VALIDATE_ZIP_FUNCTION);
@@ -59,7 +59,7 @@ public class TestZipUtils {
 
     public static void main(String[] args) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (InputStream is = new FileInputStream("docs-dev/error/params_1"); ) {
+        try (InputStream is = new FileInputStream("docs-dev/error/params_1") ) {
             IOUtils.copy(is, baos);
         }
         final byte[] origin = baos.toByteArray();

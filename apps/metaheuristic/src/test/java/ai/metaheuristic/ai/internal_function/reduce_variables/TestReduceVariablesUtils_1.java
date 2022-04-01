@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestReduceVariablesUtils_1 {
 
     @Test
-    public void testExternal_17() {
+    public void testExternal_17() throws IOException {
         UtilsForTestReduceVariables.extracted_1(List.of("variable-4487360-aggregatedResult11.zip"), UtilsForTestReduceVariables::filterStr);
     }
 

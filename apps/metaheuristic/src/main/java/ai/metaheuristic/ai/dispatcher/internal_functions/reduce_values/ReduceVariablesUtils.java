@@ -27,6 +27,7 @@ import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,17 +50,26 @@ import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
  */
 public class ReduceVariablesUtils {
 
-    public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
-            File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
-        return reduceVariables(List.of(zipFile), config, request, null);
+    @AllArgsConstructor
+    public static class ProgressData {
+        public String file;
+        public int total;
+        public int current;
     }
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
-            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter) {
+            File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+        return reduceVariables(List.of(zipFile), config, request, null, (o)->{});
+    }
+
+    public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
+            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter,
+            Consumer<ProgressData> progressConsumer
+            ) {
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
         for (File zipFile : zipFiles) {
-            loadData(data, zipFile, config);
+            loadData(data, zipFile, config, progressConsumer);
         }
 
         Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data, filter);
@@ -206,7 +217,8 @@ public class ReduceVariablesUtils {
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(ReduceVariablesData.VariablesData data, File zipFile, ReduceVariablesConfigParamsYaml config) {
+    public static ReduceVariablesData.VariablesData loadData(ReduceVariablesData.VariablesData data, File zipFile, ReduceVariablesConfigParamsYaml config,
+                                                             Consumer<ProgressData> consumer) {
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
@@ -216,7 +228,9 @@ public class ReduceVariablesUtils {
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
         Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
+        int i=0;
         for (File f : files) {
+            consumer.accept(new ProgressData(zipDir.getAbsolutePath(), files.size(), i++));
             File tmp = DirUtils.createTempDir(tempDir, "load-data");
             File zipDataDir = new File(tmp, "zip");
             ZipUtils.unzipFolder(f, zipDataDir, false, Collections.emptyList(), false);
@@ -287,7 +301,7 @@ public class ReduceVariablesUtils {
                 }
             }
 
-            int i=0;
+            int ii=0;
         }
 
         return data;
