@@ -23,16 +23,13 @@ import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,11 +43,11 @@ public class EnvServiceUtils {
     @Data
     @AllArgsConstructor
     public static class EnvYamlShort {
-        public final Map<String, String> envs;
+        public final Map<String, String> envs = new HashMap<>();
         public final List<EnvParamsYaml.DiskStorage> disk;
 
         public EnvYamlShort(EnvParamsYaml envYaml) {
-            this.envs = envYaml.envs;
+            envYaml.envs.forEach(o->envs.put(o.code, o.exec));
             this.disk = envYaml.disk;
         }
     }

@@ -24,17 +24,14 @@ import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -57,23 +54,6 @@ public class GitSourcingService {
         this.gitStatusInfo = getGitStatus();
     }
 
-    // TODO 2019-06-22 need to investigate why it isn't working with @Data
-//    @Data
-    @AllArgsConstructor
-    @ToString
-    public static class GitExecResult {
-        public File functionDir;
-        public @Nullable FunctionApiData.SystemExecResult systemExecResult;
-        public boolean ok;
-        public String error;
-
-        public GitExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
-            this.systemExecResult = systemExecResult;
-            this.ok = ok;
-            this.error = error;
-        }
-    }
-
     // !!! DO NOT CHANGE THIS CLASS !!!
     // If you need to, then copy it to ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml
     // before any changing
@@ -93,7 +73,7 @@ public class GitSourcingService {
     }
 
     public GitStatusInfo getGitStatus() {
-        GitExecResult result = execGitCmd(GIT_VERSION_CMD, 30L);
+        SystemProcessLauncher.ExecResult result = execGitCmd(GIT_VERSION_CMD, 30L);
         if (!result.ok) {
             log.warn("#027.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
@@ -112,26 +92,8 @@ public class GitSourcingService {
         return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
     }
 
-    private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
-        File gitTemp = DirUtils.createMhTempDir("git-exec-");
-        if (gitTemp==null) {
-            return new GitExecResult(null, false, "#027.017 Error: can't create temporary directory");
-        }
-        File consoleLogFile = null;
-        try {
-            consoleLogFile = File.createTempFile("console-", ".log", gitTemp);
-            FunctionApiData.SystemExecResult systemExecResult = SystemProcessLauncher.execCommand(
-                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null,
-                    globals.processor.taskConsoleOutputMaxLines);
-            log.info("systemExecResult: {}" , systemExecResult);
-            return new GitExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
-        } catch (InterruptedException | IOException e) {
-            log.error("#027.020 Error", e);
-            return new GitExecResult(null, false, "#027.020 Error: " + e.getMessage());
-        }
-        finally {
-            DirUtils.deleteAsync(gitTemp);
-        }
+    public SystemProcessLauncher.ExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
+        return SystemProcessLauncher.execCmd(gitVersionCmd, timeout, globals.processor.taskConsoleOutputMaxLines);
     }
 
     private static AssetFile prepareFunctionDir(final File resourceDir, String functionCode) {
@@ -155,13 +117,13 @@ public class GitSourcingService {
         return assetFile;
     }
 
-    public GitExecResult prepareFunction(final File resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    public SystemProcessLauncher.ExecResult prepareFunction(final File resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
 
         log.info("#027.050 Start preparing function dir");
         AssetFile assetFile = prepareFunctionDir(resourceDir, functionConfig.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
-            return new GitExecResult(null,false, "#027.060 Can't create dir for function " + functionConfig.code);
+            return new SystemProcessLauncher.ExecResult(null,false, "#027.060 Can't create dir for function " + functionConfig.code);
         }
 
         File functionDir = assetFile.file;
@@ -169,7 +131,7 @@ public class GitSourcingService {
         log.info("#027.070 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
 
         if (!repoDir.exists()) {
-            GitExecResult result = execClone(functionDir, functionConfig);
+            SystemProcessLauncher.ExecResult result = execClone(functionDir, functionConfig);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
                 result = tryToRepairRepo(functionDir, functionConfig);
@@ -177,13 +139,13 @@ public class GitSourcingService {
                 return result;
             }
         }
-        GitExecResult result = execRevParse(repoDir);
+        SystemProcessLauncher.ExecResult result = execRevParse(repoDir);
         log.info("#027.100 Result of execRevParse: {}", result.toString());
         if (!result.ok) {
             return result;
         }
         if (!result.systemExecResult.isOk) {
-            return new GitExecResult(null,false, result.systemExecResult.console);
+            return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
         if (!"true".equals(result.systemExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, functionConfig);
@@ -192,7 +154,7 @@ public class GitSourcingService {
                 return result;
             }
             if (!result.systemExecResult.isOk) {
-                return new GitExecResult(null,false, result.systemExecResult.console);
+                return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
             }
         }
 
@@ -202,7 +164,7 @@ public class GitSourcingService {
             return result;
         }
         if (!result.systemExecResult.isOk) {
-            return new GitExecResult(null,false, result.systemExecResult.console);
+            return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execCleanDF(repoDir);
@@ -211,7 +173,7 @@ public class GitSourcingService {
             return result;
         }
         if (!result.systemExecResult.isOk) {
-            return new GitExecResult(null,false, result.systemExecResult.console);
+            return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execPullOrigin(repoDir, functionConfig);
@@ -220,7 +182,7 @@ public class GitSourcingService {
             return result;
         }
         if (!result.systemExecResult.isOk) {
-            return new GitExecResult(null,false, result.systemExecResult.console);
+            return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execCheckoutRevision(repoDir, functionConfig);
@@ -229,19 +191,19 @@ public class GitSourcingService {
             return result;
         }
         if (!result.systemExecResult.isOk) {
-            return new GitExecResult(null,false, result.systemExecResult.console);
+            return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
         log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new FunctionApiData.SystemExecResult(functionConfig.code, true, 0, "" ), true, null);
+        return new SystemProcessLauncher.ExecResult(repoDir, new FunctionApiData.SystemExecResult(functionConfig.code, true, 0, "" ), true, null);
     }
 
-    public GitExecResult tryToRepairRepo(File functionDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    public SystemProcessLauncher.ExecResult tryToRepairRepo(File functionDir, TaskParamsYaml.FunctionConfig functionConfig) {
         File repoDir = new File(functionDir, "git");
-        GitExecResult result;
+        SystemProcessLauncher.ExecResult result;
         FileUtils.deleteQuietly(repoDir);
         if (repoDir.exists()) {
-            return new GitExecResult(null,
+            return new SystemProcessLauncher.ExecResult(null,
                     false,
                     "#027.170 Function "+functionConfig.code+", can't prepare repo dir for function: " + repoDir.getAbsolutePath());
         }
@@ -249,7 +211,7 @@ public class GitSourcingService {
         return result;
     }
 
-    private GitExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -257,54 +219,54 @@ public class GitSourcingService {
 //fatal: index file corrupt
 
         // git fsck --full
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git checkout sha1
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // pull origin master
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", functionConfig.git.branch),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", functionConfig.git.branch),0L);
         return result;
     }
 
-    private GitExecResult execCleanDF(File repoDir) {
+    private SystemProcessLauncher.ExecResult execCleanDF(File repoDir) {
         // git clean -df
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"),120L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"),120L);
         return result;
     }
 
-    private GitExecResult execRevParse(File repoDir) {
+    private SystemProcessLauncher.ExecResult execRevParse(File repoDir) {
         // git rev-parse --is-inside-work-tree
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"),60L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"),60L);
         return result;
     }
 
     // TODO 2019-05-11 add this before checkout for new changes
-    private GitExecResult execResetHardHead(File repoDir) {
+    private SystemProcessLauncher.ExecResult execResetHardHead(File repoDir) {
         // git reset --hard HEAD
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"),120L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"),120L);
         return result;
     }
 
-    private GitExecResult execCommonCmd(List<String> cmd, long timeout) {
+    private SystemProcessLauncher.ExecResult execCommonCmd(List<String> cmd, long timeout) {
         log.info("exec {}", cmd);
         return execGitCmd(cmd, timeout);
     }
 
-    private GitExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git -C <path> clone <git-repo-url> git
 
         String mirror = envService.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);
-        GitExecResult result = execGitCmd(cmd, 0L);
+        SystemProcessLauncher.ExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
 

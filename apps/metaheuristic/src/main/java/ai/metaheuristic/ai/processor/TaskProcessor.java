@@ -438,7 +438,8 @@ public class TaskProcessor {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
-            interpreter = new Interpreter(envService.getEnvParamsYaml().getEnvs().get(functionPrepareResult.function.env));
+            final String exec = envService.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
+            interpreter = new Interpreter(exec);
             if (interpreter.list == null) {
                 String es = "#100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
                 log.warn(es);
@@ -611,7 +612,7 @@ public class TaskProcessor {
                 }
                 final File resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
                 log.info("Root dir for function: " + resourceDir);
-                GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
+                SystemProcessLauncher.ExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
                 if (!result.ok) {
                     log.warn("#100.500 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
                     functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);

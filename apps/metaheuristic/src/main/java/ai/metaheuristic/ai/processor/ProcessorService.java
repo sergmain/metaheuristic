@@ -108,7 +108,7 @@ public class ProcessorService {
     private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
         KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
         t.mirrors.putAll(envYaml.mirrors);
-        t.envs.putAll(envYaml.envs);
+        envYaml.envs.forEach(env -> t.envs.put(env.code, env.exec));
         t.quotas.limit = envYaml.quotas.limit;
         t.quotas.disabled = envYaml.quotas.disabled;
         t.quotas.defaultValue = envYaml.quotas.defaultValue;

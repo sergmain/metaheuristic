@@ -16,10 +16,14 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
+import ai.metaheuristic.commons.utils.DirUtils;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
@@ -41,6 +45,46 @@ public class SystemProcessLauncher {
             "===============================================================\n" +
             "After %d seconds of timeout this process has been destroyed.\n" +
             "===============================================================\n";
+
+    // TODO 2019-06-22 need to investigate why it isn't working with @Data
+//    @Data
+    @AllArgsConstructor
+    @ToString
+    public static class ExecResult {
+        public File functionDir;
+        @Nullable
+        public FunctionApiData.SystemExecResult systemExecResult;
+        public boolean ok;
+        public String error;
+
+        public ExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this.systemExecResult = systemExecResult;
+            this.ok = ok;
+            this.error = error;
+        }
+    }
+
+    public static ExecResult execCmd(List<String> commands, long timeout, int taskConsoleOutputMaxLines) {
+        File gitTemp = DirUtils.createMhTempDir("command-exec-");
+        if (gitTemp==null) {
+            return new ExecResult(null, false, "#027.017 Error: can't create temporary directory");
+        }
+        File consoleLogFile = null;
+        try {
+            consoleLogFile = File.createTempFile("console-", ".log", gitTemp);
+            FunctionApiData.SystemExecResult systemExecResult = execCommand(
+                    commands, new File("."), consoleLogFile, timeout, "command-exec", null,
+                    taskConsoleOutputMaxLines);
+            log.info("systemExecResult: {}" , systemExecResult);
+            return new ExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
+        } catch (InterruptedException | IOException e) {
+            log.error("#027.020 Error", e);
+            return new ExecResult(null, false, "#027.020 Error: " + e.getMessage());
+        }
+        finally {
+            DirUtils.deleteAsync(gitTemp);
+        }
+    }
 
     public static class StreamHolder {
         public InputStream is;
