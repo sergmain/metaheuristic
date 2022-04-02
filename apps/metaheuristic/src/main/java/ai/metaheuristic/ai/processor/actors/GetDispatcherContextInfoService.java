@@ -93,10 +93,10 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
             }
             catch (HttpResponseException e) {
                 if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                    log.warn("#806.200 Access denied to url {}", assetManager.url);
+                    log.warn("#806.200 Access denied to Asset manager at {}", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
-                    log.warn("#806.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
+                    log.warn("#806.203 Asset manager at {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                     log.warn("#806.205 Functions wasn't found at {}", assetManager.url);
