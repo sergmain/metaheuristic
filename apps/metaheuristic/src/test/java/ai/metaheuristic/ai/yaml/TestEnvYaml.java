@@ -65,10 +65,11 @@ public class TestEnvYaml {
         assertNotNull(envYaml);
         assertNotNull(envYaml.getEnvs());
         assertEquals(2, envYaml.getEnvs().size());
-        assertEquals("simple-app", envYaml.getEnvs().get(0).code);
-        assertEquals("simple-app.jar", envYaml.getEnvs().get(0).exec);
-        assertEquals("lines", envYaml.getEnvs().get(1).code);
-        assertEquals("1st-line 2nd-line", envYaml.getEnvs().get(1).exec);
+        EnvParamsYaml.Env env;
+        env = envYaml.getEnvs().stream().filter(o->o.code.equals("simple-app")).findFirst().orElseThrow();
+        assertEquals("simple-app.jar", env.exec);
+        env = envYaml.getEnvs().stream().filter(o->o.code.equals("lines")).findFirst().orElseThrow();
+        assertEquals("1st-line 2nd-line", env.exec);
 
         assertNotNull(envYaml.getDisk());
         assertTrue(envYaml.getDisk().isEmpty());
