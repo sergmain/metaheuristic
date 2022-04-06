@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
@@ -88,7 +89,7 @@ public class TaskWithInternalContextEventService {
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
-    private static final int MAX_NUMBER_EXECUTORS = 2;
+    private static final int MAX_NUMBER_EXECUTORS = 4;
 
     public static class ExecutorForExecContext {
         public Long execContextId;
@@ -127,7 +128,6 @@ public class TaskWithInternalContextEventService {
                 POOL_OF_EXECUTORS[i] = null;
             }
         }
-
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
@@ -222,6 +222,7 @@ public class TaskWithInternalContextEventService {
             return;
         }
         final ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        ArtifactCleanerAtDispatcher.setBusy();
         try {
             TaskSyncService.getWithSyncVoid(event.taskId,
                     () -> {
@@ -247,6 +248,9 @@ public class TaskWithInternalContextEventService {
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 
