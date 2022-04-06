@@ -138,7 +138,6 @@ public class TaskCheckCachingTopLevelService {
         });
     }
 
-
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
         final boolean notReady = execContextReadinessStateService.isNotReady(event.execContextId);
         log.debug("execContextId: {}, notReady: {}", event.execContextId, notReady);

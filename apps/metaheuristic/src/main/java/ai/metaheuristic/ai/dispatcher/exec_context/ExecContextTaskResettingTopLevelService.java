@@ -144,7 +144,7 @@ public class ExecContextTaskResettingTopLevelService {
             Integer ai = ectspy.triesWasMade.get(taskId);
             int triesWasMade = ai == null ? 0 : ai;
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
-            // after a recovery try we don't need to use CACHE. so it'll be NONE
+            // after a try of recovering, we don't need to use CACHE. so it'll be NONE
             final EnumsApi.TaskExecState targetState = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, targetState));
         }

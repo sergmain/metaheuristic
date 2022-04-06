@@ -103,6 +103,7 @@ public class ExecContextReadinessService {
         }
     }
 
+    // this method will be invoked only one time at startup
     @Async
     @EventListener
     @SneakyThrows
@@ -118,7 +119,7 @@ public class ExecContextReadinessService {
         });
     }
 
-    public void prepare(Long execContextId) {
+    private void prepare(Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return;

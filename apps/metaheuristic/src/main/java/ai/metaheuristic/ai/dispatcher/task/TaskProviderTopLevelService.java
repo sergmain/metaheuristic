@@ -361,6 +361,7 @@ public class TaskProviderTopLevelService {
                 MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
                         execContextStatusService::getExecContextStatuses);
 
+        // find all tasks which were assigned to this processor. and try to assign one again
         List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processorId);
         for (Object[] obj : tasks) {
             Long taskId = ((Number)obj[0]).longValue();
@@ -370,6 +371,7 @@ public class TaskProviderTopLevelService {
             if (!statuses.isStarted(execContextId) || execContextReadinessStateService.isNotReady(execContextId)) {
                 continue;
             }
+            // processor's core has lost a task, so we'll try to assign it again
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("#393.680 already assigned task, processor: #{}, task #{}, task execStatus: {}",
@@ -420,6 +422,8 @@ public class TaskProviderTopLevelService {
                 }
             }
         }
+
+        // there isn't any lost task which could be assigned, let's find unassigned task
 
         TaskData.AssignedTask result =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
