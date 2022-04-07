@@ -91,7 +91,7 @@ public class ExecContextTaskAssigningTopLevelService {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 
-        log.warn("#703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
+        log.info("#703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return stat;
