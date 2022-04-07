@@ -84,7 +84,7 @@ public class ExecContextTaskAssigningTopLevelService {
             UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
             statTotal.add(stat);
         }
-        log.warn("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+        log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
     }
 
     public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {

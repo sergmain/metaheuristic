@@ -242,7 +242,7 @@ public class Schedulers {
                 eventPublisher.publishEvent(new StartProcessReadinessEvent());
                 needToInitializeReadyness = false;
             }
-            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
