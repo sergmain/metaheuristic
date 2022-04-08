@@ -128,6 +128,11 @@ public class TaskQueueService {
         return getWithSync(() -> taskQueue.alreadyRegistered(taskId));
     }
 
+    public static TaskQueue.AllocatedTask alreadyRegisteredAsTaskWithSync(Long taskId) {
+        checkWriteLockNotPresent();
+        return getWithSync(() -> taskQueue.alreadyRegisteredAsTask(taskId));
+    }
+
     public static void addNewTask(TaskQueue.QueuedTask queuedTask) {
         checkWriteLockPresent();
         taskQueue.addNewTask(queuedTask);

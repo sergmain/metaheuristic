@@ -88,15 +88,21 @@ public class TaskQueue {
 
         // we dont need execContextId because taskIds are unique across entire database
         public boolean alreadyRegistered(Long taskId) {
+            return alreadyRegisteredAsTask(taskId)!=null;
+        }
+
+        @Nullable
+        // we dont need execContextId because taskIds are unique across entire database
+        public AllocatedTask alreadyRegisteredAsTask(Long taskId) {
             if (execContextId==null) {
-                return false;
+                return null;
             }
             for (AllocatedTask task : tasks) {
                 if (task!=null && task.queuedTask.taskId.equals(taskId)) {
-                    return true;
+                    return task;
                 }
             }
-            return false;
+            return null;
         }
 
         public boolean deRegisterTask(Long taskId) {
@@ -603,6 +609,17 @@ public class TaskQueue {
             }
         }
         return false;
+    }
+
+    @Nullable
+    public AllocatedTask alreadyRegisteredAsTask(Long taskId) {
+        for (TaskGroup o : taskGroups) {
+            final AllocatedTask allocatedTask = o.alreadyRegisteredAsTask(taskId);
+            if (allocatedTask !=null) {
+                return allocatedTask;
+            }
+        }
+        return null;
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {

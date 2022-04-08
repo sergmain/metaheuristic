@@ -25,10 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
+import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -123,9 +120,24 @@ public class ExecContextTaskAssigningTopLevelService {
             return stat;
         }
 
-        List<ExecContextData.TaskVertex> filteredVertices = vertices.stream()
-                .filter(o->!TaskQueueService.alreadyRegisteredWithSync(o.taskId))
-                .collect(Collectors.toList());
+        List<ExecContextData.TaskVertex> filteredVertices = new ArrayList<>();
+        for (ExecContextData.TaskVertex vertex : vertices) {
+            final TaskQueue.AllocatedTask allocatedTask = TaskQueueService.alreadyRegisteredAsTaskWithSync(vertex.taskId);
+            if (allocatedTask==null) {
+                filteredVertices.add(vertex);
+            }
+            else {
+                final TaskImpl task = allocatedTask.queuedTask.task;
+                if (task ==null) {
+                    final String es = "#703.160 (allocatedTask.queuedTask.task==null)";
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+                if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, task.id));
+                }
+            }
+        }
 
         if (stat.found>0 && filteredVertices.isEmpty() && log.isInfoEnabled()) {
             stat.notAllocatedReasons.add("all tasks were already registered, ids: " +

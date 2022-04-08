@@ -49,4 +49,9 @@ public class TestReduceVariablesUtils_1 {
         UtilsForTestReduceVariables.extracted_1(List.of("variable-4487360-aggregatedResult11.zip"), UtilsForTestReduceVariables::filterStr);
     }
 
+    @Test
+    public void testExternal_18() throws IOException {
+        UtilsForTestReduceVariables.extracted_1(List.of("variable-857258-aggregatedResult1.zip"), UtilsForTestReduceVariables::filterStr);
+    }
+
 }
