@@ -129,9 +129,7 @@ public class ExecContextTaskAssigningTopLevelService {
             else {
                 final TaskImpl task = allocatedTask.queuedTask.task;
                 if (task ==null) {
-                    final String es = "#703.160 (allocatedTask.queuedTask.task==null)";
-                    log.error(es);
-                    throw new IllegalStateException(es);
+                    continue;
                 }
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, task.id));
