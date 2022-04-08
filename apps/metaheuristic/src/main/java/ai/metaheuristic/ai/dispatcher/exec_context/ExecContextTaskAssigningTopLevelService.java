@@ -40,6 +40,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,10 +68,12 @@ public class ExecContextTaskAssigningTopLevelService {
     public static class UnassignedTasksStat {
         public int found;
         public int allocated;
+        public List<String> notAllocatedReasons = new ArrayList<>();
 
         public void add(UnassignedTasksStat add) {
             this.found += add.found;
             this.allocated += add.allocated;
+            this.notAllocatedReasons.addAll(add.notAllocatedReasons);
         }
     }
 
@@ -84,7 +87,12 @@ public class ExecContextTaskAssigningTopLevelService {
             UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
             statTotal.add(stat);
         }
-        log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+        if (log.isInfoEnabled()) {
+            log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+            for (String notAllocatedReason : statTotal.notAllocatedReasons) {
+                log.info("  "+notAllocatedReason);
+            }
+        }
     }
 
     public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
@@ -126,11 +134,16 @@ public class ExecContextTaskAssigningTopLevelService {
             for (Long taskId : taskIds) {
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+ taskId +" wasn't found");
                     continue;
                 }
                 if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
-                    log.warn("#703.380 Task #{} was already processed with status {}", task.getId(), state);
+                    if (log.isWarnEnabled()) {
+                        String es = "#703.380 Task #"+task.getId()+" was already processed with status " + state;
+                        log.warn(es);
+                        if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
+                    }
                     // this situation will be handled while a reconciliation stage
                     continue;
                 }
@@ -138,21 +151,25 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.CHECK_CACHE");
                     continue;
                 }
 
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     logDebugAboutTask(task);
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState==EnumsApi.TaskExecState.IN_PROGRESS");
                     continue;
                 }
 
                 if (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is ERROR_WITH_RECOVERY
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY");
                     continue;
                 }
 
                 if (TaskQueueService.alreadyRegisteredWithSync(task.id)) {
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task is already registered");
                     continue;
                 }
 
@@ -163,13 +180,18 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     catch (YAMLException e) {
                         log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
-                        taskFinishingService.finishWithErrorWithTx(task.id, S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id));
+                        final String es = S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id);
+                        taskFinishingService.finishWithErrorWithTx(task.id, es);
+                        if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                         continue;
                     }
                     switch(taskParamYaml.task.context) {
                         case external:
                             if (TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml)) {
                                 stat.allocated++;
+                            }
+                            else {
+                                if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task is already registered in task queue");
                             }
                             break;
                         case internal:
