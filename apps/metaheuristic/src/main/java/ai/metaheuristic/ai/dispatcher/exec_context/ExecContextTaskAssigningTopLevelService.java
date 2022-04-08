@@ -90,7 +90,7 @@ public class ExecContextTaskAssigningTopLevelService {
         if (log.isInfoEnabled()) {
             log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
             for (String notAllocatedReason : statTotal.notAllocatedReasons) {
-                log.info("  "+notAllocatedReason);
+                log.info("  " + notAllocatedReason);
             }
         }
     }
@@ -126,6 +126,11 @@ public class ExecContextTaskAssigningTopLevelService {
         List<ExecContextData.TaskVertex> filteredVertices = vertices.stream()
                 .filter(o->!TaskQueueService.alreadyRegisteredWithSync(o.taskId))
                 .collect(Collectors.toList());
+
+        if (stat.found>0 && filteredVertices.isEmpty() && log.isInfoEnabled()) {
+            stat.notAllocatedReasons.add("all tasks were already registered, ids: " +
+                    vertices.stream().map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", ")));
+        }
 
         int page = 0;
         List<Long> taskIds;
