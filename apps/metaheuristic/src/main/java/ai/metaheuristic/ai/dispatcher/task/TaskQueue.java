@@ -603,12 +603,7 @@ public class TaskQueue {
     }
 
     public boolean alreadyRegistered(Long taskId) {
-        for (TaskGroup o : taskGroups) {
-            if (o.alreadyRegistered(taskId)) {
-                return true;
-            }
-        }
-        return false;
+        return alreadyRegisteredAsTask(taskId)!=null;
     }
 
     @Nullable
