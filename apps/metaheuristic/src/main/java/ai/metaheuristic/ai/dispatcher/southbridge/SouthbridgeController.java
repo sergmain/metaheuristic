@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -61,12 +62,18 @@ public class SouthbridgeController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable @RequestBody String data
             ) throws IOException {
-        log.debug("processRequestAuth(), data: {}", data);
-        if (S.b(data)) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return "";
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            log.debug("processRequestAuth(), data: {}", data);
+            if (S.b(data)) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return "";
+            }
+            return serverService.processRequest(data, request.getRemoteAddr());
         }
-        return serverService.processRequest(data, request.getRemoteAddr());
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
+        }
     }
 
     @PostMapping("/keep-alive/{random-part}")
@@ -138,11 +145,17 @@ public class SouthbridgeController {
             @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart
     ) {
         log.debug("uploadVariable(), taskId: #{}, variableId: {}", taskId, variableId);
-        if (Boolean.TRUE.equals(nullified)) {
-            return execContextVariableTopLevelService.setVariableAsNull(taskId, variableId);
+        ArtifactCleanerAtDispatcher.setBusy();
+        try {
+            if (Boolean.TRUE.equals(nullified)) {
+                return execContextVariableTopLevelService.setVariableAsNull(taskId, variableId);
+            }
+            else {
+                return execContextVariableTopLevelService.uploadVariable(file, taskId, variableId);
+            }
         }
-        else {
-            return execContextVariableTopLevelService.uploadVariable(file, taskId, variableId);
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 
