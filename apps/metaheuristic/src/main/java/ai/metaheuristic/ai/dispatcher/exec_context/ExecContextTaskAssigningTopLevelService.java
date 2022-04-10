@@ -138,8 +138,9 @@ public class ExecContextTaskAssigningTopLevelService {
         }
 
         if (stat.found>0 && filteredVertices.isEmpty() && log.isInfoEnabled()) {
+            String suffix = vertices.size()>5 ? " and more, total: " + vertices.size() : "";
             stat.notAllocatedReasons.add("all tasks were already registered, ids: " +
-                    vertices.stream().map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", ")));
+                    vertices.stream().limit(5).map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", "))+suffix);
         }
 
         int page = 0;

@@ -96,7 +96,10 @@ public class TaskCheckCachingTopLevelService {
         synchronized (queue) {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
-            if (queueIds.contains(event.taskId) || (taskCount - completedTaskCount)>1000) {
+            final boolean contains = queueIds.contains(event.taskId);
+            final boolean queueIsFull = (taskCount - completedTaskCount) > 1000;
+            if (contains || queueIsFull) {
+                log.debug("task #{} wasn't queued, contains: {}, queueIsFull: {}", event.taskId, contains, queueIsFull);
                 return;
             }
             queue.add(event);
