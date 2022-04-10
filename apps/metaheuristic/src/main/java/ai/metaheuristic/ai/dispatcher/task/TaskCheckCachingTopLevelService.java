@@ -92,8 +92,16 @@ public class TaskCheckCachingTopLevelService {
     private final Set<Long> queueIds = new HashSet<>();
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
+    private long mills = 0L;
+
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
+            // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
+            if (System.currentTimeMillis() - mills > 60_000) {
+                queueIds.clear();
+                queue.forEach(o->queueIds.add(o.taskId));
+                mills = System.currentTimeMillis();
+            }
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
             final boolean contains = queueIds.contains(event.taskId);
