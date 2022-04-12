@@ -534,29 +534,12 @@ public class FunctionTopLevelService {
         return configs;
     }
 
-    public void processKeepAliveData(
-            KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
-            final Processor processor) {
+    public void processKeepAliveData(List<Long> coreIds, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
-        if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {
-            // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#809.080 processorId is null");
-        }
-        final Long processorId = processorRequest.processorCommContext.processorId;
-        KeepAliveRequestParamYaml.ReportProcessor status = processorRequest.processor;
-
-        if (status==null) {
-            return;
-        }
-        ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
 
         if (processorFunctionDownloadStatusDifferent) {
-
-            ProcessorSyncService.getWithSyncVoid(processorId,
-                    () -> processorTransactionService.processKeepAliveData(
-                            processorId, status, functionDownloadStatus, psy,
-                            processorStatusDifferent, processorFunctionDownloadStatusDifferent));
+                    functionService.processFunctionStates(coreIds, functionDownloadStatus);
 
         }
     }

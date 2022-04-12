@@ -38,6 +38,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 11/22/2020
@@ -84,6 +87,7 @@ public class KeepAliveTopLevelService {
     public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
+            List<Long> coreIds = new ArrayList<>();
             for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
                 KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
                 resp.responses.add(dispatcherResponse);
@@ -118,6 +122,7 @@ public class KeepAliveTopLevelService {
                         continue;
                     }
                 }
+                coreIds.add(processorRequest.processorCommContext.processorId);
                 log.debug("Start processing commands");
                 processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
                 processGetNewProcessorId(processorRequest, dispatcherResponse);
@@ -127,6 +132,7 @@ public class KeepAliveTopLevelService {
                     break;
                 }
             }
+            functionTopLevelService.processKeepAliveData(coreIds, req.functions);
             initDispatcherInfo(resp);
         } catch (Throwable th) {
             String json;

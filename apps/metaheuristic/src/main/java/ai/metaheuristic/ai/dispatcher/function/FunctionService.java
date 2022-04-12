@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -35,6 +37,11 @@ public class FunctionService {
 
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
+
+    @Transactional
+    public void processFunctionStates(List<Long> coreIds, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+
+    }
 
     @Transactional
     public Void deleteFunction(Long functionId, String functionCode) {
