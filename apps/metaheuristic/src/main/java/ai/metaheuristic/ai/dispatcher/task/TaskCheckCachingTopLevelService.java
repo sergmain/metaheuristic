@@ -135,7 +135,7 @@ public class TaskCheckCachingTopLevelService {
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
-            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}, queue size: {}", activeCount, taskCount - completedTaskCount, queue.size());
         }
 
         if (activeCount>0) {

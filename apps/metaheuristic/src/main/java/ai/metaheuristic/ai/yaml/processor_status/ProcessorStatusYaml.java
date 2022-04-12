@@ -134,14 +134,17 @@ public class ProcessorStatusYaml implements BaseParams {
     @Nullable
     public Log log;
 
+    @Deprecated(forRemoval = true)
     @Nullable
     private String taskIds;
 
+    @Deprecated(forRemoval = true)
     @Nullable
     public String getTaskIds() {
         return taskIds;
     }
 
+    @Deprecated(forRemoval = true)
     @SuppressWarnings("MethodMayBeStatic")
     public void setTaskIds(@Nullable String taskIds) {
         throw new IllegalStateException("taskIds isn't used any more");

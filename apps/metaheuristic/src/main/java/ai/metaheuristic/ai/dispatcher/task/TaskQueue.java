@@ -46,6 +46,7 @@ public class TaskQueue {
         public final EnumsApi.FunctionExecContext execContext;
         public final Long execContextId;
         public final Long taskId;
+        // TODO P1 2022-04-11 write comment about when and at which condition this field will be initialized
         @Nullable
         public final TaskImpl task;
         public final TaskParamsYaml taskParamYaml;

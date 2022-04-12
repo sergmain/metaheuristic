@@ -127,12 +127,8 @@ public class ExecContextTaskAssigningTopLevelService {
                 filteredVertices.add(vertex);
             }
             else {
-                final TaskImpl task = allocatedTask.queuedTask.task;
-                if (task ==null) {
-                    continue;
-                }
-                if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, task.id));
+                if (allocatedTask.state == EnumsApi.TaskExecState.CHECK_CACHE) {
+                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, allocatedTask.queuedTask.taskId));
                 }
             }
         }
