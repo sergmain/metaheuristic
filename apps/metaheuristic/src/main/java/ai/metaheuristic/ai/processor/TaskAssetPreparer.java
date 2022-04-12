@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
@@ -204,30 +203,30 @@ public class TaskAssetPreparer {
             if (functionDownloadStatuses==null) {
                 return false;
             }
-            final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
-            if (functionState == Enums.FunctionState.none) {
+            final EnumsApi.FunctionState functionState = functionDownloadStatuses.functionState;
+            if (functionState == EnumsApi.FunctionState.none) {
                 downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                 return false;
             }
             else {
-                if (functionState==Enums.FunctionState.function_config_error || functionState==Enums.FunctionState.download_error) {
+                if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    metadataService.setFunctionState(assetManagerUrl, functionConfig.code, Enums.FunctionState.none);
+                    metadataService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
                     downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                     return true;
                 }
-                else if (functionState==Enums.FunctionState.dispatcher_config_error) {
+                else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
                     processorTaskService.markAsFinishedWithError(ref,
                             taskId,
                             S.f("Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
                                     taskId, ref.dispatcherUrl.url, functionConfig.code));
                 }
-                if (functionState!= Enums.FunctionState.ready) {
+                if (functionState!= EnumsApi.FunctionState.ready) {
                     log.warn("#951.180 Function {} has broken state as {}", functionConfig.code, functionState);
                 }
-                return functionState == Enums.FunctionState.ready;
+                return functionState == EnumsApi.FunctionState.ready;
             }
         }
         return true;

@@ -75,8 +75,8 @@ public class TestKeepAliveRequestParamYamlUtils {
         r.processor.os = EnumsApi.OS.any;
         r.processor.currDir = "/home";
 
-        req.functions.statuses.addAll(List.of(new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code1", Enums.FunctionState.none),
-                new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code2", Enums.FunctionState.checksum_wrong)));
+        req.functions.statuses.addAll(List.of(new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code1", EnumsApi.FunctionState.none),
+                new KeepAliveRequestParamYamlV1.FunctionDownloadStatusesV1.Status("code2", EnumsApi.FunctionState.checksum_wrong)));
 
         r.requestProcessorId = new KeepAliveRequestParamYamlV1.RequestProcessorIdV1();
 
@@ -127,9 +127,9 @@ public class TestKeepAliveRequestParamYamlUtils {
         assertNotNull(kar.functions.statuses);
         assertEquals(2, kar.functions.statuses.size());
         assertEquals("code1", kar.functions.statuses.get(0).code);
-        assertEquals(Enums.FunctionState.none, kar.functions.statuses.get(0).state);
+        assertEquals(EnumsApi.FunctionState.none, kar.functions.statuses.get(0).state);
         assertEquals("code2", kar.functions.statuses.get(1).code);
-        assertEquals(Enums.FunctionState.checksum_wrong, kar.functions.statuses.get(1).state);
+        assertEquals(EnumsApi.FunctionState.checksum_wrong, kar.functions.statuses.get(1).state);
 
         assertNotNull(kar.requests.get(0).requestProcessorId);
 
@@ -193,9 +193,9 @@ public class TestKeepAliveRequestParamYamlUtils {
         assertNotNull(kar2.functions.statuses);
         assertEquals(2, kar2.functions.statuses.size());
         assertEquals("code1", kar2.functions.statuses.get(0).code);
-        assertEquals(Enums.FunctionState.none, kar2.functions.statuses.get(0).state);
+        assertEquals(EnumsApi.FunctionState.none, kar2.functions.statuses.get(0).state);
         assertEquals("code2", kar2.functions.statuses.get(1).code);
-        assertEquals(Enums.FunctionState.checksum_wrong, kar2.functions.statuses.get(1).state);
+        assertEquals(EnumsApi.FunctionState.checksum_wrong, kar2.functions.statuses.get(1).state);
 
         assertNotNull(kar2.requests.get(0).requestProcessorId);
 

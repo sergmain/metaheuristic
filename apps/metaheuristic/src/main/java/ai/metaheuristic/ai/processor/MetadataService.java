@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
@@ -199,10 +198,10 @@ public class MetadataService {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            if (status.functionState == Enums.FunctionState.not_found) {
+            if (status.functionState == EnumsApi.FunctionState.not_found) {
                 forRemoving.add(status);
             }
-            status.functionState = Enums.FunctionState.none;
+            status.functionState = EnumsApi.FunctionState.none;
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
@@ -217,7 +216,7 @@ public class MetadataService {
             return syncFunctionStatusInternal(assetManagerUrl, assetManager, functionCode);
         } catch (Throwable th) {
             log.error("#815.080 Error in syncFunctionStatus()", th);
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.io_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error));
         }
     }
 
@@ -232,18 +231,18 @@ public class MetadataService {
             log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetManagerUrl.url);
             return null;
         }
-        if (status.functionState== Enums.FunctionState.ready) {
+        if (status.functionState== EnumsApi.FunctionState.ready) {
             if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
                 return new FunctionConfigAndStatus(status);
             }
-            setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none);
+            setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none);
         }
 
         ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
                 processorFunctionService.downloadFunctionConfig(assetManager, functionCode);
 
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
         if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.not_found) {
             removeFunction(assetManagerUrl, functionCode);
@@ -254,24 +253,24 @@ public class MetadataService {
 
         if (S.b(functionConfig.file) && S.b(functionConfig.content)) {
             log.error("#815.100 name of file for function {} is blank and content of function is blank too", functionCode);
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
 
         if (!S.b(functionConfig.content)) {
-            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.ok), null, true);
+            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), null, true);
         }
 
         File baseFunctionDir = prepareBaseDir(assetManagerUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.asset_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error));
         }
         if (!assetFile.isContent) {
-            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.none), assetFile);
+            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none), assetFile);
         }
 
-        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, Enums.FunctionState.ok), assetFile);
+        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), assetFile);
     }
 
     @Nullable
@@ -464,8 +463,8 @@ public class MetadataService {
                 MetadataParamsYaml.Status status = metadata.statuses.stream()
                         .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.code))
                         .findFirst().orElse(null);
-                if (status==null || status.functionState == Enums.FunctionState.not_found) {
-                    setFunctionDownloadStatusInternal(assetManagerUrl, info.code, info.sourcing, Enums.FunctionState.none);
+                if (status==null || status.functionState == EnumsApi.FunctionState.not_found) {
+                    setFunctionDownloadStatusInternal(assetManagerUrl, info.code, info.sourcing, EnumsApi.FunctionState.none);
                     isChanged = true;
                 }
             }
@@ -473,7 +472,7 @@ public class MetadataService {
             // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
             for (MetadataParamsYaml.Status status : metadata.statuses) {
                 if (status.assetManagerUrl.equals(assetManagerUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
-                    setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
+                    setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, EnumsApi.FunctionState.not_found);
                     isChanged = true;
                 }
             }
@@ -485,7 +484,7 @@ public class MetadataService {
     }
 
     @Nullable
-    public MetadataParamsYaml.Status setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, Enums.FunctionState functionState) {
+    public MetadataParamsYaml.Status setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
@@ -495,7 +494,7 @@ public class MetadataService {
                 return null;
             }
             status.functionState = functionState;
-            if (status.functionState== Enums.FunctionState.none||status.functionState== Enums.FunctionState.ok) {
+            if (status.functionState== EnumsApi.FunctionState.none||status.functionState== EnumsApi.FunctionState.ok) {
                 status.checksum= EnumsApi.ChecksumState.not_yet;
                 status.signature= EnumsApi.SignatureState.not_yet;
             }
@@ -513,7 +512,7 @@ public class MetadataService {
             if (status == null) {
                 return;
             }
-            status.functionState = Enums.FunctionState.ready;
+            status.functionState = EnumsApi.FunctionState.ready;
             status.checksum= EnumsApi.ChecksumState.runtime;
             status.signature= EnumsApi.SignatureState.runtime;
 
@@ -573,7 +572,7 @@ public class MetadataService {
         }
     }
 
-    public void setFunctionDownloadStatus(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+    public void setFunctionDownloadStatus(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.360 functionCode is empty");
         }
@@ -602,10 +601,10 @@ public class MetadataService {
         }
     }
 
-    private void setFunctionDownloadStatusInternal(AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+    private void setFunctionDownloadStatusInternal(AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {
         MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(Enums.FunctionState.none, code, assetManagerUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
+            status = new MetadataParamsYaml.Status(EnumsApi.FunctionState.none, code, assetManagerUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
             metadata.statuses.add(status);
         }
         status.functionState = functionState;

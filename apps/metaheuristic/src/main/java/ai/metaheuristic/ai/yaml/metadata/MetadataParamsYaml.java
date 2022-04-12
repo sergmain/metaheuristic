@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.yaml.metadata;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
@@ -53,7 +52,7 @@ public class MetadataParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Status {
-        public Enums.FunctionState functionState;
+        public EnumsApi.FunctionState functionState;
         public String code;
         public String assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;

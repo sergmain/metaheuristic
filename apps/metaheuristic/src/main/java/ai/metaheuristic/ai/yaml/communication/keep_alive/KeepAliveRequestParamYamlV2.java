@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -133,7 +132,7 @@ public class KeepAliveRequestParamYamlV2 implements BaseParams {
         @NoArgsConstructor
         public static class Status {
             public String code;
-            public Enums.FunctionState state;
+            public EnumsApi.FunctionState state;
         }
 
         public List<Status> statuses = new ArrayList<>();

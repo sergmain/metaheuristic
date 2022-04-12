@@ -18,10 +18,14 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -61,6 +65,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
+import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorFunctionDownloadStatusDifferent;
+import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorStatusDifferent;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.*;
 
 @Service
@@ -526,6 +532,47 @@ public class FunctionTopLevelService {
 
         log.info("Send all configs of functions");
         return configs;
+    }
+
+    public void processKeepAliveData(
+            KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            final Processor processor) {
+
+        if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("#809.080 processorId is null");
+        }
+        final Long processorId = processorRequest.processorCommContext.processorId;
+        KeepAliveRequestParamYaml.ReportProcessor status = processorRequest.processor;
+
+        if (status==null) {
+            return;
+        }
+        ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
+        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
+
+        if (processorFunctionDownloadStatusDifferent) {
+
+            ProcessorSyncService.getWithSyncVoid(processorId,
+                    () -> processorTransactionService.processKeepAliveData(
+                            processorId, status, functionDownloadStatus, psy,
+                            processorStatusDifferent, processorFunctionDownloadStatusDifferent));
+
+        }
+    }
+
+    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
+        if (ss.downloadStatuses.size()!=status.statuses.size()) {
+            return true;
+        }
+        for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
+                if (downloadStatus.functionCode.equals(sds.code) && !downloadStatus.functionState.equals(sds.state)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {

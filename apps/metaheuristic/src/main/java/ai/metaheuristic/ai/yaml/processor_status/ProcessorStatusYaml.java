@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.processor_status;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -45,7 +44,7 @@ public class ProcessorStatusYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class DownloadStatus {
-        public Enums.FunctionState functionState;
+        public EnumsApi.FunctionState functionState;
         public String functionCode;
     }
 

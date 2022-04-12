@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor.metadata;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.metadata.*;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -79,7 +78,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(0);
             assertEquals("test.function:1.0", status.code);
             assertEquals("http://localhost:8080", status.dispatcherUrl);
-            assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
             assertTrue(status.verified);
         }
@@ -87,7 +86,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(1);
             assertEquals("test.function:1.0", status.code);
             assertEquals("https://localhost:8888", status.dispatcherUrl);
-            assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
             assertFalse(status.verified);
         }
@@ -95,7 +94,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(2);
             assertEquals("function-01:1.1", status.code);
             assertEquals("http://localhost:8080", status.dispatcherUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
             assertFalse(status.verified);
         }
@@ -103,7 +102,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(3);
             assertEquals("function-02:1.1", status.code);
             assertEquals("http://localhost:8080", status.dispatcherUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
             assertFalse(status.verified);
         }
@@ -111,7 +110,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(4);
             assertEquals("fileless-function:1.0", status.code);
             assertEquals("https://localhost:8888", status.dispatcherUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
             assertFalse(status.verified);
         }
@@ -152,35 +151,35 @@ public class TestMetadataParamsYaml {
             status = statuses.get(0);
             assertEquals("test.function:1.0", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(1);
             assertEquals("test.function:1.0", status.code);
             assertEquals("https://localhost:8888", status.assetManagerUrl);
-            assertEquals(Enums.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(2);
             assertEquals("function-01:1.1", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(3);
             assertEquals("function-02:1.1", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(4);
             assertEquals("fileless-function:1.0", status.code);
             assertEquals("https://localhost:8888", status.assetManagerUrl);
-            assertEquals(Enums.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
     }

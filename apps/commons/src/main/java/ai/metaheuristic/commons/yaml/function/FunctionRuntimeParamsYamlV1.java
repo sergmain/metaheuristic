@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,39 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.metadata;
+package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
  */
 @Data
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class FunctionDownloadStatusYamlV1 implements BaseParams {
+public class FunctionRuntimeParamsYamlV1 implements BaseParams {
 
     public final int version=1;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class StatusV1 {
-        public EnumsApi.FunctionState functionState;
-        public String code;
-        public String dispatcherUrl;
-        public EnumsApi.FunctionSourcing sourcing;
-        public boolean verified;
+    @Override
+    public boolean checkIntegrity() {
+        return true;
     }
 
-    public List<StatusV1> statuses = new ArrayList<>();
+    public final Map<EnumsApi.FunctionState, String> states = new HashMap<>();
 }

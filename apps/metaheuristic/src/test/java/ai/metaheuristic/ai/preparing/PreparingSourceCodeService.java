@@ -200,7 +200,7 @@ public class PreparingSourceCodeService {
     private static List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
         List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> list = new ArrayList<>();
         for (Function function : f) {
-            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, Enums.FunctionState.ready));
+            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, EnumsApi.FunctionState.ready));
         }
         return list;
     }

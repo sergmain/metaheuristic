@@ -306,7 +306,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
     private static void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
         ProcessorStatusYaml.DownloadStatus ds = status.downloadStatuses.stream().filter(o->o.functionCode.equals(functionConfig.code)).findFirst().orElse(null);
 
-        if (ds==null || ds.functionState!= Enums.FunctionState.ready) {
+        if (ds==null || ds.functionState!= EnumsApi.FunctionState.ready) {
             log.debug("#317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, ds==null ? "'not prepared yet'" : ds.functionState);
             result.set(true);
         }

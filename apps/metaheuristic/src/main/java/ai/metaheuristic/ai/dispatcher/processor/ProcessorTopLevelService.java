@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -117,7 +118,7 @@ public class ProcessorTopLevelService {
         }
 
         // TODO 2020-11-22 need to decide what to do with reconcileProcessorTasks() below
-        // TODO 2021-11-25 the problem is that such reconcileProcessorTasksmust be done outside of keepAlive request, but where
+        // TODO 2021-11-25 the problem is that such reconcileProcessorTasks must be done outside of keepAlive request, but where
 //        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
 
     }
@@ -213,10 +214,10 @@ public class ProcessorTopLevelService {
             String blacklistReason = processorBlacklisted(status);
 
             boolean isFunctionProblem = status.downloadStatuses.stream()
-                    .anyMatch(s->s.functionState != Enums.FunctionState.none &&
-                            s.functionState != Enums.FunctionState.ready &&
-                            s.functionState != Enums.FunctionState.not_found &&
-                            s.functionState != Enums.FunctionState.ok);
+                    .anyMatch(s->s.functionState != EnumsApi.FunctionState.none &&
+                            s.functionState != EnumsApi.FunctionState.ready &&
+                            s.functionState != EnumsApi.FunctionState.not_found &&
+                            s.functionState != EnumsApi.FunctionState.ok);
 
             ss.add(new ProcessorData.ProcessorStatus(
                     processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,
