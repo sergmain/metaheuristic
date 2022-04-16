@@ -134,16 +134,15 @@ public class UtilsForTestReduceVariables {
         FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
         Path temp = fs.getPath("/temp");
         Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
 
         ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
-                    if (o.current==0) {
+                    if (o.current==1) {
                         System.out.println("======================");
                         System.out.println(o.file);
                     }
-                    System.out.println(S.f("%-10d %d", o.current, o.total));
-//                    if (o.current%2==0) {
-//                    }
+//                    System.out.println(S.f("%-10d %d", o.current, o.total));
                 });
 
         assertFalse(result.byValue.isEmpty());
@@ -265,13 +264,11 @@ public class UtilsForTestReduceVariables {
 
         ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
-                    if (o.current==0) {
+                    if (o.current==1) {
                         System.out.println("======================");
                         System.out.println(o.file);
                     }
-                    System.out.println(S.f("%-10d %d", o.current, o.total));
-//                    if (o.current%2==0) {
-//                    }
+//                    System.out.println(S.f("%-10d %d", o.current, o.total));
                 });
 
         assertFalse(result.byValue.isEmpty());

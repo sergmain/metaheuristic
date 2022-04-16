@@ -121,7 +121,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
                 log.debug("Start loading .zip file data to db");
                 workingDir = zipDir;
-                mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
+                mapping = ZipUtils.unzipFolder(dataFile.toPath(), zipDir.toPath(), true, List.of(), true);
             }
             else {
                 log.debug("Start loading file data to db");

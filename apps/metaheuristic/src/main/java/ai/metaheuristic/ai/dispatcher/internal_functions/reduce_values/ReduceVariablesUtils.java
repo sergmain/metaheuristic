@@ -42,10 +42,7 @@ import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -232,13 +229,6 @@ public class ReduceVariablesUtils {
                                                              Consumer<ProgressData> consumer) {
 
         Path tempDir = Files.createTempDirectory(actualTemp, "reduce-variables-");
-
-/*
-        File tempDir = DirUtils.createMhTempDir("reduce-variables-");
-        if (tempDir==null) {
-            throw new RuntimeException("Can't create temp dir in metaheuristic-temp dir");
-        }
-*/
         Path zipDir = actualTemp.resolve("zip");
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
@@ -246,13 +236,12 @@ public class ReduceVariablesUtils {
         Collection<Path> files = PathUtils.walk(zipDir, filter, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
         int i=0;
         for (Path f : files) {
-            consumer.accept(new ProgressData(""+ zipDir.normalize(), files.size(), i++));
+            consumer.accept(new ProgressData(""+ zipFile.normalize(), files.size(), ++i));
             Path tmp = Files.createTempDirectory(tempDir, "load-data-");
             Path zipDataDir = tmp.resolve("zip");
             ZipUtils.unzipFolder(f, zipDataDir, false, Collections.emptyList(), false);
 
-            final IOFileFilter dirFilter = DirectoryFileFilter.DIRECTORY;
-            List<Path> top = PathUtils.walk(zipDataDir, dirFilter, 1, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+            List<Path> top = Files.list(zipDataDir).collect(Collectors.toList());
 
             if (top.isEmpty()) {
                 throw new RuntimeException("can't find any dir in " + zipDataDir.normalize());
@@ -261,7 +250,7 @@ public class ReduceVariablesUtils {
                 throw new RuntimeException("actual size: " +top.size()+", " + top);
             }
 
-            Collection<Path> ctxDirs = PathUtils.walk(top.get(0), dirFilter, 0, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+            Collection<Path> ctxDirs = Files.list(top.get(0)).collect(Collectors.toList());
             if (ctxDirs.isEmpty()) {
                 throw new RuntimeException("can't find any dir in " + top.get(0).normalize());
             }
@@ -285,7 +274,7 @@ public class ReduceVariablesUtils {
                 EnumsApi.Fitting fitting = null;
                 MetricValues metricValues = null;
 
-                Collection<Path> ffs = PathUtils.walk(ctxDir, FileFileFilter.INSTANCE, 1, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+                Collection<Path> ffs = Files.list(ctxDir).collect(Collectors.toList());
 
                 for (Path file : ffs) {
                     final String fileName = file.getFileName().toString();
@@ -327,7 +316,7 @@ public class ReduceVariablesUtils {
 
             int ii=0;
         }
-
+        PathUtils.delete(tempDir);
         return data;
     }
 

@@ -130,7 +130,7 @@ public class ExperimentResultTopLevelService {
         try {
             File importFile = new File(resultDir, "import.zip");
             FileUtils.copyInputStreamToFile(file.getInputStream(), importFile);
-            ZipUtils.unzipFolder(importFile, resultDir);
+            ZipUtils.unzipFolder(importFile.toPath(), resultDir.toPath());
 
             File zipDir = new File(resultDir, ZIP_DIR);
             if (!zipDir.exists()){
@@ -252,7 +252,7 @@ public class ExperimentResultTopLevelService {
                 }
             }
 
-            ZipUtils.createZip(zipDir, zipFile);
+            ZipUtils.createZip(zipDir.toPath(), zipFile.toPath());
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -357,7 +357,7 @@ public class ExperimentResultTopLevelService {
     }
 
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
-    private ExperimentResultParams checkVersionAndUpgrade(Long experimentResultId, String params) {
+    private static ExperimentResultParams checkVersionAndUpgrade(Long experimentResultId, String params) {
 
         ParamsVersion v = JsonForVersioning.getParamsVersion(params);
 
@@ -438,7 +438,7 @@ public class ExperimentResultTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    private void fixData(PlotData data) {
+    private static void fixData(PlotData data) {
         if (data.x.size()==1) {
             data.x.add("stub-x");
             BigDecimal[][] z = new BigDecimal[data.z.length][2];
@@ -687,7 +687,7 @@ public class ExperimentResultTopLevelService {
     }
 
     @NonNull
-    private MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
+    private static MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
         final MetricsResult metricsResult = new MetricsResult();
 
         metricsResult.metricNames.addAll(getMetricsNames(feature));

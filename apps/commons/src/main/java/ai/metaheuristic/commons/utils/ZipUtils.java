@@ -23,10 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -70,10 +69,12 @@ public class ZipUtils {
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static void createZip(File directory, File zipFile)  {
         createZip(directory, zipFile, Collections.emptyMap());
     }
 
+    @Deprecated(forRemoval = true)
     public static void createZip(File directory, File zipFile, Map<String, String> renameTo)  {
         try {
             final Path zipPath = zipFile.toPath();
@@ -90,6 +91,41 @@ public class ZipUtils {
         }
     }
 
+    /**
+     * Creates a zip file at the specified path with the contents of the specified directory.
+     * NB:
+     *
+     * @param directory The path of the directory where the archive will be created. eg. c:/temp
+     * @param os OutputStream stream for writing result
+     * @throws ZipArchiveException If anything goes wrong
+     */
+    @Deprecated(forRemoval = true)
+    public static void createZip(File directory, OutputStream os, Map<String, String> renameTo)  {
+
+        try {
+            final File mhTempDir = DirUtils.createMhTempDir("zip-dir-");
+            File tempFile = new File(mhTempDir, "zip.zip");
+            createZip(tempFile.toPath(), directory.toPath(), renameTo);
+
+            try (FileInputStream fis = new FileInputStream(tempFile);
+                 BufferedInputStream bis = new BufferedInputStream(fis);
+                 BufferedOutputStream bos = new BufferedOutputStream(os)) {
+                IOUtils.copy(bis, bos);
+            }
+        }
+        catch (ZipArchiveException e) {
+            log.error("Zipping error", e);
+            throw e;
+        }
+        catch (Throwable th) {
+            log.error("Zipping error", th);
+            throw new ZipArchiveException("Zip failed", th);
+        }
+    }
+
+    public static void createZip(Path directoryPath, Path zipPath) {
+        createZip(directoryPath, zipPath, Collections.emptyMap());
+    }
 
     /**
      * Creates a zip file at the specified path with the contents of the specified directory.
@@ -145,6 +181,11 @@ public class ZipUtils {
         }
     }
 
+    @Deprecated(forRemoval = true)
+    public static File createTargetFile(File zipDestinationFolder, String name) {
+        return createTargetFile(zipDestinationFolder.toPath(), name).toFile();
+    }
+
     @SneakyThrows
     public static Path createTargetFile(Path zipDestinationFolder, String name) {
         Path destinationPath = zipDestinationFolder.resolve(name);
@@ -174,6 +215,7 @@ public class ZipUtils {
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static List<String> validate(File archiveFile, Function<ZipEntry, ValidationResult> validateZip) {
         return validate(archiveFile.toPath(), validateZip);
     }
@@ -212,8 +254,9 @@ public class ZipUtils {
         return errors;
     }
 
+    @Deprecated(forRemoval = true)
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder) {
-        return unzipFolder(archiveFile, zipDestinationFolder, false, Collections.emptyList());
+        return unzipFolder(archiveFile.toPath(), zipDestinationFolder.toPath(), false, Collections.emptyList(), true);
     }
 
     /**
@@ -223,6 +266,7 @@ public class ZipUtils {
      * skipped when unarchiving.
      *
      */
+    @Deprecated(forRemoval = true)
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping) {
         final Path archivePath = archiveFile.toPath();
         final Path zipDestinationFolderPath = zipDestinationFolder.toPath();
@@ -234,6 +278,10 @@ public class ZipUtils {
     //  see also
     //  https://github.com/google/jimfs
     //  https://stackoverflow.com/a/30395017/2672202
+
+    public static Map<String, String> unzipFolder(Path archivePath, Path zipDestinationFolderPath) {
+        return unzipFolder(archivePath, zipDestinationFolderPath, false, Collections.emptyList(), true);
+    }
 
     public static Map<String, String> unzipFolder(Path archivePath, Path zipDestinationFolderPath, boolean useMapping, List<String> excludeFromMapping, boolean debug) {
 
@@ -304,7 +352,7 @@ public class ZipUtils {
                     }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
                         try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING, SYNC))) {
-                            int n=0;
+                            int n;
                             int count = 0;
                             byte[] bytes = new byte[8192];
                             while ((n=inputStream.read(bytes))!=-1) {
@@ -312,6 +360,7 @@ public class ZipUtils {
                                 outChannel.write(buffer);
                                 count += n;
                             }
+                            //noinspection unused
                             int total = count;
                         }
                     }

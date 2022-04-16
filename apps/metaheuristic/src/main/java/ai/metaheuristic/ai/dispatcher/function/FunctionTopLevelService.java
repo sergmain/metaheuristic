@@ -264,7 +264,7 @@ public class FunctionTopLevelService {
             List<FunctionApiData.FunctionConfigStatus> statuses;
             if (ZIP_EXT.equals(ext)) {
                 log.debug("Start unzipping archive");
-                ZipUtils.unzipFolder(zipFile, tempDir);
+                ZipUtils.unzipFolder(zipFile.toPath(), tempDir.toPath());
                 log.debug("Start loading function data to db");
                 statuses = new ArrayList<>();
                 loadFunctionsRecursively(statuses, tempDir);

@@ -297,7 +297,7 @@ public class SourceCodeTopLevelService {
             String filename = "process-"+processCodeDirName+".zip";
             File zipFile = new File(tempDir, filename);
 
-            ZipUtils.createZip(outputDir, zipFile);
+            ZipUtils.createZip(outputDir.toPath(), zipFile.toPath());
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
