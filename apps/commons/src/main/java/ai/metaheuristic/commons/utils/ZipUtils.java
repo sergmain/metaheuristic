@@ -334,7 +334,7 @@ public class ZipUtils {
 
                             Files.createDirectories(trgDir);
                             Path d = Files.createTempFile(trgDir, "doc-", ".bin");
-                            resultName = d.getName(d.getNameCount()-1).toFile().getPath();
+                            resultName = new File(parentFile, d.getName(d.getNameCount()-1).getFileName().toString()).getPath();
                         }
                         else {
                             File d = File.createTempFile("doc-", ".bin");
