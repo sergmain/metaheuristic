@@ -20,11 +20,17 @@ import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,11 +43,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestReduceVariablesUtils {
 
     @Test
-    public void test() {
+    public void test() throws IOException {
         final URL url = TestReduceVariablesUtils.class.getResource("/bin/variable-75492-aggregatedResult.zip");
         assertNotNull(url);
-        File zip = new File(url.getFile());
-        assertTrue(zip.exists());
+        Path zip = new File(url.getFile()).toPath();
+        assertTrue(Files.exists(zip));
 
         String yaml = """
                 version: 1
@@ -86,7 +92,13 @@ public class TestReduceVariablesUtils {
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
-        ReduceVariablesUtils.loadData(data, zip, config, (o)->{});
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+
+
+        ReduceVariablesUtils.loadData(actualTemp, data, zip, config, (o)->{});
 
         assertFalse(data.permutedVariables.isEmpty());
     }

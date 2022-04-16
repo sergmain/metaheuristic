@@ -27,14 +27,25 @@ import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -58,18 +69,18 @@ public class ReduceVariablesUtils {
     }
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
-            File zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
-        return reduceVariables(List.of(zipFile), config, request, null, (o)->{});
+            Path actualTemp, Path zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
+        return reduceVariables(actualTemp, List.of(zipFile), config, request, null, (o)->{});
     }
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
-            List<File> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter,
+            Path actualTemp, List<Path> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter,
             Consumer<ProgressData> progressConsumer
             ) {
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
-        for (File zipFile : zipFiles) {
-            loadData(data, zipFile, config, progressConsumer);
+        for (Path zipFile : zipFiles) {
+            loadData(actualTemp, data, zipFile, config, progressConsumer);
         }
 
         Map<String, Map<String, Pair<AtomicInteger, AtomicInteger>>> freqValues = getFreqValues(data, filter);
@@ -217,43 +228,53 @@ public class ReduceVariablesUtils {
     }
 
     @SneakyThrows
-    public static ReduceVariablesData.VariablesData loadData(ReduceVariablesData.VariablesData data, File zipFile, ReduceVariablesConfigParamsYaml config,
+    public static ReduceVariablesData.VariablesData loadData(Path actualTemp, ReduceVariablesData.VariablesData data, Path zipFile, ReduceVariablesConfigParamsYaml config,
                                                              Consumer<ProgressData> consumer) {
 
+        Path tempDir = Files.createTempDirectory(actualTemp, "reduce-variables-");
+
+/*
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
         if (tempDir==null) {
             throw new RuntimeException("Can't create temp dir in metaheuristic-temp dir");
         }
-        File zipDir = new File(tempDir, "zip");
+*/
+        Path zipDir = actualTemp.resolve("zip");
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
-        Collection<File> files =  FileUtils.listFiles(zipDir, new String[]{"zip"}, true);
+        final IOFileFilter filter = FileFileFilter.INSTANCE.and(new SuffixFileFilter(new String[]{".zip"}));
+        Collection<Path> files = PathUtils.walk(zipDir, filter, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
         int i=0;
-        for (File f : files) {
-            consumer.accept(new ProgressData(zipDir.getAbsolutePath(), files.size(), i++));
-            File tmp = DirUtils.createTempDir(tempDir, "load-data");
-            File zipDataDir = new File(tmp, "zip");
+        for (Path f : files) {
+            consumer.accept(new ProgressData(""+ zipDir.normalize(), files.size(), i++));
+            Path tmp = Files.createTempDirectory(tempDir, "load-data-");
+            Path zipDataDir = tmp.resolve("zip");
             ZipUtils.unzipFolder(f, zipDataDir, false, Collections.emptyList(), false);
 
-            File[] top = zipDataDir.listFiles(File::isDirectory);
-            if (top==null || top.length==0) {
-                throw new RuntimeException("can't find any dir in " + zipDataDir.getAbsolutePath());
+            final IOFileFilter dirFilter = DirectoryFileFilter.DIRECTORY;
+            List<Path> top = PathUtils.walk(zipDataDir, dirFilter, 1, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+
+            if (top.isEmpty()) {
+                throw new RuntimeException("can't find any dir in " + zipDataDir.normalize());
+            }
+            if (top.size()>1) {
+                throw new RuntimeException("actual size: " +top.size()+", " + top);
             }
 
-            File[] ctxDirs = top[0].listFiles(File::isDirectory);
-            if (ctxDirs==null) {
-                throw new RuntimeException("can't read content od dir " + top[0].getAbsolutePath());
+            Collection<Path> ctxDirs = PathUtils.walk(top.get(0), dirFilter, 0, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+            if (ctxDirs.isEmpty()) {
+                throw new RuntimeException("can't find any dir in " + top.get(0).normalize());
             }
 
             ReduceVariablesData.TopPermutedVariables pvs = new ReduceVariablesData.TopPermutedVariables();
             data.permutedVariables.add(pvs);
 
             pvs.subPermutedVariables = new ArrayList<>();
-            for (File ctxDir : ctxDirs) {
-                File metadata = new File(ctxDir, MH_METADATA_YAML_FILE_NAME);
+            for (Path ctxDir : ctxDirs) {
+                Path metadata = ctxDir.resolve(MH_METADATA_YAML_FILE_NAME);
                 MetadataAggregateFunctionParamsYaml mafpy;
-                if (metadata.exists()) {
-                    String yaml = FileUtils.readFileToString(metadata, StandardCharsets.UTF_8);
+                if (Files.exists(metadata)) {
+                    String yaml = Files.readString(metadata, StandardCharsets.UTF_8);
                     mafpy = MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
                 }
                 else {
@@ -263,12 +284,15 @@ public class ReduceVariablesUtils {
                 Map<String, String> values = new HashMap<>();
                 EnumsApi.Fitting fitting = null;
                 MetricValues metricValues = null;
-                for (File file : FileUtils.listFiles(ctxDir, null, false)) {
-                    final String fileName = file.getName();
+
+                Collection<Path> ffs = PathUtils.walk(ctxDir, FileFileFilter.INSTANCE, 1, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+
+                for (Path file : ffs) {
+                    final String fileName = file.getFileName().toString();
                     if (MH_METADATA_YAML_FILE_NAME.equals(fileName)) {
                         continue;
                     }
-                    String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                    String content = Files.readString(file, StandardCharsets.UTF_8);
                     String varName = mafpy.mapping.stream()
                             .filter(o->o.get(fileName)!=null)
                             .findFirst()
@@ -287,12 +311,12 @@ public class ReduceVariablesUtils {
                     }
                 }
 
-                if (ctxDir.getName().equals("1")) {
+                if (ctxDir.getFileName().toString().equals("1")) {
                     pvs.values.putAll(values);
                 }
                 else {
                     final ReduceVariablesData.PermutedVariables permutedVariables = new ReduceVariablesData.PermutedVariables();
-                    permutedVariables.dir = ""+f.getParentFile().getParentFile().getName()+File.separatorChar+f.getParentFile().getName()+File.separatorChar+top[0].getName()+File.separatorChar+ctxDir.getName();
+                    permutedVariables.dir = ctxDir.toString();
                     permutedVariables.fitting = fitting;
                     permutedVariables.metricValues = metricValues;
                     permutedVariables.values.putAll(values);

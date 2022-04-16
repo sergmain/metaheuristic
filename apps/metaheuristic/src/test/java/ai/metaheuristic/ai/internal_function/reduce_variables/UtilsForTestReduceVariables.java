@@ -22,12 +22,17 @@ import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
 import ai.metaheuristic.commons.S;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.apache.commons.io.FileUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -62,11 +67,12 @@ public class UtilsForTestReduceVariables {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
         System.out.println("Total files: " + pathnames.size());
-        List<File> files = new ArrayList<>();
+        List<Path> files = new ArrayList<>();
+
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists(), zip.getAbsolutePath());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -124,7 +130,12 @@ public class UtilsForTestReduceVariables {
                 "isMatrixOfWinning", true));
 
         System.out.println("Start reducing variables at " + new Date());
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
                     if (o.current==0) {
                         System.out.println("======================");
@@ -187,11 +198,11 @@ public class UtilsForTestReduceVariables {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
         System.out.println("Total files: " + pathnames.size());
-        List<File> files = new ArrayList<>();
+        List<Path> files = new ArrayList<>();
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists(), zip.getAbsolutePath());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -246,7 +257,13 @@ public class UtilsForTestReduceVariables {
                 "isMatrixOfWinning", true));
 
         System.out.println("Start reducing variables at " + new Date());
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
                     if (o.current==0) {
                         System.out.println("======================");
