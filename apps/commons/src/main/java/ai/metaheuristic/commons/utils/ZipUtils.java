@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +48,8 @@ import static java.nio.file.StandardOpenOption.*;
 @SuppressWarnings("WeakerAccess")
 @Slf4j
 public class ZipUtils {
+
+    public static final int BUFFER_SIZE = 4096 * 8;
 
     public enum State {OK, ERROR}
 
@@ -165,12 +168,13 @@ public class ZipUtils {
         zOut.putArchiveEntry(zipEntry);
 
         if (!Files.isDirectory(path)) {
-            try (SeekableByteChannel inChannel = Files.newByteChannel(path, Collections.emptySet())) {
+            try (ReadableByteChannel rbc = Files.newByteChannel(path, EnumSet.of(READ))) {
 
-                final ByteBuffer buffer = ByteBuffer.wrap(new byte[8192]);
+                final ByteBuffer buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE]);
                 int n;
-                while (-1 != (n = inChannel.read(buffer))) {
+                while (-1 != (n = rbc.read(buffer))) {
                     zOut.write(buffer.array(), 0, n);
+                    buffer.clear();
                 }
                 zOut.closeArchiveEntry();
             }
@@ -230,7 +234,7 @@ public class ZipUtils {
         log.debug("'\t\tis readable: {}", Files.isReadable(archivePath));
         List<String> errors = new ArrayList<>();
 
-        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, Collections.emptySet()); MyZipFile zipFile = new MyZipFile(inChannel)) {
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
@@ -296,7 +300,7 @@ public class ZipUtils {
             log.debug("'\t\tis writable: {}", Files.isWritable(zipDestinationFolderPath));
         }
 
-        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, Collections.emptySet()); MyZipFile zipFile = new MyZipFile(inChannel)) {
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
 
             Map<String, String> mapping = new HashMap<>();
 
@@ -320,7 +324,7 @@ public class ZipUtils {
 
                     Path newDir = zipDestinationFolderPath.resolve(name);
                     if (debug) {
-                        log.debug("'\t\t\tcreate dirs in {}", newDir.toFile().getAbsolutePath());
+                        log.debug("'\t\t\tcreate dirs in {}", newDir.normalize());
                     }
                     Files.createDirectories(newDir);
                 }
@@ -354,10 +358,10 @@ public class ZipUtils {
                         try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING, SYNC))) {
                             int n;
                             int count = 0;
-                            byte[] bytes = new byte[8192];
+                            byte[] bytes = new byte[BUFFER_SIZE];
                             while ((n=inputStream.read(bytes))!=-1) {
                                 final ByteBuffer buffer = ByteBuffer.wrap(bytes, 0, n);
-                                outChannel.write(buffer);
+                                outChannel.write(buffer.flip());
                                 count += n;
                             }
                             //noinspection unused
