@@ -332,17 +332,17 @@ public class ZipUtils {
                     String resultName;
                     File f = new File(name);
                     if (useMapping && !excludeFromMapping.contains(f.getName())) {
-                        final File parentFile = f.getParentFile();
-                        if (parentFile !=null) {
-                            Path trgDir = zipDestinationFolderPath.resolve(parentFile.getPath());
+                        final Path parentPath = zipDestinationFolderPath.getFileSystem().getPath(name).getParent();
+                        if (parentPath !=null) {
+                            Path trgDir = zipDestinationFolderPath.resolve(parentPath);
 
                             Files.createDirectories(trgDir);
                             Path d = Files.createTempFile(trgDir, "doc-", ".bin");
-                            resultName = new File(parentFile, d.getName(d.getNameCount()-1).getFileName().toString()).getPath();
+                            resultName = parentPath.resolve(d.getFileName()).toString();
                         }
                         else {
-                            File d = File.createTempFile("doc-", ".bin");
-                            resultName = d.getName();
+                            Path d = Files.createTempFile(zipDestinationFolderPath, "doc-", ".bin");
+                            resultName = d.getFileName().toString();
                         }
                         mapping.put(resultName, name);
                     }
@@ -361,7 +361,7 @@ public class ZipUtils {
                             byte[] bytes = new byte[BUFFER_SIZE];
                             while ((n=inputStream.read(bytes))!=-1) {
                                 final ByteBuffer buffer = ByteBuffer.wrap(bytes, 0, n);
-                                outChannel.write(buffer.flip());
+                                outChannel.write(buffer);
                                 count += n;
                             }
                             //noinspection unused
