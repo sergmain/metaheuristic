@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVar
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
-import ai.metaheuristic.commons.S;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import org.apache.commons.io.FileUtils;
@@ -50,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UtilsForTestReduceVariables {
 
     private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
+    private static final Pattern ATTENTION_SELECTOR = Pattern.compile(".*_prediction: \\[[4-9],.*");
 
     public static boolean filterStr(String o) {
         return FILTER.matcher(o).find();
@@ -142,8 +142,8 @@ public class UtilsForTestReduceVariables {
                         System.out.println("======================");
                         System.out.println(o.file);
                     }
-//                    System.out.println(S.f("%-10d %d", o.current, o.total));
-                });
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -163,8 +163,17 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        System.out.println("\n==== Attention =================");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);
@@ -269,7 +278,8 @@ public class UtilsForTestReduceVariables {
                         System.out.println(o.file);
                     }
 //                    System.out.println(S.f("%-10d %d", o.current, o.total));
-                });
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -289,8 +299,17 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        System.out.println("\n==== Attention =================");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);

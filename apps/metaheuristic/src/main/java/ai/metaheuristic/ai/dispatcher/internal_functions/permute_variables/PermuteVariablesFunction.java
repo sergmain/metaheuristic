@@ -132,6 +132,9 @@ public class PermuteVariablesFunction implements InternalFunction {
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
+        final String vAs = MetaUtils.getValue(process.metas, "variables-as");
+        final Enums.VariablesAs variablesAs = vAs!=null ? Enums.VariablesAs.valueOf(vAs) : Enums.VariablesAs.permute;
+
         final boolean producePresentVariable = MetaUtils.isTrue(taskParamsYaml.task.metas, "produce-present-variable");
         final String producePresentVariablePrefix = MetaUtils.getValue(process.metas, "produce-present-variable-prefix");
         final boolean upperCaseFirstChar = MetaUtils.isTrue(process.metas, "produce-present-variable-upper-case-first-char");
@@ -168,7 +171,8 @@ public class PermuteVariablesFunction implements InternalFunction {
                 ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
                         permuteVariablesAndInlinesTxService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId,
-                                producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables
+                                producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables,
+                                variablesAs
                         )));
     }
 }

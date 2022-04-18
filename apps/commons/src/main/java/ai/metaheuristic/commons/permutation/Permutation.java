@@ -84,7 +84,6 @@ public class Permutation<T> {
         return combinationUtil(arr, array, 0, n - 1, 0, r, acceptor);
     }
 
-    /*Driver function to check for above function*/
     public static void main(String[] args) {
         ArrayList<String> arr = new ArrayList<>(Arrays.asList("+1", "+2", "-3", "-4", "5!"));
 

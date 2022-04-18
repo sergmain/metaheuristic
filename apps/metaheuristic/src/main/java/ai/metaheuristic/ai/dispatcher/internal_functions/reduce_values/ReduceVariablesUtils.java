@@ -21,26 +21,20 @@ import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFun
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -67,12 +61,12 @@ public class ReduceVariablesUtils {
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
             Path actualTemp, Path zipFile, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request) {
-        return reduceVariables(actualTemp, List.of(zipFile), config, request, null, (o)->{});
+        return reduceVariables(actualTemp, List.of(zipFile), config, request, null, (o)->{}, (o)->false);
     }
 
     public static ReduceVariablesData.ReduceVariablesResult reduceVariables(
             Path actualTemp, List<Path> zipFiles, ReduceVariablesConfigParamsYaml config, ReduceVariablesData.Request request, @Nullable Function<String, Boolean> filter,
-            Consumer<ProgressData> progressConsumer
+            Consumer<ProgressData> progressConsumer, Function<ReduceVariablesData.PermutedVariables, Boolean> attentionSelector
             ) {
 
         ReduceVariablesData.VariablesData data = new ReduceVariablesData.VariablesData();
@@ -123,7 +117,7 @@ public class ReduceVariablesUtils {
             result.byValue.put(key, value);
         }
 
-        result.metricsList = getExperimentMetrics(data);
+        result.attentionsAndExperimentMetrics = getExperimentMetrics(data, attentionSelector);
 
         return result;
     }
@@ -161,13 +155,26 @@ public class ReduceVariablesUtils {
         return freqValues;
     }
 
-    private static List<ReduceVariablesData.ExperimentMetrics> getExperimentMetrics(ReduceVariablesData.VariablesData data) {
-        List<ReduceVariablesData.ExperimentMetrics> ems = new ArrayList<>();
+
+
+    private static ReduceVariablesData.AttentionsAndExperimentMetrics getExperimentMetrics(
+            ReduceVariablesData.VariablesData data, Function<ReduceVariablesData.PermutedVariables, Boolean> attentionSelector) {
+        ReduceVariablesData.AttentionsAndExperimentMetrics r = new ReduceVariablesData.AttentionsAndExperimentMetrics();
 
         boolean emptyMetrics = false;
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
             for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
-
+                if (attentionSelector.apply(subPermutedVariable)) {
+                    final ReduceVariablesData.Attention attention = new ReduceVariablesData.Attention();
+                    attention.params.putAll(permutedVariable.values);
+                    attention.params.remove("predicted");
+                    subPermutedVariable.values.entrySet().stream()
+                            .filter(e->e.getKey().startsWith("is") && "true".equals(e.getValue()))
+                            .map(Map.Entry::getKey)
+                            .collect(Collectors.toCollection(()->attention.dataset));
+                    attention.result = subPermutedVariable.metricValues.comment;
+                    r.attentions.add(attention);
+                }
                 if (subPermutedVariable.fitting== EnumsApi.Fitting.UNDERFITTING) {
                     continue;
                 }
@@ -182,15 +189,15 @@ public class ReduceVariablesUtils {
                 em.metrics = subPermutedVariable.metricValues.values.entrySet().stream().map(o->""+o.getKey()+":"+o.getValue()).collect(Collectors.joining(","));
                 em.dir = subPermutedVariable.dir;
 
-                ems.add(em);
+                r.metricsList.add(em);
             }
         }
         if (emptyMetrics) {
             System.out.println("Found an empty metrics");
         }
         final String metricsName = "sum_norm_6";
-        ems.sort((o1, o2) -> o2.metricValues.values.get(metricsName).compareTo(o1.metricValues.values.get(metricsName)));
-        return ems;
+        r.metricsList.sort((o1, o2) -> o2.metricValues.values.get(metricsName).compareTo(o1.metricValues.values.get(metricsName)));
+        return r;
     }
 
     private static Map<String, Pair<AtomicInteger, AtomicInteger>> getFreqVariables(

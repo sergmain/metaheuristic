@@ -216,4 +216,8 @@ public final class Enums {
     public enum AuthType {
         basic, oauth
     }
+
+    public enum VariablesAs {
+        permute, array;
+    }
 }

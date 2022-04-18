@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -65,6 +67,27 @@ public class ReduceVariablesData {
     public static class ReduceVariablesResult {
         public final Map<String, String> byValue = new HashMap<>();
         public final Map<String, Boolean> byInstance = new HashMap<>();
-        public List<ExperimentMetrics> metricsList;
+        public AttentionsAndExperimentMetrics attentionsAndExperimentMetrics;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Attention {
+        public final Map<String, String> params = new HashMap<>();
+        public final List<String> dataset = new ArrayList<>();
+        public String result;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Attentions {
+        public final List<Attention> attentions = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AttentionsAndExperimentMetrics {
+        public final List<Attention> attentions = new ArrayList<>();
+        public final List<ExperimentMetrics> metricsList = new ArrayList<>();
     }
 }

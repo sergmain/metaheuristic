@@ -31,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class PermuteValuesOfVariablesService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void createTaskForPermutations(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, String subProcessContextId, List<InlineVariable> inlineVariables) {
