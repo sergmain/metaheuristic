@@ -19,7 +19,9 @@ package ai.metaheuristic.ai.dispatcher.variable;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -51,6 +53,7 @@ public class VariableTopLevelService {
 
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -96,5 +99,11 @@ public class VariableTopLevelService {
             log.error(es, th);
             throw new InternalFunctionException(system_error, es);
         }
+    }
+
+    public void setAsNullFunction(SimpleVariable variable, VariableUploadedEvent event, Long execContextVariableStateId) {
+        variableService.setVariableAsNull(variable.id);
+        execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), execContextVariableStateId);
+
     }
 }

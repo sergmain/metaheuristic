@@ -106,13 +106,16 @@ public class TaskWithInternalContextTopLevelService {
                 }
                 if (!variableHolder.variable.inited) {
                     throw new InternalFunctionException(variable_not_found,
-                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited");
+                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
-
-                File tempFile = File.createTempFile("output-", ".bin", tempDir);
-
-                variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
-                execContextVariableService.storeDataInVariable(output, tempFile);
+                if (variableHolder.variable.nullified) {
+                    variableService.setVariableAsNull(output.id);
+                }
+                else {
+                    File tempFile = File.createTempFile("output-", ".bin", tempDir);
+                    variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
+                    execContextVariableService.storeDataInVariable(output, tempFile);
+                }
             }
         }
         catch (IOException e) {

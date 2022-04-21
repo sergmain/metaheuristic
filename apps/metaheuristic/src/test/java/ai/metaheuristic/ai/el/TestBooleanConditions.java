@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,27 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
-
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import java.util.List;
+package ai.metaheuristic.ai.el;
 
 /**
  * @author Serge
- * Date: 6/30/2021
- * Time: 8:01 PM
+ * Date: 4/20/2022
+ * Time: 5:43 PM
  */
-public class PermutationData {
-
-    @Data
-    @AllArgsConstructor
-    public static class Inlines {
-        public final StringVariableData.StringVariableItem item;
-        public final List<InlineVariable> inlineVariables;
-        public final String inlineVariableName;
-    }
-
+public class TestBooleanConditions {
 }

@@ -74,7 +74,7 @@ public class ReduceVariablesData {
     @NoArgsConstructor
     public static class Attention {
         public final Map<String, String> params = new HashMap<>();
-        public final List<String> dataset = new ArrayList<>();
+        public final Map<String, String> dataset = new HashMap<>();
         public String result;
     }
 

@@ -34,6 +34,7 @@ public class SimpleVariable {
     public String params;
     public String filename;
     public boolean inited;
+    // variable is set as null
     public boolean nullified;
     public String taskContextId;
 

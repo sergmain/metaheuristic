@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFun
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
@@ -165,13 +166,19 @@ public class ReduceVariablesUtils {
         for (ReduceVariablesData.TopPermutedVariables permutedVariable : data.permutedVariables) {
             for (ReduceVariablesData.PermutedVariables subPermutedVariable : permutedVariable.subPermutedVariables) {
                 if (attentionSelector.apply(subPermutedVariable)) {
+                    if (subPermutedVariable.metricValues==null || S.b(subPermutedVariable.metricValues.comment)) {
+                        System.out.println("(subPermutedVariable.metricValues==null || S.b(subPermutedVariable.metricValues.comment))");
+                        continue;
+                    }
                     final ReduceVariablesData.Attention attention = new ReduceVariablesData.Attention();
                     attention.params.putAll(permutedVariable.values);
                     attention.params.remove("predicted");
-                    subPermutedVariable.values.entrySet().stream()
-                            .filter(e->e.getKey().startsWith("is") && "true".equals(e.getValue()))
-                            .map(Map.Entry::getKey)
-                            .collect(Collectors.toCollection(()->attention.dataset));
+                    for (Map.Entry<String, String> entry : subPermutedVariable.values.entrySet()) {
+                        if (!entry.getKey().startsWith("is")) {
+                            continue;
+                        }
+                        attention.dataset.put(entry.getKey(), entry.getValue());
+                    }
                     attention.result = subPermutedVariable.metricValues.comment;
                     r.attentions.add(attention);
                 }

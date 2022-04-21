@@ -136,6 +136,7 @@ public class Consts {
     public static final String MH_EXEC_SOURCE_CODE_FUNCTION = "mh.exec-source-code";
     public static final String MH_EVALUATION_FUNCTION = "mh.evaluation";
     public static final String MH_INLINE_AS_VARIABLE_FUNCTION = "mh.inline-as-variable";
+    public static final String MH_STRING_AS_VARIABLE_FUNCTION = "mh.string-as-variable";
     public static final String MH_REDUCE_VARIABLES_FUNCTION = "mh.reduce-variables";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);

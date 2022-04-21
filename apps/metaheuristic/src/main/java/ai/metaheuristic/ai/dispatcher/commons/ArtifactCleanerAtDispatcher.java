@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -124,7 +125,12 @@ public class ArtifactCleanerAtDispatcher {
                 if (isBusy()) {
                     return;
                 }
-                functionDataRepository.deleteByFunctionCode(functionCode);
+                try {
+                    functionDataRepository.deleteByFunctionCode(functionCode);
+                }
+                catch (Throwable th) {
+                    log.warn("#510.080 error while deleting obsolete funcion " + functionCode);
+                }
             }
         }
     }
@@ -218,7 +224,12 @@ public class ArtifactCleanerAtDispatcher {
                 forDeletion.add(execContextId);
             }
         }
-        execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
+        try {
+            execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
+        }
+        catch (Throwable th) {
+            log.warn("#510.235 error while deleting ExecContext " + forDeletion);
+        }
     }
 
     private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
@@ -239,7 +250,12 @@ public class ArtifactCleanerAtDispatcher {
                     continue;
                 }
                 log.info("#510.240 Found orphan ExecContextGraph #{}", allExecContextGraphId);
-                execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
+                try {
+                    execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
+                }
+                catch (Throwable th) {
+                    log.warn("#510.245 error while deleting ExecContextGraph #" + allExecContextGraphId);
+                }
             }
         }
     }
@@ -290,7 +306,12 @@ public class ArtifactCleanerAtDispatcher {
                     continue;
                 }
                 log.info("#510.320 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
-                execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
+                try {
+                    execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
+                }
+                catch (Throwable th) {
+                    log.warn("#510.325 error while deleting ExecContextVariableState " + allExecContextVariableStateId);
+                }
             }
         }
     }

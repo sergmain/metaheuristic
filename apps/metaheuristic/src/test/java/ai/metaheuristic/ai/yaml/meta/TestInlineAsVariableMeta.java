@@ -16,23 +16,16 @@
 
 package ai.metaheuristic.ai.yaml.meta;
 
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.data.InlineVariableData.*;
+import static ai.metaheuristic.ai.dispatcher.data.StringVariableData.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -52,14 +45,14 @@ public class TestInlineAsVariableMeta {
         Mapping mapping = yaml.load(yamlStr);
         assertNotNull(mapping);
 
-        List<InlineAsVar> list = mapping.mapping;
+        List<StringAsVar> list = mapping.mapping;
 
         assertNotNull(list);
         assertEquals(4, list.size());
-        assertEquals(new InlineAsVar("g1","n1","o1"), list.get(0));
-        assertEquals(new InlineAsVar("g2","n2","o2"), list.get(1));
-        assertEquals(new InlineAsVar("g3","n3","o3"), list.get(2));
-        assertEquals(new InlineAsVar("g4","n4","o4"), list.get(3));
+        assertEquals(new StringAsVar("g1",null,"n1","o1"), list.get(0));
+        assertEquals(new StringAsVar("g2",null,"n2","o2"), list.get(1));
+        assertEquals(new StringAsVar("g3",null,"n3","o3"), list.get(2));
+        assertEquals(new StringAsVar("g4",null,"n4","o4"), list.get(3));
 
     }
 }

@@ -17,10 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -30,7 +34,9 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -42,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.system_error;
 
@@ -72,10 +79,13 @@ public class EvaluateExpressionLanguage {
         public final VariableService variableService;
         public final VariableRepository variableRepository;
         public final ExecContextVariableService execContextVariableService;
+        public final Consumer<SimpleVariable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableService variableService,
-                             ExecContextVariableService execContextVariableService, VariableRepository variableRepository) {
+                             ExecContextVariableService execContextVariableService, VariableRepository variableRepository,
+                             Consumer<SimpleVariable> setAsNullFunction
+                             ) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
@@ -83,6 +93,7 @@ public class EvaluateExpressionLanguage {
             this.variableService = variableService;
             this.execContextVariableService = execContextVariableService;
             this.variableRepository = variableRepository;
+            this.setAsNullFunction = setAsNullFunction;
         }
 
         @Override
@@ -100,24 +111,27 @@ public class EvaluateExpressionLanguage {
                 }
 
                 @Override
-                public boolean canRead(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                public boolean canRead(EvaluationContext context, @Nullable Object target, String name) {
                     return true;
                 }
 
                 @Override
-                public TypedValue read(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                public TypedValue read(EvaluationContext context, @Nullable Object target, String name) {
                     VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
-                    return new TypedValue(variableHolder);
+                    TypeDescriptor typeDescriptor = new TypeDescriptor(
+                            ResolvableType.forClass(VariableUtils.VariableHolder.class), VariableUtils.VariableHolder.class, null);
+
+                    return new TypedValue(variableHolder, typeDescriptor);
                 }
 
                 @Override
-                public boolean canWrite(EvaluationContext context, @Nullable Object target, String name) throws AccessException {
+                public boolean canWrite(EvaluationContext context, @Nullable Object target, String name) {
                     return true;
                 }
 
                 @SuppressWarnings("ConstantConditions")
                 @Override
-                public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) throws AccessException {
+                public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) {
                     VariableUtils.VariableHolder variableHolderOutput = getVariableHolder(name);
                     if (variableHolderOutput.globalVariable!=null) {
                         throw new InternalFunctionException(
@@ -131,9 +145,7 @@ public class EvaluateExpressionLanguage {
                     }
 
                     if (newValue==null) {
-                        // TODO 2021-06-30 add a check that a variable can be set as null. this check must be added outside of this code
-                        variableService.setVariableAsNull(variableHolderOutput.variable.id);
-                        int i=0;
+                        setAsNullFunction.accept(variableHolderOutput.variable);
                         return;
                     }
 
@@ -148,6 +160,9 @@ public class EvaluateExpressionLanguage {
                     }
                     else if (newValue instanceof String) {
                         strValue = (String)newValue;
+                    }
+                    else if (newValue instanceof Boolean) {
+                        strValue = ""+newValue;
                     }
                     else {
                         throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
@@ -174,22 +189,24 @@ public class EvaluateExpressionLanguage {
                             } finally {
                                 DirUtils.deleteAsync(tempDir);
                             }
+                            return;
                         }
-                        else if (intValue!=null) {
-                            byte[] bytes = intValue.toString().getBytes();
-                            try (InputStream is = new ByteArrayInputStream(bytes)) {
-                                variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
-                            }
+
+                        byte[] bytes;
+                        if (intValue!=null) {
+                            bytes = intValue.toString().getBytes();
                         }
                         else if (strValue!=null) {
-                            byte[] bytes = strValue.getBytes();
-                            try (InputStream is = new ByteArrayInputStream(bytes)) {
-                                variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
-                            }
+                            bytes = strValue.getBytes();
                         }
                         else {
                             throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
                         }
+
+                        try (InputStream is = new ByteArrayInputStream(bytes)) {
+                            variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
+                        }
+                        variableHolderOutput.variable.inited = true;
                     }
                     catch (InternalFunctionException e) {
                         throw e;
@@ -223,7 +240,7 @@ public class EvaluateExpressionLanguage {
                 @Nullable
                 @Override
                 public MethodExecutor resolve(EvaluationContext context, Object targetObject, String name, List<TypeDescriptor> argumentTypes) throws AccessException {
-                    return null;
+                    throw new NotImplementedException("resolver not configured for " + name);
                 }
             };
             return List.of(mr);
@@ -257,7 +274,24 @@ public class EvaluateExpressionLanguage {
                 @Nullable
                 @Override
                 public Object convertValue(@Nullable Object value, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
-                    return null;
+                    if (sourceType==null || value==null) {
+                        return null;
+                    }
+                    if (sourceType.getObjectType().equals(targetType.getObjectType())) {
+                        return value;
+                    }
+
+                    if (targetType.getObjectType().equals(Boolean.class)) {
+                        if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
+                            return getValueBoolean(value);
+                        }
+                    }
+                    if (targetType.getObjectType().equals(Integer.class)) {
+                        if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
+                            return getValueInteger(value);
+                        }
+                    }
+                    throw new NotImplementedException("Not yet, srcType: "+sourceType.getObjectType().getSimpleName()+", trgType: " + targetType.getObjectType().getSimpleName());
                 }
             };
 //            return new StandardTypeConverter();
@@ -276,8 +310,8 @@ public class EvaluateExpressionLanguage {
                     if (firstObject==null || secondObject==null) {
                         throw new EvaluationException("(firstObject==null || secondObject==null)");
                     }
-                    Integer firstValue = getValue(firstObject);
-                    Integer secondValue = getValue(secondObject);
+                    Integer firstValue = getValueInteger(firstObject);
+                    Integer secondValue = getValueInteger(secondObject);
                     final int compare = firstValue.compareTo(secondValue);
                     return compare;
                 }
@@ -299,8 +333,8 @@ public class EvaluateExpressionLanguage {
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
                                         "#509.100 (leftOperand==null || rightOperand==null)"));
                     }
-                    Integer leftValue = getValue(leftOperand);
-                    Integer rightValue = getValue(rightOperand);
+                    Integer leftValue = getValueInteger(leftOperand);
+                    Integer rightValue = getValueInteger(rightOperand);
                     switch (operation) {
                         case ADD:
                             return leftValue + rightValue;
@@ -322,34 +356,51 @@ public class EvaluateExpressionLanguage {
             return ool;
         }
 
-        private Integer getValue(Object operand) {
+        private Integer getValueInteger(Object operand) {
             if (operand instanceof Integer) {
                 return (Integer)operand;
             }
-            if (operand instanceof VariableUtils.VariableHolder) {
-                VariableUtils.VariableHolder variableHolder = (VariableUtils.VariableHolder) operand;
-                if (variableHolder.notInited()) {
-                    throw new EvaluationException("(variableHolder.notInited())");
-                }
-                String strValue;
-                if (variableHolder.variable!=null) {
-                    strValue = variableService.getVariableDataAsString(variableHolder.variable.id);
-                }
-                else if (variableHolder.globalVariable!=null) {
-                    strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
-                }
-                else {
-                    throw new IllegalStateException("both are null");
-                }
-                return Integer.valueOf(strValue);
+            if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
+                throw new EvaluationException("not supported type: " + operand.getClass());
             }
-            throw new EvaluationException("not supported type: " + operand.getClass());
+
+            String strValue = getAsString(variableHolder);
+            return Integer.valueOf(strValue);
+        }
+
+        private Boolean getValueBoolean(Object operand) {
+            if (operand instanceof Boolean) {
+                return (Boolean)operand;
+            }
+            if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
+                throw new EvaluationException("not supported type: " + operand.getClass());
+            }
+
+            String strValue = getAsString(variableHolder);
+            return Boolean.parseBoolean(strValue);
+        }
+
+        private String getAsString(VariableUtils.VariableHolder variableHolder) {
+            if (variableHolder.notInited()) {
+                throw new EvaluationException("(variableHolder.notInited())");
+            }
+            String strValue;
+            if (variableHolder.variable!=null) {
+                strValue = variableService.getVariableDataAsString(variableHolder.variable.id);
+            }
+            else if (variableHolder.globalVariable!=null) {
+                strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+            }
+            else {
+                throw new IllegalStateException("both are null");
+            }
+            return strValue;
         }
 
         @Override
         public void setVariable(String name, @Nullable Object o) {
             VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
-
+            throw new NotImplementedException("Not yet");
         }
 
         @Nullable
@@ -380,17 +431,23 @@ public class EvaluateExpressionLanguage {
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
             GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService,
-            VariableRepository variableRepository
+            VariableRepository variableRepository, Consumer<SimpleVariable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
                 taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
-                execContextVariableService, variableRepository);
+                execContextVariableService, variableRepository, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);
-        Object obj = exp.getValue(mhEvalContext);
-        return obj;
+        try {
+            Object obj = exp.getValue(mhEvalContext);
+            return obj;
+        }
+        catch (EvaluationException e) {
+            log.error("Error while evaluating exp: " + expression, e);
+            throw e;
+        }
     }
 }

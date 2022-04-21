@@ -32,10 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -47,6 +44,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 6:53 PM
  */
 public class UtilsForTestReduceVariables {
+
+    public static class ParamsAsJson {
+        public final List<Map<String, String>> params = new ArrayList<>();
+    }
 
     private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
     private static final Pattern ATTENTION_SELECTOR = Pattern.compile(".*_prediction: \\[[4-9],.*");
@@ -163,13 +164,25 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
-        System.out.println("\n==== Attention =================");
+        ParamsAsJson paramsAsJson = new ParamsAsJson();
+
+        System.out.println("\n=== Attention =================_");
         System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
         for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            Map<String, String> map = new HashMap<>();
+            map.putAll(attention.dataset);
+            map.putAll(attention.params);
+            paramsAsJson.params.add(map);
             System.out.println(attention.result);
             System.out.println(attention.dataset);
             System.out.println(attention.params);
             System.out.println();
+        }
+
+        System.out.println("\n=== Json ==================");
+        for (Map<String, String> param : paramsAsJson.params) {
+            String json = JsonUtils.getMapper().writeValueAsString(param);
+            System.out.println(json);
         }
 
         System.out.println("\n=====================");

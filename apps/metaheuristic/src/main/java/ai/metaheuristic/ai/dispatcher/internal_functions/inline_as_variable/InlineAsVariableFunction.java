@@ -18,39 +18,29 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.inline_as_variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.dispatcher.internal_functions.string_as_variable.StringAsVariableFunction;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
-
-import java.util.Map;
-
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
 /**
  * @author Serge
  * Date: 6/27/2021
  * Time: 11:20 AM
+ *
+ * !!! Deprecated !!! use mh.string-as-variable as a internal function instead of mh.inline-as-variable
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
+@Deprecated
 public class InlineAsVariableFunction implements InternalFunction {
 
-    private static final String MAPPING = "mapping";
-
-    private final ExecContextVariableService execContextVariableService;
+    private final StringAsVariableFunction stringAsVariableFunction;
 
     @Override
     public String getCode() {
@@ -67,41 +57,7 @@ public class InlineAsVariableFunction implements InternalFunction {
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
-        TxUtils.checkTxNotExists();
-
-        if (taskParamsYaml.task.inline==null) {
-            throw new InternalFunctionException(inline_not_found, "#513.200 inline is null");
-        }
-
-        String mappingStr = MetaUtils.getValue(taskParamsYaml.task.metas, MAPPING);
-        if (S.b(mappingStr)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ MAPPING +"' wasn't found or it's blank");
-        }
-
-        Yaml yaml = YamlUtils.init(InlineVariableData.Mapping.class);
-        InlineVariableData.Mapping mapping = yaml.load(mappingStr);
-
-        for (InlineVariableData.InlineAsVar inlineAsVar : mapping.mapping) {
-
-            final Map<String, String> map = taskParamsYaml.task.inline.get(inlineAsVar.group);
-            if (map==null) {
-                throw new InternalFunctionException(inline_not_found, "#513.340 inline group '"+inlineAsVar.group+"' wasn't found");
-            }
-            String value = map.get(inlineAsVar.name);
-            if (value==null) {
-                throw new InternalFunctionException(inline_not_found, "#513.360 inline for group '"+inlineAsVar.group+"' with name '"+inlineAsVar.name+"' wasn't found");
-            }
-
-            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
-                    .filter(o->o.name.equals(inlineAsVar.output))
-                    .findFirst()
-                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
-
-            execContextVariableService.storeStringInVariable(outputVariable, value);
-        }
-
-        //noinspection unused
-        int i=0;
+        stringAsVariableFunction.process(simpleExecContext, taskId, taskContextId, taskParamsYaml);
     }
 }
 

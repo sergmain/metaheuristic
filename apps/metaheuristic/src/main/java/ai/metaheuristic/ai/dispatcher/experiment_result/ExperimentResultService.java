@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
-import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
+import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -174,7 +174,7 @@ public class ExperimentResultService {
 
         ExecContextParamsYaml.VariableDeclaration variableDeclaration = simpleExecContext.paramsYaml.variables;
 
-        InlineVariableData.InlineVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
+        StringVariableData.StringVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(inlineVariableItem.inlineKey)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#604.160 Meta 'inline-key' wasn't found or empty.");
@@ -397,7 +397,7 @@ public class ExperimentResultService {
     }
 
     private void updateData(ExperimentResult experimentResult, ExperimentResultParams experimentResultParamsYaml,
-                            InlineVariableData.InlineVariableItem item, List<ExperimentFeature> features, List<ExperimentTaskFeature> taskFeatures) {
+                            StringVariableData.StringVariableItem item, List<ExperimentFeature> features, List<ExperimentTaskFeature> taskFeatures) {
 
         item.inlines.entrySet().stream()
                 .map(e-> new ExperimentApiData.HyperParam(e.getKey(), e.getValue(), InlineVariableUtils.getNumberOfVariants(e.getValue()).count))
