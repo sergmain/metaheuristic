@@ -70,18 +70,22 @@ public class TaskWithInternalContextTopLevelService {
 
         final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        copyVariables(subExecContextId, taskId, taskParamsYaml);
+        copyVariables(subExecContextId, task, taskParamsYaml);
         taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
     }
 
-    private void copyVariables(Long execContextId, Long taskId, TaskParamsYaml taskParamsYaml) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found");
+    private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
+        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId);
+        if (subExecContext == null) {
+            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found #" +subExecContextId);
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = subExecContext.getExecContextParamsYaml();
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
+        }
+        ExecContextImpl ec = execContextCache.findById(task.execContextId);
+        if (ec == null) {
+            throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
         }
         File tempDir = null;
         try {
@@ -96,7 +100,7 @@ public class TaskWithInternalContextTopLevelService {
                 ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
 
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
-                        execContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
+                        subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
                                     "#992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
@@ -112,8 +116,8 @@ public class TaskWithInternalContextTopLevelService {
                             "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
                 if (variableHolder.variable.nullified) {
-                    VariableUploadedEvent event = new VariableUploadedEvent(execContextId, taskId, output.id, true);
-                    variableTopLevelService.setAsNullFunction(output.id, event, execContext.execContextVariableStateId);
+                    VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
+                    variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId);
                 }
                 else {
                     File tempFile = File.createTempFile("output-", ".bin", tempDir);
