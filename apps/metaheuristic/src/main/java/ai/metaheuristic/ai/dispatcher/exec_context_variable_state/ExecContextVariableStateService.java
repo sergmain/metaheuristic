@@ -55,9 +55,9 @@ public class ExecContextVariableStateService {
 
     private void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
         register(execContextVariableStateId, (ecpy)-> {
-            Set<CheckTaskCanBeFinishedTxEvent> eventsFroChecking = new HashSet<>();
+            Set<CheckTaskCanBeFinishedTxEvent> eventsForChecking = new HashSet<>();
             for (VariableUploadedEvent event : events) {
-                eventsFroChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
+                eventsForChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
                 for (ExecContextApiData.VariableState task : ecpy.tasks) {
                     if (task.taskId.equals(event.taskId)) {
                         if (task.outputs==null || task.outputs.isEmpty()) {
@@ -75,7 +75,7 @@ public class ExecContextVariableStateService {
                     }
                 }
             }
-            for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsFroChecking) {
+            for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsForChecking) {
                 eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(checkTaskCanBeFinishedTxEvent);
             }
         });

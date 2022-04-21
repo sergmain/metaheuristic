@@ -101,8 +101,8 @@ public class VariableTopLevelService {
         }
     }
 
-    public void setAsNullFunction(SimpleVariable variable, VariableUploadedEvent event, Long execContextVariableStateId) {
-        variableService.setVariableAsNull(variable.id);
+    public void setAsNullFunction(Long variableId, VariableUploadedEvent event, Long execContextVariableStateId) {
+        variableService.setVariableAsNull(variableId);
         execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), execContextVariableStateId);
 
     }

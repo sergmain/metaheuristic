@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -55,6 +57,7 @@ public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
+    private final VariableTopLevelService variableTopLevelService;
     private final VariableService variableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextCache execContextCache;
@@ -67,12 +70,12 @@ public class TaskWithInternalContextTopLevelService {
 
         final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        copyVariables(taskParamsYaml, subExecContextId);
+        copyVariables(subExecContextId, taskId, taskParamsYaml);
         taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
     }
 
-    private void copyVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
-        ExecContextImpl execContext = execContextCache.findById(subExecContextId);
+    private void copyVariables(Long execContextId, Long taskId, TaskParamsYaml taskParamsYaml) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found");
         }
@@ -93,7 +96,7 @@ public class TaskWithInternalContextTopLevelService {
                 ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
 
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
-                        subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
+                        execContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
                                     "#992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
@@ -109,7 +112,8 @@ public class TaskWithInternalContextTopLevelService {
                             "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
                 if (variableHolder.variable.nullified) {
-                    variableService.setVariableAsNull(output.id);
+                    VariableUploadedEvent event = new VariableUploadedEvent(execContextId, taskId, output.id, true);
+                    variableTopLevelService.setAsNullFunction(output.id, event, execContext.execContextVariableStateId);
                 }
                 else {
                     File tempFile = File.createTempFile("output-", ".bin", tempDir);

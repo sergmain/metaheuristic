@@ -291,13 +291,12 @@ public class TaskWithInternalContextEventService {
 
             boolean notSkip = true;
             if (!S.b(p.condition)) {
+                // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+                // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
-                        (v) -> {
-                            VariableUploadedEvent event = new VariableUploadedEvent(simpleExecContext.execContextId, taskId, v.id, true);
-                            variableTopLevelService.setAsNullFunction(v, event, simpleExecContext.execContextVariableStateId);
-                        });
+                        (v) -> variableService.setVariableAsNull(v.id));
                 if (obj!=null && !obj.getClass().equals(Boolean.class)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);

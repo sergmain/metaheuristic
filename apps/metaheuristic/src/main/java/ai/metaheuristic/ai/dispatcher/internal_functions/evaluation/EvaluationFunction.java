@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
@@ -99,13 +98,12 @@ public class EvaluationFunction implements InternalFunction {
                             source_code_not_found,"#503.320 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
         }
 
+        // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+        // because mh.evaluate doesn't have any output variables
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
                 this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository,
-                (v) -> {
-                    VariableUploadedEvent event = new VariableUploadedEvent(simpleExecContext.execContextId, taskId, v.id, true);
-                    variableTopLevelService.setAsNullFunction(v, event, simpleExecContext.execContextVariableStateId);
-                });
+                (v) -> variableService.setVariableAsNull(v.id));
 
         System.out.println("mh.evaluation, expression: "+expression+", result:" + obj);
         int i=0;
