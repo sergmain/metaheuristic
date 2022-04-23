@@ -297,7 +297,7 @@ public class SourceCodeTopLevelService {
             String filename = "process-"+processCodeDirName+".zip";
             File zipFile = new File(tempDir, filename);
 
-            ZipUtils.createZip(outputDir, zipFile);
+            ZipUtils.createZip(outputDir.toPath(), zipFile.toPath());
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -381,7 +381,9 @@ public class SourceCodeTopLevelService {
     private static boolean createEnvParamsFile(File artefactsDir) {
         EnvParamsYaml epy = new EnvParamsYaml();
 
-        epy.envs.putAll(Map.of("python-3", "/path-to-python/python", "java-11", "/path-to-java/java -Dfile.encoding=UTF-8 -jar"));
+        epy.envs.addAll(List.of(
+                new EnvParamsYaml.Env("python-3", "/path-to-python/python", null),
+                new EnvParamsYaml.Env("java-11", "/path-to-java/java -Dfile.encoding=UTF-8 -jar", null)));
         epy.disk.addAll(List.of(new EnvParamsYaml.DiskStorage("path-1", "/full/path/1"), new EnvParamsYaml.DiskStorage("path-2", "/full/path/2")));
 
         String status = EnvServiceUtils.prepareEnvironment(artefactsDir, new EnvServiceUtils.EnvYamlShort(epy));

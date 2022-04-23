@@ -92,11 +92,22 @@ public class TaskCheckCachingTopLevelService {
     private final Set<Long> queueIds = new HashSet<>();
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
+    private long mills = 0L;
+
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         synchronized (queue) {
+            // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
+            if (System.currentTimeMillis() - mills > 60_000) {
+                queueIds.clear();
+                queue.forEach(o->queueIds.add(o.taskId));
+                mills = System.currentTimeMillis();
+            }
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
-            if (queueIds.contains(event.taskId) || (taskCount - completedTaskCount)>1000) {
+            final boolean contains = queueIds.contains(event.taskId);
+            final boolean queueIsFull = (taskCount - completedTaskCount) > 1000;
+            if (contains || queueIsFull) {
+                log.debug("task #{} wasn't queued, contains: {}, queueIsFull: {}", event.taskId, contains, queueIsFull);
                 return;
             }
             queue.add(event);
@@ -124,7 +135,7 @@ public class TaskCheckCachingTopLevelService {
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
-            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}, queue size: {}", activeCount, taskCount - completedTaskCount, queue.size());
         }
 
         if (activeCount>0) {
@@ -137,7 +148,6 @@ public class TaskCheckCachingTopLevelService {
             }
         });
     }
-
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {
         final boolean notReady = execContextReadinessStateService.isNotReady(event.execContextId);

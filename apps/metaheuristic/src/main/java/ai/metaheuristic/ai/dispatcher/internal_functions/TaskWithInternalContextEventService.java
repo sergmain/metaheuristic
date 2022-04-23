@@ -20,11 +20,14 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -33,6 +36,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -85,10 +89,12 @@ public class TaskWithInternalContextEventService {
     public final VariableRepository variableRepository;
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
+    private final VariableTopLevelService variableTopLevelService;
+    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
-    private static final int MAX_NUMBER_EXECUTORS = 2;
+    private static final int MAX_NUMBER_EXECUTORS = 4;
 
     public static class ExecutorForExecContext {
         public Long execContextId;
@@ -127,7 +133,6 @@ public class TaskWithInternalContextEventService {
                 POOL_OF_EXECUTORS[i] = null;
             }
         }
-
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
@@ -222,6 +227,7 @@ public class TaskWithInternalContextEventService {
             return;
         }
         final ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        ArtifactCleanerAtDispatcher.setBusy();
         try {
             TaskSyncService.getWithSyncVoid(event.taskId,
                     () -> {
@@ -247,6 +253,9 @@ public class TaskWithInternalContextEventService {
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
                             () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
+        }
+        finally {
+            ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 
@@ -282,9 +291,17 @@ public class TaskWithInternalContextEventService {
 
             boolean notSkip = true;
             if (!S.b(p.condition)) {
+                // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+                // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository);
+                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
+                        (v) -> variableService.setVariableAsNull(v.id));
+                if (obj!=null && !obj.getClass().equals(Boolean.class)) {
+                    final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
+                    log.error(es);
+                    throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
+                }
                 notSkip = Boolean.TRUE.equals(obj);
                 int i=0;
             }

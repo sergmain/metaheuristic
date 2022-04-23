@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 @Data
 public class Interpreter {
@@ -25,7 +26,7 @@ public class Interpreter {
     public final String interpreter;
     public final String[] list;
 
-    public Interpreter(String interpreter) {
+    public Interpreter(@Nullable String interpreter) {
         if (StringUtils.isBlank(interpreter)) {
             this.interpreter = null;
             this.list = null;

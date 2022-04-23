@@ -18,12 +18,15 @@ package ai.metaheuristic.ai.processor.env;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -79,6 +84,39 @@ public class EnvService {
         if (envYaml==null) {
             log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.processor.dir.dir, File.separatorChar );
             throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
+        }
+        for (EnvParamsYaml.Env envForVerify : envYaml.envs) {
+            if (envForVerify.verify!=null) {
+                if (envForVerify.verify.run) {
+                    List<String> params = new ArrayList<>();
+                    //noinspection ManualArrayToCollectionCopy
+                    for (String s : StringUtils.split(envForVerify.exec, ' ')) {
+                        //noinspection UseBulkOperation
+                        params.add(s);
+                    }
+                    if (!S.b(envForVerify.verify.params)) {
+                        //noinspection ManualArrayToCollectionCopy
+                        for (String s : StringUtils.split(envForVerify.verify.params, ' ')) {
+                            //noinspection UseBulkOperation
+                            params.add(s);
+                        }
+                    }
+                    SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(params, 10L, globals.processor.taskConsoleOutputMaxLines);
+                    if (!result.ok) {
+                        System.out.println("!!!");
+                        System.out.println("!!!");
+                        System.out.println("!!! ======================================================================================================");
+                        System.out.println("!!!");
+                        System.out.println("!!! Verifiation of environment was failed. Error while executing " + params);
+                        System.out.println("!!! Error: " + result.error);
+                        System.out.println("!!!");
+                        System.out.println("!!! ======================================================================================================");
+                        System.out.println("!!!");
+                        System.out.println("!!!");
+                        throw new IllegalStateException("Verifiation of environment was failed, error: " + result.error);
+                    }
+                }
+            }
         }
     }
 

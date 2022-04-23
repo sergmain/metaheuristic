@@ -16,10 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.Enums;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +32,11 @@ import java.util.Map;
  * Date: 4/26/2020
  * Time: 6:18 PM
  */
-public class InlineVariableData {
+public class StringVariableData {
 
     @Data
     @AllArgsConstructor
-    public static class InlineVariableItem {
+    public static class StringVariableItem {
         public final Map<String, String> inlines;
         public final String inlineKey;
     }
@@ -43,15 +45,28 @@ public class InlineVariableData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode
-    public static class InlineAsVar {
+    public static class StringAsVar {
+        @Nullable
+        @Deprecated
         public String group;
+        @Nullable
+        public String key;
         public String name;
         public String output;
+        @Nullable
+        public Enums.StringAsVariableSource source = Enums.StringAsVariableSource.inline;
+
+        public StringAsVar(@Nullable String group, @Nullable String key, String name, String output) {
+            this.group = group;
+            this.key = key;
+            this.name = name;
+            this.output = output;
+        }
     }
 
     @Data
     @NoArgsConstructor
     public static class Mapping {
-        public final List<InlineAsVar> mapping = new ArrayList<>();
+        public final List<StringAsVar> mapping = new ArrayList<>();
     }
 }

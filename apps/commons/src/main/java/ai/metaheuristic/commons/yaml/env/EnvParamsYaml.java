@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class EnvParamsYaml implements BaseParams {
 
-    public final int version=3;
+    public final int version=4;
 
     public boolean checkIntegrity() {
         if (!quotas.disabled && (quotas.defaultValue==0)) {
@@ -79,8 +79,31 @@ public class EnvParamsYaml implements BaseParams {
         public boolean disabled;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class VerifyEnv {
+        public boolean run = false;
+        @Nullable
+        public String params;
+        @Nullable
+        public String responsePattern;
+        @Nullable
+        public String expectedResponse;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Env {
+        public String code;
+        public String exec;
+        @Nullable
+        public VerifyEnv verify;
+    }
+
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
-    public final Map<String, String> envs = new ConcurrentHashMap<>();
+    public final List<Env> envs = new ArrayList<>();
     public final List<DiskStorage> disk = new ArrayList<>();
     public final List<Processor> processors = new ArrayList<>();
     public final Quotas quotas = new Quotas();

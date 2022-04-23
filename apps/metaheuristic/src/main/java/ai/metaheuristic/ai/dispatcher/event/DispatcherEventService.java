@@ -187,7 +187,7 @@ public class DispatcherEventService {
 
 
         File zipFile = new File(tempDir, "events.zip");
-        ZipUtils.createZip(filesDir, zipFile);
+        ZipUtils.createZip(filesDir.toPath(), zipFile.toPath());
 
         final HttpHeaders headers = RestUtils.getHeader(null, zipFile.length());
 //        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));

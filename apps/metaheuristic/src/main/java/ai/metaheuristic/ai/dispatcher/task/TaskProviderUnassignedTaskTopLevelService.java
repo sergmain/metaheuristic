@@ -70,7 +70,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
     public TaskData.AssignedTask findUnassignedTaskAndAssign(Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
-        if (TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty)) {
+        if (TaskQueueService.isQueueEmptyWithSync()) {
             return null;
         }
 

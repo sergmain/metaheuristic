@@ -195,7 +195,7 @@ public class BatchResultProcessorTxService {
         }
 
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
-        ZipUtils.createZip(zipDir, zipFile);
+        ZipUtils.createZip(zipDir.toPath(), zipFile.toPath());
 
         storeBatchResult(simpleExecContext.sourceCodeId, simpleExecContext.execContextId, simpleExecContext.paramsYaml, taskContextId, taskParamsYaml, zipFile);
         return null;

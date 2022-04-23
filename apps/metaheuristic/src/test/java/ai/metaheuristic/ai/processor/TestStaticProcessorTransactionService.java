@@ -127,6 +127,9 @@ public class TestStaticProcessorTransactionService {
         assertFalse(ProcessorUtils.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa"),
                 createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa")));
+        assertTrue(ProcessorUtils.envNotEquals(
+                createProcessorStatusYamlEnvYaml(Map.of("q1","1"), Map.of("w", "2"), List.of(), "aaa"),
+                createEnvYaml(Map.of("q2","1"), Map.of("w", "2"), List.of(), "aaa")));
 
         assertFalse(ProcessorUtils.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of(), Map.of(), List.of(new ProcessorStatusYaml.DiskStorage("c", "p")), "aaa"),

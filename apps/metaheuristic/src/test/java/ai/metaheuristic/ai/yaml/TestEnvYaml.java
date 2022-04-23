@@ -36,8 +36,10 @@ public class TestEnvYaml {
         assertNotNull(envYaml);
         assertNotNull(envYaml.getEnvs());
         assertEquals(2, envYaml.getEnvs().size());
-        assertEquals("python.exe", envYaml.getEnvs().get("python"));
-        assertEquals("E:\\Anaconda3\\envs\\python-36\\python.exe", envYaml.getEnvs().get("python-3"));
+        assertEquals("python", envYaml.getEnvs().get(0).code);
+        assertEquals("python.exe", envYaml.getEnvs().get(0).exec);
+        assertEquals("python-3", envYaml.getEnvs().get(1).code);
+        assertEquals("E:\\Anaconda3\\envs\\python-36\\python.exe", envYaml.getEnvs().get(1).exec);
 
         assertNotNull(envYaml.getDisk());
         assertEquals(2, envYaml.getDisk().size());
@@ -63,8 +65,11 @@ public class TestEnvYaml {
         assertNotNull(envYaml);
         assertNotNull(envYaml.getEnvs());
         assertEquals(2, envYaml.getEnvs().size());
-        assertEquals("simple-app.jar", envYaml.getEnvs().get("simple-app"));
-        assertEquals("1st-line 2nd-line", envYaml.getEnvs().get("lines"));
+        EnvParamsYaml.Env env;
+        env = envYaml.getEnvs().stream().filter(o->o.code.equals("simple-app")).findFirst().orElseThrow();
+        assertEquals("simple-app.jar", env.exec);
+        env = envYaml.getEnvs().stream().filter(o->o.code.equals("lines")).findFirst().orElseThrow();
+        assertEquals("1st-line 2nd-line", env.exec);
 
         assertNotNull(envYaml.getDisk());
         assertTrue(envYaml.getDisk().isEmpty());

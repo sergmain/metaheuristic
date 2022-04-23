@@ -46,6 +46,7 @@ public class TaskQueue {
         public final EnumsApi.FunctionExecContext execContext;
         public final Long execContextId;
         public final Long taskId;
+        // TODO P1 2022-04-11 write comment about when and at which condition this field will be initialized
         @Nullable
         public final TaskImpl task;
         public final TaskParamsYaml taskParamYaml;
@@ -88,15 +89,21 @@ public class TaskQueue {
 
         // we dont need execContextId because taskIds are unique across entire database
         public boolean alreadyRegistered(Long taskId) {
+            return alreadyRegisteredAsTask(taskId)!=null;
+        }
+
+        @Nullable
+        // we dont need execContextId because taskIds are unique across entire database
+        public AllocatedTask alreadyRegisteredAsTask(Long taskId) {
             if (execContextId==null) {
-                return false;
+                return null;
             }
             for (AllocatedTask task : tasks) {
                 if (task!=null && task.queuedTask.taskId.equals(taskId)) {
-                    return true;
+                    return task;
                 }
             }
-            return false;
+            return null;
         }
 
         public boolean deRegisterTask(Long taskId) {
@@ -597,12 +604,18 @@ public class TaskQueue {
     }
 
     public boolean alreadyRegistered(Long taskId) {
+        return alreadyRegisteredAsTask(taskId)!=null;
+    }
+
+    @Nullable
+    public AllocatedTask alreadyRegisteredAsTask(Long taskId) {
         for (TaskGroup o : taskGroups) {
-            if (o.alreadyRegistered(taskId)) {
-                return true;
+            final AllocatedTask allocatedTask = o.alreadyRegisteredAsTask(taskId);
+            if (allocatedTask !=null) {
+                return allocatedTask;
             }
         }
-        return false;
+        return null;
     }
 
     public void deRegisterTask(Long execContextId, Long taskId) {

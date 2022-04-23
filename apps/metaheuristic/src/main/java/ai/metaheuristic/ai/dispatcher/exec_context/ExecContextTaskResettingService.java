@@ -22,11 +22,11 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskTxAfterCommitEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -40,6 +40,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +64,6 @@ public class ExecContextTaskResettingService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final TaskFinishingService taskFinishingService;
-    private final TaskStateService taskStateService;
 
     @Transactional
     public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
@@ -88,8 +88,7 @@ public class ExecContextTaskResettingService {
                         ()->taskFinishingService.finishWithError(status.taskId, null, EnumsApi.TaskExecState.ERROR));
             }
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
-                TaskSyncService.getWithSyncVoid(status.taskId,
-                        ()->resetTask(ec, status.taskId));
+                TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId, EnumsApi.TaskExecState.NONE));
                 ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
             }
             else {
@@ -111,6 +110,10 @@ public class ExecContextTaskResettingService {
     }
 
     public void resetTask(ExecContextImpl execContext, Long taskId) {
+        resetTask(execContext, taskId, null);
+    }
+
+    public void resetTask(ExecContextImpl execContext, Long taskId, @Nullable EnumsApi.TaskExecState targetExecState) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);
@@ -137,7 +140,12 @@ public class ExecContextTaskResettingService {
         task.setAssignedOn(null);
         task.setCompleted(false);
         task.setCompletedOn(null);
-        task.execState = process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
+        if (targetExecState==null) {
+            task.execState = process.cache != null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
+        }
+        else {
+            task.execState = targetExecState.value;
+        }
         task.setResultReceived(false);
         task.setResultResourceScheduledOn(0);
         taskService.save(task);
@@ -149,6 +157,8 @@ public class ExecContextTaskResettingService {
         }
 
         eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+        // we don't have to un-register task because it could un-register already de-registered task.
+        // actual deregistering will be done via reconsiliationService
 //        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
 
         log.info("#305.035 task #{} and its output variables were re-setted to initial state", taskId);

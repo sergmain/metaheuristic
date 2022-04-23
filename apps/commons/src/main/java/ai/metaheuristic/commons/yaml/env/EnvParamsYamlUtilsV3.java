@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: s5:15 AM
  */
 public class EnvParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<EnvParamsYamlV3, EnvParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<EnvParamsYamlV3, EnvParamsYamlV4, EnvParamsYamlUtilsV4, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,15 +46,15 @@ public class EnvParamsYamlUtilsV3
 
     @NonNull
     @Override
-    public EnvParamsYaml upgradeTo(@NonNull EnvParamsYamlV3 src) {
+    public EnvParamsYamlV4 upgradeTo(@NonNull EnvParamsYamlV3 src) {
         src.checkIntegrity();
-        EnvParamsYaml trg = new EnvParamsYaml();
+        EnvParamsYamlV4 trg = new EnvParamsYamlV4();
 
         trg.mirrors.putAll(src.mirrors);
-        trg.envs.putAll(src.envs);
-        src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
-        src.processors.stream().map(o->new EnvParamsYaml.Processor(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
-        src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount, o.processingTime)).collect(Collectors.toCollection(()->trg.quotas.values));
+        src.envs.forEach((key, value) -> trg.envs.add(new EnvParamsYamlV4.EnvV4(key, value)));
+        src.disk.stream().map(o->new EnvParamsYamlV4.DiskStorageV4(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        src.processors.stream().map(o->new EnvParamsYamlV4.ProcessorV4(o.code, o.tags)).collect(Collectors.toCollection(()->trg.processors));
+        src.quotas.values.stream().map(o->new EnvParamsYamlV4.QuotaV4(o.tag, o.amount, o.processingTime)).collect(Collectors.toCollection(()->trg.quotas.values));
         trg.quotas.limit = src.quotas.limit;
         trg.quotas.disabled = src.quotas.disabled;
         trg.quotas.defaultValue = src.quotas.defaultValue;
@@ -70,8 +70,8 @@ public class EnvParamsYamlUtilsV3
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public EnvParamsYamlUtilsV4 nextUtil() {
+        return (EnvParamsYamlUtilsV4) EnvParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
     }
 
     @Override

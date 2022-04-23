@@ -40,7 +40,8 @@ public final class Enums {
         number_of_metas_is_incorrect, meta_not_found,
         broken_graph_error,
         input_variable_isnt_file,
-        not_supported_anymore
+        not_supported_anymore,
+        data_not_found
     }
 
     public enum AssetType { company, account, function, source}
@@ -197,8 +198,6 @@ public final class Enums {
         }
     }
 
-//    public enum SignatureStates { unknown, signature_ok, signature_not_valid, not_signed }
-
     public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
         PRODUCING(6), PROCESSOR_LOG(7);
 
@@ -209,11 +208,11 @@ public final class Enums {
         }
     }
 
-    public enum DispatcherLookupType {
-        direct, registry
-    }
+    public enum DispatcherLookupType { direct, registry }
 
-    public enum AuthType {
-        basic, oauth
-    }
+    public enum AuthType { basic, oauth }
+
+    public enum VariablesAs { permute, array; }
+
+    public enum StringAsVariableSource { inline, variable; }
 }

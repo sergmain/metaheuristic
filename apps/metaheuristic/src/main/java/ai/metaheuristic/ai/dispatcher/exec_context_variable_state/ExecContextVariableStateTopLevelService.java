@@ -119,9 +119,13 @@ public class ExecContextVariableStateTopLevelService {
             if (execContextVariableStateId == null) {
                 return;
             }
-            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
-                    () -> registerVariableStateInternal(entry.getKey(), execContextVariableStateId, entry.getValue()));
+            registerVariableStateInternal(entry.getKey(), entry.getValue(), execContextVariableStateId);
         }
+    }
+
+    public void registerVariableStateInternal(Long execContextId, List<VariableUploadedEvent> event, Long execContextVariableStateId) {
+        ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
+                () -> registerVariableStateInternal(execContextId, execContextVariableStateId, event));
     }
 
     @Nullable
@@ -135,8 +139,8 @@ public class ExecContextVariableStateTopLevelService {
 
     // this method is here to work around some strange situation
     // about calling transactional method from lambda
-    private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
-        return execContextVariableStateService.registerVariableStates(execContextId, execContextVariableStateId, event);
+    private void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
+        execContextVariableStateService.registerVariableStates(execContextId, execContextVariableStateId, event);
     }
 
 

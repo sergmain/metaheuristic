@@ -96,7 +96,8 @@ public class TestEnvYaml {
         assertEquals("/test-files-edition", env.disk.get(0).path);
 
         assertEquals(1, env.envs.size());
-        assertEquals("python", env.envs.get("python-3"));
+        assertEquals("python-3", env.envs.get(0).code);
+        assertEquals("python", env.envs.get(0).exec);
 
         assertEquals(1, env.mirrors.size());
         assertEquals("/git-probe/mh-01/mh.git", env.mirrors.get("https://github.com/sergmain/metaheuristic.git"));

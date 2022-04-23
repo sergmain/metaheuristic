@@ -229,6 +229,7 @@ public class FunctionTopLevelService {
     }
 
     public OperationStatusRest uploadFunction(@Nullable final MultipartFile file) {
+        log.debug("Start uploading a function");
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.020 Can't upload function while 'replicated' mode of asset is active");
@@ -258,13 +259,17 @@ public class FunctionTopLevelService {
             }
             final File zipFile = new File(tempDir, "functions" + ext);
             log.debug("Start storing an uploaded function to disk");
+            long size;
             try(OutputStream os = new FileOutputStream(zipFile)) {
-                IOUtils.copy(file.getInputStream(), os, 64000);
+                size = IOUtils.copy(file.getInputStream(), os, 64000);
+                os.flush();
             }
+            log.debug("Uploaded bytes: {}, stored: {}", file.getSize(), size);
+
             List<FunctionApiData.FunctionConfigStatus> statuses;
             if (ZIP_EXT.equals(ext)) {
                 log.debug("Start unzipping archive");
-                ZipUtils.unzipFolder(zipFile, tempDir);
+                ZipUtils.unzipFolder(zipFile.toPath(), tempDir.toPath());
                 log.debug("Start loading function data to db");
                 statuses = new ArrayList<>();
                 loadFunctionsRecursively(statuses, tempDir);

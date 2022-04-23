@@ -91,10 +91,13 @@ public class ReduceVariablesFunction implements InternalFunction {
 
 
         File tempDir = DirUtils.createMhTempDir("reduce-variables-");
+        if (tempDir==null) {
+            throw new RuntimeException("(tempDir==null)");
+        }
         File zipFile = new File(tempDir, "zip.zip");
         variableService.storeToFile(input.id, zipFile);
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(zipFile, config, request);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(tempDir.toPath(), zipFile.toPath(), config, request);
 
 
 /*

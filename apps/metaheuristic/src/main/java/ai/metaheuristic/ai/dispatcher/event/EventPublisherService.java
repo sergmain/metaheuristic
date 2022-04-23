@@ -100,4 +100,11 @@ public class EventPublisherService {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);
     }
+
+    public void publishDeleteExecContextInListTxEvent(DeleteExecContextInListTxEvent event) {
+        TxUtils.checkTxExists();
+        if (!event.execContextIds.isEmpty()) {
+            eventPublisher.publishEvent(event);
+        }
+    }
 }

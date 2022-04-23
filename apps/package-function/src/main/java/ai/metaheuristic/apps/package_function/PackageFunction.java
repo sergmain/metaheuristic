@@ -168,7 +168,7 @@ public class PackageFunction implements CommandLineRunner {
         final File file = new File(targetDir, FUNCTIONS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 
-        ZipUtils.createZip(targetDir, targetZip);
+        ZipUtils.createZip(targetDir.toPath(), targetZip.toPath());
         FileUtils.deleteDirectory(targetDir);
 
         System.out.println("All done.");

@@ -49,16 +49,15 @@ public class ExecContextVariableStateService {
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public Void registerVariableStates(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
+    public void registerVariableStates(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> event) {
         registerVariableStateInternal(execContextId, execContextVariableStateId, event);
-        return null;
     }
 
-    private Void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
+    private void registerVariableStateInternal(Long execContextId, Long execContextVariableStateId, List<VariableUploadedEvent> events) {
         register(execContextVariableStateId, (ecpy)-> {
-            Set<CheckTaskCanBeFinishedTxEvent> eventsFroChecking = new HashSet<>();
+            Set<CheckTaskCanBeFinishedTxEvent> eventsForChecking = new HashSet<>();
             for (VariableUploadedEvent event : events) {
-                eventsFroChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
+                eventsForChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
                 for (ExecContextApiData.VariableState task : ecpy.tasks) {
                     if (task.taskId.equals(event.taskId)) {
                         if (task.outputs==null || task.outputs.isEmpty()) {
@@ -76,11 +75,10 @@ public class ExecContextVariableStateService {
                     }
                 }
             }
-            for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsFroChecking) {
+            for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsForChecking) {
                 eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(checkTaskCanBeFinishedTxEvent);
             }
         });
-        return null;
     }
 
     @Transactional

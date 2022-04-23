@@ -18,18 +18,21 @@ package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVariablesUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+import org.apache.commons.io.FileUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -42,28 +45,35 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class UtilsForTestReduceVariables {
 
+    public static class ParamsAsJson {
+        public final List<Map<String, String>> params = new ArrayList<>();
+    }
+
     private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
+    private static final Pattern ATTENTION_SELECTOR = Pattern.compile(".*_prediction: \\[[4-9],.*");
 
     public static boolean filterStr(String o) {
         return FILTER.matcher(o).find();
     }
 
-    public static void extracted(String pathname) {
+    public static void extracted(String pathname) throws IOException {
         extracted(List.of(pathname), null);
     }
 
-    public static void extracted(String pathname, @Nullable Function<String, Boolean> filter) {
+    public static void extracted(String pathname, @Nullable Function<String, Boolean> filter) throws IOException {
         extracted(List.of(pathname), filter);
     }
 
-    public static void extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
+    public static ReduceVariablesData.ReduceVariablesResult extracted(List<String> pathnames, @Nullable Function<String, Boolean> filter) throws IOException {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
-        List<File> files = new ArrayList<>();
+        System.out.println("Total files: " + pathnames.size());
+        List<Path> files = new ArrayList<>();
+
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -120,7 +130,21 @@ public class UtilsForTestReduceVariables {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
+        System.out.println("Start reducing variables at " + new Date());
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
+                (o)->{
+                    if (o.current==1) {
+                        System.out.println("======================");
+                        System.out.println(o.file);
+                    }
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -140,8 +164,29 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        ParamsAsJson paramsAsJson = new ParamsAsJson();
+
+        System.out.println("\n=== Attention =================_");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            Map<String, String> map = new HashMap<>();
+            map.putAll(attention.dataset);
+            map.putAll(attention.params);
+            paramsAsJson.params.add(map);
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
+        System.out.println("\n=== Json ==================");
+        for (Map<String, String> param : paramsAsJson.params) {
+            String json = JsonUtils.getMapper().writeValueAsString(param);
+            System.out.println(json);
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);
@@ -149,18 +194,36 @@ public class UtilsForTestReduceVariables {
             System.out.println(experimentMetrics.dir);
             System.out.println();
         }
+
         System.out.println("Start time: " + startDate);
         System.out.println("End time:   " + new Date());
+
+        writeResult(result);
+
+        return result;
     }
 
-    public static void extracted_1(List<String> pathnames, @Nullable Function<String, Boolean> filter) {
+    private static void writeResult(ReduceVariablesData.ReduceVariablesResult result) throws IOException {
+        File d = new File("result");
+        if (!d.exists()) {
+            d.mkdir();
+        }
+        File f = File.createTempFile("reduce-result-", ".json", d);
+        String json = JsonUtils.getMapper().writeValueAsString(result);
+        FileUtils.write(f, json, StandardCharsets.UTF_8);
+        System.out.println("A result was stored to " + f.getAbsolutePath());
+    }
+
+    //    в этом методе не используется binaryDrawWithFrequency
+    public static ReduceVariablesData.ReduceVariablesResult extracted_1(List<String> pathnames, @Nullable Function<String, Boolean> filter) throws IOException {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
-        List<File> files = new ArrayList<>();
+        System.out.println("Total files: " + pathnames.size());
+        List<Path> files = new ArrayList<>();
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -214,16 +277,31 @@ public class UtilsForTestReduceVariables {
                 "isDistribOfFreqFull", true,
                 "isMatrixOfWinning", true));
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter);
+        System.out.println("Start reducing variables at " + new Date());
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
+                (o)->{
+                    if (o.current==1) {
+                        System.out.println("======================");
+                        System.out.println(o.file);
+                    }
+//                    System.out.println(S.f("%-10d %d", o.current, o.total));
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
         assertEquals(5, result.byInstance.size());
 
-        assertTrue(result.byInstance.get("isClusterCount1New1"));
-        assertTrue(result.byInstance.get("isClusterSize1New1"));
         assertTrue(result.byInstance.get("isBinaryClusters1New1"));
 //        assertTrue(result.byInstance.get("isBinaryDrawWithFrequencyNew1"));
+        assertTrue(result.byInstance.get("isClusterCount1New1"));
+        assertTrue(result.byInstance.get("isClusterSize1New1"));
         assertTrue(result.byInstance.get("isDistribOfFreqFullNew1"));
         assertTrue(result.byInstance.get("isMatrixOfWinningNew1"));
 
@@ -234,8 +312,17 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        System.out.println("\n==== Attention =================");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);
@@ -243,7 +330,12 @@ public class UtilsForTestReduceVariables {
             System.out.println(experimentMetrics.dir);
             System.out.println();
         }
+
         System.out.println("Start time: " + startDate);
         System.out.println("End time:   " + new Date());
+
+        writeResult(result);
+
+        return result;
     }
 }

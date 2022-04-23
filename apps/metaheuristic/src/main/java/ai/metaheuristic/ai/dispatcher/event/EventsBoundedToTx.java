@@ -97,6 +97,11 @@ public class EventsBoundedToTx {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDeleteExecContextInListTxEvent(DeleteExecContextInListTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleUnAssignTaskTxEventAfterCommit(UnAssignTaskTxAfterCommitEvent event) {
         eventPublisher.publishEvent(event.to());
     }

@@ -32,7 +32,7 @@ public class PermutationData {
     @Data
     @AllArgsConstructor
     public static class Inlines {
-        public final InlineVariableData.InlineVariableItem item;
+        public final StringVariableData.StringVariableItem item;
         public final List<InlineVariable> inlineVariables;
         public final String inlineVariableName;
     }

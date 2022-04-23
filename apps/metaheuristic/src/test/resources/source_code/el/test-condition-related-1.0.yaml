@@ -1,0 +1,50 @@
+version: 4
+source:
+  clean: false
+  strictNaming: true
+  uid: test-condition-related-1.8
+  variables:
+    inputs:
+      - name: isVar1
+      - name: isVar2
+      - name: var1
+      - name: var2
+    outputs:
+      - name: var1Result
+        nullable: true
+      - name: var2Result
+        nullable: true
+  processes:
+    - code: mh.evaluation11
+      name: mh.evaluation11
+      function:
+        code: mh.evaluation
+        context: internal
+      condition: 'isVar1 ? true : false'
+      metas:
+        - expression: 'var1Result = var1'
+    - code: mh.evaluation12
+      name: mh.evaluation12
+      function:
+        code: mh.evaluation
+        context: internal
+      condition: '!isVar1 ? true : false'
+      metas:
+        - expression: 'var1Result = null'
+    - code: mh.evaluation21
+      name: mh.evaluation21
+      function:
+        code: mh.evaluation
+        context: internal
+      condition: 'isVar2 ? true : false'
+      metas:
+        - expression: 'var2Result = var2'
+    - code: mh.evaluation22
+      name: mh.evaluation22
+      function:
+        code: mh.evaluation
+        context: internal
+      condition: '!isVar2 ? true : false'
+      metas:
+        - expression: 'var2Result = null'
+

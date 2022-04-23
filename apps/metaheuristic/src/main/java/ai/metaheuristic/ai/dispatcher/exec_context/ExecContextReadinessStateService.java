@@ -44,7 +44,7 @@ public class ExecContextReadinessStateService {
 
     public boolean isNotReady(Long execContextId) {
         synchronized (notReadyExecContextIds) {
-            return notReadyExecContextIds.contains(execContextId);
+            return !notReadyExecContextIds.isEmpty() && notReadyExecContextIds.contains(execContextId);
         }
     }
 

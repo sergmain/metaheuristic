@@ -177,7 +177,7 @@ public class AggregateFunction implements InternalFunction {
                     });
 
             File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
-            ZipUtils.createZip(outputDir, zipFile);
+            ZipUtils.createZip(outputDir.toPath(), zipFile.toPath());
 
             execContextVariableService.storeDataInVariable(outputVariable, zipFile);
         }

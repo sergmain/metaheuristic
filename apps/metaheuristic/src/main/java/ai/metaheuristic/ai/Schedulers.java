@@ -173,7 +173,13 @@ public class Schedulers {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
-            replicationService.sync();
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                replicationService.sync();
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
         }
     }
 
@@ -224,7 +230,7 @@ public class Schedulers {
 
         boolean needToInitializeReadyness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 30_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 17_000)
         public void processInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -236,7 +242,7 @@ public class Schedulers {
                 eventPublisher.publishEvent(new StartProcessReadinessEvent());
                 needToInitializeReadyness = false;
             }
-            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
