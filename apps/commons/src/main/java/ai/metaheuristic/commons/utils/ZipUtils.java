@@ -338,8 +338,8 @@ public class ZipUtils {
                         final Path parentPath = zipDestinationFolderPath.getFileSystem().getPath(name).getParent();
                         if (parentPath !=null) {
                             Path trgDir = zipDestinationFolderPath.resolve(parentPath);
-
                             Files.createDirectories(trgDir);
+
                             Path d = Files.createTempFile(trgDir, "doc-", ".bin");
                             resultName = parentPath.resolve(d.getFileName()).toString();
                         }
@@ -358,7 +358,7 @@ public class ZipUtils {
                         log.debug("'\t\t\tcopy content of zip entry to file {}", destinationPath);
                     }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
-                        try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING, SYNC))) {
+                        try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING))) {
                             int n;
                             int count = 0;
                             byte[] bytes = new byte[BUFFER_SIZE];
