@@ -244,6 +244,8 @@ public class ReduceVariablesUtils {
 
         Path tempDir = Files.createTempDirectory(actualTemp, "reduce-variables-");
         Path zipDir = actualTemp.resolve("zip");
+        Files.createDirectories(zipDir);
+
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
         final IOFileFilter filter = FileFileFilter.INSTANCE.and(new SuffixFileFilter(new String[]{".zip"}));

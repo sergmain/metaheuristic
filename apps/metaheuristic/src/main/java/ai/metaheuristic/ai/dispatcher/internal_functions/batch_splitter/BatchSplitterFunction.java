@@ -41,6 +41,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -118,10 +120,12 @@ public class BatchSplitterFunction implements InternalFunction {
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");
                 File zipDir=new File(tempDir, "zip");
+                final Path zipDestinationFolderPath = zipDir.toPath();
+                Files.createDirectory(zipDestinationFolderPath);
 
                 log.debug("Start loading .zip file data to db");
                 workingDir = zipDir;
-                mapping = ZipUtils.unzipFolder(dataFile.toPath(), zipDir.toPath(), true, List.of(), true);
+                mapping = ZipUtils.unzipFolder(dataFile.toPath(), zipDestinationFolderPath, true, List.of(), true);
             }
             else {
                 log.debug("Start loading file data to db");

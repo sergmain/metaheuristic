@@ -270,11 +270,14 @@ public class ZipUtils {
      * skipped when unarchiving.
      *
      */
+    @SneakyThrows
     @Deprecated(forRemoval = true)
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping) {
         final Path archivePath = archiveFile.toPath();
         final Path zipDestinationFolderPath = zipDestinationFolder.toPath();
-
+        if (!zipDestinationFolder.exists()) {
+            Files.createDirectories(zipDestinationFolderPath);
+        }
         return unzipFolder(archivePath, zipDestinationFolderPath, useMapping, excludeFromMapping, true);
     }
 
