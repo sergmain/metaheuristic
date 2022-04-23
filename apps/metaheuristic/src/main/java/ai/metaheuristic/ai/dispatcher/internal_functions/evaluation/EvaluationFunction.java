@@ -21,14 +21,17 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -64,6 +67,9 @@ public class EvaluationFunction implements InternalFunction {
     public final VariableService variableService;
     public final ExecContextVariableService execContextVariableService;
     public final VariableRepository variableRepository;
+    public final ExecContextCache execContextCache;
+    public final VariableTopLevelService variableTopLevelService;
+    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     @Override
     public String getCode() {
@@ -92,11 +98,14 @@ public class EvaluationFunction implements InternalFunction {
                             source_code_not_found,"#503.320 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
         }
 
+        // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+        // because mh.evaluate doesn't have any output variables
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
-                this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository);
+                this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository,
+                (v) -> variableService.setVariableAsNull(v.id));
 
-        System.out.println(obj);
+        System.out.println("mh.evaluation, expression: "+expression+", result:" + obj);
         int i=0;
     }
 

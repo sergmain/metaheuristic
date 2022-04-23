@@ -28,9 +28,9 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -65,6 +65,7 @@ public class PermuteVariablesFunction implements InternalFunction {
     private final PermuteVariablesService permuteVariablesAndInlinesTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final VariableService variableService;
     private final InternalFunctionService internalFunctionService;
 
     @Override
@@ -99,10 +100,8 @@ public class PermuteVariablesFunction implements InternalFunction {
         if (MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE)) {
             throw new InternalFunctionException(not_supported_anymore, "#987.120 permutation of inline variables isn't supported anymore");
         }
-        if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
-            throw new InternalFunctionException(
-                    number_of_inputs_is_incorrect, "#987.020 The function 'mh.permute-variables' can't have input variables, process code: '" + taskParamsYaml.task.processCode+"'");
-        }
+
+        final Enums.VariablesAs variablesAs = getVariablesAs(simpleExecContext, taskContextId);
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
 
@@ -168,7 +167,28 @@ public class PermuteVariablesFunction implements InternalFunction {
                 ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->
                         permuteVariablesAndInlinesTxService.createTaskForPermutations(
                                 simpleExecContext, taskId, executionContextData, descendants, holders, variableName, subProcessContextId,
-                                producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables
+                                producePresentVariable, producePresentVariablePrefix!=null ? producePresentVariablePrefix : "", upperCaseFirstChar, presentVariables,
+                                variablesAs
                         )));
+    }
+
+    private Enums.VariablesAs getVariablesAs(ExecContextData.SimpleExecContext simpleExecContext, String taskContextId) {
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, "variablesAs");
+        if (holders.size()>1) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#987.030 Too many variables with name 'variablesAs'"));
+        }
+        String vAs = null;
+        if (!holders.isEmpty()) {
+            VariableUtils.VariableHolder variableHolder = holders.get(0);
+            if (variableHolder.variable == null) {
+                throw new InternalFunctionException(
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#987.035 Variables 'variablesAs' must be local (not global)"));
+            }
+            vAs = variableHolder.variable.nullified ? null : variableService.getVariableDataAsString(variableHolder.variable.id);
+        }
+
+        final Enums.VariablesAs variablesAs = vAs!=null ? Enums.VariablesAs.valueOf(vAs) : Enums.VariablesAs.permute;
+        return variablesAs;
     }
 }

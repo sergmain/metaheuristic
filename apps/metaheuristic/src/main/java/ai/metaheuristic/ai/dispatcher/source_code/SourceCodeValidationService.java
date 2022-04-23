@@ -400,8 +400,8 @@ public class SourceCodeValidationService {
         }
         else {
             dispatcherParamsTopLevelService.unregisterSourceCode(sourceCode.uid);
-            final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
-            log.error(es);
+            final String es = "#177.260 Validation status: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
+            log.error(es+", error: " + sourceCodeValidation.status.error);
             sourceCodeValidation.addErrorMessage(es);
             sourceCodeValidation.addErrorMessage(sourceCodeValidation.status.error);
         }

@@ -22,10 +22,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -228,9 +225,7 @@ public class ExecContextService {
                 execContextId, ec.execContextGraphId, ec.execContextTaskStateId, ec.execContextVariableStateId));
 
         List<Long> relatedIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
-        for (Long relatedExecContextId : relatedIds) {
-            eventPublisherService.publishDeleteExecContextTxEvent(new DeleteExecContextTxEvent(relatedExecContextId));
-        }
+        eventPublisherService.publishDeleteExecContextInListTxEvent(new DeleteExecContextInListTxEvent(relatedIds));
 
         eventPublisherService.publishTaskQueueCleanByExecContextIdTxEvent(new TaskQueueCleanByExecContextIdTxEvent(execContextId));
         execContextCache.deleteById(execContextId);

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -242,6 +243,14 @@ public class ExecContextTopLevelService {
             catch (Throwable th) {
                 log.error("#210.300 execContextService.deleteExecContext("+execContextId+")", th);
             }
+        }
+    }
+
+    @Async
+    @EventListener
+    public void deleteExecContextById(DeleteExecContextInListEvent event) {
+        for (Long execContextId : event.execContextIds) {
+            ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
         }
     }
 

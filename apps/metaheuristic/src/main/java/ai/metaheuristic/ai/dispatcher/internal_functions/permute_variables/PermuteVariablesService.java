@@ -58,8 +58,7 @@ public class PermuteVariablesService {
     private final TaskProducingService taskProducingService;
 
     /**
-     *
-     * @param simpleExecContext
+     *  @param simpleExecContext
      * @param taskId
      * @param executionContextData
      * @param descendants
@@ -70,6 +69,7 @@ public class PermuteVariablesService {
      * @param producePresentVariablePrefix
      * @param upperCaseFirstChar
      * @param presentVariable
+     * @param variablesAs
      */
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void createTaskForPermutations(
@@ -77,55 +77,84 @@ public class PermuteVariablesService {
             Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
             String subProcessContextId,
             final boolean producePresentVariable, final String producePresentVariablePrefix, boolean upperCaseFirstChar,
-            final List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable
-    ) {
+            final List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable,
+            final Enums.VariablesAs variablesAs) {
 
         final AtomicInteger currTaskNumber = new AtomicInteger(0);
         final List<Long> lastIds = new ArrayList<>();
-        final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
-        for (int i = 0; i < holders.size(); i++) {
+        if (variablesAs== Enums.VariablesAs.permute) {
+            final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
+            for (int i = 0; i < holders.size(); i++) {
+                try {
+                    permutation.printCombination(holders, i + 1,
+                            permutedVariables -> cretaTaskWIthVariables(
+                                    simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
+                                    producePresentVariable, producePresentVariablePrefix, upperCaseFirstChar, presentVariable,
+                                    currTaskNumber, lastIds, permutedVariables)
+                    );
+                }
+                catch (BreakFromLambdaException e) {
+                    log.error(e.getMessage());
+                    throw new InternalFunctionException(
+                            new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
+                }
+            }
+        }
+        else if (variablesAs== Enums.VariablesAs.array) {
             try {
-                permutation.printCombination(holders, i+1,
-                        permutedVariables -> {
-                            if (log.isInfoEnabled()) {
-                                log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
-                            }
-
-                            List<Pair<String, Boolean>> booleanVariables = new ArrayList<>();
-                            if (producePresentVariable) {
-                                for (Pair<VariableUtils.VariableHolder, Boolean> pair : presentVariable) {
-                                    final String varName = producePresentVariablePrefix + (upperCaseFirstChar ? StringUtils.capitalize(pair.getLeft().getName()) : pair.getLeft().getName());
-                                    boolean present = false;
-                                    if (pair.getRight()) {
-                                        present = permutedVariables.stream().anyMatch(o -> o.getName().equals(pair.getLeft().getName()));
-                                    }
-                                    booleanVariables.add(Pair.of(varName, present));
-                                }
-                            }
-
-                            currTaskNumber.incrementAndGet();
-                            final String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
-                            VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                                    new VariableData.Permutation(permutedVariables, variableName, Map.of(),
-                                            null, null, false),
-                                    booleanVariables);
-
-                            variableTopLevelService.createInputVariablesForSubProcess(
-                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
-
-                            taskProducingService.createTasksForSubProcesses(
-                                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-                            return true;
-                        }
-                );
-            } catch (BreakFromLambdaException e) {
+                    cretaTaskWIthVariables(
+                            simpleExecContext, taskId, executionContextData, variableName, subProcessContextId,
+                            producePresentVariable, producePresentVariablePrefix, upperCaseFirstChar, presentVariable,
+                            currTaskNumber, lastIds, holders);
+            }
+            catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());
                 throw new InternalFunctionException(
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
+        else {
+            throw new IllegalStateException("unknown Enums.VariablesAs - "+variablesAs);
+        }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
+    }
+
+    private boolean cretaTaskWIthVariables(
+            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
+            String variableName, String subProcessContextId, boolean producePresentVariable, String producePresentVariablePrefix,
+            boolean upperCaseFirstChar, List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable,
+            AtomicInteger currTaskNumber, List<Long> lastIds, List<VariableUtils.VariableHolder> permutedVariables) {
+
+        if (log.isInfoEnabled()) {
+            log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
+        }
+
+        List<Pair<String, Boolean>> booleanVariables = new ArrayList<>();
+        if (producePresentVariable) {
+            for (Pair<VariableUtils.VariableHolder, Boolean> pair : presentVariable) {
+                final String varName = producePresentVariablePrefix + (upperCaseFirstChar ? StringUtils.capitalize(pair.getLeft().getName()) : pair.getLeft().getName());
+                boolean present = false;
+                if (pair.getRight()) {
+                    present = permutedVariables.stream().anyMatch(o -> o.getName().equals(pair.getLeft().getName()));
+                }
+                booleanVariables.add(Pair.of(varName, present));
+            }
+        }
+
+        currTaskNumber.incrementAndGet();
+        final String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+
+        VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
+                new VariableData.Permutation(permutedVariables, variableName, Map.of(),
+                        null, null, false),
+                booleanVariables);
+
+        variableTopLevelService.createInputVariablesForSubProcess(
+                variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
+
+        taskProducingService.createTasksForSubProcesses(
+                simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+        return true;
     }
 
 }

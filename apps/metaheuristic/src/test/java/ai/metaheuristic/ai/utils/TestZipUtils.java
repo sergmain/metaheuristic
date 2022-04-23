@@ -16,70 +16,58 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.FileCopyUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
  * Date: 6/5/2019
  * Time: 12:24 PM
  */
-public class TestZipUtils {
+class TestZipUtils {
 
+    // test how validator is working
     @Test
     public void validateZip(@TempDir File dir) throws IOException {
-//        File dir = DirUtils.createMhTempDir("test-unzip-");
-
         final File tempZipFile = File.createTempFile("temp-zip-file-", ".zip", dir);
         try (FileOutputStream fos = new FileOutputStream(tempZipFile);
              InputStream is = TestZipUtils.class.getResourceAsStream("/bin/test-zip.zip")) {
             assertNotNull(is);
             FileCopyUtils.copy(is, fos);
         }
-        List<String> errors = ZipUtils.validate(tempZipFile, VALIDATE_ZIP_FUNCTION);
-
+        List<String> errors = ZipUtils.validate(tempZipFile.toPath(), VALIDATE_ZIP_FUNCTION);
         System.out.println(errors);
-
         assertFalse(errors.isEmpty());
-
     }
 
-    public static void main(String[] args) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (InputStream is = new FileInputStream("docs-dev/error/params_1") ) {
-            IOUtils.copy(is, baos);
-        }
-        final byte[] origin = baos.toByteArray();
-        byte[] bytes = zip(origin, "params.yaml");
-        System.out.println(S.f("Origin: %d\nZipped: %d", origin.length, bytes.length ));
-    }
+    @Test
+    public void testUzipping(@TempDir File temp) throws IOException {
+        final File tempZipFile = new File("D:\\2\\220422_173128.zip");
+        final Path zipFile = tempZipFile.toPath();
+        List<String> errors = ZipUtils.validate(zipFile, VALIDATE_ZIP_FUNCTION);
+        System.out.println(errors);
+        assertTrue(errors.isEmpty());
 
-    private static byte[] zip(byte[] data, String filename) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ZipArchiveOutputStream zos = new ZipArchiveOutputStream(bos);
+        Path actualTemp = temp.toPath();
 
-        ZipArchiveEntry entry = new ZipArchiveEntry(filename);
-        entry.setSize(data.length);
-        zos.putArchiveEntry(entry);
-        zos.write(data);
-        zos.closeArchiveEntry();
+        System.out.println("renamedTo:");
+        Path zip1 = actualTemp.resolve("zip1");
+        Files.createDirectories(zip1);
+        Map<String, String> renamedTo = ZipUtils.unzipFolder(zipFile, zip1, true, List.of(), true);
 
-        zos.close();
-        bos.close();
-
-        return bos.toByteArray();
     }
 }

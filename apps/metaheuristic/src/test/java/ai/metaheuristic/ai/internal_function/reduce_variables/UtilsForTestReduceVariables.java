@@ -21,17 +21,18 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVar
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
-import ai.metaheuristic.commons.S;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.apache.commons.io.FileUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -44,7 +45,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class UtilsForTestReduceVariables {
 
+    public static class ParamsAsJson {
+        public final List<Map<String, String>> params = new ArrayList<>();
+    }
+
     private static final Pattern FILTER = Pattern.compile(".*\\[[3-9],.*");
+    private static final Pattern ATTENTION_SELECTOR = Pattern.compile(".*_prediction: \\[[4-9],.*");
 
     public static boolean filterStr(String o) {
         return FILTER.matcher(o).find();
@@ -62,11 +68,12 @@ public class UtilsForTestReduceVariables {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
         System.out.println("Total files: " + pathnames.size());
-        List<File> files = new ArrayList<>();
+        List<Path> files = new ArrayList<>();
+
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists(), zip.getAbsolutePath());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -124,16 +131,20 @@ public class UtilsForTestReduceVariables {
                 "isMatrixOfWinning", true));
 
         System.out.println("Start reducing variables at " + new Date());
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
-                    if (o.current==0) {
+                    if (o.current==1) {
                         System.out.println("======================");
                         System.out.println(o.file);
                     }
-                    System.out.println(S.f("%-10d %d", o.current, o.total));
-//                    if (o.current%2==0) {
-//                    }
-                });
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -153,8 +164,29 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        ParamsAsJson paramsAsJson = new ParamsAsJson();
+
+        System.out.println("\n=== Attention =================_");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            Map<String, String> map = new HashMap<>();
+            map.putAll(attention.dataset);
+            map.putAll(attention.params);
+            paramsAsJson.params.add(map);
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
+        System.out.println("\n=== Json ==================");
+        for (Map<String, String> param : paramsAsJson.params) {
+            String json = JsonUtils.getMapper().writeValueAsString(param);
+            System.out.println(json);
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);
@@ -187,11 +219,11 @@ public class UtilsForTestReduceVariables {
         final Date startDate = new Date();
         System.out.println("Start time: " + startDate);
         System.out.println("Total files: " + pathnames.size());
-        List<File> files = new ArrayList<>();
+        List<Path> files = new ArrayList<>();
         for (String pathname : pathnames) {
-            File zip = new File(pathname);
-            assertTrue(zip.exists(), zip.getAbsolutePath());
-            assertTrue(zip.isFile());
+            Path zip = new File(pathname).toPath();
+            assertTrue(Files.exists(zip), zip.toString());
+            assertTrue(Files.isRegularFile(zip));
             files.add(zip);
         }
 
@@ -246,16 +278,21 @@ public class UtilsForTestReduceVariables {
                 "isMatrixOfWinning", true));
 
         System.out.println("Start reducing variables at " + new Date());
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(files, config, r, filter,
+
+        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+        Path temp = fs.getPath("/temp");
+        Path actualTemp = Files.createDirectory(temp);
+//        Path actualTemp = Files.createTempDirectory("reduce-variable-");
+
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(actualTemp, files, config, r, filter,
                 (o)->{
-                    if (o.current==0) {
+                    if (o.current==1) {
                         System.out.println("======================");
                         System.out.println(o.file);
                     }
-                    System.out.println(S.f("%-10d %d", o.current, o.total));
-//                    if (o.current%2==0) {
-//                    }
-                });
+//                    System.out.println(S.f("%-10d %d", o.current, o.total));
+                },
+                (o)-> o.metricValues!=null && o.metricValues.comment!=null && ATTENTION_SELECTOR.matcher(o.metricValues.comment).find());
 
         assertFalse(result.byValue.isEmpty());
         assertFalse(result.byInstance.isEmpty());
@@ -275,8 +312,17 @@ public class UtilsForTestReduceVariables {
             System.out.printf("%-15s, %s\n", entry.getKey(), entry.getValue());
         }
 
+        System.out.println("\n==== Attention =================");
+        System.out.println("found for attention: " + result.attentionsAndExperimentMetrics.attentions.size());
+        for (ReduceVariablesData.Attention attention : result.attentionsAndExperimentMetrics.attentions) {
+            System.out.println(attention.result);
+            System.out.println(attention.dataset);
+            System.out.println(attention.params);
+            System.out.println();
+        }
+
         System.out.println("\n=====================");
-        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.metricsList) {
+        for (ReduceVariablesData.ExperimentMetrics experimentMetrics : result.attentionsAndExperimentMetrics.metricsList) {
             System.out.println(experimentMetrics.hyper);
             System.out.println(experimentMetrics.data);
             System.out.println(experimentMetrics.metrics);

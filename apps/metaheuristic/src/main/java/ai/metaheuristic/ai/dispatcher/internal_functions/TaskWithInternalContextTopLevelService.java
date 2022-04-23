@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -55,6 +57,7 @@ public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
+    private final VariableTopLevelService variableTopLevelService;
     private final VariableService variableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextCache execContextCache;
@@ -67,18 +70,22 @@ public class TaskWithInternalContextTopLevelService {
 
         final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        copyVariables(taskParamsYaml, subExecContextId);
+        copyVariables(subExecContextId, task, taskParamsYaml);
         taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
     }
 
-    private void copyVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
-        ExecContextImpl execContext = execContextCache.findById(subExecContextId);
-        if (execContext == null) {
-            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found");
+    private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
+        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId);
+        if (subExecContext == null) {
+            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found #" +subExecContextId);
         }
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml ecpy = subExecContext.getExecContextParamsYaml();
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
+        }
+        ExecContextImpl ec = execContextCache.findById(task.execContextId);
+        if (ec == null) {
+            throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
         }
         File tempDir = null;
         try {
@@ -106,13 +113,17 @@ public class TaskWithInternalContextTopLevelService {
                 }
                 if (!variableHolder.variable.inited) {
                     throw new InternalFunctionException(variable_not_found,
-                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited");
+                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
-
-                File tempFile = File.createTempFile("output-", ".bin", tempDir);
-
-                variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
-                execContextVariableService.storeDataInVariable(output, tempFile);
+                if (variableHolder.variable.nullified) {
+                    VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
+                    variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId);
+                }
+                else {
+                    File tempFile = File.createTempFile("output-", ".bin", tempDir);
+                    variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
+                    execContextVariableService.storeDataInVariable(output, tempFile);
+                }
             }
         }
         catch (IOException e) {

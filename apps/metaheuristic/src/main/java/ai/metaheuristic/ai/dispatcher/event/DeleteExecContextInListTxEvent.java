@@ -14,27 +14,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
+package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import java.util.List;
 
 /**
  * @author Serge
- * Date: 6/30/2021
- * Time: 8:01 PM
+ * Date: 9/19/2021
+ * Time: 8:50 PM
  */
-public class PermutationData {
+@AllArgsConstructor
+public class DeleteExecContextInListTxEvent {
+    public final List<Long> execContextIds;
 
-    @Data
-    @AllArgsConstructor
-    public static class Inlines {
-        public final StringVariableData.StringVariableItem item;
-        public final List<InlineVariable> inlineVariables;
-        public final String inlineVariableName;
+    public DeleteExecContextInListEvent to() {
+        return new DeleteExecContextInListEvent(execContextIds);
     }
-
 }

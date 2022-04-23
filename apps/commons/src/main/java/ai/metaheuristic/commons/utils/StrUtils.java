@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,18 @@ public class StrUtils {
 
     private static final Pattern codePattern = Pattern.compile(ALLOWED_CHARS_IN_CODE_REGEXP);
     private static final Pattern varNamePattern = Pattern.compile(ALLOWED_CHARS_IN_VAR_NAME_REGEXP);
+
+    private static final char[] ALPHA_NUMERIC = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    private static final Random RANDOM = new Random();
+
+    public static String randomAlphanumeric(final int count) {
+        final StringBuilder strBuilder = new StringBuilder(count);
+        final int anLen = ALPHA_NUMERIC.length;
+        for (int i = 0; i < count; i++) {
+            strBuilder.append(ALPHA_NUMERIC[RANDOM.nextInt(anLen)]);
+        }
+        return strBuilder.toString();
+    }
 
     public static boolean isCodeOk(String code) {
         Matcher m = codePattern.matcher(code);

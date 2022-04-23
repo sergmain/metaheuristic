@@ -25,7 +25,9 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -34,6 +36,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -86,6 +89,8 @@ public class TaskWithInternalContextEventService {
     public final VariableRepository variableRepository;
     private final TaskFinishingService taskFinishingService;
     private final ApplicationEventPublisher eventPublisher;
+    private final VariableTopLevelService variableTopLevelService;
+    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -286,9 +291,17 @@ public class TaskWithInternalContextEventService {
 
             boolean notSkip = true;
             if (!S.b(p.condition)) {
+                // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
+                // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository);
+                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
+                        (v) -> variableService.setVariableAsNull(v.id));
+                if (obj!=null && !obj.getClass().equals(Boolean.class)) {
+                    final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
+                    log.error(es);
+                    throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
+                }
                 notSkip = Boolean.TRUE.equals(obj);
                 int i=0;
             }

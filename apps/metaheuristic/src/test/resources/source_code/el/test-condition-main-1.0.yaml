@@ -1,0 +1,56 @@
+version: 4
+source:
+  clean: false
+  strictNaming: true
+  instances: 1
+  uid: test-condition-main-1.9
+  variables:
+    inline:
+      mh.hyper-params:
+        isVar1: 'false'
+        isVar2: 'true'
+        var1: '10'
+        var2: '20'
+  processes:
+    - code: mh.string-as-variable1
+      name: mh.string-as-variable1
+      function:
+        code: mh.string-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: isVar1
+                output: isVar1
+              - group: mh.hyper-params
+                name: isVar2
+                output: isVar2
+              - group: mh.hyper-params
+                name: var1
+                output: var1
+              - group: mh.hyper-params
+                name: var2
+                output: var2
+      outputs:
+        - name: isVar1
+        - name: isVar2
+        - name: var1
+        - name: var2
+    - code: mh.exec-source-code2
+      name: mh.exec-source-code2
+      function:
+        code: mh.exec-source-code
+        context: internal
+      inputs:
+        - name: isVar1
+        - name: isVar2
+        - name: var1
+        - name: var2
+      outputs:
+        - name: var1Result
+          nullable: true
+        - name: var2Result
+          nullable: true
+      metas:
+        - source-code-uid: test-condition-related-1.8

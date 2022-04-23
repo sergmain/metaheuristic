@@ -136,7 +136,7 @@ public class VariableService {
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
         if (variable.inited) {
-            String es = S.f("#171.180 variable #%d wasn't already inited", variableId);
+            String es = S.f("#171.180 variable #%d was already inited", variableId);
             log.error(es);
             throw new VariableCommonException(es, variableId);
 

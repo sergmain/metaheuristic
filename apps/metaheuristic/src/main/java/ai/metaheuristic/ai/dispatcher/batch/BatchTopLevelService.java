@@ -295,7 +295,7 @@ public class BatchTopLevelService {
             }
 
             if (ext.equals(ZIP_EXT)) {
-                List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+                List<String> errors = ZipUtils.validate(tempFile.toPath(), VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
                 if (!errors.isEmpty()) {
                     final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
                     status.addErrorMessages(errors);
