@@ -150,8 +150,8 @@ public class ExecContextVariableTopLevelService {
             }
             variableFile = new File(tempDir, "variable.");
             log.debug("Start storing an uploaded resource data to disk, target file: {}", variableFile.getPath());
-            try(OutputStream os = new FileOutputStream(variableFile)) {
-                IOUtils.copy(file.getInputStream(), os, 64000);
+            try(InputStream is = file.getInputStream(); OutputStream os = new FileOutputStream(variableFile)) {
+                IOUtils.copy(is, os, 64000);
             }
 
             UploadResult uploadResult = VariableSyncService.getWithSync(variableId, () -> {

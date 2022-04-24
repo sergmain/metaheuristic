@@ -73,8 +73,8 @@ public class GlobalVariableTopLevelService {
             }
         }
         try {
-            try {
-                FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+            try (InputStream is = file.getInputStream()) {
+                FileUtils.copyInputStreamToFile(is, tempFile);
             } catch (IOException e) {
                 String es = "#172.040 can't persist uploaded file as " + tempFile.getAbsolutePath()+", error: " + e.getMessage();
                 log.error(es, e);

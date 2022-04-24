@@ -60,6 +60,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -129,7 +130,9 @@ public class ExperimentResultTopLevelService {
 
         try {
             File importFile = new File(resultDir, "import.zip");
-            FileUtils.copyInputStreamToFile(file.getInputStream(), importFile);
+            try (InputStream is = file.getInputStream()) {
+                FileUtils.copyInputStreamToFile(is, importFile);
+            }
             ZipUtils.unzipFolder(importFile.toPath(), resultDir.toPath());
 
             File zipDir = new File(resultDir, ZIP_DIR);
