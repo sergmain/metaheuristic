@@ -564,7 +564,7 @@ public class Globals {
         logGarbageCollectors();
         logDeprecated();
 
-        logUlimitSh();
+//        logUlimitSh();
 
     }
 
