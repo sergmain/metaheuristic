@@ -32,7 +32,6 @@ import java.util.Map;
 @Data
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
 public class FunctionRuntimeParamsYamlV1 implements BaseParams {
 
     public final int version=1;

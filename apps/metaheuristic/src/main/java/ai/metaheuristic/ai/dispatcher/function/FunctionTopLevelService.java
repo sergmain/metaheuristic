@@ -18,18 +18,15 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -39,6 +36,7 @@ import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionRuntimeParamsYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import lombok.AllArgsConstructor;
@@ -62,12 +60,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
-import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorFunctionDownloadStatusDifferent;
-import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorStatusDifferent;
-import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.*;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
 @Service
 @Slf4j
@@ -539,24 +537,38 @@ public class FunctionTopLevelService {
         return configs;
     }
 
-    public void processKeepAliveData(List<Long> coreIds, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+    public void processKeepAliveData(List<Long> coreIds, KeepAliveRequestParamYaml params) {
+        List<Function> functions = functionRepository.findAll();
 
-        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
+
+        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(functions, params);
 
         if (processorFunctionDownloadStatusDifferent) {
-                    functionService.processFunctionStates(coreIds, functionDownloadStatus);
-
+            functionService.processFunctionStates(coreIds, params.functions);
         }
     }
 
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
-        if (ss.downloadStatuses.size()!=status.statuses.size()) {
-            return true;
-        }
-        for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
-            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (downloadStatus.functionCode.equals(sds.code) && !downloadStatus.functionState.equals(sds.state)) {
-                    return true;
+    private static final Pattern COMMAPATTERN = Pattern.compile("[,]");
+
+    public static boolean isProcessorFunctionDownloadStatusDifferent(List<Function> functions, KeepAliveRequestParamYaml params) {
+
+        for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status status : params.functions.statuses) {
+            Function func = functions.stream().filter(f->f.code.equals(status.code)).findFirst().orElse(null);
+            if (func==null) {
+                continue;
+            }
+            FunctionRuntimeParamsYaml runtimeParams = func.getFunctionRuntimeParamsYaml();
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
+                String coreIdsAsStr = runtimeParams.states.get(st.state);
+                String[] codeIds = StringUtils.split(coreIdsAsStr, ",");
+                for (KeepAliveRequestParamYaml.ProcessorRequest request : params.requests) {
+                    if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
+                        return false;
+                    }
+                    String codeId = request.processorCommContext.processorId.toString();
+                    if (Arrays.stream(codeIds).noneMatch(o->o.equals(codeId))) {
+                        return true;
+                    }
                 }
             }
         }

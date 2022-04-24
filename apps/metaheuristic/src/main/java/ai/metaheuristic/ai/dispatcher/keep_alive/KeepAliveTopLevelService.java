@@ -132,7 +132,7 @@ public class KeepAliveTopLevelService {
                     break;
                 }
             }
-            functionTopLevelService.processKeepAliveData(coreIds, req.functions);
+            functionTopLevelService.processKeepAliveData(coreIds, req);
             initDispatcherInfo(resp);
         } catch (Throwable th) {
             String json;
