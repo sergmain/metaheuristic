@@ -82,7 +82,7 @@ public class ZipUtils {
         try {
             final Path zipPath = zipFile.toPath();
             final Path directoryPath = directory.toPath();
-            createZip(directoryPath, zipPath, renameTo);
+            createZip(List.of(directoryPath), zipPath, renameTo);
         }
         catch (ZipArchiveException e) {
             log.error("Zipping error", e);
@@ -108,7 +108,7 @@ public class ZipUtils {
         try {
             final File mhTempDir = DirUtils.createMhTempDir("zip-dir-");
             File tempFile = new File(mhTempDir, "zip.zip");
-            createZip(tempFile.toPath(), directory.toPath(), renameTo);
+            createZip(List.of(tempFile.toPath()), directory.toPath(), renameTo);
 
             try (FileInputStream fis = new FileInputStream(tempFile);
                  BufferedInputStream bis = new BufferedInputStream(fis);
@@ -127,23 +127,28 @@ public class ZipUtils {
     }
 
     public static void createZip(Path directoryPath, Path zipPath) {
-        createZip(directoryPath, zipPath, Collections.emptyMap());
+        createZip(List.of(directoryPath), zipPath, Collections.emptyMap());
+    }
+
+    public static void createZip(List<Path> directoryPaths, Path zipPath) {
+        createZip(directoryPaths, zipPath, Collections.emptyMap());
     }
 
     /**
-     * Creates a zip file at the specified path with the contents of the specified directory.
+     * Creates a zip file at the specified path with the contents of the specified files/directories
      * NB:
      *
-     * @param directoryPath The path of the directory where the archive will be created. eg. c:/temp
+     * @param directoryPaths The paths of the files/directories which will be added to zip
      * @param zipPath File for output stream for writing result
      * @throws ZipArchiveException If anything goes wrong
      */
-    public static void createZip(Path directoryPath, Path zipPath, Map<String, String> renameTo)  {
+    public static void createZip(List<Path> directoryPaths, Path zipPath, Map<String, String> renameTo)  {
         try {
-//            Path created = Files.createFile(zipPath);
             try (SeekableByteChannel seekableByteChannel = Files.newByteChannel(zipPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING));
                  ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(seekableByteChannel) ) {
-                addFileToZip(tOut, directoryPath, "", renameTo);
+                for (Path directoryPath : directoryPaths) {
+                    addFileToZip(tOut, directoryPath, "", renameTo);
+                }
             }
         }
         catch (ZipArchiveException e) {
