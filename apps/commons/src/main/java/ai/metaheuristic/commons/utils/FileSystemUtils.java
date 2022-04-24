@@ -30,6 +30,8 @@ import java.nio.charset.Charset;
 public class FileSystemUtils {
 
     public static void writeStringToFileWithSync(final File file, final String data, final Charset charset) throws IOException {
+        // TODO P1 2022-04-24 change to modern usage with Path
+//        try (OutputStream out = Files.newOutputStream(file.toPath(), CREATE, WRITE, READ, TRUNCATE_EXISTING)) {
         try (FileOutputStream out = FileUtils.openOutputStream(file, false)) {
             IOUtils.write(data, out, charset);
             out.flush();

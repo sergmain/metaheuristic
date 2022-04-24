@@ -141,17 +141,11 @@ public class ExecContextVariableTopLevelService {
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
 
         File tempDir=null;
-        final File variableFile;
         try {
             tempDir = DirUtils.createMhTempDir("upload-variable-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
                 return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.280 can't create temporary directory in " + location);
-            }
-            variableFile = new File(tempDir, "variable.");
-            log.debug("Start storing an uploaded resource data to disk, target file: {}", variableFile.getPath());
-            try(InputStream is = file.getInputStream(); OutputStream os = new FileOutputStream(variableFile)) {
-                IOUtils.copy(is, os, 64000);
             }
 
             UploadResult uploadResult = VariableSyncService.getWithSync(variableId, () -> {
@@ -162,8 +156,8 @@ public class ExecContextVariableTopLevelService {
                 if (v.inited) {
                     return OK_UPLOAD_RESULT;
                 }
-                try (final FileInputStream is = new FileInputStream(variableFile); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                    variableService.storeVariable(bis, variableFile.length(), execContextId, taskId, variableId);
+                try (final InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                    variableService.storeVariable(bis, file.getSize(), execContextId, taskId, variableId);
                     return OK_UPLOAD_RESULT;
                 } catch (Throwable th) {
                     final String error = "#440.290 can't store the result, Error: " + th.getMessage();

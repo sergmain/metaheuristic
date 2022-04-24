@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,7 +53,10 @@ import java.security.PublicKey;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 @ConfigurationProperties("mh")
 @Getter
@@ -559,6 +563,30 @@ public class Globals {
         logSystemEnvs();
         logGarbageCollectors();
         logDeprecated();
+
+        logUlimitSh();
+
+    }
+
+    private void logUlimitSh() {
+        if (os==EnumsApi.OS.linux) {
+            SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(List.of("ulimit", "-Sn"), 10L, processor.taskConsoleOutputMaxLines);
+            if (!result.ok) {
+                log.warn("Error of getting ulimit");
+                log.warn("\tresult.ok: {}",  result.ok);
+                log.warn("\tresult.error: {}",  result.error);
+                log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
+                log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
+                return;
+            }
+
+            // at this point result.systemExecResult must be not null, it can be null only if result.ok==false, but see above
+            if (result.systemExecResult.exitCode!=0) {
+                log.info("ulimit wasn't found");
+                return;
+            }
+            log.info("ulimit -Sn: " + result.systemExecResult.console.toLowerCase().strip());
+        }
     }
 
     private static void logGarbageCollectors() {
