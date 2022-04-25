@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -85,12 +86,12 @@ public class ZipUtils {
             createZip(List.of(directoryPath), zipPath, renameTo);
         }
         catch (ZipArchiveException e) {
-            log.error("Zipping error", e);
+            log.error("Zipping error, " + e.getMessage(), e);
             throw e;
         }
         catch (Throwable th) {
             log.error("Zipping error", th);
-            throw new ZipArchiveException("Zip failed", th);
+            throw new ZipArchiveException("Zip failed, " + th.getMessage(), th);
         }
     }
 
@@ -117,12 +118,12 @@ public class ZipUtils {
             }
         }
         catch (ZipArchiveException e) {
-            log.error("Zipping error", e);
+            log.error("Zipping error, " + e.getMessage(), e);
             throw e;
         }
         catch (Throwable th) {
             log.error("Zipping error", th);
-            throw new ZipArchiveException("Zip failed", th);
+            throw new ZipArchiveException("Zip failed, " + th.getMessage(), th);
         }
     }
 
@@ -152,12 +153,12 @@ public class ZipUtils {
             }
         }
         catch (ZipArchiveException e) {
-            log.error("Zipping error", e);
+            log.error("Zipping error, " + e.getMessage(), e);
             throw e;
         }
         catch (Throwable th) {
             log.error("Zipping error", th);
-            throw new ZipArchiveException("Zip failed", th);
+            throw new ZipArchiveException("Zip failed, " + th.getMessage(), th);
         }
     }
 
@@ -186,7 +187,10 @@ public class ZipUtils {
         } else {
             zOut.closeArchiveEntry();
             final String newEntryName = entryName;
-            Files.list(path).forEach(child-> addFileToZip(zOut, child, newEntryName + "/", renameMapping));
+            // do not remove try(Stream<Path>){}
+            try (final Stream<Path> list = Files.list(path) ) {
+                list.forEach(child -> addFileToZip(zOut, child, newEntryName + "/", renameMapping));
+            }
         }
     }
 
