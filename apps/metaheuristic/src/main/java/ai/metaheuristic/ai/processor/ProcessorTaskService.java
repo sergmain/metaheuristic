@@ -202,8 +202,10 @@ public class ProcessorTaskService {
                 input.empty = true;
             }
 
-            task.setReported(true);
-            task.setReportedOn(System.currentTimeMillis());
+            // TODO P0 2022-04-27 is that bug or what's meaning of this?
+//            task.setReported(true);
+//            task.setReportedOn(System.currentTimeMillis());
+
             save(ref, task);
         }
     }

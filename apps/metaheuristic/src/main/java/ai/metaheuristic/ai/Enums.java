@@ -75,22 +75,11 @@ public final class Enums {
         }
     }
 
-    /*
-    public enum VerificationState { not_yet(false), error(true), ok(true);
-
-        public boolean completed;
-
-        VerificationState(boolean completed) {
-            this.completed = completed;
-        }
-    }
-*/
-
     public enum GitStatus {unknown, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
-    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null }
+    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null, variable_is_null }
 
     public enum UploadVariableStatus {
         OK,

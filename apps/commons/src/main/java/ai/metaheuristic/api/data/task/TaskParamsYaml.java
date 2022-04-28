@@ -96,7 +96,10 @@ public class TaskParamsYaml implements BaseParams {
 
         public @Nullable String type;
 
+        // true if variable is null or length==0
         public boolean empty = false;
+
+        // could variable be null
         private Boolean nullable;
 
         public Boolean getNullable() {

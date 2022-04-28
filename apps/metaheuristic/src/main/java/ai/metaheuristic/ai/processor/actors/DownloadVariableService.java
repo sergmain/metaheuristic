@@ -171,7 +171,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     if (statusCode ==HttpServletResponse.SC_NO_CONTENT) {
                         if (task.nullable) {
                             processorTaskService.setInputAsEmpty(task.ref, task.taskId, task.variableId);
-                            resourceState = Enums.VariableState.ok;
+                            resourceState = Enums.VariableState.variable_is_null;
                         }
                         else {
                             es = String.format("#810.027 Dispatcher reported that variable #%s is empty but configuration states nullable==false. " +
@@ -272,7 +272,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 log.warn("#810.053 Variable {} can't be acquired, state: {}", task.variableId, resourceState);
                 return;
             }
-            else if (resourceState == Enums.VariableState.transmitting_error || resourceState == Enums.VariableState.variable_cant_be_null) {
+            else if (resourceState == Enums.VariableState.transmitting_error || resourceState == Enums.VariableState.variable_cant_be_null || resourceState == Enums.VariableState.variable_is_null) {
                 return;
             }
 
