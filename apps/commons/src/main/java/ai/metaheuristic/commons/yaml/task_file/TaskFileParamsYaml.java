@@ -63,11 +63,15 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public @Nullable String type;
 
+        // true if variable is null or length==0
         public boolean empty = false;
+
+        // could variable be null
+        @Nullable
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {
@@ -97,11 +101,15 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public EnumsApi.DataType dataType;
         public @Nullable String type;
+        // true if variable is null or length==0
         public boolean empty = false;
+
+        // could variable be null
+        @Nullable
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {

@@ -275,7 +275,7 @@ public class ProcessorService {
                 //noinspection unused
                 File outputResourceFile = resourceProvider.getOutputVariableFromFile(ref, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
-                final String msg = "#749.080 Error: " + e.toString();
+                final String msg = "#749.080 Error: " + e.getMessage();
                 log.error(msg, e);
                 processorTaskService.markAsFinishedWithError(ref, task.taskId, msg);
                 return false;

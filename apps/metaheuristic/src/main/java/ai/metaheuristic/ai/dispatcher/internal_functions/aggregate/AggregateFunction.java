@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtilsService;
@@ -51,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
 /**
  * @author Serge
@@ -101,8 +100,7 @@ public class AggregateFunction implements InternalFunction {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect,
-                            "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs));
+                    number_of_outputs_is_incorrect, "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
         }
 
         final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, "produce-metadata");
@@ -110,8 +108,7 @@ public class AggregateFunction implements InternalFunction {
         String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
         if (names==null || names.length==0) {
             throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    "#979.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode));
+                    meta_not_found, "#979.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
 
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
@@ -124,16 +121,14 @@ public class AggregateFunction implements InternalFunction {
             tempDir = DirUtils.createMhTempDir("mh-aggregate-internal-context-");
             if (tempDir==null) {
                 throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                        "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR));
+                        system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
             }
 
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
             File outputDir = new File(tempDir, outputVariable.name);
             if (!outputDir.mkdirs()) {
                 throw new InternalFunctionException(
-                    new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                        "#979.120 Can't create output directory  "+ outputDir.getAbsolutePath()));
+                        system_error, "#979.120 Can't create output directory  "+ outputDir.getAbsolutePath());
             }
 
             list.stream().map(o->o.taskContextId).collect(Collectors.toSet())

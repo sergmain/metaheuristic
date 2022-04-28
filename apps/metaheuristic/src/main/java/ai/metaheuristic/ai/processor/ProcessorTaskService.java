@@ -44,6 +44,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -90,61 +91,66 @@ public class ProcessorTaskService {
 
             try {
                 DispatcherUrl dispatcherUrl = ref.dispatcherUrl;
-                Files.list(dispatcherDir.toPath()).forEach(p -> {
-                    final File taskGroupDir = p.toFile();
-                    if (!taskGroupDir.isDirectory()) {
-                        return;
-                    }
-                    try {
-                        AtomicBoolean isEmpty = new AtomicBoolean(true);
-                        Files.list(p).forEach(s -> {
-                            isEmpty.set(false);
-                            String groupDirName = taskGroupDir.getName();
-                            final File currDir = s.toFile();
-                            String name = currDir.getName();
-                            long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
-                            log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
-                            File taskYamlFile = new File(currDir, Consts.TASK_YAML);
-                            if (!taskYamlFile.exists() || taskYamlFile.length()==0L) {
-                                deleteDir(currDir, "Delete not valid dir of task " + s+", exist: "+taskYamlFile.exists()+", length: " +taskYamlFile.length());
-                                return;
-                            }
+                // do not remove try(Stream<Path>){}
+                try (final Stream<Path> pathStream = Files.list(dispatcherDir.toPath())) {
+                    pathStream.forEach(p -> {
+                        final File taskGroupDir = p.toFile();
+                        if (!taskGroupDir.isDirectory()) {
+                            return;
+                        }
+                        try {
+                            AtomicBoolean isEmpty = new AtomicBoolean(true);
+                            try (final Stream<Path> stream = Files.list(p)) {
+                                stream.forEach(s -> {
+                                    isEmpty.set(false);
+                                    String groupDirName = taskGroupDir.getName();
+                                    final File currDir = s.toFile();
+                                    String name = currDir.getName();
+                                    long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
+                                    log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
+                                    File taskYamlFile = new File(currDir, Consts.TASK_YAML);
+                                    if (!taskYamlFile.exists() || taskYamlFile.length() == 0L) {
+                                        deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + taskYamlFile.exists() + ", length: " + taskYamlFile.length());
+                                        return;
+                                    }
 
-                            try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                ProcessorTask task = ProcessorTaskUtils.to(fis);
-                                if (S.b(task.dispatcherUrl)) {
-                                    deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                    log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
-                                    return;
-                                }
-                                getMapForDispatcherUrl(ref).put(taskId, task);
+                                    try (FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                        ProcessorTask task = ProcessorTaskUtils.to(fis);
+                                        if (S.b(task.dispatcherUrl)) {
+                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                            log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                                            return;
+                                        }
+                                        getMapForDispatcherUrl(ref).put(taskId, task);
 
-                                // fix state of task
-                                FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                                if (functionExec !=null &&
-                                        ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
-                                                (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
-                                    markAsFinished(ref, taskId, functionExec);
-                                }
+                                        // fix state of task
+                                        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                                        if (functionExec != null &&
+                                                ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
+                                                        (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
+                                            markAsFinished(ref, taskId, functionExec);
+                                        }
+                                    }
+                                    catch (IOException e) {
+                                        String es = "#713.010 Error";
+                                        log.error(es, e);
+                                        throw new RuntimeException(es, e);
+                                    }
+                                    catch (YAMLException e) {
+                                        String es = "#713.020 yaml Error: " + e.getMessage();
+                                        log.warn(es, e);
+                                        deleteDir(currDir, "Delete not valid dir of task " + s);
+                                    }
+                                });
                             }
-                            catch (IOException e) {
-                                String es = "#713.010 Error";
-                                log.error(es, e);
-                                throw new RuntimeException(es, e);
-                            }
-                            catch (YAMLException e) {
-                                String es = "#713.020 yaml Error: " + e.getMessage();
-                                log.warn(es, e);
-                                deleteDir(currDir, "Delete not valid dir of task " + s);
-                            }
-                        });
-                    }
-                    catch (IOException e) {
-                        String es = "#713.030 Error";
-                        log.error(es, e);
-                        throw new RuntimeException(es, e);
-                    }
-                });
+                        }
+                        catch (IOException e) {
+                            String es = "#713.030 Error";
+                            log.error(es, e);
+                            throw new RuntimeException(es, e);
+                        }
+                    });
+                }
             } catch (IOException e) {
                 String es = "#713.040 Error";
                 log.error(es, e);
@@ -196,8 +202,10 @@ public class ProcessorTaskService {
                 input.empty = true;
             }
 
-            task.setReported(true);
-            task.setReportedOn(System.currentTimeMillis());
+            // TODO P0 2022-04-27 is that bug or what's meaning of this?
+//            task.setReported(true);
+//            task.setReportedOn(System.currentTimeMillis());
+
             save(ref, task);
         }
     }

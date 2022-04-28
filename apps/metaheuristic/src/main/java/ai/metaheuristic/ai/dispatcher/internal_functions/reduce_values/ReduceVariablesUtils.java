@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.MH_METADATA_YAML_FILE_NAME;
 
@@ -257,7 +258,11 @@ public class ReduceVariablesUtils {
             Path zipDataDir = tmp.resolve("zip");
             ZipUtils.unzipFolder(f, zipDataDir, false, Collections.emptyList(), false);
 
-            List<Path> top = Files.list(zipDataDir).collect(Collectors.toList());
+            List<Path> top;
+            // do not remove try(){}
+            try (final Stream<Path> stream = Files.list(zipDataDir)) {
+                top = stream.collect(Collectors.toList());
+            }
 
             if (top.isEmpty()) {
                 throw new RuntimeException("can't find any dir in " + zipDataDir.normalize());
@@ -266,7 +271,11 @@ public class ReduceVariablesUtils {
                 throw new RuntimeException("actual size: " +top.size()+", " + top);
             }
 
-            Collection<Path> ctxDirs = Files.list(top.get(0)).collect(Collectors.toList());
+            Collection<Path> ctxDirs;
+            // do not remove try(Stream<Path>){}
+            try (final Stream<Path> stream = Files.list(top.get(0))) {
+                ctxDirs = stream.collect(Collectors.toList());
+            }
             if (ctxDirs.isEmpty()) {
                 throw new RuntimeException("can't find any dir in " + top.get(0).normalize());
             }
@@ -290,7 +299,11 @@ public class ReduceVariablesUtils {
                 EnumsApi.Fitting fitting = null;
                 MetricValues metricValues = null;
 
-                Collection<Path> ffs = Files.list(ctxDir).collect(Collectors.toList());
+                Collection<Path> ffs;
+                // do not remove try(Stream<Path>){}
+                try (final Stream<Path> stream = Files.list(ctxDir)) {
+                    ffs = stream.collect(Collectors.toList());
+                }
 
                 for (Path file : ffs) {
                     final String fileName = file.getFileName().toString();

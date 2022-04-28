@@ -213,7 +213,12 @@ public class SystemProcessLauncher {
         finally {
             try {
                 if (streamHolder.is!=null) {
-                    streamHolder.is.close();
+                    try {
+                        streamHolder.is.close();
+                    }
+                    catch (IOException e) {
+                        //
+                    }
                 }
             }
             catch(Throwable th) {

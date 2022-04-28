@@ -264,8 +264,8 @@ public class FunctionTopLevelService {
             final File zipFile = new File(tempDir, "functions" + ext);
             log.debug("Start storing an uploaded function to disk");
             long size;
-            try(OutputStream os = new FileOutputStream(zipFile)) {
-                size = IOUtils.copy(file.getInputStream(), os, 64000);
+            try (InputStream is = file.getInputStream(); OutputStream os = new FileOutputStream(zipFile)) {
+                size = IOUtils.copy(is, os, 64000);
                 os.flush();
             }
             log.debug("Uploaded bytes: {}, stored: {}", file.getSize(), size);
