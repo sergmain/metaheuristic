@@ -65,33 +65,14 @@ public class GlobalVariableTopLevelService {
         if (file.getSize()==0) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 global variables with size as 0, isn't supported");
         }
-        File tempFile = globals.createTempFileForDispatcher("temp-raw-file-");
-        if (tempFile.exists()) {
-            if (!tempFile.delete() ) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#172.030 can't delete dir " + tempFile.getAbsolutePath());
-            }
-        }
         try {
-            try (InputStream is = file.getInputStream()) {
-                FileUtils.copyInputStreamToFile(is, tempFile);
-            } catch (IOException e) {
-                String es = "#172.040 can't persist uploaded file as " + tempFile.getAbsolutePath()+", error: " + e.getMessage();
-                log.error(es, e);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                globalVariableService.save(bis, file.getSize(), variable, originFilename);
             }
-
-            try {
-                try (InputStream is = new FileInputStream(tempFile); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                    globalVariableService.save(bis, tempFile.length(), variable, originFilename);
-                }
-            } catch (Throwable e) {
-                String es = "#172.050 An error while saving data to file, " + e.getMessage();
-                log.error(es, e);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-            }
-        } finally {
-            DirUtils.deleteAsync(tempFile);
+        } catch (Throwable e) {
+            String es = "#172.050 An error while saving data to file, " + e.getMessage();
+            log.error(es, e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
