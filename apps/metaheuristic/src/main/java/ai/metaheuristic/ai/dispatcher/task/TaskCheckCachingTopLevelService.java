@@ -86,6 +86,7 @@ public class TaskCheckCachingTopLevelService {
     private final CacheProcessRepository cacheProcessRepository;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+    private final TaskFinishingService taskFinishingService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
 
@@ -144,7 +145,14 @@ public class TaskCheckCachingTopLevelService {
         executor.submit(() -> {
             RegisterTaskForCheckCachingEvent event;
             while ((event = pullFromQueue())!=null) {
-                checkCachingInternal(event);
+                try {
+                    checkCachingInternal(event);
+                }
+                catch (Throwable th) {
+                    log.error("Error", th);
+                    taskFinishingService.finishWithErrorWithTx(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage());
+                    return;
+                }
             }
         });
     }

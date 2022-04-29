@@ -24,18 +24,18 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 @Slf4j
 @Profile("dispatcher")
@@ -65,33 +65,14 @@ public class GlobalVariableTopLevelService {
         if (file.getSize()==0) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 global variables with size as 0, isn't supported");
         }
-        File tempFile = globals.createTempFileForDispatcher("temp-raw-file-");
-        if (tempFile.exists()) {
-            if (!tempFile.delete() ) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#172.030 can't delete dir " + tempFile.getAbsolutePath());
-            }
-        }
         try {
-            try (InputStream is = file.getInputStream()) {
-                FileUtils.copyInputStreamToFile(is, tempFile);
-            } catch (IOException e) {
-                String es = "#172.040 can't persist uploaded file as " + tempFile.getAbsolutePath()+", error: " + e.getMessage();
-                log.error(es, e);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                globalVariableService.save(bis, file.getSize(), variable, originFilename);
             }
-
-            try {
-                try (InputStream is = new FileInputStream(tempFile); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                    globalVariableService.save(bis, tempFile.length(), variable, originFilename);
-                }
-            } catch (Throwable e) {
-                String es = "#172.050 An error while saving data to file, " + e.getMessage();
-                log.error(es, e);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-            }
-        } finally {
-            DirUtils.deleteAsync(tempFile);
+        } catch (Throwable e) {
+            String es = "#172.050 An error while saving data to file, " + e.getMessage();
+            log.error(es, e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
