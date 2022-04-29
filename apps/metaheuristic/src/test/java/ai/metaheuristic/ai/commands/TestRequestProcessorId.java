@@ -133,7 +133,7 @@ public class TestRequestProcessorId {
     @Test
     public void testEmptySessionId() {
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml.Processor req = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId.toString(), null);

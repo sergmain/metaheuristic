@@ -126,7 +126,7 @@ public class ProcessorKeepAliveRequestor {
                 if (!ref.dispatcherUrl.equals(dispatcherUrl)) {
                     continue;
                 }
-                KeepAliveRequestParamYaml.ProcessorRequest request = new KeepAliveRequestParamYaml.ProcessorRequest(ref.processorCode);
+                KeepAliveRequestParamYaml.Processor request = new KeepAliveRequestParamYaml.Processor(ref.processorCode);
                 karpy.requests.add(request);
 
                 final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);

@@ -138,7 +138,7 @@ public class TestKeepAliveRequestParamYamlUtils {
         assertEquals("session-11", kar.requests.get(0).processorCommContext.sessionId);
 
         assertEquals(1, kar.requests.size());
-        KeepAliveRequestParamYaml.ProcessorRequest processorRequest = kar.requests.get(0);
+        KeepAliveRequestParamYaml.Processor processorRequest = kar.requests.get(0);
         assertEquals(13, processorRequest.processor.env.quotas.limit);
         assertEquals(2, processorRequest.processor.env.quotas.values.size());
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,26 +26,26 @@ import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 10/03/2019
- * Time: 6:02 PM
+ * Date: 4/29/2022
+ * Time: 12:53 AM
  */
-public class KeepAliveRequestParamYamlUtilsV2 extends
-        AbstractParamsYamlUtils<KeepAliveRequestParamYamlV2, KeepAliveRequestParamYamlV3, KeepAliveRequestParamYamlUtilsV3, Void, Void, Void> {
+public class KeepAliveRequestParamYamlUtilsV3 extends
+        AbstractParamsYamlUtils<KeepAliveRequestParamYamlV3, KeepAliveRequestParamYam3, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(KeepAliveRequestParamYamlV2.class);
+        return YamlUtils.init(KeepAliveRequestParamYamlV3.class);
     }
 
     @NonNull
     @Override
-    public KeepAliveRequestParamYamlV3 upgradeTo(@NonNull KeepAliveRequestParamYamlV2 src) {
+    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV2 src) {
         KeepAliveRequestParamYamlV3 t = new KeepAliveRequestParamYamlV3();
 
         src.functions.statuses.stream().map(o->new KeepAliveRequestParamYamlV3.FunctionDownloadStatusesV3.StatusV3(o.code, o.state))

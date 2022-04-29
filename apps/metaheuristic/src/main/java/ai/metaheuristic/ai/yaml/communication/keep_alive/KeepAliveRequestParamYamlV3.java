@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 1:03 AM
  */
 @Data
-public class KeepAliveRequestParamYaml implements BaseParams {
+public class KeepAliveRequestParamYamlV3 implements BaseParams {
 
     public final int version=3;
 
@@ -49,7 +50,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code","path"})
-    public static class DiskStorage {
+    public static class DiskStorageV3 {
         public String code;
         public String path;
     }
@@ -60,7 +61,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
 //    @EqualsAndHashCode( of={"tag","amount"})
-    public static class Quota {
+    public static class QuotaV3 {
         public String tag;
         public int amount;
         // core can disable specific tag. i.e. on scheduler basis
@@ -70,8 +71,8 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quotas {
-        public List<Quota> values = new ArrayList<>();
+    public static class QuotasV3 {
+        public List<QuotaV3> values = new ArrayList<>();
         public int limit;
         public int defaultValue;
         public boolean disabled;
@@ -80,7 +81,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Core {
+    public static class CoreV3 {
         public String coreDir;
         @Nullable
         public Long coreId;
@@ -90,9 +91,9 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         @Nullable
         public String tags;
 
-        public final Quotas quotas = new Quotas();
+        public final QuotasV3 quotas = new QuotasV3();
 
-        public Core(String coreCode) {
+        public CoreV3(String coreCode) {
             this.coreCode = coreCode;
         }
     }
@@ -100,18 +101,18 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Env {
-        public final Map<String, String> mirrors = new ConcurrentHashMap<>();
-        public final Map<String, String> envs = new ConcurrentHashMap<>();
-        public final List<DiskStorage> disk = new ArrayList<>();
+    public static class EnvV3 {
+        public final Map<String, String> mirrors = new HashMap<>();
+        public final Map<String, String> envs = new HashMap<>();
+        public final List<DiskStorageV3> disk = new ArrayList<>();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     // ReportProcessor
-    public static class ProcessorStatus {
-        public Env env;
+    public static class ProcessorStatusV3 {
+        public EnvV3 env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String ip;
@@ -136,26 +137,22 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     }
 
     @Data
-    public static class FunctionDownloadStatuses {
+    public static class FunctionDownloadStatusesV3 {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
-        public static class Status {
+        public static class StatusV3 {
             public String code;
             public EnumsApi.FunctionState state;
         }
 
-        public List<Status> statuses = new ArrayList<>();
+        public List<StatusV3> statuses = new ArrayList<>();
     }
 
     @Data
     @NoArgsConstructor
-    public static class RequestProcessorId {}
-
-    @Data
-    @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorCommContext {
+    public static class ProcessorCommContextV3 {
         public Long processorId;
         public String sessionId;
     }
@@ -163,22 +160,22 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Processor {
-        public ProcessorStatus processor;
+    public static class ProcessorV3 {
+        public ProcessorStatusV3 processor;
 
         // if not null it means we need a new processorId
         @Nullable
-        public ProcessorCommContext processorCommContext;
+        public ProcessorCommContextV3 processorCommContext;
 
         public String processorCode;
 
-        public Processor(String processorCode) {
+        public ProcessorV3(String processorCode) {
             this.processorCode = processorCode;
         }
     }
 
-    public final Processor processor = new Processor();
-    public final List<Core> cores = new ArrayList<>();
-    public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
+    public final ProcessorV3 processor = new ProcessorV3();
+    public final List<CoreV3> cores = new ArrayList<>();
+    public final FunctionDownloadStatusesV3 functions = new FunctionDownloadStatusesV3();
 
 }

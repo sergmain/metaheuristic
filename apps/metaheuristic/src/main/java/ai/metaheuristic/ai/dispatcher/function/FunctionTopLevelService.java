@@ -561,7 +561,7 @@ public class FunctionTopLevelService {
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
                 String coreIdsAsStr = runtimeParams.states.get(st.state);
                 String[] codeIds = StringUtils.split(coreIdsAsStr, ",");
-                for (KeepAliveRequestParamYaml.ProcessorRequest request : params.requests) {
+                for (KeepAliveRequestParamYaml.Processor request : params.requests) {
                     if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
                         return false;
                     }

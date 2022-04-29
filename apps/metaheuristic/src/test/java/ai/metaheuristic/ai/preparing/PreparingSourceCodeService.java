@@ -145,7 +145,7 @@ public class PreparingSourceCodeService {
         }
         String sessionId;
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml.Processor req = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAsStr, null);
@@ -174,7 +174,7 @@ public class PreparingSourceCodeService {
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
         karpy.functions.statuses = asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction());
 
-        KeepAliveRequestParamYaml.ProcessorRequest pr = new KeepAliveRequestParamYaml.ProcessorRequest();
+        KeepAliveRequestParamYaml.Processor pr = new KeepAliveRequestParamYaml.Processor();
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");

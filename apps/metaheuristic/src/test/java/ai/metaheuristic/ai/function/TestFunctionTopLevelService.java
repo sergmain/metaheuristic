@@ -42,7 +42,7 @@ public class TestFunctionTopLevelService {
         KeepAliveRequestParamYaml params = new KeepAliveRequestParamYaml();
         assertFalse(FunctionTopLevelService.isProcessorFunctionDownloadStatusDifferent(functions, params));
 
-        final KeepAliveRequestParamYaml.ProcessorRequest processorRequest = new KeepAliveRequestParamYaml.ProcessorRequest();
+        final KeepAliveRequestParamYaml.Processor processorRequest = new KeepAliveRequestParamYaml.Processor();
         processorRequest.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(42L, "123456");
         params.requests.add(processorRequest);
         assertFalse(FunctionTopLevelService.isProcessorFunctionDownloadStatusDifferent(functions, params));

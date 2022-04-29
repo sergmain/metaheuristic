@@ -90,7 +90,7 @@ public class ProcessorTopLevelService {
     }
 
     public void processKeepAliveData(
-            KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            KeepAliveRequestParamYaml.Processor processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
             final Processor processor) {
 
         if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,6 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -30,18 +31,18 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * User: Serg
- * Date: 25.06.2017
- * Time: 15:56
+ * @author Serge
+ * Date: 4/28/2022
+ * Time: 11:20 PM
  */
 @Entity
-@Table(name = "mh_processor_core")
+@Table(name = "MH_PROCESSOR_CORE")
 @Data
 @ToString(exclude = "status")
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Processor implements Serializable {
+public class ProcessorCore implements Serializable {
     @Serial
     private static final long serialVersionUID = -6094247705164836600L;
 
@@ -51,6 +52,10 @@ public class Processor implements Serializable {
 
     @Version
     public Long version;
+
+    @Nullable
+    @Column(name = "PROCESSOR_ID")
+    public Long processorId;
 
     /**
      * When status of processor was updated last time

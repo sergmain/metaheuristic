@@ -139,7 +139,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         setSessionAsExpired();
 
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
+        KeepAliveRequestParamYaml.Processor req = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
         processorComm.requests.add(req);
 
         final String newSessionId = sessionIdBefore + '-';

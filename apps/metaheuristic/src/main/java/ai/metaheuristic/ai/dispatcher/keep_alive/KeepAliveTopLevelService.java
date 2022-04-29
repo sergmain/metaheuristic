@@ -71,7 +71,7 @@ public class KeepAliveTopLevelService {
         dispatcherResponse.requestLogFile = processorTopLevelService.processLogRequest(processorId);
     }
 
-    public void processGetNewProcessorId(KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveResponseParamYaml.DispatcherResponse response) {
+    public void processGetNewProcessorId(KeepAliveRequestParamYaml.Processor processorRequest, KeepAliveResponseParamYaml.DispatcherResponse response) {
         response.assignedProcessorId = getNewProcessorId(processorRequest.requestProcessorId);
     }
 
@@ -88,7 +88,7 @@ public class KeepAliveTopLevelService {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
             List<Long> coreIds = new ArrayList<>();
-            for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
+            for (KeepAliveRequestParamYaml.Processor processorRequest : req.requests) {
                 KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
                 resp.responses.add(dispatcherResponse);
 
