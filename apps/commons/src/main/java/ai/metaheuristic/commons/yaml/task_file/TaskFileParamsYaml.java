@@ -35,6 +35,8 @@ import java.util.Map;
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:10 PM
+ *
+ * V2 - added support of type 'array' of variable
  */
 @Data
 @EqualsAndHashCode
