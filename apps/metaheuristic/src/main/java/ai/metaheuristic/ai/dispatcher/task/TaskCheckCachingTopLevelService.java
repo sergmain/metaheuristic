@@ -144,7 +144,12 @@ public class TaskCheckCachingTopLevelService {
         executor.submit(() -> {
             RegisterTaskForCheckCachingEvent event;
             while ((event = pullFromQueue())!=null) {
-                checkCachingInternal(event);
+                try {
+                    checkCachingInternal(event);
+                }
+                catch (Throwable th) {
+                    log.error("Error", th);
+                }
             }
         });
     }
