@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class ProcessorStatusYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
@@ -92,15 +92,10 @@ public class ProcessorStatusYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class Env {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
         public final List<DiskStorage> disk = new ArrayList<>();
-
-        @Nullable
-        public String tags;
-
         public final Quotas quotas = new Quotas();
     }
 
@@ -122,32 +117,16 @@ public class ProcessorStatusYaml implements BaseParams {
     public String host;
 
     // contains text of error which can occur while preparing a processor status
+    @Nullable
     public List<String> errors = null;
     public boolean logDownloadable;
     public int taskParamsVersion;
     public EnumsApi.OS os;
 
-    @Nullable
     public String currDir;
 
     @Nullable
     public Log log;
-
-    @Deprecated(forRemoval = true)
-    @Nullable
-    private String taskIds;
-
-    @Deprecated(forRemoval = true)
-    @Nullable
-    public String getTaskIds() {
-        return taskIds;
-    }
-
-    @Deprecated(forRemoval = true)
-    @SuppressWarnings("MethodMayBeStatic")
-    public void setTaskIds(@Nullable String taskIds) {
-        throw new IllegalStateException("taskIds isn't used any more");
-    }
 
     public void addError(String error) {
         if (errors==null) {

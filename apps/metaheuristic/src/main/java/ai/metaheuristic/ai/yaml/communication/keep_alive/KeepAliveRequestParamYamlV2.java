@@ -59,6 +59,7 @@ public class KeepAliveRequestParamYamlV2 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode
     public static class QuotaV2 {
         public String tag;
         public int amount;

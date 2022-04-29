@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Time: 12:53 AM
  */
 public class KeepAliveRequestParamYamlUtilsV3 extends
-        AbstractParamsYamlUtils<KeepAliveRequestParamYamlV3, KeepAliveRequestParamYam3, Void, Void, Void, Void> {
+        AbstractParamsYamlUtils<KeepAliveRequestParamYamlV3, KeepAliveRequestParamYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -45,42 +45,39 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
 
     @NonNull
     @Override
-    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV2 src) {
-        KeepAliveRequestParamYamlV3 t = new KeepAliveRequestParamYamlV3();
+    public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV3 src) {
+        KeepAliveRequestParamYaml t = new KeepAliveRequestParamYaml();
 
-        src.functions.statuses.stream().map(o->new KeepAliveRequestParamYamlV3.FunctionDownloadStatusesV3.StatusV3(o.code, o.state))
+        src.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
                 .collect(Collectors.toCollection(()->t.functions.statuses));
 
-        for (KeepAliveRequestParamYamlV2.ProcessorRequestV2 v2 : src.requests) {
-
-            KeepAliveRequestParamYamlV3.ProcessorRequestV3 r = new KeepAliveRequestParamYamlV3.ProcessorRequestV3(v2.processorCode);
-            t.requests.add(r);
-
-            if (v2.processor !=null) {
-                r.processor = new KeepAliveRequestParamYamlV3.ReportProcessorV3();
-                BeanUtils.copyProperties(v2.processor, r.processor);
-                if (v2.processor.env!=null) {
-                    r.processor.env = new KeepAliveRequestParamYaml.Env(v2.processor.env.tags);
-                    r.processor.env.mirrors.putAll(v2.processor.env.mirrors);
-                    r.processor.env.envs.putAll(v2.processor.env.envs);
-                    v2.processor.env.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> r.processor.env.disk));
-                    v2.processor.env.quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->r.processor.env.quotas.values));
-                    r.processor.env.quotas.limit = v2.processor.env.quotas.limit;
-                    r.processor.env.quotas.disabled = v2.processor.env.quotas.disabled;
-                    r.processor.env.quotas.defaultValue = v2.processor.env.quotas.defaultValue;
-                }
-            }
-            if (v2.requestProcessorId!=null) {
-                r.requestProcessorId = new KeepAliveRequestParamYamlV3.RequestProcessorIdV3();
-            }
-            if (v2.processorCommContext!=null) {
-                r.processorCommContext = new KeepAliveRequestParamYamlV3.ProcessorCommContextV3(v2.processorCommContext.processorId, v2.processorCommContext.sessionId);
-            }
-            else {
-                r.processorCommContext = new KeepAliveRequestParamYamlV3.ProcessorCommContextV3();
+        BeanUtils.copyProperties(src.processor, t.processor);
+        if (src.processor.status.env != null) {
+            t.processor.status.env = new KeepAliveRequestParamYaml.Env();
+            t.processor.status.env.mirrors.putAll(src.processor.status.env.mirrors);
+            t.processor.status.env.envs.putAll(src.processor.status.env.envs);
+            src.processor.status.env.disk.stream().map(o -> new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.processor.status.env.disk));
+            setQuotas(src.processor.status.env.quotas, t.processor.status.env.quotas);
+            if (src.processor.status.errors!=null) {
+                t.processor.status.errors = src.processor.status.errors;
             }
         }
+        if (src.processor.processorCommContext != null) {
+            t.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(
+                    src.processor.processorCommContext.processorId, src.processor.processorCommContext.sessionId, src.processor.processorCommContext.sessionCreatedOn);
+        }
+        for (KeepAliveRequestParamYamlV3.CoreV3 V3 : src.cores) {
+            KeepAliveRequestParamYaml.Core r = new KeepAliveRequestParamYaml.Core(V3.coreDir, V3.coreId, V3.coreCode, V3.coreCode);
+            t.cores.add(r);
+        }
         return t;
+    }
+
+    private static void setQuotas(KeepAliveRequestParamYamlV3.QuotasV3 quotas, KeepAliveRequestParamYaml.Quotas q) {
+        q.limit = quotas.limit;
+        q.defaultValue = quotas.defaultValue;
+        q.disabled = quotas.disabled;
+        quotas.values.stream().map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(() -> q.values));
     }
 
     @NonNull
@@ -90,8 +87,8 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
     }
 
     @Override
-    public KeepAliveRequestParamYamlUtilsV3 nextUtil() {
-        return (KeepAliveRequestParamYamlUtilsV3) KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -100,14 +97,14 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
     }
 
     @Override
-    public String toString(@NonNull KeepAliveRequestParamYamlV2 yaml) {
+    public String toString(@NonNull KeepAliveRequestParamYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public KeepAliveRequestParamYamlV2 to(@NonNull String s) {
-        final KeepAliveRequestParamYamlV2 p = getYaml().load(s);
+    public KeepAliveRequestParamYamlV3 to(@NonNull String s) {
+        final KeepAliveRequestParamYamlV3 p = getYaml().load(s);
         return p;
     }
 

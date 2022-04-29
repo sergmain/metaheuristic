@@ -27,7 +27,7 @@ public interface Task {
     String getParams();
 
     @Nullable
-    Long getProcessorId();
+    Long getCoreId();
 
     @Nullable
     Long getAssignedOn();
@@ -54,7 +54,7 @@ public interface Task {
 
     void setParams(String params);
 
-    void setProcessorId(@Nullable Long processorId);
+    void setCoreId(@Nullable Long processorId);
 
     void setAssignedOn(@Nullable Long assignedOn);
 

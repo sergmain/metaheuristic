@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
@@ -36,6 +35,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
@@ -45,7 +45,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -75,23 +74,23 @@ public class ProcessorService {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
     public File logFile;
 
-    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherSchedule schedule) {
+    KeepAliveRequestParamYaml.ProcessorStatus produceReportProcessorStatus(DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
 
-        final File processorFile = new File(globals.processor.dir.dir, ref.processorCode);
-        KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
-                to(envService.getEnvParamsYaml(), envService.getTags(ref.processorCode)),
+        KeepAliveRequestParamYaml.ProcessorStatus status = new KeepAliveRequestParamYaml.ProcessorStatus(
+                to(envService.getEnvParamsYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
-                metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null,
+                "[unknown]", "[unknown]",
                 logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
-                globals.os, processorFile.getAbsolutePath());
+                globals.os, globals.processor.dir.dir.getAbsolutePath(), null);
+
+//        metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
+//                System.currentTimeMillis(),
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
@@ -105,17 +104,23 @@ public class ProcessorService {
         return status;
     }
 
-    private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
-        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
+    private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {
+        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env();
         t.mirrors.putAll(envYaml.mirrors);
         envYaml.envs.forEach(env -> t.envs.put(env.code, env.exec));
-        t.quotas.limit = envYaml.quotas.limit;
-        t.quotas.disabled = envYaml.quotas.disabled;
-        t.quotas.defaultValue = envYaml.quotas.defaultValue;
+        envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
+        t.quotas = toQuotas(envYaml);
+        return t;
+    }
+
+    private static KeepAliveRequestParamYaml.Quotas toQuotas(EnvParamsYaml envYaml) {
+        KeepAliveRequestParamYaml.Quotas t = new KeepAliveRequestParamYaml.Quotas();
+        t.limit = envYaml.quotas.limit;
+        t.disabled = envYaml.quotas.disabled;
+        t.defaultValue = envYaml.quotas.defaultValue;
         envYaml.quotas.values.stream()
                 .map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, DispatcherSchedule.createDispatcherSchedule(o.processingTime).isCurrentTimeInactive()))
-                .collect(Collectors.toCollection(()->t.quotas.values));
-        envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
+                .collect(Collectors.toCollection(()->t.values));
         return t;
     }
 

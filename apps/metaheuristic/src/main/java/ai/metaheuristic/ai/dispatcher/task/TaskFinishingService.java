@@ -125,7 +125,7 @@ public class TaskFinishingService {
 
             finishTaskAsError(task, console, targetState);
 
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.processorId, task.id, task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId);
         } catch (Throwable th) {
             log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#319.170 Error", th);

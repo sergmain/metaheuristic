@@ -164,7 +164,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
 
         final Processor p = createProcessor(null, null, psy);
         return new DispatcherApiData.ProcessorSessionId(p.id, sessionId);
@@ -204,7 +204,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public void processKeepAliveData(
-            Long processorId, KeepAliveRequestParamYaml.ReportProcessor status,
+            Long processorId, KeepAliveRequestParamYaml.ProcessorStatus status,
             KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
             ProcessorStatusYaml psy, final boolean processorStatusDifferent, final boolean processorFunctionDownloadStatusDifferent) {
 
@@ -271,7 +271,6 @@ public class ProcessorTransactionService {
         env.quotas.defaultValue = envYaml.quotas.defaultValue;
         env.envs.putAll(envYaml.envs);
         env.mirrors.putAll(envYaml.mirrors);
-        env.tags = envYaml.tags;
         return env;
     }
 
@@ -281,7 +280,7 @@ public class ProcessorTransactionService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherApiData.ProcessorSessionId(p.getId(), sessionId);

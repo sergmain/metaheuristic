@@ -45,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -537,14 +538,14 @@ public class FunctionTopLevelService {
         return configs;
     }
 
-    public void processKeepAliveData(List<Long> coreIds, KeepAliveRequestParamYaml params) {
+    public void processKeepAliveData(Long processorId, KeepAliveRequestParamYaml params) {
         List<Function> functions = functionRepository.findAll();
 
 
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(functions, params);
 
         if (processorFunctionDownloadStatusDifferent) {
-            functionService.processFunctionStates(coreIds, params.functions);
+            functionService.processFunctionStates(processorId, params.functions);
         }
     }
 
@@ -561,6 +562,17 @@ public class FunctionTopLevelService {
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
                 String coreIdsAsStr = runtimeParams.states.get(st.state);
                 String[] codeIds = StringUtils.split(coreIdsAsStr, ",");
+                KeepAliveRequestParamYaml.Processor request = params.processor; {
+                    if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
+                        return false;
+                    }
+                    String codeId = request.processorCommContext.processorId.toString();
+                    if (Arrays.stream(codeIds).noneMatch(o->o.equals(codeId))) {
+                        return true;
+                    }
+                }
+                if (true) throw new NotImplementedException();
+/*
                 for (KeepAliveRequestParamYaml.Processor request : params.requests) {
                     if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
                         return false;
@@ -570,6 +582,7 @@ public class FunctionTopLevelService {
                         return true;
                     }
                 }
+*/
             }
         }
         return false;

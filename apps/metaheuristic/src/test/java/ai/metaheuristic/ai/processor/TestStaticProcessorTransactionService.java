@@ -64,11 +64,11 @@ public class TestStaticProcessorTransactionService {
     private static KeepAliveRequestParamYaml.Env createEnvYaml(
             Map<String, String> mirrors, Map<String, String> envs, List<KeepAliveRequestParamYaml.DiskStorage> disk, @Nullable String tags, @Nullable KeepAliveRequestParamYaml.Quotas quotas) {
         KeepAliveRequestParamYaml.Env envYaml = new KeepAliveRequestParamYaml.Env();
-        envYaml.tags = tags;
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);
         envYaml.disk.addAll(disk);
         if (quotas!=null) {
+            envYaml.quotas = new KeepAliveRequestParamYaml.Quotas();
             envYaml.quotas.limit = quotas.limit;
             envYaml.quotas.values.addAll(quotas.values);
         }
@@ -95,14 +95,12 @@ public class TestStaticProcessorTransactionService {
         psy.os= EnumsApi.OS.unknown;
         psy.currDir="/users/xxx";
 
-        final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
+        final KeepAliveRequestParamYaml.ProcessorStatus ss = new KeepAliveRequestParamYaml.ProcessorStatus (
                 new KeepAliveRequestParamYaml.Env(),
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
-                sessionId,
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, true,
-                1, EnumsApi.OS.unknown, "/users/yyy");
+                "[unknown]", "[unknown]",  true,
+                1, EnumsApi.OS.unknown, "/users/yyy", null);
 
 //        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertTrue(ProcessorUtils.isProcessorStatusDifferent(psy, ss), S.f("ss1:\n%s\n\nss:\n%s", psy, ss));
@@ -120,10 +118,10 @@ public class TestStaticProcessorTransactionService {
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), null));
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(""), new KeepAliveRequestParamYaml.Env()));
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env("")));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
 
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(""), new KeepAliveRequestParamYaml.Env("")));
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env("aaa"), new KeepAliveRequestParamYaml.Env("aaa")));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(""), new KeepAliveRequestParamYaml.Env()));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env("aaa"), new KeepAliveRequestParamYaml.Env()));
         assertFalse(ProcessorUtils.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa"),
                 createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa")));

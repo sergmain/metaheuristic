@@ -90,8 +90,6 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         @Nullable
         public String tags;
 
-        public final Quotas quotas = new Quotas();
-
         public Core(String coreCode) {
             this.coreCode = coreCode;
         }
@@ -99,11 +97,11 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class Env {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
         public final List<DiskStorage> disk = new ArrayList<>();
+        public final Quotas quotas = new Quotas();
     }
 
     @Data
@@ -158,13 +156,17 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     public static class ProcessorCommContext {
         public Long processorId;
         public String sessionId;
+        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
+        // it'll work but in some cases behaviour can be different
+        // need to change it to UTC, Coordinated Universal Time
+        public long sessionCreatedOn;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Processor {
-        public ProcessorStatus processor;
+        public ProcessorStatus status;
 
         // if not null it means we need a new processorId
         @Nullable

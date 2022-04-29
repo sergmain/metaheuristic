@@ -64,7 +64,7 @@ public class TaskImpl implements Serializable, Task {
 
     @Nullable
     @Column(name = "PROCESSOR_ID")
-    public Long processorId;
+    public Long coreId;
 
     @Nullable
     @Column(name = "ASSIGNED_ON")

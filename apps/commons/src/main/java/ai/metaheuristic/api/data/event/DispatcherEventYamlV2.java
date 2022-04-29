@@ -19,7 +19,6 @@ package ai.metaheuristic.api.data.event;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
-import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -27,16 +26,16 @@ import org.springframework.lang.Nullable;
  * Time: 5:36 PM
  */
 @Data
-public class DispatcherEventYaml implements BaseParams {
-    public final int version = 1;
+public class DispatcherEventYamlV2 implements BaseParams {
+    public final int version = 2;
 
     // representation of LocalDateTime
     public String createdOn;
     public EnumsApi.DispatcherEventType event;
-    public @Nullable String contextId;
+    public String contextId;
 
-    public BatchEventData batchData;
-    public TaskEventData taskData;
+    public BatchEventDataV1 batchData;
+    public TaskEventDataV1 taskData;
 
     @Override
     public boolean checkIntegrity() {
@@ -44,22 +43,20 @@ public class DispatcherEventYaml implements BaseParams {
     }
 
     @Data
-    public static class BatchEventData {
-        public @Nullable Long size;
-        public @Nullable String filename;
+    public static class BatchEventDataV1 {
+        public Long size;
+        public String filename;
         public String username;
-        public @Nullable Long batchId;
-        public @Nullable Long execContextId;
-
-        // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
+        public Long batchId;
+        public Long execContextId;
         public Long companyId;
     }
 
     @Data
-    public static class TaskEventData {
-        @Nullable
+    public static class TaskEventDataV1 {
         public Long coreId;
         public Long taskId;
         public Long execContextId;
+        public Long batchId;
     }
 }

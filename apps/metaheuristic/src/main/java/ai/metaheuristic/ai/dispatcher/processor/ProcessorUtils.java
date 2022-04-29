@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.commons.S;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.Objects;
@@ -51,7 +50,7 @@ public class ProcessorUtils {
     }
 
     private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {
-        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors));
     }
 
     public static boolean envNotEquals(@Nullable ProcessorStatusYaml.Env env1, @Nullable KeepAliveRequestParamYaml.Env env2) {
@@ -89,7 +88,7 @@ public class ProcessorUtils {
                 return true;
             }
         }
-        return StringUtils.compare(env1.tags, env2.tags)!=0;
+        return false;
     }
 
     private static boolean quotasNotEquals(ProcessorStatusYaml.Quotas quotas, KeepAliveRequestParamYaml.Quotas quotas1) {
@@ -110,7 +109,7 @@ public class ProcessorUtils {
         return false;
     }
 
-    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
+    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ProcessorStatus status) {
 
         if (envNotEquals(ss.env, status.env)) {
             return true;

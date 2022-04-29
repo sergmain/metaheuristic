@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
@@ -27,7 +26,6 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -62,7 +60,7 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
 
-        log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.processorId);
+        log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.coreId);
         switch (state) {
             case ERROR:
             case ERROR_WITH_RECOVERY:

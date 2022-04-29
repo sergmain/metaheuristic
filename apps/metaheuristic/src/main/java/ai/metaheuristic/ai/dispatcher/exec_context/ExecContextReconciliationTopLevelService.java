@@ -242,7 +242,7 @@ public class ExecContextReconciliationTopLevelService {
                                     // TODO 2021-05-17 check that internal function is setting task.accessByProcessorOn at all
                                     if (tpy.task.context== FunctionExecContext.external && !tpy.task.inputs.isEmpty() && (System.currentTimeMillis() - task.assignedOn) > 120_000) {
                                         log.info("#307.360 Reset task #{} at processor #{}, The reason - hasn't started to download variables in 2 minutes",
-                                                task.id, task.processorId);
+                                                task.id, task.coreId);
                                         status.taskForResettingIds.add(task.id);
                                     }
                                 }
@@ -256,7 +256,7 @@ public class ExecContextReconciliationTopLevelService {
                                         long effectiveTimeout = Math.min(timeoutForChecking, oneHourToMills);
                                         if ((System.currentTimeMillis() - task.accessByProcessorOn) > effectiveTimeout) {
                                             log.info("#307.400 Reset task #{} at processor #{}, timeoutBeforeTerminate: {}, timeoutForChecking: {}, effective timeout: {}",
-                                                    task.id, task.processorId, tpy.task.timeoutBeforeTerminate, timeoutForChecking, effectiveTimeout);
+                                                    task.id, task.coreId, tpy.task.timeoutBeforeTerminate, timeoutForChecking, effectiveTimeout);
                                             status.taskForResettingIds.add(task.id);
                                         }
                                     }

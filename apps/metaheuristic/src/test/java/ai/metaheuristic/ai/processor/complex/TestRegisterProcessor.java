@@ -154,14 +154,12 @@ public class TestRegisterProcessor {
 
         ProcessorStatusYaml ss1 = s.getProcessorStatusYaml();
 
-        final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
+        final KeepAliveRequestParamYaml.ProcessorStatus ss = new KeepAliveRequestParamYaml.ProcessorStatus (
                 new KeepAliveRequestParamYaml.Env(),
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
-                sessionId,
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false,
-                1, EnumsApi.OS.unknown, null);
+                "[unknown]", "[unknown]", false,
+                1, EnumsApi.OS.unknown, null, null);
 
         ss.currDir = ss1.currDir;
         ss1.schedule = ss.schedule;

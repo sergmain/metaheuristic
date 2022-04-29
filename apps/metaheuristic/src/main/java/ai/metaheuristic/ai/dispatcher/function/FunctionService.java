@@ -39,7 +39,7 @@ public class FunctionService {
     private final FunctionDataService functionDataService;
 
     @Transactional
-    public void processFunctionStates(List<Long> coreIds, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+    public void processFunctionStates(Long processorId, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
 
     }
 

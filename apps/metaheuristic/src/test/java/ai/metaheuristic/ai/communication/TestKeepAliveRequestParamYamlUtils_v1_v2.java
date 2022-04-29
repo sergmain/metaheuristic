@@ -18,8 +18,12 @@ package ai.metaheuristic.ai.communication;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.*;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtilsV1;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlV1;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlV2;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,24 +36,63 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 1/4/2021
  * Time: 4:34 AM
  */
-public class TestKeepAliveRequestParamYamlUtils {
+public class TestKeepAliveRequestParamYamlUtils_v1_v2 {
+
+    @Test
+    public void testEquals() {
+        assertEquals(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false), new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false));
+        assertNotEquals(new KeepAliveRequestParamYamlV2.QuotaV2("tag2", 15, false), new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false));
+        assertNotEquals(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 16, false), new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false));
+        assertNotEquals(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, true), new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false));
+    }
 
     @Test
     public void test() {
         KeepAliveRequestParamYamlV1 karv1 = getKeepAliveRequestParamYamlV1();
-        KeepAliveRequestParamYamlV2 karv2 = new KeepAliveRequestParamYamlUtilsV1().upgradeTo(karv1);
 
-        System.out.println(KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karv2));
-
+        // V2
+        KeepAliveRequestParamYamlV2 karv2 = v1Tov2(karv1);
         testAssertsV2(karv2);
+        karv2 = v2ToV2(karv2);
+        testAssertsV2(karv2);
+        initV2Specific(karv2);
+        testAssertsV2Specific(karv2);
 
+    }
+
+    private static void initV2Specific(KeepAliveRequestParamYamlV2 karv2) {
         assertEquals(1, karv2.requests.size());
         KeepAliveRequestParamYamlV2.ProcessorRequestV2 processorRequestV2 = karv2.requests.get(0);
         processorRequestV2.processor.env.quotas.limit = 13;
         processorRequestV2.processor.env.quotas.values.addAll(List.of(new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false), new KeepAliveRequestParamYamlV2.QuotaV2("tag2", 25, false)));
-        KeepAliveRequestParamYaml kar = new KeepAliveRequestParamYamlUtilsV2().upgradeTo(karv2);
+        processorRequestV2.processor.env.quotas.defaultValue = 17;
+        processorRequestV2.processor.env.quotas.disabled = true;
+    }
 
-        testAsserts(kar);
+    private static KeepAliveRequestParamYamlV2 v1Tov2(KeepAliveRequestParamYamlV1 karv1) {
+        KeepAliveRequestParamYamlV2 karv2 = new KeepAliveRequestParamYamlUtilsV1().upgradeTo(karv1);
+        System.out.println(KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karv2));
+        return karv2;
+    }
+
+    private static void testAssertsV2Specific(KeepAliveRequestParamYamlV2 karv2) {
+        assertEquals(1, karv2.requests.size());
+        KeepAliveRequestParamYamlV2.ProcessorRequestV2 processorRequestV2 = karv2.requests.get(0);
+        assertEquals(13, processorRequestV2.processor.env.quotas.limit);
+        assertEquals(2, processorRequestV2.processor.env.quotas.values.size());
+        assertEquals( new KeepAliveRequestParamYamlV2.QuotaV2("tag1", 15, false), processorRequestV2.processor.env.quotas.values.get(0));
+        assertEquals( new KeepAliveRequestParamYamlV2.QuotaV2("tag2", 25, false), processorRequestV2.processor.env.quotas.values.get(1));
+        assertEquals(17, processorRequestV2.processor.env.quotas.defaultValue);
+        assertTrue(processorRequestV2.processor.env.quotas.disabled);
+    }
+
+    private static KeepAliveRequestParamYamlV2 v2ToV2(KeepAliveRequestParamYamlV2 v2) {
+        String yamlv2 = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(v2);
+        //noinspection rawtypes
+        final AbstractParamsYamlUtils forVersion2 = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        assertNotNull(forVersion2);
+        KeepAliveRequestParamYamlV2 karv2 = (KeepAliveRequestParamYamlV2) forVersion2.to(yamlv2);
+        return karv2;
     }
 
     private static KeepAliveRequestParamYamlV1 getKeepAliveRequestParamYamlV1() {
@@ -83,72 +126,6 @@ public class TestKeepAliveRequestParamYamlUtils {
         r.processorCommContext = new KeepAliveRequestParamYamlV1.ProcessorCommContextV1(11L, "session-11");
 
         return req;
-    }
-
-    private static void testAsserts(KeepAliveRequestParamYaml kar) {
-        assertEquals(1, kar.requests.size());
-
-        assertNotNull(kar.requests.get(0).processor);
-        assertNotNull(kar.requests.get(0).processor.env);
-
-        assertEquals("tag1", kar.requests.get(0).processor.env.tags);
-        assertEquals(2, kar.requests.get(0).processor.env.envs.size());
-        assertEquals("env-value1", kar.requests.get(0).processor.env.envs.get("env-key1"));
-        assertEquals("env-value2", kar.requests.get(0).processor.env.envs.get("env-key2"));
-        assertEquals(2, kar.requests.get(0).processor.env.mirrors.size());
-        assertEquals("mirror-value1", kar.requests.get(0).processor.env.mirrors.get("mirror-key1"));
-        assertEquals("mirror-value2", kar.requests.get(0).processor.env.mirrors.get("mirror-key2"));
-        assertEquals(2, kar.requests.get(0).processor.env.disk.size());
-        assertEquals("code1", kar.requests.get(0).processor.env.disk.get(0).code);
-        assertEquals("path1", kar.requests.get(0).processor.env.disk.get(0).path);
-        assertEquals("code2", kar.requests.get(0).processor.env.disk.get(1).code);
-        assertEquals("path2", kar.requests.get(0).processor.env.disk.get(1).path);
-
-        assertNotNull(kar.requests.get(0).processor.gitStatusInfo);
-
-        assertEquals(Enums.GitStatus.unknown, kar.requests.get(0).processor.gitStatusInfo.status);
-        assertEquals("ver1", kar.requests.get(0).processor.gitStatusInfo.version);
-        assertEquals("no-error", kar.requests.get(0).processor.gitStatusInfo.error);
-
-        assertEquals("schedule1", kar.requests.get(0).processor.schedule);
-        assertEquals("sessionId-42", kar.requests.get(0).processor.sessionId);
-        assertEquals(13, kar.requests.get(0).processor.sessionCreatedOn);
-        assertEquals("192.168.0.17", kar.requests.get(0).processor.ip);
-        assertEquals("host-17", kar.requests.get(0).processor.host);
-        assertEquals("host-17", kar.requests.get(0).processor.host);
-        assertEquals(2, kar.requests.get(0).processor.errors.size());
-        assertEquals("error-1", kar.requests.get(0).processor.errors.get(0));
-        assertEquals("error-2", kar.requests.get(0).processor.errors.get(1));
-        assertTrue(kar.requests.get(0).processor.logDownloadable);
-        assertEquals(2, kar.requests.get(0).processor.taskParamsVersion);
-        assertEquals(EnumsApi.OS.any, kar.requests.get(0).processor.os);
-        assertEquals("/home", kar.requests.get(0).processor.currDir);
-
-        assertNotNull(kar.functions.statuses);
-        assertEquals(2, kar.functions.statuses.size());
-        assertEquals("code1", kar.functions.statuses.get(0).code);
-        assertEquals(EnumsApi.FunctionState.none, kar.functions.statuses.get(0).state);
-        assertEquals("code2", kar.functions.statuses.get(1).code);
-        assertEquals(EnumsApi.FunctionState.checksum_wrong, kar.functions.statuses.get(1).state);
-
-        assertNotNull(kar.requests.get(0).requestProcessorId);
-
-        assertNotNull(kar.requests.get(0).processorCommContext);
-        assertEquals(11L, kar.requests.get(0).processorCommContext.processorId);
-        assertEquals("session-11", kar.requests.get(0).processorCommContext.sessionId);
-
-        assertEquals(1, kar.requests.size());
-        KeepAliveRequestParamYaml.Processor processorRequest = kar.requests.get(0);
-        assertEquals(13, processorRequest.processor.env.quotas.limit);
-        assertEquals(2, processorRequest.processor.env.quotas.values.size());
-
-        KeepAliveRequestParamYaml.Quota q1 = processorRequest.processor.env.quotas.values.get(0);
-        assertEquals("tag1", q1.tag);
-        assertEquals(15, q1.amount);
-
-        KeepAliveRequestParamYaml.Quota q2 = processorRequest.processor.env.quotas.values.get(1);
-        assertEquals("tag2", q2.tag);
-        assertEquals(25, q2.amount);
     }
 
     private static void testAssertsV2(KeepAliveRequestParamYamlV2 kar2) {

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -30,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateServ
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -71,6 +73,7 @@ public class TaskProviderTopLevelService {
     private final Globals globals;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
+    private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
@@ -255,11 +258,11 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds, boolean queueEmpty) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds, boolean queueEmpty) {
         TxUtils.checkTxNotExists();
 
         if (queueEmpty) {
-            AtomicLong mills = processorCheckedOn.computeIfAbsent(processorId, o -> new AtomicLong());
+            AtomicLong mills = processorCheckedOn.computeIfAbsent(coreId, o -> new AtomicLong());
             final boolean b = System.currentTimeMillis() - mills.get() < 60_000;
             log.debug("#393.445 queue is empty, suspend finding of new tasks: {}", b );
             if (b) {
@@ -268,22 +271,22 @@ public class TaskProviderTopLevelService {
             mills.set(System.currentTimeMillis());
         }
 
-        final Processor processor = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
-                ()->processorCache.findById(processorId));
+        final ProcessorCore core = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
+                ()->processorCoreCache.findById(coreId));
 
-        if (processor == null) {
-            log.error("#393.440 Processor with id #{} wasn't found", processorId);
+        if (core == null) {
+            log.error("#393.440 Processor with id #{} wasn't found", coreId);
             return null;
         }
 
-        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
+        ProcessorStatusYaml psy = toProcessorStatusYaml(core);
         if (psy==null) {
             return null;
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
-                        ()-> getTaskAndAssignToProcessor(processor.id, psy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessor(core.id, psy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -298,7 +301,7 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private static ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
+    private static ProcessorStatusYaml toProcessorStatusYaml(ProcessorCore core) {
         ProcessorStatusYaml ss;
         try {
             ss = processor.getProcessorStatusYaml();

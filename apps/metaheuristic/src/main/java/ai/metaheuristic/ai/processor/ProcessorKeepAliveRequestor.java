@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlU
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -40,6 +41,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetManagerUrl;
@@ -122,30 +124,40 @@ public class ProcessorKeepAliveRequestor {
 
         try {
             KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-                if (!ref.dispatcherUrl.equals(dispatcherUrl)) {
-                    continue;
-                }
-                KeepAliveRequestParamYaml.Processor request = new KeepAliveRequestParamYaml.Processor(ref.processorCode);
-                karpy.requests.add(request);
+            karpy.processor.status = processorService.produceReportProcessorStatus(dispatcher.schedule);
 
-                final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
-                final String sessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
+            if (true) throw new NotImplementedException();
+/*
+            final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
+            final String sessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
 
-                if (processorId == null || sessionId==null) {
-                    request.requestProcessorId = new KeepAliveRequestParamYaml.RequestProcessorId();
-                    continue;
-                }
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-
-                request.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-                request.processor = processorService.produceReportProcessorStatus(ref, dispatcher.schedule);
-
-                AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+            if (processorId == null || sessionId==null) {
+                karpy.processor.processorCommContext = null;
             }
+            else {
+                karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
 
+                Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
+                if (refs.isEmpty()) {
+                    log.warn("dispatcherUrl wasn't found");
+                }
+                else if (refs.size()>1) {
+                    final String es = "metadata is broken. there are more than one dispatcherUrl " + dispatcherUrl;
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+                else {
+                    KeepAliveRequestParamYaml.Core core = new KeepAliveRequestParamYaml.Core(ref.processorCode);
+                    karpy.cores.add(core);
+
+                    final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                            dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+
+                    AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+                    karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+                }
+            }
+*/
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {
                 HttpHeaders headers = new HttpHeaders();

@@ -98,7 +98,7 @@ public class ProcessorTopLevelService {
             throw new IllegalStateException("#809.080 processorId is null");
         }
         final Long processorId = processorRequest.processorCommContext.processorId;
-        KeepAliveRequestParamYaml.ReportProcessor status = processorRequest.processor;
+        KeepAliveRequestParamYaml.ProcessorStatus status = processorRequest.status;
 
         if (status==null) {
             return;

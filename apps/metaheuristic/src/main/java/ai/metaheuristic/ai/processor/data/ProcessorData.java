@@ -30,6 +30,15 @@ public class ProcessorData {
 
     @Data
     @AllArgsConstructor
+    @EqualsAndHashCode(of={"coreCode", "coreId", "dispatcherUrl"})
+    public static class CoreCodeAndIdAndDispatcherUrlRef {
+        public final String coreCode;
+        public final String coreId;
+        public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
+    }
+
+    @Data
+    @AllArgsConstructor
     @EqualsAndHashCode(of={"processorCode", "processorId", "dispatcherUrl"})
     public static class ProcessorCodeAndIdAndDispatcherUrlRef {
         public final String processorCode;

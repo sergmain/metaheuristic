@@ -76,6 +76,13 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
         public int limit;
         public int defaultValue;
         public boolean disabled;
+
+        public void init(QuotasV3 v3) {
+            this.values.addAll(v3.values);
+            this.limit = v3.limit;
+            this.defaultValue = v3.defaultValue;
+            this.disabled = v3.disabled;
+        }
     }
 
     @Data
@@ -91,8 +98,6 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
         @Nullable
         public String tags;
 
-        public final QuotasV3 quotas = new QuotasV3();
-
         public CoreV3(String coreCode) {
             this.coreCode = coreCode;
         }
@@ -100,11 +105,11 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class EnvV3 {
         public final Map<String, String> mirrors = new HashMap<>();
         public final Map<String, String> envs = new HashMap<>();
         public final List<DiskStorageV3> disk = new ArrayList<>();
+        public QuotasV3 quotas = new QuotasV3();
     }
 
     @Data
@@ -155,13 +160,17 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
     public static class ProcessorCommContextV3 {
         public Long processorId;
         public String sessionId;
+        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
+        // it'll work but in some cases behaviour can be different
+        // need to change it to UTC, Coordinated Universal Time
+        public long sessionCreatedOn;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorV3 {
-        public ProcessorStatusV3 processor;
+        public ProcessorStatusV3 status;
 
         // if not null it means we need a new processorId
         @Nullable
