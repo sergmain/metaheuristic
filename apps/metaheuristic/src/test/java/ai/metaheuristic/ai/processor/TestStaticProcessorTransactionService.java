@@ -46,7 +46,6 @@ public class TestStaticProcessorTransactionService {
     private static ProcessorStatusYaml.Env createProcessorStatusYamlEnvYaml(
             Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk, @Nullable String tags, @Nullable ProcessorStatusYaml.Quotas quotas) {
         ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
-        envYaml.tags = tags;
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);
         envYaml.disk.addAll(disk);
