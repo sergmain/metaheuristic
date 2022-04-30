@@ -29,34 +29,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ProcessorStatusYamlUtilsV2
-        extends AbstractParamsYamlUtils<ProcessorStatusYamlV2, ProcessorStatusYamlV3, ProcessorStatusYamlUtilsV3, Void, Void, Void> {
+public class ProcessorStatusYamlUtilsV3
+        extends AbstractParamsYamlUtils<ProcessorStatusYamlV3, ProcessorStatusYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ProcessorStatusYamlV2.class);
+        return YamlUtils.init(ProcessorStatusYamlV3.class);
     }
 
     @NonNull
     @Override
-    public ProcessorStatusYamlV3 upgradeTo(@NonNull ProcessorStatusYamlV2 src) {
+    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV3 src) {
         src.checkIntegrity();
-        ProcessorStatusYamlV3 trg = new ProcessorStatusYamlV3();
+        ProcessorStatusYaml trg = new ProcessorStatusYaml();
         trg.downloadStatuses = src.downloadStatuses.stream()
-                .map( source -> new ProcessorStatusYamlV3.DownloadStatusV3(source.functionState,source.functionCode))
+                .map( source -> new ProcessorStatusYaml.DownloadStatus(source.functionState,source.functionCode))
                 .collect(Collectors.toList());
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);
         }
         trg.env = getEnv(src.env);
         if (src.log!=null) {
-            trg.log = new ProcessorStatusYamlV3.LogV3(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
+            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors", "taskIds");
         trg.checkIntegrity();
@@ -64,12 +64,12 @@ public class ProcessorStatusYamlUtilsV2
     }
 
     @Nullable
-    private static ProcessorStatusYamlV3.EnvV3 getEnv(@Nullable ProcessorStatusYamlV2.EnvV2 envSrc) {
+    private static ProcessorStatusYaml.Env getEnv(@Nullable ProcessorStatusYamlV3.EnvV3 envSrc) {
         if (envSrc==null) {
             return null;
         }
 
-        ProcessorStatusYamlV3.EnvV3 env = new ProcessorStatusYamlV3.EnvV3();
+        ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
 
         if (!envSrc.envs.isEmpty()) {
             final Map<String, String> envMap = envSrc.envs.entrySet().stream()
@@ -79,7 +79,7 @@ public class ProcessorStatusYamlUtilsV2
 
         if (!envSrc.disk.isEmpty()) {
             env.disk.addAll(envSrc.disk.stream()
-                    .map(d -> new ProcessorStatusYamlV3.DiskStorageV3(d.code, d.path))
+                    .map(d -> new ProcessorStatusYaml.DiskStorage(d.code, d.path))
                     .collect(Collectors.toList()));
         }
         if (!envSrc.mirrors.isEmpty()) {
@@ -87,7 +87,7 @@ public class ProcessorStatusYamlUtilsV2
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
             env.mirrors.putAll(mirrorMap);
         }
-        envSrc.quotas.values.stream().map(o->new ProcessorStatusYamlV3.QuotaV3(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
+        envSrc.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envSrc.quotas.limit;
         env.quotas.disabled = envSrc.quotas.disabled;
         env.quotas.defaultValue = envSrc.quotas.defaultValue;
@@ -101,8 +101,8 @@ public class ProcessorStatusYamlUtilsV2
     }
 
     @Override
-    public ProcessorStatusYamlUtilsV3 nextUtil() {
-        return (ProcessorStatusYamlUtilsV3) ProcessorStatusYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -111,17 +111,17 @@ public class ProcessorStatusYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull ProcessorStatusYamlV2 yaml) {
+    public String toString(@NonNull ProcessorStatusYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ProcessorStatusYamlV2 to(@NonNull String s) {
+    public ProcessorStatusYamlV3 to(@NonNull String s) {
         if (S.b(s)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final ProcessorStatusYamlV2 p = getYaml().load(s);
+        final ProcessorStatusYamlV3 p = getYaml().load(s);
         return p;
     }
 

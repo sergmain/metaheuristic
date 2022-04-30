@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -271,22 +272,34 @@ public class TaskProviderTopLevelService {
             mills.set(System.currentTimeMillis());
         }
 
-        final ProcessorCore core = MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> processorCache.findById()",
-                ()->processorCoreCache.findById(coreId));
-
+        final ProcessorCore core = processorCoreCache.findById(coreId);
         if (core == null) {
             log.error("#393.440 Processor with id #{} wasn't found", coreId);
             return null;
         }
+        if (core.processorId==null) {
+            log.info("#393.442 Core #{} wasn't linked with Processor", coreId);
+            return null;
+        }
+        CoreStatusYaml csy = toCoreStatusYaml(core);
+        if (csy==null) {
+            return null;
+        }
 
-        ProcessorStatusYaml psy = toProcessorStatusYaml(core);
+        final Processor processor = processorCache.findById(core.processorId);
+        if (processor == null) {
+            log.error("#393.445 Processor with id #{} wasn't found", core.processorId);
+            return null;
+        }
+
+        ProcessorStatusYaml psy = toProcessorStatusYaml(processor);
         if (psy==null) {
             return null;
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
-                        ()-> getTaskAndAssignToProcessor(core.id, psy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessor(core.id, psy, csy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
@@ -301,7 +314,7 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
-    private static ProcessorStatusYaml toProcessorStatusYaml(ProcessorCore core) {
+    private static ProcessorStatusYaml toProcessorStatusYaml(Processor processor) {
         ProcessorStatusYaml ss;
         try {
             ss = processor.getProcessorStatusYaml();
@@ -314,13 +327,26 @@ public class TaskProviderTopLevelService {
     }
 
     @Nullable
+    private static CoreStatusYaml toCoreStatusYaml(ProcessorCore core) {
+        CoreStatusYaml ss;
+        try {
+            ss = core.getCoreStatusYaml();
+            return ss;
+        } catch (Throwable e) {
+            log.error("#393.580 Error parsing current status of core:\n{}", core.getStatus());
+            log.error("#393.585 Error ", e);
+            return null;
+        }
+    }
+
+    @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long processorId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final TaskData.AssignedTask task =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
-                        ()-> getTaskAndAssignToProcessorInternal(processorId, psy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessorInternal(processorId, psy, csy, isAcceptOnlySigned, quotas, taskIds));
 
         // task won't be returned for an internal function
         if (task==null) {
@@ -356,7 +382,7 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
-            Long processorId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long processorId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
 
         TxUtils.checkTxNotExists();
 
@@ -430,7 +456,7 @@ public class TaskProviderTopLevelService {
 
         TaskData.AssignedTask result =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
-                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(processorId, psy, isAcceptOnlySigned, quotas));
+                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(processorId, psy, csy, isAcceptOnlySigned, quotas));
 
         return result;
     }

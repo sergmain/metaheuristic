@@ -13,24 +13,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.processor_status;
+package ai.metaheuristic.ai.yaml.core_status;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
-public class ProcessorStatusYamlUtils {
+public class CoreStatusYamlUtils {
 
-    private static final ProcessorStatusYamlUtilsV1 YAML_UTILS_V_1 = new ProcessorStatusYamlUtilsV1();
-    private static final ProcessorStatusYamlUtilsV2 YAML_UTILS_V_2 = new ProcessorStatusYamlUtilsV2();
-    private static final ProcessorStatusYamlUtilsV3 YAML_UTILS_V_3 = new ProcessorStatusYamlUtilsV3();
-    private static final ProcessorStatusYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final CoreStatusYamlUtilsV1 YAML_UTILS_V_1 = new CoreStatusYamlUtilsV1();
+    private static final CoreStatusYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<ProcessorStatusYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<CoreStatusYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );

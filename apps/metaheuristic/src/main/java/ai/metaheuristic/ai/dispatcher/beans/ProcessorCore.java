@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.commons.S;
@@ -76,7 +78,7 @@ public class ProcessorCore implements Serializable {
 
     /**
      * contains data in yaml format
-     * @see ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml
+     * @see ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml
      */
     @Column(name = "STATUS")
     private String status;
@@ -95,17 +97,17 @@ public class ProcessorCore implements Serializable {
     @Transient
     @JsonIgnore
     @Nullable
-    private ProcessorStatusYaml psy = null;
+    private CoreStatusYaml psy = null;
 
     @JsonIgnore
-    public ProcessorStatusYaml getProcessorStatusYaml() {
+    public CoreStatusYaml getCoreStatusYaml() {
         if (psy ==null) {
             synchronized (this) {
                 if (psy ==null) {
                     // to create a valid structure of params
-                    String p = S.b(status) ? ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(new ProcessorStatusYaml()) : status;
+                    String p = S.b(status) ? CoreStatusYamlUtils.BASE_YAML_UTILS.toString(new CoreStatusYaml()) : status;
                     //noinspection UnnecessaryLocalVariable
-                    ProcessorStatusYaml temp = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(p);
+                    CoreStatusYaml temp = CoreStatusYamlUtils.BASE_YAML_UTILS.to(p);
                     psy = temp;
                 }
             }
@@ -114,8 +116,8 @@ public class ProcessorCore implements Serializable {
     }
 
     @JsonIgnore
-    public void updateParams(ProcessorStatusYaml dpy) {
-        setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(dpy));
+    public void updateParams(CoreStatusYaml dpy) {
+        setStatus(CoreStatusYamlUtils.BASE_YAML_UTILS.toString(dpy));
     }
 
 }

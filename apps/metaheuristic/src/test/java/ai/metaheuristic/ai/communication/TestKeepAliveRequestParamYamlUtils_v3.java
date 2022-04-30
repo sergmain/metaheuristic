@@ -18,7 +18,10 @@ package ai.metaheuristic.ai.communication;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.*;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtilsV3;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlV3;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.junit.jupiter.api.Test;
@@ -28,7 +31,6 @@ import java.util.Map;
 
 import static ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlV3.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Serge
@@ -84,6 +86,10 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         r.status.env.envs.putAll(Map.of("env-key1", "env-value1", "env-key2", "env-value2"));
         r.status.env.mirrors.putAll(Map.of("mirror-key1", "mirror-value1", "mirror-key2", "mirror-value2"));
         r.status.env.disk.addAll(List.of(new DiskStorageV3("code1", "path1"), new DiskStorageV3("code2", "path2")));
+        r.status.env.quotas.init(new QuotasV3(
+                List.of(new QuotaV3("tag1", 15, false),
+                        new QuotaV3("tag2", 25, false)),
+                23, 4, true));
 
         r.status.gitStatusInfo = new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, "ver1", "no-error");
         r.status.schedule = "schedule1";
@@ -103,12 +109,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         r.processorCommContext = new ProcessorCommContextV3(11L, "session-11", 42L);
 
         CoreV3 core1 = new CoreV3("/dir-core1", 21L, "code-core1", "core-tags1");
-        core1.quotas.init(new QuotasV3(
-                List.of(new QuotaV3("tag1", 15, false)), 13, 3, true));
-
         CoreV3 core2 = new CoreV3("/dir-core2", 22L, "code-core2", "core-tags2");
-        core1.quotas.init(new QuotasV3(
-                List.of(new QuotaV3("tag2", 25, false)), 23, 4, true));
 
         req.cores.add(core1);
         req.cores.add(core2);
@@ -133,6 +134,13 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("path1", kar.processor.status.env.disk.get(0).path);
         assertEquals("code2", kar.processor.status.env.disk.get(1).code);
         assertEquals("path2", kar.processor.status.env.disk.get(1).path);
+
+        assertEquals(1, kar.processor.status.env.quotas.values.size());
+        assertEquals(new KeepAliveRequestParamYaml.Quota("tag1", 15, true), kar.processor.status.env.quotas.values.get(0));
+        assertEquals(new KeepAliveRequestParamYaml.Quota("tag2", 25, false), kar.processor.status.env.quotas.values.get(1));
+        assertEquals(23, kar.processor.status.env.quotas.limit);
+        assertEquals(4, kar.processor.status.env.quotas.defaultValue);
+        assertTrue(kar.processor.status.env.quotas.disabled);
 
         assertNotNull(kar.processor.status.gitStatusInfo);
 
@@ -173,12 +181,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("code-core1", kar.cores.get(0).coreCode);
         assertEquals("core-tags1", kar.cores.get(0).tags);
 
-        assertEquals(1, kar.cores.get(0).quotas.values.size());
-        assertEquals(new KeepAliveRequestParamYaml.Quota("tag1", 15, true), kar.cores.get(0).quotas.values.get(0));
-        assertEquals(13, kar.cores.get(0).quotas.limit);
-        assertEquals(3, kar.cores.get(0).quotas.defaultValue);
-        assertTrue(kar.cores.get(0).quotas.disabled);
-
         assertEquals("tag1", kar.cores.get(0).tags);
 
 
@@ -186,12 +188,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals(22L, kar.cores.get(1).coreId);
         assertEquals("code-core2", kar.cores.get(1).coreCode);
         assertEquals("core-tags2", kar.cores.get(1).tags);
-
-        assertEquals(1, kar.cores.get(1).quotas.values.size());
-        assertEquals(new KeepAliveRequestParamYaml.Quota("tag2", 25, false), kar.cores.get(1).quotas.values.get(0));
-        assertEquals(23, kar.cores.get(1).quotas.limit);
-        assertEquals(4, kar.cores.get(1).quotas.defaultValue);
-        assertTrue(kar.cores.get(1).quotas.disabled);
 
         assertEquals("tag2", kar.cores.get(1).tags);
 
@@ -214,6 +210,13 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("path1", karV3.processor.status.env.disk.get(0).path);
         assertEquals("code2", karV3.processor.status.env.disk.get(1).code);
         assertEquals("path2", karV3.processor.status.env.disk.get(1).path);
+
+        assertEquals(1, karV3.processor.status.env.quotas.values.size());
+        assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag1", 15, true), karV3.processor.status.env.quotas.values.get(0));
+        assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag2", 25, false), karV3.processor.status.env.quotas.values.get(1));
+        assertEquals(23, karV3.processor.status.env.quotas.limit);
+        assertEquals(4, karV3.processor.status.env.quotas.defaultValue);
+        assertTrue(karV3.processor.status.env.quotas.disabled);
 
         assertNotNull(karV3.processor.status.gitStatusInfo);
 
@@ -254,12 +257,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("code-core1", karV3.cores.get(0).coreCode);
         assertEquals("core-tags1", karV3.cores.get(0).tags);
 
-        assertEquals(1, karV3.cores.get(0).quotas.values.size());
-        assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag1", 15, true), karV3.cores.get(0).quotas.values.get(0));
-        assertEquals(13, karV3.cores.get(0).quotas.limit);
-        assertEquals(3, karV3.cores.get(0).quotas.defaultValue);
-        assertTrue(karV3.cores.get(0).quotas.disabled);
-
         assertEquals("tag1", karV3.cores.get(0).tags);
 
 
@@ -267,12 +264,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals(22L, karV3.cores.get(1).coreId);
         assertEquals("code-core2", karV3.cores.get(1).coreCode);
         assertEquals("core-tags2", karV3.cores.get(1).tags);
-
-        assertEquals(1, karV3.cores.get(1).quotas.values.size());
-        assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag2", 25, false), karV3.cores.get(1).quotas.values.get(0));
-        assertEquals(23, karV3.cores.get(1).quotas.limit);
-        assertEquals(4, karV3.cores.get(1).quotas.defaultValue);
-        assertTrue(karV3.cores.get(1).quotas.disabled);
 
         assertEquals("tag2", karV3.cores.get(1).tags);
 

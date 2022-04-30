@@ -46,6 +46,7 @@ public class StringVariableData {
     @AllArgsConstructor
     @EqualsAndHashCode
     public static class StringAsVar {
+        // use key instead
         @Nullable
         @Deprecated
         public String group;

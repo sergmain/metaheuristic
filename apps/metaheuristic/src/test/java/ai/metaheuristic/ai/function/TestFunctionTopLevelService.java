@@ -42,9 +42,8 @@ public class TestFunctionTopLevelService {
         KeepAliveRequestParamYaml params = new KeepAliveRequestParamYaml();
         assertFalse(FunctionTopLevelService.isProcessorFunctionDownloadStatusDifferent(functions, params));
 
-        final KeepAliveRequestParamYaml.Processor processorRequest = new KeepAliveRequestParamYaml.Processor();
-        processorRequest.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(42L, "123456");
-        params.requests.add(processorRequest);
+        final KeepAliveRequestParamYaml.Processor processorRequest = params.processor;
+        processorRequest.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(42L, "123456", System.currentTimeMillis());
         assertFalse(FunctionTopLevelService.isProcessorFunctionDownloadStatusDifferent(functions, params));
 
         final KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status status = new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status("func-1", EnumsApi.FunctionState.ok);

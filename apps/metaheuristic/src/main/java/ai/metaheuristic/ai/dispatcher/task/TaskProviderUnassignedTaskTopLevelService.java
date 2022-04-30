@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
@@ -67,14 +68,14 @@ public class TaskProviderUnassignedTaskTopLevelService {
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
 
     @Nullable
-    public TaskData.AssignedTask findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
+    public TaskData.AssignedTask findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
         TxUtils.checkTxNotExists();
 
         if (TaskQueueService.isQueueEmptyWithSync()) {
             return null;
         }
 
-        TaskData.AssignedTask task = findUnassignedTaskAndAssignInternal(coreId, psy, isAcceptOnlySigned, quotas);
+        TaskData.AssignedTask task = findUnassignedTaskAndAssignInternal(coreId, psy, csy, isAcceptOnlySigned, quotas);
 
         if (task!=null) {
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, task.task.id, task.task.execContextId);
@@ -93,7 +94,8 @@ public class TaskProviderUnassignedTaskTopLevelService {
 
     @SuppressWarnings("TextBlockMigration")
     @Nullable
-    private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(Long coreId, ProcessorStatusYaml psy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
+    private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(
+            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
 
         if (TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty)) {
@@ -187,7 +189,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
                 }
 
                 // check of tag
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags)) {
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, csy.tags)) {
                     log.debug("#317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
                     continue;
                 }

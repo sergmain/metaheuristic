@@ -57,8 +57,9 @@ public class DispatcherEventYaml implements BaseParams {
 
     @Data
     public static class TaskEventData {
+        // actually this is a coreId but won't be changed because of compatibility with 3rd party apps reason
         @Nullable
-        public Long coreId;
+        public Long processorId;
         public Long taskId;
         public Long execContextId;
     }

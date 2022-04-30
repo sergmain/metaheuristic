@@ -109,19 +109,17 @@ public class ProcessorService {
         t.mirrors.putAll(envYaml.mirrors);
         envYaml.envs.forEach(env -> t.envs.put(env.code, env.exec));
         envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
-        t.quotas = toQuotas(envYaml);
+        initQuotas(envYaml, t.quotas);
         return t;
     }
 
-    private static KeepAliveRequestParamYaml.Quotas toQuotas(EnvParamsYaml envYaml) {
-        KeepAliveRequestParamYaml.Quotas t = new KeepAliveRequestParamYaml.Quotas();
+    private static void initQuotas(EnvParamsYaml envYaml, KeepAliveRequestParamYaml.Quotas t) {
         t.limit = envYaml.quotas.limit;
         t.disabled = envYaml.quotas.disabled;
         t.defaultValue = envYaml.quotas.defaultValue;
         envYaml.quotas.values.stream()
                 .map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, DispatcherSchedule.createDispatcherSchedule(o.processingTime).isCurrentTimeInactive()))
                 .collect(Collectors.toCollection(()->t.values));
-        return t;
     }
 
     /**

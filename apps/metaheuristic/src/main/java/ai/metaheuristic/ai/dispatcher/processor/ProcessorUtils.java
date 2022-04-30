@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.commons.S;
 import org.springframework.lang.Nullable;
 
 import java.util.Objects;
@@ -46,7 +45,7 @@ public class ProcessorUtils {
     }
 
     private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
-        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags) && CollectionUtils.isEmpty(env.quotas.values));
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && CollectionUtils.isEmpty(env.quotas.values));
     }
 
     private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {

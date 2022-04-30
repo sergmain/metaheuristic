@@ -113,10 +113,10 @@ public class TestReAssignProcessorId {
         // in this scenario we test that processor has got a new re-assigned processorId
 
         KeepAliveRequestParamYaml processorCommParamsYaml = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.Processor processorComm = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorCommParamsYaml.requests.add(processorComm);
+        KeepAliveRequestParamYaml.Processor processorComm = processorCommParamsYaml.processor;
+        processorComm.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
-        processorComm.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
+        processorComm.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore, sessionIdBefore.substring(0, 4), 0);
         final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorCommParamsYaml);
         String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
 

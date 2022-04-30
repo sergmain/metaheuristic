@@ -116,7 +116,6 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
         DispatcherApiData.ProcessorSessionId s1 = processorTransactionService.reassignProcessorId(null, null);
         assertNotEquals(sessionIdBefore, s1.sessionId);
-
     }
 
     @AfterEach
@@ -139,16 +138,15 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         setSessionAsExpired();
 
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.Processor req = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
+        KeepAliveRequestParamYaml.Processor req = processorComm.processor;
+        req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
         final String newSessionId = sessionIdBefore + '-';
-        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore.toString(), newSessionId);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore, newSessionId, System.currentTimeMillis());
 
         String dispatcherResponse = serverService.keepAlive(KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
-
 
         assertNotNull(d);
         assertNotNull(d.responses);

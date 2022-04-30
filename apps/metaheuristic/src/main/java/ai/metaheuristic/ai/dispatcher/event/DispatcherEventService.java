@@ -79,7 +79,7 @@ public class DispatcherEventService {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.coreId = coreId;
+        taskEventData.processorId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
@@ -113,7 +113,7 @@ public class DispatcherEventService {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.coreId = coreId;
+        taskEventData.processorId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));

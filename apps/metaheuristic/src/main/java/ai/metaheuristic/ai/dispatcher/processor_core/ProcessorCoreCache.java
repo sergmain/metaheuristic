@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.processor_core;
 
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -41,10 +40,10 @@ public class ProcessorCoreCache {
 
     private final ProcessorCoreRepository processorCoreRepository;
 
-    public ProcessorCore save(@NonNull Processor processor) {
+    public ProcessorCore save(@NonNull ProcessorCore core) {
         TxUtils.checkTxExists();
-        log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
-        return processorCoreRepository.save(processor);
+        log.debug("#457.010 save core, id: #{}, core: {}", core.id, core);
+        return processorCoreRepository.save(core);
     }
 
     public void delete(@NonNull ProcessorCore processor) {
@@ -56,21 +55,21 @@ public class ProcessorCoreCache {
         }
     }
 
-    public void delete(Long processorId) {
+    public void delete(Long coreId) {
         TxUtils.checkTxExists();
         try {
-            processorCoreRepository.deleteById(processorId);
+            processorCoreRepository.deleteById(coreId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.050 Error deleting of processor by id", e);
+            log.error("#457.050 Error deleting of core by id", e);
         }
     }
 
-    public void deleteById(Long processorId) {
+    public void deleteById(Long coreId) {
         TxUtils.checkTxExists();
         try {
-            processorCoreRepository.deleteById(processorId);
+            processorCoreRepository.deleteById(coreId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.070 Error deleting of processor by id", e);
+            log.error("#457.070 Error deleting of core by id", e);
         }
     }
 

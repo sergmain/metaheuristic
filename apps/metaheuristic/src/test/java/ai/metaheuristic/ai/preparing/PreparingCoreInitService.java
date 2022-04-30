@@ -44,8 +44,6 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 /**
  * @author Serge
  * Date: 1/6/2022
@@ -89,7 +87,7 @@ public class PreparingCoreInitService {
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
-                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
 
         mills = System.currentTimeMillis();

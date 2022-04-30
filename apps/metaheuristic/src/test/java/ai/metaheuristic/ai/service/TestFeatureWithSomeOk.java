@@ -73,7 +73,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
             return null;
         });
 
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(getProcessorIdAsStr());
+        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
         preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
