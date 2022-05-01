@@ -55,7 +55,6 @@ public class ProcessorCore implements Serializable {
     @Version
     public Long version;
 
-    @Nullable
     @Column(name = "PROCESSOR_ID")
     public Long processorId;
 

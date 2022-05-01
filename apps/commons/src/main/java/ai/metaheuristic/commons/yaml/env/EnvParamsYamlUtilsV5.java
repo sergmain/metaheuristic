@@ -30,31 +30,31 @@ import java.util.stream.Collectors;
  * Date: 04/01/2022
  * Time: 5:15 PM
  */
-public class EnvParamsYamlUtilsV4
-        extends AbstractParamsYamlUtils<EnvParamsYamlV4, EnvParamsYamlV5, EnvParamsYamlUtilsV5, Void, Void, Void> {
+public class EnvParamsYamlUtilsV5
+        extends AbstractParamsYamlUtils<EnvParamsYamlV5, EnvParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 4;
+        return 5;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(EnvParamsYamlV4.class);
+        return YamlUtils.init(EnvParamsYamlV5.class);
     }
 
     @NonNull
     @Override
-    public EnvParamsYamlV5 upgradeTo(@NonNull EnvParamsYamlV4 src) {
+    public EnvParamsYaml upgradeTo(@NonNull EnvParamsYamlV5 src) {
         src.checkIntegrity();
-        EnvParamsYamlV5 trg = new EnvParamsYamlV5();
+        EnvParamsYaml trg = new EnvParamsYaml();
 
         trg.mirrors.putAll(src.mirrors);
-        src.envs.stream().map(EnvParamsYamlUtilsV4::to).collect(Collectors.toCollection(() -> trg.envs));
-        src.disk.stream().map(o->new EnvParamsYamlV5.DiskStorageV5(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
-        src.processors.stream().map(o->new EnvParamsYamlV5.CoreV5(o.code, o.tags)).collect(Collectors.toCollection(()->trg.cores));
-        src.quotas.values.stream().map(o->new EnvParamsYamlV5.QuotaV5(o.tag, o.amount, o.processingTime)).collect(Collectors.toCollection(()->trg.quotas.values));
+        src.envs.stream().map(EnvParamsYamlUtilsV5::to).collect(Collectors.toCollection(() -> trg.envs));
+        src.disk.stream().map(o->new EnvParamsYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> trg.disk));
+        src.cores.stream().map(o->new EnvParamsYaml.Core(o.code, o.tags)).collect(Collectors.toCollection(()->trg.cores));
+        src.quotas.values.stream().map(o->new EnvParamsYaml.Quota(o.tag, o.amount, o.processingTime)).collect(Collectors.toCollection(()->trg.quotas.values));
         trg.quotas.limit = src.quotas.limit;
         trg.quotas.disabled = src.quotas.disabled;
         trg.quotas.defaultValue = src.quotas.defaultValue;
@@ -63,16 +63,16 @@ public class EnvParamsYamlUtilsV4
         return trg;
     }
 
-    private static EnvParamsYamlV5.EnvV5 to(EnvParamsYamlV4.EnvV4 v4) {
-        EnvParamsYamlV5.EnvV5 env = new EnvParamsYamlV5.EnvV5();
-        env.code = v4.code;
-        env.exec = v4.exec;
-        if (v4.verify!=null) {
-            EnvParamsYamlV5.VerifyEnvV5 verifyEnv = new EnvParamsYamlV5.VerifyEnvV5();
-            verifyEnv.run = v4.verify.run;
-            verifyEnv.params = v4.verify.params;
-            verifyEnv.responsePattern = v4.verify.responsePattern;
-            verifyEnv.expectedResponse = v4.verify.expectedResponse;
+    private static EnvParamsYaml.Env to(EnvParamsYamlV5.EnvV5 V5) {
+        EnvParamsYaml.Env env = new EnvParamsYaml.Env();
+        env.code = V5.code;
+        env.exec = V5.exec;
+        if (V5.verify!=null) {
+            EnvParamsYaml.VerifyEnv verifyEnv = new EnvParamsYaml.VerifyEnv();
+            verifyEnv.run = V5.verify.run;
+            verifyEnv.params = V5.verify.params;
+            verifyEnv.responsePattern = V5.verify.responsePattern;
+            verifyEnv.expectedResponse = V5.verify.expectedResponse;
             env.verify = verifyEnv;
         }
         return env;
@@ -85,8 +85,8 @@ public class EnvParamsYamlUtilsV4
     }
 
     @Override
-    public EnvParamsYamlUtilsV5 nextUtil() {
-        return (EnvParamsYamlUtilsV5) EnvParamsYamlUtils.BASE_YAML_UTILS.getForVersion(5);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -95,17 +95,17 @@ public class EnvParamsYamlUtilsV4
     }
 
     @Override
-    public String toString(@NonNull EnvParamsYamlV4 yaml) {
+    public String toString(@NonNull EnvParamsYamlV5 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public EnvParamsYamlV4 to(@NonNull String yaml) {
+    public EnvParamsYamlV5 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final EnvParamsYamlV4 p = getYaml().load(yaml);
+        final EnvParamsYamlV5 p = getYaml().load(yaml);
         return p;
     }
 

@@ -16,7 +16,6 @@
 package ai.metaheuristic.commons.yaml.env;
 
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -28,22 +27,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @NoArgsConstructor
 @ToString
-public class EnvParamsYaml implements BaseParams {
+public class EnvParamsYamlV5 implements BaseParams {
 
     public final int version=5;
-
-    public boolean checkIntegrity() {
-        if (!quotas.disabled && (quotas.defaultValue==0)) {
-            throw new CheckIntegrityFailedException("(!quotas.disabled && (quotas.defaultValue==0))");
-        }
-        return true;
-    }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code","path"})
-    public static class DiskStorage {
+    public static class DiskStorageV5 {
         public String code;
         public String path;
     }
@@ -52,7 +44,7 @@ public class EnvParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode( of={"code"})
-    public static class Core {
+    public static class CoreV5 {
         public String code;
         @Nullable
         public String tags;
@@ -61,7 +53,7 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quota {
+    public static class QuotaV5 {
         public String tag;
         public int amount;
         // string representation of ai.metaheuristic.ai.commons.dispatcher_schedule.DispatcherSchedule
@@ -72,8 +64,8 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Quotas {
-        public List<Quota> values = new ArrayList<>();
+    public static class QuotasV5 {
+        public final List<QuotaV5> values = new ArrayList<>();
         public int limit;
         public int defaultValue;
         public boolean disabled;
@@ -82,7 +74,7 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class VerifyEnv {
+    public static class VerifyEnvV5 {
         public boolean run = false;
         @Nullable
         public String params;
@@ -95,17 +87,22 @@ public class EnvParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Env {
+    public static class EnvV5 {
         public String code;
         public String exec;
         @Nullable
-        public VerifyEnv verify;
+        public VerifyEnvV5 verify;
+
+        public EnvV5(String code, String exec) {
+            this.code = code;
+            this.exec = exec;
+        }
     }
 
     public final Map<String, String> mirrors = new ConcurrentHashMap<>();
-    public final List<Env> envs = new ArrayList<>();
-    public final List<DiskStorage> disk = new ArrayList<>();
-    public final List<Core> cores = new ArrayList<>();
-    public final Quotas quotas = new Quotas();
+    public final List<EnvV5> envs = new ArrayList<>();
+    public final List<DiskStorageV5> disk = new ArrayList<>();
+    public final List<CoreV5> cores = new ArrayList<>();
+    public final QuotasV5 quotas = new QuotasV5();
 
 }

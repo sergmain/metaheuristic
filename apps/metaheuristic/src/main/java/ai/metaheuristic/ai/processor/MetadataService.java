@@ -144,7 +144,7 @@ public class MetadataService {
     }
 
     private void fixProcessorCodes() {
-        final List<String> codes = envService.getEnvParamsYaml().processors.stream().map(o -> o.code).collect(Collectors.toList());
+        final List<String> codes = envService.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
         Set<String> forDeletion = new HashSet<>();
         for (String key : metadata.processors.keySet()) {
