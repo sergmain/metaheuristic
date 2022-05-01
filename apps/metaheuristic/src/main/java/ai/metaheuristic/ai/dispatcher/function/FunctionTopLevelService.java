@@ -37,7 +37,6 @@ import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionRuntimeParamsYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import lombok.AllArgsConstructor;
@@ -535,56 +534,6 @@ public class FunctionTopLevelService {
 
         log.info("Send all configs of functions");
         return configs;
-    }
-
-    public void processKeepAliveData(Long processorId, KeepAliveRequestParamYaml params) {
-        List<Function> functions = functionRepository.findAll();
-
-
-        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(functions, params);
-
-        if (processorFunctionDownloadStatusDifferent) {
-            functionService.processFunctionStates(processorId, params.functions);
-        }
-    }
-
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
-        if (ss.functions.size()!=status.statuses.size()) {
-            return true;
-        }
-        for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
-            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (entry.getKey().equals(sds.code) && !entry.getValue().equals(sds.state)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public static boolean isProcessorFunctionDownloadStatusDifferent(List<Function> functions, KeepAliveRequestParamYaml params) {
-
-        for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status status : params.functions.statuses) {
-            Function func = functions.stream().filter(f->f.code.equals(status.code)).findFirst().orElse(null);
-            if (func==null) {
-                continue;
-            }
-            FunctionRuntimeParamsYaml runtimeParams = func.getFunctionRuntimeParamsYaml();
-            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
-                String processorIdsAsStr = runtimeParams.states.computeIfAbsent(st.state, (k)->"");
-                String[] processorIds = StringUtils.split(processorIdsAsStr, ",");
-                KeepAliveRequestParamYaml.Processor processor = params.processor; {
-                    if (processor.processorCommContext==null || processor.processorCommContext.processorId==null) {
-                        return false;
-                    }
-                    String codeId = processor.processorCommContext.processorId.toString();
-                    if (Arrays.stream(processorIds).noneMatch(o->o.equals(codeId))) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {

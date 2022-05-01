@@ -21,12 +21,15 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -34,13 +37,9 @@ import ai.metaheuristic.api.data.DispatcherApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Serge
@@ -61,6 +60,8 @@ public class KeepAliveTopLevelService {
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreCache processorCoreCache;
 
     public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
@@ -85,15 +86,18 @@ public class KeepAliveTopLevelService {
         return new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
     }
 
+    @Nullable
+    private KeepAliveResponseParamYaml.AssignedProcessorCoreId getNewProcessorCoreId(@Nullable Long processorId) {
+        Long processorCoreId = processorCoreService.getNewProcessorCoreId(processorId);
+        return processorCoreId==null ? null : new KeepAliveResponseParamYaml.AssignedProcessorCoreId(processorCoreId);
+    }
+
     public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         try {
             Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
             if (System.currentTimeMillis() - startMills < 12_000) {
-                processInfoAboutCores(req, remoteAddress, startMills, resp);
-            }
-            if (System.currentTimeMillis() - startMills < 12_000) {
-                functionTopLevelService.processKeepAliveData(processorId, req);
+                processInfoAboutCores(processorId, req, startMills, resp);
             }
             initDispatcherInfo(resp);
         } catch (Throwable th) {
@@ -156,51 +160,31 @@ public class KeepAliveTopLevelService {
         return processorRequest.processorCommContext.processorId;
     }
 
-    private void processInfoAboutCores(KeepAliveRequestParamYaml req, String remoteAddress, long startMills, KeepAliveResponseParamYaml resp) {
+    private void processInfoAboutCores(@Nullable Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(core.coreCode);
             resp.responses.add(dispatcherResponse);
-            throw new NotImplementedException();
-/*
 
-            if (core.processorCommContext == null) {
-                dispatcherResponse.assignedProcessorId = getNewProcessorId(null);
-                continue;
-            }
-            if (core.processorCommContext.processorId == null) {
-                log.warn("#446.100 StringUtils.isBlank(processorId), return RequestProcessorId()");
-                DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                dispatcherResponse.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
+            if (core.coreId == null) {
+                dispatcherResponse.assignedProcessorCoreId = getNewProcessorCoreId(processorId);
                 continue;
             }
 
-            final Processor processor = processorCache.findById(core.processorCommContext.processorId);
-            if (processor == null) {
+            final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
+            if (processorCore == null) {
                 log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
                 // no need of syncing for creation of new Processor
-                DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + core.processorCommContext.processorId);
-                dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                Long processorCoreId = processorCoreService.reassignProcessorCoreId(processorId);
+                dispatcherResponse.reAssignedProcessorCoreId = new KeepAliveResponseParamYaml.ReAssignedProcessorCoreId(processorCoreId);
                 continue;
             }
 
-            Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, core.processorCommContext.sessionId);
-            if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
-                DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
-                        ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
-
-                if (processorSessionId != null) {
-                    dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-            }
             log.debug("Start processing commands");
             processorTopLevelService.processKeepAliveData(core, req.functions, processor);
-            processGetNewProcessorId(core, dispatcherResponse);
 
             if (System.currentTimeMillis() - startMills > 12_000) {
                 break;
             }
-*/
         }
     }
 

@@ -43,18 +43,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ReAssignedProcessorId {
-        public String reAssignedProcessorId;
-        public String sessionId;
-
-        public ReAssignedProcessorId(Long processorId, String sessionId) {
-            this(Long.toString(processorId), sessionId);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
     public static class Functions {
         @Data
         @NoArgsConstructor
@@ -122,6 +110,36 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class AssignedProcessorCoreId {
+        public Long assignedProcessorCoreId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReAssignedProcessorId {
+        public String reAssignedProcessorId;
+        public String sessionId;
+
+        public ReAssignedProcessorId(Long processorId, String sessionId) {
+            this(Long.toString(processorId), sessionId);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReAssignedProcessorCoreId {
+        public String reAssignedProcessorCoreId;
+
+        public ReAssignedProcessorCoreId(Long processorCoreId) {
+            this.reAssignedProcessorCoreId = Long.toString(processorCoreId);
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DispatcherResponse {
         public String processorCode;
 
@@ -130,6 +148,9 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
         @Nullable
         public AssignedProcessorId assignedProcessorId;
+
+        @Nullable
+        public AssignedProcessorCoreId assignedProcessorCoreId;
 
         @Nullable
         public RequestLogFile requestLogFile;

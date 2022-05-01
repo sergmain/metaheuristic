@@ -16,16 +16,12 @@
 
 package ai.metaheuristic.ai.yaml.core_status;
 
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.lang.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
@@ -42,6 +38,7 @@ public class CoreStatusYaml implements BaseParams {
         return true;
     }
 
+    @Nullable
     public String currDir;
 
     @Nullable

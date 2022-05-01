@@ -61,6 +61,11 @@ public abstract class PreparingCore {
 
     @AfterEach
     public void afterPreparingCore() {
-        preparingCoreService.afterPreparingCore(preparingCodeData);
+        try {
+            preparingCoreService.afterPreparingCore(preparingCodeData);
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+        }
     }
 }
