@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.communication.keep_alive;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -166,6 +167,8 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Processor {
+        // status will be set only after aquiring a processorId
+        @Nullable
         public ProcessorStatus status;
 
         // if not null it means we need a new processorId

@@ -19,14 +19,17 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionRuntimeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -40,6 +43,30 @@ public class FunctionService {
 
     @Transactional
     public void processFunctionStates(Long processorId, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+
+/*
+        for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status status : params.functions.statuses) {
+            Function func = functions.stream().filter(f->f.code.equals(status.code)).findFirst().orElse(null);
+            if (func==null) {
+                continue;
+            }
+            FunctionRuntimeParamsYaml runtimeParams = func.getFunctionRuntimeParamsYaml();
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
+                String processorIdsAsStr = runtimeParams.states.computeIfAbsent(st.state, (k)->"");
+                String[] processorIds = StringUtils.split(processorIdsAsStr, ",");
+                KeepAliveRequestParamYaml.Processor processor = params.processor; {
+                    if (processor.processorCommContext==null || processor.processorCommContext.processorId==null) {
+                        return false;
+                    }
+                    String codeId = processor.processorCommContext.processorId.toString();
+                    if (Arrays.stream(processorIds).noneMatch(o->o.equals(codeId))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+*/
 
     }
 

@@ -16,12 +16,16 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -52,14 +56,30 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
                 .collect(Collectors.toCollection(()->t.functions.statuses));
 
         BeanUtils.copyProperties(src.processor, t.processor);
-        if (src.processor.status.env != null) {
-            t.processor.status.env = new KeepAliveRequestParamYaml.Env();
-            t.processor.status.env.mirrors.putAll(src.processor.status.env.mirrors);
-            t.processor.status.env.envs.putAll(src.processor.status.env.envs);
-            src.processor.status.env.disk.stream().map(o -> new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.processor.status.env.disk));
-            setQuotas(src.processor.status.env.quotas, t.processor.status.env.quotas);
-            if (src.processor.status.errors!=null) {
-                t.processor.status.errors = src.processor.status.errors;
+        if (src.processor.status!=null) {
+            t.processor.status = new KeepAliveRequestParamYaml.ProcessorStatus();
+
+            if (src.processor.status.env != null) {
+                t.processor.status.env = new KeepAliveRequestParamYaml.Env();
+                t.processor.status.env.mirrors.putAll(src.processor.status.env.mirrors);
+                t.processor.status.env.envs.putAll(src.processor.status.env.envs);
+                src.processor.status.env.disk.stream().map(o -> new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.processor.status.env.disk));
+                setQuotas(src.processor.status.env.quotas, t.processor.status.env.quotas);
+                if (src.processor.status.errors != null) {
+                    t.processor.status.errors = src.processor.status.errors;
+                }
+                if (src.processor.status.gitStatusInfo!=null) {
+                    t.processor.status.gitStatusInfo = new GitSourcingService.GitStatusInfo(
+                            src.processor.status.gitStatusInfo.status, src.processor.status.gitStatusInfo.version, src.processor.status.gitStatusInfo.error); ;
+                }
+
+                t.processor.status.schedule = src.processor.status.schedule;
+                t.processor.status.ip = src.processor.status.ip;
+                t.processor.status.host = src.processor.status.host;
+                t.processor.status.logDownloadable = src.processor.status.logDownloadable;
+                t.processor.status.taskParamsVersion = src.processor.status.taskParamsVersion;
+                t.processor.status.os = src.processor.status.os;
+                t.processor.status.currDir = src.processor.status.currDir;
             }
         }
         if (src.processor.processorCommContext != null) {
@@ -67,7 +87,7 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
                     src.processor.processorCommContext.processorId, src.processor.processorCommContext.sessionId, src.processor.processorCommContext.sessionCreatedOn);
         }
         for (KeepAliveRequestParamYamlV3.CoreV3 V3 : src.cores) {
-            KeepAliveRequestParamYaml.Core r = new KeepAliveRequestParamYaml.Core(V3.coreDir, V3.coreId, V3.coreCode, V3.coreCode);
+            KeepAliveRequestParamYaml.Core r = new KeepAliveRequestParamYaml.Core(V3.coreDir, V3.coreId, V3.coreCode, V3.tags);
             t.cores.add(r);
         }
         return t;

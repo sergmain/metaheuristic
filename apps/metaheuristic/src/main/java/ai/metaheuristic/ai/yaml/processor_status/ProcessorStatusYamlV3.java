@@ -23,6 +23,7 @@ import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,14 +39,6 @@ public class ProcessorStatusYamlV3 implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         return true;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DownloadStatusV3 {
-        public EnumsApi.FunctionState functionState;
-        public String functionCode;
     }
 
     @Data
@@ -99,7 +92,8 @@ public class ProcessorStatusYamlV3 implements BaseParams {
         public final QuotasV3 quotas = new QuotasV3();
     }
 
-    public List<DownloadStatusV3> downloadStatuses = new ArrayList<>();
+    // key - code of function, value - stae of function
+    public final Map<String, EnumsApi.FunctionState> functions = new HashMap<>();
 
     @Nullable
     public EnvV3 env;
@@ -112,6 +106,8 @@ public class ProcessorStatusYamlV3 implements BaseParams {
     //  need to change to UTC, Coordinated Universal Time
     // TODO 2020-10-11 actually, it's working in prod with multi-time-zoned.
     //  So need to decide about implementing the support of UTC
+    // TODO 2022-04-30 actually, it isn't working correctly in multi-timezone environment
+    //  tasks have been loosing periodically
     public long sessionCreatedOn;
     public String ip;
     public String host;

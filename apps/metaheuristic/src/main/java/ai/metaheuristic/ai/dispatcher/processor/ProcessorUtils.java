@@ -19,8 +19,10 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.api.EnumsApi;
 import org.springframework.lang.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -31,12 +33,12 @@ import java.util.Objects;
 public class ProcessorUtils {
 
     public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
-        if (ss.downloadStatuses.size()!=status.statuses.size()) {
+        if (ss.functions.size()!=status.statuses.size()) {
             return true;
         }
-        for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
+        for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (downloadStatus.functionCode.equals(sds.code) && !downloadStatus.functionState.equals(sds.state)) {
+                if (entry.getKey().equals(sds.code) && !entry.getValue().equals(sds.state)) {
                     return true;
                 }
             }

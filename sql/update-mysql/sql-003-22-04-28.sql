@@ -1,12 +1,10 @@
-rename table mh_processor to mh_processor_core;
+truncate table mh_processor;
 
-alter table mh_processor_core
-    add     PROCESSOR_ID    INT UNSIGNED;
-
-CREATE TABLE mh_processor
+CREATE TABLE mh_processor_core
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
+    PROCESSOR_ID    INT UNSIGNED,
     UPDATED_ON      bigint not null,
     IP              VARCHAR(30),
     DESCRIPTION     VARCHAR(250),

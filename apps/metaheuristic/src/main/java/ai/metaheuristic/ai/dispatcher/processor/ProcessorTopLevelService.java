@@ -213,11 +213,11 @@ public class ProcessorTopLevelService {
 
             String blacklistReason = processorBlacklisted(status);
 
-            boolean isFunctionProblem = status.downloadStatuses.stream()
-                    .anyMatch(s->s.functionState != EnumsApi.FunctionState.none &&
-                            s.functionState != EnumsApi.FunctionState.ready &&
-                            s.functionState != EnumsApi.FunctionState.not_found &&
-                            s.functionState != EnumsApi.FunctionState.ok);
+            boolean isFunctionProblem = status.functions.entrySet().stream()
+                    .anyMatch(s->s.getValue() != EnumsApi.FunctionState.none &&
+                            s.getValue() != EnumsApi.FunctionState.ready &&
+                            s.getValue() != EnumsApi.FunctionState.not_found &&
+                            s.getValue() != EnumsApi.FunctionState.ok);
 
             ss.add(new ProcessorData.ProcessorStatus(
                     processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,

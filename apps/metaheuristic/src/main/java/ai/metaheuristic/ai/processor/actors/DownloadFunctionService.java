@@ -105,7 +105,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             }
 
             MetadataParamsYaml.Status functionDownloadStatus = functionConfigAndStatus.status;
-            // functionState == Enums.FunctionState.ready if function was processed already
+            // functionState == EnumsApi.FunctionState.ready if function was processed already
             if (functionDownloadStatus==null || functionDownloadStatus.functionState == EnumsApi.FunctionState.ready) {
                 continue;
             }

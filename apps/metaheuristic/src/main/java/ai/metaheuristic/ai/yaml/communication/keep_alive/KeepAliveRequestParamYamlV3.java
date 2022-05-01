@@ -118,6 +118,7 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
     // ReportProcessor
     public static class ProcessorStatusV3 {
         public EnvV3 env;
+        @Nullable
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String ip;

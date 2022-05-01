@@ -48,9 +48,7 @@ public class ProcessorStatusYamlUtilsV3
     public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV3 src) {
         src.checkIntegrity();
         ProcessorStatusYaml trg = new ProcessorStatusYaml();
-        trg.downloadStatuses = src.downloadStatuses.stream()
-                .map( source -> new ProcessorStatusYaml.DownloadStatus(source.functionState,source.functionCode))
-                .collect(Collectors.toList());
+        trg.functions.putAll(src.functions);
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);
         }
@@ -58,7 +56,7 @@ public class ProcessorStatusYamlUtilsV3
         if (src.log!=null) {
             trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
-        BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors", "taskIds");
+        BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors", "taskIds", "functions");
         trg.checkIntegrity();
         return trg;
     }

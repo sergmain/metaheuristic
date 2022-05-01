@@ -77,10 +77,8 @@ public class TestStaticProcessorTransactionService {
 
     @Test
     public void test() {
-        String sessionId = "sessionId";
         ProcessorStatusYaml psy = new ProcessorStatusYaml();
-        psy.downloadStatuses= List.of();
-//        psy.env=null;
+
         GitSourcingService.GitStatusInfo gitStatusInfoAsNull = new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null);
 
         psy.gitStatusInfo= gitStatusInfoAsNull;
@@ -89,7 +87,6 @@ public class TestStaticProcessorTransactionService {
         psy.sessionCreatedOn=1606910626645L;
         psy.ip="[unknown]";
         psy.host="[unknown]";
-//        psy.errors=null;
         psy.logDownloadable=true;
         psy.taskParamsVersion=1;
         psy.os= EnumsApi.OS.unknown;

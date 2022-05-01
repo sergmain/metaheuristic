@@ -63,7 +63,6 @@ public class ProcessorService {
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final UploadVariableService uploadResourceActor;
-    private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final EnvService envService;
     private final VariableProviderFactory resourceProviderFactory;
@@ -88,9 +87,6 @@ public class ProcessorService {
                 logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
                 globals.os, globals.processor.dir.dir.getAbsolutePath(), null);
-
-//        metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
-//                System.currentTimeMillis(),
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
@@ -176,11 +172,9 @@ public class ProcessorService {
                 case git:
                 case inline:
                 default:
-                    if (true) {
-                        throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
-                    }
-                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
-                    break;
+                    throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
+//                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
+//                    break;
             }
             if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
                 return status;

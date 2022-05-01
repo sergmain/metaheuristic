@@ -87,7 +87,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         r.status.env.mirrors.putAll(Map.of("mirror-key1", "mirror-value1", "mirror-key2", "mirror-value2"));
         r.status.env.disk.addAll(List.of(new DiskStorageV3("code1", "path1"), new DiskStorageV3("code2", "path2")));
         r.status.env.quotas.init(new QuotasV3(
-                List.of(new QuotaV3("tag1", 15, false),
+                List.of(new QuotaV3("tag1", 15, true),
                         new QuotaV3("tag2", 25, false)),
                 23, 4, true));
 
@@ -108,8 +108,8 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         r.processorCommContext = new ProcessorCommContextV3(11L, "session-11", 42L);
 
-        CoreV3 core1 = new CoreV3("/dir-core1", 21L, "code-core1", "core-tags1");
-        CoreV3 core2 = new CoreV3("/dir-core2", 22L, "code-core2", "core-tags2");
+        CoreV3 core1 = new CoreV3("/dir-core1", 21L, "core-code1", "core-tags1");
+        CoreV3 core2 = new CoreV3("/dir-core2", 22L, "core-code2", "core-tags2");
 
         req.cores.add(core1);
         req.cores.add(core2);
@@ -135,7 +135,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("code2", kar.processor.status.env.disk.get(1).code);
         assertEquals("path2", kar.processor.status.env.disk.get(1).path);
 
-        assertEquals(1, kar.processor.status.env.quotas.values.size());
+        assertEquals(2, kar.processor.status.env.quotas.values.size());
         assertEquals(new KeepAliveRequestParamYaml.Quota("tag1", 15, true), kar.processor.status.env.quotas.values.get(0));
         assertEquals(new KeepAliveRequestParamYaml.Quota("tag2", 25, false), kar.processor.status.env.quotas.values.get(1));
         assertEquals(23, kar.processor.status.env.quotas.limit);
@@ -150,7 +150,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertEquals("schedule1", kar.processor.status.schedule);
         assertEquals("192.168.0.17", kar.processor.status.ip);
-        assertEquals("host-17", kar.processor.status.host);
         assertEquals("host-17", kar.processor.status.host);
         assertNotNull(kar.processor.status.errors);
         assertEquals(2, kar.processor.status.errors.size());
@@ -170,7 +169,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertNotNull(kar.processor.processorCommContext);
         assertEquals(11L, kar.processor.processorCommContext.processorId);
-        assertEquals("sessionId-42", kar.processor.processorCommContext.sessionId);
+        assertEquals("session-11", kar.processor.processorCommContext.sessionId);
         assertEquals(42L, kar.processor.processorCommContext.sessionCreatedOn);
 
 
@@ -178,18 +177,13 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertEquals("/dir-core1", kar.cores.get(0).coreDir);
         assertEquals(21L, kar.cores.get(0).coreId);
-        assertEquals("code-core1", kar.cores.get(0).coreCode);
+        assertEquals("core-code1", kar.cores.get(0).coreCode);
         assertEquals("core-tags1", kar.cores.get(0).tags);
-
-        assertEquals("tag1", kar.cores.get(0).tags);
-
 
         assertEquals("/dir-core2", kar.cores.get(1).coreDir);
         assertEquals(22L, kar.cores.get(1).coreId);
-        assertEquals("code-core2", kar.cores.get(1).coreCode);
+        assertEquals("core-code2", kar.cores.get(1).coreCode);
         assertEquals("core-tags2", kar.cores.get(1).tags);
-
-        assertEquals("tag2", kar.cores.get(1).tags);
 
     }
 
@@ -211,7 +205,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("code2", karV3.processor.status.env.disk.get(1).code);
         assertEquals("path2", karV3.processor.status.env.disk.get(1).path);
 
-        assertEquals(1, karV3.processor.status.env.quotas.values.size());
+        assertEquals(2, karV3.processor.status.env.quotas.values.size());
         assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag1", 15, true), karV3.processor.status.env.quotas.values.get(0));
         assertEquals(new KeepAliveRequestParamYamlV3.QuotaV3("tag2", 25, false), karV3.processor.status.env.quotas.values.get(1));
         assertEquals(23, karV3.processor.status.env.quotas.limit);
@@ -246,26 +240,20 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertNotNull(karV3.processor.processorCommContext);
         assertEquals(11L, karV3.processor.processorCommContext.processorId);
-        assertEquals("sessionId-42", karV3.processor.processorCommContext.sessionId);
+        assertEquals("session-11", karV3.processor.processorCommContext.sessionId);
         assertEquals(42L, karV3.processor.processorCommContext.sessionCreatedOn);
-
 
         assertEquals(2, karV3.cores.size());
 
         assertEquals("/dir-core1", karV3.cores.get(0).coreDir);
         assertEquals(21L, karV3.cores.get(0).coreId);
-        assertEquals("code-core1", karV3.cores.get(0).coreCode);
+        assertEquals("core-code1", karV3.cores.get(0).coreCode);
         assertEquals("core-tags1", karV3.cores.get(0).tags);
-
-        assertEquals("tag1", karV3.cores.get(0).tags);
-
 
         assertEquals("/dir-core2", karV3.cores.get(1).coreDir);
         assertEquals(22L, karV3.cores.get(1).coreId);
-        assertEquals("code-core2", karV3.cores.get(1).coreCode);
+        assertEquals("core-code2", karV3.cores.get(1).coreCode);
         assertEquals("core-tags2", karV3.cores.get(1).tags);
-
-        assertEquals("tag2", karV3.cores.get(1).tags);
 
     }
 

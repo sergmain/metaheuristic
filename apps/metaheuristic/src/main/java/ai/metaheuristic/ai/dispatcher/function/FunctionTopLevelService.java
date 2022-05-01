@@ -560,29 +560,17 @@ public class FunctionTopLevelService {
             }
             FunctionRuntimeParamsYaml runtimeParams = func.getFunctionRuntimeParamsYaml();
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status st : params.functions.statuses) {
-                String coreIdsAsStr = runtimeParams.states.get(st.state);
-                String[] codeIds = StringUtils.split(coreIdsAsStr, ",");
-                KeepAliveRequestParamYaml.Processor request = params.processor; {
-                    if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
+                String processorIdsAsStr = runtimeParams.states.computeIfAbsent(st.state, (k)->"");
+                String[] processorIds = StringUtils.split(processorIdsAsStr, ",");
+                KeepAliveRequestParamYaml.Processor processor = params.processor; {
+                    if (processor.processorCommContext==null || processor.processorCommContext.processorId==null) {
                         return false;
                     }
-                    String codeId = request.processorCommContext.processorId.toString();
-                    if (Arrays.stream(codeIds).noneMatch(o->o.equals(codeId))) {
+                    String codeId = processor.processorCommContext.processorId.toString();
+                    if (Arrays.stream(processorIds).noneMatch(o->o.equals(codeId))) {
                         return true;
                     }
                 }
-                if (true) throw new NotImplementedException();
-/*
-                for (KeepAliveRequestParamYaml.Processor request : params.requests) {
-                    if (request.processorCommContext==null || request.processorCommContext.processorId==null) {
-                        return false;
-                    }
-                    String codeId = request.processorCommContext.processorId.toString();
-                    if (Arrays.stream(codeIds).noneMatch(o->o.equals(codeId))) {
-                        return true;
-                    }
-                }
-*/
             }
         }
         return false;

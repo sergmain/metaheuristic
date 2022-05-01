@@ -39,7 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -161,7 +161,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
@@ -236,9 +236,8 @@ public class ProcessorTransactionService {
             psy.currDir = status.currDir;
         }
         if (processorFunctionDownloadStatusDifferent) {
-            psy.downloadStatuses = functionDownloadStatus.statuses.stream()
-                    .map(o -> new ProcessorStatusYaml.DownloadStatus(o.state, o.code))
-                    .collect(Collectors.toList());
+            psy.functions.clear();
+            functionDownloadStatus.statuses.forEach(o->psy.functions.put(o.code, o.state));
         }
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
@@ -277,7 +276,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTransactionService.createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(new ArrayList<>(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);

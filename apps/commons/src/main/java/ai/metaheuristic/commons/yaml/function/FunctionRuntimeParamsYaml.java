@@ -18,7 +18,6 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -41,6 +40,7 @@ public class FunctionRuntimeParamsYaml implements BaseParams {
         return true;
     }
 
+    // key - state of function, value - list of processorIds
     public final Map<EnumsApi.FunctionState, String> states = new HashMap<>();
 
 }
