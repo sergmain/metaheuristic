@@ -67,8 +67,9 @@ public class TestStaticProcessorTransactionService {
         envYaml.envs.putAll(envs);
         envYaml.disk.addAll(disk);
         if (quotas!=null) {
-            envYaml.quotas = new KeepAliveRequestParamYaml.Quotas();
             envYaml.quotas.limit = quotas.limit;
+            envYaml.quotas.defaultValue = quotas.defaultValue;
+            envYaml.quotas.disabled = quotas.disabled;
             envYaml.quotas.values.addAll(quotas.values);
         }
         return envYaml;
@@ -116,11 +117,11 @@ public class TestStaticProcessorTransactionService {
         assertFalse(ProcessorUtils.envNotEquals(null, new KeepAliveRequestParamYaml.Env()));
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), null));
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(""), new KeepAliveRequestParamYaml.Env()));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
         assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
 
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(""), new KeepAliveRequestParamYaml.Env()));
-        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env("aaa"), new KeepAliveRequestParamYaml.Env()));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
+        assertFalse(ProcessorUtils.envNotEquals(new ProcessorStatusYaml.Env(), new KeepAliveRequestParamYaml.Env()));
         assertFalse(ProcessorUtils.envNotEquals(
                 createProcessorStatusYamlEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa"),
                 createEnvYaml(Map.of("q","1"), Map.of("w", "2"), List.of(), "aaa")));

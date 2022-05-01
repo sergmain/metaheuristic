@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
@@ -37,6 +38,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -86,7 +88,7 @@ public class TaskCheckCachingTopLevelService {
     private final CacheProcessRepository cacheProcessRepository;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
 
@@ -150,7 +152,7 @@ public class TaskCheckCachingTopLevelService {
                 }
                 catch (Throwable th) {
                     log.error("Error", th);
-                    taskFinishingService.finishWithErrorWithTx(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage());
+                    eventPublisher.publishEvent(new TaskFinishWithErrorEvent(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage()));
                     return;
                 }
             }

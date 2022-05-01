@@ -133,10 +133,10 @@ public class TestRequestProcessorId {
     @Test
     public void testEmptySessionId() {
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.Processor req = new KeepAliveRequestParamYaml.Processor(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
+        KeepAliveRequestParamYaml.Processor req = processorComm.processor;
+        req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
-        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId.toString(), null);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, null, 0);
 
         final String reqYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.keepAlive(reqYaml, "127.0.0.1");
