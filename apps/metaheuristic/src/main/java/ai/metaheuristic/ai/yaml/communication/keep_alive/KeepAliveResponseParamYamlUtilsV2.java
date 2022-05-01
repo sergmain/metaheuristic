@@ -28,67 +28,67 @@ import java.util.stream.Collectors;
  * Date: 10/03/2019
  * Time: 6:02 PM
  */
-public class KeepAliveResponseParamYamlUtilsV1 extends
-        AbstractParamsYamlUtils<KeepAliveResponseParamYamlV1, KeepAliveResponseParamYamlV2, KeepAliveResponseParamYamlUtilsV2, Void, Void, Void> {
+public class KeepAliveResponseParamYamlUtilsV2 extends
+        AbstractParamsYamlUtils<KeepAliveResponseParamYamlV2, KeepAliveResponseParamYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(KeepAliveResponseParamYamlV1.class);
+        return YamlUtils.init(KeepAliveResponseParamYamlV2.class);
     }
 
     @NonNull
     @Override
-    public KeepAliveResponseParamYamlV2 upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1) {
-        KeepAliveResponseParamYamlV2 t = new KeepAliveResponseParamYamlV2();
+    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV2 V2) {
+        KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
 
-        if( v1.dispatcherInfo !=null ) {
-            t.dispatcherInfo = new KeepAliveResponseParamYamlV2.DispatcherInfoV2();
-            t.dispatcherInfo.chunkSize = v1.dispatcherInfo.chunkSize;
-            t.dispatcherInfo.processorCommVersion = v1.dispatcherInfo.processorCommVersion;
+        if( V2.dispatcherInfo !=null ) {
+            t.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo();
+            t.dispatcherInfo.chunkSize = V2.dispatcherInfo.chunkSize;
+            t.dispatcherInfo.processorCommVersion = V2.dispatcherInfo.processorCommVersion;
         }
-        if (!v1.functions.infos.isEmpty()) {
-            t.functions.infos.addAll( v1.functions.infos
+        if (!V2.functions.infos.isEmpty()) {
+            t.functions.infos.addAll( V2.functions.infos
                             .stream()
-                            .map(o->new KeepAliveResponseParamYamlV2.FunctionsV2.Info (o.code, o.sourcing))
+                            .map(o->new KeepAliveResponseParamYaml.Functions.Info (o.code, o.sourcing))
                             .collect(Collectors.toList())
                     );
         }
-        if (v1.execContextStatus !=null) {
-            t.execContextStatus = new KeepAliveResponseParamYamlV2.ExecContextStatusV2();
-            v1.execContextStatus.statuses
+        if (V2.execContextStatus !=null) {
+            t.execContextStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
+            V2.execContextStatus.statuses
                     .stream()
-                    .map(o -> new KeepAliveResponseParamYamlV2.ExecContextStatusV2.SimpleStatus(o.id, o.state))
+                    .map(o -> new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
                     .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
         }
-        for (KeepAliveResponseParamYamlV1.DispatcherResponseV1 r : v1.responses) {
+        for (KeepAliveResponseParamYamlV2.DispatcherResponseV2 r : V2.responses) {
 
-            KeepAliveResponseParamYamlV2.DispatcherResponseV2 response = new KeepAliveResponseParamYamlV2.DispatcherResponseV2();
+            KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
             t.responses.add(response);
 
             response.processorCode = r.processorCode;
 
             if (r.assignedProcessorId !=null) {
-                response.assignedProcessorId = new KeepAliveResponseParamYamlV2.AssignedProcessorIdV2(
+                response.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
                         r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);
             }
             if (r.reAssignedProcessorId !=null) {
-                response.reAssignedProcessorId = new KeepAliveResponseParamYamlV2.ReAssignedProcessorIdV2(
+                response.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
                         r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
             }
 
             if (r.requestLogFile!=null) {
-                response.requestLogFile = new KeepAliveResponseParamYamlV2.RequestLogFileV2(r.requestLogFile.requestedOn);
+                response.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(r.requestLogFile.requestedOn);
             }
         }
 
-        t.success = v1.success;
-        t.msg = v1.msg;
+        t.success = V2.success;
+        t.msg = V2.msg;
 
         return t;
     }
@@ -100,8 +100,8 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     }
 
     @Override
-    public KeepAliveResponseParamYamlUtilsV2 nextUtil() {
-        return (KeepAliveResponseParamYamlUtilsV2) KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -110,14 +110,14 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull KeepAliveResponseParamYamlV1 yaml) {
+    public String toString(@NonNull KeepAliveResponseParamYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public KeepAliveResponseParamYamlV1 to(@NonNull String s) {
-        final KeepAliveResponseParamYamlV1 p = getYaml().load(s);
+    public KeepAliveResponseParamYamlV2 to(@NonNull String s) {
+        final KeepAliveResponseParamYamlV2 p = getYaml().load(s);
         return p;
     }
 

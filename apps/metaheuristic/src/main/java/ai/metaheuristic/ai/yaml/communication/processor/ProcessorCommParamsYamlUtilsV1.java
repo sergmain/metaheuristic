@@ -95,62 +95,6 @@ public class ProcessorCommParamsYamlUtilsV1
     @Override
     public Void downgradeTo(@NonNull Void v1) {
         return null;
-/*
-        ProcessorCommParamsYamlV3 t = new ProcessorCommParamsYamlV3();
-
-        if (v1.processorCommContext!=null) {
-            t.processorCommContext = new ProcessorCommParamsYamlV3.ProcessorCommContextV3();
-            BeanUtils.copyProperties(v1.processorCommContext, t.processorCommContext);
-        }
-        if (v1.requestProcessorId!=null) {
-            t.requestProcessorId = new ProcessorCommParamsYamlV3.RequestProcessorIdV3(true);
-        }
-        if (v1.reportProcessorStatus!=null) {
-            t.reportProcessorStatus = new ProcessorCommParamsYamlV3.ReportProcessorStatusV3();
-            BeanUtils.copyProperties(v1.reportProcessorStatus, t.reportProcessorStatus);
-        }
-        if (v1.reportProcessorTaskStatus!=null) {
-            t.reportProcessorTaskStatus = new ProcessorCommParamsYamlV3.ReportProcessorTaskStatusV3();
-            t.reportProcessorTaskStatus.statuses =
-                    v1.reportProcessorTaskStatus.statuses!=null
-                            ? v1.reportProcessorTaskStatus.statuses
-                            .stream()
-                            .map(o->new ProcessorCommParamsYamlV3.ReportProcessorTaskStatusV3.SimpleStatus(o.taskId))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
-        if (v1.requestTask!=null) {
-            t.requestTask = new ProcessorCommParamsYamlV3.RequestTaskV3();
-            t.requestTask.acceptOnlySigned = v1.requestTask.acceptOnlySigned;
-        }
-        if (v1.reportTaskProcessingResult!=null) {
-            t.reportTaskProcessingResult = new ProcessorCommParamsYamlV3.ReportTaskProcessingResultV3();
-            t.reportTaskProcessingResult.results =
-                    v1.reportTaskProcessingResult.results!=null
-                            ? v1.reportTaskProcessingResult.results
-                            .stream()
-                            .map(o->new ProcessorCommParamsYamlV3.ReportTaskProcessingResultV3.SimpleTaskExecResult(o.taskId, o.result,
-                                    o.ml!=null ? o.ml.metrics : null, null))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
-        if (v1.checkForMissingOutputResources!=null) {
-            t.checkForMissingOutputResources = new ProcessorCommParamsYamlV3.CheckForMissingOutputResourcesV3(true);
-        }
-        if (v1.resendTaskOutputResourceResult!=null) {
-            t.resendTaskOutputResourceResult = new ProcessorCommParamsYamlV3.ResendTaskOutputResourceResultV3();
-            t.resendTaskOutputResourceResult.statuses =
-                    v1.resendTaskOutputResourceResult.statuses!=null
-                            ? v1.resendTaskOutputResourceResult.statuses
-                            .stream()
-                            .map(o->new ProcessorCommParamsYamlV3.ResendTaskOutputResourceResultV3.SimpleStatus(o.taskId, o.status))
-                            .collect(Collectors.toList())
-                            : new ArrayList<>();
-        }
-
-        BeanUtils.copyProperties(v1, t);
-        return t;
-*/
     }
 
     @Override
