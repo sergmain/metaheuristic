@@ -15,14 +15,9 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.commons.yaml.function.FunctionRuntimeParamsYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionRuntimeParamsYamlUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serial;
@@ -53,48 +48,5 @@ public class Function implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
-
-    @Column(name = "RT_PARAMS")
-    private String runtimeParams;
-
-    public void setRuntimeParams(String params) {
-        synchronized (this) {
-            this.runtimeParams = params;
-            this.epy=null;
-        }
-    }
-
-    @NonNull
-    public String getRuntimeParams() {
-        return runtimeParams;
-    }
-
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private FunctionRuntimeParamsYaml epy = null;
-
-    @JsonIgnore
-    public @NonNull FunctionRuntimeParamsYaml getFunctionRuntimeParamsYaml() {
-        if (epy==null) {
-            synchronized (this) {
-                if (epy==null) {
-                    if (runtimeParams!=null) {
-                        FunctionRuntimeParamsYaml temp = FunctionRuntimeParamsYamlUtils.BASE_YAML_UTILS.to(runtimeParams);
-                        epy = temp == null ? new FunctionRuntimeParamsYaml() : temp;
-                    }
-                    else {
-                        epy = new FunctionRuntimeParamsYaml();
-                    }
-                }
-            }
-        }
-        return epy;
-    }
-
-    @JsonIgnore
-    public void updateRuntimeParams(FunctionRuntimeParamsYaml epy) {
-        setParams(FunctionRuntimeParamsYamlUtils.BASE_YAML_UTILS.toString(epy));
-    }
 
 }

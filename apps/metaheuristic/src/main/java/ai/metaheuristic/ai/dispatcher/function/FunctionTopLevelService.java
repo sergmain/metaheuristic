@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -45,7 +46,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -61,7 +61,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
@@ -549,7 +548,19 @@ public class FunctionTopLevelService {
         }
     }
 
-    private static final Pattern COMMAPATTERN = Pattern.compile("[,]");
+    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
+        if (ss.functions.size()!=status.statuses.size()) {
+            return true;
+        }
+        for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
+            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
+                if (entry.getKey().equals(sds.code) && !entry.getValue().equals(sds.state)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     public static boolean isProcessorFunctionDownloadStatusDifferent(List<Function> functions, KeepAliveRequestParamYaml params) {
 
