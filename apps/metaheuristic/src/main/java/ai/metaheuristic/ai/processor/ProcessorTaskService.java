@@ -562,7 +562,7 @@ public class ProcessorTaskService {
     }
 
     public void delete(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, final Long taskId) {
-        MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
+        MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.removeQuota(ref.dispatcherUrl.url, taskId);

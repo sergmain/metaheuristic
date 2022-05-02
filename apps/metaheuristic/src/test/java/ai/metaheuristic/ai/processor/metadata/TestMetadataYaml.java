@@ -45,12 +45,12 @@ public class TestMetadataYaml {
         assertEquals(1, m.getProcessors().size());
         final MetadataParamsYaml.Processor actual = m.getProcessors().values().stream().findFirst().orElse(null);
         assertNotNull(actual);
-        Set<Map.Entry<String, MetadataParamsYaml.ProcessorState>> entry = actual.states.entrySet();
-        Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorState>> iterator = entry.iterator();
-        Map.Entry<String, MetadataParamsYaml.ProcessorState> map = iterator.next();
-        Map.Entry<String, MetadataParamsYaml.ProcessorState> map1 = iterator.next();
+        Set<Map.Entry<String, MetadataParamsYaml.ProcessorSession>> entry = actual.states.entrySet();
+        Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorSession>> iterator = entry.iterator();
+        Map.Entry<String, MetadataParamsYaml.ProcessorSession> map = iterator.next();
+        Map.Entry<String, MetadataParamsYaml.ProcessorSession> map1 = iterator.next();
 
-        MetadataParamsYaml.ProcessorState p = map.getValue();
+        MetadataParamsYaml.ProcessorSession p = map.getValue();
 
         assertEquals("http://localhost:8080", map.getKey());
         assertEquals("localhost-8080", map.getValue().dispatcherCode);

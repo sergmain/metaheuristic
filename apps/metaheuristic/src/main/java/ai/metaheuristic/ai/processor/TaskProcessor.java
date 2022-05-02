@@ -147,7 +147,7 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(ref, task.taskId);
 
-            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
+            final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
             if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
                 continue;
@@ -317,7 +317,7 @@ public class TaskProcessor {
     }
 
     private void execAllFunctions(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
-                                  ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+                                  ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
                                   File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
                                   File systemDir, FunctionPrepareResult[] results) {
@@ -584,7 +584,7 @@ public class TaskProcessor {
 
     @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 

@@ -68,7 +68,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
         try {
@@ -155,7 +155,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {

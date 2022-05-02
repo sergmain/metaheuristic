@@ -24,7 +24,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -34,7 +36,7 @@ import java.util.List;
 @Data
 public class KeepAliveResponseParamYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -58,28 +60,21 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @NoArgsConstructor
     public static class ExecContextStatus {
 
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public Long id;
-            public EnumsApi.ExecContextState state;
-        }
-
-        public final List<SimpleStatus> statuses = new ArrayList<>();
+        // key - execContextId, value - stae of execContext
+        public final Map<Long, EnumsApi.ExecContextState> statuses = new HashMap<>();
 
         public boolean isStarted(Long execContextId) {
-            for (SimpleStatus status : statuses) {
-                if (status.id.equals(execContextId)) {
-                    return status.state== EnumsApi.ExecContextState.STARTED;
+            for (Map.Entry<Long, EnumsApi.ExecContextState> entry : statuses.entrySet()) {
+                if (entry.getKey().equals(execContextId)) {
+                    return entry.getValue()==EnumsApi.ExecContextState.STARTED;
                 }
             }
             return false;
         }
 
         @Nullable
-        public SimpleStatus getStatus(Long execContextId) {
-            return statuses.stream().filter(o->o.id.equals(execContextId)).findFirst().orElse(null);
+        public EnumsApi.ExecContextState getExecContextState(Long execContextId) {
+            return statuses.get(execContextId);
         }
     }
 
@@ -110,13 +105,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssignedProcessorCoreId {
-        public Long assignedProcessorCoreId;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ReAssignedProcessorId {
         public String reAssignedProcessorId;
         public String sessionId;
@@ -129,12 +117,9 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignedProcessorCoreId {
-        public String reAssignedProcessorCoreId;
-
-        public ReAssignedProcessorCoreId(Long processorCoreId) {
-            this.reAssignedProcessorCoreId = Long.toString(processorCoreId);
-        }
+    public static class CoreInfo {
+        public Long coreId;
+        public String code;
     }
 
     @Data
@@ -149,8 +134,7 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         @Nullable
         public AssignedProcessorId assignedProcessorId;
 
-        @Nullable
-        public AssignedProcessorCoreId assignedProcessorCoreId;
+        public final List<CoreInfo> coreInfos = new ArrayList<>();
 
         @Nullable
         public RequestLogFile requestLogFile;
@@ -160,9 +144,9 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         }
     }
 
-    public final List<DispatcherResponse> responses = new ArrayList<>();
+    public final DispatcherResponse response = new DispatcherResponse();
     public final Functions functions = new Functions();
-    public ExecContextStatus execContextStatus;
+    public final ExecContextStatus execContextStatus = new ExecContextStatus();
     public DispatcherInfo dispatcherInfo;
 
     public boolean success = true;

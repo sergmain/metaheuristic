@@ -16,15 +16,12 @@
 
 package ai.metaheuristic.ai.yaml.metadata;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
  * Time: 1:29 AM
  */
 public class MetadataParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<MetadataParamsYamlV2, MetadataParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<MetadataParamsYamlV2, MetadataParamsYamlV3, MetadataParamsYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -47,44 +44,9 @@ public class MetadataParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public MetadataParamsYaml upgradeTo(@NonNull MetadataParamsYamlV2 src) {
-        src.checkIntegrity();
-        MetadataParamsYaml trg = new MetadataParamsYaml();
-        for (Map.Entry<String, MetadataParamsYamlV2.ProcessorV2> entry : src.processors.entrySet()) {
-            MetadataParamsYaml.Processor value =  new MetadataParamsYaml.Processor();
-            trg.processors.put(entry.getKey(), value);
-            if (entry.getValue()!=null) {
-                for (Map.Entry<String, MetadataParamsYamlV2.ProcessorStateV2> stateV2Entry : entry.getValue().states.entrySet()) {
-                    MetadataParamsYamlV2.ProcessorStateV2 v = stateV2Entry.getValue();
-                    value.states.put(stateV2Entry.getKey(), new MetadataParamsYaml.ProcessorState(v.dispatcherCode, v.processorId, v.sessionId));
-                }
-            }
-        }
-
-        for (Map.Entry<String, String> o : src.metadata.entrySet()) {
-            if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
-                trg.metadata.put(o.getKey(), o.getValue());
-            }
-        }
-        src.statuses.stream().map(MetadataParamsYamlUtilsV2::toStatus).collect(Collectors.toCollection(()->trg.statuses));
-        for (Map.Entry<String, MetadataParamsYamlV2.QuotasV2> entry : src.quotas.entrySet()) {
-            MetadataParamsYaml.Quotas q = new MetadataParamsYaml.Quotas();
-            trg.quotas.put(entry.getKey(), q);
-            entry.getValue().quotas.stream().map(MetadataParamsYamlUtilsV2::toQuota).collect(Collectors.toCollection(()->q.quotas));
-        }
-
-        trg.checkIntegrity();
-        return trg;
+    public MetadataParamsYamlV3 upgradeTo(@NonNull MetadataParamsYamlV2 src) {
+        throw new UpgradeNotSupportedException("Upgrade of metadata.yaml from v2 to v3 isn't supported. Delete metadata.yaml and re-run Metaheuristic");
     }
-
-    private static MetadataParamsYaml.Status toStatus(MetadataParamsYamlV2.StatusV2 sV2) {
-        return new MetadataParamsYaml.Status(sV2.functionState, sV2.code, sV2.assetManagerUrl, sV2.sourcing, sV2.checksum, sV2.signature);
-    }
-
-    private static MetadataParamsYaml.Quota toQuota(MetadataParamsYamlV2.QuotaV2 sV2) {
-        return new MetadataParamsYaml.Quota(sV2.taskId, sV2.tag, sV2.quota);
-    }
-
 
     @NonNull
     @Override
@@ -93,8 +55,8 @@ public class MetadataParamsYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public MetadataParamsYamlUtilsV3 nextUtil() {
+        return (MetadataParamsYamlUtilsV3) MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     @Override

@@ -127,13 +127,13 @@ public class TestMetadataParamsYaml {
         assertFalse(metadata.processors.isEmpty());
         assertEquals(1, metadata.processors.size());
         assertTrue(metadata.processors.containsKey(ConstsApi.DEFAULT_PROCESSOR_CODE));
-        MetadataParamsYaml.ProcessorState dispatcher8080 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
+        MetadataParamsYaml.ProcessorSession dispatcher8080 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);
         assertEquals("209", dispatcher8080.processorId);
         assertEquals("sessionId-11", dispatcher8080.sessionId);
 
-        MetadataParamsYaml.ProcessorState dispatcher8888 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
+        MetadataParamsYaml.ProcessorSession dispatcher8888 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
         assertNotNull(dispatcher8888);
         assertEquals("localhost-8888", dispatcher8888.dispatcherCode);
         assertEquals("42", dispatcher8888.processorId);
@@ -142,44 +142,44 @@ public class TestMetadataParamsYaml {
         assertNotNull(metadata.metadata);
         assertTrue(metadata.metadata.isEmpty());
 
-        List<MetadataParamsYaml.Status> statuses = metadata.statuses;
+        List<MetadataParamsYaml.Function> statuses = metadata.functions;
         assertNotNull(statuses);
         assertEquals(5, statuses.size());
 
-        MetadataParamsYaml.Status status;
+        MetadataParamsYaml.Function status;
         {
             status = statuses.get(0);
             assertEquals("test.function:1.0", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.state);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(1);
             assertEquals("test.function:1.0", status.code);
             assertEquals("https://localhost:8888", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_not_found, status.state);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(2);
             assertEquals("function-01:1.1", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.state);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(3);
             assertEquals("function-02:1.1", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.state);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
         {
             status = statuses.get(4);
             assertEquals("fileless-function:1.0", status.code);
             assertEquals("https://localhost:8888", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.not_found, status.state);
             assertEquals(EnumsApi.FunctionSourcing.processor, status.sourcing);
         }
     }

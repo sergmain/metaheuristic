@@ -123,9 +123,9 @@ public class TestReAssignProcessorId {
         KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.responses);
-        assertFalse(d.responses.isEmpty());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(d.response);
+        assertFalse(d.response.isEmpty());
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.response.get(0).getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);

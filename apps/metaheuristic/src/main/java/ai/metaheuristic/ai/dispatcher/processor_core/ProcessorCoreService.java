@@ -53,13 +53,4 @@ public class ProcessorCoreService {
         return coreCache.save(p);
     }
 
-    @Transactional
-    public Long reassignProcessorCoreId(Long processorId) {
-        CoreStatusYaml csy = new CoreStatusYaml();
-        ProcessorCore p = createProcessorCore(processorId, csy);
-
-        return p.id;
-    }
-
-
 }

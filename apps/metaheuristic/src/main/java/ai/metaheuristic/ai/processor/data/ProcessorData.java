@@ -21,6 +21,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Serge
  * Date: 1/4/2021
@@ -30,19 +33,22 @@ public class ProcessorData {
 
     @Data
     @AllArgsConstructor
-    @EqualsAndHashCode(of={"coreCode", "coreId", "dispatcherUrl"})
-    public static class CoreCodeAndIdAndDispatcherUrlRef {
+    @EqualsAndHashCode(of={"coreCode", "coreId"})
+    public static class CoreInfo {
         public final String coreCode;
         public final String coreId;
-        public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
     }
 
     @Data
     @AllArgsConstructor
     @EqualsAndHashCode(of={"processorCode", "processorId", "dispatcherUrl"})
     public static class ProcessorCodeAndIdAndDispatcherUrlRef {
+        public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
         public final String processorCode;
         public final String processorId;
-        public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
+
+        public final Map<String, CoreInfo> cores = new HashMap<>();
+
+
     }
 }

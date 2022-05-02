@@ -156,9 +156,9 @@ public class PreparingSourceCodeService {
         KeepAliveResponseParamYaml d0 = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d0);
-        assertNotNull(d0.responses);
-        assertEquals(1, d0.responses.size());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(d0.response);
+        assertEquals(1, d0.response.size());
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.response.get(0).getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);
         assertEquals(processorId.toString(), reAssignedProcessorId.reAssignedProcessorId);

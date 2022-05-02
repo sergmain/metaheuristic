@@ -80,19 +80,19 @@ public class MetadataService {
         @Nullable
         public final TaskParamsYaml.FunctionConfig functionConfig;
         @Nullable
-        public final MetadataParamsYaml.Status status;
+        public final MetadataParamsYaml.Function status;
         @Nullable
         public final AssetFile assetFile;
         public final boolean contentIsInline;
 
-        public FunctionConfigAndStatus(@Nullable MetadataParamsYaml.Status status) {
+        public FunctionConfigAndStatus(@Nullable MetadataParamsYaml.Function status) {
             this.functionConfig = null;
             this.assetFile = null;
             this.contentIsInline = false;
             this.status = status;
         }
 
-        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable MetadataParamsYaml.Status setFunctionState, AssetFile assetFile) {
+        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable MetadataParamsYaml.Function setFunctionState, AssetFile assetFile) {
             this.functionConfig = functionConfig;
             this.status = setFunctionState;
             this.assetFile = assetFile;
@@ -147,16 +147,19 @@ public class MetadataService {
         final List<String> codes = envService.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
         Set<String> forDeletion = new HashSet<>();
-        for (String key : metadata.processors.keySet()) {
-            if (!codes.contains(key)) {
-                forDeletion.add(key);
+        for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : metadata.procesorSessions.entrySet()) {
+            final LinkedHashMap<String, String> cores = entry.getValue().cores;
+            for (String key : cores.keySet()) {
+                if (!codes.contains(key)) {
+                    forDeletion.add(key);
+                }
             }
-        }
-        forDeletion.forEach(key -> metadata.processors.remove(key));
+            forDeletion.forEach(cores::remove);
 
-        for (String code : codes) {
-            if (!metadata.processors.containsKey(code)) {
-                metadata.processors.put(code, new MetadataParamsYaml.Processor());
+            for (String code : codes) {
+                if (!cores.containsKey(code)) {
+                    cores.put(code, null);
+                }
             }
         }
         ;
@@ -193,19 +196,19 @@ public class MetadataService {
     }
 
     private void markAllAsUnverified() {
-        List<MetadataParamsYaml.Status> forRemoving = new ArrayList<>();
-        for (MetadataParamsYaml.Status status : metadata.statuses) {
+        List<MetadataParamsYaml.Function> forRemoving = new ArrayList<>();
+        for (MetadataParamsYaml.Function status : metadata.functions) {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
-            if (status.functionState == EnumsApi.FunctionState.not_found) {
+            if (status.state == EnumsApi.FunctionState.not_found) {
                 forRemoving.add(status);
             }
-            status.functionState = EnumsApi.FunctionState.none;
+            status.state = EnumsApi.FunctionState.none;
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
-        for (MetadataParamsYaml.Status status : forRemoving) {
+        for (MetadataParamsYaml.Function status : forRemoving) {
             removeFunction(status.assetManagerUrl, status.code);
         }
     }
@@ -222,7 +225,7 @@ public class MetadataService {
 
     @Nullable
     private FunctionConfigAndStatus syncFunctionStatusInternal(AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
-        MetadataParamsYaml.Status status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
+        MetadataParamsYaml.Function status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
 
         if (status == null) {
             return null;
@@ -231,7 +234,7 @@ public class MetadataService {
             log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetManagerUrl.url);
             return null;
         }
-        if (status.functionState== EnumsApi.FunctionState.ready) {
+        if (status.state == EnumsApi.FunctionState.ready) {
             if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
                 return new FunctionConfigAndStatus(status);
             }
@@ -280,7 +283,7 @@ public class MetadataService {
             if (p==null) {
                 return null;
             }
-            for (Map.Entry<String, MetadataParamsYaml.ProcessorState> entry : p.states.entrySet()) {
+            for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : p.states.entrySet()) {
                 if (code.equals(entry.getValue().dispatcherCode)) {
                     return new DispatcherUrl(entry.getKey());
                 }
@@ -289,9 +292,9 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorState processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
+            MetadataParamsYaml.ProcessorSession processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
                 processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
@@ -324,19 +327,19 @@ public class MetadataService {
 
     public void resetAllQuotas() {
         synchronized (syncObj) {
-            metadata.quotas.forEach((k,v)->v.quotas.clear());
+            metadata.procesorSessions.forEach((k,v)->v.quotas.clear());
             updateMetadataFile();
         }
     }
 
     public int currentQuota(String dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.get(dispatcherUrl);
-            if (quotaForDispatcher==null) {
+            MetadataParamsYaml.ProcessorSession ps = metadata.procesorSessions.get(dispatcherUrl);
+            if (ps==null) {
                 return 0;
             }
             int sum = 0;
-            for (MetadataParamsYaml.Quota o : quotaForDispatcher.quotas) {
+            for (MetadataParamsYaml.Quota o : ps.quotas) {
                 int quota = o.quota;
                 sum += quota;
             }
@@ -376,8 +379,18 @@ public class MetadataService {
         } );
     }
 
-    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
-        return getAllRefs( (du) -> du.equals(dispatcherUrl) );
+    @Nullable
+    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+        final Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> set = getAllRefs((du) -> du.equals(dispatcherUrl));
+        if (set.isEmpty()) {
+            return null;
+        }
+        if (set.size()>1) {
+            final String es = "metadata is broken. there are more than one ProcessorCodeAndIdAndDispatcherUrlRef for " + dispatcherUrl;
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        return new ArrayList<>(set).get(0);
     }
 
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
@@ -398,7 +411,7 @@ public class MetadataService {
                 if (processorEntry.getValue()==null) {
                     continue;
                 }
-                for (Map.Entry<String, MetadataParamsYaml.ProcessorState> stateEntry : processorEntry.getValue().states.entrySet()) {
+                for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> stateEntry : processorEntry.getValue().states.entrySet()) {
                     final DispatcherUrl dispatcherUrl = new DispatcherUrl(stateEntry.getKey());
                     if (function.apply(dispatcherUrl)) {
                         refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
@@ -424,7 +437,7 @@ public class MetadataService {
                 if (!processorCode.equals(processorEntry.getKey())) {
                     continue;
                 }
-                MetadataParamsYaml.ProcessorState processorState = processorEntry.getValue().states.get(dispatcherUrl.url);
+                MetadataParamsYaml.ProcessorSession processorState = processorEntry.getValue().states.get(dispatcherUrl.url);
                 return processorState==null ? null : new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorState.processorId, dispatcherUrl);
             }
             return null;
@@ -436,7 +449,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorState processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
+            final MetadataParamsYaml.ProcessorSession processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
@@ -447,11 +460,11 @@ public class MetadataService {
 
     public void deRegisterFunctionCode(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
         synchronized (syncObj) {
-            metadata.statuses.removeIf(next -> next.assetManagerUrl.equals(assetManagerUrl.url) && next.code.equals(functionCode));
+            metadata.functions.removeIf(next -> next.assetManagerUrl.equals(assetManagerUrl.url) && next.code.equals(functionCode));
         }
     }
 
-    public List<MetadataParamsYaml.Status> registerNewFunctionCode(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.Functions.Info> infos) {
+    public List<MetadataParamsYaml.Function> registerNewFunctionCode(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.Functions.Info> infos) {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
@@ -460,17 +473,17 @@ public class MetadataService {
         synchronized (syncObj) {
             boolean isChanged = false;
             for (KeepAliveResponseParamYaml.Functions.Info info : infos) {
-                MetadataParamsYaml.Status status = metadata.statuses.stream()
+                MetadataParamsYaml.Function status = metadata.functions.stream()
                         .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.code))
                         .findFirst().orElse(null);
-                if (status==null || status.functionState == EnumsApi.FunctionState.not_found) {
+                if (status==null || status.state == EnumsApi.FunctionState.not_found) {
                     setFunctionDownloadStatusInternal(assetManagerUrl, info.code, info.sourcing, EnumsApi.FunctionState.none);
                     isChanged = true;
                 }
             }
 
             // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
-            for (MetadataParamsYaml.Status status : metadata.statuses) {
+            for (MetadataParamsYaml.Function status : metadata.functions) {
                 if (status.assetManagerUrl.equals(assetManagerUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
                     setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, EnumsApi.FunctionState.not_found);
                     isChanged = true;
@@ -480,21 +493,21 @@ public class MetadataService {
                 updateMetadataFile();
             }
         }
-        return metadata.statuses;
+        return metadata.functions;
     }
 
     @Nullable
-    public MetadataParamsYaml.Status setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
+    public MetadataParamsYaml.Function setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return null;
             }
-            status.functionState = functionState;
-            if (status.functionState== EnumsApi.FunctionState.none||status.functionState== EnumsApi.FunctionState.ok) {
+            status.state = functionState;
+            if (status.state == EnumsApi.FunctionState.none||status.state == EnumsApi.FunctionState.ok) {
                 status.checksum= EnumsApi.ChecksumState.not_yet;
                 status.signature= EnumsApi.SignatureState.not_yet;
             }
@@ -508,11 +521,11 @@ public class MetadataService {
             if (S.b(functionCode)) {
                 throw new IllegalStateException("#815.240 functionCode is null");
             }
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
             }
-            status.functionState = EnumsApi.FunctionState.ready;
+            status.state = EnumsApi.FunctionState.ready;
             status.checksum= EnumsApi.ChecksumState.runtime;
             status.signature= EnumsApi.SignatureState.runtime;
 
@@ -529,7 +542,7 @@ public class MetadataService {
         }
 
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
             }
@@ -543,7 +556,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
         synchronized (syncObj) {
-            MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+            MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
             }
@@ -562,10 +575,10 @@ public class MetadataService {
             throw new IllegalStateException("#815.280 functionCode is empty");
         }
         synchronized (syncObj) {
-            List<MetadataParamsYaml.Status> statuses = metadata.statuses.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
-            if (statuses.size()!= metadata.statuses.size()) {
-                metadata.statuses.clear();
-                metadata.statuses.addAll(statuses);
+            List<MetadataParamsYaml.Function> statuses = metadata.functions.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
+            if (statuses.size()!= metadata.functions.size()) {
+                metadata.functions.clear();
+                metadata.functions.addAll(statuses);
                 updateMetadataFile();
             }
             return true;
@@ -584,9 +597,9 @@ public class MetadataService {
 
     // it could be null if this function was deleted
     @Nullable
-    public MetadataParamsYaml.Status getFunctionDownloadStatuses(AssetManagerUrl assetManagerUrl, String functionCode) {
+    public MetadataParamsYaml.Function getFunctionDownloadStatuses(AssetManagerUrl assetManagerUrl, String functionCode) {
         synchronized (syncObj) {
-            return metadata.statuses.stream()
+            return metadata.functions.stream()
                     .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))
                     .findFirst().orElse(null);
         }
@@ -594,25 +607,25 @@ public class MetadataService {
 
     public List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> getAsFunctionDownloadStatuses(final AssetManagerUrl assetManagerUrl) {
         synchronized (syncObj) {
-            return metadata.statuses.stream()
+            return metadata.functions.stream()
                     .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url))
-                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.functionState))
+                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
                     .collect(Collectors.toList());
         }
     }
 
     private void setFunctionDownloadStatusInternal(AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {
-        MetadataParamsYaml.Status status = metadata.statuses.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
+        MetadataParamsYaml.Function status = metadata.functions.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new MetadataParamsYaml.Status(EnumsApi.FunctionState.none, code, assetManagerUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
-            metadata.statuses.add(status);
+            status = new MetadataParamsYaml.Function(EnumsApi.FunctionState.none, code, assetManagerUrl.url, sourcing, EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet);
+            metadata.functions.add(status);
         }
-        status.functionState = functionState;
+        status.state = functionState;
     }
 
-    public List<MetadataParamsYaml.Status> getStatuses() {
+    public List<MetadataParamsYaml.Function> getStatuses() {
         synchronized (syncObj) {
-            return Collections.unmodifiableList(metadata.statuses);
+            return Collections.unmodifiableList(metadata.functions);
         }
     }
 
@@ -634,7 +647,7 @@ public class MetadataService {
         }
     }
 
-    private MetadataParamsYaml.ProcessorState getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
+    private MetadataParamsYaml.ProcessorSession getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
             MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(processorCode, o->new MetadataParamsYaml.Processor());
             return p.states.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
@@ -681,8 +694,8 @@ public class MetadataService {
 
     }
 
-    private static MetadataParamsYaml.ProcessorState asEmptyProcessorState(DispatcherUrl dispatcherUrl) {
-        MetadataParamsYaml.ProcessorState processorState = new MetadataParamsYaml.ProcessorState();
+    private static MetadataParamsYaml.ProcessorSession asEmptyProcessorState(DispatcherUrl dispatcherUrl) {
+        MetadataParamsYaml.ProcessorSession processorState = new MetadataParamsYaml.ProcessorSession();
         processorState.dispatcherCode = asCode(dispatcherUrl);
         return processorState;
     }

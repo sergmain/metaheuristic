@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -124,10 +123,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         });
         // statuses of ExecContext are being refreshing from Scheduler which is disabled while testing
         execContextStatusService.resetStatus();
-        assertEquals(EnumsApi.ExecContextState.STARTED,
-                execContextStatusService.getExecContextStatuses().statuses.stream()
-                        .filter(o->o.id.equals(getExecContextForTest().id))
-                        .findFirst().map(KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus::getState).orElse(null));
+        assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
         setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));

@@ -56,20 +56,14 @@ public class ExecContextStatusService {
     public void resetStatus() {
         ExecContextStatus cachedStatusTemp = new ExecContextStatus();
 
-        execContextRepository.findAllExecStates()
-                .stream()
-                .map(o -> toSimpleStatus((Long) o[0], (Integer) o[1]))
-                .collect(Collectors.toCollection(() -> cachedStatusTemp.statuses));
-
+        for (Object[] allExecState : execContextRepository.findAllExecStates()) {
+            cachedStatusTemp.statuses.put((Long) allExecState[0], EnumsApi.ExecContextState.toState((Integer) allExecState[1]));
+        }
         cachedStatus = cachedStatusTemp;
     }
 
     @Nullable
     public EnumsApi.ExecContextState getExecContextState(Long execContextId) {
-        return cachedStatus.statuses.stream().filter(o->o.id.equals(execContextId)).findFirst().map(ExecContextStatus.SimpleStatus::getState).orElse(null);
-    }
-
-    private static ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
-        return new ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
+        return cachedStatus.statuses.get(execContextId);
     }
 }

@@ -52,7 +52,7 @@ public class ArtifactCleanerAtProcessor {
                 continue;
             }
 
-            MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
+            MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
             if (!dispatcherDir.exists()) {
                 dispatcherDir.mkdir();

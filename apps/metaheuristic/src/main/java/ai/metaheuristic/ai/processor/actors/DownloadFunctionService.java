@@ -104,14 +104,14 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            MetadataParamsYaml.Status functionDownloadStatus = functionConfigAndStatus.status;
+            MetadataParamsYaml.Function functionDownloadStatus = functionConfigAndStatus.status;
             // functionState == EnumsApi.FunctionState.ready if function was processed already
-            if (functionDownloadStatus==null || functionDownloadStatus.functionState == EnumsApi.FunctionState.ready) {
+            if (functionDownloadStatus==null || functionDownloadStatus.state == EnumsApi.FunctionState.ready) {
                 continue;
             }
 
-            if (functionDownloadStatus.functionState != EnumsApi.FunctionState.none && functionDownloadStatus.functionState != EnumsApi.FunctionState.ok) {
-                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.functionState);
+            if (functionDownloadStatus.state != EnumsApi.FunctionState.none && functionDownloadStatus.state != EnumsApi.FunctionState.ok) {
+                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.state);
                 continue;
             }
 
@@ -124,7 +124,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 throw new IllegalStateException("(functionConfig == null)");
             }
 
-            if (functionDownloadStatus.functionState == EnumsApi.FunctionState.none) {
+            if (functionDownloadStatus.state == EnumsApi.FunctionState.none) {
                 try {
 
                     File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
@@ -313,7 +313,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
     public void prepareFunctionForDownloading() {
         metadataService.getStatuses().forEach(o -> {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(o.assetManagerUrl);
-            if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.functionState.needVerification) {
+            if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.state.needVerification) {
                 final DispatcherLookupParamsYaml.AssetManager asset = dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
                 if (asset==null || asset.disabled) {
                     return;

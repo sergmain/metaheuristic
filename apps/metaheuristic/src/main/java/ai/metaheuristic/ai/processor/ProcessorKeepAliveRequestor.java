@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -44,7 +43,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetManagerUrl;
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
@@ -91,29 +89,6 @@ public class ProcessorKeepAliveRequestor {
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
-    private void processDispatcherCommParamsYaml(KeepAliveRequestParamYaml karpy, DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-        log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
-        storeDispatcherContext(dispatcherUrl, responseParamYaml);
-        processorKeepAliveProcessor.processKeepAliveResponseParamYaml(karpy, dispatcherUrl, responseParamYaml);
-    }
-
-    private void storeDispatcherContext(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-        if (responseParamYaml.dispatcherInfo ==null) {
-            return;
-        }
-        DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-
-        if (dispatcher==null) {
-            return;
-        }
-
-        int maxVersionOfProcessor = responseParamYaml.dispatcherInfo.processorCommVersion != null
-                ? responseParamYaml.dispatcherInfo.processorCommVersion
-                : 1;
-        DispatcherContextInfoHolder.put(dispatcherUrl, new DispatcherData.DispatcherContextInfo(responseParamYaml.dispatcherInfo.chunkSize, maxVersionOfProcessor));
-    }
-
     public void proceedWithRequest() {
         if (globals.testing) {
             return;
@@ -126,38 +101,36 @@ public class ProcessorKeepAliveRequestor {
             KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
             karpy.processor.status = processorService.produceReportProcessorStatus(dispatcher.schedule);
 
-            if (true) throw new NotImplementedException();
-/*
-            final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
-            final String sessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
-
-            if (processorId == null || sessionId==null) {
-                karpy.processor.processorCommContext = null;
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
+            if (ref==null) {
+                log.warn("dispatcherUrl wasn't found");
             }
             else {
-                karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
+                final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
+                final String sessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
 
-                Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
-                if (refs.isEmpty()) {
-                    log.warn("dispatcherUrl wasn't found");
-                }
-                else if (refs.size()>1) {
-                    final String es = "metadata is broken. there are more than one dispatcherUrl " + dispatcherUrl;
-                    log.error(es);
-                    throw new IllegalStateException(es);
+                if (processorId == null || sessionId == null) {
+                    karpy.processor.processorCommContext = null;
                 }
                 else {
-                    KeepAliveRequestParamYaml.Core core = new KeepAliveRequestParamYaml.Core(ref.processorCode);
-                    karpy.cores.add(core);
+                    karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
 
-                    final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                            dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+                    ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
+                    if (ref == null) {
+                        log.warn("dispatcherUrl wasn't found");
+                    }
+                    else {
+                        KeepAliveRequestParamYaml.Core core = new KeepAliveRequestParamYaml.Core(ref.processorCode);
+                        karpy.cores.add(core);
 
-                    AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-                    karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+                        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+
+                        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+                        karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+                    }
                 }
             }
-*/
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {
                 HttpHeaders headers = new HttpHeaders();
@@ -187,7 +160,7 @@ public class ProcessorKeepAliveRequestor {
                     log.error("#776.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
-                processDispatcherCommParamsYaml(karpy, dispatcherUrl, responseParamYaml);
+                processorKeepAliveProcessor.processKeepAliveResponseParamYaml(dispatcherUrl, responseParamYaml);
             }
             catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {

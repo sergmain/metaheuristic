@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,14 @@ import org.springframework.lang.Nullable;
 
 import java.util.*;
 
+/**
+ * @author Serge
+ * Date: 5/1/2022
+ * Time: 6:09 PM
+ */
 @Data
 @NoArgsConstructor
-public class MetadataParamsYaml implements BaseParams {
+public class MetadataParamsYamlV3 implements BaseParams {
 
     public final int version=3;
 
@@ -32,7 +37,7 @@ public class MetadataParamsYaml implements BaseParams {
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class ProcessorSession {
+    public static class ProcessorSessionV3 {
         public String dispatcherCode;
         @Nullable
         public String processorId;
@@ -42,13 +47,13 @@ public class MetadataParamsYaml implements BaseParams {
         // key - code of Core, value - coreId
         public final LinkedHashMap<String, String> cores = new LinkedHashMap<>();
 
-        public final List<Quota> quotas = new ArrayList<>();
+        public final List<QuotaV3> quotas = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Function {
+    public static class FunctionV3 {
         public EnumsApi.FunctionState state;
         public String code;
         public String assetManagerUrl;
@@ -64,27 +69,18 @@ public class MetadataParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode(of={"taskId"})
-    public static class Quota {
+    public static class QuotaV3 {
         public Long taskId;
         @Nullable
         public String tag;
         public int quota;
     }
 
-//procesorSessions:
-//  http://localhost:8080:
-//    dispatcherCode: localhost-8080
-//    processorId: '3410'
-//    sessionId: 4266a35f-290d-49b8-83cc-c75913598719-4f020c95-0283-455a-9467-0a76bbaba796
-//    cores:
-//      proc-01: '3410'
-//      proc-02: '3410'
-
     /**
      * key  - a code of dispatcher (i.e. normalized url of dispatcher)
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public final LinkedHashMap<String, ProcessorSession> procesorSessions = new LinkedHashMap<>();
-    public final List<Function> functions = new ArrayList<>();
+    public final LinkedHashMap<String, ProcessorSessionV3> procesorSessions = new LinkedHashMap<>();
+    public final List<FunctionV3> functions = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

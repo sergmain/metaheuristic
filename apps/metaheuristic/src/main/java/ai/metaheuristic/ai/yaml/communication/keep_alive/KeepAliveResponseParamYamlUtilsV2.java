@@ -44,32 +44,28 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
 
     @NonNull
     @Override
-    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV2 V2) {
+    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV2 v2) {
         KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
 
-        if( V2.dispatcherInfo !=null ) {
+        if( v2.dispatcherInfo !=null ) {
             t.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo();
-            t.dispatcherInfo.chunkSize = V2.dispatcherInfo.chunkSize;
-            t.dispatcherInfo.processorCommVersion = V2.dispatcherInfo.processorCommVersion;
+            t.dispatcherInfo.chunkSize = v2.dispatcherInfo.chunkSize;
+            t.dispatcherInfo.processorCommVersion = v2.dispatcherInfo.processorCommVersion;
         }
-        if (!V2.functions.infos.isEmpty()) {
-            t.functions.infos.addAll( V2.functions.infos
+        if (!v2.functions.infos.isEmpty()) {
+            t.functions.infos.addAll( v2.functions.infos
                             .stream()
                             .map(o->new KeepAliveResponseParamYaml.Functions.Info (o.code, o.sourcing))
                             .collect(Collectors.toList())
                     );
         }
-        if (V2.execContextStatus !=null) {
-            t.execContextStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
-            V2.execContextStatus.statuses
-                    .stream()
-                    .map(o -> new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
-                    .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
+        if (v2.execContextStatus !=null) {
+            v2.execContextStatus.statuses.forEach(o->t.execContextStatus.statuses.put(o.id, o.state));
         }
-        for (KeepAliveResponseParamYamlV2.DispatcherResponseV2 r : V2.responses) {
+        for (KeepAliveResponseParamYamlV2.DispatcherResponseV2 r : v2.responses) {
 
             KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
-            t.responses.add(response);
+            t.response.add(response);
 
             response.processorCode = r.processorCode;
 
@@ -87,8 +83,8 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
             }
         }
 
-        t.success = V2.success;
-        t.msg = V2.msg;
+        t.success = v2.success;
+        t.msg = v2.msg;
 
         return t;
     }

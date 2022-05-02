@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -133,7 +132,7 @@ public class ProcessorService {
 
     public void assignTasks(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            currentExecState.registerDelta(ref.dispatcherUrl, List.of(new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(task.execContextId, task.state)));
+            currentExecState.registerDelta(ref.dispatcherUrl, task.execContextId, task.state);
             processorTaskService.createTask(ref, task);
         }
     }
@@ -213,7 +212,7 @@ public class ProcessorService {
     }
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         if (!ref.dispatcherUrl.url.equals(task.dispatcherUrl)) {

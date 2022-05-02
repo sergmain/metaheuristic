@@ -38,7 +38,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -63,9 +62,8 @@ public class KeepAliveTopLevelService {
     private final ProcessorCoreService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
 
-    public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
+    private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
-        keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 
@@ -74,13 +72,9 @@ public class KeepAliveTopLevelService {
 //    }
 //
 
-    private KeepAliveResponseParamYaml.AssignedProcessorCoreId getNewProcessorCoreId(Long processorId) {
-        Long processorCoreId = processorCoreService.getNewProcessorCoreId(processorId);
-        return new KeepAliveResponseParamYaml.AssignedProcessorCoreId(processorCoreId);
-    }
-
     public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
+        resp.response.processorCode = req.processor.processorCode;
         try {
             Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
             if (System.currentTimeMillis() - startMills < 12_000) {
@@ -105,8 +99,7 @@ public class KeepAliveTopLevelService {
 
     private Long processInfoAboutProcessor(KeepAliveRequestParamYaml req, String remoteAddress, KeepAliveResponseParamYaml resp) {
         KeepAliveRequestParamYaml.Processor processorRequest = req.processor;
-        KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
-        resp.responses.add(dispatcherResponse);
+        KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = resp.response;
 
         if (processorRequest.processorCommContext == null || processorRequest.processorCommContext.processorId==null) {
             DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
@@ -142,11 +135,8 @@ public class KeepAliveTopLevelService {
 
     private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
-            KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(core.coreCode);
-            resp.responses.add(dispatcherResponse);
-
             if (core.coreId == null) {
-                dispatcherResponse.assignedProcessorCoreId = getNewProcessorCoreId(processorId);
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
                 continue;
             }
 
@@ -154,13 +144,10 @@ public class KeepAliveTopLevelService {
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
                 log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
                 // no need of syncing for creation of new Processor
-                Long processorCoreId = processorCoreService.reassignProcessorCoreId(processorId);
-                dispatcherResponse.reAssignedProcessorCoreId = new KeepAliveResponseParamYaml.ReAssignedProcessorCoreId(processorCoreId);
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
                 continue;
             }
-
-            log.debug("Start processing commands");
-            processorTopLevelService.processKeepAliveData(core, req.functions, processor);
+            resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));
 
             if (System.currentTimeMillis() - startMills > 12_000) {
                 break;
