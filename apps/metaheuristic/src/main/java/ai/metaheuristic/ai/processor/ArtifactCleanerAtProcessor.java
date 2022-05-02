@@ -39,12 +39,13 @@ public class ArtifactCleanerAtProcessor {
     private final CurrentExecState currentExecState;
     private final Globals globals;
     private final MetadataService metadataService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void fixedDelay() {
-        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
 
-            File processorDir = new File(globals.processor.dir.dir, ref.coreCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.dispatcherCode);
+            File coreDir = new File(globals.processor.dir.dir, ref.dispatcherCode);
+
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
             if (!globals.processor.enabled || !currentExecState.isInited(ref.dispatcherUrl)) {

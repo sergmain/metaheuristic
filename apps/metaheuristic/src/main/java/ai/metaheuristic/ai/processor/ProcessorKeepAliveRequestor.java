@@ -107,7 +107,7 @@ public class ProcessorKeepAliveRequestor {
 
 
             final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(dispatcherUrl);
-            final String processorId = processorSession.processorId;
+            final Long processorId = processorSession.processorId;
             final String sessionId = processorSession.sessionId;
 
             if (processorId == null || sessionId == null) {
@@ -115,28 +115,23 @@ public class ProcessorKeepAliveRequestor {
             }
             else {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-
-                Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> cores = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
-                for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef core : cores) {
-
-//                public String coreDir;
-//                public Long coreId;
-//                public String coreCode;
-//                public String tags;
-
-                    String tags = envService.getTags(dispatcherUrl.url);
-                    cores.forEach(o-> karpy.cores.add(new KeepAliveRequestParamYaml.Core()) );
-
-                    karpy.cores.add(core);
-
-                }
-
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-
-                ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-                karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
             }
+
+            Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> cores = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
+            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef core : cores) {
+                String coreDir = globals.processor.dir core.;
+                Long coreId = core.coreId;
+                String coreCode = core.coreCode;
+                String tags = envService.getTags(core.coreCode);
+
+                cores.forEach(o-> karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags)) );
+            }
+
+            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+
+            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
+            karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {

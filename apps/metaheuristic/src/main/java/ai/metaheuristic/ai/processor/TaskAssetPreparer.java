@@ -147,7 +147,7 @@ public class TaskAssetPreparer {
                 dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
 
         final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
-        if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
+        if (processorState.processorId==null || S.b(processorState.sessionId)) {
             log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.coreCode, ref.dispatcherUrl.url);
             return null;
         }

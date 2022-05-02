@@ -35,7 +35,7 @@ public class MetadataParamsYaml implements BaseParams {
     public static class ProcessorSession {
         public String dispatcherCode;
         @Nullable
-        public String processorId;
+        public Long processorId;
         @Nullable
         public String sessionId;
 
@@ -81,7 +81,7 @@ public class MetadataParamsYaml implements BaseParams {
 //      proc-02: '3410'
 
     /**
-     * key  - a code of dispatcher (i.e. normalized url of dispatcher)
+     * key  - a url of dispatcher
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
     public final LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();

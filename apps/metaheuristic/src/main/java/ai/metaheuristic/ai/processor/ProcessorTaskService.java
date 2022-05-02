@@ -412,9 +412,7 @@ public class ProcessorTaskService {
                 }
             }
         }
-
         return map.computeIfAbsent(ref.coreCode, k->new HashMap<>()).computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
-        return new HashMap<>();
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {
@@ -442,7 +440,7 @@ public class ProcessorTaskService {
         return getMapForDispatcherUrl(ref).values().stream().filter(o -> o.finishedOn!=null);
     }
 
-    public void createTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask assignedTask) {
+    public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask assignedTask) {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.registerTaskQuota(ref.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);

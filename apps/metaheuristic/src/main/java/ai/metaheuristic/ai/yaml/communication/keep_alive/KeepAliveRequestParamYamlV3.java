@@ -160,10 +160,6 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
     public static class ProcessorCommContextV3 {
         public Long processorId;
         public String sessionId;
-        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        // it'll work but in some cases behaviour can be different
-        // need to change it to UTC, Coordinated Universal Time
-        public long sessionCreatedOn;
     }
 
     @Data

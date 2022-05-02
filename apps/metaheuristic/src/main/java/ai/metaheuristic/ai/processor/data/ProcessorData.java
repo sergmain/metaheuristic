@@ -34,10 +34,20 @@ public class ProcessorData {
     @Data
     @AllArgsConstructor
     @EqualsAndHashCode(of={"processorId", "coreCode", "dispatcherUrl"})
-    public static class ProcessorCodeAndIdAndDispatcherUrlRef {
+    public static class ProcessorCoreAndProcessorIdAndDispatcherUrlRef {
         public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
-        public final String processorId;
+        public final String dispatcherCode;
+        public final Long processorId;
         public final String coreCode;
         public final Long coreId;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @EqualsAndHashCode(of={"processorId", "dispatcherUrl"})
+    public static class ProcessorCodeAndIdAndDispatcherUrlRef {
+        public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
+        public final String dispatcherCode;
+        public final Long processorId;
     }
 }

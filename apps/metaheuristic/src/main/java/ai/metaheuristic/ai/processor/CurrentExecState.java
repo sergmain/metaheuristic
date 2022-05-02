@@ -56,6 +56,7 @@ public class CurrentExecState {
     }
 
     public void register(DispatcherUrl dispatcherUrl, Map<Long, EnumsApi.ExecContextState> states) {
+        // TODO 2021-05-01 check how Runnable.run() is working
         synchronized(execContextState) {
             ((Runnable) () -> {
                 // there isn't any execContext

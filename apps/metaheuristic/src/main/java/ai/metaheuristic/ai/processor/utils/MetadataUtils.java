@@ -26,10 +26,11 @@ import java.util.*;
  * Time: 9:16 PM
  */
 public class MetadataUtils {
+
     public static void fixProcessorCodes(List<String> codes, Map<String, MetadataParamsYaml.ProcessorSession> map) {
         Set<String> forDeletion = new HashSet<>();
         for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : map.entrySet()) {
-            final LinkedHashMap<String, String> cores = entry.getValue().cores;
+            final LinkedHashMap<String, Long> cores = entry.getValue().cores;
             for (String key : cores.keySet()) {
                 if (!codes.contains(key)) {
                     forDeletion.add(key);

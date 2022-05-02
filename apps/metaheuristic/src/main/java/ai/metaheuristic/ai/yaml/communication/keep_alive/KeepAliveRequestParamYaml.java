@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.yaml.communication.keep_alive;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -157,10 +156,6 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     public static class ProcessorCommContext {
         public Long processorId;
         public String sessionId;
-        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        // it'll work but in some cases behaviour can be different
-        // need to change it to UTC, Coordinated Universal Time
-        public long sessionCreatedOn;
     }
 
     @Data

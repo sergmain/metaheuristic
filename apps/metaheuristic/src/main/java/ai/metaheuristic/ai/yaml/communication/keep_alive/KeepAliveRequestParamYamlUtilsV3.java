@@ -17,15 +17,12 @@
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -84,7 +81,7 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
         }
         if (src.processor.processorCommContext != null) {
             t.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(
-                    src.processor.processorCommContext.processorId, src.processor.processorCommContext.sessionId, src.processor.processorCommContext.sessionCreatedOn);
+                    src.processor.processorCommContext.processorId, src.processor.processorCommContext.sessionId);
         }
         for (KeepAliveRequestParamYamlV3.CoreV3 V3 : src.cores) {
             KeepAliveRequestParamYaml.Core r = new KeepAliveRequestParamYaml.Core(V3.coreDir, V3.coreId, V3.coreCode, V3.tags);

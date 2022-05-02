@@ -38,14 +38,14 @@ public class TestMetadataUtils {
         final List<String> codes = List.of("aaa1", "aaa2");
         final LinkedHashMap<String, MetadataParamsYaml.ProcessorSession> map = new LinkedHashMap<>();
         final MetadataParamsYaml.ProcessorSession ps1 = new MetadataParamsYaml.ProcessorSession();
-        ps1.cores.putAll(Map.of("aaa1", "qqq", "aaa2", "wwww"));
+        ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
         MetadataUtils.fixProcessorCodes(codes, map);
 
         assertEquals(2, ps1.cores.size());
-        assertEquals("qqq", ps1.cores.get("aaa1"));
-        assertEquals("www", ps1.cores.get("aaa2"));
+        assertEquals(15L, ps1.cores.get("aaa1"));
+        assertEquals(17L, ps1.cores.get("aaa2"));
 
     }
 
@@ -54,13 +54,13 @@ public class TestMetadataUtils {
         final List<String> codes = List.of("aaa1");
         final LinkedHashMap<String, MetadataParamsYaml.ProcessorSession> map = new LinkedHashMap<>();
         final MetadataParamsYaml.ProcessorSession ps1 = new MetadataParamsYaml.ProcessorSession();
-        ps1.cores.putAll(Map.of("aaa1", "qqq", "aaa2", "wwww"));
+        ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
         MetadataUtils.fixProcessorCodes(codes, map);
 
         assertEquals(1, ps1.cores.size());
-        assertEquals("qqq", ps1.cores.get("aaa1"));
+        assertEquals(15L, ps1.cores.get("aaa1"));
     }
 
     @Test
@@ -68,14 +68,14 @@ public class TestMetadataUtils {
         final List<String> codes = List.of("aaa1", "aaa2", "aaa3");
         final LinkedHashMap<String, MetadataParamsYaml.ProcessorSession> map = new LinkedHashMap<>();
         final MetadataParamsYaml.ProcessorSession ps1 = new MetadataParamsYaml.ProcessorSession();
-        ps1.cores.putAll(Map.of("aaa1", "qqq", "aaa2", "wwww"));
+        ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
         MetadataUtils.fixProcessorCodes(codes, map);
 
         assertEquals(3, ps1.cores.size());
-        assertEquals("qqq", ps1.cores.get("aaa1"));
-        assertEquals("www", ps1.cores.get("aaa2"));
+        assertEquals(15L, ps1.cores.get("aaa1"));
+        assertEquals(17L, ps1.cores.get("aaa2"));
         assertEquals(null, ps1.cores.get("aaa3"));
     }
 
@@ -84,7 +84,7 @@ public class TestMetadataUtils {
         final List<String> codes = List.of("aaa3", "aaa4");
         final LinkedHashMap<String, MetadataParamsYaml.ProcessorSession> map = new LinkedHashMap<>();
         final MetadataParamsYaml.ProcessorSession ps1 = new MetadataParamsYaml.ProcessorSession();
-        ps1.cores.putAll(Map.of("aaa1", "qqq", "aaa2", "wwww"));
+        ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
         MetadataUtils.fixProcessorCodes(codes, map);
