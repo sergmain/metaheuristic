@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
@@ -151,7 +151,7 @@ public class ProcessorService {
     }
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, Long variableId) {
-        ProcessorTask task = processorTaskService.findById(ref, taskId);
+        ProcessorCoreTask task = processorTaskService.findById(ref, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
@@ -212,7 +212,7 @@ public class ProcessorService {
     }
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         if (!ref.dispatcherUrl.url.equals(task.dispatcherUrl)) {
@@ -263,7 +263,7 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);

@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlU
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -40,7 +39,6 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
@@ -106,8 +104,8 @@ public class ProcessorKeepAliveRequestor {
                 log.warn("dispatcherUrl wasn't found");
             }
             else {
-                final String processorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
-                final String sessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
+                final String processorId = metadataService.getProcessorSession(ref.dispatcherUrl);
+                final String sessionId = metadataService.getSessionId(ref.dispatcherUrl);
 
                 if (processorId == null || sessionId == null) {
                     karpy.processor.processorCommContext = null;
@@ -120,7 +118,7 @@ public class ProcessorKeepAliveRequestor {
                         log.warn("dispatcherUrl wasn't found");
                     }
                     else {
-                        KeepAliveRequestParamYaml.Core core = new KeepAliveRequestParamYaml.Core(ref.processorCode);
+                        KeepAliveRequestParamYaml.Core core = new KeepAliveRequestParamYaml.Core(ref.coreCode);
                         karpy.cores.add(core);
 
                         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =

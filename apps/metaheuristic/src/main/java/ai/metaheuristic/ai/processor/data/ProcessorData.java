@@ -41,10 +41,9 @@ public class ProcessorData {
 
     @Data
     @AllArgsConstructor
-    @EqualsAndHashCode(of={"processorCode", "processorId", "dispatcherUrl"})
+    @EqualsAndHashCode(of={"processorId", "dispatcherUrl"})
     public static class ProcessorCodeAndIdAndDispatcherUrlRef {
         public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
-        public final String processorCode;
         public final String processorId;
 
         public final Map<String, CoreInfo> cores = new HashMap<>();

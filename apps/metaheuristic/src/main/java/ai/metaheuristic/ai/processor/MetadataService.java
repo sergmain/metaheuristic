@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
+import ai.metaheuristic.ai.processor.utils.MetadataUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -146,23 +147,7 @@ public class MetadataService {
     private void fixProcessorCodes() {
         final List<String> codes = envService.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
-        Set<String> forDeletion = new HashSet<>();
-        for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : metadata.procesorSessions.entrySet()) {
-            final LinkedHashMap<String, String> cores = entry.getValue().cores;
-            for (String key : cores.keySet()) {
-                if (!codes.contains(key)) {
-                    forDeletion.add(key);
-                }
-            }
-            forDeletion.forEach(cores::remove);
-
-            for (String code : codes) {
-                if (!cores.containsKey(code)) {
-                    cores.put(code, null);
-                }
-            }
-        }
-        ;
+        MetadataUtils.fixProcessorCodes(codes, metadata.procesorSessions);
     }
 
     public static ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -276,6 +261,7 @@ public class MetadataService {
         return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), assetFile);
     }
 
+/*
     @Nullable
     public DispatcherUrl findDispatcherByCode(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String code) {
         synchronized (syncObj) {
@@ -291,10 +277,11 @@ public class MetadataService {
             return null;
         }
     }
+*/
 
     public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorSession processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
+            MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
                 processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
@@ -306,9 +293,9 @@ public class MetadataService {
 
     public void registerTaskQuota(String dispatcherUrl, Long taskId, @Nullable String tag, int quota) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.computeIfAbsent(dispatcherUrl, (o)->new MetadataParamsYaml.Quotas());
+            MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
             MetadataParamsYaml.Quota q = null;
-            for (MetadataParamsYaml.Quota o1 : quotaForDispatcher.quotas) {
+            for (MetadataParamsYaml.Quota o1 : ps.quotas) {
                 if (o1.taskId.equals(taskId)) {
                     q = o1;
                     break;
@@ -319,10 +306,21 @@ public class MetadataService {
                 q.quota=quota;
             }
             else {
-                quotaForDispatcher.quotas.add(new MetadataParamsYaml.Quota(taskId, tag, quota));
+                ps.quotas.add(new MetadataParamsYaml.Quota(taskId, tag, quota));
             }
             updateMetadataFile();
         }
+    }
+
+    // must be sync outside
+    private MetadataParamsYaml.ProcessorSession getProcessorSession(String dispatcherUrl) {
+        MetadataParamsYaml.ProcessorSession ps = metadata.procesorSessions.get(dispatcherUrl);
+        if (ps==null) {
+            final String es = "dispatcherUrl isn't registered in metadata, " + dispatcherUrl;
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        return ps;
     }
 
     public void resetAllQuotas() {
@@ -334,10 +332,7 @@ public class MetadataService {
 
     public int currentQuota(String dispatcherUrl) {
         synchronized (syncObj) {
-            MetadataParamsYaml.ProcessorSession ps = metadata.procesorSessions.get(dispatcherUrl);
-            if (ps==null) {
-                return 0;
-            }
+            MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
             int sum = 0;
             for (MetadataParamsYaml.Quota o : ps.quotas) {
                 int quota = o.quota;
@@ -349,13 +344,10 @@ public class MetadataService {
 
     public void removeQuota(String dispatcherUrl, Long taskId) {
         synchronized (syncObj) {
-            MetadataParamsYaml.Quotas quotaForDispatcher = metadata.quotas.get(dispatcherUrl);
-            if (quotaForDispatcher==null) {
-                return;
-            }
-            for (MetadataParamsYaml.Quota o : quotaForDispatcher.quotas) {
+            MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
+            for (MetadataParamsYaml.Quota o : ps.quotas) {
                 if (o.taskId.equals(taskId)) {
-                    quotaForDispatcher.quotas.remove(o);
+                    ps.quotas.remove(o);
                     break;
                 }
             }
@@ -423,10 +415,9 @@ public class MetadataService {
         }
     }
 
-    @Nullable
-    public String getProcessorId(String processorCode, DispatcherUrl dispatcherUrl) {
+    public MetadataParamsYaml.ProcessorSession getProcessorSession(DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            return getDispatcherInfo(processorCode, dispatcherUrl).processorId;
+            return getProcessorSession(dispatcherUrl.url);
         }
     }
 
@@ -449,7 +440,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.180 processorId is null");
         }
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorSession processorState = getDispatcherInfo(ref.processorCode, ref.dispatcherUrl);
+            final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
@@ -629,28 +620,14 @@ public class MetadataService {
         }
     }
 
-    @Nullable
-    public String getSessionId(String processorCode, DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
-            return getDispatcherInfo(processorCode, dispatcherUrl).sessionId;
-        }
-    }
-
     @SuppressWarnings("unused")
-    public void setSessionId(String processorCode, DispatcherUrl dispatcherUrl, String sessionId) {
+    public void setSessionId(DispatcherUrl dispatcherUrl, String sessionId) {
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
         synchronized (syncObj) {
-            getDispatcherInfo(processorCode, dispatcherUrl).processorId = sessionId;
+            getProcessorSession(dispatcherUrl.url).processorId = sessionId;
             updateMetadataFile();
-        }
-    }
-
-    private MetadataParamsYaml.ProcessorSession getDispatcherInfo(String processorCode, DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
-            MetadataParamsYaml.Processor p = metadata.processors.computeIfAbsent(processorCode, o->new MetadataParamsYaml.Processor());
-            return p.states.computeIfAbsent(dispatcherUrl.url, m -> asEmptyProcessorState(dispatcherUrl));
         }
     }
 

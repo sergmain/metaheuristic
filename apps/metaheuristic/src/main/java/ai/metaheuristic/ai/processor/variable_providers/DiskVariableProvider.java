@@ -23,9 +23,9 @@ import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -72,7 +72,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
@@ -122,7 +122,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
@@ -146,7 +146,7 @@ public class DiskVariableProvider implements VariableProvider {
     @Override
     public File getOutputVariableFromFile(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
+            ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvParamsYaml env = envService.getEnvParamsYaml();
         if (variable.disk==null) {

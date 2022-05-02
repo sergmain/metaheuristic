@@ -98,8 +98,8 @@ public class ProcessorCommandProcessor {
         if (response.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorId(ref.processorCode, ref.dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl);
+        final String currProcessorId = metadataService.getProcessorSession(ref.dispatcherUrl);
+        final String currSessionId = metadataService.getSessionId(ref.dispatcherUrl);
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(response.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(response.reAssignedProcessorId.sessionId)

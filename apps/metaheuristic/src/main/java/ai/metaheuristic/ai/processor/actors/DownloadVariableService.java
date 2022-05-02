@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +97,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
             log.info("DispatcherContextInfo isn't inited for dispatcherUrl {}", task.ref.dispatcherUrl.url);
             return;
         }
-        ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
+        ProcessorCoreTask processorTask = processorTaskService.findById(task.ref, task.taskId);
         if (processorTask==null) {
             log.info("#810.008 Task #{} wasn't found, skip it", task.taskId);
             return;

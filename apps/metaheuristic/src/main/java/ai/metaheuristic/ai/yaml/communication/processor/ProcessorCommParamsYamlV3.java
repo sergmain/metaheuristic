@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.yaml.communication.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,14 +41,6 @@ public class ProcessorCommParamsYamlV3 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (requests.isEmpty()) {
-            throw new CheckIntegrityFailedException("requests.isEmpty()");
-        }
-        for (ProcessorRequestV3 request : requests) {
-            if (S.b(request.processorCode)) {
-                throw new CheckIntegrityFailedException("(S.b(request.processorCode))");
-            }
-        }
         return true;
     }
 
@@ -60,7 +50,8 @@ public class ProcessorCommParamsYamlV3 implements BaseParams {
     public static class ProcessorCommContextV3 {
         @Nullable
         public String processorId;
-        @Nullable public String sessionId;
+        @Nullable
+        public String sessionId;
     }
 
     @Data
@@ -125,30 +116,34 @@ public class ProcessorCommParamsYamlV3 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class QuotasV3 {
-        public int current;
+    public static class CoreV3 {
+        public String code;
+        @Nullable
+        public Long coreId;
+        @Nullable
+        public RequestTaskV3 requestTask;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorRequestV3 {
-        public @Nullable ProcessorCommContextV3 processorCommContext;
-        public @Nullable RequestProcessorIdV3 requestProcessorId;
-        public @Nullable RequestTaskV3 requestTask;
-        public @Nullable ReportTaskProcessingResultV3 reportTaskProcessingResult;
-        public @Nullable CheckForMissingOutputResourcesV3 checkForMissingOutputResources;
-        public @Nullable ResendTaskOutputResourceResultV3 resendTaskOutputResourceResult;
+        @Nullable
+        public ProcessorCommContextV3 processorCommContext;
+        @Nullable
+        public RequestProcessorIdV3 requestProcessorId;
+        @Nullable
+        public CheckForMissingOutputResourcesV3 checkForMissingOutputResources;
+        @Nullable
+        public ResendTaskOutputResourceResultV3 resendTaskOutputResourceResult;
+        @Nullable
+        public ReportTaskProcessingResultV3 reportTaskProcessingResult;
 
+        public final List<CoreV3> cores = new ArrayList<>();
 
-        public String processorCode;
-
-        public ProcessorRequestV3(String processorCode) {
-            this.processorCode = processorCode;
-        }
+        public int currentQuota;
     }
 
-    public final List<ProcessorRequestV3> requests = new ArrayList<>();
-    public final QuotasV3 quotas = new QuotasV3();
+    public final ProcessorRequestV3 request = new ProcessorRequestV3();
 
 }

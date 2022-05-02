@@ -26,22 +26,22 @@ import java.io.InputStream;
 public class ProcessorTaskUtils {
 
     private static Yaml getYaml() {
-        return YamlUtils.init(ProcessorTask.class);
+        return YamlUtils.init(ProcessorCoreTask.class);
     }
 
-    public static String toString(ProcessorTask config) {
+    public static String toString(ProcessorCoreTask config) {
         return YamlUtils.toString(config, getYaml());
     }
 
-    public static ProcessorTask to(String s) {
-        return (ProcessorTask) YamlUtils.to(s, getYaml());
+    public static ProcessorCoreTask to(String s) {
+        return (ProcessorCoreTask) YamlUtils.to(s, getYaml());
     }
 
-    public static ProcessorTask to(InputStream is) {
-        return (ProcessorTask) YamlUtils.to(is, getYaml());
+    public static ProcessorCoreTask to(InputStream is) {
+        return (ProcessorCoreTask) YamlUtils.to(is, getYaml());
     }
 
-    public static ProcessorTask to(File file) {
-        return (ProcessorTask) YamlUtils.to(file, getYaml());
+    public static ProcessorCoreTask to(File file) {
+        return (ProcessorCoreTask) YamlUtils.to(file, getYaml());
     }
 }

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -107,12 +107,12 @@ public class TaskAssetPreparer {
             });
 
             // find all tasks which weren't finished and resources aren't prepared yet
-            List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, false);
+            List<ProcessorCoreTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, false);
             if (tasks.size()>1) {
-                log.warn("#951.020 There is more than one task: {}", tasks.stream().map(ProcessorTask::getTaskId).collect(Collectors.toList()));
+                log.warn("#951.020 There is more than one task: {}", tasks.stream().map(ProcessorCoreTask::getTaskId).collect(Collectors.toList()));
             }
 
-            for (ProcessorTask task : tasks) {
+            for (ProcessorCoreTask task : tasks) {
                 eventPublisher.publishEvent(new AssetPreparingForProcessorTaskEvent(ref, task.taskId));
             }
         }
@@ -122,7 +122,7 @@ public class TaskAssetPreparer {
     @EventListener
     public void processAssetPreparing(AssetPreparingForProcessorTaskEvent event) {
         try {
-            TaskAssetPreparingSync.getWithSyncNullable(event.ref.processorCode,
+            TaskAssetPreparingSync.getWithSyncNullable(event.ref.coreCode,
                     ()-> processAssetPreparingInternal(event.ref, event.taskId));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
@@ -130,7 +130,7 @@ public class TaskAssetPreparer {
     }
 
     private Void processAssetPreparingInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        ProcessorTask task = processorTaskService.findById(ref, taskId);
+        ProcessorCoreTask task = processorTaskService.findById(ref, taskId);
         if (task==null) {
             return null;
         }
@@ -148,7 +148,7 @@ public class TaskAssetPreparer {
 
         final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
         if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-            log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.processorCode, ref.dispatcherUrl.url);
+            log.warn("#951.070 processor {} with dispatcher {} isn't ready", ref.coreCode, ref.dispatcherUrl.url);
             return null;
         }
 

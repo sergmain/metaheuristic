@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -129,11 +129,11 @@ public class TaskProcessor {
 
     private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
 
-        log.debug("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
+        log.debug("#100.000 Start processInternal at processor {} for url #{}", ref.coreCode, ref.dispatcherUrl);
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
-        List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
-        for (ProcessorTask task : tasks) {
+        List<ProcessorCoreTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
+        for (ProcessorCoreTask task : tasks) {
             log.info("#100.001 Start processing task #{}", task.taskId);
 
             if (StringUtils.isBlank(task.dispatcherUrl)) {
@@ -149,7 +149,7 @@ public class TaskProcessor {
 
             final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
             if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-                log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
+                log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.coreCode, dispatcherUrl.url);
                 continue;
             }
 
@@ -288,7 +288,7 @@ public class TaskProcessor {
             }
 
             // at this point all required resources have to be prepared
-            ProcessorTask taskResult = processorTaskService.setLaunchOn(ref, task.taskId);
+            ProcessorCoreTask taskResult = processorTaskService.setLaunchOn(ref, task.taskId);
             if (taskResult==null) {
                 String es = "#100.120 Task #"+task.taskId+" wasn't found";
                 log.warn(es);
@@ -317,7 +317,7 @@ public class TaskProcessor {
     }
 
     private void execAllFunctions(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
-                                  ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+                                  ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
                                   File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
                                   File systemDir, FunctionPrepareResult[] results) {
@@ -426,7 +426,7 @@ public class TaskProcessor {
     @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
-            ProcessorTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
+            ProcessorCoreTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
             @Nullable DispatcherSchedule schedule) {
 
         File paramFile = new File(

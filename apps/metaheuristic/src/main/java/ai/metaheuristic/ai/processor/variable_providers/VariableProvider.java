@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -32,13 +32,13 @@ import java.util.List;
 public interface VariableProvider {
     List<AssetFile> prepareForDownloadingVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable);
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable,
             TaskParamsYaml.FunctionConfig functionConfig
     );
@@ -46,7 +46,7 @@ public interface VariableProvider {
     File getOutputVariableFromFile(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, TaskParamsYaml.OutputVariable variable);
+            ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable);
 
     EnumsApi.DataSourcing getSourcing();
 }

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -64,16 +64,16 @@ public class ProcessorTaskService {
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
 
-    /**key - processorCode
+    /**key - code of core
      * value:
      *      Map of:
      *      key - DispatcherUrl
      *      value:
      *             Map.of:
-     *             key - ProcessorTask.taskId,
-     *             Value - ProcessorTask
+     *             key - ProcessorCoreTask.taskId,
+     *             Value - ProcessorCoreTask
      */
-    private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorTask>>> map = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> map = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -81,80 +81,83 @@ public class ProcessorTaskService {
             return;
         }
         for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
-            File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-            String dispatcherCode = MetadataService.asCode(ref.dispatcherUrl);
-            File dispatcherDir = new File(processorTaskDir, dispatcherCode);
-            if (!dispatcherDir.exists()) {
-                dispatcherDir.mkdirs();
-            }
+            for (String key : ref.cores.keySet()) {
 
-            try {
-                DispatcherUrl dispatcherUrl = ref.dispatcherUrl;
-                // do not remove try(Stream<Path>){}
-                try (final Stream<Path> pathStream = Files.list(dispatcherDir.toPath())) {
-                    pathStream.forEach(p -> {
-                        final File taskGroupDir = p.toFile();
-                        if (!taskGroupDir.isDirectory()) {
-                            return;
-                        }
-                        try {
-                            AtomicBoolean isEmpty = new AtomicBoolean(true);
-                            try (final Stream<Path> stream = Files.list(p)) {
-                                stream.forEach(s -> {
-                                    isEmpty.set(false);
-                                    String groupDirName = taskGroupDir.getName();
-                                    final File currDir = s.toFile();
-                                    String name = currDir.getName();
-                                    long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
-                                    log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
-                                    File taskYamlFile = new File(currDir, Consts.TASK_YAML);
-                                    if (!taskYamlFile.exists() || taskYamlFile.length() == 0L) {
-                                        deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + taskYamlFile.exists() + ", length: " + taskYamlFile.length());
-                                        return;
-                                    }
+                File processorDir = new File(globals.processor.dir.dir, key);
+                File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+                String dispatcherCode = MetadataService.asCode(ref.dispatcherUrl);
+                File dispatcherDir = new File(processorTaskDir, dispatcherCode);
+                if (!dispatcherDir.exists()) {
+                    dispatcherDir.mkdirs();
+                }
 
-                                    try (FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                        ProcessorTask task = ProcessorTaskUtils.to(fis);
-                                        if (S.b(task.dispatcherUrl)) {
-                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                            log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                try {
+                    DispatcherUrl dispatcherUrl = ref.dispatcherUrl;
+                    // !!! do not remove try(Stream<Path>){}
+                    try (final Stream<Path> pathStream = Files.list(dispatcherDir.toPath())) {
+                        pathStream.forEach(p -> {
+                            final File taskGroupDir = p.toFile();
+                            if (!taskGroupDir.isDirectory()) {
+                                return;
+                            }
+                            try {
+                                AtomicBoolean isEmpty = new AtomicBoolean(true);
+                                try (final Stream<Path> stream = Files.list(p)) {
+                                    stream.forEach(s -> {
+                                        isEmpty.set(false);
+                                        String groupDirName = taskGroupDir.getName();
+                                        final File currDir = s.toFile();
+                                        String name = currDir.getName();
+                                        long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
+                                        log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
+                                        File taskYamlFile = new File(currDir, Consts.TASK_YAML);
+                                        if (!taskYamlFile.exists() || taskYamlFile.length() == 0L) {
+                                            deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + taskYamlFile.exists() + ", length: " + taskYamlFile.length());
                                             return;
                                         }
-                                        getMapForDispatcherUrl(ref).put(taskId, task);
 
-                                        // fix state of task
-                                        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                                        if (functionExec != null &&
-                                                ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
-                                                        (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
-                                            markAsFinished(ref, taskId, functionExec);
+                                        try (FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                            ProcessorCoreTask task = ProcessorTaskUtils.to(fis);
+                                            if (S.b(task.dispatcherUrl)) {
+                                                deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                                log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                                                return;
+                                            }
+                                            getMapForDispatcherUrl(ref).put(taskId, task);
+
+                                            // fix state of task
+                                            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                                            if (functionExec != null &&
+                                                    ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
+                                                            (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
+                                                markAsFinished(ref, taskId, functionExec);
+                                            }
                                         }
-                                    }
-                                    catch (IOException e) {
-                                        String es = "#713.010 Error";
-                                        log.error(es, e);
-                                        throw new RuntimeException(es, e);
-                                    }
-                                    catch (YAMLException e) {
-                                        String es = "#713.020 yaml Error: " + e.getMessage();
-                                        log.warn(es, e);
-                                        deleteDir(currDir, "Delete not valid dir of task " + s);
-                                    }
-                                });
+                                        catch (IOException e) {
+                                            String es = "#713.010 Error";
+                                            log.error(es, e);
+                                            throw new RuntimeException(es, e);
+                                        }
+                                        catch (YAMLException e) {
+                                            String es = "#713.020 yaml Error: " + e.getMessage();
+                                            log.warn(es, e);
+                                            deleteDir(currDir, "Delete not valid dir of task " + s);
+                                        }
+                                    });
+                                }
                             }
-                        }
-                        catch (IOException e) {
-                            String es = "#713.030 Error";
-                            log.error(es, e);
-                            throw new RuntimeException(es, e);
-                        }
-                    });
+                            catch (IOException e) {
+                                String es = "#713.030 Error";
+                                log.error(es, e);
+                                throw new RuntimeException(es, e);
+                            }
+                        });
+                    }
+                } catch (IOException e) {
+                    String es = "#713.040 Error";
+                    log.error(es, e);
+                    throw new RuntimeException(es, e);
                 }
-            } catch (IOException e) {
-                String es = "#713.040 Error";
-                log.error(es, e);
-                throw new RuntimeException(es, e);
             }
         }
         //noinspection unused
@@ -175,9 +178,9 @@ public class ProcessorTaskService {
     public void setReportedOn(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.065 setReportedOn({}, {})", ref.dispatcherUrl, taskId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.070 ProcessorTask wasn't found for Id " + taskId);
+                log.error("#713.070 ProcessorCoreTask wasn't found for Id " + taskId);
                 return;
             }
             task.setReported(true);
@@ -189,14 +192,14 @@ public class ProcessorTaskService {
     public void setInputAsEmpty(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId, String variableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.075 setInputAsEmpty({}, {})", ref.dispatcherUrl, taskId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.077 ProcessorTask wasn't found for Id " + taskId);
+                log.error("#713.077 ProcessorCoreTask wasn't found for Id " + taskId);
                 return;
             }
-            final ProcessorTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findFirst().orElse(null);
+            final ProcessorCoreTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findFirst().orElse(null);
             if (input==null) {
-                task.empty.empties.add(new ProcessorTask.EmptyStateOfInput(variableId, true));
+                task.empty.empties.add(new ProcessorCoreTask.EmptyStateOfInput(variableId, true));
             }
             else {
                 input.empty = true;
@@ -213,9 +216,9 @@ public class ProcessorTaskService {
     public void setDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.080 setDelivered({}, {})", ref.dispatcherUrl.url, taskId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
+                log.error("#713.090 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
             }
             if (!task.isReported() ) {
@@ -245,9 +248,9 @@ public class ProcessorTaskService {
     public void setVariableUploadedAndCompleted(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, Long outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {}, {})", ref.dispatcherUrl, taskId, outputVariableId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
+                log.error("#713.090 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
             }
             task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findFirst().ifPresent(status -> status.uploaded = true);
@@ -260,9 +263,9 @@ public class ProcessorTaskService {
     public void setCompleted(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setCompleted({}, {})", ref.dispatcherUrl, taskId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.100 ProcessorTask wasn't found for Id {}", taskId);
+                log.error("#713.100 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setCompleted(true);
@@ -270,10 +273,10 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> getForReporting(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public List<ProcessorCoreTask> getForReporting(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            Stream<ProcessorTask> stream = findAllByFinishedOnIsNotNull(ref);
-            List<ProcessorTask> result = stream
+            Stream<ProcessorCoreTask> stream = findAllByFinishedOnIsNotNull(ref);
+            List<ProcessorCoreTask> result = stream
                     .filter(processorTask -> !processorTask.isReported() ||
                             (!processorTask.isDelivered() &&
                                     (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
@@ -284,13 +287,13 @@ public class ProcessorTaskService {
 
     @Nullable
     public ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        final List<ProcessorTask> list = getForReporting(ref);
+        final List<ProcessorCoreTask> list = getForReporting(ref);
         if (list.isEmpty()) {
             return null;
         }
         log.info("Number of tasks for reporting: " + list.size());
         final ProcessorCommParamsYaml.ReportTaskProcessingResult processingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
-        for (ProcessorTask task : list) {
+        for (ProcessorCoreTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {
                 log.warn("#713.105 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
             }
@@ -323,9 +326,9 @@ public class ProcessorTaskService {
             log.info("markAsFinished({}, #{}, {})", ref.dispatcherUrl.url, taskId, functionExec);
 
             metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
+                log.error("#713.110 ProcessorCoreTask wasn't found for Id #" + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
                     final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -357,9 +360,9 @@ public class ProcessorTaskService {
     void markAsAssetPrepared(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, boolean status) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", ref.dispatcherUrl, taskId, status);
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
-                log.error("#713.130 ProcessorTask wasn't found for Id {}", taskId);
+                log.error("#713.130 ProcessorCoreTask wasn't found for Id {}", taskId);
             } else {
                 task.setAssetsPrepared(status);
                 save(ref, task);
@@ -370,8 +373,8 @@ public class ProcessorTaskService {
     boolean isNeedNewTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             // TODO 2019-10-24 need to optimize
-            List<ProcessorTask> tasks = findAllByCompletedIsFalse(ref);
-            for (ProcessorTask task : tasks) {
+            List<ProcessorCoreTask> tasks = findAllByCompletedIsFalse(ref);
+            for (ProcessorCoreTask task : tasks) {
                 // we don't need new task because execContext for this task is active
                 // i.e. there is a non-completed task with active execContext
                 // if execContext wasn't active, we would need a new task
@@ -383,10 +386,10 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public List<ProcessorCoreTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            List<ProcessorTask> list = new ArrayList<>();
-            for (ProcessorTask task : getMapForDispatcherUrl(ref).values()) {
+            List<ProcessorCoreTask> list = new ArrayList<>();
+            for (ProcessorCoreTask task : getMapForDispatcherUrl(ref).values()) {
                 if (!task.completed) {
                     if (task.finishedOn!=null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o->o.uploaded)) {
                         task.completed = true;
@@ -401,16 +404,16 @@ public class ProcessorTaskService {
         }
     }
 
-    private Map<Long, ProcessorTask> getMapForDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        return map.computeIfAbsent(ref.processorCode, k->new HashMap<>()).computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
+    private Map<Long, ProcessorCoreTask> getMapForDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+        return map.computeIfAbsent(ref.coreCode, k->new HashMap<>()).computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
     }
 
-    public List<ProcessorTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {
+    public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            List<ProcessorTask> list = new ArrayList<>();
-            Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
+            List<ProcessorCoreTask> list = new ArrayList<>();
+            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
             List<Long> forDeletion = new ArrayList<>();
-            for (ProcessorTask task : mapForDispatcherUrl.values()) {
+            for (ProcessorCoreTask task : mapForDispatcherUrl.values()) {
                 if (S.b(task.dispatcherUrl)) {
                     forDeletion.add(task.taskId);
                 }
@@ -426,7 +429,7 @@ public class ProcessorTaskService {
         }
     }
 
-    private Stream<ProcessorTask> findAllByFinishedOnIsNotNull(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    private Stream<ProcessorCoreTask> findAllByFinishedOnIsNotNull(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         return getMapForDispatcherUrl(ref).values().stream().filter(o -> o.finishedOn!=null);
     }
 
@@ -436,8 +439,8 @@ public class ProcessorTaskService {
             metadataService.registerTaskQuota(ref.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
-            Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
-            ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorTask());
+            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getMapForDispatcherUrl(ref);
+            ProcessorCoreTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorCoreTask());
 
             task.taskId = assignedTask.taskId;
             task.execContextId = assignedTask.execContextId;
@@ -456,10 +459,10 @@ public class ProcessorTaskService {
             task.completed = false;
             task.quotas.quota = assignedTask.quota;
             taskParamYaml.task.outputs.stream()
-                    .map(o->new ProcessorTask.OutputStatus(o.id, false) )
+                    .map(o->new ProcessorCoreTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
+            File processorDir = new File(globals.processor.dir.dir, ref.coreCode);
             if (!processorDir.exists()) {
                 processorDir.mkdirs();
             }
@@ -493,9 +496,9 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask resetTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
+    public ProcessorCoreTask resetTask(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
                 return null;
             }
@@ -505,9 +508,9 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask setLaunchOn(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId) {
+    public ProcessorCoreTask setLaunchOn(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            ProcessorTask task = findById(ref, taskId);
+            ProcessorCoreTask task = findById(ref, taskId);
             if (task == null) {
                 return null;
             }
@@ -516,7 +519,7 @@ public class ProcessorTaskService {
         }
     }
 
-    private ProcessorTask save(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task) {
+    private ProcessorCoreTask save(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorCoreTask task) {
         File taskDir = prepareTaskDir(ref, task.taskId);
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
 
@@ -542,7 +545,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorTask findById(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
+    public ProcessorCoreTask findById(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             return getMapForDispatcherUrl(ref)
                     .entrySet()
@@ -554,9 +557,9 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorTask> findAll(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public List<ProcessorCoreTask> findAll(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            Collection<ProcessorTask> values = getMapForDispatcherUrl(ref).values();
+            Collection<ProcessorCoreTask> values = getMapForDispatcherUrl(ref).values();
             return List.copyOf(values);
         }
     }
@@ -566,7 +569,7 @@ public class ProcessorTaskService {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.removeQuota(ref.dispatcherUrl.url, taskId);
-            final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
+            final File processorDir = new File(globals.processor.dir.dir, ref.coreCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
 
@@ -576,7 +579,7 @@ public class ProcessorTaskService {
                 if (taskDir.exists()) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
                 }
-                Map<Long, ProcessorTask> mapTask = getMapForDispatcherUrl(ref);
+                Map<Long, ProcessorCoreTask> mapTask = getMapForDispatcherUrl(ref);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
@@ -596,7 +599,7 @@ public class ProcessorTaskService {
     }
 
     public File prepareTaskDir(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId) {
-        final File processorDir = new File(globals.processor.dir.dir, ref.processorCode);
+        final File processorDir = new File(globals.processor.dir.dir, ref.coreCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
         final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(ref.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));

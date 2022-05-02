@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor.event;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import lombok.AllArgsConstructor;
 
 /**

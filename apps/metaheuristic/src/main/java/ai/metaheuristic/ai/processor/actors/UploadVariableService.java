@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -102,7 +102,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         while((task = poll())!=null) {
             final UploadVariableTask finalTask = task;
 
-            ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
+            ProcessorCoreTask processorTask = processorTaskService.findById(task.ref, task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
@@ -121,7 +121,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 processorTaskService.delete(task.ref, task.taskId);
                 continue;
             }
-            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
+            ProcessorCoreTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
             if (outputStatus==null) {
                 log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.ref, task.taskId);

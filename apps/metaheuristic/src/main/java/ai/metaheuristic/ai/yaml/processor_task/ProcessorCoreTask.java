@@ -28,7 +28,7 @@ import java.util.Set;
 @Data
 @ToString
 @NoArgsConstructor
-public class ProcessorTask {
+public class ProcessorCoreTask {
 
     // TODO 2020-12-30 'String dispatcherUrl' need to be changed it to DispatcherServerUrl when this class will be based on BaseClass
 
