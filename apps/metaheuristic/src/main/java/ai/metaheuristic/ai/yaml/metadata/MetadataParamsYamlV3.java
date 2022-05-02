@@ -45,7 +45,7 @@ public class MetadataParamsYamlV3 implements BaseParams {
         public String sessionId;
 
         // key - code of Core, value - coreId
-        public final LinkedHashMap<String, String> cores = new LinkedHashMap<>();
+        public final LinkedHashMap<String, Long> cores = new LinkedHashMap<>();
 
         public final List<QuotaV3> quotas = new ArrayList<>();
     }

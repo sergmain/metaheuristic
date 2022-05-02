@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -118,8 +119,9 @@ public class ProcessorKeepAliveProcessor {
         if (response.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorSession(ref.dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(ref.dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(ref.dispatcherUrl);
+        final String currProcessorId = processorSession.processorId;
+        final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(response.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(response.reAssignedProcessorId.sessionId)

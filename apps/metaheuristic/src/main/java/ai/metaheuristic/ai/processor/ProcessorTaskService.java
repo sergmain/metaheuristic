@@ -405,7 +405,16 @@ public class ProcessorTaskService {
     }
 
     private Map<Long, ProcessorCoreTask> getMapForDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+        for (Map<DispatcherUrl, Map<Long, ProcessorCoreTask>> value : map.values()) {
+            for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> entry : value.entrySet()) {
+                if (entry.getKey().equals(ref.dispatcherUrl)) {
+                    return entry.getValue();
+                }
+            }
+        }
+
         return map.computeIfAbsent(ref.coreCode, k->new HashMap<>()).computeIfAbsent(ref.dispatcherUrl, m -> new HashMap<>());
+        return new HashMap<>();
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, boolean assetsPreparedStatus) {

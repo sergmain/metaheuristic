@@ -33,21 +33,11 @@ public class ProcessorData {
 
     @Data
     @AllArgsConstructor
-    @EqualsAndHashCode(of={"coreCode", "coreId"})
-    public static class CoreInfo {
-        public final String coreCode;
-        public final String coreId;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @EqualsAndHashCode(of={"processorId", "dispatcherUrl"})
+    @EqualsAndHashCode(of={"processorId", "coreCode", "dispatcherUrl"})
     public static class ProcessorCodeAndIdAndDispatcherUrlRef {
         public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
         public final String processorId;
-
-        public final Map<String, CoreInfo> cores = new HashMap<>();
-
-
+        public final String coreCode;
+        public final Long coreId;
     }
 }

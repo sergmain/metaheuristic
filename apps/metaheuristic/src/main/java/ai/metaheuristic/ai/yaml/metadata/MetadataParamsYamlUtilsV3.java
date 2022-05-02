@@ -57,7 +57,7 @@ public class MetadataParamsYamlUtilsV3
 
             psV3.quotas.stream().map(MetadataParamsYamlUtilsV3::toQuota).collect(Collectors.toCollection(()->value.quotas));
 
-            trg.procesorSessions.put(entry.getKey(), value);
+            trg.processorSessions.put(entry.getKey(), value);
         }
 
         for (Map.Entry<String, String> o : src.metadata.entrySet()) {

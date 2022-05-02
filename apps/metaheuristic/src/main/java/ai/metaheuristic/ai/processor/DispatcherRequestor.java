@@ -41,10 +41,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -151,16 +148,7 @@ public class DispatcherRequestor {
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
-                    final boolean b = processorTaskService.isNeedNewTask(ref);
-                    if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        // always report about current active tasks, if we have actual processorId
-                        // don't report about tasks which belong to finished execContext
-                        final String taskIds = processorTaskService.findAll(ref).stream()
-                                .filter(o -> currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
-                                .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
-                    }
-                    else {
+                     {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorCoreTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
@@ -189,21 +177,12 @@ public class DispatcherRequestor {
                 }
                 r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
             }
+            for (Map.Entry<String, String> entry : ps.cores.entrySet()) {
+                String coreCode = entry.getKey();
+                ProcessorCommParamsYaml.Core core = new ProcessorCommParamsYaml.Core();
+                r.cores.add(core);
 
-            for (String processorCode : metadataService.getProcessorCodes()) {
-
-                ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(processorCode);
-                pcpy.requests.add(r);
-
-                final String processorId = metadataService.getProcessorSession(dispatcherUrl);
-                final String sessionId = metadataService.getSessionId(dispatcherUrl);
-
-                if (processorId == null || sessionId == null) {
-                    r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
-                    continue;
-                }
-                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorId, dispatcherUrl);
-                r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
+                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(dispatcherUrl, processorId);
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(dispatcherUrl)) {
@@ -214,7 +193,7 @@ public class DispatcherRequestor {
                         final String taskIds = processorTaskService.findAll(ref).stream()
                                 .filter(o -> currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
                                 .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                        core.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {

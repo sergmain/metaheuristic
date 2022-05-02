@@ -40,7 +40,7 @@ public class MetadataParamsYaml implements BaseParams {
         public String sessionId;
 
         // key - code of Core, value - coreId
-        public final LinkedHashMap<String, String> cores = new LinkedHashMap<>();
+        public final LinkedHashMap<String, Long> cores = new LinkedHashMap<>();
 
         public final List<Quota> quotas = new ArrayList<>();
     }
@@ -84,7 +84,7 @@ public class MetadataParamsYaml implements BaseParams {
      * key  - a code of dispatcher (i.e. normalized url of dispatcher)
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public final LinkedHashMap<String, ProcessorSession> procesorSessions = new LinkedHashMap<>();
+    public final LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();
     public final List<Function> functions = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

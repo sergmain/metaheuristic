@@ -167,8 +167,6 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Processor {
-        // status will be set only after aquiring a processorId
-        @Nullable
         public ProcessorStatus status;
 
         // if not null it means we need a new processorId

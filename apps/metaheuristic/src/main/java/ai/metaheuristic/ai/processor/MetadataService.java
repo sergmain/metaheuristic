@@ -147,7 +147,7 @@ public class MetadataService {
     private void fixProcessorCodes() {
         final List<String> codes = envService.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
-        MetadataUtils.fixProcessorCodes(codes, metadata.procesorSessions);
+        MetadataUtils.fixProcessorCodes(codes, metadata.processorSessions);
     }
 
     public static ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -314,7 +314,7 @@ public class MetadataService {
 
     // must be sync outside
     private MetadataParamsYaml.ProcessorSession getProcessorSession(String dispatcherUrl) {
-        MetadataParamsYaml.ProcessorSession ps = metadata.procesorSessions.get(dispatcherUrl);
+        MetadataParamsYaml.ProcessorSession ps = metadata.processorSessions.get(dispatcherUrl);
         if (ps==null) {
             final String es = "dispatcherUrl isn't registered in metadata, " + dispatcherUrl;
             log.error(es);
@@ -325,7 +325,7 @@ public class MetadataService {
 
     public void resetAllQuotas() {
         synchronized (syncObj) {
-            metadata.procesorSessions.forEach((k,v)->v.quotas.clear());
+            metadata.processorSessions.forEach((k, v)->v.quotas.clear());
             updateMetadataFile();
         }
     }
@@ -355,12 +355,6 @@ public class MetadataService {
         }
     }
 
-    public List<String> getProcessorCodes() {
-        synchronized (syncObj) {
-            return new ArrayList<>(metadata.processors.keySet());
-        }
-    }
-
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
         return getAllRefs( (du) -> {
             if (du.equals(dispatcherUrl)) {
@@ -371,18 +365,9 @@ public class MetadataService {
         } );
     }
 
-    @Nullable
-    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
         final Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> set = getAllRefs((du) -> du.equals(dispatcherUrl));
-        if (set.isEmpty()) {
-            return null;
-        }
-        if (set.size()>1) {
-            final String es = "metadata is broken. there are more than one ProcessorCodeAndIdAndDispatcherUrlRef for " + dispatcherUrl;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        return new ArrayList<>(set).get(0);
+        return set;
     }
 
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
@@ -399,19 +384,20 @@ public class MetadataService {
     private Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs(Function<DispatcherUrl, Boolean> function) {
         synchronized (syncObj) {
             Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
-            for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
-                if (processorEntry.getValue()==null) {
+            for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> processorEntry : metadata.processorSessions.entrySet()) {
+                final MetadataParamsYaml.ProcessorSession processorSession = processorEntry.getValue();
+                if (processorSession ==null) {
                     continue;
                 }
-                for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> stateEntry : processorEntry.getValue().states.entrySet()) {
-                    final DispatcherUrl dispatcherUrl = new DispatcherUrl(stateEntry.getKey());
+                for (Map.Entry<String, Long> coreEntry : processorSession.cores.entrySet()) {
+                    final DispatcherUrl dispatcherUrl = new DispatcherUrl(processorEntry.getKey());
                     if (function.apply(dispatcherUrl)) {
                         refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                                processorEntry.getKey(), stateEntry.getValue().processorId, dispatcherUrl));
+                                dispatcherUrl, processorEntry.getKey(), coreEntry.getKey(), coreEntry.getValue()));
                     }
                 }
             }
-            return refs;
+            return Collections.unmodifiableSet(refs);
         }
     }
 
@@ -422,14 +408,14 @@ public class MetadataService {
     }
 
     @Nullable
-    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(String processorCode, DispatcherUrl dispatcherUrl) {
+    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(String coreCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
-            for (Map.Entry<String, MetadataParamsYaml.Processor> processorEntry : metadata.processors.entrySet()) {
-                if (!processorCode.equals(processorEntry.getKey())) {
+            MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
+            for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> processorEntry : metadata.processorSessions.entrySet()) {
+                if (!coreCode.equals(processorEntry.getKey())) {
                     continue;
                 }
-                MetadataParamsYaml.ProcessorSession processorState = processorEntry.getValue().states.get(dispatcherUrl.url);
-                return processorState==null ? null : new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorState.processorId, dispatcherUrl);
+                return processorState==null ? null : new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(coreCode, processorState.processorId, dispatcherUrl);
             }
             return null;
         }

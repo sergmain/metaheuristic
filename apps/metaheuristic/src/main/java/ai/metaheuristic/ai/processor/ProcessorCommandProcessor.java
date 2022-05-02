@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -49,7 +50,7 @@ public class ProcessorCommandProcessor {
                     continue;
                 }
 
-                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(request.processorCode, dispatcherUrl);
+                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(request.coreCode, dispatcherUrl);
                 if(ref==null) {
                     log.warn("ref is null for processorId: {}, dispatcherUrl: {}", request.processorCode, dispatcherUrl);
                     continue;
@@ -98,8 +99,9 @@ public class ProcessorCommandProcessor {
         if (response.reAssignedProcessorId ==null) {
             return;
         }
-        final String currProcessorId = metadataService.getProcessorSession(ref.dispatcherUrl);
-        final String currSessionId = metadataService.getSessionId(ref.dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(ref.dispatcherUrl);
+        final String currProcessorId = processorSession.processorId;
+        final String currSessionId = processorSession.processorId;
         if (currProcessorId!=null && currSessionId!=null &&
                 currProcessorId.equals(response.reAssignedProcessorId.getReAssignedProcessorId()) &&
                 currSessionId.equals(response.reAssignedProcessorId.sessionId)
@@ -107,8 +109,10 @@ public class ProcessorCommandProcessor {
             return;
         }
 
-        log.info("reAssignProcessorId(),\n\t\tcurrent processorId: {}, sessionId: {}\n\t\t" +
-                        "new processorId: {}, sessionId: {}",
+        log.info("""
+            reAssignProcessorId(),
+            \t\tcurrent processorId: {}, sessionId: {}
+            \t\tnew processorId: {}, sessionId: {}""",
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
