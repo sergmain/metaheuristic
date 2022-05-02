@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -136,4 +137,10 @@ public class EnvService {
         return envYaml;
     }
 
+    @Nullable
+    public String getTags(String coreCode) {
+        synchronized (this) {
+            return envYaml.cores.stream().filter(o->o.code.equals(coreCode)).findFirst().map(o->o.tags).orElse(null);
+        }
+    }
 }

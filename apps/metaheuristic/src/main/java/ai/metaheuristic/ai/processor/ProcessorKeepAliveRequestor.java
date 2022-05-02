@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -63,6 +64,7 @@ public class ProcessorKeepAliveRequestor {
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
+    private final EnvService envService;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
@@ -73,13 +75,14 @@ public class ProcessorKeepAliveRequestor {
     public ProcessorKeepAliveRequestor(
             DispatcherUrl dispatcherUrl, Globals globals,
             ProcessorService processorService, MetadataService metadataService,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor) {
+            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor, EnvService envService) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorService = processorService;
         this.metadataService = metadataService;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.processorKeepAliveProcessor = processorKeepAliveProcessor;
+        this.envService = envService;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
@@ -114,13 +117,19 @@ public class ProcessorKeepAliveRequestor {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
 
                 Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> cores = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
+                for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef core : cores) {
+
 //                public String coreDir;
 //                public Long coreId;
 //                public String coreCode;
 //                public String tags;
 
-                cores.forEach(o-> karpy.cores.add(new KeepAliveRequestParamYaml.Core()) );
-                karpy.cores.add(core);
+                    String tags = envService.getTags(dispatcherUrl.url);
+                    cores.forEach(o-> karpy.cores.add(new KeepAliveRequestParamYaml.Core()) );
+
+                    karpy.cores.add(core);
+
+                }
 
                 final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                         dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
