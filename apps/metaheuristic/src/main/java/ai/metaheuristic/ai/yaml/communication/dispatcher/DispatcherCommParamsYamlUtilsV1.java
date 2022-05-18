@@ -16,6 +16,9 @@
 
 package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtilsV2;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
@@ -30,7 +33,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class DispatcherCommParamsYamlUtilsV1 extends
-        AbstractParamsYamlUtils<DispatcherCommParamsYamlV1, DispatcherCommParamsYaml, Void, Void, Void, Void> {
+        AbstractParamsYamlUtils<DispatcherCommParamsYamlV1, DispatcherCommParamsYamlV2, DispatcherCommParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -45,54 +48,8 @@ public class DispatcherCommParamsYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1) {
-        v1.checkIntegrity();
-
-        DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
-
-        for (DispatcherCommParamsYamlV1.DispatcherResponseV1 response : v1.responses) {
-            DispatcherCommParamsYaml.DispatcherResponse r = new DispatcherCommParamsYaml.DispatcherResponse(response.processorCode);
-            t.responses.add(r);
-
-            if (response.assignedTask!=null) {
-                r.assignedTask = to(response.assignedTask);
-            }
-            if (response.assignedProcessorId !=null) {
-                r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
-            }
-            if (response.reAssignedProcessorId !=null) {
-                r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(
-                        response.reAssignedProcessorId.reAssignedProcessorId, response.reAssignedProcessorId.sessionId);
-            }
-            if (response.reportResultDelivering!=null) {
-                r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
-                r.reportResultDelivering.ids =
-                        response.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
-            }
-            if (response.resendTaskOutputs!=null) {
-                r.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
-                response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> r.resendTaskOutputs.resends));
-            }
-        }
-        if (v1.requestLogFile!=null) {
-            t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v1.requestLogFile.requestedOn);
-        }
-        t.success = v1.success;
-        t.msg = v1.msg;
-
-        t.checkIntegrity();
-        return t;
-    }
-
-    private static DispatcherCommParamsYaml.AssignedTask to(DispatcherCommParamsYamlV1.AssignedTaskV1 src) {
-        DispatcherCommParamsYaml.AssignedTask trg = new DispatcherCommParamsYaml.AssignedTask();
-        trg.taskId = src.taskId;
-        trg.execContextId = src.execContextId;
-        trg.params = src.params;
-        trg.state = src.state;
-        trg.tag = src.tag;
-        trg.quota = src.quota;
-        return trg;
+    public DispatcherCommParamsYamlV2 upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1) {
+        throw new UpgradeNotSupportedException();
     }
 
     @NonNull
@@ -102,8 +59,8 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public DispatcherCommParamsYamlUtilsV2 nextUtil() {
+        return (DispatcherCommParamsYamlUtilsV2) DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

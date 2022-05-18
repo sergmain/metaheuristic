@@ -109,7 +109,6 @@ public class DispatcherCommParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DispatcherResponseV2 {
-        public String processorCode;
         @Nullable
         public AssignedTaskV2 assignedTask;
         @Nullable
