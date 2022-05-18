@@ -39,6 +39,7 @@ public class TestMapWithYaml {
     private static final String AGGREGATE_COMMAND_INSPECTION_1_5 = "aggregate-command-inspection:1.5";
     private static final String GET_LIST_OF_EDITION_PAIRS_1_1_7 = "get-list-of-edition-pairs:1.1.7";
     private static final String AAA_BBB = "aaa bbb";
+    public static final String AS_NULL = "as-null";
 
     @Data
     @NoArgsConstructor
@@ -55,6 +56,7 @@ public class TestMapWithYaml {
         to.status.map.put(AGGREGATE_COMMAND_INSPECTION_1_5, EnumsApi.FunctionState.ok);
         to.status.map.put(GET_LIST_OF_EDITION_PAIRS_1_1_7, EnumsApi.FunctionState.asset_error);
         to.status.map.put(AAA_BBB, EnumsApi.FunctionState.checksum_wrong);
+        to.status.map.put(AS_NULL, null);
 
         Yaml y = YamlUtils.init(To.class);
         String yaml = y.dumpAsMap(to);
@@ -66,9 +68,12 @@ public class TestMapWithYaml {
         assertTrue(m.containsKey(AGGREGATE_COMMAND_INSPECTION_1_5));
         assertTrue(m.containsKey(GET_LIST_OF_EDITION_PAIRS_1_1_7));
         assertTrue(m.containsKey(AAA_BBB));
+        assertTrue(m.containsKey(AS_NULL));
         assertEquals(EnumsApi.FunctionState.ok, m.get(AGGREGATE_COMMAND_INSPECTION_1_5));
         assertEquals(EnumsApi.FunctionState.asset_error, m.get(GET_LIST_OF_EDITION_PAIRS_1_1_7));
         assertEquals(EnumsApi.FunctionState.checksum_wrong, m.get(AAA_BBB));
+        assertTrue(m.containsKey(AS_NULL));
+        assertNull(m.get(AS_NULL));
 
     }
 }
