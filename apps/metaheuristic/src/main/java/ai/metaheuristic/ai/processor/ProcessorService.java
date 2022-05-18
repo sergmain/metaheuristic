@@ -121,42 +121,42 @@ public class ProcessorService {
      * mark tasks as delivered.
      * By delivering it means that result of exec was delivered to dispatcher
      *
-     * @param ref ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef
+     * @param core ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef
      * @param ids List&lt;String> list if task ids
      */
-    public void markAsDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<Long> ids) {
+    public void markAsDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, List<Long> ids) {
         for (Long id : ids) {
-            processorTaskService.setDelivered(ref, id);
+            processorTaskService.setDelivered(core, id);
         }
     }
 
-    public void assignTasks(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask task) {
+    public void assignTasks(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            currentExecState.registerDelta(ref.dispatcherUrl, task.execContextId, task.state);
-            processorTaskService.createTask(ref, task);
+            currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
+            processorTaskService.createTask(core, task);
         }
     }
 
     public List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> getResendTaskOutputResourceResultStatus(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.DispatcherResponse response) {
         if (response.resendTaskOutputs==null || response.resendTaskOutputs.resends.isEmpty()) {
             return List.of();
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (DispatcherCommParamsYaml.ResendTaskOutput output : response.resendTaskOutputs.resends) {
-            Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(ref, output.taskId, output.variableId);
+            Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(core, output.taskId, output.variableId);
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return statuses;
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, Long variableId) {
-        ProcessorCoreTask task = processorTaskService.findById(ref, taskId);
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long variableId) {
+        ProcessorCoreTask task = processorTaskService.findById(core, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(ref, taskId);
+        File taskDir = processorTaskService.prepareTaskDir(core, taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -165,7 +165,7 @@ public class ProcessorService {
             Enums.ResendTaskOutputResourceStatus status;
             switch (outputVariable.sourcing) {
                 case dispatcher:
-                    status = scheduleSendingToDispatcher(ref, taskId, taskDir, outputVariable);
+                    status = scheduleSendingToDispatcher(core, taskId, taskDir, outputVariable);
                     break;
                 case disk:
                 case git:
@@ -182,23 +182,23 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
-            processorTaskService.markAsFinishedWithError(ref, taskId,
+            processorTaskService.markAsFinishedWithError(core, taskId,
                     "#749.050 Variable #"+outputVariable.id+" wasn't found. Considering that this task is broken");
 
-            processorTaskService.setCompleted(ref, taskId);
+            processorTaskService.setCompleted(core, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
 
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
+                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
-        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, ref, dispatcher.dispatcherLookup);
+        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, core, dispatcher.dispatcherLookup);
         uploadResourceActor.add(uploadResourceTask);
 
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
@@ -212,11 +212,11 @@ public class ProcessorService {
     }
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
-        if (!ref.dispatcherUrl.url.equals(task.dispatcherUrl)) {
-            throw new IllegalStateException("(!ref.dispatcherUrl.url.equals(task.dispatcherUrl))");
+        if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
+            throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
         }
         try {
             taskParamYaml.task.inputs.forEach(input -> {
@@ -227,7 +227,7 @@ public class ProcessorService {
                 }
 
                 // the method prepareForDownloadingVariable() is creating a list dynamically. So don't cache the result
-                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(ref, taskDir, dispatcher, task, processorState, input);
+                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(core, taskDir, dispatcher, task, processorState, input);
                 for (AssetFile assetFile : assetFiles) {
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
@@ -238,13 +238,13 @@ public class ProcessorService {
             });
         }
         catch (BreakFromLambdaException e) {
-            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.getMessage());
+            processorTaskService.markAsFinishedWithError(core, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (VariableProviderException e) {
             log.error("#749.070 Error", e);
-            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.toString());
+            processorTaskService.markAsFinishedWithError(core, task.taskId, e.toString());
             result.isError = true;
             return result;
         }
@@ -253,7 +253,7 @@ public class ProcessorService {
         }
         if (!result.isAllLoaded) {
             if (task.assetsPrepared) {
-                processorTaskService.markAsAssetPrepared(ref, task.taskId, false);
+                processorTaskService.markAsAssetPrepared(core, task.taskId, false);
             }
             result.isError = true;
             return result;
@@ -263,17 +263,17 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputVariableFromFile(ref, taskDir, dispatcher, task, outputVariable);
+                File outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.getMessage();
                 log.error(msg, e);
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, msg);
+                processorTaskService.markAsFinishedWithError(core, task.taskId, msg);
                 return false;
             }
         }

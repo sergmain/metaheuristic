@@ -33,10 +33,10 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
+import java.io.File;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -117,9 +117,9 @@ public class ProcessorKeepAliveRequestor {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
             }
 
-            Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> cores = metadataService.getRefsForDispatcherUrl(dispatcherUrl);
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef core : cores) {
-                String coreDir = globals.processor.dir core.;
+            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = metadataService.getAllCoresForDispatcherUrl(dispatcherUrl);
+            for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
+                String coreDir = new File(globals.processor.dir.dir, core.coreCode).getPath();
                 Long coreId = core.coreId;
                 String coreCode = core.coreCode;
                 String tags = envService.getTags(core.coreCode);

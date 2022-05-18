@@ -26,6 +26,6 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class AssetPreparingForProcessorTaskEvent {
-    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
+    public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
     public final Long taskId;
 }

@@ -67,19 +67,19 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
         try {
 
             if (variable.context==EnumsApi.VariableContext.array) {
-                createDownloadTasksForArray(ref, variable.id, task.getTaskId(), taskDir,
+                createDownloadTasksForArray(core, variable.id, task.getTaskId(), taskDir,
                         dispatcher.dispatcherLookup, variable.getNullable());
             }
             else {
                 DownloadVariableTask variableTask = new DownloadVariableTask(
-                        ref, variable.id, variable.context, task.getTaskId(), taskDir,
+                        core, variable.id, variable.context, task.getTaskId(), taskDir,
                         dispatcher.dispatcherLookup, variable.getNullable());
                 downloadVariableService.add(variableTask);
             }
@@ -108,11 +108,11 @@ public class DispatcherVariableProvider implements VariableProvider {
     }
 
     private void createDownloadTasksForArray(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             Long variableId, Long taskId, File taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
             boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
-                ref, variableId, EnumsApi.VariableContext.local, taskId, taskDir, dispatcherLookup, nullable);
+                core, variableId, EnumsApi.VariableContext.local, taskId, taskDir, dispatcherLookup, nullable);
         downloadVariableService.add(task);
 
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variableId.toString(), null, DataType.variable);
@@ -122,13 +122,13 @@ public class DispatcherVariableProvider implements VariableProvider {
         for (VariableArrayParamsYaml.Variable v : variables) {
             // element of array of variables can't be nullable
             DownloadVariableTask task1 = new DownloadVariableTask(
-                    ref, v.id, v.dataType==DataType.variable ? EnumsApi.VariableContext.local : EnumsApi.VariableContext.global,
+                    core, v.id, v.dataType==DataType.variable ? EnumsApi.VariableContext.local : EnumsApi.VariableContext.global,
                     taskId, taskDir, dispatcherLookup, false);
             downloadVariableService.add(task1);
         }
     }
 
-    private List<AssetFile> prepareArrayVariable(File taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
+    private static List<AssetFile> prepareArrayVariable(File taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.variable);
         List<AssetFile> assetFiles = new ArrayList<>();
         assetFiles.add(assetFile);
@@ -141,7 +141,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         return assetFiles;
     }
 
-    private List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
+    private static List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
         List<VariableArrayParamsYaml.Variable> variables = new ArrayList<>();
         if (assetFile.isContent && !assetFile.isError) {
             String data = FileUtils.readFileToString(assetFile.file, StandardCharsets.UTF_8);
@@ -154,19 +154,19 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Override
     @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
-            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, ref, dispatcher.dispatcherLookup);
+            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
             log.info("Register an upload task for setting a variable #{} as null", outputVariable.id);
-            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariable.id, true, ref, dispatcher.dispatcherLookup);
+            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariable.id, true, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
         }
@@ -179,7 +179,7 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     @Override
     public File getOutputVariableFromFile(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
         File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);

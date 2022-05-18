@@ -25,7 +25,7 @@ import lombok.EqualsAndHashCode;
 import java.io.File;
 
 @Data
-@EqualsAndHashCode(of = {"ref", "variableId", "context"}, callSuper = false)
+@EqualsAndHashCode(of = {"core", "variableId", "context"}, callSuper = false)
 public class DownloadVariableTask extends ProcessorRestTask {
     public final String variableId;
     public final EnumsApi.VariableContext context;
@@ -33,20 +33,20 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final File targetDir;
     public final boolean nullable;
     public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
-    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
+    public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
 
     public DownloadVariableTask(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
-        this(ref, variableId.toString(), context, taskId, targetDir, dispatcher, nullable);
+        this(core, variableId.toString(), context, taskId, targetDir, dispatcher, nullable);
     }
 
     public DownloadVariableTask(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             String variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
-        this.ref = ref;
+        this.core = core;
         this.variableId = variableId;
         this.context = context;
         this.taskId = taskId;

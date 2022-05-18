@@ -56,6 +56,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.data.ProcessorData.*;
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignature;
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignatureInfo;
 
@@ -120,7 +121,7 @@ public class MetadataService {
         }
         fixDispatcherUrls();
         fixProcessorCodes();
-        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
+        for (ProcessorCodeAndIdAndDispatcherUrlRef ref : getAllEnabledRefs()) {
             processorStateByDispatcherUrl(ref);
         }
         resetAllQuotas();
@@ -286,7 +287,7 @@ public class MetadataService {
     }
 */
 
-    public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorCodeAndIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
             MetadataParamsYaml.ProcessorSession processorState = metadata.processorSessions.get(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
@@ -298,7 +299,7 @@ public class MetadataService {
         }
     }
 
-    public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref) {
+    public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref) {
         synchronized (syncObj) {
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
@@ -374,37 +375,40 @@ public class MetadataService {
         }
     }
 
-    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
         return getAllRefs( (du) -> {
             if (du.equals(dispatcherUrl)) {
-                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
-                return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
+                return selectEnabledDispathcersFunc(dispatcherUrl);
             }
             return false;
         } );
     }
 
-    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
-        final Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> set = getAllRefs((du) -> du.equals(dispatcherUrl));
+    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+        final Set<ProcessorCodeAndIdAndDispatcherUrlRef> set = getAllRefs((du) -> du.equals(dispatcherUrl));
         return set;
     }
 
-    public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
+    public Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllCoresForDispatcherUrl(DispatcherUrl dispatcherUrl) {
+        final Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> set = getAllRefsForCores((du) -> du.equals(dispatcherUrl));
+        return set;
+    }
+
+    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
         return getAllRefs( (dispatcherUrl) -> true );
     }
 
-    public Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllEnabledRefsForCores() {
-        return getAllRefsForCores( (dispatcherUrl) -> {
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
-            return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
-        } );
+    public Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllEnabledRefsForCores() {
+        return getAllRefsForCores(this::selectEnabledDispathcersFunc);
     }
 
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefs() {
-        return getAllRefs( (dispatcherUrl) -> {
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
-            return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
-        } );
+        return getAllRefs(this::selectEnabledDispathcersFunc);
+    }
+
+    private boolean selectEnabledDispathcersFunc(DispatcherUrl dispatcherUrl) {
+        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
+        return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
     }
 
     private Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs(Function<DispatcherUrl, Boolean> function) {
@@ -415,21 +419,19 @@ public class MetadataService {
                 if (processorSession ==null) {
                     continue;
                 }
-                for (Map.Entry<String, Long> coreEntry : processorSession.cores.entrySet()) {
-                    final DispatcherUrl dispatcherUrl = new DispatcherUrl(processorEntry.getKey());
-                    if (function.apply(dispatcherUrl)) {
-                        refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                                dispatcherUrl, asCode(dispatcherUrl), processorSession.processorId));
-                    }
+                final DispatcherUrl dispatcherUrl = new DispatcherUrl(processorEntry.getKey());
+                if (function.apply(dispatcherUrl)) {
+                    refs.add( new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                            dispatcherUrl, asCode(dispatcherUrl), processorSession.processorId));
                 }
             }
             return Collections.unmodifiableSet(refs);
         }
     }
 
-    private Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllRefsForCores(Function<DispatcherUrl, Boolean> function) {
+    private Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllRefsForCores(Function<DispatcherUrl, Boolean> function) {
         synchronized (syncObj) {
-            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> refs = new HashSet<>();
+            Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> processorEntry : metadata.processorSessions.entrySet()) {
                 final MetadataParamsYaml.ProcessorSession processorSession = processorEntry.getValue();
                 if (processorSession ==null) {
@@ -438,7 +440,7 @@ public class MetadataService {
                 for (Map.Entry<String, Long> coreEntry : processorSession.cores.entrySet()) {
                     final DispatcherUrl dispatcherUrl = new DispatcherUrl(processorEntry.getKey());
                     if (function.apply(dispatcherUrl)) {
-                        refs.add( new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
+                        refs.add( new ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
                                 dispatcherUrl, asCode(dispatcherUrl), processorSession.processorId, coreEntry.getKey(), coreEntry.getValue()));
                     }
                 }
@@ -454,25 +456,37 @@ public class MetadataService {
     }
 
     @Nullable
-    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(String coreCode, DispatcherUrl dispatcherUrl) {
+    public ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef getCoreRef(String coreCode, DispatcherUrl dispatcherUrl) {
         synchronized (syncObj) {
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             for (Map.Entry<String, Long> core : processorState.cores.entrySet()) {
                 if (!coreCode.equals(core.getKey())) {
                     continue;
                 }
-                return new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(dispatcherUrl, processorState.processorId, coreCode, core.getValue());
+                return new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
+                        dispatcherUrl, processorState.dispatcherCode, processorState.processorId, coreCode, core.getValue());
             }
             return null;
         }
     }
 
-    public void setProcessorIdAndSessionId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String processorId, String sessionId) {
-        if (StringUtils.isBlank(processorId)) {
+    @Nullable
+    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(DispatcherUrl dispatcherUrl) {
+        synchronized (syncObj) {
+            MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
+            return new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
+                    dispatcherUrl, processorState.dispatcherCode, processorState.processorId);
+        }
+    }
+
+    public void setProcessorIdAndSessionId(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, String processorIdStr, String sessionId) {
+        if (StringUtils.isBlank(processorIdStr)) {
             throw new IllegalStateException("#815.180 processorId is null");
         }
+        Long processorId = Long.parseLong(processorIdStr);
+
         synchronized (syncObj) {
-            final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
+            final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;

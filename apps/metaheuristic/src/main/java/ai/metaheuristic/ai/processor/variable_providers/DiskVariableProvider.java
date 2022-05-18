@@ -71,7 +71,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -121,18 +121,18 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
         if (outputVariableFile.exists()) {
             log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
-            processorTaskService.setVariableUploadedAndCompleted(ref, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(core, task.taskId, outputVariable.id);
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
             log.info("The result variable #{} is nullable, no need to upload to dispatcher", outputVariable.id);
-            processorTaskService.setVariableUploadedAndCompleted(ref, task.taskId, outputVariable.id);
+            processorTaskService.setVariableUploadedAndCompleted(core, task.taskId, outputVariable.id);
             return null;
         }
         else {
@@ -145,7 +145,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public File getOutputVariableFromFile(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvParamsYaml env = envService.getEnvParamsYaml();

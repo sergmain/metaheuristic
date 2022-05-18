@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,28 +30,18 @@ import java.util.List;
  * Communication file which is transferred from a dispatcher to a Processor
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 10/03/2019
  * Time: 6:00 PM
  */
 @Data
-public class DispatcherCommParamsYaml implements BaseParams {
+public class DispatcherCommParamsYamlV2 implements BaseParams {
 
-    public final int version=2;
-
-    @Override
-    public boolean checkIntegrity() {
-        for (Core core : response.cores) {
-            if (S.b(core.code)) {
-                throw new CheckIntegrityFailedException("(S.b(core.code))");
-            }
-        }
-        return true;
-    }
+    public final int version=1;
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AssignedTask {
+    public static class AssignedTaskV2 {
         public String params;
         public Long taskId;
         public Long execContextId;
@@ -65,7 +53,7 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssignedProcessorId {
+    public static class AssignedProcessorIdV2 {
         public String assignedProcessorId;
         public String assignedSessionId;
     }
@@ -73,7 +61,7 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignProcessorId {
+    public static class ReAssignProcessorIdV2 {
         public String reAssignedProcessorId;
         public String sessionId;
     }
@@ -81,62 +69,65 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportResultDelivering {
+    public static class ReportResultDeliveringV2 {
         public List<Long> ids;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutput {
+    public static class ResendTaskOutputV2 {
         public Long taskId;
         public Long variableId;
     }
 
     @Data
     @NoArgsConstructor
-    public static class ResendTaskOutputs {
-        public final List<ResendTaskOutput> resends = new ArrayList<>();
+    public static class ResendTaskOutputsV2 {
+        public final List<ResendTaskOutputV2> resends = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestLogFile {
+    public static class RequestLogFileV2 {
         public long requestedOn;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Core {
+    public static class CoreV2 {
         public String code;
         @Nullable
         public Long coreId;
         @Nullable
-        public AssignedTask assignedTask;
+        public DispatcherCommParamsYaml.AssignedTask assignedTask;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DispatcherResponse {
+    public static class DispatcherResponseV2 {
+        public String processorCode;
         @Nullable
-        public AssignedProcessorId assignedProcessorId;
+        public AssignedTaskV2 assignedTask;
         @Nullable
-        public ReAssignProcessorId reAssignedProcessorId;
+        public AssignedProcessorIdV2 assignedProcessorId;
         @Nullable
-        public ReportResultDelivering reportResultDelivering;
+        public ReAssignProcessorIdV2 reAssignedProcessorId;
         @Nullable
-        public ResendTaskOutputs resendTaskOutputs;
+        public ReportResultDeliveringV2 reportResultDelivering;
+        @Nullable
+        public ResendTaskOutputsV2 resendTaskOutputs;
 
-        public final List<Core> cores = new ArrayList<>();
+        public final List<CoreV2> cores = new ArrayList<>();
     }
 
-    public final DispatcherResponse response = new DispatcherResponse();
-
+    public final DispatcherResponseV2 response = new DispatcherResponseV2();
+    
     @Nullable
-    public RequestLogFile requestLogFile;
+    public RequestLogFileV2 requestLogFile;
 
     public boolean success = true;
     public String msg;

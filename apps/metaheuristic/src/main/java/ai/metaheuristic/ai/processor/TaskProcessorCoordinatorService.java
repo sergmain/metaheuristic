@@ -44,6 +44,7 @@ public class TaskProcessorCoordinatorService {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
+    // key -coreCode, value
     private final Map<String, TaskProcessor> taskProcessors = new HashMap<>();
 
     public void fixedDelay() {
@@ -53,12 +54,12 @@ public class TaskProcessorCoordinatorService {
         if (!globals.processor.enabled) {
             return;
         }
-        log.info("#415.020 Start processing task by processors. taskProcessors.size(): {}", taskProcessors.size());
+        log.info("#415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
 
-        for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-            TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( ref.coreCode,
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+            TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
                     o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
-            new Thread(()-> taskProcessor.process(ref), "task-processor-"+ref.coreCode).start();
+            new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
         }
     }
 }
