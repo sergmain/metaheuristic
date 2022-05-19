@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
@@ -111,14 +110,11 @@ public class TestRegisterProcessor {
     public void testRestPayload_asRest() throws Exception {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
 
         DispatcherCommParamsYaml ed = requestServer(processorComm);
 
         assertNotNull(ed);
-        assertEquals(1, ed.responses.size());
-        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = ed.responses.get(0).getAssignedProcessorId();
+        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = ed.response.getAssignedProcessorId();
         assertNotNull(assignedProcessorId);
         assertNotNull(assignedProcessorId.getAssignedProcessorId());
         assertFalse(assignedProcessorId.getAssignedProcessorId().isBlank());
@@ -131,17 +127,16 @@ public class TestRegisterProcessor {
         sessionId = assignedProcessorId.getAssignedSessionId();
 
         processorComm = new ProcessorCommParamsYaml();
-        req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
+        ProcessorCommParamsYaml.ProcessorRequest req = processorComm.request;
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
-        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
+        req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
+        req.cores.add(new ProcessorCommParamsYaml.Core("core-code-1", 113L, new ProcessorCommParamsYaml.RequestTask(false, null)));
         req.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
         ed = requestServer(processorComm);
 
-        assignedProcessorId = ed.responses.get(0).getAssignedProcessorId();
+        assignedProcessorId = ed.response.getAssignedProcessorId();
 
         if (assignedProcessorId!=null) {
             // collect for deletion
@@ -154,14 +149,12 @@ public class TestRegisterProcessor {
 
         ProcessorStatusYaml ss1 = s.getProcessorStatusYaml();
 
-        final KeepAliveRequestParamYaml.ReportProcessor ss = new KeepAliveRequestParamYaml.ReportProcessor (
+        final KeepAliveRequestParamYaml.ProcessorStatus ss = new KeepAliveRequestParamYaml.ProcessorStatus (
                 new KeepAliveRequestParamYaml.Env(),
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
-                sessionId,
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false,
-                1, EnumsApi.OS.unknown, null);
+                "[unknown]", "[unknown]", false,
+                1, EnumsApi.OS.unknown, null, null);
 
         ss.currDir = ss1.currDir;
         ss1.schedule = ss.schedule;
@@ -201,7 +194,6 @@ public class TestRegisterProcessor {
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
         final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.requests.add(new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE));
 
         final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 

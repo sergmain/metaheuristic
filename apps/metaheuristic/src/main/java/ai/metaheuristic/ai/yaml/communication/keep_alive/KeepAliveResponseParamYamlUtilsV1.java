@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class KeepAliveResponseParamYamlUtilsV1 extends
-        AbstractParamsYamlUtils<KeepAliveResponseParamYamlV1, KeepAliveResponseParamYaml, Void, Void, Void, Void> {
+        AbstractParamsYamlUtils<KeepAliveResponseParamYamlV1, KeepAliveResponseParamYamlV2, KeepAliveResponseParamYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -44,53 +43,8 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
 
     @NonNull
     @Override
-    public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1) {
-        KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
-
-        if( v1.dispatcherInfo !=null ) {
-            t.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo();
-            t.dispatcherInfo.chunkSize = v1.dispatcherInfo.chunkSize;
-            t.dispatcherInfo.processorCommVersion = v1.dispatcherInfo.processorCommVersion;
-        }
-        if (!v1.functions.infos.isEmpty()) {
-            t.functions.infos.addAll( v1.functions.infos
-                            .stream()
-                            .map(o->new KeepAliveResponseParamYaml.Functions.Info (o.code, o.sourcing))
-                            .collect(Collectors.toList())
-                    );
-        }
-        if (v1.execContextStatus !=null) {
-            t.execContextStatus = new KeepAliveResponseParamYaml.ExecContextStatus();
-            v1.execContextStatus.statuses
-                    .stream()
-                    .map(o -> new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(o.id, o.state))
-                    .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
-        }
-        for (KeepAliveResponseParamYamlV1.DispatcherResponseV1 r : v1.responses) {
-
-            KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
-            t.responses.add(response);
-
-            response.processorCode = r.processorCode;
-
-            if (r.assignedProcessorId !=null) {
-                response.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
-                        r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);
-            }
-            if (r.reAssignedProcessorId !=null) {
-                response.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
-                        r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
-            }
-
-            if (r.requestLogFile!=null) {
-                response.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(r.requestLogFile.requestedOn);
-            }
-        }
-
-        t.success = v1.success;
-        t.msg = v1.msg;
-
-        return t;
+    public KeepAliveResponseParamYamlV2 upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1) {
+        throw new UpgradeNotSupportedException("upgrade to latest version of ");
     }
 
     @NonNull
@@ -100,8 +54,8 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public KeepAliveResponseParamYamlUtilsV2 nextUtil() {
+        return (KeepAliveResponseParamYamlUtilsV2) KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

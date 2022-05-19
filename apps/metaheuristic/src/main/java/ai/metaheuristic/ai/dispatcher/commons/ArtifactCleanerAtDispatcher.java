@@ -103,13 +103,15 @@ public class ArtifactCleanerAtDispatcher {
 
     public void fixedDelay() {
         TxUtils.checkTxNotExists();
+
+        deleteOrphanExecContexts();
+
         if (isBusy()) {
             return;
         }
 
         // do not change the order of calling
         deleteOrphanAndObsoletedBatches();
-        deleteOrphanExecContexts();
         deleteOrphanTasks();
         deleteOrphanVariables();
         deleteOrphanCacheData();
@@ -197,7 +199,11 @@ public class ArtifactCleanerAtDispatcher {
 
     private void deleteOrphanExecContexts() {
         List<Long> execContextIds = execContextRepository.findAllIds();
+
+        // execContext mus be deleted without checking isBusy() because we need to terminate all running tasks
+        // all running tasks at processor will be terminated only if a related ExecContext doesn't exist
         deleteOrphanExecContexts(execContextIds);
+
         if (isBusy()) {
             return;
         }

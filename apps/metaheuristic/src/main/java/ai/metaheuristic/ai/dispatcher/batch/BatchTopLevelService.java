@@ -283,8 +283,8 @@ public class BatchTopLevelService {
             File tempFile;
             try {
                 tempFile = File.createTempFile("mh-temp-file-for-processing-", ".bin", tempDir);
-                try (OutputStream os = Files.newOutputStream(tempFile.toPath())) {
-                    IOUtils.copy(file.getInputStream(), os, 128_000);
+                try (InputStream is = file.getInputStream(); OutputStream os = Files.newOutputStream(tempFile.toPath())) {
+                    IOUtils.copy(is, os, 128_000);
                 }
 //                file.transferTo(tempFile);
                 if (file.getSize()!=tempFile.length()) {

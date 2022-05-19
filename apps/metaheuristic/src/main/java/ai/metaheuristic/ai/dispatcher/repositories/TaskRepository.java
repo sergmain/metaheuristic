@@ -65,15 +65,15 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
-            "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
+            "where t.coreId=:processorId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     // IN_PROGRESS(1)
-    @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.processorId=:processorId and t.execState=1")
+    @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.coreId=:processorId and t.execState=1")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findExecStateByProcessorId(Long processorId);
 
-    @Query(value="select t.id from TaskImpl t where t.processorId=:processorId")
+    @Query(value="select t.id from TaskImpl t where t.coreId=:processorId")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findTaskIdsForProcessorId(Long processorId);
 
@@ -81,11 +81,11 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findExecStateByExecContextId(Long execContextId);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t.id FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
+    @Query("SELECT t.id FROM TaskImpl t where t.coreId is null and t.execContextId=:execContextId and (t.execState=0 or t.execState=6) and t.id in :ids")
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
+    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
     List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
 

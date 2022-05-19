@@ -21,12 +21,14 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -35,7 +37,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -52,80 +53,29 @@ public class KeepAliveTopLevelService {
     private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
     private final FunctionTopLevelService functionTopLevelService;
-    private final ProcessorTransactionService processorService;
-    private final ExecContextStatusService execContextStatusService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreCache processorCoreCache;
 
-    public void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
+    private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
-        keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 
-    public void processLogRequest(Long processorId, KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse) {
-        dispatcherResponse.requestLogFile = processorTopLevelService.processLogRequest(processorId);
-    }
-
-    public void processGetNewProcessorId(KeepAliveRequestParamYaml.ProcessorRequest processorRequest, KeepAliveResponseParamYaml.DispatcherResponse response) {
-        response.assignedProcessorId = getNewProcessorId(processorRequest.requestProcessorId);
-    }
-
-    @Nullable
-    private KeepAliveResponseParamYaml.AssignedProcessorId getNewProcessorId(@Nullable KeepAliveRequestParamYaml.RequestProcessorId request) {
-        if (request==null) {
-            return null;
-        }
-        DispatcherApiData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
-        return new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
-    }
+//    public void processLogRequest(Long processorId, KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse) {
+//        dispatcherResponse.requestLogFile = processorTopLevelService.processLogRequest(processorId);
+//    }
+//
 
     public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
+        resp.response.processorCode = req.processor.processorCode;
         try {
-            for (KeepAliveRequestParamYaml.ProcessorRequest processorRequest : req.requests) {
-                KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = new KeepAliveResponseParamYaml.DispatcherResponse(processorRequest.processorCode);
-                resp.responses.add(dispatcherResponse);
-
-                if (processorRequest.processorCommContext == null) {
-                    dispatcherResponse.assignedProcessorId = getNewProcessorId(new KeepAliveRequestParamYaml.RequestProcessorId());
-                    continue;
-                }
-                if (processorRequest.processorCommContext.processorId == null) {
-                    log.warn("#446.100 StringUtils.isBlank(processorId), return RequestProcessorId()");
-                    DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                    dispatcherResponse.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
-                    continue;
-                }
-
-                final Processor processor = processorCache.findById(processorRequest.processorCommContext.processorId);
-                if (processor == null) {
-                    log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                    // no need of syncing for creation of new Processor
-                    DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
-                    dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-
-                Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
-                if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
-                    DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
-                            ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
-
-                    if (processorSessionId != null) {
-                        dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                        continue;
-                    }
-                }
-                log.debug("Start processing commands");
-                processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
-                processGetNewProcessorId(processorRequest, dispatcherResponse);
-//                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
-
-                if (System.currentTimeMillis() - startMills > 12_000) {
-                    break;
-                }
+            Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
+            if (System.currentTimeMillis() - startMills < 12_000) {
+                processInfoAboutCores(processorId, req, startMills, resp);
             }
             initDispatcherInfo(resp);
         } catch (Throwable th) {
@@ -142,6 +92,64 @@ public class KeepAliveTopLevelService {
             resp.msg = th.getMessage();
         }
         return resp;
+    }
+
+    private Long processInfoAboutProcessor(KeepAliveRequestParamYaml req, String remoteAddress, KeepAliveResponseParamYaml resp) {
+        KeepAliveRequestParamYaml.Processor processorRequest = req.processor;
+        KeepAliveResponseParamYaml.DispatcherResponse dispatcherResponse = resp.response;
+
+        if (processorRequest.processorCommContext == null || processorRequest.processorCommContext.processorId==null) {
+            DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+            dispatcherResponse.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(processorSessionId.processorId, processorSessionId.sessionId);
+            return dispatcherResponse.assignedProcessorId.getAssignedProcessorId();
+        }
+
+        final Processor processor = processorCache.findById(processorRequest.processorCommContext.processorId);
+        if (processor == null) {
+            log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            // no need of syncing for creation of new Processor
+            DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
+            dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+            return processorSessionId.processorId;
+        }
+
+        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
+        if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
+            DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
+                    ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+
+            if (processorSessionId != null) {
+                dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+                return processorSessionId.processorId;
+            }
+        }
+        log.debug("Start processing commands");
+        processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
+//                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
+
+        return processorRequest.processorCommContext.processorId;
+    }
+
+    private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
+        for (KeepAliveRequestParamYaml.Core core : req.cores) {
+            if (core.coreId == null) {
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
+                continue;
+            }
+
+            final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
+            if (processorCore == null || !processorCore.processorId.equals(processorId)) {
+                log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+                // no need of syncing for creation of new Processor
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
+                continue;
+            }
+            resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));
+
+            if (System.currentTimeMillis() - startMills > 12_000) {
+                break;
+            }
+        }
     }
 
 

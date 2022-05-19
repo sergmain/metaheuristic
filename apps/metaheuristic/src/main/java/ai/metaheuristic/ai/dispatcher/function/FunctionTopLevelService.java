@@ -21,11 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -61,7 +63,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
-import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.*;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
+import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
 @Service
 @Slf4j
@@ -260,8 +263,8 @@ public class FunctionTopLevelService {
             final File zipFile = new File(tempDir, "functions" + ext);
             log.debug("Start storing an uploaded function to disk");
             long size;
-            try(OutputStream os = new FileOutputStream(zipFile)) {
-                size = IOUtils.copy(file.getInputStream(), os, 64000);
+            try (InputStream is = file.getInputStream(); OutputStream os = new FileOutputStream(zipFile)) {
+                size = IOUtils.copy(is, os, 64000);
                 os.flush();
             }
             log.debug("Uploaded bytes: {}, stored: {}", file.getSize(), size);

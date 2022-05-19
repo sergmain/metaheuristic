@@ -36,7 +36,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -107,16 +109,27 @@ public class EnvService {
                         System.out.println("!!!");
                         System.out.println("!!! ======================================================================================================");
                         System.out.println("!!!");
-                        System.out.println("!!! Verifiation of environment was failed. Error while executing " + params);
+                        System.out.println("!!! Verification of environment was failed. Error while executing " + params);
                         System.out.println("!!! Error: " + result.error);
                         System.out.println("!!!");
                         System.out.println("!!! ======================================================================================================");
                         System.out.println("!!!");
                         System.out.println("!!!");
-                        throw new IllegalStateException("Verifiation of environment was failed, error: " + result.error);
+                        throw new IllegalStateException("Verification of environment was failed, error: " + result.error);
                     }
                 }
             }
+        }
+        verifyCoreCodes(envYaml);
+    }
+
+    private static void verifyCoreCodes(EnvParamsYaml envYaml) {
+        Set<String> codes = new HashSet<>();
+        for (EnvParamsYaml.Core core : envYaml.cores) {
+            if (codes.contains(core.code)) {
+                throw new IllegalStateException("Core with code "+core.code+" present more than once");
+            }
+            codes.add(core.code);
         }
     }
 
@@ -125,9 +138,9 @@ public class EnvService {
     }
 
     @Nullable
-    public String getTags(String processorCode) {
+    public String getTags(String coreCode) {
         synchronized (this) {
-            return envYaml.processors.stream().filter(o->o.code.equals(processorCode)).findFirst().map(o->o.tags).orElse(null);
+            return envYaml.cores.stream().filter(o->o.code.equals(coreCode)).findFirst().map(o->o.tags).orElse(null);
         }
     }
 }

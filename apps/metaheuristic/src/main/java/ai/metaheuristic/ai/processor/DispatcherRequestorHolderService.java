@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.env.EnvService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class DispatcherRequestorHolderService {
             CurrentExecState currentExecState,
             DispatcherLookupExtendedService dispatcherLookupExtendedService,
             ProcessorCommandProcessor processorCommandProcessor,
-            ProcessorKeepAliveProcessor processorKeepAliveProcessor
+            ProcessorKeepAliveProcessor processorKeepAliveProcessor, EnvService envService
     ) {
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
@@ -66,7 +67,7 @@ public class DispatcherRequestorHolderService {
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals,
                     processorService, metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor);
+                    processorKeepAliveProcessor, envService);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
         }

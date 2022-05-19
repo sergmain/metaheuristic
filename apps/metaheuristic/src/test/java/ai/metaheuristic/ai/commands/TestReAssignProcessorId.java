@@ -71,17 +71,13 @@ public class TestReAssignProcessorId {
     @BeforeEach
     public void before() {
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.responses);
-        assertEquals(1, d.responses.size());
-        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.response.getAssignedProcessorId();
         assertNotNull(assignedProcessorId);
         assertNotNull(assignedProcessorId.assignedProcessorId);
         assertNotNull(assignedProcessorId.assignedSessionId);
@@ -113,19 +109,17 @@ public class TestReAssignProcessorId {
         // in this scenario we test that processor has got a new re-assigned processorId
 
         KeepAliveRequestParamYaml processorCommParamsYaml = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.ProcessorRequest processorComm = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorCommParamsYaml.requests.add(processorComm);
+        KeepAliveRequestParamYaml.Processor processorComm = processorCommParamsYaml.processor;
+        processorComm.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
-        processorComm.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
+        processorComm.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore, sessionIdBefore.substring(0, 4));
         final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorCommParamsYaml);
         String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
 
         KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.responses);
-        assertFalse(d.responses.isEmpty());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.responses.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.response.getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);

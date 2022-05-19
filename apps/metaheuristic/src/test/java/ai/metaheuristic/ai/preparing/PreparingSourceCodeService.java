@@ -139,16 +139,16 @@ public class PreparingSourceCodeService {
      * this method must be called after   produceTasks() and after toStarted()
      * @return
      */
-    public String step_1_0_init_session_id(@Nullable String processorIdAsStr) {
-        if (processorIdAsStr==null) {
-            throw new IllegalStateException("(processorIdAsStr==null)");
+    public String step_1_0_init_session_id(@Nullable Long processorId) {
+        if (processorId==null) {
+            throw new IllegalStateException("(processorId==null)");
         }
         String sessionId;
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
-        KeepAliveRequestParamYaml.ProcessorRequest req = new KeepAliveRequestParamYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
+        KeepAliveRequestParamYaml.Processor req = processorComm.processor;
+        req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
-        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAsStr, null);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, null);
 
         final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
@@ -156,12 +156,11 @@ public class PreparingSourceCodeService {
         KeepAliveResponseParamYaml d0 = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d0);
-        assertNotNull(d0.responses);
-        assertEquals(1, d0.responses.size());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.responses.get(0).getReAssignedProcessorId();
+        assertNotNull(d0.response);
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.response.getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);
-        assertEquals(processorIdAsStr, reAssignedProcessorId.reAssignedProcessorId);
+        assertEquals(processorId.toString(), reAssignedProcessorId.reAssignedProcessorId);
 
         sessionId = reAssignedProcessorId.sessionId;
         return sessionId;
@@ -174,22 +173,19 @@ public class PreparingSourceCodeService {
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
         karpy.functions.statuses = asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction());
 
-        KeepAliveRequestParamYaml.ProcessorRequest pr = new KeepAliveRequestParamYaml.ProcessorRequest();
+        KeepAliveRequestParamYaml.Processor pr = karpy.processor;
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");
         env.envs.put("python-3", "/path/to/python-3");
 
-        pr.processor = new KeepAliveRequestParamYaml.ReportProcessor(
+        pr.status = new KeepAliveRequestParamYaml.ProcessorStatus(
                 env,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
-                sessionId,
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, true,
-                1, EnumsApi.OS.unknown, "/users/yyy");
-        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        karpy.requests.add(pr);
+                "[unknown]", "[unknown]", true,
+                1, EnumsApi.OS.unknown, "/users/yyy", null);
+        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(preparingCodeData.processor.getId(), sessionId);
 
         String yamlRequest = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karpy);
         String yamlResponse = serverService.keepAlive(yamlRequest, "127.0.0.1");
@@ -200,7 +196,7 @@ public class PreparingSourceCodeService {
     private static List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
         List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> list = new ArrayList<>();
         for (Function function : f) {
-            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, Enums.FunctionState.ready));
+            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, EnumsApi.FunctionState.ready));
         }
         return list;
     }

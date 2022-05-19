@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor.event;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import lombok.AllArgsConstructor;
 
 /**
@@ -27,6 +26,6 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class AssetPreparingForProcessorTaskEvent {
-    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
+    public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
     public final Long taskId;
 }

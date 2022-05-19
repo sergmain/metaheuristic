@@ -71,7 +71,7 @@ public class TestQuotasUtils {
     @Test
     public void test_getQuotaAmount() {
 
-//        public static Integer getQuotaAmount(ProcessorStatusYaml.Quotas processorQuotas, @Nullable String tag) {
+//        public static Integer getQuotaAmount(CoreStatusYaml.Quotas processorQuotas, @Nullable String tag) {
         assertEquals(Enums.QuotaAllocation.disabled, QuotasUtils.getQuotaAmount(get(true), null).quotaAllocation);
 
         QuotasData.ActualQuota quotaAmount = QuotasUtils.getQuotaAmount(get(false, 100, 42), null);

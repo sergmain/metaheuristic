@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
@@ -31,11 +30,11 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
@@ -64,34 +63,31 @@ public class ProcessorService {
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final UploadVariableService uploadResourceActor;
-    private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final EnvService envService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
+    private final MetadataService metadataService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
     public File logFile;
 
-    KeepAliveRequestParamYaml.ReportProcessor produceReportProcessorStatus(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherSchedule schedule) {
+    KeepAliveRequestParamYaml.ProcessorStatus produceReportProcessorStatus(DispatcherSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
         // TODO 2020-11-14 or it's about using TimeZoned value?
 
-        final File processorFile = new File(globals.processor.dir.dir, ref.processorCode);
-        KeepAliveRequestParamYaml.ReportProcessor status = new KeepAliveRequestParamYaml.ReportProcessor(
-                to(envService.getEnvParamsYaml(), envService.getTags(ref.processorCode)),
+        KeepAliveRequestParamYaml.ProcessorStatus status = new KeepAliveRequestParamYaml.ProcessorStatus(
+                to(envService.getEnvParamsYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
-                metadataService.getSessionId(ref.processorCode, ref.dispatcherUrl),
-                System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null,
+                "[unknown]", "[unknown]",
                 logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
-                globals.os, processorFile.getAbsolutePath());
+                globals.os, globals.processor.dir.dir.getAbsolutePath(), null);
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
@@ -105,18 +101,22 @@ public class ProcessorService {
         return status;
     }
 
-    private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml, @Nullable String tags) {
-        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env(tags);
+    private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {
+        KeepAliveRequestParamYaml.Env t = new KeepAliveRequestParamYaml.Env();
         t.mirrors.putAll(envYaml.mirrors);
         envYaml.envs.forEach(env -> t.envs.put(env.code, env.exec));
-        t.quotas.limit = envYaml.quotas.limit;
-        t.quotas.disabled = envYaml.quotas.disabled;
-        t.quotas.defaultValue = envYaml.quotas.defaultValue;
+        envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
+        initQuotas(envYaml, t.quotas);
+        return t;
+    }
+
+    private static void initQuotas(EnvParamsYaml envYaml, KeepAliveRequestParamYaml.Quotas t) {
+        t.limit = envYaml.quotas.limit;
+        t.disabled = envYaml.quotas.disabled;
+        t.defaultValue = envYaml.quotas.defaultValue;
         envYaml.quotas.values.stream()
                 .map(o->new KeepAliveRequestParamYaml.Quota(o.tag, o.amount, DispatcherSchedule.createDispatcherSchedule(o.processingTime).isCurrentTimeInactive()))
-                .collect(Collectors.toCollection(()->t.quotas.values));
-        envYaml.disk.stream().map(o->new KeepAliveRequestParamYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(() -> t.disk));
-        return t;
+                .collect(Collectors.toCollection(()->t.values));
     }
 
     /**
@@ -127,38 +127,55 @@ public class ProcessorService {
      * @param ids List&lt;String> list if task ids
      */
     public void markAsDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<Long> ids) {
-        for (Long id : ids) {
-            processorTaskService.setDelivered(ref, id);
+        for (Long taskId : ids) {
+            String coreCode = processorTaskService.findCoreCodeWithTaskId(taskId);
+            if (coreCode==null) {
+                continue;
+            }
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            if (core==null) {
+                continue;
+            }
+            processorTaskService.setDelivered(core, taskId);
         }
     }
 
-    public void assignTasks(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.AssignedTask task) {
+    public void assignTasks(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask task) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            currentExecState.registerDelta(ref.dispatcherUrl, List.of(new KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus(task.execContextId, task.state)));
-            processorTaskService.createTask(ref, task);
+            currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
+            processorTaskService.createTask(core, task);
         }
     }
 
+    @Nullable
     public List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> getResendTaskOutputResourceResultStatus(
             ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
         if (response.resendTaskOutputs==null || response.resendTaskOutputs.resends.isEmpty()) {
-            return List.of();
+            return null;
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (DispatcherCommParamsYaml.ResendTaskOutput output : response.resendTaskOutputs.resends) {
-            Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(ref, output.taskId, output.variableId);
+            String coreCode = processorTaskService.findCoreCodeWithTaskId(output.taskId);
+            if (coreCode==null) {
+                continue;
+            }
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            if (core==null) {
+                continue;
+            }
+            Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(core, output.taskId, output.variableId);
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return statuses;
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, Long variableId) {
-        ProcessorTask task = processorTaskService.findById(ref, taskId);
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long variableId) {
+        ProcessorCoreTask task = processorTaskService.findByIdForCore(core, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(ref, taskId);
+        File taskDir = processorTaskService.prepareTaskDir(core, taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -167,17 +184,15 @@ public class ProcessorService {
             Enums.ResendTaskOutputResourceStatus status;
             switch (outputVariable.sourcing) {
                 case dispatcher:
-                    status = scheduleSendingToDispatcher(ref, taskId, taskDir, outputVariable);
+                    status = scheduleSendingToDispatcher(core, taskId, taskDir, outputVariable);
                     break;
                 case disk:
                 case git:
                 case inline:
                 default:
-                    if (true) {
-                        throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
-                    }
-                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
-                    break;
+                    throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
+//                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
+//                    break;
             }
             if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
                 return status;
@@ -186,23 +201,23 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
-            processorTaskService.markAsFinishedWithError(ref, taskId,
+            processorTaskService.markAsFinishedWithError(core, taskId,
                     "#749.050 Variable #"+outputVariable.id+" wasn't found. Considering that this task is broken");
 
-            processorTaskService.setCompleted(ref, taskId);
+            processorTaskService.setCompleted(core, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
 
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(ref.dispatcherUrl);
+                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
-        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, ref, dispatcher.dispatcherLookup);
+        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, core, dispatcher.dispatcherLookup);
         uploadResourceActor.add(uploadResourceTask);
 
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
@@ -216,11 +231,11 @@ public class ProcessorService {
     }
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
-        if (!ref.dispatcherUrl.url.equals(task.dispatcherUrl)) {
-            throw new IllegalStateException("(!ref.dispatcherUrl.url.equals(task.dispatcherUrl))");
+        if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
+            throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
         }
         try {
             taskParamYaml.task.inputs.forEach(input -> {
@@ -231,7 +246,7 @@ public class ProcessorService {
                 }
 
                 // the method prepareForDownloadingVariable() is creating a list dynamically. So don't cache the result
-                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(ref, taskDir, dispatcher, task, processorState, input);
+                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(core, taskDir, dispatcher, task, processorState, input);
                 for (AssetFile assetFile : assetFiles) {
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
@@ -242,13 +257,13 @@ public class ProcessorService {
             });
         }
         catch (BreakFromLambdaException e) {
-            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.getMessage());
+            processorTaskService.markAsFinishedWithError(core, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (VariableProviderException e) {
             log.error("#749.070 Error", e);
-            processorTaskService.markAsFinishedWithError(ref, task.taskId, e.toString());
+            processorTaskService.markAsFinishedWithError(core, task.taskId, e.toString());
             result.isError = true;
             return result;
         }
@@ -257,7 +272,7 @@ public class ProcessorService {
         }
         if (!result.isAllLoaded) {
             if (task.assetsPrepared) {
-                processorTaskService.markAsAssetPrepared(ref, task.taskId, false);
+                processorTaskService.markAsAssetPrepared(core, task.taskId, false);
             }
             result.isError = true;
             return result;
@@ -267,17 +282,17 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputVariableFromFile(ref, taskDir, dispatcher, task, outputVariable);
+                File outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
-                final String msg = "#749.080 Error: " + e.toString();
+                final String msg = "#749.080 Error: " + e.getMessage();
                 log.error(msg, e);
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, msg);
+                processorTaskService.markAsFinishedWithError(core, task.taskId, msg);
                 return false;
             }
         }

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.processor_status;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -24,6 +23,7 @@ import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,19 +34,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class ProcessorStatusYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
         return true;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DownloadStatus {
-        public Enums.FunctionState functionState;
-        public String functionCode;
     }
 
     @Data
@@ -93,19 +85,15 @@ public class ProcessorStatusYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class Env {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
         public final List<DiskStorage> disk = new ArrayList<>();
-
-        @Nullable
-        public String tags;
-
         public final Quotas quotas = new Quotas();
     }
 
-    public List<DownloadStatus> downloadStatuses = new ArrayList<>();
+    // key - code of function, value - stae of function
+    public Map<String, EnumsApi.FunctionState> functions = new HashMap<>();
 
     @Nullable
     public Env env;
@@ -118,37 +106,23 @@ public class ProcessorStatusYaml implements BaseParams {
     //  need to change to UTC, Coordinated Universal Time
     // TODO 2020-10-11 actually, it's working in prod with multi-time-zoned.
     //  So need to decide about implementing the support of UTC
+    // TODO 2022-04-30 actually, it isn't working correctly in multi-timezone environment
+    //  tasks have been loosing periodically
     public long sessionCreatedOn;
     public String ip;
     public String host;
 
     // contains text of error which can occur while preparing a processor status
+    @Nullable
     public List<String> errors = null;
     public boolean logDownloadable;
     public int taskParamsVersion;
     public EnumsApi.OS os;
 
-    @Nullable
     public String currDir;
 
     @Nullable
     public Log log;
-
-    @Deprecated(forRemoval = true)
-    @Nullable
-    private String taskIds;
-
-    @Deprecated(forRemoval = true)
-    @Nullable
-    public String getTaskIds() {
-        return taskIds;
-    }
-
-    @Deprecated(forRemoval = true)
-    @SuppressWarnings("MethodMayBeStatic")
-    public void setTaskIds(@Nullable String taskIds) {
-        throw new IllegalStateException("taskIds isn't used any more");
-    }
 
     public void addError(String error) {
         if (errors==null) {
@@ -156,4 +130,5 @@ public class ProcessorStatusYaml implements BaseParams {
         }
         errors.add(error);
     }
+
 }

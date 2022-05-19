@@ -46,51 +46,11 @@ public final class Enums {
 
     public enum AssetType { company, account, function, source}
 
-    public enum FunctionState {
-        // state is unknown, task for downloading of function is just created
-        none(true),
-        // asset file for function exists and we need to check checksum and signature, if they are presented
-        ok(true),
-        // function is ready for executing
-        ready,
-
-        not_found,
-        not_supported_os,
-        asset_error,
-        download_error,
-        function_config_error,
-        io_error,
-        dispatcher_config_error,
-        signature_wrong,
-        checksum_wrong,
-        // not used anymore, left there for backward compatibility
-        signature_not_found;
-
-        public boolean needVerification = false;
-        FunctionState() {
-        }
-
-        FunctionState(boolean needVerification) {
-            this.needVerification = needVerification;
-        }
-    }
-
-    /*
-    public enum VerificationState { not_yet(false), error(true), ok(true);
-
-        public boolean completed;
-
-        VerificationState(boolean completed) {
-            this.completed = completed;
-        }
-    }
-*/
-
     public enum GitStatus {unknown, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
-    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null }
+    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null, variable_is_null }
 
     public enum UploadVariableStatus {
         OK,

@@ -494,10 +494,10 @@ public class BatchResultProcessorTxService {
         final String processorIpAndHost;
         String processorId;
         if (tpy.task.context== EnumsApi.FunctionExecContext.external) {
-            processorId = S.f("processorId: %s", task.getProcessorId());
+            processorId = S.f("processorId: %s", task.getCoreId());
             Processor s = null;
-            if (task.getProcessorId() != null) {
-                s = processorCache.findById(task.getProcessorId());
+            if (task.getCoreId() != null) {
+                s = processorCache.findById(task.getCoreId());
             }
             processorIpAndHost = getProcessorIpAndHost(s);
         }
@@ -577,7 +577,7 @@ public class BatchResultProcessorTxService {
 
         final String header =
                 S.f("#993.400 Task #%s was completed with an error, , status: %s, execContextId: %s, processorId: %s, %s\n\n",
-                        task.id, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost);
+                        task.id, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getCoreId(), processorIpAndHost);
 
         StringBuilder sb = new StringBuilder(header);
         if (functionExec.generalExec!=null) {

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.metadata;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -42,7 +41,7 @@ public class FunctionDownloadStatusYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Status {
-        public Enums.FunctionState functionState;
+        public EnumsApi.FunctionState functionState;
         public String code;
 
         // actually this is assetManagerUrl. left it here for backward compatibility

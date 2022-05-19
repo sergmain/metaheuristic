@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 4/21/2022
  * Time: 5:16 PM
  */
+@Disabled
 class AttentionUtils {
 
     private static final String EPOCH = "epochs";

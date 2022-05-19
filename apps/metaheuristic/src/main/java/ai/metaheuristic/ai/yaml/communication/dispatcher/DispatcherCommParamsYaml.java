@@ -38,16 +38,13 @@ import java.util.List;
 @Data
 public class DispatcherCommParamsYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
-        if (responses.isEmpty()) {
-            throw new CheckIntegrityFailedException("responses.isEmpty()");
-        }
-        for (DispatcherResponse response : responses) {
-            if (S.b(response.processorCode)) {
-                throw new CheckIntegrityFailedException("(S.b(response.processorCode))");
+        for (Core core : response.cores) {
+            if (S.b(core.code)) {
+                throw new CheckIntegrityFailedException("(S.b(core.code))");
             }
         }
         return true;
@@ -79,10 +76,6 @@ public class DispatcherCommParamsYaml implements BaseParams {
     public static class ReAssignProcessorId {
         public String reAssignedProcessorId;
         public String sessionId;
-
-        public ReAssignProcessorId(Long processorId, String sessionId) {
-            this(Long.toString(processorId), sessionId);
-        }
     }
 
     @Data
@@ -116,21 +109,34 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class DispatcherResponse {
-        public String processorCode;
-        public @Nullable AssignedTask assignedTask;
-        public @Nullable AssignedProcessorId assignedProcessorId;
-        public @Nullable ReAssignProcessorId reAssignedProcessorId;
-        public @Nullable ReportResultDelivering reportResultDelivering;
-        public @Nullable ResendTaskOutputs resendTaskOutputs;
-
-        public DispatcherResponse(String processorCode) {
-            this.processorCode = processorCode;
-        }
+    public static class Core {
+        public String code;
+        @Nullable
+        public Long coreId;
+        @Nullable
+        public AssignedTask assignedTask;
     }
 
-    public final List<DispatcherResponse> responses = new ArrayList<>();
-    public @Nullable RequestLogFile requestLogFile;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DispatcherResponse {
+        @Nullable
+        public AssignedProcessorId assignedProcessorId;
+        @Nullable
+        public ReAssignProcessorId reAssignedProcessorId;
+        @Nullable
+        public ReportResultDelivering reportResultDelivering;
+        @Nullable
+        public ResendTaskOutputs resendTaskOutputs;
+
+        public final List<Core> cores = new ArrayList<>();
+    }
+
+    public final DispatcherResponse response = new DispatcherResponse();
+
+    @Nullable
+    public RequestLogFile requestLogFile;
 
     public boolean success = true;
     public String msg;

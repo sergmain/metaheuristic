@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ProcessorStatusYamlUtilsV2
-        extends AbstractParamsYamlUtils<ProcessorStatusYamlV2, ProcessorStatusYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ProcessorStatusYamlV2, ProcessorStatusYamlV3, ProcessorStatusYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -45,18 +45,16 @@ public class ProcessorStatusYamlUtilsV2
 
     @NonNull
     @Override
-    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV2 src) {
+    public ProcessorStatusYamlV3 upgradeTo(@NonNull ProcessorStatusYamlV2 src) {
         src.checkIntegrity();
-        ProcessorStatusYaml trg = new ProcessorStatusYaml();
-        trg.downloadStatuses = src.downloadStatuses.stream()
-                .map( source -> new ProcessorStatusYaml.DownloadStatus(source.functionState,source.functionCode))
-                .collect(Collectors.toList());
+        ProcessorStatusYamlV3 trg = new ProcessorStatusYamlV3();
+        src.downloadStatuses.forEach(o->trg.functions.put(o.functionCode, o.functionState));
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);
         }
         trg.env = getEnv(src.env);
         if (src.log!=null) {
-            trg.log = new ProcessorStatusYaml.Log(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
+            trg.log = new ProcessorStatusYamlV3.LogV3(src.log.logRequested, src.log.requestedOn, src.log.logReceivedOn);
         }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors", "taskIds");
         trg.checkIntegrity();
@@ -64,13 +62,12 @@ public class ProcessorStatusYamlUtilsV2
     }
 
     @Nullable
-    private static ProcessorStatusYaml.Env getEnv(@Nullable ProcessorStatusYamlV2.EnvV2 envSrc) {
+    private static ProcessorStatusYamlV3.EnvV3 getEnv(@Nullable ProcessorStatusYamlV2.EnvV2 envSrc) {
         if (envSrc==null) {
             return null;
         }
 
-        ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
-        env.tags = envSrc.tags;
+        ProcessorStatusYamlV3.EnvV3 env = new ProcessorStatusYamlV3.EnvV3();
 
         if (!envSrc.envs.isEmpty()) {
             final Map<String, String> envMap = envSrc.envs.entrySet().stream()
@@ -80,7 +77,7 @@ public class ProcessorStatusYamlUtilsV2
 
         if (!envSrc.disk.isEmpty()) {
             env.disk.addAll(envSrc.disk.stream()
-                    .map(d -> new ProcessorStatusYaml.DiskStorage(d.code, d.path))
+                    .map(d -> new ProcessorStatusYamlV3.DiskStorageV3(d.code, d.path))
                     .collect(Collectors.toList()));
         }
         if (!envSrc.mirrors.isEmpty()) {
@@ -88,7 +85,7 @@ public class ProcessorStatusYamlUtilsV2
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
             env.mirrors.putAll(mirrorMap);
         }
-        envSrc.quotas.values.stream().map(o->new ProcessorStatusYaml.Quota(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
+        envSrc.quotas.values.stream().map(o->new ProcessorStatusYamlV3.QuotaV3(o.tag, o.amount, o.disabled)).collect(Collectors.toCollection(()->env.quotas.values));
         env.quotas.limit = envSrc.quotas.limit;
         env.quotas.disabled = envSrc.quotas.disabled;
         env.quotas.defaultValue = envSrc.quotas.defaultValue;
@@ -102,8 +99,8 @@ public class ProcessorStatusYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ProcessorStatusYamlUtilsV3 nextUtil() {
+        return (ProcessorStatusYamlUtilsV3) ProcessorStatusYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     @Override

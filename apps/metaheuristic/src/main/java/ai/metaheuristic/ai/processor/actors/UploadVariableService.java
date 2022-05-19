@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -102,15 +102,15 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         while((task = poll())!=null) {
             final UploadVariableTask finalTask = task;
 
-            ProcessorTask processorTask = processorTaskService.findById(task.ref, task.taskId);
+            ProcessorCoreTask processorTask = processorTaskService.findByIdForCore(task.core, task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
             }
-            if (currentExecState.finishedOrDoesntExist(task.ref.dispatcherUrl, processorTask.execContextId)) {
+            if (currentExecState.finishedOrDoesntExist(task.core.dispatcherUrl, processorTask.execContextId)) {
                 log.info("#311.021 ExecContext #{} for task #{} with variable #{} is finished or doesn't exist, url: {}",
                         processorTask.execContextId, task.taskId, finalTask.variableId, task.getDispatcherUrl());
-                processorTaskService.setVariableUploadedAndCompleted(task.ref, finalTask.taskId, finalTask.variableId);
+                processorTaskService.setVariableUploadedAndCompleted(task.core, finalTask.taskId, finalTask.variableId);
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
@@ -118,13 +118,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {
                 log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.ref, task.taskId);
+                processorTaskService.delete(task.core, task.taskId);
                 continue;
             }
-            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
+            ProcessorCoreTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
             if (outputStatus==null) {
                 log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
-                processorTaskService.delete(task.ref, task.taskId);
+                processorTaskService.delete(task.core, task.taskId);
                 continue;
             }
             if (outputStatus.uploaded) {
@@ -151,23 +151,23 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 final Boolean readyForUploading = isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor);
                 if (readyForUploading==null) {
                     log.info("variable #{} in task #{} doesn't exist at dispathcer", task.variableId, task.taskId);
-                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);
                     continue;
                 }
                 if (!readyForUploading) {
                     log.info("variable #{} in task #{} was aready inited", task.variableId, task.taskId);
-                    processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
+                    processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);
                     continue;
                 }
 
                 final String uploadRestUrl  = task.getDispatcherUrl().url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
-                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.ref.processorId + '-' + task.taskId;
+                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.core.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
                 final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.RFC6532)
                         .setCharset(StandardCharsets.UTF_8)
-                        .addTextBody("processorId", task.ref.processorId)
+                        .addTextBody("processorId", ""+task.core.processorId)
                         .addTextBody("taskId", Long.toString(task.taskId))
                         .addTextBody("variableId", Long.toString(task.variableId))
                         .addTextBody("nullified", String.valueOf(task.nullified));
@@ -234,13 +234,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         // right we will assume that it's ok to set as UploadedAndCompleted
                     case OK:
                         log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.getDispatcherUrl(), task.taskId);
-                        processorTaskService.setVariableUploadedAndCompleted(task.ref, task.taskId, finalTask.variableId);
+                        processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
-                        processorTaskService.delete(task.ref, task.taskId);
+                        processorTaskService.delete(task.core, task.taskId);
                         log.error("#311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:

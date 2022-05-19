@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.processor.tasks;
 
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -27,33 +26,33 @@ import org.springframework.lang.Nullable;
 import java.io.File;
 
 @Data
-@EqualsAndHashCode(of={"ref", "taskId", "variableId"}, callSuper = false)
+@EqualsAndHashCode(of={"core", "taskId", "variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
     public Long taskId;
     @Nullable
     public File file = null;
     public Long variableId;
     public boolean nullified = false;
-    public final ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref;
+    public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
     public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
-    public UploadVariableTask(Long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
+    public UploadVariableTask(Long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
         this.taskId = taskId;
         this.file = file;
         this.variableId = variableId;
-        this.ref = ref;
+        this.core = core;
         this.dispatcher = dispatcher;
     }
 
-    public UploadVariableTask(Long taskId, Long variableId, boolean nullified, ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
+    public UploadVariableTask(Long taskId, Long variableId, boolean nullified, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
         this.taskId = taskId;
         this.variableId = variableId;
         this.nullified = nullified;
-        this.ref = ref;
+        this.core = core;
         this.dispatcher = dispatcher;
     }
 
     public ProcessorAndCoreData.DispatcherUrl getDispatcherUrl() {
-        return ref.dispatcherUrl;
+        return core.dispatcherUrl;
     }
 }

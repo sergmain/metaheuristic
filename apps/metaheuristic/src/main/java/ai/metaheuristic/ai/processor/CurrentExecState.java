@@ -15,15 +15,17 @@
  */
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @Component
 @Profile("processor")
@@ -46,35 +48,35 @@ public class CurrentExecState {
         }
     }
 
-    public void registerDelta(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void registerDelta(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
         synchronized(execContextState) {
+            execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(execContextId, state);
             isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
-            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.id, status.state));
         }
     }
 
-    public void register(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(DispatcherUrl dispatcherUrl, Map<Long, EnumsApi.ExecContextState> states) {
+        // TODO 2021-05-01 check how Runnable.run() is working
         synchronized(execContextState) {
-            isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
-            // there isn't any execContext
-            if (statuses.isEmpty()) {
-                execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).clear();
-                return;
-            }
-            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.id, status.state));
-            execContextState.forEach((k, v) -> {
-                if (!k.equals(dispatcherUrl)) {
+            ((Runnable) () -> {
+                // there isn't any execContext
+                final Map<Long, EnumsApi.ExecContextState> execContextStateMap = execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>());
+                if (states.isEmpty()) {
+                    execContextStateMap.clear();
                     return;
                 }
+                execContextStateMap.putAll(states);
                 List<Long> ids = new ArrayList<>();
-                v.forEach((key, value) -> {
-                    boolean isFound = statuses.stream().anyMatch(status -> status.id.equals(key));
+                execContextStateMap.forEach((key, value) -> {
+                    boolean isFound = states.entrySet().stream().anyMatch(status -> status.getKey().equals(key));
                     if (!isFound) {
                         ids.add(key);
                     }
                 });
-                ids.forEach(v::remove);
-            });
+                ids.forEach(execContextStateMap::remove);
+
+            }).run();
+            isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
         }
     }
 

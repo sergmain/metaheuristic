@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -39,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public class KeepAliveRequestParamYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
@@ -55,8 +54,8 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         public String path;
     }
 
-    // event though at processor side a quatas is placed in env.yaml above all processors level
-    // here it'll be placed at concrete processor
+    // event though at core side a quatas is placed in env.yaml above all cores level
+    // here it'll be placed at concrete core
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -64,7 +63,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     public static class Quota {
         public String tag;
         public int amount;
-        // processor can disable specific tag. i.e. on scheduler basis
+        // core can disable specific tag. i.e. on scheduler basis
         public boolean disabled;
     }
 
@@ -81,43 +80,50 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class Core {
+        public String coreDir;
+        @Nullable
+        public Long coreId;
+
+        public String coreCode;
+
+        @Nullable
+        public String tags;
+
+        public Core(String coreCode) {
+            this.coreCode = coreCode;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class Env {
         public final Map<String, String> mirrors = new ConcurrentHashMap<>();
         public final Map<String, String> envs = new ConcurrentHashMap<>();
         public final List<DiskStorage> disk = new ArrayList<>();
-
-        // this field is specific for concrete processorCode
-        @Nullable
-        public String tags;
-
         public final Quotas quotas = new Quotas();
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportProcessor {
+    // ReportProcessor
+    public static class ProcessorStatus {
         public Env env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
-        public String sessionId;
-
-        // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        // it'll work but in some cases behaviour can be different
-        // need to change it to UTC, Coordinated Universal Time
-        public long sessionCreatedOn;
         public String ip;
         public String host;
 
-        // contains text of error which can occur while preparing a processor status
-        public List<String> errors = null;
         public boolean logDownloadable;
         public int taskParamsVersion;
 
         public EnumsApi.OS os;
-
-        @Nullable
         public String currDir;
+
+        // contains text of error which can occur while preparing a processor status
+        @Nullable
+        public List<String> errors = null;
 
         public void addError(String error) {
             if (errors==null) {
@@ -134,7 +140,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         @NoArgsConstructor
         public static class Status {
             public String code;
-            public Enums.FunctionState state;
+            public EnumsApi.FunctionState state;
         }
 
         public List<Status> statuses = new ArrayList<>();
@@ -142,55 +148,35 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-//    @AllArgsConstructor
-    public static class RequestProcessorId {
-    }
+    public static class RequestProcessorId {}
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorCommContext {
-        @Nullable public Long processorId;
-        @Nullable public String sessionId;
-
-        public ProcessorCommContext(String processorId, @Nullable String sessionId) {
-            this.processorId = Long.valueOf(processorId);
-            this.sessionId = sessionId;
-        }
+        public Long processorId;
+        public String sessionId;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessorRequest {
-        public ReportProcessor processor;
+    public static class Processor {
+        public ProcessorStatus status;
 
+        // if not null it means we need a new processorId
         @Nullable
-        public RequestProcessorId requestProcessorId;
         public ProcessorCommContext processorCommContext;
-
-        @Nullable
-        private String taskIds = null;
-
-        @Nullable
-        public String getTaskIds() {
-            return taskIds;
-        }
-
-        @SuppressWarnings("MethodMayBeStatic")
-        public void setTaskIds(@Nullable String taskIds) {
-            throw new IllegalStateException("taskIds isn't used any more");
-        }
 
         public String processorCode;
 
-        public ProcessorRequest(String processorCode) {
+        public Processor(String processorCode) {
             this.processorCode = processorCode;
         }
     }
 
+    public final Processor processor = new Processor();
+    public final List<Core> cores = new ArrayList<>();
     public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
-
-    public final List<ProcessorRequest> requests = new ArrayList<>();
 
 }

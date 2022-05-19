@@ -42,9 +42,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -85,11 +84,11 @@ public class PreparingCoreInitService {
         envYaml.getEnvs().put("env-function-03:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), envYaml,
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(Map.of(), envYaml,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
-                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
 
         mills = System.currentTimeMillis();

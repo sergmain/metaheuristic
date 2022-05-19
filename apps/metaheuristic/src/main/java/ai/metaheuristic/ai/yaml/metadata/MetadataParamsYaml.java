@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.yaml.metadata;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
@@ -27,33 +26,30 @@ import java.util.*;
 @NoArgsConstructor
 public class MetadataParamsYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=3;
 
     @Data
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class ProcessorState {
+    public static class ProcessorSession {
         public String dispatcherCode;
         @Nullable
-        public String processorId;
+        public Long processorId;
         @Nullable
         public String sessionId;
-    }
 
-    @Data
-    @NoArgsConstructor
-    @ToString
-    public static class Processor {
-        // key is url of dispatcher
-        public final LinkedHashMap<String, ProcessorState> states = new LinkedHashMap<>();
+        // key - code of Core, value - coreId
+        public final LinkedHashMap<String, Long> cores = new LinkedHashMap<>();
+
+        public final List<Quota> quotas = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Status {
-        public Enums.FunctionState functionState;
+    public static class Function {
+        public EnumsApi.FunctionState state;
         public String code;
         public String assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
@@ -75,19 +71,20 @@ public class MetadataParamsYaml implements BaseParams {
         public int quota;
     }
 
-    @Data
-    public static class Quotas {
-        public final List<Quota> quotas = new ArrayList<>();
-    }
+//procesorSessions:
+//  http://localhost:8080:
+//    dispatcherCode: localhost-8080
+//    processorId: '3410'
+//    sessionId: 4266a35f-290d-49b8-83cc-c75913598719-4f020c95-0283-455a-9467-0a76bbaba796
+//    cores:
+//      proc-01: '3410'
+//      proc-02: '3410'
 
     /**
-     * key  - a code of processor which is configured in env.yaml
-     * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.Processor
+     * key  - a url of dispatcher
+     * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public final LinkedHashMap<String, Processor> processors = new LinkedHashMap<>();
-
-    public final List<Status> statuses = new ArrayList<>();
+    public final LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();
+    public final List<Function> functions = new ArrayList<>();
     public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    // key is url of dispatcher
-    public final LinkedHashMap<String, Quotas> quotas = new LinkedHashMap<>();
 }

@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -96,30 +97,35 @@ public class BatchSplitterTxService {
                 taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         try {
-            Files.list(srcDir.toPath())
-                    .forEach( dataFilePath ->  {
-                        File file = dataFilePath.toFile();
-                        currTaskNumber.incrementAndGet();
-                        try {
-                            VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
-                            if (variableDataSource == null) {
-                                return;
+            // do not remove try(Stream<Path>){}
+            try (final Stream<Path> list = Files.list(srcDir.toPath())) {
+                list
+                        .forEach(dataFilePath -> {
+                            File file = dataFilePath.toFile();
+                            currTaskNumber.incrementAndGet();
+                            try {
+                                VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
+                                if (variableDataSource == null) {
+                                    return;
+                                }
+                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                                variableService.createInputVariablesForSubProcess(
+                                        variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
+
+                                taskProducingService.createTasksForSubProcesses(
+                                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+
                             }
-                            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-                            variableService.createInputVariablesForSubProcess(
-                                    variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
-
-                            taskProducingService.createTasksForSubProcesses(
-                                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
-
-                        } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
-                            throw e;
-                        } catch (Throwable th) {
-                            String es = "#995.300 An error while saving data to file, " + th.getMessage();
-                            log.error(es, th);
-                            throw new BatchResourceProcessingException(es);
-                        }
-                    });
+                            catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
+                                throw e;
+                            }
+                            catch (Throwable th) {
+                                String es = "#995.300 An error while saving data to file, " + th.getMessage();
+                                log.error(es, th);
+                                throw new BatchResourceProcessingException(es);
+                            }
+                        });
+            }
         } catch (IOException e) {
             String es = "#995.310 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
@@ -132,14 +138,17 @@ public class BatchSplitterTxService {
     private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
         if (file.isDirectory()) {
-            final List<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
-                    .filter(o -> o.toFile().isFile())
-                    .map(f -> {
-                        final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
-                        final String actualFileName = mapping.get(currFileName);
-                        return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
-                    }).collect(Collectors.toList());
-
+            final List<BatchTopLevelService.FileWithMapping> files;
+            // do not remove try(Stream<Path>){}
+            try (final Stream<Path> stream = Files.list(dataFilePath)) {
+                files = stream
+                        .filter(o -> o.toFile().isFile())
+                        .map(f -> {
+                            final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                            final String actualFileName = mapping.get(currFileName);
+                            return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
+                        }).collect(Collectors.toList());
+            }
             if (files.isEmpty()) {
                 log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
                 return null;

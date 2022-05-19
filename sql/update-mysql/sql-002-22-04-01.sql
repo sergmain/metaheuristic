@@ -1,2 +1,2 @@
 alter table mh_processor
-    modify STATUS MEDIUMTEXT not null;
+    modify STATUS LONGTEXT not null;

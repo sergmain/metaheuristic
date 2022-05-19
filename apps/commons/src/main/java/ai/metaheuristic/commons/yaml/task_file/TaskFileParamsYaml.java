@@ -35,6 +35,8 @@ import java.util.Map;
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:10 PM
+ *
+ * V2 - added support of type 'array' of variable
  */
 @Data
 @EqualsAndHashCode
@@ -63,11 +65,15 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public @Nullable String type;
 
+        // true if variable is null or length==0
         public boolean empty = false;
+
+        // could variable be null
+        @Nullable
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {
@@ -97,11 +103,15 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public EnumsApi.DataType dataType;
         public @Nullable String type;
+        // true if variable is null or length==0
         public boolean empty = false;
+
+        // could variable be null
+        @Nullable
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {

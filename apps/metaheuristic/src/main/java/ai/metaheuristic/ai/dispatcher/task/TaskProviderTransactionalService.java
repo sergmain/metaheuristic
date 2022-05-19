@@ -53,7 +53,7 @@ public class TaskProviderTransactionalService {
     @Nullable
     @Transactional
     public TaskData.AssignedTask findUnassignedTaskAndAssign(
-            Long processorId, final DispatcherData.TaskQuotas currentQuotas,
+            Long coreId, final DispatcherData.TaskQuotas currentQuotas,
             final TaskQueue.AllocatedTask resultTask, final QuotasData.ActualQuota quota
     ) {
         checkWriteLockNotPresent();
@@ -70,7 +70,7 @@ public class TaskProviderTransactionalService {
         }
 
         t.setAssignedOn(System.currentTimeMillis());
-        t.setProcessorId(processorId);
+        t.setCoreId(coreId);
         t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         t.setResultResourceScheduledOn(0);
 

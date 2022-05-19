@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
@@ -31,7 +30,7 @@ import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -105,7 +104,7 @@ public class TaskProcessor {
         this.gitSourcingService = gitSourcingService;
     }
 
-    public void process(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    public void process(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         if (!globals.processor.enabled) {
             return;
         }
@@ -119,7 +118,7 @@ public class TaskProcessor {
             processing.set(true);
         }
         try {
-            processInternal(ref);
+            processInternal(core);
         }
         finally {
             synchronized (processing) {
@@ -128,13 +127,13 @@ public class TaskProcessor {
         }
     }
 
-    private void processInternal(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref) {
+    private void processInternal(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
 
-        log.debug("#100.000 Start processInternal at processor {} for url #{}", ref.processorCode, ref.dispatcherUrl);
+        log.debug("#100.000 Start processInternal at processor {} for url #{}", core.coreCode, core.dispatcherUrl);
 
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
-        List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ref, true);
-        for (ProcessorTask task : tasks) {
+        List<ProcessorCoreTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(core, true);
+        for (ProcessorCoreTask task : tasks) {
             log.info("#100.001 Start processing task #{}", task.taskId);
 
             if (StringUtils.isBlank(task.dispatcherUrl)) {
@@ -146,23 +145,23 @@ public class TaskProcessor {
 
             ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
 
-            processorTaskService.setLaunchOn(ref, task.taskId);
+            processorTaskService.setLaunchOn(core, task.taskId);
 
-            final MetadataParamsYaml.ProcessorState processorState = metadataService.processorStateByDispatcherUrl(ref);
-            if (S.b(processorState.processorId) || S.b(processorState.sessionId)) {
-                log.warn("#100.010 processor {} with dispatcher {} isn't ready", ref.processorCode, dispatcherUrl.url);
+            final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            if (processorState.processorId==null || S.b(processorState.sessionId)) {
+                log.warn("#100.010 processor {} with dispatcher {} isn't ready", core.coreCode, dispatcherUrl.url);
                 continue;
             }
 
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, es);
+                processorTaskService.markAsFinishedWithError(core, task.taskId, es);
                 continue;
             }
 
             if (dispatcher.schedule.isCurrentTimeInactive()) {
-                processorTaskService.delete(ref, task.taskId);
+                processorTaskService.delete(core, task.taskId);
                 log.warn("#100.025 Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, dispatcherUrl, new Date(), dispatcher.schedule.asString);
                 return;
             }
@@ -180,50 +179,50 @@ public class TaskProcessor {
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
                 log.info("#100.034 The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, dispatcherUrl, state, task.taskId);
-                processorTaskService.delete(ref, task.taskId);
+                processorTaskService.delete(core, task.taskId);
                 continue;
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = processorTaskService.prepareTaskDir(ref, task.taskId);
+            File taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
 
             final TaskParamsYaml taskParamYaml;
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (CheckIntegrityFailedException e) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.037 Broken task. Check of integrity was failed.");
+                processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.037 Broken task. Check of integrity was failed.");
                 continue;
             }
 
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(ref, task, processorState, taskParamYaml, dispatcher, taskDir);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(core, task, processorState, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            if (!processorService.checkOutputResourceFile(ref, task, taskParamYaml, dispatcher, taskDir)) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
+            if (!processorService.checkOutputResourceFile(core, task, taskParamYaml, dispatcher, taskDir)) {
+                processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
             if (taskParamYaml.task.outputs.isEmpty()) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.050 Broken task. output variable must be specified");
+                processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.050 Broken task. output variable must be specified");
                 continue;
             }
 
             File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             File systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(envService.getEnvParamsYaml()));
             if (status!=null) {
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, status);
+                processorTaskService.markAsFinishedWithError(core, task.taskId, status);
             }
 
             boolean isNotReady = false;
@@ -236,7 +235,7 @@ public class TaskProcessor {
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
                 result = prepareFunction(dispatcher, assetManagerUrl, processorState, preFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -252,7 +251,7 @@ public class TaskProcessor {
 
             result = prepareFunction(dispatcher, assetManagerUrl, processorState, taskParamYaml.task.getFunction());
             if (result.isError) {
-                markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
+                markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                 continue;
             }
             results[idx++] = result;
@@ -263,7 +262,7 @@ public class TaskProcessor {
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
                 result = prepareFunction(dispatcher, assetManagerUrl, processorState, postFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(ref, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -284,12 +283,12 @@ public class TaskProcessor {
             } catch (Throwable th) {
                 String es = "#100.110 Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
                 log.warn(es);
-                processorTaskService.markAsFinishedWithError(ref, task.taskId, es);
+                processorTaskService.markAsFinishedWithError(core, task.taskId, es);
                 continue;
             }
 
             // at this point all required resources have to be prepared
-            ProcessorTask taskResult = processorTaskService.setLaunchOn(ref, task.taskId);
+            ProcessorCoreTask taskResult = processorTaskService.setLaunchOn(core, task.taskId);
             if (taskResult==null) {
                 String es = "#100.120 Task #"+task.taskId+" wasn't found";
                 log.warn(es);
@@ -298,27 +297,27 @@ public class TaskProcessor {
                 continue;
             }
             try {
-                execAllFunctions(ref, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(core, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
-                processorTaskService.resetTask(ref, task.taskId);
-                processorTaskService.delete(ref, task.taskId);
+                processorTaskService.resetTask(core, task.taskId);
+                processorTaskService.delete(core, task.taskId);
                 log.info("#100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
         }
     }
 
-    private void markFunctionAsFinishedWithPermanentError(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, Long taskId, FunctionPrepareResult result) {
+    private void markFunctionAsFinishedWithPermanentError(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
                 "#100.150 Function "+result.getFunction().code+" has a permanent error: " + result.getSystemExecResult().console);
-        processorTaskService.markAsFinished(ref, taskId,
+        processorTaskService.markAsFinished(core, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
     }
 
-    private void execAllFunctions(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref,
-                                  ProcessorTask task, MetadataParamsYaml.ProcessorState processorState,
+    private void execAllFunctions(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
+                                  ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
                                   File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
                                   File systemDir, FunctionPrepareResult[] results) {
@@ -384,7 +383,7 @@ public class TaskProcessor {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
                                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processOutputVariable(
-                                        ref, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
+                                        core, taskDir, dispatcher, task, processorState, outputVariable, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {
@@ -398,7 +397,7 @@ public class TaskProcessor {
             }
         }
 
-        processorTaskService.markAsFinished(ref, task.getTaskId(),
+        processorTaskService.markAsFinished(core, task.getTaskId(),
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
@@ -427,7 +426,7 @@ public class TaskProcessor {
     @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
-            ProcessorTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
+            ProcessorCoreTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
             @Nullable DispatcherSchedule schedule) {
 
         File paramFile = new File(
@@ -585,7 +584,7 @@ public class TaskProcessor {
 
     @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorState processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
@@ -598,7 +597,7 @@ public class TaskProcessor {
                     log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                     functionPrepareResult.isLoaded = false;
 
-                    metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
+                    metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
                 }
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {

@@ -28,7 +28,7 @@ import java.util.Set;
 @Data
 @ToString
 @NoArgsConstructor
-public class ProcessorTask {
+public class ProcessorCoreTask {
 
     // TODO 2020-12-30 'String dispatcherUrl' need to be changed it to DispatcherServerUrl when this class will be based on BaseClass
 
@@ -104,6 +104,7 @@ public class ProcessorTask {
 
     // TODO 2020-12-30 need to change it to DispatcherServerUrl when this class will be based on BaseClass
     // TODO 2021-08-07 you mean ProcessorAndCoreData.DispatcherUrl()? and what the point of this change?
+    // TODO P5 2022-05-18 it's String for eliminationg a problem with persisting of DispatcherUrl to yaml file
     public String dispatcherUrl;
 
     // when task was created

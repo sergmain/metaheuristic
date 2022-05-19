@@ -31,7 +31,7 @@ import java.io.Serializable;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Function implements Serializable {
     @Serial
-    private static final long serialVersionUID = 4066977399166436522L;
+    private static final long serialVersionUID = 7232827143557914909L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,4 +48,5 @@ public class Function implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
+
 }

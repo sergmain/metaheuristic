@@ -135,6 +135,17 @@ CREATE TABLE mh_processor
     STATUS          LONGTEXT NOT NULL
 );
 
+CREATE TABLE mh_processor_core
+(
+    ID              INT UNSIGNED NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED NOT NULL,
+    PROCESSOR_ID    INT UNSIGNED NOT NULL,
+    UPDATED_ON      bigint not null,
+    IP              VARCHAR(30),
+    DESCRIPTION     VARCHAR(250),
+    STATUS          LONGTEXT NOT NULL
+);
+
 CREATE TABLE mh_log_data
 (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -254,7 +265,8 @@ CREATE TABLE mh_function
     VERSION         INT UNSIGNED    NOT NULL,
     FUNCTION_CODE   VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     FUNCTION_TYPE   VARCHAR(50) not null,
-    PARAMS          MEDIUMTEXT not null
+    PARAMS          MEDIUMTEXT not null,
+    RT_PARAMS       MEDIUMTEXT
 );
 
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx

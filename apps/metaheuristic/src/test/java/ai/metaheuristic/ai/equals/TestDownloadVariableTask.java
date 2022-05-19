@@ -37,8 +37,9 @@ public class TestDownloadVariableTask {
     @Test
     public void test() {
 
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                "proc-code-1", "proc-id-1", new ProcessorAndCoreData.DispatcherUrl("url"));
+        ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
+                new ProcessorAndCoreData.DispatcherUrl("url"), "url", 17L, "core-code-1", 101L);
+
         DownloadVariableTask o1 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), false);
         DownloadVariableTask o2 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), true);
 

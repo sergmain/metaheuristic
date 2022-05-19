@@ -39,27 +39,23 @@ public class TestDispatcherComm {
     @Test
     public void testMarshalling() {
         DispatcherCommParamsYaml o = new DispatcherCommParamsYaml();
-        DispatcherCommParamsYaml.DispatcherResponse resp = new DispatcherCommParamsYaml.DispatcherResponse();
-        resp.processorCode = "proc-1";
-        o.responses.add(resp);
+        DispatcherCommParamsYaml.DispatcherResponse resp = o.response;
 
         final DispatcherCommParamsYaml.AssignedTask at = new DispatcherCommParamsYaml.AssignedTask();
-        resp.assignedTask = at;
-        resp.assignedTask.taskId = 11L;
-        resp.assignedTask.execContextId = 15L;
-        resp.assignedTask.tag = "tag1";
-        resp.assignedTask.quota = 99 ;
-        resp.assignedTask.params = "params";
-        resp.assignedTask.state = EnumsApi.ExecContextState.STARTED;
+        resp.cores.add(new DispatcherCommParamsYaml.Core("core-1", 111L, at));
+        at.taskId = 11L;
+        at.execContextId = 15L;
+        at.tag = "tag1";
+        at.quota = 99 ;
+        at.params = "params";
+        at.state = EnumsApi.ExecContextState.STARTED;
 
         String s = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(o);
         DispatcherCommParamsYaml o1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        assertEquals(1, o1.responses.size());
-        assertNotNull(o1.responses.get(0));
-        assertEquals("proc-1", o1.responses.get(0).processorCode);
+        assertEquals("proc-1", o1.response.cores.get(0).code);
 
 
-        DispatcherCommParamsYaml.AssignedTask at1 = o1.responses.get(0).assignedTask;
+        DispatcherCommParamsYaml.AssignedTask at1 = o1.response.cores.get(0).assignedTask;
         assertNotNull(at1);
 
         assertEquals(at.taskId, at1.taskId);

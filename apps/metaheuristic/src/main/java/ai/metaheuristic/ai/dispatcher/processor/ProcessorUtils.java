@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.commons.S;
-import org.apache.commons.lang3.StringUtils;
+import ai.metaheuristic.api.EnumsApi;
 import org.springframework.lang.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -33,12 +33,12 @@ import java.util.Objects;
 public class ProcessorUtils {
 
     public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
-        if (ss.downloadStatuses.size()!=status.statuses.size()) {
+        if (ss.functions.size()!=status.statuses.size()) {
             return true;
         }
-        for (ProcessorStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
+        for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
             for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (downloadStatus.functionCode.equals(sds.code) && !downloadStatus.functionState.equals(sds.state)) {
+                if (entry.getKey().equals(sds.code) && !entry.getValue().equals(sds.state)) {
                     return true;
                 }
             }
@@ -47,11 +47,11 @@ public class ProcessorUtils {
     }
 
     private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
-        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags) && CollectionUtils.isEmpty(env.quotas.values));
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && CollectionUtils.isEmpty(env.quotas.values));
     }
 
     private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {
-        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && S.b(env.tags));
+        return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors));
     }
 
     public static boolean envNotEquals(@Nullable ProcessorStatusYaml.Env env1, @Nullable KeepAliveRequestParamYaml.Env env2) {
@@ -89,7 +89,7 @@ public class ProcessorUtils {
                 return true;
             }
         }
-        return StringUtils.compare(env1.tags, env2.tags)!=0;
+        return false;
     }
 
     private static boolean quotasNotEquals(ProcessorStatusYaml.Quotas quotas, KeepAliveRequestParamYaml.Quotas quotas1) {
@@ -110,7 +110,7 @@ public class ProcessorUtils {
         return false;
     }
 
-    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ReportProcessor status) {
+    public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.ProcessorStatus status) {
 
         if (envNotEquals(ss.env, status.env)) {
             return true;

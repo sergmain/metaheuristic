@@ -24,7 +24,8 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -40,10 +41,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -130,69 +128,71 @@ public class DispatcherRequestor {
             return;
         }
 
-//        if (!metadataService.hasTasks(dispatcherUrl)) {
-//            return;
-//        }
-
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
-        pcpy.quotas.current = metadataService.currentQuota(dispatcherUrl.url);
 
         try {
-            for (String processorCode : metadataService.getProcessorCodes()) {
+            ProcessorCommParamsYaml.ProcessorRequest r = pcpy.request;
+            r.currentQuota = metadataService.currentQuota(dispatcherUrl.url);
 
-                ProcessorCommParamsYaml.ProcessorRequest r = new ProcessorCommParamsYaml.ProcessorRequest(processorCode);
-                pcpy.requests.add(r);
+            MetadataParamsYaml.ProcessorSession ps = metadataService.getProcessorSession(dispatcherUrl);
+            final Long processorId = ps.processorId;
+            final String sessionId = ps.sessionId;
 
-                final String processorId = metadataService.getProcessorId(processorCode, dispatcherUrl);
-                final String sessionId = metadataService.getSessionId(processorCode, dispatcherUrl);
-
-                if (processorId == null || sessionId == null) {
-                    r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
-                    continue;
-                }
-                ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(processorCode, processorId, dispatcherUrl);
+            if (processorId == null || sessionId == null) {
+                r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
+            }
+            else {
                 r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
 
-                // we have to pull new tasks from server constantly
-                if (currentExecState.isInited(dispatcherUrl)) {
-                    final boolean b = processorTaskService.isNeedNewTask(ref);
-                    if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        // always report about current active tasks, if we have actual processorId
-                        // don't report about tasks which belong to finished execContext
-                        final String taskIds = processorTaskService.findAll(ref).stream()
-                                .filter(o->currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
-                                .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                        r.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
-                    }
-                    else {
-                        if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
-                            // let's check variables for not completed and not sent yet tasks
-                            List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(ref).stream()
-                                    .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
-                                    .filter(t -> currentExecState.notFinishedAndExists(ref.dispatcherUrl, t.execContextId))
-                                    .collect(Collectors.toList());
-
-                            List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
-                            for (ProcessorTask processorTask : processorTasks) {
-                                for (ProcessorTask.OutputStatus outputStatus : processorTask.output.outputStatuses) {
-                                    statuses.add(new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                            processorTask.taskId, outputStatus.variableId,
-                                            processorService.resendTaskOutputResources(ref, processorTask.taskId, outputStatus.variableId))
-                                    );
-                                }
-                            }
-
-                            r.resendTaskOutputResourceResult = new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
-                            lastCheckForResendTaskOutputResource = System.currentTimeMillis();
-                        }
-                    }
-                }
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 30_000) {
                     r.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
-                r.reportTaskProcessingResult = processorTaskService.reportTaskProcessingResult(ref);
+                for (Map.Entry<String, Long> entry : ps.cores.entrySet()) {
+                    String coreCode = entry.getKey();
+                    ProcessorCommParamsYaml.Core coreParams = new ProcessorCommParamsYaml.Core();
+                    r.cores.add(coreParams);
+
+                    ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core =
+                            new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, entry.getValue());
+
+                    // we have to pull new tasks from server constantly
+                    if (currentExecState.isInited(dispatcherUrl)) {
+                        final boolean b = processorTaskService.isNeedNewTask(core);
+                        if (b && dispatcher.schedule.isCurrentTimeActive()) {
+                            // always report about current active tasks, if we have actual processorId
+                            // don't report about tasks which belong to finished execContext
+                            final String taskIds = processorTaskService.findAllForCore(core).stream()
+                                    .filter(o -> currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
+                                    .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
+                            coreParams.requestTask = new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                        }
+                        else {
+                            if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
+                                // let's check variables for not completed and not sent yet tasks
+                                List<ProcessorCoreTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(core).stream()
+                                        .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
+                                        .filter(t -> currentExecState.notFinishedAndExists(core.dispatcherUrl, t.execContextId))
+                                        .collect(Collectors.toList());
+
+                                List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
+                                for (ProcessorCoreTask processorTask : processorTasks) {
+                                    for (ProcessorCoreTask.OutputStatus outputStatus : processorTask.output.outputStatuses) {
+                                        statuses.add(new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
+                                                processorTask.taskId, outputStatus.variableId,
+                                                processorService.resendTaskOutputResources(core, processorTask.taskId, outputStatus.variableId))
+                                        );
+                                    }
+                                }
+                                pcpy.addResendTaskOutputResourceResult(statuses);
+                                lastCheckForResendTaskOutputResource = System.currentTimeMillis();
+                            }
+                        }
+                    }
+                    pcpy.addReportTaskProcessingResult(processorTaskService.reportTaskProcessingResult(core));
+                }
             }
+
             if (!newRequest(pcpy)) {
                 log.info("#775.045 no new requests to {}", dispatcherUrl.url );
                 return;
@@ -287,15 +287,14 @@ public class DispatcherRequestor {
     }
 
     private static boolean newRequest(ProcessorCommParamsYaml pcpy) {
-        for (ProcessorCommParamsYaml.ProcessorRequest request : pcpy.requests) {
-            boolean state = request.requestProcessorId!=null || request.requestTask!=null ||
-                    request.reportTaskProcessingResult!=null || request.checkForMissingOutputResources!=null ||
-                    request.resendTaskOutputResourceResult!=null;
-            if (state) {
-                return true;
-            }
-        }
-        return false;
+        ProcessorCommParamsYaml.ProcessorRequest request = pcpy.request;
+        boolean state = request.requestProcessorId!=null ||
+                request.checkForMissingOutputResources!=null ||
+                request.resendTaskOutputResourceResult!=null ||
+                request.reportTaskProcessingResult!=null ||
+                request.cores.stream().anyMatch(core -> Objects.nonNull(core.requestTask));
+
+        return state;
     }
 
 }

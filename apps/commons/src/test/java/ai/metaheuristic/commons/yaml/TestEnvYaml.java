@@ -83,13 +83,13 @@ public class TestEnvYaml {
         assertEquals("pc9", env.quotas.values.get(3).tag);
         assertEquals(444, env.quotas.values.get(3).amount);
 
-        assertEquals(3, env.processors.size());
-        assertEquals("proc-01", env.processors.get(0).code);
-        assertEquals("stat, ai, ai-common, pc9", env.processors.get(0).tags);
-        assertEquals("proc-02", env.processors.get(1).code);
-        assertEquals("stat, ai-common", env.processors.get(1).tags);
-        assertEquals("proc-03", env.processors.get(2).code);
-        assertEquals("ai-common", env.processors.get(2).tags);
+        assertEquals(3, env.cores.size());
+        assertEquals("proc-01", env.cores.get(0).code);
+        assertEquals("stat, ai, ai-common, pc9", env.cores.get(0).tags);
+        assertEquals("proc-02", env.cores.get(1).code);
+        assertEquals("stat, ai-common", env.cores.get(1).tags);
+        assertEquals("proc-03", env.cores.get(2).code);
+        assertEquals("ai-common", env.cores.get(2).tags);
 
         assertEquals(1, env.disk.size());
         assertEquals("test-files", env.disk.get(0).code);

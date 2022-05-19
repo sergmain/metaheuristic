@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskTxAfterCommitEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
@@ -136,7 +135,7 @@ public class ExecContextTaskResettingService {
         }
 
         task.setFunctionExecResults(null);
-        task.setProcessorId(null);
+        task.setCoreId(null);
         task.setAssignedOn(null);
         task.setCompleted(false);
         task.setCompletedOn(null);

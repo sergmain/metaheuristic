@@ -35,7 +35,7 @@ import java.io.Serializable;
  * Time: 15:56
  */
 @Entity
-@Table(name = "MH_PROCESSOR")
+@Table(name = "mh_processor_core")
 @Data
 @ToString(exclude = "status")
 @NoArgsConstructor
