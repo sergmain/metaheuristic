@@ -301,7 +301,7 @@ public class ZipUtils {
 
     public static Map<String, String> unzipFolder(Path archivePath, Path zipDestinationFolderPath, boolean useMapping, List<String> excludeFromMapping, boolean debug) {
 
-        if (debug) {
+        if (debug && log.isDebugEnabled()) {
             log.debug("Start unzipping archive file");
             log.debug("'\tzip archive file: {}", archivePath.normalize());
             log.debug("'\t\texists: {}", Files.exists(archivePath));
