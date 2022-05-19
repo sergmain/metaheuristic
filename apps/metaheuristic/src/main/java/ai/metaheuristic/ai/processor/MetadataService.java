@@ -672,7 +672,7 @@ public class MetadataService {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
         synchronized (syncObj) {
-            getProcessorSession(dispatcherUrl.url).processorId = sessionId;
+            getProcessorSession(dispatcherUrl.url).sessionId = sessionId;
             updateMetadataFile();
         }
     }

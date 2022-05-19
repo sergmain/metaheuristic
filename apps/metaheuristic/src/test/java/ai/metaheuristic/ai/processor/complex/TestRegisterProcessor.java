@@ -136,7 +136,7 @@ public class TestRegisterProcessor {
 
         // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
         req.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-        req.requestTask = new ProcessorCommParamsYaml.RequestTask(true, false, null);
+        req.requestTask = new ProcessorCommParamsYaml.RequestTask(false, null);
         req.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
         ed = requestServer(processorComm);

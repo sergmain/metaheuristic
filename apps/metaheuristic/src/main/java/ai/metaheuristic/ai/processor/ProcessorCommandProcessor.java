@@ -51,23 +51,27 @@ public class ProcessorCommandProcessor {
             return;
         }
 
-        for (ProcessorCommParamsYaml.ProcessorRequest request : pcpy.requests) {
-            for (DispatcherCommParamsYaml.DispatcherResponse response : dispatcherYaml.responses) {
-                if (!request.processorCode.equals(response.processorCode)) {
+        ProcessorCommParamsYaml.ProcessorRequest request = pcpy.request;
+        DispatcherCommParamsYaml.DispatcherResponse response = dispatcherYaml.response;
+
+        storeProcessorId(ref.dispatcherUrl, response);
+
+        request.resendTaskOutputResourceResult = resendTaskOutputResource(ref, response);
+        processReportResultDelivering(ref, response);
+        reAssignProcessorId(ref.dispatcherUrl, response);
+
+        for (ProcessorCommParamsYaml.Core core : request.cores) {
+            for (DispatcherCommParamsYaml.Core c : response.cores) {
+                if (!core.code.equals(c.code)) {
                     continue;
                 }
-                storeProcessorId(ref.dispatcherUrl, response);
-
-                request.resendTaskOutputResourceResult = resendTaskOutputResource(ref, response);
-                processReportResultDelivering(ref, response);
                 processAssignedTask(ref, response);
-                reAssignProcessorId(ref.dispatcherUrl, response);
             }
         }
     }
 
     // processing at processor side
-    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
+    private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorService.getResendTaskOutputResourceResultStatus(ref, response);
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
@@ -81,10 +85,12 @@ public class ProcessorCommandProcessor {
     }
 
     private void processAssignedTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.DispatcherResponse response) {
-        if (response.assignedTask==null) {
-            return;
+        for (DispatcherCommParamsYaml.Core c : response.cores) {
+            if (c.assignedTask==null) {
+                continue;
+            }
+            processorService.assignTasks(core, c.assignedTask);
         }
-        processorService.assignTasks(core, response.assignedTask);
     }
 
     // processing at processor side

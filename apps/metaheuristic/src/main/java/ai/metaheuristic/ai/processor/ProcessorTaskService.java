@@ -177,7 +177,7 @@ public class ProcessorTaskService {
     public void setReportedOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.065 setReportedOn({}, {})", core.dispatcherUrl, taskId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.070 ProcessorCoreTask wasn't found for Id " + taskId);
                 return;
@@ -191,7 +191,7 @@ public class ProcessorTaskService {
     public void setInputAsEmpty(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, String variableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.075 setInputAsEmpty({}, {})", core.dispatcherUrl, taskId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.077 ProcessorCoreTask wasn't found for Id " + taskId);
                 return;
@@ -215,7 +215,7 @@ public class ProcessorTaskService {
     public void setDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("#713.080 setDelivered({}, {})", core.dispatcherUrl.url, taskId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.090 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
@@ -247,7 +247,7 @@ public class ProcessorTaskService {
     public void setVariableUploadedAndCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {}, {})", core.dispatcherUrl, taskId, outputVariableId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.090 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
@@ -262,7 +262,7 @@ public class ProcessorTaskService {
     public void setCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setCompleted({}, {})", core.dispatcherUrl, taskId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.100 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
@@ -325,7 +325,7 @@ public class ProcessorTaskService {
             log.info("markAsFinished({}, #{}, {})", core.dispatcherUrl.url, taskId, functionExec);
 
             metadataService.removeQuota(core.dispatcherUrl.url, taskId);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorCoreTask wasn't found for Id #" + taskId);
             } else {
@@ -359,7 +359,7 @@ public class ProcessorTaskService {
     void markAsAssetPrepared(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, boolean status) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", core.dispatcherUrl, taskId, status);
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.130 ProcessorCoreTask wasn't found for Id {}", taskId);
             } else {
@@ -510,7 +510,7 @@ public class ProcessorTaskService {
     @Nullable
     public ProcessorCoreTask resetTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
             }
@@ -522,7 +522,7 @@ public class ProcessorTaskService {
     @Nullable
     public ProcessorCoreTask setLaunchOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            ProcessorCoreTask task = findById(core, taskId);
+            ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
             }
@@ -557,7 +557,7 @@ public class ProcessorTaskService {
     }
 
     @Nullable
-    public ProcessorCoreTask findById(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+    public ProcessorCoreTask findByIdForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             return getTasksForProcessorCore(core)
                     .entrySet()
@@ -576,6 +576,22 @@ public class ProcessorTaskService {
         }
     }
 
+    @Nullable
+    public String findCoreCodeWithTaskId(Long taskId) {
+        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            for (Map.Entry<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> entry : map.entrySet()) {
+                for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> dispatcherUrlMapEntry : entry.getValue().entrySet()) {
+                    for (Map.Entry<Long, ProcessorCoreTask> longProcessorCoreTaskEntry : dispatcherUrlMapEntry.getValue().entrySet()) {
+                        if (longProcessorCoreTaskEntry.getKey().equals(taskId)) {
+                            return entry.getKey();
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
         MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
 
@@ -591,7 +607,7 @@ public class ProcessorTaskService {
                 if (taskDir.exists()) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
                 }
-                Map<Long, ProcessorCoreTask> mapTask = getTasksForDispatcherUrl(core);
+                Map<Long, ProcessorCoreTask> mapTask = getTasksForProcessorCore(core);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));

@@ -44,6 +44,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -67,6 +68,7 @@ public class ProcessorService {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
+    private final MetadataService metadataService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
@@ -137,13 +139,22 @@ public class ProcessorService {
         }
     }
 
+    @Nullable
     public List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> getResendTaskOutputResourceResultStatus(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.DispatcherResponse response) {
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
         if (response.resendTaskOutputs==null || response.resendTaskOutputs.resends.isEmpty()) {
-            return List.of();
+            return null;
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (DispatcherCommParamsYaml.ResendTaskOutput output : response.resendTaskOutputs.resends) {
+            String coreCode = processorTaskService.findCoreCodeWithTaskId(output.taskId);
+            if (coreCode==null) {
+                continue;
+            }
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            if (core==null) {
+                continue;
+            }
             Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(core, output.taskId, output.variableId);
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
@@ -151,7 +162,7 @@ public class ProcessorService {
     }
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long variableId) {
-        ProcessorCoreTask task = processorTaskService.findById(core, taskId);
+        ProcessorCoreTask task = processorTaskService.findByIdForCore(core, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }

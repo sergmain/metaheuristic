@@ -130,7 +130,7 @@ public class TaskAssetPreparer {
     }
 
     private Void processAssetPreparingInternal(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        ProcessorCoreTask task = processorTaskService.findById(core, taskId);
+        ProcessorCoreTask task = processorTaskService.findByIdForCore(core, taskId);
         if (task==null) {
             return null;
         }

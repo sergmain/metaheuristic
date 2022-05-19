@@ -86,7 +86,7 @@ public class ProcessorCommParamsYamlUtilsV3
             core.code = coreV3.code;
             core.coreId = coreV3.coreId;
             if (coreV3.requestTask!=null) {
-                core.requestTask = new ProcessorCommParamsYaml.RequestTask(coreV3.requestTask.newTask, coreV3.requestTask.acceptOnlySigned, coreV3.requestTask.taskIds);
+                core.requestTask = new ProcessorCommParamsYaml.RequestTask(coreV3.requestTask.acceptOnlySigned, coreV3.requestTask.taskIds);
             }
             trg.request.cores.add(core);
         }

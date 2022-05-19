@@ -142,7 +142,7 @@ public class DispatcherRequestor {
                 r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
             }
             else {
-                r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(Long.toString(processorId), sessionId);
+                r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
 
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 30_000) {
                     r.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
@@ -165,7 +165,7 @@ public class DispatcherRequestor {
                             final String taskIds = processorTaskService.findAllForCore(core).stream()
                                     .filter(o -> currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
                                     .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                            coreParams.requestTask = new ProcessorCommParamsYaml.RequestTask(true, dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                            coreParams.requestTask = new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired, taskIds);
                         }
                         else {
                             if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {

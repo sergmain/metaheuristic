@@ -74,7 +74,6 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RequestTask {
-        public boolean newTask;
         public boolean acceptOnlySigned;
         @Nullable
         public String taskIds;

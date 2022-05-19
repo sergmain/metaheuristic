@@ -102,7 +102,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         while((task = poll())!=null) {
             final UploadVariableTask finalTask = task;
 
-            ProcessorCoreTask processorTask = processorTaskService.findById(task.core, task.taskId);
+            ProcessorCoreTask processorTask = processorTaskService.findByIdForCore(task.core, task.taskId);
             if (processorTask == null) {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
