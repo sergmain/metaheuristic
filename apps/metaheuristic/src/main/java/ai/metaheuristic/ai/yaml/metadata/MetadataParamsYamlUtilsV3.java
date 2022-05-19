@@ -50,7 +50,7 @@ public class MetadataParamsYamlUtilsV3
     public MetadataParamsYaml upgradeTo(@NonNull MetadataParamsYamlV3 src) {
         src.checkIntegrity();
         MetadataParamsYaml trg = new MetadataParamsYaml();
-        for (Map.Entry<String, MetadataParamsYamlV3.ProcessorSessionV3> entry : src.procesorSessions.entrySet()) {
+        for (Map.Entry<String, MetadataParamsYamlV3.ProcessorSessionV3> entry : src.processorSessions.entrySet()) {
             final MetadataParamsYamlV3.ProcessorSessionV3 psV3 = entry.getValue();
             MetadataParamsYaml.ProcessorSession value =  new MetadataParamsYaml.ProcessorSession(psV3.dispatcherCode, psV3.processorId, psV3.sessionId);
             value.cores.putAll(psV3.cores);

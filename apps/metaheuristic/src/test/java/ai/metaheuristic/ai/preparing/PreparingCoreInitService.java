@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -96,6 +97,12 @@ public class PreparingCoreInitService {
 
 
         // Prepare processor
+        data.processor = processorTransactionService.createProcessor(description, null, ss);
+        log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
+        data.processorIdAsStr =  Long.toString(data.processor.getId());
+
+        // Prepare processor's cores
+        if (true) throw new NotImplementedException();
         data.processor = processorTransactionService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
         data.processorIdAsStr =  Long.toString(data.processor.getId());

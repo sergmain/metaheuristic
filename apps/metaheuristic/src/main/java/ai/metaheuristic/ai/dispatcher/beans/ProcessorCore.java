@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYamlUtils;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -46,7 +44,7 @@ import java.io.Serializable;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ProcessorCore implements Serializable {
     @Serial
-    private static final long serialVersionUID = -6094247705164836600L;
+    private static final long serialVersionUID = -4095241769778747431L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
