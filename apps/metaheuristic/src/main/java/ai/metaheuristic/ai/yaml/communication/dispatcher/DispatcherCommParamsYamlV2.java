@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,7 +38,17 @@ import java.util.List;
 @Data
 public class DispatcherCommParamsYamlV2 implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
+
+    @Override
+    public boolean checkIntegrity() {
+        for (CoreV2 core : response.cores) {
+            if (S.b(core.code)) {
+                throw new CheckIntegrityFailedException("(S.b(core.code))");
+            }
+        }
+        return true;
+    }
 
     @Data
     @AllArgsConstructor
@@ -102,15 +114,13 @@ public class DispatcherCommParamsYamlV2 implements BaseParams {
         @Nullable
         public Long coreId;
         @Nullable
-        public DispatcherCommParamsYaml.AssignedTask assignedTask;
+        public AssignedTaskV2 assignedTask;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DispatcherResponseV2 {
-        @Nullable
-        public AssignedTaskV2 assignedTask;
         @Nullable
         public AssignedProcessorIdV2 assignedProcessorId;
         @Nullable

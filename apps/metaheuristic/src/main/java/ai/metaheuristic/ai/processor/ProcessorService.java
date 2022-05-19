@@ -123,12 +123,20 @@ public class ProcessorService {
      * mark tasks as delivered.
      * By delivering it means that result of exec was delivered to dispatcher
      *
-     * @param core ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef
+     * @param ref ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef
      * @param ids List&lt;String> list if task ids
      */
-    public void markAsDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, List<Long> ids) {
-        for (Long id : ids) {
-            processorTaskService.setDelivered(core, id);
+    public void markAsDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<Long> ids) {
+        for (Long taskId : ids) {
+            String coreCode = processorTaskService.findCoreCodeWithTaskId(taskId);
+            if (coreCode==null) {
+                continue;
+            }
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            if (core==null) {
+                continue;
+            }
+            processorTaskService.setDelivered(core, taskId);
         }
     }
 

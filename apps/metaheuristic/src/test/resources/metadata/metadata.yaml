@@ -1,9 +1,10 @@
-dispatcher:
+vesiont: 2
+processorSessions:
   http://localhost:8080:
-    code: localhost-8080
-    value: localhost-8080
+    dispatcherCode: localhost-8080
+    sessionId: 'aaa123'
     processorId: 15
   http://host:
-    code: host
+    dispatcherCode: host
 metadata:
   processorId: '11'

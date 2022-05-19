@@ -59,28 +59,27 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
                             .collect(Collectors.toList())
                     );
         }
-        if (v2.execContextStatus !=null) {
-            v2.execContextStatus.statuses.forEach(o->t.execContextStatus.statuses.put(o.id, o.state));
+        t.execContextStatus.statuses.putAll(v2.execContextStatus.statuses);
+
+        KeepAliveResponseParamYaml.DispatcherResponse response = t.response;
+        KeepAliveResponseParamYamlV2.DispatcherResponseV2 r = v2.response;
+        response.processorCode = r.processorCode;
+
+        if (r.assignedProcessorId !=null) {
+            response.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
+                    r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);
         }
-        for (KeepAliveResponseParamYamlV2.DispatcherResponseV2 r : v2.responses) {
+        if (r.reAssignedProcessorId !=null) {
+            response.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
+                    r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
+        }
 
-            KeepAliveResponseParamYaml.DispatcherResponse response = new KeepAliveResponseParamYaml.DispatcherResponse();
-            t.response.add(response);
+        if (r.requestLogFile!=null) {
+            response.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(r.requestLogFile.requestedOn);
+        }
 
-            response.processorCode = r.processorCode;
-
-            if (r.assignedProcessorId !=null) {
-                response.assignedProcessorId = new KeepAliveResponseParamYaml.AssignedProcessorId(
-                        r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);
-            }
-            if (r.reAssignedProcessorId !=null) {
-                response.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(
-                        r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
-            }
-
-            if (r.requestLogFile!=null) {
-                response.requestLogFile = new KeepAliveResponseParamYaml.RequestLogFile(r.requestLogFile.requestedOn);
-            }
+        for (KeepAliveResponseParamYamlV2.CoreInfoV2 coreInfoV2 : r.coreInfos) {
+            response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreInfoV2.coreId, coreInfoV2.code));
         }
 
         t.success = v2.success;

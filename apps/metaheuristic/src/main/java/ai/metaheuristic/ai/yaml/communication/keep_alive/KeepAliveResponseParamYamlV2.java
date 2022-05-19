@@ -24,7 +24,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -42,7 +44,6 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class FunctionsV2 {
         @Data
@@ -52,31 +53,16 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
             public String code;
             public EnumsApi.FunctionSourcing sourcing;
         }
-        public List<Info> infos = new ArrayList<>();
+        public final List<Info> infos = new ArrayList<>();
     }
 
     @Data
     @NoArgsConstructor
     public static class ExecContextStatusV2 {
 
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleStatus {
-            public Long id;
-            public EnumsApi.ExecContextState state;
-        }
+        // key - execContextId, value - stae of execContext
+        public final Map<Long, EnumsApi.ExecContextState> statuses = new HashMap<>();
 
-        public final List<SimpleStatus> statuses = new ArrayList<>();
-
-        public boolean isStarted(Long execContextId) {
-            for (SimpleStatus status : statuses) {
-                if (status.id.equals(execContextId)) {
-                    return status.state== EnumsApi.ExecContextState.STARTED;
-                }
-            }
-            return false;
-        }
     }
 
     @Data
@@ -98,18 +84,19 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class AssignedProcessorIdV2 {
+        public Long assignedProcessorId;
+        public String assignedSessionId;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReAssignedProcessorIdV2 {
         public String reAssignedProcessorId;
         public String sessionId;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AssignedProcessorIdV2 {
-        public Long assignedProcessorId;
-        public String assignedSessionId;
-    }
+
 
     @Data
     @NoArgsConstructor
@@ -125,6 +112,14 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class CoreInfoV2 {
+        public Long coreId;
+        public String code;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DispatcherResponseV2 {
         public String processorCode;
 
@@ -134,6 +129,8 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
         @Nullable
         public AssignedProcessorIdV2 assignedProcessorId;
 
+        public final List<CoreInfoV2> coreInfos = new ArrayList<>();
+
         @Nullable
         public RequestLogFileV2 requestLogFile;
 
@@ -142,9 +139,9 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
         }
     }
 
-    public final List<DispatcherResponseV2> responses = new ArrayList<>();
+    public final DispatcherResponseV2 response = new DispatcherResponseV2();
     public final FunctionsV2 functions = new FunctionsV2();
-    public ExecContextStatusV2 execContextStatus;
+    public final ExecContextStatusV2 execContextStatus = new ExecContextStatusV2();
     public DispatcherInfoV2 dispatcherInfo;
 
     public boolean success = true;

@@ -106,7 +106,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
                 new FunctionDownloadStatusesV3.StatusV3("code1", EnumsApi.FunctionState.none),
                 new FunctionDownloadStatusesV3.StatusV3("code2", EnumsApi.FunctionState.checksum_wrong)));
 
-        r.processorCommContext = new ProcessorCommContextV3(11L, "session-11", 42L);
+        r.processorCommContext = new ProcessorCommContextV3(11L, "session-11");
 
         CoreV3 core1 = new CoreV3("/dir-core1", 21L, "core-code1", "core-tags1");
         CoreV3 core2 = new CoreV3("/dir-core2", 22L, "core-code2", "core-tags2");
@@ -170,7 +170,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertNotNull(kar.processor.processorCommContext);
         assertEquals(11L, kar.processor.processorCommContext.processorId);
         assertEquals("session-11", kar.processor.processorCommContext.sessionId);
-        assertEquals(42L, kar.processor.processorCommContext.sessionCreatedOn);
 
 
         assertEquals(2, kar.cores.size());
@@ -241,7 +240,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertNotNull(karV3.processor.processorCommContext);
         assertEquals(11L, karV3.processor.processorCommContext.processorId);
         assertEquals("session-11", karV3.processor.processorCommContext.sessionId);
-        assertEquals(42L, karV3.processor.processorCommContext.sessionCreatedOn);
 
         assertEquals(2, karV3.cores.size());
 

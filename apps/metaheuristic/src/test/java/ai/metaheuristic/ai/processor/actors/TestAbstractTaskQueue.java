@@ -38,8 +38,8 @@ public class TestAbstractTaskQueue {
 
         DispatcherLookupParamsYaml.DispatcherLookup dispatcherStub = new DispatcherLookupParamsYaml.DispatcherLookup();
 
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
-                "proc-code-1", "proc-id-1", new ProcessorAndCoreData.DispatcherUrl("url"));
+        ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
+                new ProcessorAndCoreData.DispatcherUrl("url"), "url", 17L, "core-code-1", 101L);
 
         DownloadVariableTask task = new DownloadVariableTask(
                 ref,

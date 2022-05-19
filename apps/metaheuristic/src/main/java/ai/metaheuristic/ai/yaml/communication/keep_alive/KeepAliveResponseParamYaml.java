@@ -114,6 +114,19 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReAssignedProcessorCoreIdV2 {
+        public String reAssignedProcessorCoreId;
+
+        public ReAssignedProcessorCoreIdV2(Long processorCoreId) {
+            this.reAssignedProcessorCoreId = Long.toString(processorCoreId);
+        }
+    }
+
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

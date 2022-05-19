@@ -87,17 +87,13 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
     public void before() {
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        ProcessorCommParamsYaml.ProcessorRequest req = new ProcessorCommParamsYaml.ProcessorRequest(ConstsApi.DEFAULT_PROCESSOR_CODE);
-        processorComm.requests.add(req);
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.responses);
-        assertEquals(1, d.responses.size());
-        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.responses.get(0).getAssignedProcessorId();
+        final DispatcherCommParamsYaml.AssignedProcessorId assignedProcessorId = d.response.getAssignedProcessorId();
         assertNotNull(assignedProcessorId);
         assertNotNull(assignedProcessorId.assignedProcessorId);
         assertNotNull(assignedProcessorId.assignedSessionId);
@@ -142,16 +138,14 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
         req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
         final String newSessionId = sessionIdBefore + '-';
-        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore, newSessionId, System.currentTimeMillis());
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdBefore, newSessionId);
 
         String dispatcherResponse = serverService.keepAlive(KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         KeepAliveResponseParamYaml d = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.response);
-        assertEquals(1, d.response.size());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.response.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d.response.getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);

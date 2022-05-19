@@ -148,7 +148,7 @@ public class PreparingSourceCodeService {
         KeepAliveRequestParamYaml.Processor req = processorComm.processor;
         req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
-        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, null, 0);
+        req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, null);
 
         final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
@@ -157,8 +157,7 @@ public class PreparingSourceCodeService {
 
         assertNotNull(d0);
         assertNotNull(d0.response);
-        assertEquals(1, d0.response.size());
-        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.response.get(0).getReAssignedProcessorId();
+        final KeepAliveResponseParamYaml.ReAssignedProcessorId reAssignedProcessorId = d0.response.getReAssignedProcessorId();
         assertNotNull(reAssignedProcessorId);
         assertNotNull(reAssignedProcessorId.sessionId);
         assertEquals(processorId.toString(), reAssignedProcessorId.reAssignedProcessorId);
@@ -186,7 +185,7 @@ public class PreparingSourceCodeService {
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", true,
                 1, EnumsApi.OS.unknown, "/users/yyy", null);
-        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(preparingCodeData.processor.getId(), sessionId, 0);
+        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(preparingCodeData.processor.getId(), sessionId);
 
         String yamlRequest = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karpy);
         String yamlResponse = serverService.keepAlive(yamlRequest, "127.0.0.1");

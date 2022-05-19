@@ -125,7 +125,7 @@ public class DispatcherCommandProcessor {
     // processing at dispatcher side
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.Core core, ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
-        if (core.requestTask==null || !core.requestTask.newTask || request.processorCommContext==null || request.processorCommContext.processorId==null) {
+        if (core.requestTask==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
         checkProcessorId(request);

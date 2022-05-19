@@ -495,6 +495,14 @@ public class MetadataService {
         }
     }
 
+    public void setCoreId(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, String coreCode, Long coreId) {
+        synchronized (syncObj) {
+            final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
+            processorState.cores.put(coreCode, coreId);
+            updateMetadataFile();
+        }
+    }
+
     public void deRegisterFunctionCode(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
         synchronized (syncObj) {
             metadata.functions.removeIf(next -> next.assetManagerUrl.equals(assetManagerUrl.url) && next.code.equals(functionCode));

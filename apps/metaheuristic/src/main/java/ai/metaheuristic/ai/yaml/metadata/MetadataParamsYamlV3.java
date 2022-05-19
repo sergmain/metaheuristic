@@ -40,7 +40,7 @@ public class MetadataParamsYamlV3 implements BaseParams {
     public static class ProcessorSessionV3 {
         public String dispatcherCode;
         @Nullable
-        public String processorId;
+        public Long processorId;
         @Nullable
         public String sessionId;
 

@@ -17,15 +17,11 @@ package ai.metaheuristic.ai.processor.metadata;
 
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,29 +32,27 @@ public class TestMetadataYaml {
         String yaml = IOUtils.resourceToString("/metadata/metadata.yaml", StandardCharsets.UTF_8);
         assertNotNull(yaml);
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+
         assertNotNull(m);
         assertNotNull(m.getMetadata());
-        assertNotNull(m.getProcessors());
-        assertEquals(ConstsApi.DEFAULT_PROCESSOR_CODE, m.processors.keySet().stream().findFirst().orElse(null));
+        assertNotNull(m.getProcessorSessions());
+        assertTrue(m.processorSessions.containsKey("http://localhost:8080"));
+        assertTrue(m.processorSessions.containsKey("http://host"));
 
         assertEquals(1, m.getMetadata().size());
-        assertEquals(1, m.getProcessors().size());
-        final MetadataParamsYaml.Processor actual = m.getProcessors().values().stream().findFirst().orElse(null);
-        assertNotNull(actual);
-        Set<Map.Entry<String, MetadataParamsYaml.ProcessorSession>> entry = actual.states.entrySet();
-        Iterator<Map.Entry<String, MetadataParamsYaml.ProcessorSession>> iterator = entry.iterator();
-        Map.Entry<String, MetadataParamsYaml.ProcessorSession> map = iterator.next();
-        Map.Entry<String, MetadataParamsYaml.ProcessorSession> map1 = iterator.next();
+        final MetadataParamsYaml.ProcessorSession ps1 = m.processorSessions.get("http://localhost:8080");
+        assertNotNull(ps1);
 
-        MetadataParamsYaml.ProcessorSession p = map.getValue();
+        assertEquals("localhost-8080", ps1.dispatcherCode);
+        assertEquals(15L, ps1.processorId);
+        assertEquals("aaa123", ps1.sessionId);
 
-        assertEquals("http://localhost:8080", map.getKey());
-        assertEquals("localhost-8080", map.getValue().dispatcherCode);
-        assertEquals("15", map.getValue().processorId);
+        MetadataParamsYaml.ProcessorSession ps2 = m.processorSessions.get("http://host");
+        assertNotNull(ps2);
 
-        assertEquals("http://host", map1.getKey());
-        assertEquals("host", map1.getValue().dispatcherCode);
-        assertNull(map1.getValue().processorId);
+        assertEquals("host", ps2.dispatcherCode);
+        assertNull(ps2.processorId);
+        assertNull(ps2.sessionId);
     }
 
     @Test
@@ -68,9 +62,8 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
-        assertNotNull(m.processors);
+        assertNotNull(m.processorSessions);
         assertEquals(0, m.metadata.size());
-        assertEquals(0, m.processors.size());
     }
 
     @Test
@@ -80,9 +73,8 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
         assertNotNull(m.metadata);
-        assertNotNull(m.processors);
+        assertNotNull(m.processorSessions);
         assertEquals(0, m.metadata.size());
-        assertEquals(1, m.processors.size());
     }
 
 

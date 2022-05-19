@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -45,52 +44,7 @@ public class KeepAliveResponseParamYamlUtilsV1 extends
     @NonNull
     @Override
     public KeepAliveResponseParamYamlV2 upgradeTo(@NonNull KeepAliveResponseParamYamlV1 v1) {
-        KeepAliveResponseParamYamlV2 t = new KeepAliveResponseParamYamlV2();
-
-        if( v1.dispatcherInfo !=null ) {
-            t.dispatcherInfo = new KeepAliveResponseParamYamlV2.DispatcherInfoV2();
-            t.dispatcherInfo.chunkSize = v1.dispatcherInfo.chunkSize;
-            t.dispatcherInfo.processorCommVersion = v1.dispatcherInfo.processorCommVersion;
-        }
-        if (!v1.functions.infos.isEmpty()) {
-            t.functions.infos.addAll( v1.functions.infos
-                            .stream()
-                            .map(o->new KeepAliveResponseParamYamlV2.FunctionsV2.Info (o.code, o.sourcing))
-                            .collect(Collectors.toList())
-                    );
-        }
-        if (v1.execContextStatus !=null) {
-            t.execContextStatus = new KeepAliveResponseParamYamlV2.ExecContextStatusV2();
-            v1.execContextStatus.statuses
-                    .stream()
-                    .map(o -> new KeepAliveResponseParamYamlV2.ExecContextStatusV2.SimpleStatus(o.id, o.state))
-                    .collect(Collectors.toCollection(()->t.execContextStatus.statuses));
-        }
-        for (KeepAliveResponseParamYamlV1.DispatcherResponseV1 r : v1.responses) {
-
-            KeepAliveResponseParamYamlV2.DispatcherResponseV2 response = new KeepAliveResponseParamYamlV2.DispatcherResponseV2();
-            t.responses.add(response);
-
-            response.processorCode = r.processorCode;
-
-            if (r.assignedProcessorId !=null) {
-                response.assignedProcessorId = new KeepAliveResponseParamYamlV2.AssignedProcessorIdV2(
-                        r.assignedProcessorId.assignedProcessorId, r.assignedProcessorId.assignedSessionId);
-            }
-            if (r.reAssignedProcessorId !=null) {
-                response.reAssignedProcessorId = new KeepAliveResponseParamYamlV2.ReAssignedProcessorIdV2(
-                        r.reAssignedProcessorId.reAssignedProcessorId, r.reAssignedProcessorId.sessionId);
-            }
-
-            if (r.requestLogFile!=null) {
-                response.requestLogFile = new KeepAliveResponseParamYamlV2.RequestLogFileV2(r.requestLogFile.requestedOn);
-            }
-        }
-
-        t.success = v1.success;
-        t.msg = v1.msg;
-
-        return t;
+        throw new UpgradeNotSupportedException("upgrade to latest version of ");
     }
 
     @NonNull

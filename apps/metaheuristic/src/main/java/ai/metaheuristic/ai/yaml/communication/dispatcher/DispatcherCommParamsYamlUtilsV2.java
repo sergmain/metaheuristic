@@ -45,46 +45,43 @@ public class DispatcherCommParamsYamlUtilsV2 extends
 
     @NonNull
     @Override
-    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV2 v1) {
-        v1.checkIntegrity();
+    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV2 v2) {
+        v2.checkIntegrity();
 
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
+        DispatcherCommParamsYamlV2.DispatcherResponseV2 response = v2.response;
 
-        for (DispatcherCommParamsYamlV1.DispatcherResponseV1 response : v1.responses) {
-            DispatcherCommParamsYaml.DispatcherResponse r = new DispatcherCommParamsYaml.DispatcherResponse(response.processorCode);
-            t.responses.add(r);
+        v2.response.cores.stream().map(DispatcherCommParamsYamlUtilsV2::toCore).collect(Collectors.toCollection(()->t.response.cores));
 
-            if (response.assignedTask!=null) {
-                r.assignedTask = to(response.assignedTask);
-            }
-            if (response.assignedProcessorId !=null) {
-                r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
-            }
-            if (response.reAssignedProcessorId !=null) {
-                r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(
-                        response.reAssignedProcessorId.reAssignedProcessorId, response.reAssignedProcessorId.sessionId);
-            }
-            if (response.reportResultDelivering!=null) {
-                r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
-                r.reportResultDelivering.ids =
-                        response.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
-            }
-            if (response.resendTaskOutputs!=null) {
-                r.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
-                response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> r.resendTaskOutputs.resends));
-            }
+        DispatcherCommParamsYaml.DispatcherResponse r = t.response;
+        if (response.assignedProcessorId !=null) {
+            r.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
         }
-        if (v1.requestLogFile!=null) {
-            t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v1.requestLogFile.requestedOn);
+        if (response.reAssignedProcessorId !=null) {
+            r.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(
+                    response.reAssignedProcessorId.reAssignedProcessorId, response.reAssignedProcessorId.sessionId);
         }
-        t.success = v1.success;
-        t.msg = v1.msg;
+        if (response.reportResultDelivering!=null) {
+            r.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
+            r.reportResultDelivering.ids =
+                    response.reportResultDelivering.ids!=null ? new ArrayList<>(response.reportResultDelivering.ids) : new ArrayList<>();
+        }
+        if (response.resendTaskOutputs!=null) {
+            r.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
+            response.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> r.resendTaskOutputs.resends));
+        }
+
+        if (v2.requestLogFile!=null) {
+            t.requestLogFile = new DispatcherCommParamsYaml.RequestLogFile(v2.requestLogFile.requestedOn);
+        }
+        t.success = v2.success;
+        t.msg = v2.msg;
 
         t.checkIntegrity();
         return t;
     }
 
-    private static DispatcherCommParamsYaml.AssignedTask to(DispatcherCommParamsYamlV1.AssignedTaskV1 src) {
+    private static DispatcherCommParamsYaml.AssignedTask toAssignedTask(DispatcherCommParamsYamlV2.AssignedTaskV2 src) {
         DispatcherCommParamsYaml.AssignedTask trg = new DispatcherCommParamsYaml.AssignedTask();
         trg.taskId = src.taskId;
         trg.execContextId = src.execContextId;
@@ -92,6 +89,16 @@ public class DispatcherCommParamsYamlUtilsV2 extends
         trg.state = src.state;
         trg.tag = src.tag;
         trg.quota = src.quota;
+        return trg;
+    }
+
+    private static DispatcherCommParamsYaml.Core toCore(DispatcherCommParamsYamlV2.CoreV2 src) {
+        DispatcherCommParamsYaml.Core trg = new DispatcherCommParamsYaml.Core();
+        trg.code = src.code;
+        trg.coreId = src.coreId;
+        if (src.assignedTask!=null) {
+            trg.assignedTask = toAssignedTask(src.assignedTask);
+        }
         return trg;
     }
 

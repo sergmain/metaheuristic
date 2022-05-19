@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.processor.metadata;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.metadata.*;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import org.apache.commons.io.IOUtils;
@@ -118,26 +117,31 @@ public class TestMetadataParamsYaml {
 
     @Test
     public void testVersion2() throws IOException {
-        String s = IOUtils.resourceToString("/metadata/metadata-v1.yaml", StandardCharsets.UTF_8);
+        String s = IOUtils.resourceToString("/metadata/metadata-v2.yaml", StandardCharsets.UTF_8);
         assertFalse(S.b(s));
 
         MetadataParamsYaml metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(s);
         assertNotNull(metadata);
-        assertNotNull(metadata.processors);
-        assertFalse(metadata.processors.isEmpty());
-        assertEquals(1, metadata.processors.size());
-        assertTrue(metadata.processors.containsKey(ConstsApi.DEFAULT_PROCESSOR_CODE));
-        MetadataParamsYaml.ProcessorSession dispatcher8080 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("http://localhost:8080");
+        assertNotNull(metadata.processorSessions);
+        assertFalse(metadata.processorSessions.isEmpty());
+        assertEquals(1, metadata.processorSessions.size());
+        assertTrue(metadata.processorSessions.containsKey("http://localhost:8080"));
+        MetadataParamsYaml.ProcessorSession dispatcher8080 = metadata.processorSessions.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);
-        assertEquals("209", dispatcher8080.processorId);
+        assertEquals(209, dispatcher8080.processorId);
         assertEquals("sessionId-11", dispatcher8080.sessionId);
 
-        MetadataParamsYaml.ProcessorSession dispatcher8888 = metadata.processors.get(ConstsApi.DEFAULT_PROCESSOR_CODE).states.get("https://localhost:8888");
+        MetadataParamsYaml.ProcessorSession dispatcher8888 = metadata.processorSessions.get("https://localhost:8888");
         assertNotNull(dispatcher8888);
         assertEquals("localhost-8888", dispatcher8888.dispatcherCode);
-        assertEquals("42", dispatcher8888.processorId);
+        assertEquals(42, dispatcher8888.processorId);
         assertEquals("sessionId-12", dispatcher8888.sessionId);
+        assertEquals(2, dispatcher8888.cores.size());
+        assertTrue(dispatcher8888.cores.containsKey("core-1"));
+        assertTrue(dispatcher8888.cores.containsKey("core-2"));
+        assertEquals(117, dispatcher8888.cores.get("core-1"));
+        assertEquals(121, dispatcher8888.cores.get("core-2"));
 
         assertNotNull(metadata.metadata);
         assertTrue(metadata.metadata.isEmpty());

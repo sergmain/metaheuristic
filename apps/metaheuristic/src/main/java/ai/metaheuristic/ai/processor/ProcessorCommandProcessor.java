@@ -65,7 +65,8 @@ public class ProcessorCommandProcessor {
                 if (!core.code.equals(c.code)) {
                     continue;
                 }
-                processAssignedTask(ref, response);
+                processAssignedTask(ref, c);
+                break;
             }
         }
     }
@@ -77,20 +78,24 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
-    private void processReportResultDelivering(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.DispatcherResponse response) {
-        if (response.reportResultDelivering==null) {
+    private void processReportResultDelivering(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.DispatcherResponse response) {
+        if (response.reportResultDelivering==null || response.reportResultDelivering.ids==null || response.reportResultDelivering.ids.isEmpty()) {
             return;
         }
-        processorService.markAsDelivered(core, response.reportResultDelivering.getIds());
+        processorService.markAsDelivered(ref, response.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.DispatcherResponse response) {
-        for (DispatcherCommParamsYaml.Core c : response.cores) {
-            if (c.assignedTask==null) {
-                continue;
+    private void processAssignedTask(
+            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.Core coreRequest) {
+
+            if (coreRequest.assignedTask==null) {
+                return;
             }
-            processorService.assignTasks(core, c.assignedTask);
-        }
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreRequest.code, ref.dispatcherUrl);
+            if (core==null) {
+                return;
+            }
+            processorService.assignTasks(core, coreRequest.assignedTask);
     }
 
     // processing at processor side

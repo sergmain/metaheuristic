@@ -51,14 +51,14 @@ public class ProcessorKeepAliveProcessor {
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
         final KeepAliveResponseParamYaml.DispatcherResponse response = responseParamYaml.response;
 
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(response.processorCode, dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(dispatcherUrl);
 
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}", response.processorCode, dispatcherUrl);
             return;
         }
-        storeProcessorId(ref, response);
-        reAssignProcessorId(ref, response);
+        storeProcessorId(dispatcherUrl, response);
+        reAssignProcessorId(dispatcherUrl, response);
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
 
         storeProcessorCoreId(ref, responseParamYaml.response.coreInfos);
@@ -104,14 +104,8 @@ public class ProcessorKeepAliveProcessor {
 
     private void storeProcessorCoreId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<KeepAliveResponseParamYaml.CoreInfo> coreInfos) {
         for (KeepAliveResponseParamYaml.CoreInfo coreInfo : coreInfos) {
-
+            metadataService.setCoreId(ref.dispatcherUrl, coreInfo.code, coreInfo.coreId);
         }
-        if (response.assignedProcessorId ==null) {
-            return;
-        }
-        log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(
-                ref, response.assignedProcessorId.assignedProcessorId.toString(), response.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
