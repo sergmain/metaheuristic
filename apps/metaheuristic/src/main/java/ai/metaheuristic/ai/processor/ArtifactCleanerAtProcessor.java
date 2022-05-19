@@ -58,16 +58,16 @@ public class ArtifactCleanerAtProcessor {
                     dispatcherDir.mkdir();
                 }
 
-                List<ProcessorCoreTask> all = processorTaskService.findAll(core);
+                List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
                 for (ProcessorCoreTask task : all) {
                     if (currentExecState.isState(ref.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                         log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        processorTaskService.delete(ref, task.getTaskId());
+                        processorTaskService.delete(core, task.getTaskId());
                         continue;
                     }
                     if (task.clean && task.delivered && task.completed) {
                         log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        processorTaskService.delete(ref, task.getTaskId());
+                        processorTaskService.delete(core, task.getTaskId());
                     }
                 }
             }

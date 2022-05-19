@@ -49,7 +49,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class ProcessorCommContext {
         @Nullable
-        public String processorId;
+        public Long processorId;
         @Nullable
         public String sessionId;
     }
@@ -74,8 +74,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RequestTask {
-        @Nullable
-        public Boolean newTask;
+        public boolean newTask;
         public boolean acceptOnlySigned;
         @Nullable
         public String taskIds;
@@ -144,6 +143,32 @@ public class ProcessorCommParamsYaml implements BaseParams {
         public final List<Core> cores = new ArrayList<>();
 
         public int currentQuota;
+    }
+
+    public void addReportTaskProcessingResult(@Nullable ReportTaskProcessingResult result) {
+        if (result==null || result.results.isEmpty()) {
+            return;
+        }
+        if (request.reportTaskProcessingResult==null) {
+            request.reportTaskProcessingResult = new ReportTaskProcessingResult();
+        }
+        if (request.reportTaskProcessingResult.results==null) {
+            request.reportTaskProcessingResult.results = new ArrayList<>();
+        }
+        request.reportTaskProcessingResult.results.addAll(result.results);
+    }
+
+    public void addResendTaskOutputResourceResult(List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses) {
+        if (statuses.isEmpty()) {
+            return;
+        }
+        if (request.resendTaskOutputResourceResult==null) {
+            request.resendTaskOutputResourceResult = new ResendTaskOutputResourceResult();
+        }
+        if (request.resendTaskOutputResourceResult.statuses==null) {
+            request.resendTaskOutputResourceResult.statuses = new ArrayList<>();
+        }
+        request.resendTaskOutputResourceResult.statuses.addAll(statuses);
     }
 
     public final ProcessorRequest request = new ProcessorRequest();

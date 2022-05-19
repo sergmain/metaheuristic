@@ -97,7 +97,7 @@ public class TaskAssetPreparer {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
             // delete all orphan tasks
-            processorTaskService.findAll(core).forEach(task -> {
+            processorTaskService.findAllForCore(core).forEach(task -> {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(core, task.taskId);

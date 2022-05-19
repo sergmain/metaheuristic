@@ -73,7 +73,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -225,51 +224,20 @@ public class SouthbridgeService {
 
     public String processRequest(String data, String remoteAddress) {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
-        DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy, System.currentTimeMillis());
+        DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
         String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         log.info("#444.196 processRequest(), size of yaml: {}", yaml.length());
         return yaml;
     }
 
-    private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy, long startMills) {
-        DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
-        DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.quotas.current);
-
-        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
-                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
-
+    private DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
+        if (log.isDebugEnabled()) {
+            MetaheuristicThreadLocal.getExecutionStat().setStat(true);
+        }
         try {
-            for (ProcessorCommParamsYaml.ProcessorRequest request : scpy.requests) {
-                DispatcherCommParamsYaml.DispatcherResponse response = new DispatcherCommParamsYaml.DispatcherResponse(request.processorCode);
-                lcpy.responses.add(response);
-
-                if (request.processorCommContext ==null || S.b(request.processorCommContext.processorId)) {
-                    DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
-                    response.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-                Long processorId = Long.parseLong(request.processorCommContext.processorId);
-                final Processor processor = processorCache.findById(processorId);
-                if (processor == null) {
-                    log.warn("#444.200 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                    DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + request.processorCommContext.processorId);
-                    response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
-                    continue;
-                }
-
-                Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
-                if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession) {
-                    // do nothing because sessionId will be initialized via KeepAlive call
-                    log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
-                    continue;
-                }
-
-                log.debug("Start processing commands");
-                dispatcherCommandProcessor.process(request, response, quotas, queueEmpty);
-                if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) {
-                    break;
-                }
-            }
+            DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
+            processing(remoteAddress, scpy, lcpy);
+            return lcpy;
         } catch (Throwable th) {
             String json;
             try {
@@ -280,10 +248,62 @@ public class SouthbridgeService {
             }
             log.error("#444.320 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
             log.error("#444.330 Error", th);
+            DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
             lcpy.success = false;
             lcpy.msg = th.getMessage();
+            return lcpy;
         }
-        return lcpy;
+        finally {
+            if (log.isDebugEnabled()) {
+                MetaheuristicThreadLocal.getExecutionStat().print().forEach(log::debug);
+            }
+            MetaheuristicThreadLocal.getExecutionStat().execStat.clear();
+        }
+    }
+
+    private void processing(String remoteAddress, ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
+        DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.request.currentQuota);
+
+        long startMills = System.currentTimeMillis();
+        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
+                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
+
+        ProcessorCommParamsYaml.ProcessorRequest request = scpy.request;
+        DispatcherCommParamsYaml.DispatcherResponse response = lcpy.response;
+
+        if (request.processorCommContext == null || request.processorCommContext.processorId==null) {
+            DispatcherApiData.ProcessorSessionId processorSessionId = dispatcherCommandProcessor.getNewProcessorId();
+            response.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+            return;
+        }
+
+        Long processorId = request.processorCommContext.processorId;
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.warn("#444.200 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + request.processorCommContext.processorId);
+            response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
+            return;
+        }
+
+        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
+        if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus == Enums.ProcessorAndSessionStatus.newSession) {
+            // do nothing because sessionId will be initialized via KeepAlive call
+            log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
+            return;
+        }
+
+        log.debug("Start processing commands");
+        dispatcherCommandProcessor.process(request, response, startMills);
+        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) { return; }
+
+        for (ProcessorCommParamsYaml.Core core : scpy.request.cores) {
+            log.debug("Start processing commands");
+            dispatcherCommandProcessor.processCores(core, request, response, quotas, queueEmpty);
+            if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) {
+                break;
+            }
+        }
     }
 
     private static boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml.DispatcherResponse lcpy) {

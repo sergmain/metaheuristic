@@ -153,7 +153,7 @@ public class TaskTopLevelService {
         }
     }
 
-    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
+    public void processResendTaskOutputResourceResult(@Nullable Long processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         switch (status) {
             case SEND_SCHEDULED:
                 log.info("#303.380 Processor #{} scheduled for sending an output variable #{}, task #{}. This is normal operation of Processor", processorId, variableId, taskId);

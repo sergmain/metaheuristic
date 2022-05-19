@@ -49,7 +49,7 @@ public class ProcessorCommParamsYamlV3 implements BaseParams {
     @AllArgsConstructor
     public static class ProcessorCommContextV3 {
         @Nullable
-        public String processorId;
+        public Long processorId;
         @Nullable
         public String sessionId;
     }

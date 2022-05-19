@@ -123,7 +123,7 @@ public class ProcessorTaskService {
                                             log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
                                             return;
                                         }
-                                        getMapForDispatcherUrl(core).put(taskId, task);
+                                        getTasksForProcessorCore(core).put(taskId, task);
 
                                         // fix state of task
                                         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
@@ -388,7 +388,7 @@ public class ProcessorTaskService {
     public List<ProcessorCoreTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorCoreTask> list = new ArrayList<>();
-            for (ProcessorCoreTask task : getMapForDispatcherUrl(core).values()) {
+            for (ProcessorCoreTask task : getTasksForProcessorCore(core).values()) {
                 if (!task.completed) {
                     if (task.finishedOn!=null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o->o.uploaded)) {
                         task.completed = true;
@@ -403,21 +403,27 @@ public class ProcessorTaskService {
         }
     }
 
-    private Map<Long, ProcessorCoreTask> getMapForDispatcherUrl(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+    private Map<Long, ProcessorCoreTask> getTasksForDispatcherUrl(ProcessorAndCoreData.DispatcherUrl dispatcherUrl) {
+        Map<Long, ProcessorCoreTask> result = new HashMap<>();
+
         for (Map<DispatcherUrl, Map<Long, ProcessorCoreTask>> value : map.values()) {
             for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> entry : value.entrySet()) {
-                if (entry.getKey().equals(core.dispatcherUrl)) {
-                    return entry.getValue();
+                if (entry.getKey().equals(dispatcherUrl)) {
+                    result.putAll( entry.getValue());
                 }
             }
         }
+        return result;
+    }
+
+    private Map<Long, ProcessorCoreTask> getTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         return map.computeIfAbsent(core.coreCode, k->new HashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new HashMap<>());
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorCoreTask> list = new ArrayList<>();
-            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getMapForDispatcherUrl(core);
+            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             List<Long> forDeletion = new ArrayList<>();
             for (ProcessorCoreTask task : mapForDispatcherUrl.values()) {
                 if (S.b(task.dispatcherUrl)) {
@@ -436,7 +442,7 @@ public class ProcessorTaskService {
     }
 
     private Stream<ProcessorCoreTask> findAllByFinishedOnIsNotNull(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        return getMapForDispatcherUrl(core).values().stream().filter(o -> o.finishedOn!=null);
+        return getTasksForProcessorCore(core).values().stream().filter(o -> o.finishedOn!=null);
     }
 
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
@@ -445,7 +451,7 @@ public class ProcessorTaskService {
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
-            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getMapForDispatcherUrl(core);
+            Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             ProcessorCoreTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorCoreTask());
 
             task.taskId = assignedTask.taskId;
@@ -553,7 +559,7 @@ public class ProcessorTaskService {
     @Nullable
     public ProcessorCoreTask findById(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            return getMapForDispatcherUrl(core)
+            return getTasksForProcessorCore(core)
                     .entrySet()
                     .stream()
                     .filter(e -> e.getValue().taskId.equals(taskId))
@@ -563,9 +569,9 @@ public class ProcessorTaskService {
         }
     }
 
-    public List<ProcessorCoreTask> findAll(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+    public List<ProcessorCoreTask> findAllForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            Collection<ProcessorCoreTask> values = getMapForDispatcherUrl(core).values();
+            Collection<ProcessorCoreTask> values = getTasksForProcessorCore(core).values();
             return List.copyOf(values);
         }
     }
@@ -585,7 +591,7 @@ public class ProcessorTaskService {
                 if (taskDir.exists()) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
                 }
-                Map<Long, ProcessorCoreTask> mapTask = getMapForDispatcherUrl(core);
+                Map<Long, ProcessorCoreTask> mapTask = getTasksForDispatcherUrl(core);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
