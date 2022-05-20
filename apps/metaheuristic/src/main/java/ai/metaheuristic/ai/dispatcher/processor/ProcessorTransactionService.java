@@ -19,11 +19,14 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,6 +60,7 @@ import java.util.stream.Collectors;
 public class ProcessorTransactionService {
 
     private final ProcessorRepository processorRepository;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final ProcessorCache processorCache;
 
     private static final int COOL_DOWN_MINUTES = 2;
@@ -180,6 +184,16 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
+    public ProcessorCore createProcessorCore(@Nullable String description, CoreStatusYaml ss, Long processorId) {
+        ProcessorCore core = new ProcessorCore();
+        core.processorId = processorId;
+        core.updatedOn = System.currentTimeMillis();
+        core.updateParams(ss);
+        core.description= description;
+        return processorCoreRepository.save(core);
+    }
+
+    @Transactional
     public ProcessorData.ProcessorResult updateDescription(Long processorId, @Nullable String desc) {
         ProcessorSyncService.checkWriteLockPresent(processorId);
         Processor s = processorCache.findById(processorId);
@@ -199,6 +213,17 @@ public class ProcessorTransactionService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
         }
         processorCache.deleteById(id);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Transactional
+    public OperationStatusRest deleteProcessorCoreById(Long id) {
+        ProcessorSyncService.checkWriteLockPresent(id);
+        ProcessorCore core = processorCoreRepository.findById(id).orElse(null);
+        if (core == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.082 ProcessorCore wasn't found, processorCoreId: " + id);
+        }
+        processorCoreRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

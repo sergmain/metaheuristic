@@ -166,15 +166,16 @@ public class PreparingSourceCodeService {
         return sessionId;
     }
 
-    public void step_1_1_register_function_statuses(String sessionId, @Nullable String processorIdAsStr, PreparingData.PreparingSourceCodeData preparingSourceCodeData, PreparingData.PreparingCodeData preparingCodeData) {
-        if (S.b(processorIdAsStr)) {
-            throw new IllegalStateException("(S.b(processorIdAsStr))");
-        }
+    public void step_1_1_register_function_statuses(String sessionId, @Nullable Long processorId, PreparingData.PreparingSourceCodeData preparingSourceCodeData, PreparingData.PreparingCodeData preparingCodeData) {
+        assertNotNull(processorId);
+        assertEquals(preparingCodeData.processor.getId(), processorId);
+
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
         karpy.functions.statuses = asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction());
 
         KeepAliveRequestParamYaml.Processor pr = karpy.processor;
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
+
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");
         env.envs.put("python-3", "/path/to/python-3");

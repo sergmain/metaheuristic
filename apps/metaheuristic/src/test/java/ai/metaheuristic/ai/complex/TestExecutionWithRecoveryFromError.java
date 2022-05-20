@@ -155,7 +155,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
 
         System.out.println("start step_1_1_register_function_statuses()");
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
@@ -198,7 +198,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     private void step_DatasetProcessing() {
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
@@ -206,7 +206,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertNotNull(task3);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         assertNotNull(simpleTask21);
         assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
 
@@ -248,7 +248,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     private void step_AssembledRaw(boolean error) {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -256,7 +256,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertNotNull(task);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
 
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());

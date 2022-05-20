@@ -74,7 +74,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         });
 
         String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
@@ -87,7 +87,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask();
 
         // this processor already got task, so don't provide any new
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         // we still didn't finish task
         // so we will get the same task
         assertNotNull(task);
@@ -97,7 +97,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
-        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
 
         assertNull(task1);
     }

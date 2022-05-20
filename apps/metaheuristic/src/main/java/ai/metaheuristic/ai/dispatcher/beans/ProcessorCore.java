@@ -62,13 +62,6 @@ public class ProcessorCore implements Serializable {
     @Column(name="UPDATED_ON")
     public long updatedOn;
 
-    /**
-     * this field is initialized manually
-     */
-    @Nullable
-    @Column(name = "IP")
-    public String ip;
-
     @Nullable
     @Column(name = "DESCRIPTION")
     public String description;

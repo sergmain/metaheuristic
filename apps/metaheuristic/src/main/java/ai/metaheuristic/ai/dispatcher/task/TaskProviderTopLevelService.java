@@ -248,7 +248,7 @@ public class TaskProviderTopLevelService {
         });
     }
 
-    private static final ConcurrentHashMap<Long, AtomicLong> processorCheckedOn = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, AtomicLong> coreCheckedOn = new ConcurrentHashMap<>();
 
     @Nullable
     public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
@@ -263,7 +263,7 @@ public class TaskProviderTopLevelService {
         TxUtils.checkTxNotExists();
 
         if (queueEmpty) {
-            AtomicLong mills = processorCheckedOn.computeIfAbsent(coreId, o -> new AtomicLong());
+            AtomicLong mills = coreCheckedOn.computeIfAbsent(coreId, o -> new AtomicLong());
             final boolean b = System.currentTimeMillis() - mills.get() < 60_000;
             log.debug("#393.445 queue is empty, suspend finding of new tasks: {}", b );
             if (b) {

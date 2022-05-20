@@ -50,19 +50,26 @@ public class MetadataParamsYamlUtilsV3
     public MetadataParamsYaml upgradeTo(@NonNull MetadataParamsYamlV3 src) {
         src.checkIntegrity();
         MetadataParamsYaml trg = new MetadataParamsYaml();
-        for (Map.Entry<String, MetadataParamsYamlV3.ProcessorSessionV3> entry : src.processorSessions.entrySet()) {
-            final MetadataParamsYamlV3.ProcessorSessionV3 psV3 = entry.getValue();
-            MetadataParamsYaml.ProcessorSession value =  new MetadataParamsYaml.ProcessorSession(psV3.dispatcherCode, psV3.processorId, psV3.sessionId);
-            value.cores.putAll(psV3.cores);
+        if (trg.processorSessions==null || trg.metadata==null) {
+            throw new IllegalStateException("(trg.processorSessions==null || trg.metadata==null)");
+        }
+        if (src.processorSessions!=null) {
+            for (Map.Entry<String, MetadataParamsYamlV3.ProcessorSessionV3> entry : src.processorSessions.entrySet()) {
+                final MetadataParamsYamlV3.ProcessorSessionV3 psV3 = entry.getValue();
+                MetadataParamsYaml.ProcessorSession value = new MetadataParamsYaml.ProcessorSession(psV3.dispatcherCode, psV3.processorId, psV3.sessionId);
+                value.cores.putAll(psV3.cores);
 
-            psV3.quotas.stream().map(MetadataParamsYamlUtilsV3::toQuota).collect(Collectors.toCollection(()->value.quotas));
+                psV3.quotas.stream().map(MetadataParamsYamlUtilsV3::toQuota).collect(Collectors.toCollection(() -> value.quotas));
 
-            trg.processorSessions.put(entry.getKey(), value);
+                trg.processorSessions.put(entry.getKey(), value);
+            }
         }
 
-        for (Map.Entry<String, String> o : src.metadata.entrySet()) {
-            if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
-                trg.metadata.put(o.getKey(), o.getValue());
+        if (src.metadata!=null) {
+            for (Map.Entry<String, String> o : src.metadata.entrySet()) {
+                if (!Consts.META_FUNCTION_DOWNLOAD_STATUS.equals(o.getKey())) {
+                    trg.metadata.put(o.getKey(), o.getValue());
+                }
             }
         }
         src.functions.stream().map(MetadataParamsYamlUtilsV3::toStatus).collect(Collectors.toCollection(()->trg.functions));

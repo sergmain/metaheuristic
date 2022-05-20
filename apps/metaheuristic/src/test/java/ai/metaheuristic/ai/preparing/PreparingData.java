@@ -30,6 +30,8 @@ public class PreparingData {
     @Data
     public static class PreparingCodeData {
         public Processor processor = null;
+        public ProcessorCore core1 = null;
+        public ProcessorCore core2 = null;
         public String processorIdAsStr;
 
         @Nullable

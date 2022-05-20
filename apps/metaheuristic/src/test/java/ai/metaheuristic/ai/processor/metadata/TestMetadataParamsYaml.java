@@ -124,7 +124,7 @@ public class TestMetadataParamsYaml {
         assertNotNull(metadata);
         assertNotNull(metadata.processorSessions);
         assertFalse(metadata.processorSessions.isEmpty());
-        assertEquals(1, metadata.processorSessions.size());
+        assertEquals(2, metadata.processorSessions.size());
         assertTrue(metadata.processorSessions.containsKey("http://localhost:8080"));
         MetadataParamsYaml.ProcessorSession dispatcher8080 = metadata.processorSessions.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
@@ -141,7 +141,7 @@ public class TestMetadataParamsYaml {
         assertTrue(dispatcher8888.cores.containsKey("core-1"));
         assertTrue(dispatcher8888.cores.containsKey("core-2"));
         assertEquals(117, dispatcher8888.cores.get("core-1"));
-        assertEquals(121, dispatcher8888.cores.get("core-2"));
+        assertEquals(119, dispatcher8888.cores.get("core-2"));
 
         assertNotNull(metadata.metadata);
         assertTrue(metadata.metadata.isEmpty());

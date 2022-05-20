@@ -77,7 +77,7 @@ public class TestTaskRequest extends FeatureMethods {
         produceTasks();
         toStarted();
         String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
         step_2(sessionId);
         step_3(sessionId);
         step_4(sessionId);
@@ -88,7 +88,7 @@ public class TestTaskRequest extends FeatureMethods {
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         // get a task for processing
-        DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

@@ -141,7 +141,6 @@ CREATE TABLE mh_processor_core
     VERSION         INT UNSIGNED NOT NULL,
     PROCESSOR_ID    INT UNSIGNED NOT NULL,
     UPDATED_ON      bigint not null,
-    IP              VARCHAR(30),
     DESCRIPTION     VARCHAR(250),
     STATUS          LONGTEXT NOT NULL
 );
@@ -240,7 +239,7 @@ CREATE TABLE mh_task
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION                     INT UNSIGNED    NOT NULL,
     PARAMS                      MEDIUMTEXT not null,
-    PROCESSOR_ID                NUMERIC(10, 0),
+    CORE_ID                     NUMERIC(10, 0),
     ASSIGNED_ON                 bigint,
     UPDATED_ON                  bigint,
     COMPLETED_ON                bigint,
@@ -253,8 +252,8 @@ CREATE TABLE mh_task
     ACCESS_BY_PROCESSOR_ON      bigint
 );
 
-CREATE INDEX mh_task_processor_id_idx
-    ON mh_task (PROCESSOR_ID);
+CREATE INDEX mh_task_core_id_idx
+    ON mh_task (CORE_ID);
 
 CREATE INDEX mh_task_exec_context_id_idx
     ON mh_task (EXEC_CONTEXT_ID);

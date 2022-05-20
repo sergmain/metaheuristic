@@ -54,7 +54,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         toStarted();
 
         String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
@@ -64,7 +64,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
         log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         // there isn't a new task for processing
         // we will get the same task
         assertNotNull(task);
@@ -80,7 +80,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
 
-        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
         assertNull(task2);
 
         log.info("noNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);

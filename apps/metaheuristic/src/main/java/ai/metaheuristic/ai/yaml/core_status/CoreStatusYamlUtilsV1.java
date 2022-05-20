@@ -27,7 +27,7 @@ public class CoreStatusYamlUtilsV1
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 
     @NonNull

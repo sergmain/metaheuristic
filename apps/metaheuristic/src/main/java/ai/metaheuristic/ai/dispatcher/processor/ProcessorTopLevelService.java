@@ -89,6 +89,10 @@ public class ProcessorTopLevelService {
         return ProcessorSyncService.getWithSync(processorId, ()-> processorTransactionService.deleteProcessorById(processorId));
     }
 
+    public OperationStatusRest deleteProcessorCoreById(Long coreId) {
+        return ProcessorSyncService.getWithSync(coreId, ()-> processorTransactionService.deleteProcessorCoreById(coreId));
+    }
+
     public void processKeepAliveData(
             KeepAliveRequestParamYaml.Processor processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
             final Processor processor) {

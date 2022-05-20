@@ -138,7 +138,6 @@ CREATE TABLE MH_PROCESSOR_CORE
   VERSION           NUMERIC(10, 0)  NOT NULL,
   PROCESSOR_ID      NUMERIC(10, 0) NOT NULL,
   UPDATED_ON        bigint not null,
-  IP                VARCHAR(30),
   DESCRIPTION       VARCHAR(250),
   STATUS            TEXT NOT NULL
 );
@@ -233,10 +232,10 @@ CREATE UNIQUE INDEX MH_SERIES_NAME_UNQ_IDX
 
 CREATE TABLE MH_TASK
 (
-  ID            SERIAL PRIMARY KEY,
-  VERSION       NUMERIC(10, 0)  NOT NULL,
-  PARAMS        TEXT not null,
-  PROCESSOR_ID                  NUMERIC(10, 0),
+  ID                            SERIAL PRIMARY KEY,
+  VERSION                       NUMERIC(10, 0)  NOT NULL,
+  PARAMS                        TEXT not null,
+  CORE_ID                       NUMERIC(10, 0),
   ASSIGNED_ON                   bigint,
   UPDATED_ON                    bigint,
   COMPLETED_ON                  bigint,
@@ -250,7 +249,7 @@ CREATE TABLE MH_TASK
 );
 
 CREATE INDEX MH_TASK_PROCESSOR_ID_IDX
-    ON MH_TASK (PROCESSOR_ID);
+    ON MH_TASK (CORE_ID);
 
 CREATE INDEX MH_TASK_EXEC_CONTEXT_ID_IDX
     ON MH_TASK (EXEC_CONTEXT_ID);

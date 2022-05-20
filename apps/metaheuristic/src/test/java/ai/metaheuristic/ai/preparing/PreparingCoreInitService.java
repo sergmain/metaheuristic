@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
@@ -37,12 +38,11 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -102,10 +102,11 @@ public class PreparingCoreInitService {
         data.processorIdAsStr =  Long.toString(data.processor.getId());
 
         // Prepare processor's cores
-        if (true) throw new NotImplementedException();
-        data.processor = processorTransactionService.createProcessor(description, null, ss);
-        log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        data.processorIdAsStr =  Long.toString(data.processor.getId());
+        CoreStatusYaml csy1 = new CoreStatusYaml("/home/core-1", null, null);
+        data.core1 = processorTransactionService.createProcessorCore(description, csy1, data.processor.id);
+
+        CoreStatusYaml csy2 = new CoreStatusYaml("/home/core-2", null, null);
+        data.core2 = processorTransactionService.createProcessorCore(description, csy2, data.processor.id);
 
         // Prepare functions
         mills = System.currentTimeMillis();
@@ -160,29 +161,46 @@ public class PreparingCoreInitService {
         return data;
     }
 
-    public void afterPreparingCore(PreparingData.PreparingCodeData preparingCodeData) {
+    public void afterPreparingCore(@Nullable PreparingData.PreparingCodeData preparingCodeData) {
         long mills = System.currentTimeMillis();
         log.info("Start afterPreparingCore()");
-        if (preparingCodeData.processor != null) {
-            try {
-                processorTopLevelService.deleteProcessorById(preparingCodeData.processor.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+        if (preparingCodeData!=null) {
+            if (preparingCodeData.core1 != null) {
+                try {
+                    processorTopLevelService.deleteProcessorCoreById(preparingCodeData.core1.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
-        }
-        if (preparingCodeData.predictFunction != null) {
-            try {
-                txSupportForTestingService.deleteFunctionById(preparingCodeData.predictFunction.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+            if (preparingCodeData.core2 != null) {
+                try {
+                    processorTopLevelService.deleteProcessorCoreById(preparingCodeData.core2.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
-        }
-        if (preparingCodeData.fitFunction != null) {
-            try {
-                txSupportForTestingService.deleteFunctionById(preparingCodeData.fitFunction.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+            if (preparingCodeData.processor != null) {
+                try {
+                    processorTopLevelService.deleteProcessorById(preparingCodeData.processor.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
+            if (preparingCodeData.predictFunction != null) {
+                try {
+                    txSupportForTestingService.deleteFunctionById(preparingCodeData.predictFunction.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+            if (preparingCodeData.fitFunction != null) {
+                try {
+                    txSupportForTestingService.deleteFunctionById(preparingCodeData.fitFunction.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+
         }
         TaskWithInternalContextEventService.shutdown();
         System.out.println("afterPreparingCore() Was finished correctly");
