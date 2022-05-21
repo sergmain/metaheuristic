@@ -159,7 +159,7 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
     public final DispatcherResponse response = new DispatcherResponse();
     public final Functions functions = new Functions();
-    public final ExecContextStatus execContextStatus = new ExecContextStatus();
+    public ExecContextStatus execContextStatus = new ExecContextStatus();
     public DispatcherInfo dispatcherInfo;
 
     public boolean success = true;

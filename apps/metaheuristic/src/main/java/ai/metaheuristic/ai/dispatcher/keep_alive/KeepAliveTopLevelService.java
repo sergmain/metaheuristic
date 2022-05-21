@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
@@ -58,9 +59,11 @@ public class KeepAliveTopLevelService {
     private final ProcessorTransactionService processorTransactionService;
     private final ProcessorCoreService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
+    private final ExecContextStatusService execContextStatusService;
 
     private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
+        keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 

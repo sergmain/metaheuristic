@@ -492,9 +492,9 @@ public class BatchResultProcessorTxService {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
         final String processorIpAndHost;
-        String processorId;
+        String coreId;
         if (tpy.task.context== EnumsApi.FunctionExecContext.external) {
-            processorId = S.f("processorId: %s", task.getCoreId());
+            coreId = S.f("coreId: %s", task.getCoreId());
             Processor s = null;
             if (task.getCoreId() != null) {
                 s = processorCache.findById(task.getCoreId());
@@ -503,7 +503,7 @@ public class BatchResultProcessorTxService {
         }
         else {
             processorIpAndHost = "Internal function";
-            processorId = "Dispatcher";
+            coreId = "Dispatcher";
         }
 
         String func = tpy.task.function.code;
@@ -512,7 +512,7 @@ public class BatchResultProcessorTxService {
             case IN_PROGRESS:
                 bs.getProgressStatus().add(
                         S.f("#993.300 Task #%s hasn't completed yet, function: %s, status: %s, execContextId: %s, %s, %s",
-                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
+                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, coreId, processorIpAndHost)
                         ,'\n');
                 bs.ok = true;
                 return;
@@ -523,14 +523,14 @@ public class BatchResultProcessorTxService {
                 } catch (YAMLException e) {
                     bs.getGeneralStatus().add(
                             S.f("#993.320 Task #%s has broken console output, function: %s, status: %s, execContextId: %s, %s, %s",
-                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
+                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, coreId, processorIpAndHost)
                             ,'\n');
                     return;
                 }
                 if (functionExec==null) {
                     bs.getGeneralStatus().add(
                             S.f("#993.340 Task #%s has broken console output, function: %s, status: %s, execContextId: %s, %s, %s",
-                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
+                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, coreId, processorIpAndHost)
                             ,'\n');
                     return;
                 }
@@ -543,7 +543,7 @@ public class BatchResultProcessorTxService {
             case SKIPPED:
                 bs.getProgressStatus().add(
                         S.f("#993.360 Task #%s was skipped yet, function: %s, status: %s, execContextId: %s, %s, %s",
-                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
+                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, coreId, processorIpAndHost)
                         ,'\n');
                 bs.ok = true;
                 return;
@@ -556,7 +556,7 @@ public class BatchResultProcessorTxService {
 
         bs.getOkStatus().add(
                 S.f("#993.380 Task #%s was completed successfully, function: %s, status: %s, execContextId: %s, %s, %s",
-                        taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
+                        taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, coreId, processorIpAndHost)
                 ,'\n');
         bs.ok = true;
     }
@@ -576,7 +576,7 @@ public class BatchResultProcessorTxService {
     private static String getStatusForError(ExecContextImpl ec, TaskImpl task, FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
 
         final String header =
-                S.f("#993.400 Task #%s was completed with an error, , status: %s, execContextId: %s, processorId: %s, %s\n\n",
+                S.f("#993.400 Task #%s was completed with an error, , status: %s, execContextId: %s, coreId: %s, %s\n\n",
                         task.id, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getCoreId(), processorIpAndHost);
 
         StringBuilder sb = new StringBuilder(header);
