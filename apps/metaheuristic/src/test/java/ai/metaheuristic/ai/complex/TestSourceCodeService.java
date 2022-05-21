@@ -99,6 +99,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
+    @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -167,24 +168,29 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         //   processCode: feature-processing-1, function code: function-03:1.1
         System.out.println("start step_CommonProcessing(feature-output-1)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-1");
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+
         //   processCode: feature-processing-2, function code: function-04:1.1
         System.out.println("start step_CommonProcessing(feature-output-2)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-2");
@@ -285,7 +291,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         // process and complete fit/predict tasks
         for (int i = 0; i < 12; i++) {
-            step_FitAndPredict();
+            step_FitAndPredict(processorIdAndCoreIds);
         }
 
         verifyGraphIntegrity();
@@ -378,24 +384,16 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextVariableStateTopLevelService.processFlushing();
     }
 
-    private void step_FitAndPredict() {
+    private void step_FitAndPredict(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
         Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
-
-/*
-        // becauce those tasks is executing in parallel, don't call getTaskAndAssignToProcessor() again
-        DispatcherCommParamsYaml.AssignedTask simpleTask31 =
-                execContextService.getTaskAndAssignToProcessor(new ProcessorCommParamsYaml.ReportProcessorTaskStatus(), processor.getId(), false, execContextForTest.getId());
-
-        assertNull(simpleTask31);
-*/
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
         assertNotNull(taskParamsYaml.task.processCode);

@@ -173,7 +173,9 @@ public class PermuteVariablesFunction implements InternalFunction {
     }
 
     private Enums.VariablesAs getVariablesAs(ExecContextData.SimpleExecContext simpleExecContext, String taskContextId) {
-        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, "variablesAs");
+        List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
+                simpleExecContext.execContextId, taskContextId, new String[]{"variablesAs"}, false);
+
         if (holders.size()>1) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#987.030 Too many variables with name 'variablesAs'"));
