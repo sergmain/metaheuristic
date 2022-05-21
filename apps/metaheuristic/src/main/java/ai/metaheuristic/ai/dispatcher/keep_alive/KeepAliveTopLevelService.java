@@ -74,7 +74,7 @@ public class KeepAliveTopLevelService {
         resp.response.processorCode = req.processor.processorCode;
         try {
             Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
-            if (System.currentTimeMillis() - startMills < 12_000) {
+            if (System.currentTimeMillis() - startMills < 12_000 || globals.isTesting()) {
                 processInfoAboutCores(processorId, req, startMills, resp);
             }
             initDispatcherInfo(resp);

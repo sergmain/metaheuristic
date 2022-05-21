@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -73,8 +74,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
             return null;
         });
 
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
@@ -84,20 +85,20 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask();
+        DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask(processorIdAndCoreIds);
 
         // this processor already got task, so don't provide any new
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // we still didn't finish task
         // so we will get the same task
         assertNotNull(task);
         assertEquals(assignedTask.taskId, task.taskId);
 
-        storeConsoleResultAsError();
+        storeConsoleResultAsError(processorIdAndCoreIds);
 
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
-        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         assertNull(task1);
     }

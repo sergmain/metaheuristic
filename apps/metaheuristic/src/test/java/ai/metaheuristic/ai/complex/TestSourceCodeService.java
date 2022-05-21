@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -159,34 +160,34 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextStatusService.resetStatus();
 
         System.out.println("start step_1_0_init_session_id()");
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
 
         System.out.println("start step_1_1_register_function_statuses()");
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         System.out.println("start step_AssembledRaw()");
-        step_AssembledRaw();
+        step_AssembledRaw(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         System.out.println("start step_DatasetProcessing()");
-        step_DatasetProcessing();
+        step_DatasetProcessing(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         //   processCode: feature-processing-1, function code: function-03:1.1
         System.out.println("start step_CommonProcessing(feature-output-1)");
-        step_CommonProcessing("feature-output-1");
+        step_CommonProcessing(processorIdAndCoreIds, "feature-output-1");
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         //   processCode: feature-processing-2, function code: function-04:1.1
         System.out.println("start step_CommonProcessing(feature-output-2)");
-        step_CommonProcessing("feature-output-2");
+        step_CommonProcessing(processorIdAndCoreIds, "feature-output-2");
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         // mh.permute-values-of-variables
@@ -232,7 +233,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.task.params);
         assertFalse(tpy.task.metas.isEmpty());
 
-        DispatcherCommParamsYaml.AssignedTask task40 = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task40 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
@@ -296,7 +297,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
         DispatcherCommParamsYaml.AssignedTask t =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(aggregateTask.task.id, 40);
@@ -315,7 +316,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         });
 
         execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
-        t = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
         waitForFinishing(finishTask.task.id, 40);
@@ -343,9 +344,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         });
     }
 
-    private void step_CommonProcessing(String outputVariable) {
+    private void step_CommonProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, String outputVariable) {
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
@@ -428,9 +429,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextSchedulerService.updateExecContextStatuses();
     }
 
-    private void step_DatasetProcessing() {
+    private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
@@ -438,7 +439,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(task3);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNotNull(simpleTask21);
         assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
 
@@ -478,9 +479,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     }
 
-    private void step_AssembledRaw() {
+    private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -488,7 +489,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(task);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
 

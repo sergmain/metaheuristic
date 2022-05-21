@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -72,30 +73,32 @@ public class TestTaskRequest extends FeatureMethods {
         return getSourceParamsYamlAsString_Simple();
     }
 
+
     @Test
     public void testTaskRequest() {
         produceTasks();
         toStarted();
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
-        step_2(sessionId);
-        step_3(sessionId);
-        step_4(sessionId);
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
+        step_2(processorIdAndCoreIds);
+        step_3(processorIdAndCoreIds);
+        step_4(processorIdAndCoreIds);
     }
 
-    private void step_2(String sessionId) {
+    private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         // get a task for processing
-        DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = processorComm0.request;
 
-        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorId(), sessionId);
-        req0.cores.add(new ProcessorCommParamsYaml.Core("core-1", 111L, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req0.processorCommContext = PreparingSourceCodeService.toProcessorCommContext(processorIdAndCoreIds);
+        req0.cores.add(new ProcessorCommParamsYaml.Core("core-1", processorIdAndCoreIds.coreId1, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req0.cores.add(new ProcessorCommParamsYaml.Core("core-2", processorIdAndCoreIds.coreId2, null));
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
@@ -108,12 +111,18 @@ public class TestTaskRequest extends FeatureMethods {
         final DispatcherCommParamsYaml.DispatcherResponse response = d1.response;
         assertNotNull(response);
         assertNotNull(response.cores);
-        assertEquals(1, response.cores.size());
+        assertEquals(2, response.cores.size());
+        assertNotNull(response.cores.get(0).code);
+        assertNotNull(response.cores.get(0).coreId);
+
+        assertNotNull(response.cores.get(1).code);
+        assertNotNull(response.cores.get(1).coreId);
+
         final DispatcherCommParamsYaml.AssignedTask assignedTask = response.cores.get(0).getAssignedTask();
         assertNotNull(assignedTask);
         assertEquals(t.taskId, assignedTask.taskId);
 
-        storeConsoleResultAsOk();
+        storeConsoleResultAsOk(processorIdAndCoreIds);
         final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
 
@@ -140,15 +149,16 @@ public class TestTaskRequest extends FeatureMethods {
         setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
     }
 
-    private void step_3(String sessionId) {
+    private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = processorComm0.request;
 
-        req0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorId(), sessionId);
-        req0.cores.add(new ProcessorCommParamsYaml.Core("core-1", 111L, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req0.processorCommContext = PreparingSourceCodeService.toProcessorCommContext(processorIdAndCoreIds);
+        req0.cores.add(new ProcessorCommParamsYaml.Core("core-1", processorIdAndCoreIds.coreId1, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req0.cores.add(new ProcessorCommParamsYaml.Core("core-2", processorIdAndCoreIds.coreId2, null));
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
         String dispatcherResponse0 = serverService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
@@ -159,17 +169,23 @@ public class TestTaskRequest extends FeatureMethods {
         final DispatcherCommParamsYaml.DispatcherResponse response = d.response;
 
         assertNotNull(response.cores);
-        assertEquals(1, response.cores.size());
+        assertEquals(2, response.cores.size());
+        assertNotNull(response.cores.get(0).code);
+        assertNotNull(response.cores.get(0).coreId);
+
+        assertNotNull(response.cores.get(1).code);
+        assertNotNull(response.cores.get(1).coreId);
         final DispatcherCommParamsYaml.AssignedTask assignedTask = response.cores.get(0).getAssignedTask();
         assertNotNull(assignedTask);
     }
 
-    private void step_4(String sessionId) {
+    private void step_4(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req1 = processorComm1.request;
 
-        req1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(getProcessorId(), sessionId);
-        req1.cores.add(new ProcessorCommParamsYaml.Core("core-1", 111L, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req1.processorCommContext = PreparingSourceCodeService.toProcessorCommContext(processorIdAndCoreIds);
+        req1.cores.add(new ProcessorCommParamsYaml.Core("core-1", processorIdAndCoreIds.coreId1, new ProcessorCommParamsYaml.RequestTask(false, null)));
+        req1.cores.add(new ProcessorCommParamsYaml.Core("core-2", processorIdAndCoreIds.coreId2, null));
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
         String dispatcherResponse1 = serverService.processRequest(processorYaml1, Consts.LOCALHOST_IP);
@@ -180,7 +196,12 @@ public class TestTaskRequest extends FeatureMethods {
         final DispatcherCommParamsYaml.DispatcherResponse response = d1.response;
 
         assertNotNull(response.cores);
-        assertEquals(1, response.cores.size());
+        assertEquals(2, response.cores.size());
+        assertNotNull(response.cores.get(0).code);
+        assertNotNull(response.cores.get(0).coreId);
+
+        assertNotNull(response.cores.get(1).code);
+        assertNotNull(response.cores.get(1).coreId);
         final DispatcherCommParamsYaml.AssignedTask assignedTask = response.cores.get(0).getAssignedTask();
         assertNull(assignedTask);
     }

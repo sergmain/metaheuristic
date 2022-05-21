@@ -295,12 +295,12 @@ public class SouthbridgeService {
 
         log.debug("Start processing commands");
         dispatcherCommandProcessor.process(request, response, startMills);
-        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) { return; }
+        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS && !globals.isTesting()) { return; }
 
         for (ProcessorCommParamsYaml.Core core : scpy.request.cores) {
             log.debug("Start processing commands");
             dispatcherCommandProcessor.processCores(core, request, response, quotas, queueEmpty);
-            if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) {
+            if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS && !globals.isTesting()) {
                 break;
             }
         }

@@ -41,6 +41,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,7 +49,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -139,16 +139,16 @@ public class PreparingSourceCodeService {
      * this method must be called after   produceTasks() and after toStarted()
      * @return
      */
-    public String step_1_0_init_session_id(@Nullable Long processorId) {
+    public PreparingData.ProcessorIdAndCoreIds step_1_0_init_session_id(@Nullable Long processorId) {
         if (processorId==null) {
             throw new IllegalStateException("(processorId==null)");
         }
-        String sessionId;
         KeepAliveRequestParamYaml processorComm = new KeepAliveRequestParamYaml();
         KeepAliveRequestParamYaml.Processor req = processorComm.processor;
         req.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
 
         req.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, null);
+        processorComm.cores.addAll(getCoresKeepAlive(null));
 
         final String processorYaml = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(processorComm);
         String dispatcherResponse = serverService.keepAlive(processorYaml, "127.0.0.1");
@@ -162,19 +162,41 @@ public class PreparingSourceCodeService {
         assertNotNull(reAssignedProcessorId.sessionId);
         assertEquals(processorId.toString(), reAssignedProcessorId.reAssignedProcessorId);
 
-        sessionId = reAssignedProcessorId.sessionId;
-        return sessionId;
+        assertNotNull(d0.response.coreInfos);
+        assertEquals(2, d0.response.coreInfos.size());
+        assertEquals("core-1", d0.response.coreInfos.get(0).code);
+        assertEquals("core-2", d0.response.coreInfos.get(1).code);
+        assertNotNull(d0.response.coreInfos.get(0).coreId);
+        assertNotNull(d0.response.coreInfos.get(1).coreId);
+
+        PreparingData.ProcessorIdAndCoreIds result = new PreparingData.ProcessorIdAndCoreIds(
+                Long.valueOf(reAssignedProcessorId.reAssignedProcessorId), reAssignedProcessorId.sessionId,
+                d0.response.coreInfos.get(0).coreId, d0.response.coreInfos.get(1).coreId);
+
+        return result;
     }
 
-    public void step_1_1_register_function_statuses(String sessionId, @Nullable Long processorId, PreparingData.PreparingSourceCodeData preparingSourceCodeData, PreparingData.PreparingCodeData preparingCodeData) {
-        assertNotNull(processorId);
-        assertEquals(preparingCodeData.processor.getId(), processorId);
+    private static List<KeepAliveRequestParamYaml.Core> getCoresKeepAlive(@Nullable PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
+        return List.of(
+                new KeepAliveRequestParamYaml.Core("/home/core-1", processorIdAndCoreIds==null ? null : processorIdAndCoreIds.coreId1, "core-1", null),
+                new KeepAliveRequestParamYaml.Core("/home/core-2", processorIdAndCoreIds==null ? null : processorIdAndCoreIds.coreId2, "core-2", null)
+        );
+    }
+
+    public static ProcessorCommParamsYaml.ProcessorCommContext toProcessorCommContext(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
+        return new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAndCoreIds.processorId, processorIdAndCoreIds.sessionId);
+    }
+
+    public void step_1_1_register_function_statuses(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, PreparingData.PreparingSourceCodeData preparingSourceCodeData, PreparingData.PreparingCodeData preparingCodeData) {
+        assertNotNull(processorIdAndCoreIds.processorId);
+        assertEquals(preparingCodeData.processor.getId(), processorIdAndCoreIds.processorId);
 
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
         karpy.functions.statuses = asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction());
 
         KeepAliveRequestParamYaml.Processor pr = karpy.processor;
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
+        karpy.cores.addAll(getCoresKeepAlive(processorIdAndCoreIds));
 
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");
@@ -186,7 +208,7 @@ public class PreparingSourceCodeService {
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", true,
                 1, EnumsApi.OS.unknown, "/users/yyy", null);
-        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(preparingCodeData.processor.getId(), sessionId);
+        pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAndCoreIds.processorId, processorIdAndCoreIds.sessionId);
 
         String yamlRequest = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karpy);
         String yamlResponse = serverService.keepAlive(yamlRequest, "127.0.0.1");

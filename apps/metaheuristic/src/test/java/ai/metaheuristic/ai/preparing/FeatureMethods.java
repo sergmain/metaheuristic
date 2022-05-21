@@ -58,7 +58,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         return getSourceParamsYamlAsString_Simple();
     }
 
-    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
+    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         long mills;
 
         mills = System.currentTimeMillis();
@@ -67,7 +67,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
         // get a task for processing
         log.info("Start experimentService.getTaskAndAssignToProcessor()");
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderService.findTask(processorIdAndCoreIds.coreId1, false);
         log.info("experimentService.getTaskAndAssignToProcessor() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         assertNotNull(task);
@@ -129,10 +129,10 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 
-    protected void storeConsoleResultAsError() {
+    protected void storeConsoleResultAsError(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(preparingCodeData.core1.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
@@ -147,9 +147,9 @@ public abstract class FeatureMethods extends PreparingExperiment {
         execContextTopLevelService.storeAllConsoleResults(results);
     }
 
-    protected void storeConsoleResultAsOk() {
+    protected void storeConsoleResultAsOk(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(preparingCodeData.core1.getId());
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);

@@ -251,11 +251,11 @@ public class TaskProviderTopLevelService {
     private static final ConcurrentHashMap<Long, AtomicLong> coreCheckedOn = new ConcurrentHashMap<>();
 
     @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long processorId, boolean isAcceptOnlySigned) {
+    public DispatcherCommParamsYaml.AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned) {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
-        return findTask(processorId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of(), false);
+        return findTask(coreId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of(), false);
     }
 
     @Nullable
@@ -274,7 +274,7 @@ public class TaskProviderTopLevelService {
 
         final ProcessorCore core = processorCoreCache.findById(coreId);
         if (core == null) {
-            log.error("#393.440 Processor with id #{} wasn't found", coreId);
+            log.error("#393.440 Core #{} wasn't found", coreId);
             return null;
         }
         if (core.processorId==null) {
@@ -288,7 +288,7 @@ public class TaskProviderTopLevelService {
 
         final Processor processor = processorCache.findById(core.processorId);
         if (processor == null) {
-            log.error("#393.445 Processor with id #{} wasn't found", core.processorId);
+            log.error("#393.445 Processor #{} wasn't found", core.processorId);
             return null;
         }
 
@@ -341,12 +341,12 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            Long processorId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final TaskData.AssignedTask task =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
-                        ()-> getTaskAndAssignToProcessorInternal(processorId, psy, csy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessorInternal(coreId, psy, csy, isAcceptOnlySigned, quotas, taskIds));
 
         // task won't be returned for an internal function
         if (task==null) {
@@ -365,8 +365,8 @@ public class TaskProviderTopLevelService {
                 // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
                 //  but this one fails. that could occur because of prepareVariables(task);
                 //  need a better solution for checking
-                log.warn("#393.600 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.task.getId(), processorId, psy.taskParamsVersion);
+                log.warn("#393.600 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                        task.task.getId(), coreId, psy.taskParamsVersion);
                 return null;
             }
 
@@ -382,7 +382,7 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
-            Long processorId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
 
         TxUtils.checkTxNotExists();
 
@@ -390,8 +390,8 @@ public class TaskProviderTopLevelService {
                 MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
                         execContextStatusService::getExecContextStatuses);
 
-        // find all tasks which were assigned to this processor. and try to assign one again
-        List<Object[]> tasks = taskRepository.findExecStateByProcessorId(processorId);
+        // find all tasks which were assigned to this core. and try to assign one again
+        List<Object[]> tasks = taskRepository.findExecStateByCoreId(coreId);
         for (Object[] obj : tasks) {
             Long taskId = ((Number)obj[0]).longValue();
             int execState = ((Number)obj[1]).intValue();
@@ -403,12 +403,12 @@ public class TaskProviderTopLevelService {
             // processor's core has lost a task, so we'll try to assign it again
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                    log.warn("#393.680 already assigned task, processor: #{}, task #{}, task execStatus: {}",
-                            processorId, taskId, EnumsApi.TaskExecState.from(execState));
+                    log.warn("#393.680 already assigned task, core: #{}, task #{}, task execStatus: {}",
+                            coreId, taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
                         if (psy.env==null) {
-                            log.error("#393.720 Processor {} has empty env.yaml", processorId);
+                            log.error("#393.720 Core #{} has empty env.yaml", coreId);
                             return null;
                         }
                         ExecContextImpl ec =  execContextService.findById(execContextId);
@@ -456,7 +456,7 @@ public class TaskProviderTopLevelService {
 
         TaskData.AssignedTask result =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
-                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(processorId, psy, csy, isAcceptOnlySigned, quotas));
+                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(coreId, psy, csy, isAcceptOnlySigned, quotas));
 
         return result;
     }

@@ -27,12 +27,20 @@ import org.springframework.lang.Nullable;
  * Time: 4:04 PM
  */
 public class PreparingData {
+
+    @Data
+    public static class ProcessorIdAndCoreIds {
+        public final Long processorId;
+        public final String sessionId;
+        public final Long coreId1;
+        public final Long coreId2;
+    }
+
     @Data
     public static class PreparingCodeData {
         public Processor processor = null;
         public ProcessorCore core1 = null;
         public ProcessorCore core2 = null;
-        public String processorIdAsStr;
 
         @Nullable
         public Function fitFunction = null;

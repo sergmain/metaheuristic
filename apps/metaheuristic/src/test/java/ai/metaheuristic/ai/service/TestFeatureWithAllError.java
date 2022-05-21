@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -53,18 +54,18 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         toStarted();
 
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
+        DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask(processorIdAndCoreIds);
         log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // there isn't a new task for processing
         // we will get the same task
         assertNotNull(task);
@@ -72,7 +73,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start storeConsoleResultAsError()");
-        storeConsoleResultAsError();
+        storeConsoleResultAsError(processorIdAndCoreIds);
         log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
@@ -80,7 +81,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
 
-        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+        DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNull(task2);
 
         log.info("noNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);

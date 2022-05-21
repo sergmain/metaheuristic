@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.event.CheckForLostTaskEvent;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
+    private final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final TaskTopLevelService taskTopLevelService;
     private final ProcessorTransactionService processorService;
@@ -64,11 +66,11 @@ public class DispatcherCommandProcessor {
         }
         MetaheuristicThreadLocal.getExecutionStat().exec("checkForMissingOutputResources()",
                 ()-> response.resendTaskOutputs = checkForMissingOutputResources(request));
-        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) { return;}
+        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS && !globals.isTesting()) { return;}
 
         MetaheuristicThreadLocal.getExecutionStat().exec("processResendTaskOutputResourceResult()",
                 ()-> processResendTaskOutputResourceResult(request));
-        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS) { return;}
+        if (System.currentTimeMillis() - startMills > Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS && !globals.isTesting()) { return;}
 
         MetaheuristicThreadLocal.getExecutionStat().exec("processReportTaskProcessingResult()",
                 ()->response.reportResultDelivering = processReportTaskProcessingResult(request));
@@ -125,48 +127,44 @@ public class DispatcherCommandProcessor {
     // processing at dispatcher side
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.Core core, ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
-        if (core.requestTask==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
+        if (core.requestTask==null) {
             return null;
         }
-        checkProcessorId(request);
+
+        if (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("#997.070 processorId is null");
+        }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
         List<Long> taskIds = S.b(core.requestTask.taskIds) ?
                 List.of() :
                 Arrays.stream(StringUtils.split(core.requestTask.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
-        final long processorId = request.processorCommContext.processorId;
+
         try {
-            assignedTask = taskProviderService.findTask(processorId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
+            assignedTask = taskProviderService.findTask(core.coreId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#997.520 ObjectOptimisticLockingFailureException", e);
             log.error("#997.540 Lets try requesting a new task one more time");
             try {
-                assignedTask = taskProviderService.findTask(processorId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
+                assignedTask = taskProviderService.findTask(core.coreId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
             } catch (ObjectOptimisticLockingFailureException e1) {
                 log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
             }
         }
         if (!taskIds.isEmpty()) {
-            eventPublisher.publishEvent(new CheckForLostTaskEvent(processorId, taskIds, core.requestTask.taskIds == null ? "" : core.requestTask.taskIds));
+            eventPublisher.publishEvent(new CheckForLostTaskEvent(core.coreId, taskIds, core.requestTask.taskIds == null ? "" : core.requestTask.taskIds));
         }
 
         if (assignedTask!=null) {
-            log.info("#997.550 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.550 Assign task #{} to processor #{}, core #{}", assignedTask.getTaskId(), request.processorCommContext.processorId, core.coreId);
         }
         return assignedTask;
     }
 
-    private static void checkProcessorId(ProcessorCommParamsYaml.ProcessorRequest request) {
-        if (request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
-            // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#997.070 processorId is null");
-        }
-    }
-
     // processing at dispatcher side
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
-        DispatcherApiData.ProcessorSessionId processorSessionId = processorService.getNewProcessorId();
-        return processorSessionId;
+        return processorService.getNewProcessorId();
     }
 }

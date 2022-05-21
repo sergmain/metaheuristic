@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.api.dispatcher.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -69,13 +68,13 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     // IN_PROGRESS(1)
-    @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.coreId=:processorId and t.execState=1")
+    @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.coreId=:coreId and t.execState=1")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    List<Object[]> findExecStateByProcessorId(Long processorId);
+    List<Object[]> findExecStateByCoreId(Long coreId);
 
-    @Query(value="select t.id from TaskImpl t where t.coreId=:processorId")
+    @Query(value="select t.id from TaskImpl t where t.coreId=:coreId")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
-    List<Long> findTaskIdsForProcessorId(Long processorId);
+    List<Long> findTaskIdsForCoreId(Long coreId);
 
     @Query(value="select t.id, t.execState, t.updatedOn from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findExecStateByExecContextId(Long execContextId);

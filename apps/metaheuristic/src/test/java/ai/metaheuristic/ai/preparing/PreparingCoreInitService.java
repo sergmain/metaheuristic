@@ -91,6 +91,7 @@ public class PreparingCoreInitService {
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
+        final String descriptionCore = "Test processor core. Must be deleted automatically";
 
         mills = System.currentTimeMillis();
         log.info("Start processorRepository.saveAndFlush()");
@@ -99,14 +100,13 @@ public class PreparingCoreInitService {
         // Prepare processor
         data.processor = processorTransactionService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        data.processorIdAsStr =  Long.toString(data.processor.getId());
 
         // Prepare processor's cores
         CoreStatusYaml csy1 = new CoreStatusYaml("/home/core-1", null, null);
-        data.core1 = processorTransactionService.createProcessorCore(description, csy1, data.processor.id);
+        data.core1 = processorTransactionService.createProcessorCore(descriptionCore, csy1, data.processor.id);
 
         CoreStatusYaml csy2 = new CoreStatusYaml("/home/core-2", null, null);
-        data.core2 = processorTransactionService.createProcessorCore(description, csy2, data.processor.id);
+        data.core2 = processorTransactionService.createProcessorCore(descriptionCore, csy2, data.processor.id);
 
         // Prepare functions
         mills = System.currentTimeMillis();

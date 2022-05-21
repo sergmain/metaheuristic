@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -152,24 +153,24 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         execContextStatusService.resetStatus();
 
         System.out.println("start step_1_0_init_session_id()");
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
 
         System.out.println("start step_1_1_register_function_statuses()");
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorId(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         System.out.println("start step_AssembledRaw()");
-        step_AssembledRaw(true);
+        step_AssembledRaw(processorIdAndCoreIds, true);
         Thread.sleep(5_000);
-        step_AssembledRaw(false);
+        step_AssembledRaw(processorIdAndCoreIds, false);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         System.out.println("start step_DatasetProcessing()");
-        step_DatasetProcessing();
+        step_DatasetProcessing(processorIdAndCoreIds);
 
     }
 
@@ -196,9 +197,9 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         execContextVariableStateTopLevelService.processFlushing();
     }
 
-    private void step_DatasetProcessing() {
+    private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
@@ -206,7 +207,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertNotNull(task3);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNotNull(simpleTask21);
         assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
 
@@ -246,9 +247,9 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     }
 
-    private void step_AssembledRaw(boolean error) {
+    private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, boolean error) {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -256,7 +257,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertNotNull(task);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
