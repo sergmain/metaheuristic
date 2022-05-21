@@ -120,19 +120,6 @@ public class ProcessorTopLevelService {
                             processorStatusDifferent, processorFunctionDownloadStatusDifferent));
 
         }
-
-        // TODO 2020-11-22 need to decide what to do with reconcileProcessorTasks() below
-        // TODO 2021-11-25 the problem is that such reconcileProcessorTasks must be done outside of keepAlive request, but where
-//        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
-
-    }
-
-    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<Long> taskIds) {
-        if (S.b(processorIdAsStr)) {
-            return;
-        }
-        final Long processorId = Long.valueOf(processorIdAsStr);
-        ProcessorSyncService.getWithSyncVoid( processorId, ()-> reconcileProcessorTasks(processorId, taskIds));
     }
 
     public static Enums.ProcessorAndSessionStatus checkProcessorAndSessionStatus(final Processor processor, @Nullable String sessionId) {
