@@ -133,7 +133,7 @@ public class DispatcherCommandProcessor {
 
         if (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#997.070 processorId is null");
+            throw new IllegalStateException("#997.070 (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null)");
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
