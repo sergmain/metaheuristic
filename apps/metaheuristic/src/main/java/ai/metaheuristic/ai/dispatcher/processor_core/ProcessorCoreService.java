@@ -61,4 +61,9 @@ public class ProcessorCoreService {
     public void deleteOrphanProcessorCores(List<Long> ids) {
         processorCoreRepository.deleteByIds(ids);
     }
+
+    @Transactional
+    public void deleteProcessorCoreById(Long id) {
+        processorCoreRepository.deleteById(id);
+    }
 }

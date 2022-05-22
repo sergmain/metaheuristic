@@ -20,14 +20,18 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.processor.ProcessorService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -65,6 +69,8 @@ public class PreparingCoreInitService {
     private final ProcessorTopLevelService processorTopLevelService;
     private final ProcessorTransactionService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
+    private final ProcessorCoreService processorCoreService;
+    private final ProcessorService processorService;
 
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();
@@ -202,12 +208,36 @@ public class PreparingCoreInitService {
                 }
             }
 
+            deleteProcessorCore(preparingCodeData.core1);
+            deleteProcessorCore(preparingCodeData.core2);
+            deleteProcessor(preparingCodeData.processor);
         }
+
         TaskWithInternalContextEventService.shutdown();
         System.out.println("afterPreparingCore() Was finished correctly");
         log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
 
     }
+    private void deleteProcessorCore(@Nullable ProcessorCore s) {
+        if (s!=null) {
+            try {
+                processorCoreService.deleteProcessorCoreById(s.id);
+            } catch (Throwable th) {
+                log.error("Error", th);
+            }
+        }
+    }
+
+    private void deleteProcessor(@Nullable Processor s) {
+        if (s!=null) {
+            try {
+                processorService.deleteProcessorById(s.id);
+            } catch (Throwable th) {
+                log.error("Error", th);
+            }
+        }
+    }
+
 
 }
