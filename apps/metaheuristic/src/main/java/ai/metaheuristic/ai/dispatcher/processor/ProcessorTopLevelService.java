@@ -47,6 +47,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -110,13 +111,16 @@ public class ProcessorTopLevelService {
         ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
 
         final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
-        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, functionDownloadStatus);
+
+        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = ProcessorTransactionService.parsetToMapOfStates(functionDownloadStatus);
+        final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, mapOfFunctionStates);
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
 
+
             ProcessorSyncService.getWithSyncVoid(processorId,
                     () -> processorTransactionService.processKeepAliveData(
-                            processorId, status, functionDownloadStatus, psy,
+                            processorId, status, mapOfFunctionStates, psy,
                             processorStatusDifferent, processorFunctionDownloadStatusDifferent));
 
         }

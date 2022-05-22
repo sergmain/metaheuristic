@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -230,7 +231,7 @@ public class ProcessorTransactionService {
     @Transactional
     public void processKeepAliveData(
             Long processorId, KeepAliveRequestParamYaml.ProcessorStatus status,
-            KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            Map<String, EnumsApi.FunctionState> functionDownloadStatuses,
             ProcessorStatusYaml psy, final boolean processorStatusDifferent, final boolean processorFunctionDownloadStatusDifferent) {
 
         ProcessorSyncService.checkWriteLockPresent(processorId);
@@ -262,7 +263,7 @@ public class ProcessorTransactionService {
         }
         if (processorFunctionDownloadStatusDifferent) {
             psy.functions.clear();
-            functionDownloadStatus.statuses.forEach(o->psy.functions.put(o.code, o.state));
+            psy.functions.putAll(functionDownloadStatuses);
         }
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
@@ -284,6 +285,17 @@ public class ProcessorTransactionService {
             log.debug("#807.160 Processor status is equal to the status stored in db");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
+    }
+
+    public static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
+            String[] names = entry.getValue().split(",");
+            for (String name : names) {
+                map.put(name, entry.getKey());
+            }
+        }
+        return map;
     }
 
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {

@@ -47,18 +47,12 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
     public KeepAliveResponseParamYaml upgradeTo(@NonNull KeepAliveResponseParamYamlV2 v2) {
         KeepAliveResponseParamYaml t = new KeepAliveResponseParamYaml();
 
-        if( v2.dispatcherInfo !=null ) {
+        if (v2.dispatcherInfo !=null) {
             t.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo();
             t.dispatcherInfo.chunkSize = v2.dispatcherInfo.chunkSize;
             t.dispatcherInfo.processorCommVersion = v2.dispatcherInfo.processorCommVersion;
         }
-        if (!v2.functions.infos.isEmpty()) {
-            t.functions.infos.addAll( v2.functions.infos
-                            .stream()
-                            .map(o->new KeepAliveResponseParamYaml.Functions.Info (o.code, o.sourcing))
-                            .collect(Collectors.toList())
-                    );
-        }
+        t.functions.infos.putAll(v2.functions.infos);
         t.execContextStatus.statuses.putAll(v2.execContextStatus.statuses);
 
         KeepAliveResponseParamYaml.DispatcherResponse response = t.response;

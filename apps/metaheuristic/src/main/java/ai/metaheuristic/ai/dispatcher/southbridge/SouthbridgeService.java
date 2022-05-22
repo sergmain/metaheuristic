@@ -218,7 +218,7 @@ public class SouthbridgeService {
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
         KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
-        log.info("#444.194 keepAlive(), size of yaml: {}", yaml.length());
+        log.info("#444.194 keepAlive(), size of request yaml: {}, response yaml: {}", data.length(), yaml.length());
         return yaml;
     }
 

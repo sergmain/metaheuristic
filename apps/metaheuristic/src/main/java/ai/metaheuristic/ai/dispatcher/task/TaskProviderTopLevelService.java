@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
@@ -36,7 +37,6 @@ import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -386,10 +386,6 @@ public class TaskProviderTopLevelService {
 
         TxUtils.checkTxNotExists();
 
-        KeepAliveResponseParamYaml.ExecContextStatus statuses =
-                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> getExecContextStatuses()",
-                        execContextStatusService::getExecContextStatuses);
-
         // find all tasks which were assigned to this core. and try to assign one again
         List<Object[]> tasks = taskRepository.findExecStateByCoreId(coreId);
         for (Object[] obj : tasks) {
@@ -397,7 +393,7 @@ public class TaskProviderTopLevelService {
             int execState = ((Number)obj[1]).intValue();
             Long execContextId = ((Number)obj[2]).longValue();
 
-            if (!statuses.isStarted(execContextId) || execContextReadinessStateService.isNotReady(execContextId)) {
+            if (!execContextStatusService.isStarted(execContextId) || execContextReadinessStateService.isNotReady(execContextId)) {
                 continue;
             }
             // processor's core has lost a task, so we'll try to assign it again

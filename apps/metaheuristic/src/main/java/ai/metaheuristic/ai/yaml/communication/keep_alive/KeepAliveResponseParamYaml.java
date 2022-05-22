@@ -46,36 +46,14 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     public static class Functions {
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Info {
-            public String code;
-            public EnumsApi.FunctionSourcing sourcing;
-        }
-        public final List<Info> infos = new ArrayList<>();
+        public final Map<EnumsApi.FunctionSourcing, String> infos = new HashMap<>();
     }
 
     @Data
     @NoArgsConstructor
     public static class ExecContextStatus {
-
-        // key - execContextId, value - stae of execContext
-        public final Map<Long, EnumsApi.ExecContextState> statuses = new HashMap<>();
-
-        public boolean isStarted(Long execContextId) {
-            for (Map.Entry<Long, EnumsApi.ExecContextState> entry : statuses.entrySet()) {
-                if (entry.getKey().equals(execContextId)) {
-                    return entry.getValue()==EnumsApi.ExecContextState.STARTED;
-                }
-            }
-            return false;
-        }
-
-        @Nullable
-        public EnumsApi.ExecContextState getExecContextState(Long execContextId) {
-            return statuses.get(execContextId);
-        }
+        // key - stae of execContext, value - comma-separated list of execContextId
+        public final Map<EnumsApi.ExecContextState, String> statuses = new HashMap<>();
     }
 
     @Data

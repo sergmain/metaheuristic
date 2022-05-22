@@ -56,9 +56,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -192,7 +191,7 @@ public class PreparingSourceCodeService {
         assertEquals(preparingCodeData.processor.getId(), processorIdAndCoreIds.processorId);
 
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
-        karpy.functions.statuses = asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction());
+        karpy.functions.statuses.put(EnumsApi.FunctionState.ready, asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction()));
 
         KeepAliveRequestParamYaml.Processor pr = karpy.processor;
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;
@@ -216,12 +215,9 @@ public class PreparingSourceCodeService {
         int i =0;
     }
 
-    private static List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> asListOfReady(Function... f) {
-        List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> list = new ArrayList<>();
-        for (Function function : f) {
-            list.add(new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(function.code, EnumsApi.FunctionState.ready));
-        }
-        return list;
+    private static String asListOfReady(Function... fs) {
+        String codes = Arrays.stream(fs).map(f -> f.code).collect(Collectors.joining(","));
+        return codes;
     }
 
     @SneakyThrows

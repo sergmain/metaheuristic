@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,15 +136,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     @Data
     public static class FunctionDownloadStatuses {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class Status {
-            public String code;
-            public EnumsApi.FunctionState state;
-        }
-
-        public List<Status> statuses = new ArrayList<>();
+        public final Map<EnumsApi.FunctionState, String> statuses = new HashMap<>();
     }
 
     @Data

@@ -62,8 +62,8 @@ public class KeepAliveTopLevelService {
     private final ExecContextStatusService execContextStatusService;
 
     private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
-        keepAliveResponse.functions.infos.addAll( functionTopLevelService.getFunctionInfos() );
-        keepAliveResponse.execContextStatus = execContextStatusService.getExecContextStatuses();
+        keepAliveResponse.functions.infos.putAll(functionTopLevelService.toMapOfFunctionInfos());
+        keepAliveResponse.execContextStatus = execContextStatusService.toExecContextStatus();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }
 

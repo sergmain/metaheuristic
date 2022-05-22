@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +26,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml.ExecContextStatus;
+import java.util.*;
+
+import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 
 /**
  * @author Serge
@@ -42,19 +44,40 @@ public class ExecContextStatusService {
 
     private final ExecContextRepository execContextRepository;
 
-    private ExecContextStatus cachedStatus = null;
+    private ExecContextStates cachedStatus = null;
 
     @PostConstruct
     public void post() {
         resetStatus();
     }
 
-    public ExecContextStatus getExecContextStatuses() {
+    public ExecContextStates getExecContextStatuses() {
         return cachedStatus;
     }
 
+    public KeepAliveResponseParamYaml.ExecContextStatus toExecContextStatus() {
+        KeepAliveResponseParamYaml.ExecContextStatus ecs = new KeepAliveResponseParamYaml.ExecContextStatus();
+        Map<EnumsApi.ExecContextState, List<String>> map = new HashMap<>();
+        for (Map.Entry<Long, EnumsApi.ExecContextState> entry : cachedStatus.statuses.entrySet()) {
+            map.computeIfAbsent(entry.getValue(), (o)->new ArrayList<>()).add(entry.getKey().toString());
+        }
+        for (Map.Entry<EnumsApi.ExecContextState, List<String>> en : map.entrySet()) {
+            ecs.statuses.put(en.getKey(), String.join(",", en.getValue()));
+        }
+        return ecs;
+    }
+
+    public boolean isStarted(Long execContextId) {
+        for (Map.Entry<Long, EnumsApi.ExecContextState> entry : cachedStatus.statuses.entrySet()) {
+            if (entry.getKey().equals(execContextId)) {
+                return entry.getValue()==EnumsApi.ExecContextState.STARTED;
+            }
+        }
+        return false;
+    }
+
     public void resetStatus() {
-        ExecContextStatus cachedStatusTemp = new ExecContextStatus();
+        ExecContextStates cachedStatusTemp = new ExecContextStates();
 
         for (Object[] allExecState : execContextRepository.findAllExecStates()) {
             cachedStatusTemp.statuses.put((Long) allExecState[0], EnumsApi.ExecContextState.toState((Integer) allExecState[1]));

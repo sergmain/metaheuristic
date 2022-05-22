@@ -20,12 +20,14 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @author Serge
@@ -43,7 +45,13 @@ public interface ProcessorCoreRepository extends CrudRepository<ProcessorCore, L
 
     Page<Processor> findAll(Pageable pageable);
 
-    @Query(value="select s.id from Processor s order by s.updatedOn desc")
-    Slice<Long> findAllByOrderByUpdatedOnDescId(Pageable pageable);
+    @Query(value="select distinct p.processorId from ProcessorCore p")
+    List<Long> getAllProcessorIds();
 
+    @Query(value="select c.id from ProcessorCore c where c.processorId=:processorId")
+    List<Long> findAllByProcessorId(Pageable pageable, Long processorId);
+
+    @Modifying
+    @Query(value="delete from ProcessorCore t where t.id in (:ids)")
+    void deleteByIds(List<Long> ids);
 }

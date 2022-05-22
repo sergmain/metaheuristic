@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.dispatcher.processor_core;
 
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * @author Serge
@@ -36,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProcessorCoreService {
 
     private final ProcessorCoreCache coreCache;
+    private final ProcessorCoreRepository processorCoreRepository;
 
     @Transactional
     public Long getNewProcessorCoreId(Long processorId) {
@@ -53,4 +57,8 @@ public class ProcessorCoreService {
         return coreCache.save(p);
     }
 
+    @Transactional
+    public void deleteOrphanProcessorCores(List<Long> ids) {
+        processorCoreRepository.deleteByIds(ids);
+    }
 }

@@ -49,8 +49,7 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
     public KeepAliveRequestParamYaml upgradeTo(@NonNull KeepAliveRequestParamYamlV3 src) {
         KeepAliveRequestParamYaml t = new KeepAliveRequestParamYaml();
 
-        src.functions.statuses.stream().map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
-                .collect(Collectors.toCollection(()->t.functions.statuses));
+        t.functions.statuses.putAll(src.functions.statuses);
 
         BeanUtils.copyProperties(src.processor, t.processor);
         if (src.processor.status!=null) {
