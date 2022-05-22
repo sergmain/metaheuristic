@@ -44,6 +44,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -166,7 +167,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
@@ -313,7 +314,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTransactionService.createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);

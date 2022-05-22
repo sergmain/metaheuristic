@@ -43,7 +43,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.util.Map;
+
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -85,7 +86,7 @@ public class PreparingCoreInitService {
         envYaml.getEnvs().put("env-function-03:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(Map.of(), envYaml,
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(new TreeMap<>(), envYaml,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
