@@ -128,7 +128,8 @@ public class KeepAliveTopLevelService {
         }
         log.debug("Start processing commands");
         processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
-//                keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
+
+        //      keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
 
         return processorRequest.processorCommContext.processorId;
     }
@@ -136,7 +137,7 @@ public class KeepAliveTopLevelService {
     private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             if (core.coreId == null) {
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.createProcessorCore(processorId, core).id, core.coreCode));
                 continue;
             }
 
@@ -144,7 +145,7 @@ public class KeepAliveTopLevelService {
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
                 log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
                 // no need of syncing for creation of new Processor
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.getNewProcessorCoreId(processorId), core.coreCode));
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.createProcessorCore(processorId, core).id, core.coreCode));
                 continue;
             }
             resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));

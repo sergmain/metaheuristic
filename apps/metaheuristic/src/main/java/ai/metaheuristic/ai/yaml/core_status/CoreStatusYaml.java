@@ -38,11 +38,10 @@ public class CoreStatusYaml implements BaseParams {
         return true;
     }
 
-    @Nullable
-    public String currDir;
+    public String code;
 
     @Nullable
-    public String taskIds;
+    public String currDir;
 
     @Nullable
     public String tags;

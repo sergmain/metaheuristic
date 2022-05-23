@@ -43,7 +43,7 @@ public class CoreStatusYamlUtilsV1
         CoreStatusYaml trg = new CoreStatusYaml();
         trg.currDir = src.currDir;
         trg.tags = src.tags;
-        trg.taskIds = src.taskIds;
+        trg.code = src.code;
         trg.checkIntegrity();
         return trg;
     }

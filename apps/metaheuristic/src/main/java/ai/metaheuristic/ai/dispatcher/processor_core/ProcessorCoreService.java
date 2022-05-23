@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.processor_core;
 
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,17 +43,17 @@ public class ProcessorCoreService {
     private final ProcessorCoreRepository processorCoreRepository;
 
     @Transactional
-    public Long getNewProcessorCoreId(Long processorId) {
-        CoreStatusYaml csy = new CoreStatusYaml();
-        final ProcessorCore p = createProcessorCore(processorId, csy);
-        return p.id;
-    }
+    public ProcessorCore createProcessorCore(Long processorId, KeepAliveRequestParamYaml.Core core) {
+        CoreStatusYaml ss = new CoreStatusYaml();
+        ss.tags = core.tags;
+        ss.code = core.coreCode;
+        ss.currDir = core.coreDir;
 
-    @Transactional
-    public ProcessorCore createProcessorCore(Long processorId, CoreStatusYaml ss) {
         ProcessorCore p = new ProcessorCore();
         p.processorId = processorId;
         p.updatedOn = System.currentTimeMillis();
+        p.code = core.coreCode;
+
         p.updateParams(ss);
         return coreCache.save(p);
     }
