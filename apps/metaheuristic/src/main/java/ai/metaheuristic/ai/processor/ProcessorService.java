@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
@@ -47,7 +46,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -71,7 +69,6 @@ public class ProcessorService {
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
-    private final ProcessorRepository processorRepository;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
@@ -300,10 +297,5 @@ public class ProcessorService {
             }
         }
         return true;
-    }
-
-    @Transactional
-    public void deleteProcessorById(Long id) {
-        processorRepository.deleteById(id);
     }
 }

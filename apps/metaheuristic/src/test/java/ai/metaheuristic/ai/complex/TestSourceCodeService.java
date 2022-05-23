@@ -18,15 +18,11 @@ package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -46,7 +42,6 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -88,7 +83,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    @Autowired private ExecContextRepository execContextRepository;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
@@ -96,10 +90,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private VariableService variableService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextFSM execContextFSM;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
-    @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -332,22 +324,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
-            verifyGraphIntegrity();
-            taskIds.clear();
-            taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));
-            assertEquals(0, taskIds.size());
-
-            ExecContext execContext = execContextService.findById(getExecContextForTest().id);
-            assertNotNull(execContext);
-            assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
-
-            execContext = execContextRepository.findById(getExecContextForTest().id).orElse(null);
-            assertNotNull(execContext);
-            assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
-
-            return null;
-        });
+        finalAssertions(22);
     }
 
     private void step_CommonProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, String outputVariable) {
@@ -571,24 +548,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     }
 
-    private void verifyGraphIntegrity() {
-
-        List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
-
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(this.getExecContextForTest().id)));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId);
-        assertEquals(tasks.size(), taskVertices.size());
-
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findFirst().orElse(null);
-            assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
-            final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
-            final EnumsApi.TaskExecState graphTaskState = preparingSourceCodeService.findTaskState(getExecContextForTest(), taskVertex.taskId);
-            assertEquals(taskExecState, graphTaskState, "task has a different states in db and graph, " +
-                    "db: " + taskExecState +", graph: " + graphTaskState);
-        }
-    }
-
     private void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
 
         processScheduledTasks();
@@ -618,17 +577,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 null, null, null);
 
         return FunctionExecUtils.toString(functionExec);
-    }
-
-    private List<Long> getUnfinishedTaskVertices(ExecContextImpl execContext) {
-        if (execContext.execContextTaskStateId==null) {
-            return List.of();
-        }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
-        if (ects==null) {
-            return List.of();
-        }
-        return ExecContextTaskStateService.getUnfinishedTaskVertices(ects);
     }
 
 }

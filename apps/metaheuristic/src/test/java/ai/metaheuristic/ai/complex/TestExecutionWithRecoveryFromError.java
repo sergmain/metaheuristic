@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -43,7 +42,6 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -81,7 +79,6 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
-    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private TaskFinishingService taskFinishingService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
@@ -172,10 +169,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
-    }
-
-    private void finish_step_AssembledRaw() {
-
+        finalAssertions(6);
     }
 
     private void finishTask(TaskImpl task32) {
@@ -314,24 +308,6 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
             storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
             storeExecResult(simpleTask);
             finishTask(task);
-        }
-    }
-
-    private void verifyGraphIntegrity() {
-
-        List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
-
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(this.getExecContextForTest().id)));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId);
-        assertEquals(tasks.size(), taskVertices.size());
-
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findFirst().orElse(null);
-            assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
-            final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
-            final EnumsApi.TaskExecState graphTaskState = preparingSourceCodeService.findTaskState(getExecContextForTest(), taskVertex.taskId);
-            assertEquals(taskExecState, graphTaskState, "task has a different states in db and graph, " +
-                    "db: " + taskExecState +", graph: " + graphTaskState);
         }
     }
 

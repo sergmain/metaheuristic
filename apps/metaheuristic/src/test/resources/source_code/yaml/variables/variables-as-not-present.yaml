@@ -1,0 +1,46 @@
+source:
+  clean: false
+  uid: test-variables-as-not-present-1.0
+  variables:
+    inline:
+      mh.hyper-params:
+        var1: '42'
+        var2: '17'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: var1
+                output: var1
+              - group: mh.hyper-params
+                name: var2
+                output: var2
+      outputs:
+        - name: var1
+        - name: var2
+    - code: mh.permute-variables
+      name: permute variables
+      function:
+        code: mh.permute-variables
+        context: internal
+      metas:
+        - variables-for-permutation: var1, var2
+        - output-variable: feature-item
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop
+            name: mh.nop
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: feature-item
+                array: true
+version: 1

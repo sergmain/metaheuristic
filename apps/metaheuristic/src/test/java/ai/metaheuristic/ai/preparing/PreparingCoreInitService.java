@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.processor.ProcessorService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -47,7 +46,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -70,7 +68,6 @@ public class PreparingCoreInitService {
     private final ProcessorTransactionService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreService processorCoreService;
-    private final ProcessorService processorService;
 
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();
@@ -232,7 +229,7 @@ public class PreparingCoreInitService {
     private void deleteProcessor(@Nullable Processor s) {
         if (s!=null) {
             try {
-                processorService.deleteProcessorById(s.id);
+                processorTopLevelService.deleteProcessorById(s.id);
             } catch (Throwable th) {
                 log.error("Error", th);
             }
