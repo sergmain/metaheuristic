@@ -25,6 +25,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * User: Serg
@@ -45,4 +49,7 @@ public interface ProcessorRepository extends CrudRepository<Processor, Long> {
     @Query(value="select s.id from Processor s order by s.updatedOn desc")
     Slice<Long> findAllByOrderByUpdatedOnDescId(Pageable pageable);
 
+    @Query(value="select p.id from Processor p")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    List<Long> findAllIds();
 }

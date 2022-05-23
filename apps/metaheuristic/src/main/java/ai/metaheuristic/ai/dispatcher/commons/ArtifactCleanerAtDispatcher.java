@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
@@ -35,7 +36,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -74,6 +74,9 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextService execContextService;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;
+    private final ProcessorRepository processorRepository;
+    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreRepository processorCoreRepository;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
@@ -117,6 +120,43 @@ public class ArtifactCleanerAtDispatcher {
         deleteOrphanCacheData();
         deleteObsoleteEvents();
         deleteObsoleteFunctionData();
+        deleteOrphanCores();
+    }
+
+    private void deleteOrphanCores() {
+        List<Long> coresIds = processorCoreRepository.getAllProcessorIds();
+        List<Long> processorIds = processorRepository.findAllIds();
+
+        //noinspection SimplifyStreamApiCallChains
+        List<Long> orphanProcessorIds = coresIds.stream()
+                .filter(o->!processorIds.contains(o)).collect(Collectors.toList());
+
+        for (Long processorId : orphanProcessorIds) {
+            if (processorRepository.findById(processorId).isPresent()) {
+                log.warn("processorId #{} wasn't deleted, actually", processorId);
+                continue;
+            }
+
+            List<Long> ids;
+            while (!(ids = processorCoreRepository.findIdsByProcessorId(Consts.PAGE_REQUEST_100_REC, processorId)).isEmpty()) {
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
+                for (List<Long> page : pages) {
+                    if (isBusy()) {
+                        return;
+                    }
+                    if (page.isEmpty()) {
+                        continue;
+                    }
+                    log.info("Found orphan ProcessorCore, processorId: #{}, cores #{}", processorId, page);
+                    try {
+                        processorCoreService.deleteOrphanProcessorCores(page);
+                    }
+                    catch (Throwable th) {
+                        log.error("variableService.deleteOrphanVariables("+processorId+")", th);
+                    }
+                }
+            }
+        }
     }
 
     private void deleteObsoleteFunctionData() {
@@ -353,7 +393,7 @@ public class ArtifactCleanerAtDispatcher {
 
             List<Long> ids;
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     if (page.isEmpty() || isBusy()) {
                         return;
@@ -386,7 +426,7 @@ public class ArtifactCleanerAtDispatcher {
 
             List<Long> ids;
             while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     if (isBusy()) {
                         return;
@@ -416,7 +456,7 @@ public class ArtifactCleanerAtDispatcher {
         for (String funcCode : missingCodes) {
             List<Long> ids;
             while (!(ids = cacheProcessRepository.findByFunctionCode(Consts.PAGE_REQUEST_100_REC, funcCode)).isEmpty()) {
-                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 20);
+                List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     if (isBusy()) {
                         return;

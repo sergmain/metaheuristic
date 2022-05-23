@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -28,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -117,7 +117,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
         List<TaskQueue.QueuedTask> forRemoving = new ArrayList<>();
 
         QuotasData.ActualQuota quota = null;
-        KeepAliveResponseParamYaml.ExecContextStatus statuses = execContextStatusService.getExecContextStatuses();
+        ExecContextData.ExecContextStates statuses = execContextStatusService.getExecContextStatuses();
         try {
             TaskQueue.GroupIterator iter = TaskQueueService.getIterator();
             while (iter.hasNext()) {
@@ -137,7 +137,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     continue;
                 }
 
-                final EnumsApi.ExecContextState execContextState = statuses.getExecContextState(queuedTask.execContextId);
+                final EnumsApi.ExecContextState execContextState = execContextStatusService.getExecContextState(queuedTask.execContextId);
                 if ((execContextState == EnumsApi.ExecContextState.STOPPED || execContextState == EnumsApi.ExecContextState.FINISHED)) {
                     log.warn("#317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, execContextState);
                     forRemoving.add(queuedTask);
@@ -155,7 +155,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     continue;
                 }
 
-                if (!statuses.isStarted(queuedTask.execContextId)) {
+                if (!execContextStatusService.isStarted(queuedTask.execContextId)) {
                     continue;
                 }
 

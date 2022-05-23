@@ -124,14 +124,14 @@ public class ProcessorKeepAliveRequestor {
                 String coreCode = core.coreCode;
                 String tags = envService.getTags(core.coreCode);
 
-                cores.forEach(o-> karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags)) );
+                karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags));
             }
 
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                     dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-            karpy.functions.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+            karpy.functions.statuses.putAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {

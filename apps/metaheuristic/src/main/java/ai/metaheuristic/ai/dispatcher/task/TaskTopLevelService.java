@@ -83,11 +83,11 @@ public class TaskTopLevelService {
                 return;
             }
 
-            AtomicLong lastCheck = lastCheckOn.computeIfAbsent(event.processorId, (o)->new AtomicLong());
+            AtomicLong lastCheck = lastCheckOn.computeIfAbsent(event.coreId, (o)->new AtomicLong());
             if (System.currentTimeMillis() - lastCheck.get() > MILLS_TO_HOLD_CHECK) {
                 boolean found = false;
                 for (CheckForLostTaskEvent checkForLostTaskEvent : queue) {
-                    if (event.processorId.equals(checkForLostTaskEvent.processorId)) {
+                    if (event.coreId.equals(checkForLostTaskEvent.coreId)) {
                         found = true;
                         break;
                     }
@@ -124,7 +124,7 @@ public class TaskTopLevelService {
         if (event.taskIds.isEmpty()) {
             return;
         }
-        List<Long> actualTaskIds = taskRepository.findTaskIdsForProcessorId(event.processorId);
+        List<Long> actualTaskIds = taskRepository.findTaskIdsForCoreId(event.coreId);
         for (Long actualTaskId : actualTaskIds) {
             if (!event.taskIds.contains(actualTaskId)) {
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
@@ -144,8 +144,8 @@ public class TaskTopLevelService {
                     continue;
                 }
                 // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
-                log.info("#303.370 found a lost task #{}, which doesn't exist at processor #{}. state: {}, assignedOn: {}, is old: {}",
-                        actualTaskId, event.processorId, EnumsApi.TaskExecState.from(task.execState),
+                log.info("#303.370 found a lost task #{}, which doesn't exist at core #{}. state: {}, assignedOn: {}, is old: {}",
+                        actualTaskId, event.coreId, EnumsApi.TaskExecState.from(task.execState),
                         task.assignedOn, System.currentTimeMillis() - task.assignedOn<60_000);
 
                 applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));

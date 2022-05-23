@@ -21,9 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -46,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -120,14 +118,26 @@ public class FunctionTopLevelService {
     private final ApplicationEventPublisher eventPublisher;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
-    private List<KeepAliveResponseParamYaml.Functions.Info> functionInfosCache = null;
+    private List<Pair<EnumsApi.FunctionSourcing, String>> functionInfosCache = null;
     private long mills = 0L;
 
     private static class RefreshInfoAboutFunctionsEvent {}
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
 
-    public List<KeepAliveResponseParamYaml.Functions.Info> getFunctionInfos() {
+    public Map<EnumsApi.FunctionSourcing, String> toMapOfFunctionInfos() {
+        Map<EnumsApi.FunctionSourcing, List<String>> map = new HashMap<>();
+        for (Pair<EnumsApi.FunctionSourcing, String> pair : getFunctionInfos()) {
+            map.computeIfAbsent(pair.getKey(), (k)->new ArrayList<>()).add(pair.getValue());
+        }
+        Map<EnumsApi.FunctionSourcing, String> result = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionSourcing, List<String>> e : map.entrySet()) {
+            result.put(e.getKey(), String.join(",", e.getValue()));
+        }
+        return result;
+    }
+
+    public List<Pair<EnumsApi.FunctionSourcing, String>> getFunctionInfos() {
         rwl.readLock().lock();
         try {
             if (functionInfosCache == null) {
@@ -172,7 +182,7 @@ public class FunctionTopLevelService {
         }
     }
 
-    private List<KeepAliveResponseParamYaml.Functions.Info> collectInfoAboutFunction() {
+    private List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
         final List<Long> allIds = functionRepository.findAllIds();
 
         return allIds.stream()
@@ -180,7 +190,7 @@ public class FunctionTopLevelService {
                 .filter(Objects::nonNull)
                 .map(s->{
                     FunctionConfigYaml fcy = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(s.params);
-                    return new KeepAliveResponseParamYaml.Functions.Info(s.code, fcy.sourcing);
+                    return Pair.of(fcy.sourcing, s.code);
                 })
                 .collect(Collectors.toList());
     }

@@ -64,6 +64,10 @@ public class InternalFunctionVariableService {
     }
 
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names) {
+        return discoverVariables(execContextId, taskContextId, names, true);
+    }
+
+    public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names, boolean throwsException) {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             SimpleVariable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
@@ -76,9 +80,11 @@ public class InternalFunctionVariableService {
                     holders.add(new VariableUtils.VariableHolder(gv));
                 }
                 else {
-                    throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"' not found in local and global contexts, internal context "+taskContextId));
+                    if (throwsException) {
+                        throw new InternalFunctionException(
+                                new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                                        "Variable '" + name + "' not found in local and global contexts, internal context " + taskContextId));
+                    }
                 }
             }
         }

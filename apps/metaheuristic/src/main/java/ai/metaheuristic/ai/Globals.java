@@ -507,7 +507,6 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
 
-
     // some fields
     public File dispatcherTempDir;
     public File dispatcherResourcesDir;

@@ -22,10 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
@@ -93,7 +90,7 @@ public class ProcessorStatusYaml implements BaseParams {
     }
 
     // key - code of function, value - stae of function
-    public Map<String, EnumsApi.FunctionState> functions = new HashMap<>();
+    public TreeMap<String, EnumsApi.FunctionState> functions = new TreeMap<>();
 
     @Nullable
     public Env env;

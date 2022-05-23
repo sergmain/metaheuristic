@@ -64,6 +64,8 @@ public class ProcessorData {
         public Slice<ProcessorStatus> items;
     }
 
+    public record ProcessorCore(Long id, String code) {}
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -76,6 +78,7 @@ public class ProcessorData {
         public long lastSeen;
         public String ip;
         public String host;
+        public final List<ProcessorCore> cores = new ArrayList<>();
     }
 
     @Data

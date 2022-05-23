@@ -143,15 +143,7 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
 
     @Data
     public static class FunctionDownloadStatusesV3 {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class StatusV3 {
-            public String code;
-            public EnumsApi.FunctionState state;
-        }
-
-        public List<StatusV3> statuses = new ArrayList<>();
+        public final Map<EnumsApi.FunctionState, String> statuses = new HashMap<>();
     }
 
     @Data

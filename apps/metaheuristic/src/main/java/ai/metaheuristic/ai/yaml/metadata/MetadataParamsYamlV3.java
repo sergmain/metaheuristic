@@ -80,7 +80,9 @@ public class MetadataParamsYamlV3 implements BaseParams {
      * key  - a code of dispatcher (i.e. normalized url of dispatcher)
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public final LinkedHashMap<String, ProcessorSessionV3> procesorSessions = new LinkedHashMap<>();
+    @Nullable
+    public LinkedHashMap<String, ProcessorSessionV3> processorSessions = new LinkedHashMap<>();
     public final List<FunctionV3> functions = new ArrayList<>();
-    public final LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    @Nullable
+    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

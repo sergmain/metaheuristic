@@ -20,15 +20,19 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
@@ -38,11 +42,11 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -63,6 +67,7 @@ public class PreparingCoreInitService {
     private final ProcessorTopLevelService processorTopLevelService;
     private final ProcessorTransactionService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
+    private final ProcessorCoreService processorCoreService;
 
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();
@@ -84,12 +89,13 @@ public class PreparingCoreInitService {
         envYaml.getEnvs().put("env-function-03:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(Map.of(), envYaml,
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(new TreeMap<>(), envYaml,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
+        final String descriptionCore = "Test processor core. Must be deleted automatically";
 
         mills = System.currentTimeMillis();
         log.info("Start processorRepository.saveAndFlush()");
@@ -98,7 +104,13 @@ public class PreparingCoreInitService {
         // Prepare processor
         data.processor = processorTransactionService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        data.processorIdAsStr =  Long.toString(data.processor.getId());
+
+        // Prepare processor's cores
+        CoreStatusYaml csy1 = new CoreStatusYaml("/home/core-1", null, null);
+        data.core1 = processorTransactionService.createProcessorCore(descriptionCore, csy1, data.processor.id);
+
+        CoreStatusYaml csy2 = new CoreStatusYaml("/home/core-2", null, null);
+        data.core2 = processorTransactionService.createProcessorCore(descriptionCore, csy2, data.processor.id);
 
         // Prepare functions
         mills = System.currentTimeMillis();
@@ -153,35 +165,76 @@ public class PreparingCoreInitService {
         return data;
     }
 
-    public void afterPreparingCore(PreparingData.PreparingCodeData preparingCodeData) {
+    public void afterPreparingCore(@Nullable PreparingData.PreparingCodeData preparingCodeData) {
         long mills = System.currentTimeMillis();
         log.info("Start afterPreparingCore()");
-        if (preparingCodeData.processor != null) {
-            try {
-                processorTopLevelService.deleteProcessorById(preparingCodeData.processor.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+        if (preparingCodeData!=null) {
+            if (preparingCodeData.core1 != null) {
+                try {
+                    processorTopLevelService.deleteProcessorCoreById(preparingCodeData.core1.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
-        }
-        if (preparingCodeData.predictFunction != null) {
-            try {
-                txSupportForTestingService.deleteFunctionById(preparingCodeData.predictFunction.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+            if (preparingCodeData.core2 != null) {
+                try {
+                    processorTopLevelService.deleteProcessorCoreById(preparingCodeData.core2.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
-        }
-        if (preparingCodeData.fitFunction != null) {
-            try {
-                txSupportForTestingService.deleteFunctionById(preparingCodeData.fitFunction.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+            if (preparingCodeData.processor != null) {
+                try {
+                    processorTopLevelService.deleteProcessorById(preparingCodeData.processor.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
+            if (preparingCodeData.predictFunction != null) {
+                try {
+                    txSupportForTestingService.deleteFunctionById(preparingCodeData.predictFunction.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+            if (preparingCodeData.fitFunction != null) {
+                try {
+                    txSupportForTestingService.deleteFunctionById(preparingCodeData.fitFunction.getId());
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+
+            deleteProcessorCore(preparingCodeData.core1);
+            deleteProcessorCore(preparingCodeData.core2);
+            deleteProcessor(preparingCodeData.processor);
         }
+
         TaskWithInternalContextEventService.shutdown();
         System.out.println("afterPreparingCore() Was finished correctly");
         log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
 
     }
+    private void deleteProcessorCore(@Nullable ProcessorCore s) {
+        if (s!=null) {
+            try {
+                processorCoreService.deleteProcessorCoreById(s.id);
+            } catch (Throwable th) {
+                log.error("Error", th);
+            }
+        }
+    }
+
+    private void deleteProcessor(@Nullable Processor s) {
+        if (s!=null) {
+            try {
+                processorTopLevelService.deleteProcessorById(s.id);
+            } catch (Throwable th) {
+                log.error("Error", th);
+            }
+        }
+    }
+
 
 }

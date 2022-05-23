@@ -19,11 +19,14 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -39,7 +42,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -57,6 +62,7 @@ import java.util.stream.Collectors;
 public class ProcessorTransactionService {
 
     private final ProcessorRepository processorRepository;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final ProcessorCache processorCache;
 
     private static final int COOL_DOWN_MINUTES = 2;
@@ -161,7 +167,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
@@ -177,6 +183,16 @@ public class ProcessorTransactionService {
         p.description= description;
         p.ip = ip;
         return processorCache.save(p);
+    }
+
+    @Transactional
+    public ProcessorCore createProcessorCore(@Nullable String description, CoreStatusYaml ss, Long processorId) {
+        ProcessorCore core = new ProcessorCore();
+        core.processorId = processorId;
+        core.updatedOn = System.currentTimeMillis();
+        core.updateParams(ss);
+        core.description= description;
+        return processorCoreRepository.save(core);
     }
 
     @Transactional
@@ -203,9 +219,20 @@ public class ProcessorTransactionService {
     }
 
     @Transactional
+    public OperationStatusRest deleteProcessorCoreById(Long id) {
+        ProcessorSyncService.checkWriteLockPresent(id);
+        ProcessorCore core = processorCoreRepository.findById(id).orElse(null);
+        if (core == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.082 ProcessorCore wasn't found, processorCoreId: " + id);
+        }
+        processorCoreRepository.deleteById(id);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Transactional
     public void processKeepAliveData(
             Long processorId, KeepAliveRequestParamYaml.ProcessorStatus status,
-            KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            Map<String, EnumsApi.FunctionState> functionDownloadStatuses,
             ProcessorStatusYaml psy, final boolean processorStatusDifferent, final boolean processorFunctionDownloadStatusDifferent) {
 
         ProcessorSyncService.checkWriteLockPresent(processorId);
@@ -237,7 +264,7 @@ public class ProcessorTransactionService {
         }
         if (processorFunctionDownloadStatusDifferent) {
             psy.functions.clear();
-            functionDownloadStatus.statuses.forEach(o->psy.functions.put(o.code, o.state));
+            psy.functions.putAll(functionDownloadStatuses);
         }
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
@@ -261,6 +288,17 @@ public class ProcessorTransactionService {
         }
     }
 
+    public static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
+            String[] names = entry.getValue().split(",");
+            for (String name : names) {
+                map.put(name, entry.getKey());
+            }
+        }
+        return map;
+    }
+
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
         ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
@@ -276,7 +314,7 @@ public class ProcessorTransactionService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTransactionService.createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(Map.of(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
@@ -334,5 +372,4 @@ public class ProcessorTransactionService {
         processor.updatedOn = ss.sessionCreatedOn;
         processorCache.save(processor);
     }
-
 }

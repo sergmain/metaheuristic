@@ -1,0 +1,43 @@
+source:
+  clean: false
+  uid: test-permute-values-of-variables-1.0
+  variables:
+    inline:
+      mh.hyper-params:
+        batches: '[40, 60]'
+  processes:
+    - code: mh.inline-as-variable
+      name: mh.inline-as-variable
+      function:
+        code: mh.inline-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: mh.hyper-params
+                name: batches
+                output: batchSize
+      outputs:
+        - name: batchSize
+    - code: mh.permute-values-of-variables
+      name: permute values of variables
+      function:
+        code: mh.permute-values-of-variables
+        context: internal
+      inputs:
+        - name: batchSize
+      metas:
+        - prefix: sub
+        - suffix: Val
+        - upper-case-first-char: true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop
+            name: mh.nop
+            function:
+              code: mh.nop
+              context: internal
+            inputs:
+              - name: subBatchSizeVal
+version: 1

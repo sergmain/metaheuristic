@@ -45,12 +45,13 @@ public class ProcessorKeepAliveProcessor {
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void processKeepAliveResponseParamYaml(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
-        log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
+//        log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
+
         storeDispatcherContext(dispatcherUrl, responseParamYaml);
-
         processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
-        final KeepAliveResponseParamYaml.DispatcherResponse response = responseParamYaml.response;
+        registerFunctions(dispatcherUrl, responseParamYaml.functions);
 
+        final KeepAliveResponseParamYaml.DispatcherResponse response = responseParamYaml.response;
         ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(dispatcherUrl);
 
         if(ref==null) {
@@ -59,11 +60,9 @@ public class ProcessorKeepAliveProcessor {
         }
         storeProcessorId(dispatcherUrl, response);
         reAssignProcessorId(dispatcherUrl, response);
-        processExecContextStatus(dispatcherUrl, responseParamYaml.execContextStatus);
 
         storeProcessorCoreId(ref, responseParamYaml.response.coreInfos);
 
-        registerFunctions(dispatcherUrl, responseParamYaml.functions);
 //        processRequestLogFile(pcpy)
     }
 

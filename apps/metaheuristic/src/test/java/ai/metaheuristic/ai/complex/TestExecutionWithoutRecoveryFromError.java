@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -34,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -42,7 +42,6 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -132,7 +131,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         System.out.println("start taskProviderService.findTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(preparingCodeData.core1.id, false);
 
         assertNull(simpleTask0);
 
@@ -152,24 +151,24 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         execContextStatusService.resetStatus();
 
         System.out.println("start step_1_0_init_session_id()");
-        String sessionId = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
+        PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
 
         System.out.println("start step_1_1_register_function_statuses()");
-        preparingSourceCodeService.step_1_1_register_function_statuses(sessionId, getProcessorIdAsStr(), preparingSourceCodeData, preparingCodeData);
+        preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
-        step_AssembledRaw(true, EnumsApi.TaskExecState.NONE);
+        step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.NONE);
         Thread.sleep(5_000);
-        step_AssembledRaw(true, EnumsApi.TaskExecState.ERROR);
+        step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.ERROR);
         Thread.sleep(5_000);
 
         System.out.println("start findInternalTaskForRegisteringInQueue() #2");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        step_DatasetProcessing();
+        step_DatasetProcessing(processorIdAndCoreIds);
 
 
     }
@@ -193,10 +192,10 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         execContextVariableStateTopLevelService.processFlushing();
     }
 
-    private void step_DatasetProcessing() {
+    private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         System.out.println("start step_DatasetProcessing()");
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         // function code is function-02:1.1
         assertNull(simpleTask20);
@@ -225,11 +224,11 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     }
 
-    private void step_AssembledRaw(boolean error, EnumsApi.TaskExecState expectedState) {
+    private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, boolean error, EnumsApi.TaskExecState expectedState) {
         System.out.println("start step_AssembledRaw()");
 
         DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -237,7 +236,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         assertNotNull(task);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
@@ -294,24 +293,6 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
             storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
             storeExecResult(simpleTask);
             finishTask(task);
-        }
-    }
-
-    private void verifyGraphIntegrity() {
-
-        List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
-
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(this.getExecContextForTest().id)));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId);
-        assertEquals(tasks.size(), taskVertices.size());
-
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findFirst().orElse(null);
-            assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
-            final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
-            final EnumsApi.TaskExecState graphTaskState = preparingSourceCodeService.findTaskState(getExecContextForTest(), taskVertex.taskId);
-            assertEquals(taskExecState, graphTaskState, "task has a different states in db and graph, " +
-                    "db: " + taskExecState +", graph: " + graphTaskState);
         }
     }
 

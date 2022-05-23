@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.processor.metadata;
 
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -70,11 +71,7 @@ public class TestMetadataYaml {
     public void testParsingZeroFile() throws IOException {
         String yaml = IOUtils.resourceToString("/metadata/metadata-zero.yaml", StandardCharsets.UTF_8);
         assertNotNull(yaml);
-        MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        assertNotNull(m);
-        assertNotNull(m.metadata);
-        assertNotNull(m.processorSessions);
-        assertEquals(0, m.metadata.size());
+        assertThrows(UpgradeNotSupportedException.class, ()->MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
     }
 
 

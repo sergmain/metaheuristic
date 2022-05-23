@@ -52,7 +52,7 @@ public class TestDispatcherComm {
 
         String s = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(o);
         DispatcherCommParamsYaml o1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        assertEquals("proc-1", o1.response.cores.get(0).code);
+        assertEquals("core-1", o1.response.cores.get(0).code);
 
 
         DispatcherCommParamsYaml.AssignedTask at1 = o1.response.cores.get(0).assignedTask;

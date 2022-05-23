@@ -6,7 +6,6 @@ CREATE TABLE MH_PROCESSOR_CORE
     VERSION           NUMERIC(10, 0)  NOT NULL,
     PROCESSOR_ID      NUMERIC(10, 0) NOT NULL,
     UPDATED_ON        bigint not null,
-    IP                VARCHAR(30),
     DESCRIPTION       VARCHAR(250),
     STATUS            TEXT NOT NULL
 );

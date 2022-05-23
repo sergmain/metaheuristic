@@ -24,8 +24,6 @@ import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.utils.MetadataUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
@@ -41,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
@@ -56,7 +55,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
-import static ai.metaheuristic.ai.processor.data.ProcessorData.*;
+import static ai.metaheuristic.ai.processor.data.ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef;
+import static ai.metaheuristic.ai.processor.data.ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef;
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignature;
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignatureInfo;
 
@@ -509,27 +509,36 @@ public class MetadataService {
         }
     }
 
-    public List<MetadataParamsYaml.Function> registerNewFunctionCode(DispatcherUrl dispatcherUrl, List<KeepAliveResponseParamYaml.Functions.Info> infos) {
+    public List<MetadataParamsYaml.Function> registerNewFunctionCode(DispatcherUrl dispatcherUrl, Map<EnumsApi.FunctionSourcing, String> infos) {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
         AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
+
+        List<Pair<EnumsApi.FunctionSourcing, String>> list = new ArrayList<>();
+        for (Map.Entry<EnumsApi.FunctionSourcing, String> e : infos.entrySet()) {
+            String[] codes = e.getValue().split(",");
+            for (String code : codes) {
+                list.add(Pair.of(e.getKey(), code));
+            }
+        }
+
         synchronized (syncObj) {
             boolean isChanged = false;
-            for (KeepAliveResponseParamYaml.Functions.Info info : infos) {
+            for (Pair<EnumsApi.FunctionSourcing, String> info : list) {
                 MetadataParamsYaml.Function status = metadata.functions.stream()
-                        .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.code))
+                        .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.getValue()))
                         .findFirst().orElse(null);
                 if (status==null || status.state == EnumsApi.FunctionState.not_found) {
-                    setFunctionDownloadStatusInternal(assetManagerUrl, info.code, info.sourcing, EnumsApi.FunctionState.none);
+                    setFunctionDownloadStatusInternal(assetManagerUrl, info.getValue(), info.getKey(), EnumsApi.FunctionState.none);
                     isChanged = true;
                 }
             }
 
             // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
             for (MetadataParamsYaml.Function status : metadata.functions) {
-                if (status.assetManagerUrl.equals(assetManagerUrl.url) && infos.stream().filter(i-> i.code.equals(status.code)).findFirst().orElse(null)==null) {
+                if (status.assetManagerUrl.equals(assetManagerUrl.url) && list.stream().filter(i-> i.getValue().equals(status.code)).findFirst().orElse(null)==null) {
                     setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, EnumsApi.FunctionState.not_found);
                     isChanged = true;
                 }
@@ -650,13 +659,19 @@ public class MetadataService {
         }
     }
 
-    public List<KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status> getAsFunctionDownloadStatuses(final AssetManagerUrl assetManagerUrl) {
+    public Map<EnumsApi.FunctionState, String> getAsFunctionDownloadStatuses(final AssetManagerUrl assetManagerUrl) {
+        final Map<EnumsApi.FunctionState, List<String>> map = new HashMap<>();
         synchronized (syncObj) {
-            return metadata.functions.stream()
+            metadata.functions.stream()
                     .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url))
-                    .map(o->new KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status(o.code, o.state))
-                    .collect(Collectors.toList());
+                    .forEach(o->map.computeIfAbsent(o.state, (k)->new ArrayList<>()).add(o.code));
         }
+
+        final Map<EnumsApi.FunctionState, String> infos = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, List<String>> entry : map.entrySet()) {
+            infos.put(entry.getKey(), String.join(",", entry.getValue()));
+        }
+        return infos;
     }
 
     private void setFunctionDownloadStatusInternal(AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {

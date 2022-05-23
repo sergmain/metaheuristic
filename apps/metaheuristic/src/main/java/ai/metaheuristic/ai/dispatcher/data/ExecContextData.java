@@ -26,10 +26,7 @@ import org.springframework.lang.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -39,6 +36,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class ExecContextData {
+
+    @Data
+    @NoArgsConstructor
+    public static class ExecContextStates {
+        // key - execContextId, value - stae of execContext
+        public final Map<Long, EnumsApi.ExecContextState> statuses = new HashMap<>();
+    }
+
 
     @Data
     @AllArgsConstructor

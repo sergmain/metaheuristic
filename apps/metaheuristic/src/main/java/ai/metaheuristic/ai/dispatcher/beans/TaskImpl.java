@@ -63,7 +63,7 @@ public class TaskImpl implements Serializable, Task {
     public String params;
 
     @Nullable
-    @Column(name = "PROCESSOR_ID")
+    @Column(name = "CORE_ID")
     public Long coreId;
 
     @Nullable

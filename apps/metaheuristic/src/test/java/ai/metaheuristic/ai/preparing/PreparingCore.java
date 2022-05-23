@@ -39,15 +39,6 @@ public abstract class PreparingCore {
     }
 
     @Nullable
-    public String getProcessorIdAsStr() {
-        return preparingCodeData.processorIdAsStr;
-    }
-
-    public Long getProcessorId() {
-        return preparingCodeData.processor.getId();
-    }
-
-    @Nullable
     public Function getFitFunction() {
         return preparingCodeData.fitFunction;
     }

@@ -25,12 +25,14 @@ public class MetadataParamsYamlUtils {
 
     private static final MetadataParamsYamlUtilsV1 YAML_UTILS_V_1 = new MetadataParamsYamlUtilsV1();
     private static final MetadataParamsYamlUtilsV2 YAML_UTILS_V_2 = new MetadataParamsYamlUtilsV2();
-    private static final MetadataParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final MetadataParamsYamlUtilsV3 YAML_UTILS_V_3 = new MetadataParamsYamlUtilsV3();
+    private static final MetadataParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
     public static final BaseYamlUtils<MetadataParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3
             ),
             DEFAULT_UTILS
     );

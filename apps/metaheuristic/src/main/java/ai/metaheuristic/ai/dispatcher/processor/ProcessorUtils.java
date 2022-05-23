@@ -32,15 +32,14 @@ import java.util.Objects;
  */
 public class ProcessorUtils {
 
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, KeepAliveRequestParamYaml.FunctionDownloadStatuses status) {
-        if (ss.functions.size()!=status.statuses.size()) {
+    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, Map<String, EnumsApi.FunctionState> mapOfFunctionStates) {
+        if (ss.functions.size()!=mapOfFunctionStates.size()) {
             return true;
         }
         for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
-            for (KeepAliveRequestParamYaml.FunctionDownloadStatuses.Status sds : status.statuses) {
-                if (entry.getKey().equals(sds.code) && !entry.getValue().equals(sds.state)) {
-                    return true;
-                }
+            EnumsApi.FunctionState state = mapOfFunctionStates.get(entry.getKey());
+            if (!entry.getValue().equals(state)) {
+                return true;
             }
         }
         return false;

@@ -65,6 +65,12 @@
     color:green;
 }
 
+#core-status {
+    font-size: 10px;
+    border: none;
+    padding: 0 0 0 0;
+}
+
 .no-wrap {
     white-space: nowrap;
 }

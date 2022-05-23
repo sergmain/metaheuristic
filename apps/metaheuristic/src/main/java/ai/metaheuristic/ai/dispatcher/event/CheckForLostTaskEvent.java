@@ -27,7 +27,7 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 public class CheckForLostTaskEvent {
-    public final Long processorId;
+    public final Long coreId;
     public final List<Long> taskIds;
     public final String taskIdsAsStr;
 }

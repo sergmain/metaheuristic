@@ -1,4 +1,4 @@
-version: 2
+version: 3
 processorSessions:
   http://localhost:8080:
     dispatcherCode: localhost-8080
@@ -12,31 +12,24 @@ processorSessions:
       'core-1' : 117
       'core-2' : 119
 metadata:
-  mh-function-download-status: |
-    statuses:
-    - code: test.function:1.0
-      dispatcherUrl: http://localhost:8080
-      functionState: signature_not_found
-      sourcing: dispatcher
-      verified: true
-    - code: test.function:1.0
-      dispatcherUrl: https://localhost:8888
-      functionState: signature_not_found
-      sourcing: dispatcher
-      verified: false
-    - code: function-01:1.1
-      dispatcherUrl: http://localhost:8080
-      functionState: not_found
-      sourcing: processor
-      verified: false
-    - code: function-02:1.1
-      dispatcherUrl: http://localhost:8080
-      functionState: not_found
-      sourcing: processor
-      verified: false
-    - code: fileless-function:1.0
-      dispatcherUrl: https://localhost:8888
-      functionState: not_found
-      sourcing: processor
-      verified: false
-    version: 1
+functions:
+  - code: test.function:1.0
+    assetManagerUrl: http://localhost:8080
+    state: signature_not_found
+    sourcing: dispatcher
+  - code: test.function:1.0
+    assetManagerUrl: https://localhost:8888
+    state: signature_not_found
+    sourcing: dispatcher
+  - code: function-01:1.1
+    assetManagerUrl: http://localhost:8080
+    state: not_found
+    sourcing: processor
+  - code: function-02:1.1
+    assetManagerUrl: http://localhost:8080
+    state: not_found
+    sourcing: processor
+  - code: fileless-function:1.0
+    assetManagerUrl: https://localhost:8888
+    state: not_found
+    sourcing: processor

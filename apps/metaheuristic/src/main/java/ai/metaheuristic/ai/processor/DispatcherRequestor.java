@@ -150,11 +150,12 @@ public class DispatcherRequestor {
                 }
                 for (Map.Entry<String, Long> entry : ps.cores.entrySet()) {
                     String coreCode = entry.getKey();
-                    ProcessorCommParamsYaml.Core coreParams = new ProcessorCommParamsYaml.Core();
+                    final Long coreId = entry.getValue();
+                    ProcessorCommParamsYaml.Core coreParams = new ProcessorCommParamsYaml.Core(coreCode, coreId, null);
                     r.cores.add(coreParams);
 
                     ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core =
-                            new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, entry.getValue());
+                            new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, coreId);
 
                     // we have to pull new tasks from server constantly
                     if (currentExecState.isInited(dispatcherUrl)) {
