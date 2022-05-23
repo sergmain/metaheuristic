@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -67,7 +66,6 @@ public class ProcessorTopLevelService {
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorCoreCache processorCoreCache;
     private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
@@ -230,12 +228,6 @@ public class ProcessorTopLevelService {
 
             List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(Consts.PAGE_REQUEST_100_REC, processor.id);
             for (Object[] obj : coreIds) {
-//                ProcessorCore processorCore = processorCoreCache.findById(coreId);
-//                if (processorCore ==null) {
-//                    continue;
-//                }
-//                CoreStatusYaml coreStatus = processorCore.getCoreStatusYaml();
-
                 Long coreId = ((Number)obj[0]).longValue();
                 String code = obj[1]==null ? "<unknown>" : obj[1].toString();
                 processorStatus.cores.add(new ProcessorData.ProcessorCore(coreId, code));

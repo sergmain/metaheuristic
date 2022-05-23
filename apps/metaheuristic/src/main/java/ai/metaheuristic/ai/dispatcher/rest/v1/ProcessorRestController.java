@@ -39,7 +39,7 @@ public class ProcessorRestController {
     private final ProcessorTopLevelService processorTopLevelService;
 
     @GetMapping("/processors")
-    public ProcessorData.ProcessorsResult init(@PageableDefault(size = 5) Pageable pageable) {
+    public ProcessorData.ProcessorsResult init(@PageableDefault(size = 50) Pageable pageable) {
         return processorTopLevelService.getProcessors(pageable);
     }
 

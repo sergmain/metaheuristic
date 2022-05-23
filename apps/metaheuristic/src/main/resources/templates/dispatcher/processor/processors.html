@@ -79,7 +79,7 @@
                 <div th:text="${r.host}" class="no-wrap">Host name</div>
             </td>
             <td th:text="${r.processor.description}">Sample Description</td>
-            <td><pre style="display: none;" id="core-status" th:if="${r.processor.status}!=null" th:text="${r.processor.status}">Status of processor </pre></td>
+            <td><pre style="display: none;" id="processor-status" th:if="${r.processor.status}!=null" th:text="${r.processor.status}">Status of processor </pre></td>
             <td>
                 <div th:text="${r.active ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.active ? 'alert-success' : 'alert-danger')}">Is active</div>
                 <div th:text="${r.functionProblem ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.functionProblem ? 'alert-danger' : 'alert-success')}">Is any problem with Functions</div>
