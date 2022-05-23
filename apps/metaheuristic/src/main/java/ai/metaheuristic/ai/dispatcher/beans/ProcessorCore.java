@@ -63,6 +63,10 @@ public class ProcessorCore implements Serializable {
     public long updatedOn;
 
     @Nullable
+    @Column(name = "CORE_CODE")
+    public String code;
+
+    @Nullable
     @Column(name = "DESCRIPTION")
     public String description;
 

@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -32,7 +34,6 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,8 @@ public class ProcessorTopLevelService {
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
+    private final ProcessorCoreCache processorCoreCache;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     // Attention, this value must be greater than
@@ -214,14 +218,29 @@ public class ProcessorTopLevelService {
                             s.getValue() != EnumsApi.FunctionState.not_found &&
                             s.getValue() != EnumsApi.FunctionState.ok);
 
-            ss.add(new ProcessorData.ProcessorStatus(
+            final ProcessorData.ProcessorStatus processorStatus = new ProcessorData.ProcessorStatus(
                     processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,
                     isFunctionProblem,
-                    blacklistReason!=null, blacklistReason,
+                    blacklistReason != null, blacklistReason,
                     processor.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO),
                     (StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO)
-            ));
+            );
+            ss.add(processorStatus);
+
+            List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(Consts.PAGE_REQUEST_100_REC, processor.id);
+            for (Object[] obj : coreIds) {
+//                ProcessorCore processorCore = processorCoreCache.findById(coreId);
+//                if (processorCore ==null) {
+//                    continue;
+//                }
+//                CoreStatusYaml coreStatus = processorCore.getCoreStatusYaml();
+
+                Long coreId = ((Number)obj[0]).longValue();
+                String code = obj[1]==null ? "<unknown>" : obj[1].toString();
+                processorStatus.cores.add(new ProcessorData.ProcessorCore(coreId, code));
+            }
+            processorStatus.cores.sort((o1, o2)-> Objects.equals(o1, o2) || o1==null || o2==null ? 0 :  o1.code().compareTo(o2.code()) );
         }
         result.items =  new SliceImpl<>(ss, pageable, ids.hasNext());
         return result;

@@ -138,7 +138,7 @@ public class ArtifactCleanerAtDispatcher {
             }
 
             List<Long> ids;
-            while (!(ids = processorCoreRepository.findAllByProcessorId(Consts.PAGE_REQUEST_100_REC, processorId)).isEmpty()) {
+            while (!(ids = processorCoreRepository.findIdsByProcessorId(Consts.PAGE_REQUEST_100_REC, processorId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
                     if (isBusy()) {

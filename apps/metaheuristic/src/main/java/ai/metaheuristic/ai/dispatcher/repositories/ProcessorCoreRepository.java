@@ -49,7 +49,10 @@ public interface ProcessorCoreRepository extends CrudRepository<ProcessorCore, L
     List<Long> getAllProcessorIds();
 
     @Query(value="select c.id from ProcessorCore c where c.processorId=:processorId")
-    List<Long> findAllByProcessorId(Pageable pageable, Long processorId);
+    List<Long> findIdsByProcessorId(Pageable pageable, Long processorId);
+
+    @Query(value="select c.id, c.code from ProcessorCore c where c.processorId=:processorId")
+    List<Object[]> findIdsAndCodesByProcessorId(Pageable pageable, Long processorId);
 
     @Modifying
     @Query(value="delete from ProcessorCore t where t.id in (:ids)")

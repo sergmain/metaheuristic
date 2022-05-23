@@ -141,9 +141,13 @@ CREATE TABLE mh_processor_core
     VERSION         INT UNSIGNED NOT NULL,
     PROCESSOR_ID    INT UNSIGNED NOT NULL,
     UPDATED_ON      bigint not null,
+    CORE_CODE       VARCHAR(20),
     DESCRIPTION     VARCHAR(250),
     STATUS          LONGTEXT NOT NULL
 );
+
+CREATE INDEX mh_processor_core_processor_id_idx
+    ON mh_processor_core (PROCESSOR_ID);
 
 CREATE TABLE mh_log_data
 (

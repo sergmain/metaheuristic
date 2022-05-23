@@ -57,23 +57,27 @@
         </label>
     </div>
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.ProcessorData.ProcessorsResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.ProcessorData$ProcessorsResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
-        <thead>
+        <thead style="vertical-align: middle;">
         <tr>
             <th>Id</th>
-            <th><div class="no-wrap">IP</div><div class="no-wrap">Host name</div></th>
+            <th><div class="no-wrap">Last seen</div><div class="no-wrap">IP</div><div class="no-wrap">Host name</div></th>
             <th>Description</th>
             <th>Status of processor</th>
             <th><div class="no-wrap">Is active?</div><div class="no-wrap">problems with functions?</div><div class="no-wrap">Is blacklisted?</div><div class="no-wrap">Reason</div></th>
-            <th>Last seen</th>
+            <th><div class="no-wrap">Core Id : Code</div></th>
             <th colspan="3">&nbsp;</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody style="vertical-align: top;">
         <tr th:each="r : ${result.items}">
             <td th:text="${'#' + r.processor.id}">Processor's Id</td>
-            <td><div th:text="${r.ip}" class="no-wrap">IP</div><div th:text="${r.host}" class="no-wrap">Host name</div></td>
+            <td>
+                <div th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</div>
+                <div th:text="${r.ip}" class="no-wrap">IP</div>
+                <div th:text="${r.host}" class="no-wrap">Host name</div>
+            </td>
             <td th:text="${r.processor.description}">Sample Description</td>
             <td><pre style="display: none;" id="processor-status" th:if="${r.processor.status}!=null" th:text="${r.processor.status}">Status of processor </pre></td>
             <td>
@@ -82,19 +86,36 @@
                 <div th:text="${r.blacklisted ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.blacklisted ? 'alert-danger' : 'alert-success')}">Is blacklisted</div>
                 <div th:text="${r.blacklistReason}" class="no-wrap alert-danger">Reason</div>
             </td>
-            <td th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-edit/' + r.processor.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-delete/' + r.processor.id}">Delete</a></td>
             <td>
-                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/processor/processor-request-logfile-commit}" accept-charset="UTF-8" id="processor-form" name="f">
-                    <input type="hidden" th:name="id" th:value="${r.processor.id}"/>
-                    <button type="submit" class="pure-button pure-button-primary">Request log file</button>
-                </form>
-
+                <table style="border: none">
+                <tr>
+                    <td>
+                        <div th:each="c : ${r.cores}" th:remove="tag" >
+                            <div th:text="${'#' + c.id + ': ' + c.code}">Processor's Id and Code</div>
+                        </div>
+                    </td>
+                </tr>
+                </table>
             </td>
+            <td><table style="border: none">
+                <tr>
+                    <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-edit/' + r.processor.id}">Edit</a></td>
+                </tr>
+                <tr>
+                    <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/processor/processor-delete/' + r.processor.id}">Delete</a></td>
+                </tr>
+                <tr>
+                    <td th:if="${false}">
+                        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/processor/processor-request-logfile-commit}" accept-charset="UTF-8" id="processor-form" name="f">
+                            <input type="hidden" th:name="id" th:value="${r.processor.id}"/>
+                            <button type="submit" class="pure-button pure-button-primary">Request log file</button>
+                        </form>
+                    </td>
+                </tr>
+            </table></td>
         </tr>
         <tr>
-            <td colspan="8">
+            <td colspan="7">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">
