@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class TestTaskRequest extends FeatureMethods {
 
@@ -73,15 +73,22 @@ public class TestTaskRequest extends FeatureMethods {
         return getSourceParamsYamlAsString_Simple();
     }
 
-
     @Test
     public void testTaskRequest() {
-        produceTasks();
-        toStarted();
+        System.out.println("start step_0_0_produce_tasks_and_start()");
+        step_0_0_produce_tasks_and_start();
+
+        System.out.println("start step_1_0_init_session_id()");
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
+
+        System.out.println("start step_2()");
         step_2(processorIdAndCoreIds);
+
+        System.out.println("start step_3()");
         step_3(processorIdAndCoreIds);
+
+        System.out.println("start step_4()");
         step_4(processorIdAndCoreIds);
     }
 

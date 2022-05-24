@@ -19,20 +19,19 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -59,8 +58,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -72,14 +69,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
-    @Autowired private ExecContextService execContextService;
-    @Autowired private GlobalVariableRepository globalVariableRepository;
-    @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
-    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private TaskFinishingService taskFinishingService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
@@ -115,40 +107,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     @Test
     public void test() {
 
-        System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
-
-        assertNotNull(getExecContextForTest());
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-
-        System.out.println("start verifyGraphIntegrity()");
-        verifyGraphIntegrity();
-
-        // ======================
-
-        System.out.println("start taskProviderService.findTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(preparingCodeData.core1.id, false);
-
-        assertNull(simpleTask0);
-
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
-
-            System.out.println("start txSupportForTestingService.toStarted()");
-            txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
-
-            SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
-            assertNotNull(gv);
-
-            assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-            return null;
-        });
-        System.out.println("start execContextStatusService.resetStatus()");
-        execContextStatusService.resetStatus();
+        System.out.println("start step_0_0_produce_tasks_and_start()");
+        step_0_0_produce_tasks_and_start();
 
         System.out.println("start step_1_0_init_session_id()");
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
@@ -169,7 +129,6 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         step_DatasetProcessing(processorIdAndCoreIds);
-
 
     }
 

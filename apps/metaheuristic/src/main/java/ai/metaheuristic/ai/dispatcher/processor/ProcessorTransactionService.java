@@ -42,7 +42,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -148,7 +147,7 @@ public class ProcessorTransactionService {
 
     }
 
-    public DispatcherApiData.ProcessorSessionId assignNewSessionId(Processor processor) {
+    private DispatcherApiData.ProcessorSessionId assignNewSessionId(Processor processor) {
         TxUtils.checkTxExists();
         ProcessorSyncService.checkWriteLockPresent(processor.id);
 
@@ -288,17 +287,6 @@ public class ProcessorTransactionService {
         }
     }
 
-    public static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
-        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
-        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
-            String[] names = entry.getValue().split(",");
-            for (String name : names) {
-                map.put(name, entry.getKey());
-            }
-        }
-        return map;
-    }
-
     private static ProcessorStatusYaml.Env to(KeepAliveRequestParamYaml.Env envYaml) {
         ProcessorStatusYaml.Env env = new ProcessorStatusYaml.Env();
         envYaml.disk.stream().map(o->new ProcessorStatusYaml.DiskStorage(o.code, o.path)).collect(Collectors.toCollection(()->env.disk));
@@ -321,37 +309,6 @@ public class ProcessorTransactionService {
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherApiData.ProcessorSessionId(p.getId(), sessionId);
-    }
-
-    /**
-     * session is Ok, so we need to update session's timestamp periodically
-     */
-    @Transactional
-    public void updateSessionWithTx(Processor processor, ProcessorStatusYaml ss) {
-        final long millis = System.currentTimeMillis();
-        final long diff = millis - ss.sessionCreatedOn;
-        if (diff > Consts.SESSION_UPDATE_TIMEOUT) {
-            log.debug("""
-                            #807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),
-                            '    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},
-                            '    processor.status:
-                            {},
-                            '    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.""",
-                    processor.version, millis, ss.sessionCreatedOn, diff, Consts.SESSION_UPDATE_TIMEOUT, processor.getStatus());
-            // the same processor, with the same sessionId
-            // so we just need to refresh sessionId timestamp
-            ss.sessionCreatedOn = millis;
-            processor.updatedOn = millis;
-            processor.updateParams(ss);
-            processorCache.save(processor);
-
-            // the same processorId but new sessionId
-            return;
-        }
-        else {
-            // the same processorId, the same sessionId, session isn't expired
-            return;
-        }
     }
 
     private void updateSession(Processor processor) {

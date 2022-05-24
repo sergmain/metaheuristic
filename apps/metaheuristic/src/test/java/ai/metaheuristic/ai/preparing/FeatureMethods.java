@@ -74,20 +74,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
         return task;
     }
 
-    public long countTasks(@Nullable List<EnumsApi.ExecContextState> states) {
-        List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(getExecContextForTest().id);
-        if (states==null) {
-            return list.size();
-        }
-        long count = list.stream().filter(o->states.contains(EnumsApi.ExecContextState.toState((Integer)o[1]))).count();
-        return count;
-    }
-
-    public void toStarted() {
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-    }
-
     protected void produceTasks() {
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);

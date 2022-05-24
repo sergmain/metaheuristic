@@ -47,12 +47,8 @@ public class TestFeatureWithAllError extends FeatureMethods {
     public void testFeatureCompletionWithAllError() {
         createExperiment();
 
-        long mills = System.currentTimeMillis();
-        log.info("Start produceTasks()");
-        produceTasks();
-        log.info("produceTasks() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-
-        toStarted();
+        System.out.println("start step_0_0_produce_tasks_and_start()");
+        step_0_0_produce_tasks_and_start();
 
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
@@ -60,7 +56,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
-        mills = System.currentTimeMillis();
+        long mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask(processorIdAndCoreIds);
         log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {} milliseconds", System.currentTimeMillis() - mills);

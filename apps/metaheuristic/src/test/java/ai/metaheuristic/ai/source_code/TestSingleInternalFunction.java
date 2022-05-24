@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class TestSingleInternalFunction extends FeatureMethods {
 
@@ -64,7 +64,9 @@ public class TestSingleInternalFunction extends FeatureMethods {
 
     @Test
     public void test() {
-        produceTasks();
+        System.out.println("start step_0_0_produce_tasks_and_start()");
+        step_0_0_produce_tasks_and_start();
+
         List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(getExecContextForTest().id);
         assertEquals(2, list.size());
 

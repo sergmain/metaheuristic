@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -45,10 +44,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -74,6 +70,17 @@ public class ProcessorTopLevelService {
     // at least for 20 seconds
     // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
+
+    private static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
+            String[] names = entry.getValue().split(",");
+            for (String name : names) {
+                map.put(name, entry.getKey());
+            }
+        }
+        return map;
+    }
 
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
@@ -114,7 +121,7 @@ public class ProcessorTopLevelService {
 
         final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
 
-        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = ProcessorTransactionService.parsetToMapOfStates(functionDownloadStatus);
+        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parsetToMapOfStates(functionDownloadStatus);
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, mapOfFunctionStates);
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
@@ -160,32 +167,6 @@ public class ProcessorTopLevelService {
             return Enums.ProcessorAndSessionStatus.ok;
         }
     }
-
-    @Nullable
-    public DispatcherApiData.ProcessorSessionId checkProcessorId(Processor processor, Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        switch (processorAndSessionStatus) {
-            case reassignProcessor -> {
-                return ProcessorSyncService.getWithSync(processorId,
-                        ()-> processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId));
-            }
-            case newSession -> {
-                return ProcessorSyncService.getWithSync(processorId,
-                        () -> processorTransactionService.assignNewSessionId(processor));
-            }
-            case updateSession -> {
-                return null;
-//                return ProcessorSyncService.getWithSyncVoid( processorId,
-//                        ()-> processorTransactionService.updateSessionWithTx(processor, ss));
-            }
-            case ok -> {
-                return null;
-            }
-            default -> {
-                return null;
-            }
-        }
-    }
-
 
     public OperationStatusRest requestLogFile(final Long processorId) {
         return ProcessorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
