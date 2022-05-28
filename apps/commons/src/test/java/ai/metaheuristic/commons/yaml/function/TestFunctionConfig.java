@@ -16,13 +16,12 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
+import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -32,9 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class TestFunctionConfig {
 
+    // this test is cheching that both classes
+    //  ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml
+    // and
+    //  ai.metaheuristic.commons.yaml.function.FunctionConfigYaml
+    // have the same set of fields, except field version
     @Test
     public void test() {
-        Field[] fields = FunctionConfigListYaml.FunctionConfig.class.getDeclaredFields();
+        Field[] fields = BundleParamsYaml.FunctionConfig.class.getDeclaredFields();
 
         Field[] fields1 = ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.class.getDeclaredFields();
 

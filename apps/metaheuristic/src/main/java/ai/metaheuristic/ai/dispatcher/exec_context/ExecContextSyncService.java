@@ -25,8 +25,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 /**
- * it's a Spring based implementation because we need singleton
- *
  * @author Serge
  * Date: 8/11/2019
  * Time: 10:56 AM

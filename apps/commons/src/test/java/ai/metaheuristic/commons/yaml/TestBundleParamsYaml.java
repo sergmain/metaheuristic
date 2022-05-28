@@ -125,9 +125,9 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
         System.out.println(yaml);
-        assertThrows(CheckIntegrityFailedException.class, ()->FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yaml));
+        assertThrows(CheckIntegrityFailedException.class, ()->BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
     }
 
     @Test

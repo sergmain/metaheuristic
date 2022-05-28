@@ -18,19 +18,13 @@ package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
-import ai.metaheuristic.ai.dispatcher.batch.BatchHelperService;
-import ai.metaheuristic.ai.dispatcher.batch.BatchService;
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -77,17 +71,9 @@ public class BundleTopLevelService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleTopLevelService::isZipEntitySizeOk;
 
     private final SourceCodeCache sourceCodeCache;
-    private final ExecContextCache execContextCache;
-    private final BatchRepository batchRepository;
-    private final BatchService batchService;
-    private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextSyncService execContextSyncService;
-    private final BatchHelperService batchHelperService;
-    private final ExecContextGraphSyncService execContextGraphSyncService;
-    private final ExecContextTaskStateSyncService execContextTaskStateSyncService;
     private final ExecContextVariableService execContextVariableService;
 
     public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
@@ -142,7 +128,7 @@ public class BundleTopLevelService {
         }
 
         if (ext.equals(ZIP_EXT)) {
-            List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+            List<String> errors = ZipUtils.validate(tempFile.toPath(), VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
             if (!errors.isEmpty()) {
                 final BundleData.UploadingStatus status = new BundleData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
                 status.addErrorMessages(errors);

@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR;
+import static ai.metaheuristic.ai.dispatcher.bundle.BundleVerificationUtils.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -49,27 +49,45 @@ public class TestFunctionConfigSchemeValidation {
     }
 
     @Test
-    public void testError() {
-
-        String yaml = createYaml();
-        final int endIndex = yaml.lastIndexOf("version: 2");
-        assertNotEquals(-1, endIndex);
-        yaml = yaml.substring(0, endIndex)+ "  aaa: 2\n";
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
+    public void testError_01() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-error-v3-01.yaml", StandardCharsets.UTF_8);
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNotNull(result, result);
     }
 
     @Test
-    public void test_01() throws IOException {
-        String cfg = IOUtils.resourceToString("/yaml/function/function-01-v1.yaml", StandardCharsets.UTF_8);
+    public void testError_02() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-error-v3-02.yaml", StandardCharsets.UTF_8);
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNotNull(result, result);
+    }
+
+    @Test
+    public void test_v1_01() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v1-01.yaml", StandardCharsets.UTF_8);
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result, result);
+    }
+
+    @Test
+    public void test_v2_01() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v2-01.yaml", StandardCharsets.UTF_8);
 
         String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
     }
 
     @Test
-    public void test_02() throws IOException {
-        String cfg = IOUtils.resourceToString("/yaml/function/function-02-v2.yaml", StandardCharsets.UTF_8);
+    public void test_v3_01() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v3-01.yaml", StandardCharsets.UTF_8);
+
+        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        assertNull(result, result);
+    }
+
+    @Test
+    public void test_v3_02() throws IOException {
+        String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v3-02.yaml", StandardCharsets.UTF_8);
 
         String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
@@ -77,9 +95,6 @@ public class TestFunctionConfigSchemeValidation {
 
     @NonNull
     private static String createYaml() {
-        FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
-        FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();
-    private String createYaml() {
         BundleParamsYaml cfgList = new BundleParamsYaml();
         BundleParamsYaml.FunctionConfig cfg = new BundleParamsYaml.FunctionConfig();
         cfg.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "123");

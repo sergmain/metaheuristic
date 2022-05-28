@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.bundle.BundleVerificationUtils;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -31,7 +32,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
@@ -61,55 +61,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.*;
-import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
-import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionTopLevelService {
-
-    private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
-    public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-            List.of( new Scheme(
-                    List.of( new Element(
-                            "functions",
-                            true, false,
-                            List.of(
-                                    new Element("code"),
-                                    new Element("env", false, false),
-                                    new Element("file", false, false),
-                                    new Element("git", false, false),
-                                    new Element("params", false, false),
-                                    new Element("metas", false, false),
-                                    new Element("skipParams", false, false),
-                                    new Element("sourcing"),
-                                    new Element("type", false, false),
-                                    new Element("checksumMap", false, false))
-                    ) ),
-            1, SEE_MORE_INFO),
-                    new Scheme(
-                    List.of( new Element(
-                            "functions",
-                            true, false,
-                            List.of(
-                                    new Element("code"),
-                                    new Element("env", false, false),
-                                    new Element("file", false, false),
-                                    new Element("git", false, false),
-                                    new Element("params", false, false),
-                                    new Element("metas", false, false),
-                                    new Element("skipParams", false, false),
-                                    new Element("sourcing"),
-                                    new Element("type", false, false),
-                                    new Element("content", false, false),
-                                    new Element("checksumMap", false, false))
-                    ) ),
-            2, SEE_MORE_INFO)),
-            "the config file functions.yaml",
-            (es)-> es, SEE_MORE_INFO
-    );
 
     private final Globals globals;
     private final FunctionRepository functionRepository;
@@ -341,7 +298,7 @@ public class FunctionTopLevelService {
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
-        String errorString = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String errorString = BundleVerificationUtils.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         if (errorString!=null) {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
         }
