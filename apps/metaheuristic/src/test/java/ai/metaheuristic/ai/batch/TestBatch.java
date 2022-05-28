@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class TestBatch extends PreparingSourceCode {
 
@@ -59,9 +59,7 @@ public class TestBatch extends PreparingSourceCode {
 
     @Test
     public void test() {
-
         List<String> uids = dispatcherParamsTopLevelService.getBatches();
-
         assertTrue(uids.contains("default-source-code-for-batch-testing-1.0"), "uids: " + uids);
     }
 }

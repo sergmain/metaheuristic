@@ -258,6 +258,7 @@ public class PreparingSourceCodeService {
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeParams);
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
+        System.out.println("start checkConsistencyOfSourceCode()");
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(preparingSourceCodeData.getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 

@@ -27,12 +27,12 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskLastProcessingHelper;
-import ai.metaheuristic.ai.dispatcher.repositories.*;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -74,11 +74,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private ExecContextService execContextService;
-    @Autowired private GlobalVariableRepository globalVariableRepository;
-    @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
@@ -117,40 +114,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Test
     public void testCreateTasks() {
 
-        System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
-
-        assertNotNull(getExecContextForTest());
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-
-        System.out.println("start verifyGraphIntegrity()");
-        verifyGraphIntegrity();
-
-        // ======================
-
-        System.out.println("start taskProviderService.findTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
-
-        assertNull(simpleTask0);
-
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
-
-            System.out.println("start txSupportForTestingService.toStarted()");
-            txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
-
-            SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
-            assertNotNull(gv);
-
-            assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-            return null;
-        });
-        System.out.println("start execContextStatusService.resetStatus()");
-        execContextStatusService.resetStatus();
+        System.out.println("start step_0_0_produce_tasks_and_start()");
+        step_0_0_produce_tasks_and_start();
 
         System.out.println("start step_1_0_init_session_id()");
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());

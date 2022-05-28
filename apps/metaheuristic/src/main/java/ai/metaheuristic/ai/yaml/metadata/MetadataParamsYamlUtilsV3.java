@@ -79,7 +79,7 @@ public class MetadataParamsYamlUtilsV3
     }
 
     private static MetadataParamsYaml.Function toStatus(MetadataParamsYamlV3.FunctionV3 sV3) {
-        return new MetadataParamsYaml.Function(sV3.state, sV3.code, sV3.assetManagerUrl, sV3.sourcing, sV3.checksum, sV3.signature);
+        return new MetadataParamsYaml.Function(sV3.state, sV3.code, sV3.assetManagerUrl, sV3.sourcing, sV3.checksum, sV3.signature, sV3.lastCheck);
     }
 
     private static MetadataParamsYaml.Quota toQuota(MetadataParamsYamlV3.QuotaV3 sV3) {

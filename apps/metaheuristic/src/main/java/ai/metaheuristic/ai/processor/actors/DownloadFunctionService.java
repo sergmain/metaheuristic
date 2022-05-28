@@ -105,12 +105,11 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             }
 
             MetadataParamsYaml.Function functionDownloadStatus = functionConfigAndStatus.status;
-            // functionState == EnumsApi.FunctionState.ready if function was processed already
-            if (functionDownloadStatus==null || functionDownloadStatus.state == EnumsApi.FunctionState.ready) {
+            if (functionDownloadStatus==null) {
                 continue;
             }
 
-            if (functionDownloadStatus.state != EnumsApi.FunctionState.none && functionDownloadStatus.state != EnumsApi.FunctionState.ok) {
+            if (!functionDownloadStatus.state.needVerification) {
                 log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.state);
                 continue;
             }
@@ -124,7 +123,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 throw new IllegalStateException("(functionConfig == null)");
             }
 
-            if (functionDownloadStatus.state == EnumsApi.FunctionState.none) {
+            if (functionDownloadStatus.state.needDownload) {
                 try {
 
                     File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
@@ -248,14 +247,19 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         log.error("#811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
                         continue;
                     }
-                    else if (functionState == EnumsApi.FunctionState.download_error || functionState == EnumsApi.FunctionState.dispatcher_config_error) {
-                        log.warn("#811.110 function {} can't be downloaded, state: {}", functionCode, functionState);
+                    else if (functionState == EnumsApi.FunctionState.download_error) {
+                        log.warn("#811.110 function {} will be downloaded later, state: {}", functionCode, functionState);
                         metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                        continue;
+                    }
+                    else if (functionState == EnumsApi.FunctionState.dispatcher_config_error) {
+                        log.warn("#811.111 function {} can't be downloaded, state: {}", functionCode, functionState);
+                        metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
                         continue;
                     }
                     else if (functionState == EnumsApi.FunctionState.not_found) {
                         log.warn("#811.112 function {} can't be downloaded, state: {}", functionCode, functionState);
-                        metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                        metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
                         continue;
                     }
 
@@ -316,6 +320,11 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.state.needVerification) {
                 final DispatcherLookupParamsYaml.AssetManager asset = dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
                 if (asset==null || asset.disabled) {
+                    return;
+                }
+
+                if (System.currentTimeMillis() - o.lastCheck < o.state.recheckPeriod) {
+                    log.debug("#811.1854 Function {} from {} is in cool-down mode", o.code, o.assetManagerUrl);
                     return;
                 }
 

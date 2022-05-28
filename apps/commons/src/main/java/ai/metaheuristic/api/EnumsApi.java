@@ -381,16 +381,16 @@ public class EnumsApi {
 
     public enum FunctionState {
         // state is unknown, task for downloading of function is just created
-        none(true),
+        none(true, 0, true),
         // asset file for function exists and we need to check checksum and signature, if they are presented
-        ok(true),
+        ok(true, 0, false),
         // function is ready for executing
         ready,
 
         not_found,
         not_supported_os,
         asset_error,
-        download_error,
+        download_error(true, 10*60*1000, true), // recheck every 10 minutes
         function_config_error,
         io_error,
         dispatcher_config_error,
@@ -400,11 +400,15 @@ public class EnumsApi {
         signature_not_found;
 
         public boolean needVerification = false;
+        public long recheckPeriod = 0;
+        public boolean needDownload = false;
         FunctionState() {
         }
 
-        FunctionState(boolean needVerification) {
+        FunctionState(boolean needVerification, long recheckPeriod, boolean needDownload) {
             this.needVerification = needVerification;
+            this.recheckPeriod = recheckPeriod;
+            this.needDownload = needDownload;
         }
     }
 }

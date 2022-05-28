@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -32,7 +31,6 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -46,10 +44,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -67,7 +62,6 @@ public class ProcessorTopLevelService {
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorCoreCache processorCoreCache;
     private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
@@ -76,6 +70,17 @@ public class ProcessorTopLevelService {
     // at least for 20 seconds
     // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
+
+    private static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
+            String[] names = entry.getValue().split(",");
+            for (String name : names) {
+                map.put(name, entry.getKey());
+            }
+        }
+        return map;
+    }
 
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
@@ -116,7 +121,7 @@ public class ProcessorTopLevelService {
 
         final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
 
-        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = ProcessorTransactionService.parsetToMapOfStates(functionDownloadStatus);
+        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parsetToMapOfStates(functionDownloadStatus);
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, mapOfFunctionStates);
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
@@ -163,32 +168,6 @@ public class ProcessorTopLevelService {
         }
     }
 
-    @Nullable
-    public DispatcherApiData.ProcessorSessionId checkProcessorId(Processor processor, Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, @Nullable String sessionId, String remoteAddress) {
-        switch (processorAndSessionStatus) {
-            case reassignProcessor -> {
-                return ProcessorSyncService.getWithSync(processorId,
-                        ()-> processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId));
-            }
-            case newSession -> {
-                return ProcessorSyncService.getWithSync(processorId,
-                        () -> processorTransactionService.assignNewSessionId(processor));
-            }
-            case updateSession -> {
-                return null;
-//                return ProcessorSyncService.getWithSyncVoid( processorId,
-//                        ()-> processorTransactionService.updateSessionWithTx(processor, ss));
-            }
-            case ok -> {
-                return null;
-            }
-            default -> {
-                return null;
-            }
-        }
-    }
-
-
     public OperationStatusRest requestLogFile(final Long processorId) {
         return ProcessorSyncService.getWithSync( processorId, ()-> processorTransactionService.requestLogFile(processorId));
     }
@@ -230,12 +209,6 @@ public class ProcessorTopLevelService {
 
             List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(Consts.PAGE_REQUEST_100_REC, processor.id);
             for (Object[] obj : coreIds) {
-//                ProcessorCore processorCore = processorCoreCache.findById(coreId);
-//                if (processorCore ==null) {
-//                    continue;
-//                }
-//                CoreStatusYaml coreStatus = processorCore.getCoreStatusYaml();
-
                 Long coreId = ((Number)obj[0]).longValue();
                 String code = obj[1]==null ? "<unknown>" : obj[1].toString();
                 processorStatus.cores.add(new ProcessorData.ProcessorCore(coreId, code));
