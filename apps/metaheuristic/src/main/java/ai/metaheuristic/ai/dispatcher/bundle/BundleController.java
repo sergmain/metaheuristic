@@ -50,7 +50,7 @@ public class BundleController {
     private final BundleTopLevelService bundleTopLevelService;
     private final UserContextService userContextService;
 
-    @GetMapping("/bundlea-dd")
+    @GetMapping("/bundlea-add")
     public String index() {
         return "dispatcher/bundle/bundle-add";
     }

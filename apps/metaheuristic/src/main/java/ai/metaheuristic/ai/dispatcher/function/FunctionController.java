@@ -15,6 +15,10 @@
  */
 package ai.metaheuristic.ai.dispatcher.function;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.bundle.BundleTopLevelService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -39,6 +43,8 @@ public class FunctionController {
     private static final String REDIRECT_DISPATCHER_FUNCTIONS = "redirect:/dispatcher/function/functions";
 
     private final FunctionTopLevelService functionTopLevelService;
+    private final BundleTopLevelService bundleTopLevelService;
+    private final UserContextService userContextService;
 
     @GetMapping("/functions")
     @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
