@@ -22,10 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchHelperService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
@@ -33,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -93,6 +91,7 @@ public class BatchResultProcessorTxService {
 
     private static final String DELIMITER_2 = "\n====================================================================\n";
     private static final String IP_HOST = "IP: %s, host: %s";
+    private static final String UNKNOWN_IP_AND_HOST = String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
 
     private static final String BATCH_STATUS = "batch-status";
     private static final String BATCH_RESULT = "batch-result";
@@ -108,6 +107,7 @@ public class BatchResultProcessorTxService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
+    private final ProcessorCoreCache processorCoreCache;
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
     private final ExecContextCache execContextCache;
@@ -495,11 +495,7 @@ public class BatchResultProcessorTxService {
         String coreId;
         if (tpy.task.context== EnumsApi.FunctionExecContext.external) {
             coreId = S.f("coreId: %s", task.getCoreId());
-            Processor s = null;
-            if (task.getCoreId() != null) {
-                s = processorCache.findById(task.getCoreId());
-            }
-            processorIpAndHost = getProcessorIpAndHost(s);
+            processorIpAndHost = getProcessorIpAndHost(task.getCoreId());
         }
         else {
             processorIpAndHost = "Internal function";
@@ -561,11 +557,18 @@ public class BatchResultProcessorTxService {
         bs.ok = true;
     }
 
-    private static String getProcessorIpAndHost(@Nullable Processor processor) {
-        if (processor ==null) {
-            return String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
+    private String getProcessorIpAndHost(@Nullable Long coreId) {
+        if (coreId==null) {
+            return UNKNOWN_IP_AND_HOST;
         }
-
+        ProcessorCore core = processorCoreCache.findById(coreId);
+        if (core==null) {
+            return UNKNOWN_IP_AND_HOST;
+        }
+        Processor processor = processorCache.findById(core.getProcessorId());
+        if (processor ==null) {
+            return UNKNOWN_IP_AND_HOST;
+        }
         ProcessorStatusYaml status = processor.getProcessorStatusYaml();
         final String ip = StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO;
         final String host = StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO;
