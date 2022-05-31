@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
@@ -157,8 +158,8 @@ public class DispatcherRequestor {
                     ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core =
                             new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, coreId);
 
-                    // we have to pull new tasks from server constantly
-                    if (currentExecState.isInited(dispatcherUrl)) {
+                    // we have to pull new tasks from server constantly only if a list of execContextIds was initialized fully
+                    if (currentExecState.getCurrentInitState(dispatcherUrl)== Enums.ExecContextInitState.FULL) {
                         final boolean b = processorTaskService.isNeedNewTask(core);
                         if (b && dispatcher.schedule.isCurrentTimeActive()) {
                             // always report about current active tasks, if we have actual processorId

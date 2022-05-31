@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -44,8 +46,8 @@ public class ArtifactCleanerAtProcessor {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
             for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-                if (!globals.processor.enabled || !currentExecState.isInited(ref.dispatcherUrl)) {
-                    // don't delete anything until the processor has received the list of actual ExecContexts
+                if (!globals.processor.enabled || currentExecState.getCurrentInitState(ref.dispatcherUrl)!= Enums.ExecContextInitState.FULL) {
+                    // don't delete anything until the processor has received the full list of actual ExecContexts
                     continue;
                 }
 
@@ -62,6 +64,9 @@ public class ArtifactCleanerAtProcessor {
                 for (ProcessorCoreTask task : all) {
                     if (currentExecState.isState(ref.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                         log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
+                        for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(ref.dispatcherUrl).entrySet()) {
+                            log.warn("'   {}: {}", entry.getKey(), entry.getValue());
+                        }
                         processorTaskService.delete(core, task.getTaskId());
                         continue;
                     }
