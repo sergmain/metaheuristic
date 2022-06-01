@@ -41,7 +41,7 @@ public class VariablePostgresqlService implements VariableDatabaseSpecificServic
 
     public final VariablePostgresqlRepository variablePostgresqlRepository;
 
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) throws IOException {
+    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();
 
         // TODO 2021-10-14 right now, an array variable isn't supported

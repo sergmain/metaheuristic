@@ -20,10 +20,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -52,10 +55,17 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     private final CacheVariableService cacheVariableService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) throws IOException {
+    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();
 
-        final File tempFile = File.createTempFile("var-" +srcVariable.id + "-", ".bin", globals.dispatcherTempDir);
+
+        final File tempFile;
+        try {
+            tempFile = File.createTempFile("var-" +srcVariable.id + "-", ".bin", globals.dispatcherTempDir);
+        }
+        catch (IOException e) {
+            throw new BreakFromLambdaException(e.getMessage());
+        }
         InputStream is;
         try {
             // TODO 2021-10-14 right now, an array variable isn't supported

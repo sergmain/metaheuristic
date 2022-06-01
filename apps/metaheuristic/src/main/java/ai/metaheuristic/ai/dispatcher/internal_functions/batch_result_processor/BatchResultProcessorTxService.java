@@ -36,6 +36,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -224,17 +225,19 @@ public class BatchResultProcessorTxService {
                             S.f("#993.080 Can't find SourceCode #%s", sourceCodeId)));
         }
 
-        String originBatchFilename = batchHelperService.findUploadedFilenameForBatchId(execContextId, ecpy, "batch-result.zip");
+        String name = batchHelperService.findUploadedFilenameForBatchId(execContextId, ecpy, "batch-result.zip");
         String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.dispatcher.defaultResultFileExtension);
         if (!S.b(ext)) {
-            originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
+            name = StrUtils.getName(name) + ext;
         }
+        final String originBatchFilename = name;
 
         // this stream will be closed outside of this transaction
         FileInputStream fis = new FileInputStream(zipFile);
         eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
 
-        variableService.storeData(fis, zipFile.length(), batchResultVar.id, originBatchFilename);
+        VariableSyncService.getWithSyncNullableForCreationVoid(batchResultVar.id,
+                () -> variableService.storeData(fis, zipFile.length(), batchResultVar.id, originBatchFilename));
     }
 
     @SneakyThrows
@@ -265,7 +268,8 @@ public class BatchResultProcessorTxService {
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
         eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
-        variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null);
+        VariableSyncService.getWithSyncNullableForCreationVoid(batchStatusVar.id,
+                () -> variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
     }
 
     /**

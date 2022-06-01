@@ -41,7 +41,7 @@ public class VariableMysqlService implements VariableDatabaseSpecificService {
 
     public final VariableMysqlRepository variableMysqlRepository;
 
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) throws IOException {
+    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();
 
         // TODO 2021-10-14 right now, a variable as array isn't supported

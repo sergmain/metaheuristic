@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -58,18 +59,6 @@ public class TaskVariableService {
         public UpdateStatusOfVariableException(UploadResult uploadResult) {
             this.uploadResult = uploadResult;
         }
-    }
-
-    @Transactional
-    public void setVariableAsNull(Long taskId, Long variableId) {
-        Variable variable = variableRepository.findById(variableId).orElseThrow(()->new VariableCommonException("#441.120 Variable #"+variableId+" wasn't found", variableId));
-        variable.inited = true;
-        variable.nullified = true;
-        variable.setData(null);
-
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
-
-        variableRepository.save(variable);
     }
 
     @Transactional

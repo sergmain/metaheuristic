@@ -27,6 +27,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -40,7 +43,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,7 +63,7 @@ public class TaskCheckCachingService {
     private final TaskStateService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
-    private final TaskVariableService taskVariableService;
+    private final VariableService variableService;
     private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final EventPublisherService eventPublisherService;
 
@@ -115,8 +117,12 @@ public class TaskCheckCachingService {
                     }
                 }
                 if (!found) {
-                    log.warn("#609.100 cashProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.\n" +
-                                    "vars[0]: {}\nvars[1]: {}\nvars[2]: {}\n",
+                    log.warn("""
+                        #609.100 cacheProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.
+                        vars[0]: {}
+                        vars[1]: {}
+                        vars[2]: {}
+                        """,
                             cacheProcess.id, output.name,
                             vars.get(0)[0]!=null?vars.get(0)[0].getClass().getName():null,
                             vars.get(0)[1]!=null?vars.get(0)[1].getClass().getName():null,
@@ -135,15 +141,17 @@ public class TaskCheckCachingService {
                 try {
                     VariableData.StoredVariable storedVariable = new VariableData.StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        taskVariableService.setVariableAsNull(taskId, output.id);
+                        VariableSyncService.getWithSyncNullableForCreationVoid(output.id,
+                                () -> variableService.setVariableAsNull(taskId, output.id));
                     }
                     else {
-                        variableDatabaseSpecificService.copyData(storedVariable, output);
+                        VariableSyncService.getWithSyncNullableForCreationVoid(output.id,
+                                () -> variableDatabaseSpecificService.copyData(storedVariable, output));
                     }
 
                     output.uploaded = true;
 
-                } catch (IOException e) {
+                } catch (BreakFromLambdaException e) {
                     log.warn("#609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }

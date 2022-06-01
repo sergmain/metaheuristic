@@ -296,7 +296,7 @@ public class TaskWithInternalContextEventService {
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
                         (v) -> variableService.setVariableAsNull(v.id));
-                if (obj!=null && !obj.getClass().equals(Boolean.class)) {
+                if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);
                     throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);

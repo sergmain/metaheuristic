@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
@@ -92,7 +93,14 @@ public class VariableService {
     private final ExecContextCache execContextCache;
 
     @Transactional
+    public void setVariableAsNull(Long taskId, Long variableId) {
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
+        setVariableAsNull(variableId);
+    }
+
+    @Transactional
     public void storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
+        VariableSyncService.checkWriteLockPresent(variableId);
 
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
@@ -109,6 +117,7 @@ public class VariableService {
 
     public void resetVariable(Long execContextId, Long variableId) {
         TxUtils.checkTxExists();
+        VariableSyncService.checkWriteLockPresent(variableId);
 
         Variable v = variableRepository.findById(variableId).orElse(null);
         if (v ==null) {
@@ -129,17 +138,13 @@ public class VariableService {
 
     @Transactional
     public void setVariableAsNull(Long variableId) {
+        VariableSyncService.checkWriteLockPresent(variableId);
+
         Variable variable = variableRepository.findById(variableId).orElse(null);
         if (variable ==null) {
             String es = S.f("#171.150 variable #%d wasn't found", variableId);
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-        }
-        if (variable.inited) {
-            String es = S.f("#171.180 variable #%d was already inited", variableId);
-            log.error(es);
-            throw new VariableCommonException(es, variableId);
-
         }
         variable.inited = true;
         variable.nullified = true;
@@ -560,6 +565,8 @@ public class VariableService {
     }
 
     public void update(InputStream is, long size, Variable data) {
+        VariableSyncService.checkWriteLockPresent(data.id);
+
         if (size==0) {
             throw new IllegalStateException("#171.690 Variable can't be with zero length");
         }
@@ -575,6 +582,8 @@ public class VariableService {
 
     @Transactional
     public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
+        VariableSyncService.checkWriteLockPresent(variableId);
+
         if (size==0) {
             throw new IllegalStateException("#171.720 Variable can't be with zero length");
         }

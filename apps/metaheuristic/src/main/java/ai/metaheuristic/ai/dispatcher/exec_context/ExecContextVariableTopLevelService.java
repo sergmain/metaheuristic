@@ -83,7 +83,8 @@ public class ExecContextVariableTopLevelService {
 
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
         try {
-            taskVariableService.setVariableAsNull(taskId, variableId);
+            VariableSyncService.getWithSyncVoid(variableId,
+                    () -> variableService.setVariableAsNull(taskId, variableId));
             return OK_UPLOAD_RESULT;
         }
         catch (ObjectOptimisticLockingFailureException th) {
