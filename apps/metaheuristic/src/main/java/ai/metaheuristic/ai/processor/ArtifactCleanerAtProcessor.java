@@ -67,12 +67,12 @@ public class ArtifactCleanerAtProcessor {
                         for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(ref.dispatcherUrl).entrySet()) {
                             log.warn("'   {}: {}", entry.getKey(), entry.getValue());
                         }
-                        processorTaskService.delete(core, task.getTaskId());
+//                        processorTaskService.delete(core, task.getTaskId());
                         continue;
                     }
                     if (task.clean && task.delivered && task.completed) {
                         log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        processorTaskService.delete(core, task.getTaskId());
+//                        processorTaskService.delete(core, task.getTaskId());
                     }
                 }
             }
