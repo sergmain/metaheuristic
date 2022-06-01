@@ -43,37 +43,38 @@ public class ArtifactCleanerAtProcessor {
     private final MetadataService metadataService;
 
     public void fixedDelay() {
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-                if (!globals.processor.enabled || currentExecState.getCurrentInitState(ref.dispatcherUrl)!= Enums.ExecContextInitState.FULL) {
-                    // don't delete anything until the processor has received the full list of actual ExecContexts
+        if (!globals.processor.enabled) {
+            // don't delete anything until the processor has received the full list of actual ExecContexts
+            return;
+        }
+
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+            if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
+                // don't delete anything until the processor has received the full list of actual ExecContexts
+                continue;
+            }
+            File coreDir = new File(globals.processor.dir.dir, core.coreCode);
+            File coreTaskDir = new File(coreDir, Consts.TASK_DIR);
+
+            MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            final File dispatcherDir = new File(coreTaskDir, processorState.dispatcherCode);
+            if (!dispatcherDir.exists()) {
+                dispatcherDir.mkdir();
+            }
+            List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
+            for (ProcessorCoreTask task : all) {
+                if (currentExecState.isState(core.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                    log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                    for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(core.dispatcherUrl).entrySet()) {
+                        log.warn("'   {}: {}", entry.getKey(), entry.getValue());
+                    }
+                    processorTaskService.delete(core, task.getTaskId());
                     continue;
                 }
-
-                File coreDir = new File(globals.processor.dir.dir, core.coreCode);
-                File coreTaskDir = new File(coreDir, Consts.TASK_DIR);
-
-                MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
-                final File dispatcherDir = new File(coreTaskDir, processorState.dispatcherCode);
-                if (!dispatcherDir.exists()) {
-                    dispatcherDir.mkdir();
-                }
-
-                List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
-                for (ProcessorCoreTask task : all) {
-                    if (currentExecState.isState(ref.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
-                        log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(ref.dispatcherUrl).entrySet()) {
-                            log.warn("'   {}: {}", entry.getKey(), entry.getValue());
-                        }
-//                        processorTaskService.delete(core, task.getTaskId());
-                        continue;
-                    }
-                    if (task.clean && task.delivered && task.completed) {
-                        log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-//                        processorTaskService.delete(core, task.getTaskId());
-                    }
+                if (task.clean && task.delivered && task.completed) {
+                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                    processorTaskService.delete(core, task.getTaskId());
                 }
             }
         }

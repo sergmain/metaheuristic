@@ -450,7 +450,7 @@ public class ProcessorTaskService {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
-            log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
+            log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             ProcessorCoreTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorCoreTask());
 
